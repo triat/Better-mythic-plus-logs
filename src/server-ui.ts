@@ -277,11 +277,11 @@ const qualityLine = (r) => {
   const deaths = '<span class="' + deathsCls(r.quality.deaths) + '">' + r.quality.deaths + ' death' + (r.quality.deaths === 1 ? '' : 's') + '</span>';
   const dtps = fmtAmount(r.quality.dtps) + ' dtps';
   let cmp = '';
-  if (r.quality.roleMedianDtps && r.quality.roleMedianDtps > 0) {
-    const delta = (r.quality.dtps - r.quality.roleMedianDtps) / r.quality.roleMedianDtps * 100;
+  if (r.quality.peerMedianDtps && r.quality.peerMedianDtps > 0) {
+    const delta = (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
     const sign = delta >= 0 ? '+' : '';
-    const mates = r.quality.roleSize - 1;
-    const label = sign + delta.toFixed(0) + '% vs role (' + mates + ' ' + r.quality.role + ' mate' + (mates === 1 ? '' : 's') + ')';
+    const peers = r.quality.peerCount;
+    const label = sign + delta.toFixed(0) + '% vs ' + peers + ' dps peer' + (peers === 1 ? '' : 's');
     cmp = ' · <span class="' + dtpsDeltaCls(delta) + '">' + esc(label) + '</span>';
   }
   return '<span class="quality">' + deaths + ' · ' + dtps + cmp + '</span>';

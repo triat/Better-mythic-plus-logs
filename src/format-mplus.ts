@@ -54,10 +54,10 @@ const deathColor = (n: number): string => {
 
 const dtpsCompareTag = (r: MPlusRun): string => {
   const q = r.quality;
-  if (!q || q.roleMedianDtps === null || q.roleMedianDtps === 0) return "";
-  const deltaPct = (q.dtps - q.roleMedianDtps) / q.roleMedianDtps * 100;
+  if (!q || q.peerMedianDtps === null || q.peerMedianDtps === 0) return "";
+  const deltaPct = (q.dtps - q.peerMedianDtps) / q.peerMedianDtps * 100;
   const sign = deltaPct >= 0 ? "+" : "";
-  const label = `${sign}${deltaPct.toFixed(0)}% vs role (${q.roleSize - 1} ${q.role} mate${q.roleSize - 1 === 1 ? "" : "s"})`;
+  const label = `${sign}${deltaPct.toFixed(0)}% vs ${q.peerCount} dps peer${q.peerCount === 1 ? "" : "s"}`;
   if (deltaPct <= -10) return pc.green(label);
   if (deltaPct <= 10) return dim(label);
   if (deltaPct <= 30) return pc.yellow(label);

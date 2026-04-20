@@ -17,10 +17,13 @@ export interface RunQuality {
   fightDurationMs: number;
   dtps: number;
   role: GroupRole;
-  // Median DTPS across same-role team-mates in this fight (excluding the
-  // target player). null when the target is the only one in their role.
-  roleMedianDtps: number | null;
-  roleSize: number;
+  // Median DTPS across "peers" in this fight — i.e. all DPS except the target.
+  // The idea: everyone except the tank is expected to survive avoidable
+  // mechanics, and DPS make the cleanest baseline (healers often take less
+  // because of positioning, tanks take much more by design). Tanks get no
+  // peer comparison (peerCount = 0).
+  peerMedianDtps: number | null;
+  peerCount: number;
 }
 
 export interface MPlusRun {
@@ -488,20 +491,21 @@ async function fetchRunSummary(
     }
     const targetRole = roleByName.get(characterName) ?? "unknown";
 
-    // Same-role team-mates (exclude target).
-    let roleMedianDtps: number | null = null;
-    let roleSize = 1;
-    if (duration > 0 && targetRole !== "unknown") {
-      const mates: number[] = [];
+    // Peer comparison: for non-tanks, median DTPS across all DPS in the group
+    // (excluding the target). Tanks get no peer comparison.
+    let peerMedianDtps: number | null = null;
+    let peerCount = 0;
+    if (duration > 0 && targetRole !== "tank") {
+      const peers: number[] = [];
       for (const e of dtEntries) {
         if (e.name === characterName) continue;
-        const role = roleByName.get(e.name) ?? "unknown";
-        if (role === targetRole && typeof e.total === "number") {
-          mates.push(e.total / (duration / 1000));
+        const peerRole = roleByName.get(e.name) ?? "unknown";
+        if (peerRole === "dps" && typeof e.total === "number") {
+          peers.push(e.total / (duration / 1000));
         }
       }
-      roleSize = mates.length + 1;
-      roleMedianDtps = medianOrNull(mates);
+      peerCount = peers.length;
+      peerMedianDtps = medianOrNull(peers);
     }
 
     return {
@@ -510,8 +514,8 @@ async function fetchRunSummary(
       fightDurationMs: duration,
       dtps: duration > 0 ? damageTaken / (duration / 1000) : 0,
       role: targetRole,
-      roleMedianDtps,
-      roleSize,
+      peerMedianDtps,
+      peerCount,
     };
   } catch {
     return null;

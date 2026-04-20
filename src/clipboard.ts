@@ -26,11 +26,17 @@ const isWSL = (): boolean =>
 export async function detectClipboardReader(): Promise<ClipboardBackend> {
   if (isWSL() || process.platform === "win32") {
     if (process.platform === "win32" || (await which("powershell.exe"))) {
+      // Force UTF-8 on the output stream before Get-Clipboard. PowerShell's
+      // default console output encoding on many Windows installs is the
+      // legacy DOS code page (e.g. CP437), which mangles accented chars
+      // like "ì" → 0x8D — invalid as UTF-8 — when we decode the stream.
+      const cmd =
+        "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard";
       return {
-        label: "powershell.exe Get-Clipboard",
+        label: "powershell.exe Get-Clipboard (UTF-8)",
         read: async () =>
           stripTrailingNewline(
-            await $`powershell.exe -NoProfile -Command Get-Clipboard`.text(),
+            await $`powershell.exe -NoProfile -Command ${cmd}`.text(),
           ),
       };
     }

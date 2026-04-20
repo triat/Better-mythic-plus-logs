@@ -327,6 +327,20 @@ const broadcast = (event: string, data: unknown): void => {
   }
 };
 
+// Periodic heartbeat so SSE connections are never fully idle, even without
+// a watcher event. A `:` line is an SSE comment — the browser ignores it
+// but it keeps the socket live through any reverse proxies.
+const HEARTBEAT_BYTES = sseEncoder.encode(`: ping\n\n`);
+setInterval(() => {
+  for (const c of sseClients) {
+    try {
+      c.enqueue(HEARTBEAT_BYTES);
+    } catch {
+      /* client closed */
+    }
+  }
+}, 20_000);
+
 // --- Clipboard watcher state machine ---------------------------------------
 
 interface WatcherState {
@@ -446,6 +460,9 @@ export async function runServer(opts: ServeOptions): Promise<void> {
 
   const server = Bun.serve({
     port: opts.port,
+    // Local single-user tool — disable the 10s idle-connection timeout so
+    // long-lived SSE streams and slow enrichment lookups don't get killed.
+    idleTimeout: 0,
     async fetch(req) {
       const url = new URL(req.url);
       const path = url.pathname;

@@ -25,7 +25,65 @@ interface LookupRequest {
   level?: number | string | null;
   spec?: string | null;
   metric?: string | null;
+  refresh?: boolean;
 }
+
+interface HistoryEntry {
+  key: string;
+  request: {
+    character: string;
+    level: number | null;
+    spec: string | null;
+    metric: Metric | null;
+  };
+  fetchedAt: number;
+  // Full payload sent to the client (same shape as a non-cached /api/lookup response).
+  result: unknown;
+  // Summary fields used to render the tab strip + compare view.
+  label: string;
+  charClass: number;
+  spec: string | null;
+  targetLevel: number;
+  targetAutoDetected: boolean;
+}
+
+const HISTORY_MAX = 20;
+const history = new Map<string, HistoryEntry>();
+
+const cacheKey = (
+  character: string,
+  level: number | null,
+  spec: string | null,
+  metric: Metric | null,
+): string =>
+  JSON.stringify([
+    character.trim().toLowerCase(),
+    level ?? "auto",
+    spec ? spec.trim().toLowerCase() : "",
+    metric ?? "",
+  ]);
+
+const addHistoryEntry = (entry: HistoryEntry): void => {
+  // Re-insert at the end (newest wins).
+  history.delete(entry.key);
+  history.set(entry.key, entry);
+  while (history.size > HISTORY_MAX) {
+    const oldest = history.keys().next().value;
+    if (oldest === undefined) break;
+    history.delete(oldest);
+  }
+};
+
+const historySummary = (entry: HistoryEntry) => ({
+  key: entry.key,
+  label: entry.label,
+  charClass: entry.charClass,
+  spec: entry.spec,
+  targetLevel: entry.targetLevel,
+  targetAutoDetected: entry.targetAutoDetected,
+  fetchedAt: entry.fetchedAt,
+  request: entry.request,
+});
 
 interface SetupRequest {
   clientId?: string;
@@ -97,6 +155,18 @@ async function handleLookup(req: Request): Promise<Response> {
     levelOverride = n;
   }
 
+  const requestCharacter = `${target.name}-${target.realm}`;
+  const key = cacheKey(requestCharacter, levelOverride, specFilter, metric ?? null);
+
+  // Cache hit: return the cached payload without any API call.
+  if (!body.refresh && history.has(key)) {
+    const entry = history.get(key)!;
+    // Move to the end so "recently viewed" ordering reflects real activity.
+    history.delete(key);
+    history.set(key, entry);
+    return jsonResponse({ ok: true, result: entry.result, key, fromCache: true });
+  }
+
   try {
     const data = await fetchMplusData(target.name, target.realm, {
       metric,
@@ -140,24 +210,40 @@ async function handleLookup(req: Request): Promise<Response> {
     // Server always enriches — quality stats are the core of the web UI.
     await enrichLookupResult(filtered, result);
 
-    return jsonResponse({
-      ok: true,
-      result: {
-        character: filtered.character,
-        zone: {
-          id: filtered.zoneID,
-          name: filtered.zoneName,
-          partition: filtered.partition,
-        },
-        metric: filtered.metric,
-        metricAutoSelected: filtered.metricAutoSelected,
-        alternateMetricHasData: filtered.alternateMetricHasData,
-        specFilter: filtered.specFilter,
-        runsIndexed: filtered.runs.length,
-        seasonDungeons: filtered.seasonDungeons,
-        ...result,
+    const payload = {
+      character: filtered.character,
+      zone: {
+        id: filtered.zoneID,
+        name: filtered.zoneName,
+        partition: filtered.partition,
       },
+      metric: filtered.metric,
+      metricAutoSelected: filtered.metricAutoSelected,
+      alternateMetricHasData: filtered.alternateMetricHasData,
+      specFilter: filtered.specFilter,
+      runsIndexed: filtered.runs.length,
+      seasonDungeons: filtered.seasonDungeons,
+      ...result,
+    };
+
+    addHistoryEntry({
+      key,
+      request: {
+        character: requestCharacter,
+        level: levelOverride,
+        spec: specFilter,
+        metric: metric ?? null,
+      },
+      fetchedAt: Date.now(),
+      result: payload,
+      label: requestCharacter,
+      charClass: filtered.character.classID,
+      spec: filtered.character.spec,
+      targetLevel: result.targetLevel,
+      targetAutoDetected: result.targetAutoDetected,
     });
+
+    return jsonResponse({ ok: true, result: payload, key, fromCache: false });
   } catch (e) {
     return jsonResponse(
       { ok: false, error: e instanceof Error ? e.message : String(e) },
@@ -236,6 +322,26 @@ export async function runServer(opts: ServeOptions): Promise<void> {
       }
       if (req.method === "POST" && path === "/api/lookup") {
         return handleLookup(req);
+      }
+      if (req.method === "GET" && path === "/api/history") {
+        // Newest first for the UI.
+        const items = [...history.values()].reverse().map(historySummary);
+        return jsonResponse({ ok: true, items });
+      }
+      if (req.method === "GET" && path.startsWith("/api/history/")) {
+        const key = decodeURIComponent(path.slice("/api/history/".length));
+        const entry = history.get(key);
+        if (!entry) return jsonResponse({ ok: false, error: "Not in history" }, 404);
+        return jsonResponse({ ok: true, result: entry.result, key, fromCache: true });
+      }
+      if (req.method === "DELETE" && path === "/api/history") {
+        history.clear();
+        return jsonResponse({ ok: true });
+      }
+      if (req.method === "DELETE" && path.startsWith("/api/history/")) {
+        const key = decodeURIComponent(path.slice("/api/history/".length));
+        const removed = history.delete(key);
+        return jsonResponse({ ok: removed });
       }
       if (req.method === "POST" && path === "/api/quit") {
         queueMicrotask(() => setTimeout(() => process.exit(0), 120));

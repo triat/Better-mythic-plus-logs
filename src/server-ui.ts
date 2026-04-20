@@ -133,7 +133,45 @@ header.top {
 }
 header.top h1 { font-size: 1.1rem; margin: 0; }
 header.top h1 .tag { margin-left: .5rem; }
-main { max-width: 920px; margin: 1.5rem auto; padding: 0 1.5rem; }
+main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.5rem; }
+.tabs {
+  display: flex; flex-wrap: wrap; gap: .35rem; align-items: center;
+  margin-bottom: .9rem; min-height: 2.2rem;
+}
+.tabs:empty::before { content: "Your tabs will appear here after a lookup."; color: #8b949e; font-size: .85rem; }
+.tab {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .35rem .75rem; border-radius: 6px;
+  background: #161b22; border: 1px solid #30363d; color: #c9d1d9;
+  cursor: pointer; font: inherit; font-size: .82rem;
+  max-width: 280px;
+}
+.tab:hover { background: #21262d; }
+.tab.active { background: #0d3b66; border-color: #388bfd; color: white; }
+.tab .tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab .tab-sub { color: #8b949e; font-size: .72rem; }
+.tab.active .tab-sub { color: #b9d3ff; }
+.tab .tab-close {
+  background: transparent; border: 0; color: inherit; opacity: .55;
+  padding: 0 .15rem; cursor: pointer; font-size: 1rem; line-height: 1;
+}
+.tab .tab-close:hover { opacity: 1; color: #f85149; }
+.toolbar {
+  display: flex; gap: .5rem; align-items: center;
+  margin: .5rem 0 1rem;
+  color: #8b949e; font-size: .82rem;
+}
+.toolbar button { padding: .3rem .6rem; font-size: .82rem; }
+.from-cache { background: #21262d; color: #56d364; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; }
+.compare-table {
+  width: 100%; border-collapse: collapse; font-size: .85rem;
+}
+.compare-table th, .compare-table td {
+  text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #21262d;
+}
+.compare-table th { color: #8b949e; font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+.compare-table tbody tr:hover { background: #161b22; }
+.compare-table .numeric { text-align: right; font-variant-numeric: tabular-nums; }
 form#lookupForm { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin-bottom: 1rem; }
 form#lookupForm input[name="character"] { font-size: 1.05rem; }
 details { margin-bottom: 1rem; padding: .6rem .8rem; border: 1px solid #21262d; border-radius: 6px; }
@@ -207,6 +245,8 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
   </div>
 </header>
 <main>
+  <div class="tabs" id="tabs"></div>
+
   <form id="lookupForm">
     <input type="text" name="character" required placeholder="Name-Realm (e.g. Drahous-Archimonde)" autofocus autocomplete="off" />
     <button type="submit">Look up</button>
@@ -232,7 +272,17 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
       </label>
     </div>
   </details>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <button class="ghost" id="compareBtn">Compare all tabs</button>
+    <button class="ghost" id="refreshBtn" title="Re-fetch the active tab">↻ Refresh</button>
+    <button class="ghost" id="clearBtn" title="Close all tabs">Clear tabs</button>
+    <span id="cacheTag"></span>
+    <span id="fetchedAt" class="dim"></span>
+  </div>
+
   <section id="result"></section>
+  <section id="compare" hidden></section>
 </main>
 <script>
 const CLASSES = {1:"Death Knight",2:"Druid",3:"Hunter",4:"Mage",5:"Monk",6:"Paladin",7:"Priest",8:"Rogue",9:"Shaman",10:"Warlock",11:"Warrior",12:"Demon Hunter",13:"Evoker"};
@@ -363,17 +413,102 @@ const render = (payload) => {
 };
 
 const resultEl = document.getElementById("result");
-document.getElementById("lookupForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const fd = new FormData(form);
-  const body = {
-    character: fd.get("character"),
-    level: fd.get("level") || null,
-    spec: fd.get("spec") || null,
-    metric: fd.get("metric") || null,
-  };
-  resultEl.innerHTML = '<div class="dim"><span class="spinner"></span> looking up ' + esc(body.character) + '…</div>';
+const compareEl = document.getElementById("compare");
+const tabsEl = document.getElementById("tabs");
+const toolbarEl = document.getElementById("toolbar");
+const cacheTagEl = document.getElementById("cacheTag");
+const fetchedAtEl = document.getElementById("fetchedAt");
+
+let activeKey = null;
+let tabs = [];           // summaries (from /api/history)
+let activePayload = null; // full result for currently-shown tab
+
+const classShort = { 1:"DK",2:"Druid",3:"Hntr",4:"Mage",5:"Monk",6:"Pal",7:"Priest",8:"Rogue",9:"Sham",10:"Lock",11:"Warr",12:"DH",13:"Evoker" };
+
+function showToolbar(hasTabs) {
+  toolbarEl.hidden = !hasTabs;
+}
+
+function updateFetchedAt(ts, fromCache) {
+  fetchedAtEl.textContent = ts ? "fetched " + fmtAge(ts) : "";
+  cacheTagEl.innerHTML = fromCache ? '<span class="from-cache">cached · 0 API pts</span>' : "";
+}
+
+function renderTabs() {
+  tabsEl.innerHTML = tabs.map((t) => {
+    const classClass = "class-" + t.charClass;
+    const cls = classShort[t.charClass] || "";
+    const auto = t.targetAutoDetected ? " auto" : "";
+    const sub = "+" + t.targetLevel + auto + (t.spec ? " · " + esc(t.spec) : "");
+    const active = t.key === activeKey ? " active" : "";
+    return '<button class="tab' + active + '" data-key="' + esc(t.key) + '">' +
+      '<span class="tab-title ' + classClass + '">' + esc(t.label) +
+        '<span class="dim" style="font-weight:400"> · ' + cls + '</span>' +
+      '</span>' +
+      '<span class="tab-sub">' + esc(sub) + '</span>' +
+      '<span class="tab-close" data-close="' + esc(t.key) + '" title="Close tab">×</span>' +
+    '</button>';
+  }).join("");
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch("/api/history");
+    const data = await res.json();
+    tabs = data.items || [];
+    renderTabs();
+    showToolbar(tabs.length > 0);
+  } catch {}
+}
+
+async function showTab(key) {
+  activeKey = key;
+  renderTabs();
+  try {
+    const res = await fetch("/api/history/" + encodeURIComponent(key));
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || ("HTTP " + res.status));
+    activePayload = data.result;
+    resultEl.innerHTML = render(data.result);
+    compareEl.hidden = true;
+    resultEl.hidden = false;
+    const entry = tabs.find((t) => t.key === key);
+    updateFetchedAt(entry ? entry.fetchedAt : null, true);
+  } catch (err) {
+    resultEl.innerHTML = '<div class="err">✗ ' + esc(err.message) + '</div>';
+  }
+}
+
+async function closeTab(key) {
+  try {
+    await fetch("/api/history/" + encodeURIComponent(key), { method: "DELETE" });
+  } catch {}
+  if (activeKey === key) {
+    activeKey = null;
+    resultEl.innerHTML = "";
+    compareEl.hidden = true;
+    updateFetchedAt(null, false);
+  }
+  await loadHistory();
+  if (!activeKey && tabs.length > 0) showTab(tabs[0].key);
+}
+
+async function clearAllTabs() {
+  if (!confirm("Close all " + tabs.length + " tabs?")) return;
+  try { await fetch("/api/history", { method: "DELETE" }); } catch {}
+  activeKey = null;
+  activePayload = null;
+  resultEl.innerHTML = "";
+  compareEl.hidden = true;
+  updateFetchedAt(null, false);
+  await loadHistory();
+}
+
+async function runLookup(formValues, refresh) {
+  const body = Object.assign({}, formValues, { refresh: refresh || false });
+  resultEl.innerHTML = '<div class="dim"><span class="spinner"></span> ' + (refresh ? "refreshing " : "looking up ") + esc(body.character) + '…</div>';
+  compareEl.hidden = true;
+  resultEl.hidden = false;
   try {
     const res = await fetch("/api/lookup", {
       method: "POST",
@@ -382,17 +517,118 @@ document.getElementById("lookupForm").addEventListener("submit", async (e) => {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || ("HTTP " + res.status));
+    activeKey = data.key;
+    activePayload = data.result;
     resultEl.innerHTML = render(data.result);
+    await loadHistory();
+    updateFetchedAt(Date.now(), !!data.fromCache);
   } catch (err) {
     resultEl.innerHTML = '<div class="err">✗ ' + esc(err.message) + '</div>';
   }
+}
+
+function openCompare() {
+  if (tabs.length === 0) return;
+  // Fetch all tab payloads in parallel, build a table.
+  compareEl.hidden = false;
+  resultEl.hidden = true;
+  compareEl.innerHTML = '<div class="dim"><span class="spinner"></span> building compare view…</div>';
+  Promise.all(tabs.map(async (t) => {
+    try {
+      const res = await fetch("/api/history/" + encodeURIComponent(t.key));
+      const d = await res.json();
+      return d.ok ? { tab: t, payload: d.result } : null;
+    } catch { return null; }
+  })).then((rows) => {
+    const valid = rows.filter(Boolean);
+    if (valid.length === 0) {
+      compareEl.innerHTML = '<div class="dim">No tabs to compare.</div>';
+      return;
+    }
+    const rowHtml = valid.map(({ tab, payload }) => {
+      const pd = payload.perDungeon;
+      const prev = payload.prevLevelBest;
+      // medians across displayed runs (includes prev-level-best if present)
+      const displayedRuns = [];
+      if (prev) displayedRuns.push(prev.best);
+      for (const r of pd.runs) displayedRuns.push(r);
+      const deathsList = displayedRuns.map((r) => (r.quality ? r.quality.deaths : null)).filter((v) => v !== null);
+      const deltaList = displayedRuns.map((r) => {
+        if (!r.quality || !r.quality.peerMedianDtps) return null;
+        return (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
+      }).filter((v) => v !== null);
+      const medianNum = (xs) => { if (xs.length === 0) return null; const s = [...xs].sort((a,b)=>a-b); const m = Math.floor(s.length/2); return s.length%2===0 ? (s[m-1]+s[m])/2 : s[m]; };
+      const totalDeaths = deathsList.reduce((a,b) => a + b, 0);
+      const medDelta = medianNum(deltaList);
+      const deltaCell = medDelta === null
+        ? '—'
+        : '<span class="' + dtpsDeltaCls(medDelta) + '">' + (medDelta >= 0 ? "+" : "") + medDelta.toFixed(0) + '%</span>';
+      const score = payload.character.scoreTop;
+      const classClass = "class-" + payload.character.classID;
+      return '<tr data-key="' + esc(tab.key) + '">' +
+        '<td><a href="#" class="' + classClass + '" data-jump="' + esc(tab.key) + '">' + esc(tab.label) + '</a> <span class="dim">' + esc(payload.character.spec || "") + '</span></td>' +
+        '<td class="numeric">' + (score ? score.points.toFixed(0) : '—') + '</td>' +
+        '<td class="numeric">+' + payload.targetLevel + (payload.targetAutoDetected ? ' <span class="dim">auto</span>' : '') + '</td>' +
+        '<td class="numeric">' + pd.dungeonsAtOrAboveTarget + '/' + pd.totalDungeonsInSeason + '</td>' +
+        '<td class="numeric">' + (prev ? ('+' + prev.level + ' · <span class="' + pclass(prev.best.parsePercent) + '">' + prev.best.parsePercent.toFixed(0) + '%</span>') : '—') + '</td>' +
+        '<td class="numeric"><span class="' + (totalDeaths === 0 ? "deaths-0" : (totalDeaths <= 3 ? "deaths-low" : "deaths-high")) + '">' + totalDeaths + '</span></td>' +
+        '<td class="numeric">' + deltaCell + '</td>' +
+        '<td class="numeric">+' + pd.medianLevel + '</td>' +
+      '</tr>';
+    }).join("");
+    compareEl.innerHTML = '<h3>Compare ' + valid.length + ' tab' + (valid.length === 1 ? '' : 's') + '</h3>' +
+      '<table class="compare-table"><thead><tr>' +
+        '<th>Character</th><th>Score</th><th>Target</th><th>Timed ≥target</th><th>Best prev-level</th>' +
+        '<th>Σ deaths</th><th>med Δ dtps</th><th>Med lvl</th>' +
+      '</tr></thead><tbody>' + rowHtml + '</tbody></table>' +
+      '<p class="dim" style="margin-top:.75rem;font-size:.8rem">Σ deaths and median Δ dtps computed across the displayed runs (prev-level + per-dungeon bests).</p>';
+    compareEl.querySelectorAll("[data-jump]").forEach((a) => {
+      a.addEventListener("click", (e) => { e.preventDefault(); showTab(a.getAttribute("data-jump")); });
+    });
+  });
+}
+
+// Wire events.
+document.getElementById("lookupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await runLookup({
+    character: fd.get("character"),
+    level: fd.get("level") || null,
+    spec: fd.get("spec") || null,
+    metric: fd.get("metric") || null,
+  }, false);
 });
+
+tabsEl.addEventListener("click", (e) => {
+  const close = e.target.closest("[data-close]");
+  if (close) { e.stopPropagation(); closeTab(close.getAttribute("data-close")); return; }
+  const tab = e.target.closest(".tab");
+  if (tab) showTab(tab.getAttribute("data-key"));
+});
+
+document.getElementById("refreshBtn").addEventListener("click", () => {
+  if (!activeKey) return;
+  const entry = tabs.find((t) => t.key === activeKey);
+  if (!entry) return;
+  runLookup({
+    character: entry.request.character,
+    level: entry.request.level,
+    spec: entry.request.spec,
+    metric: entry.request.metric,
+  }, true);
+});
+document.getElementById("compareBtn").addEventListener("click", openCompare);
+document.getElementById("clearBtn").addEventListener("click", clearAllTabs);
+
 document.getElementById("quitBtn").addEventListener("click", async () => {
   if (!confirm("Quit bmpl? The server will stop and this page will no longer work.")) return;
   try { await fetch("/api/quit", { method: "POST" }); } catch {}
   document.body.innerHTML = '<main style="max-width:500px;margin:4rem auto;text-align:center"><h2>bmpl stopped</h2><p class="dim">You can close this tab.</p></main>';
 });
 document.getElementById("setupBtn").addEventListener("click", () => { location.href = "/setup"; });
+
+loadHistory();
 </script>
 </body>
 </html>

@@ -26,6 +26,7 @@ import {
 import type { Metric } from "./roles.ts";
 import { renderLookup, renderSummary } from "./format-mplus.ts";
 import { parseNameRealm, realmToSlug } from "./util.ts";
+import { runServer } from "./server.ts";
 import { runWatch } from "./watch.ts";
 
 const USAGE = `bmpl — Better Mythic+ Logs (Warcraft Logs analyzer)
@@ -42,6 +43,10 @@ Usage:
                                      Poll the clipboard; runs lookup whenever a
                                      Name-Realm string is copied. Omit --level
                                      to auto-detect per character. Ctrl+C to quit.
+  bmpl serve  [--port <N>] [--no-open]
+                                     Start the local web UI at http://localhost:<port>
+                                     (default 3000) and auto-open your browser.
+                                     First run shows a setup page for creds.
   bmpl char <name> <realm>           Basic character info.
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).
@@ -414,6 +419,18 @@ async function main(): Promise<void> {
         }
         await cmdMplus(target.name, target.realm, spec, metric, json);
         break;
+      }
+      case "serve": {
+        const portStr = parseFlag(rest, "--port");
+        const port = portStr ? Number.parseInt(portStr, 10) : 3000;
+        if (!Number.isFinite(port) || port < 1 || port > 65535) {
+          console.error(err(`Invalid --port value: ${portStr}`));
+          process.exit(2);
+        }
+        const open = !hasFlag(rest, "--no-open");
+        await runServer({ port, open });
+        // Bun.serve keeps the process alive; do not return.
+        return;
       }
       case "watch": {
         const lvlStr = parseFlag(rest, "--level");

@@ -13,9 +13,19 @@ interface TokenCache {
 
 let cache: TokenCache | null = null;
 
+export const resetAuthCache = (): void => {
+  cache = null;
+};
+
 export async function getAccessToken(): Promise<string> {
   if (cache && cache.expiresAt > Date.now() + 60_000) {
     return cache.token;
+  }
+
+  if (!config.clientId || !config.clientSecret) {
+    throw new Error(
+      "WCL credentials not configured. Fill WCL_CLIENT_ID and WCL_CLIENT_SECRET in .env, or run `bmpl serve` for a guided setup.",
+    );
   }
 
   const basic = btoa(`${config.clientId}:${config.clientSecret}`);

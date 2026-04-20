@@ -87,6 +87,27 @@ just l Drahous-Archimonde --json
 Both forms work — combined `Name-Realm` (what you get from WoW's in-game copy)
 or `Name Realm` as two args.
 
+### Graphical UI (easiest for non-technical users)
+
+```bash
+just serve                    # starts http://localhost:3000 and opens your browser
+just serve --port 4000        # custom port
+just serve --no-open          # don't auto-launch browser
+```
+
+On first run, the browser lands on a setup page that walks you through creating
+a Warcraft Logs API client and saves the creds to `.env` automatically — no
+manual file editing required.
+
+After that, you get a single input field: paste a `Name-Realm`, hit **Look up**,
+see the same vetting view the CLI produces but rendered as HTML. There's a
+**Quit** button in the header to shut down the server. No terminal knowledge
+needed.
+
+This is the intended "share with friends" mode — ship them `bmpl.exe` (see the
+Windows section below), they double-click, the browser opens, they're set up
+in 30 seconds.
+
 ### Hands-free (clipboard watcher)
 
 The real killer feature. Leave this running in a terminal:
@@ -129,26 +150,44 @@ just --list                   # all recipes
 Cross-compile a standalone `.exe` (no Bun install needed on the target):
 
 ```bash
-just build-windows
-# → bmpl.exe (~115 MB, bundles the Bun runtime)
+just build-windows             # cross-compile from Linux / WSL
+# OR on a Windows host with Bun installed:
+just build-windows-native      # adds --windows-hide-console: no console flash on double-click
+# → bmpl.exe (~115 MB, bundles Bun)
 ```
 
-On the Windows machine:
+### Easiest path: double-click for the web UI
 
-1. Copy `bmpl.exe` + your `.env` to e.g. `C:\tools\bmpl\`
-2. Open **PowerShell** / **Windows Terminal** (don't double-click — it's a CLI)
-3. `cd C:\tools\bmpl` and run `.\bmpl.exe watch`
+1. Drop `bmpl.exe` in a folder of its own, e.g. `C:\Users\<you>\bmpl\`.
+2. Double-click it. A brief console window opens (hidden entirely if you built
+   with `build-windows-native`), then your browser opens to
+   `http://localhost:3000`. On first run it lands on the setup page — follow
+   the 4 steps to create a WCL client and paste the creds. `.env` is written
+   for you alongside the `.exe`.
+3. After that, double-click → type a `Name-Realm` → see the result. Click
+   **Quit** in the header (or close via Task Manager) to stop the server.
 
-To run `bmpl` from anywhere:
+This is the non-technical-friendly mode.
 
-- Add `C:\tools\bmpl` to your PATH, **and** either:
-  - `cd` into a folder containing `.env` before running, or
-  - Set the creds as Windows user env vars — no `.env` needed:
-    ```powershell
-    [Environment]::SetEnvironmentVariable("WCL_CLIENT_ID", "…", "User")
-    [Environment]::SetEnvironmentVariable("WCL_CLIENT_SECRET", "…", "User")
-    ```
-    Restart the terminal after setting.
+### CLI mode on Windows
+
+For the terminal commands (`bmpl lookup`, `bmpl watch`, etc.), open
+**PowerShell** / **Windows Terminal**:
+
+```powershell
+cd C:\Users\<you>\bmpl
+.\bmpl.exe watch
+.\bmpl.exe lookup Drahous-Archimonde
+```
+
+To run `bmpl` from anywhere, add the folder to your PATH and either keep an
+`.env` next to where you `cd`, or set Windows user env vars:
+
+```powershell
+[Environment]::SetEnvironmentVariable("WCL_CLIENT_ID", "…", "User")
+[Environment]::SetEnvironmentVariable("WCL_CLIENT_SECRET", "…", "User")
+```
+(Restart the terminal after setting.)
 
 ## Security
 

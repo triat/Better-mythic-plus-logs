@@ -50,13 +50,23 @@ l nameRealm *flags:
 watch *flags:
     bun src/cli.ts watch {{flags}}
 
+# local web UI + auto-open browser: `just serve [--port 3000] [--no-open]`
+serve *flags:
+    bun src/cli.ts serve {{flags}}
+
 # build a standalone binary for the current platform (./bmpl)
 build:
     bun build src/cli.ts --compile --outfile bmpl
 
 # cross-compile a standalone Windows executable (./bmpl.exe)
+# Note: --windows-hide-console is only available when compiling ON Windows;
+# for a truly console-free launch, run this recipe on a Windows host.
 build-windows:
     bun build src/cli.ts --compile --target=bun-windows-x64 --outfile bmpl.exe
+
+# build on Windows (PowerShell) — adds --windows-hide-console so double-click has no console flash
+build-windows-native:
+    bun build src/cli.ts --compile --windows-hide-console --windows-title="bmpl" --outfile bmpl.exe
 
 # introspect a GraphQL type (defaults to Character)
 introspect type="Character":

@@ -1,4 +1,9 @@
 import pc from "picocolors";
+import {
+  type ClipboardBackend,
+  detectClipboardReader,
+  isPlausibleNameRealm,
+} from "./clipboard.ts";
 import { hasCredentials } from "./config.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import {
@@ -105,109 +110,96 @@ const parseMetric = (raw: string | null | undefined): Metric | undefined => {
   return v === "dps" || v === "hps" ? v : undefined;
 };
 
-async function handleLookup(req: Request): Promise<Response> {
-  if (!hasCredentials()) {
-    return jsonResponse(
-      { ok: false, error: "No credentials configured. Visit /setup first." },
-      400,
-    );
-  }
-  let body: LookupRequest;
-  try {
-    body = (await req.json()) as LookupRequest;
-  } catch {
-    return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  }
-  const raw = (body.character ?? "").trim();
-  if (!raw) {
-    return jsonResponse({ ok: false, error: "`character` is required" }, 400);
-  }
-  const target =
-    parseNameRealm(raw) ??
-    (() => {
-      const bits = raw.split(/\s+/);
-      return bits.length >= 2
-        ? { name: bits[0]!, realm: bits.slice(1).join(" ") }
-        : null;
-    })();
-  if (!target) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "Could not parse character. Use `Name-Realm` or `Name Realm`.",
-      },
-      400,
-    );
-  }
+function parseCharacterInput(
+  raw: string,
+): { name: string; realm: string } | null {
+  const s = raw.trim();
+  if (!s) return null;
+  const fromDash = parseNameRealm(s);
+  if (fromDash) return fromDash;
+  const bits = s.split(/\s+/);
+  return bits.length >= 2
+    ? { name: bits[0]!, realm: bits.slice(1).join(" ") }
+    : null;
+}
 
-  const specFilter =
-    body.spec && body.spec.trim() ? body.spec.trim() : null;
-  const metric = parseMetric(body.metric ?? null);
-  let levelOverride: number | null = null;
-  if (body.level !== undefined && body.level !== null && body.level !== "") {
-    const n = Number.parseInt(String(body.level), 10);
-    if (!Number.isFinite(n) || n < 2) {
-      return jsonResponse(
-        { ok: false, error: `Invalid level: ${body.level}` },
-        400,
-      );
-    }
-    levelOverride = n;
+export interface LookupError {
+  ok: false;
+  error: string;
+  status: number;
+}
+
+export interface LookupSuccess {
+  ok: true;
+  key: string;
+  result: unknown;
+  fromCache: boolean;
+}
+
+export async function runLookupWithCache(opts: {
+  character: string;
+  level: number | null;
+  spec: string | null;
+  metric: Metric | null;
+  refresh: boolean;
+}): Promise<LookupSuccess | LookupError> {
+  if (!hasCredentials()) {
+    return { ok: false, error: "No credentials configured. Visit /setup first.", status: 400 };
+  }
+  const target = parseCharacterInput(opts.character);
+  if (!target) {
+    return {
+      ok: false,
+      error: "Could not parse character. Use `Name-Realm` or `Name Realm`.",
+      status: 400,
+    };
   }
 
   const requestCharacter = `${target.name}-${target.realm}`;
-  const key = cacheKey(requestCharacter, levelOverride, specFilter, metric ?? null);
+  const key = cacheKey(requestCharacter, opts.level, opts.spec, opts.metric);
 
-  // Cache hit: return the cached payload without any API call.
-  if (!body.refresh && history.has(key)) {
+  if (!opts.refresh && history.has(key)) {
     const entry = history.get(key)!;
-    // Move to the end so "recently viewed" ordering reflects real activity.
     history.delete(key);
     history.set(key, entry);
-    return jsonResponse({ ok: true, result: entry.result, key, fromCache: true });
+    return { ok: true, key, result: entry.result, fromCache: true };
   }
 
   try {
     const data = await fetchMplusData(target.name, target.realm, {
-      metric,
-      specFilter,
+      metric: opts.metric ?? undefined,
+      specFilter: opts.spec,
     });
-    const runs = specFilter ? filterBySpec(data.runs, specFilter) : data.runs;
-    if (specFilter && runs.length === 0) {
+    const runs = opts.spec ? filterBySpec(data.runs, opts.spec) : data.runs;
+    if (opts.spec && runs.length === 0) {
       const avail = uniqueSpecs(data.runs);
-      return jsonResponse(
-        {
-          ok: false,
-          error: `No runs for spec "${specFilter}". ${
-            avail.length > 0
-              ? "Specs on this character: " + avail.join(", ")
-              : "Character has no runs this season."
-          }`,
-        },
-        404,
-      );
+      return {
+        ok: false,
+        status: 404,
+        error: `No runs for spec "${opts.spec}". ${
+          avail.length > 0
+            ? "Specs on this character: " + avail.join(", ")
+            : "Character has no runs this season."
+        }`,
+      };
     }
-    const filtered = specFilter
-      ? { ...data, runs, specFilter }
-      : data;
+    const filtered = opts.spec ? { ...data, runs, specFilter: opts.spec } : data;
     const inferred = inferTargetLevel(filtered.runs);
-    const effective = levelOverride ?? inferred;
+    const effective = opts.level ?? inferred;
     if (effective === null) {
-      return jsonResponse(
-        {
-          ok: false,
-          error: "No runs found — cannot auto-detect target level. Pass `level` explicitly.",
-        },
-        404,
-      );
+      return {
+        ok: false,
+        status: 404,
+        error:
+          "No runs found — cannot auto-detect target level. Pass `level` explicitly.",
+      };
     }
     const result = analyzeLookup(
       filtered.runs,
       effective,
       filtered.seasonDungeons,
-      levelOverride === null,
+      opts.level === null,
     );
-    // Server always enriches — quality stats are the core of the web UI.
     await enrichLookupResult(filtered, result);
 
     const payload = {
@@ -230,9 +222,9 @@ async function handleLookup(req: Request): Promise<Response> {
       key,
       request: {
         character: requestCharacter,
-        level: levelOverride,
-        spec: specFilter,
-        metric: metric ?? null,
+        level: opts.level,
+        spec: opts.spec,
+        metric: opts.metric,
       },
       fetchedAt: Date.now(),
       result: payload,
@@ -243,13 +235,54 @@ async function handleLookup(req: Request): Promise<Response> {
       targetAutoDetected: result.targetAutoDetected,
     });
 
-    return jsonResponse({ ok: true, result: payload, key, fromCache: false });
+    return { ok: true, key, result: payload, fromCache: false };
   } catch (e) {
-    return jsonResponse(
-      { ok: false, error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    return {
+      ok: false,
+      status: 500,
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
+}
+
+async function handleLookup(req: Request): Promise<Response> {
+  let body: LookupRequest;
+  try {
+    body = (await req.json()) as LookupRequest;
+  } catch {
+    return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
+  }
+  const raw = (body.character ?? "").trim();
+  if (!raw) {
+    return jsonResponse({ ok: false, error: "`character` is required" }, 400);
+  }
+  let levelOverride: number | null = null;
+  if (body.level !== undefined && body.level !== null && body.level !== "") {
+    const n = Number.parseInt(String(body.level), 10);
+    if (!Number.isFinite(n) || n < 2) {
+      return jsonResponse(
+        { ok: false, error: `Invalid level: ${body.level}` },
+        400,
+      );
+    }
+    levelOverride = n;
+  }
+  const result = await runLookupWithCache({
+    character: raw,
+    level: levelOverride,
+    spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
+    metric: parseMetric(body.metric ?? null) ?? null,
+    refresh: !!body.refresh,
+  });
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: result.error }, result.status);
+  }
+  return jsonResponse({
+    ok: true,
+    result: result.result,
+    key: result.key,
+    fromCache: result.fromCache,
+  });
 }
 
 async function handleSetup(req: Request): Promise<Response> {
@@ -275,6 +308,115 @@ async function handleSetup(req: Request): Promise<Response> {
       500,
     );
   }
+}
+
+// --- SSE fan-out ------------------------------------------------------------
+
+const sseClients = new Set<ReadableStreamDefaultController<Uint8Array>>();
+const sseEncoder = new TextEncoder();
+
+const broadcast = (event: string, data: unknown): void => {
+  const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  const bytes = sseEncoder.encode(msg);
+  for (const c of sseClients) {
+    try {
+      c.enqueue(bytes);
+    } catch {
+      /* client closed */
+    }
+  }
+};
+
+// --- Clipboard watcher state machine ---------------------------------------
+
+interface WatcherState {
+  active: boolean;
+  opts: {
+    level: number | null;
+    spec: string | null;
+    metric: Metric | null;
+  };
+  intervalId: ReturnType<typeof setInterval> | null;
+  backend: ClipboardBackend | null;
+  lastSeen: string;
+}
+
+const watcher: WatcherState = {
+  active: false,
+  opts: { level: null, spec: null, metric: null },
+  intervalId: null,
+  backend: null,
+  lastSeen: "",
+};
+
+async function watcherTick(): Promise<void> {
+  if (!watcher.backend) return;
+  let value = "";
+  try {
+    value = (await watcher.backend.read()).trim();
+  } catch (e) {
+    broadcast("error", {
+      message: "clipboard read failed: " + (e instanceof Error ? e.message : String(e)),
+    });
+    return;
+  }
+  if (value === watcher.lastSeen) return;
+  watcher.lastSeen = value;
+  const parsed = isPlausibleNameRealm(value);
+  if (!parsed) return;
+  broadcast("searching", { character: value });
+  const result = await runLookupWithCache({
+    character: value,
+    level: watcher.opts.level,
+    spec: watcher.opts.spec,
+    metric: watcher.opts.metric,
+    refresh: false,
+  });
+  if (result.ok) {
+    broadcast("result", { key: result.key, fromCache: result.fromCache });
+  } else {
+    broadcast("error", { message: result.error, character: value });
+  }
+}
+
+async function startWatcher(opts: WatcherState["opts"]): Promise<void> {
+  // Always update options — allows reconfiguring without a restart.
+  watcher.opts = opts;
+  if (watcher.active) {
+    broadcast("status", { active: true, opts });
+    return;
+  }
+  try {
+    watcher.backend = await detectClipboardReader();
+  } catch (e) {
+    throw new Error(
+      "Clipboard unavailable on this platform: " +
+        (e instanceof Error ? e.message : String(e)),
+    );
+  }
+  // Seed lastSeen so we don't instantly re-fire on whatever was in the clipboard.
+  try {
+    watcher.lastSeen = (await watcher.backend.read()).trim();
+  } catch {
+    watcher.lastSeen = "";
+  }
+  watcher.active = true;
+  watcher.intervalId = setInterval(watcherTick, 750);
+  broadcast("status", {
+    active: true,
+    opts,
+    backend: watcher.backend.label,
+  });
+}
+
+function stopWatcher(): void {
+  if (!watcher.active) return;
+  if (watcher.intervalId) {
+    clearInterval(watcher.intervalId);
+    watcher.intervalId = null;
+  }
+  watcher.active = false;
+  broadcast("status", { active: false });
 }
 
 const openBrowser = (url: string): void => {
@@ -343,7 +485,79 @@ export async function runServer(opts: ServeOptions): Promise<void> {
         const removed = history.delete(key);
         return jsonResponse({ ok: removed });
       }
+      if (req.method === "GET" && path === "/api/events") {
+        let selfController: ReadableStreamDefaultController<Uint8Array>;
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            selfController = controller;
+            sseClients.add(controller);
+            controller.enqueue(
+              sseEncoder.encode(
+                `event: status\ndata: ${JSON.stringify({
+                  active: watcher.active,
+                  opts: watcher.opts,
+                  backend: watcher.backend?.label ?? null,
+                })}\n\n`,
+              ),
+            );
+          },
+          cancel() {
+            sseClients.delete(selfController);
+          },
+        });
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+          },
+        });
+      }
+      if (req.method === "POST" && path === "/api/watch/start") {
+        let body: {
+          level?: number | string | null;
+          spec?: string | null;
+          metric?: string | null;
+        };
+        try {
+          body = await req.json();
+        } catch {
+          body = {};
+        }
+        let level: number | null = null;
+        if (body.level !== undefined && body.level !== null && body.level !== "") {
+          const n = Number.parseInt(String(body.level), 10);
+          if (Number.isFinite(n) && n >= 2) level = n;
+        }
+        const opts = {
+          level,
+          spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
+          metric: parseMetric(body.metric ?? null) ?? null,
+        };
+        try {
+          await startWatcher(opts);
+          return jsonResponse({ ok: true, active: true, opts });
+        } catch (e) {
+          return jsonResponse(
+            { ok: false, error: e instanceof Error ? e.message : String(e) },
+            500,
+          );
+        }
+      }
+      if (req.method === "POST" && path === "/api/watch/stop") {
+        stopWatcher();
+        return jsonResponse({ ok: true, active: false });
+      }
+      if (req.method === "GET" && path === "/api/watch/status") {
+        return jsonResponse({
+          ok: true,
+          active: watcher.active,
+          opts: watcher.opts,
+          backend: watcher.backend?.label ?? null,
+        });
+      }
       if (req.method === "POST" && path === "/api/quit") {
+        stopWatcher();
         queueMicrotask(() => setTimeout(() => process.exit(0), 120));
         return jsonResponse({ ok: true });
       }

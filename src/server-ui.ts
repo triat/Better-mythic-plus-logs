@@ -172,6 +172,17 @@ main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.5rem; }
 .compare-table th { color: #8b949e; font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
 .compare-table tbody tr:hover { background: #161b22; }
 .compare-table .numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.auto-watch {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  margin: 0 0 .75rem; padding: .5rem .75rem;
+  background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+  font-size: .85rem;
+}
+.watch-toggle { display: inline-flex; align-items: center; gap: .5rem; margin: 0; cursor: pointer; }
+.watch-toggle input { width: auto; cursor: pointer; accent-color: #388bfd; }
+.auto-watch.active { border-color: #388bfd; background: #0d2137; }
+.auto-watch.active .watch-toggle span { color: #b9d3ff; }
+.watch-toggle input:disabled + span { opacity: .5; }
 form#lookupForm { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin-bottom: 1rem; }
 form#lookupForm input[name="character"] { font-size: 1.05rem; }
 details { margin-bottom: 1rem; padding: .6rem .8rem; border: 1px solid #21262d; border-radius: 6px; }
@@ -272,6 +283,14 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
       </label>
     </div>
   </details>
+
+  <div class="auto-watch">
+    <label class="watch-toggle">
+      <input type="checkbox" id="watchCheckbox" />
+      <span>Auto-search on clipboard copy</span>
+    </label>
+    <span id="watchStatus" class="dim"></span>
+  </div>
 
   <div class="toolbar" id="toolbar" hidden>
     <button class="ghost" id="compareBtn">Compare all tabs</button>
@@ -620,6 +639,85 @@ document.getElementById("refreshBtn").addEventListener("click", () => {
 });
 document.getElementById("compareBtn").addEventListener("click", openCompare);
 document.getElementById("clearBtn").addEventListener("click", clearAllTabs);
+
+// --- Auto-search (server-driven clipboard watcher via SSE) ---------------
+const watchCb = document.getElementById("watchCheckbox");
+const watchStatus = document.getElementById("watchStatus");
+const autoWatchEl = document.querySelector(".auto-watch");
+
+function setWatchUI(active, label) {
+  watchCb.checked = !!active;
+  autoWatchEl.classList.toggle("active", !!active);
+  if (active) {
+    watchStatus.textContent = label
+      ? "watching clipboard · " + label
+      : "watching clipboard…";
+  } else {
+    watchStatus.textContent = "";
+  }
+}
+
+watchCb.addEventListener("change", async () => {
+  const wanted = watchCb.checked;
+  watchCb.disabled = true;
+  try {
+    if (wanted) {
+      const fd = new FormData(document.getElementById("lookupForm"));
+      const res = await fetch("/api/watch/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          level: fd.get("level") || null,
+          spec: fd.get("spec") || null,
+          metric: fd.get("metric") || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || ("HTTP " + res.status));
+      }
+    } else {
+      await fetch("/api/watch/stop", { method: "POST" });
+    }
+  } catch (err) {
+    setWatchUI(false);
+    resultEl.innerHTML = '<div class="err">✗ ' + esc(err.message) + '</div>';
+  } finally {
+    watchCb.disabled = false;
+  }
+});
+
+// Keep the SSE connection alive. Browsers auto-reconnect EventSource.
+const evt = new EventSource("/api/events");
+evt.addEventListener("status", (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    setWatchUI(data.active, data.backend);
+  } catch {}
+});
+evt.addEventListener("searching", (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    watchStatus.textContent = "watching clipboard · looking up " + data.character + "…";
+  } catch {}
+});
+evt.addEventListener("result", async (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    await loadHistory();
+    await showTab(data.key);
+  } catch {}
+});
+evt.addEventListener("error", (e) => {
+  try {
+    if (!e.data) return;
+    const data = JSON.parse(e.data);
+    if (data.message) {
+      watchStatus.textContent = "watch error · " + data.message;
+      setTimeout(() => { if (watchCb.checked) watchStatus.textContent = "watching clipboard…"; }, 4000);
+    }
+  } catch {}
+});
 
 document.getElementById("quitBtn").addEventListener("click", async () => {
   if (!confirm("Quit bmpl? The server will stop and this page will no longer work.")) return;

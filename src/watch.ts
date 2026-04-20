@@ -1,5 +1,8 @@
-import { $ } from "bun";
 import pc from "picocolors";
+import {
+  detectClipboardReader,
+  isPlausibleNameRealm,
+} from "./clipboard.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import { renderLookup } from "./format-mplus.ts";
 import {
@@ -11,9 +14,6 @@ import {
   uniqueSpecs,
 } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
-import { parseNameRealm } from "./util.ts";
-
-type ClipboardReader = () => Promise<string>;
 
 export interface WatchOptions {
   level: number | null;
@@ -22,80 +22,6 @@ export interface WatchOptions {
   intervalMs: number;
   enrich: boolean;
 }
-
-const stripTrailingNewline = (s: string): string => s.replace(/\r?\n$/, "");
-
-async function which(cmd: string): Promise<boolean> {
-  try {
-    const p = await $`which ${cmd}`.nothrow().quiet();
-    return p.exitCode === 0;
-  } catch {
-    return false;
-  }
-}
-
-const isWSL = (): boolean =>
-  process.platform === "linux" &&
-  (!!process.env.WSL_DISTRO_NAME || !!process.env.WSL_INTEROP);
-
-async function detectClipboardReader(): Promise<
-  { label: string; read: ClipboardReader }
-> {
-  if (isWSL() || process.platform === "win32") {
-    if (process.platform === "win32" || (await which("powershell.exe"))) {
-      return {
-        label: "powershell.exe Get-Clipboard",
-        read: async () =>
-          stripTrailingNewline(
-            await $`powershell.exe -NoProfile -Command Get-Clipboard`.text(),
-          ),
-      };
-    }
-  }
-  if (process.platform === "darwin") {
-    return {
-      label: "pbpaste",
-      read: async () => stripTrailingNewline(await $`pbpaste`.text()),
-    };
-  }
-  if (process.platform === "linux") {
-    if (await which("wl-paste")) {
-      return {
-        label: "wl-paste",
-        read: async () => stripTrailingNewline(await $`wl-paste -n`.text()),
-      };
-    }
-    if (await which("xclip")) {
-      return {
-        label: "xclip",
-        read: async () =>
-          stripTrailingNewline(
-            await $`xclip -selection clipboard -o`.text(),
-          ),
-      };
-    }
-  }
-  throw new Error(
-    "No clipboard reader found. Install wl-clipboard or xclip (Linux), or run this from WSL with PowerShell available.",
-  );
-}
-
-// Name part: starts with a letter, 2-20 chars (letters, apostrophes).
-// Realm part: starts with a letter, 3-30 chars (letters, apostrophes, dashes).
-// Using Unicode letter class so accents work.
-const NAME_RE = /^[\p{L}][\p{L}'-]{1,19}$/u;
-const REALM_RE = /^[\p{L}][\p{L}'-]{2,29}$/u;
-
-const isPlausibleNameRealm = (
-  text: string,
-): { name: string; realm: string } | null => {
-  if (text.length < 4 || text.length > 60) return null;
-  if (/\s/.test(text)) return null; // in-game compact form has no spaces
-  const p = parseNameRealm(text);
-  if (!p) return null;
-  if (!NAME_RE.test(p.name) || !REALM_RE.test(p.realm)) return null;
-  return p;
-};
 
 const divider = () => dim("─".repeat(60));
 

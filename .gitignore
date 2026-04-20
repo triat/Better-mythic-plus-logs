@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+dist/
+bun.lockb
+bmpl
+bmpl.exe
+*.log
+.DS_Store

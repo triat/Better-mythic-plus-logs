@@ -1,0 +1,22 @@
+{
+  "name": "bmpl",
+  "version": "0.1.0",
+  "description": "Better Mythic+ Logs — Warcraft Logs M+ character analyzer",
+  "type": "module",
+  "bin": {
+    "bmpl": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun src/cli.ts",
+    "dev": "bun --watch src/cli.ts",
+    "build": "bun build src/cli.ts --compile --outfile bmpl",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "picocolors": "^1.1.1"
+  }
+}

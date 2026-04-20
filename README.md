@@ -23,9 +23,31 @@ The metric also auto-selects: `hps` for healers, `dps` for DPS and tanks.
 ## Requirements
 
 - [Bun](https://bun.sh/) 1.3+ (for running from source / building)
-- A Warcraft Logs v2 API client — free, ~30 sec to register at
-  https://www.warcraftlogs.com/api/clients/
+- A Warcraft Logs v2 API client — free, see below
 - `just` (optional but recommended) — https://github.com/casey/just
+
+## Getting Warcraft Logs API credentials
+
+`bmpl` uses Warcraft Logs' v2 API, which requires a Client ID + Secret.
+Creating them takes ~30 seconds.
+
+1. Log in at https://www.warcraftlogs.com/ (any free account works).
+2. Go to https://www.warcraftlogs.com/api/clients/
+   (or: avatar → **Clients** under the API section).
+3. Click **Create Client**.
+4. Fill the form:
+   - **Application Name**: anything, e.g. `bmpl`
+   - **Redirect URLs**: required but unused for our flow — put
+     `http://localhost` (this is a server-to-server client, no browser
+     redirect happens)
+   - **Public Client?**: leave **unchecked** — `bmpl` uses the
+     `client_credentials` OAuth flow, which needs a confidential client.
+5. Submit. The page now shows your **Client ID** and **Client Secret** —
+   copy both into your `.env` as `WCL_CLIENT_ID` and `WCL_CLIENT_SECRET`.
+
+Keep the secret private. If it ever leaks, return to the same page,
+delete the client, and create a new one. Rate limit is **3600 points per
+hour** per client, which is ~700 `bmpl lookup` calls.
 
 ## Setup
 

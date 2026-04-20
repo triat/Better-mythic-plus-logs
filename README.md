@@ -19,7 +19,7 @@ For a given character and target key level, `bmpl lookup` shows:
   from each run's raw log. Skip with `--no-stats` to save API budget.
 
 If you don't pass `--level`, the target auto-detects to the character's
-highest key run — so `bmpl lookup Drahous-Archimonde` "just works".
+highest key run — so `bmpl lookup Biwaadrood-Nerzhul` "just works".
 
 The metric also auto-selects: `hps` for healers, `dps` for DPS and tanks.
 
@@ -75,16 +75,16 @@ Only EU is wired up (region is hardcoded in `src/config.ts`).
 
 ```bash
 # auto-detect target from their highest run
-just l Drahous-Archimonde
+just l Biwaadrood-Nerzhul
 
 # force a specific target level
-just l Drahous-Archimonde --level 18
+just l Biwaadrood-Nerzhul --level 18
 
 # only consider runs on one spec
 just l Biwaadrood-Nerzhul --spec Restoration
 
 # JSON output (for scripts/pipelines)
-just l Drahous-Archimonde --json
+just l Biwaadrood-Nerzhul --json
 ```
 
 Both forms work — combined `Name-Realm` (what you get from WoW's in-game copy)
@@ -131,8 +131,8 @@ is already printed. Copy the next applicant; the next lookup runs.
 ### Other commands
 
 ```bash
-just m Drahous-Archimonde     # full M+ summary, per-key-level breakdown
-just c Drahous-Archimonde     # basic character info
+just m Biwaadrood-Nerzhul     # full M+ summary, per-key-level breakdown
+just c Biwaadrood-Nerzhul     # basic character info
 just ping                     # auth + rate-limit budget
 just zones                    # list WCL zones (M+ filter: `just zones`)
 just --list                   # all recipes
@@ -181,7 +181,7 @@ For the terminal commands (`bmpl lookup`, `bmpl watch`, etc.), open
 ```powershell
 cd C:\Users\<you>\bmpl
 .\bmpl.exe watch
-.\bmpl.exe lookup Drahous-Archimonde
+.\bmpl.exe lookup Biwaadrood-Nerzhul
 ```
 
 To run `bmpl` from anywhere, add the folder to your PATH and either keep an

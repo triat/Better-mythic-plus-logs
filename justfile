@@ -26,7 +26,7 @@ zones:
 char name realm:
     bun src/cli.ts char {{name}} {{realm}}
 
-# basic character info (combined form: `just c Drahous-Archimonde`)
+# basic character info (combined form: `just c Biwaadrood-Nerzhul`)
 c nameRealm:
     bun src/cli.ts char {{nameRealm}}
 
@@ -34,7 +34,7 @@ c nameRealm:
 mplus name realm *flags:
     bun src/cli.ts mplus {{name}} {{realm}} {{flags}}
 
-# full M+ summary (combined form: `just m Drahous-Archimonde [--json]`)
+# full M+ summary (combined form: `just m Biwaadrood-Nerzhul [--json]`)
 m nameRealm *flags:
     bun src/cli.ts mplus {{nameRealm}} {{flags}}
 
@@ -42,7 +42,7 @@ m nameRealm *flags:
 lookup name realm level *flags:
     bun src/cli.ts lookup {{name}} {{realm}} --level {{level}} {{flags}}
 
-# vet a player (combined form, level auto-detected): `just l Drahous-Archimonde [--level 18]`
+# vet a player (combined form, level auto-detected): `just l Biwaadrood-Nerzhul [--level 18]`
 l nameRealm *flags:
     bun src/cli.ts lookup {{nameRealm}} {{flags}}
 

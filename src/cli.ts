@@ -18,6 +18,7 @@ import { classColor, classNames, dim, err, heading, ok } from "./format.ts";
 import { config } from "./config.ts";
 import {
   analyzeLookup,
+  enrichLookupResult,
   fetchMplusData,
   filterBySpec,
   inferTargetLevel,
@@ -139,6 +140,7 @@ async function cmdLookup(
   targetLevel: number | null,
   spec: string | null,
   metric: Metric | undefined,
+  enrich: boolean,
   json: boolean,
 ): Promise<void> {
   let data = await fetchMplusData(name, realm, {
@@ -162,6 +164,7 @@ async function cmdLookup(
     data.seasonDungeons,
     targetLevel === null,
   );
+  if (enrich) await enrichLookupResult(data, result);
   if (json) {
     console.log(
       JSON.stringify(
@@ -375,17 +378,18 @@ async function main(): Promise<void> {
         const spec = parseFlag(rest, "--spec") ?? null;
         const metric = parseMetric(parseFlag(rest, "--metric"));
         const json = hasFlag(rest, "--json");
+        const enrich = !hasFlag(rest, "--no-stats");
         const positional = stripFlags(
           rest,
           ["--level", "--spec", "--metric"],
-          ["--json"],
+          ["--json", "--no-stats"],
         );
         const target = resolveTarget(positional);
         if (!target) {
           console.error(
             err(
-              "Usage: bmpl lookup <name> <realm> [--level <N>] [--spec <name>] [--metric dps|hps] [--json]\n" +
-                "       bmpl lookup <Name-Realm> [--level <N>] ...\n" +
+              "Usage: bmpl lookup <name> <realm> [--level <N>] [--spec X] [--metric dps|hps] [--no-stats] [--json]\n" +
+                "       bmpl lookup <Name-Realm> ...\n" +
                 "       (omit --level to auto-detect target from the character's highest run)",
             ),
           );
@@ -399,7 +403,15 @@ async function main(): Promise<void> {
             process.exit(2);
           }
         }
-        await cmdLookup(target.name, target.realm, lvl, spec, metric, json);
+        await cmdLookup(
+          target.name,
+          target.realm,
+          lvl,
+          spec,
+          metric,
+          enrich,
+          json,
+        );
         break;
       }
       case "mplus": {
@@ -452,7 +464,8 @@ async function main(): Promise<void> {
           );
           process.exit(2);
         }
-        await runWatch({ level: lvl, spec, metric, intervalMs });
+        const enrich = !hasFlag(rest, "--no-stats");
+        await runWatch({ level: lvl, spec, metric, intervalMs, enrich });
         break;
       }
       case "zones":

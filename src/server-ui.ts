@@ -163,6 +163,15 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
   font-size: .88rem;
 }
 .run:hover { background: #0b0f14; }
+.run .quality {
+  grid-column: 2 / -1;
+  font-size: .8rem;
+  color: #8b949e;
+  padding-top: .1rem;
+}
+.deaths-0 { color: #56d364; font-weight: 600; }
+.deaths-low { color: #d29922; font-weight: 600; }
+.deaths-high { color: #f85149; font-weight: 700; }
 .run .level { font-weight: 600; color: #ffa657; }
 .run .dungeon { color: #e6edf3; }
 .run .amount { text-align: right; color: #e6edf3; }
@@ -256,6 +265,13 @@ const pclass = (p) => {
 };
 const wclUrl = (code, fightID) => "https://www.warcraftlogs.com/reports/" + encodeURIComponent(code) + "#fight=" + fightID;
 
+const deathsCls = (n) => n === 0 ? "deaths-0" : (n <= 2 ? "deaths-low" : "deaths-high");
+const qualityLine = (r) => {
+  if (!r.quality) return "";
+  const deaths = '<span class="' + deathsCls(r.quality.deaths) + '">' + r.quality.deaths + ' death' + (r.quality.deaths === 1 ? '' : 's') + '</span>';
+  const dtps = fmtAmount(r.quality.dtps) + ' dtps';
+  return '<span class="quality">' + deaths + ' · ' + dtps + '</span>';
+};
 const runRow = (r, metric) => {
   const stale = ageDays(r.startTime) >= STALE_DAYS;
   return '<div class="run">' +
@@ -266,6 +282,7 @@ const runRow = (r, metric) => {
     '<span class="spec">' + esc(r.spec) + '</span>' +
     '<span class="age' + (stale ? ' stale' : '') + '">' + fmtAge(r.startTime) + '</span>' +
     '<a href="' + wclUrl(r.reportCode, r.fightID) + '" target="_blank" rel="noopener" title="Open log">↗</a>' +
+    qualityLine(r) +
   '</div>';
 };
 

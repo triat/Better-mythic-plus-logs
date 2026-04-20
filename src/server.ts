@@ -3,6 +3,7 @@ import { hasCredentials } from "./config.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import {
   analyzeLookup,
+  enrichLookupResult,
   fetchMplusData,
   filterBySpec,
   inferTargetLevel,
@@ -136,6 +137,8 @@ async function handleLookup(req: Request): Promise<Response> {
       filtered.seasonDungeons,
       levelOverride === null,
     );
+    // Server always enriches — quality stats are the core of the web UI.
+    await enrichLookupResult(filtered, result);
 
     return jsonResponse({
       ok: true,

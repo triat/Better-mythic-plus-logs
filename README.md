@@ -14,6 +14,9 @@ For a given character and target key level, `bmpl lookup` shows:
 - **Per-dungeon profile**: one best run per dungeon in the season (8 entries),
   sorted by key level. Median stats, coverage (`6/8 at or above +18`), and a
   stale-data warning for runs older than 14 days.
+- **Gameplay quality per run**: **deaths** (green 0 / yellow 1-2 / red ≥3) and
+  **DTPS** (damage taken per second — proxy for avoidable damage). Fetched
+  from each run's raw log. Skip with `--no-stats` to save API budget.
 
 If you don't pass `--level`, the target auto-detects to the character's
 highest key run — so `bmpl lookup Drahous-Archimonde` "just works".
@@ -143,6 +146,7 @@ just --list                   # all recipes
 | `--spec <name>` | Filter to one spec (`Augmentation`, `Restoration`, …). Case-insensitive |
 | `--metric dps \| hps` | Override the auto-selected metric |
 | `--json` | Structured output (lookup / mplus only) |
+| `--no-stats` | Skip per-run enrichment (deaths + DTPS). Saves ~40 pts/lookup |
 | `--interval <ms>` | Clipboard poll rate for `watch` (default 750ms) |
 
 ## Windows
@@ -203,9 +207,11 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
 ## API cost
 
 - Auth: 0 pts (OAuth2 token is cached in memory)
-- `lookup` / `mplus`: ~5 pts per character (2 round-trips: metric probe +
-  per-dungeon batch)
-- Budget: 3600 pts/hr → ~700 lookups/hr
+- `lookup` basic (no stats): ~5 pts per character. 3600 pts/hr → ~700 lookups/hr
+- `lookup` with stats enrichment (default): ~45 pts per character (1 `report.table`
+  query per displayed run, up to 9 parallel queries). 3600 pts/hr → ~80 lookups/hr
+- `mplus`: ~5 pts per character (no enrichment; unchanged)
+- Pass `--no-stats` to drop back to the 5-pt cost for `lookup` and `watch`
 
 ## Repo layout
 

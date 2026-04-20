@@ -4,9 +4,17 @@ import { realmToSlug } from "./util.ts";
 import { gql } from "./wcl/client.ts";
 import {
   CHARACTER_METRIC_PROBE_QUERY,
+  REPORT_RUN_SUMMARY_QUERY,
   ZONES_QUERY,
 } from "./wcl/queries.ts";
 import type { ZonesData } from "./wcl/types.ts";
+
+export interface RunQuality {
+  deaths: number;
+  damageTaken: number;
+  fightDurationMs: number;
+  dtps: number;
+}
 
 export interface MPlusRun {
   encounterID: number;
@@ -20,6 +28,8 @@ export interface MPlusRun {
   fightID: number;
   startTime: number;
   score: number;
+  // Populated only for runs we chose to display (see enrichLookupResult).
+  quality?: RunQuality;
 }
 
 export interface CharacterIdentity {
@@ -313,8 +323,7 @@ export async function fetchMplusData(
 
   const runs: MPlusRun[] = [];
   encounterIDs.forEach((id, i) => {
-    const alias = `e${i}`;
-    const data = multiChar[alias] as EncounterRankingsJson | null;
+    const data = multiChar[`e${i}`] as EncounterRankingsJson | null;
     if (!data || !Array.isArray(data.ranks)) return;
     for (const r of data.ranks) {
       runs.push({
@@ -405,6 +414,77 @@ export const inferTargetLevel = (runs: MPlusRun[]): number | null => {
   if (runs.length === 0) return null;
   return Math.max(...runs.map((r) => r.keyLevel));
 };
+
+// `table` endpoint returns JSON wrapped in a `data` key.
+interface TableDataPayload {
+  totalTime?: number;
+  entries?: Array<{ name: string; total?: number }>;
+}
+
+interface ReportSummaryResponse {
+  reportData: {
+    report: {
+      code: string;
+      damageTaken: { data?: TableDataPayload } | null;
+      deaths: { data?: TableDataPayload } | null;
+    } | null;
+  };
+}
+
+async function fetchRunSummary(
+  run: MPlusRun,
+  characterName: string,
+): Promise<RunQuality | null> {
+  try {
+    const resp = await gql<ReportSummaryResponse>(REPORT_RUN_SUMMARY_QUERY, {
+      code: run.reportCode,
+      fightID: run.fightID,
+    });
+    const r = resp.reportData.report;
+    if (!r) return null;
+    const dt = r.damageTaken?.data;
+    const dEntry = (dt?.entries ?? []).find((e) => e.name === characterName);
+    const damageTaken = dEntry?.total ?? 0;
+    const duration = dt?.totalTime ?? 0;
+    const deaths = (r.deaths?.data?.entries ?? []).filter(
+      (e) => e.name === characterName,
+    ).length;
+    return {
+      deaths,
+      damageTaken,
+      fightDurationMs: duration,
+      dtps: duration > 0 ? damageTaken / (duration / 1000) : 0,
+    };
+  } catch {
+    // Report may be private, deleted, or otherwise inaccessible. Skip silently.
+    return null;
+  }
+}
+
+/**
+ * Pulls deaths + damage-taken from WCL's per-report Summary table and attaches
+ * it to the runs displayed in the lookup (prev-level best + per-dungeon bests).
+ * Mutates the MPlusRun objects in place. Safe to call multiple times.
+ * Runs all requests in parallel — API cost ~= 2-3 pts per run enriched.
+ */
+export async function enrichLookupResult(
+  data: MPlusData,
+  result: LookupResult,
+): Promise<void> {
+  const toEnrich: MPlusRun[] = [];
+  if (result.prevLevelBest) toEnrich.push(result.prevLevelBest.best);
+  for (const r of result.perDungeon.runs) toEnrich.push(r);
+  // Deduplicate: if prev-level-best happens to be in per-dungeon, only fetch once.
+  const unique = [
+    ...new Map(toEnrich.map((r) => [`${r.reportCode}:${r.fightID}`, r])).values(),
+  ];
+  const results = await Promise.all(
+    unique.map((r) => fetchRunSummary(r, data.character.name)),
+  );
+  results.forEach((q, i) => {
+    if (q) unique[i]!.quality = q;
+  });
+}
 
 export function analyzeLookup(
   runs: MPlusRun[],

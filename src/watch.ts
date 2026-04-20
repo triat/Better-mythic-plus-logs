@@ -4,6 +4,7 @@ import { dim, err, heading, ok } from "./format.ts";
 import { renderLookup } from "./format-mplus.ts";
 import {
   analyzeLookup,
+  enrichLookupResult,
   fetchMplusData,
   filterBySpec,
   inferTargetLevel,
@@ -19,6 +20,7 @@ export interface WatchOptions {
   spec: string | null;
   metric: Metric | undefined;
   intervalMs: number;
+  enrich: boolean;
 }
 
 const stripTrailingNewline = (s: string): string => s.replace(/\r?\n$/, "");
@@ -190,6 +192,7 @@ export async function runWatch(opts: WatchOptions): Promise<void> {
             filtered.seasonDungeons,
             opts.level === null,
           );
+          if (opts.enrich) await enrichLookupResult(filtered, result);
           console.log(renderLookup(filtered, result));
         }
       }

@@ -84,6 +84,18 @@ export const CHARACTER_METRIC_PROBE_QUERY = /* GraphQL */ `
   }
 `;
 
+export const REPORT_RUN_SUMMARY_QUERY = /* GraphQL */ `
+  query ReportRunSummary($code: String!, $fightID: Int!) {
+    reportData {
+      report(code: $code) {
+        code
+        damageTaken: table(fightIDs: [$fightID], dataType: DamageTaken)
+        deaths: table(fightIDs: [$fightID], dataType: Deaths)
+      }
+    }
+  }
+`;
+
 export const CHARACTER_ENCOUNTER_RANKINGS_QUERY = /* GraphQL */ `
   query CharacterEncounterRankings(
     $name: String!

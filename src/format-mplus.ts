@@ -45,6 +45,19 @@ export const renderHeader = (data: MPlusData): string => {
   return lines.join("\n");
 };
 
+const deathColor = (n: number): string => {
+  const label = `${n} death${n === 1 ? "" : "s"}`;
+  if (n === 0) return pc.green(label);
+  if (n <= 2) return pc.yellow(label);
+  return pc.red(pc.bold(label));
+};
+
+const renderQuality = (r: MPlusRun): string => {
+  if (!r.quality) return "";
+  const dtps = formatDps(r.quality.dtps);
+  return `${deathColor(r.quality.deaths)}  ${dim("·")}  ${dtps} dtps`;
+};
+
 const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
   const amount = formatDps(r.amount);
   const parse = percentileColor(r.parsePercent);
@@ -55,7 +68,10 @@ const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
     ageInDays(r.startTime) >= STALE_DAYS
       ? pc.yellow(ageText)
       : dim(ageText);
-  return `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}%  ${dim(r.spec)}  ${ageTag}\n${indent}${dim("  → ")}${url}`;
+  const mainLine = `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}%  ${dim(r.spec)}  ${ageTag}`;
+  const quality = renderQuality(r);
+  const qualityLine = quality ? `\n${indent}   ${quality}` : "";
+  return `${mainLine}${qualityLine}\n${indent}${dim("  → ")}${url}`;
 };
 
 export const renderLookup = (

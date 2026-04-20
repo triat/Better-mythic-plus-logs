@@ -9,11 +9,18 @@ import {
 } from "./wcl/queries.ts";
 import type { ZonesData } from "./wcl/types.ts";
 
+export type GroupRole = "dps" | "healer" | "tank" | "unknown";
+
 export interface RunQuality {
   deaths: number;
   damageTaken: number;
   fightDurationMs: number;
   dtps: number;
+  role: GroupRole;
+  // Median DTPS across same-role team-mates in this fight (excluding the
+  // target player). null when the target is the only one in their role.
+  roleMedianDtps: number | null;
+  roleSize: number;
 }
 
 export interface MPlusRun {
@@ -415,21 +422,42 @@ export const inferTargetLevel = (runs: MPlusRun[]): number | null => {
   return Math.max(...runs.map((r) => r.keyLevel));
 };
 
-// `table` endpoint returns JSON wrapped in a `data` key.
 interface TableDataPayload {
   totalTime?: number;
   entries?: Array<{ name: string; total?: number }>;
+}
+
+interface SummaryTableData {
+  totalTime?: number;
+  composition?: Array<{
+    name: string;
+    specs?: Array<{ role?: string }>;
+  }>;
 }
 
 interface ReportSummaryResponse {
   reportData: {
     report: {
       code: string;
+      summary: { data?: SummaryTableData } | null;
       damageTaken: { data?: TableDataPayload } | null;
       deaths: { data?: TableDataPayload } | null;
     } | null;
   };
 }
+
+const normalizeRole = (raw: string | undefined): GroupRole => {
+  const r = (raw ?? "").toLowerCase();
+  if (r === "dps" || r === "healer" || r === "tank") return r;
+  return "unknown";
+};
+
+const medianOrNull = (xs: number[]): number | null => {
+  if (xs.length === 0) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 === 0 ? (s[m - 1]! + s[m]!) / 2 : s[m]!;
+};
 
 async function fetchRunSummary(
   run: MPlusRun,
@@ -442,21 +470,50 @@ async function fetchRunSummary(
     });
     const r = resp.reportData.report;
     if (!r) return null;
+
     const dt = r.damageTaken?.data;
-    const dEntry = (dt?.entries ?? []).find((e) => e.name === characterName);
-    const damageTaken = dEntry?.total ?? 0;
-    const duration = dt?.totalTime ?? 0;
+    const dtEntries = dt?.entries ?? [];
+    const targetEntry = dtEntries.find((e) => e.name === characterName);
+    const damageTaken = targetEntry?.total ?? 0;
+    const duration = dt?.totalTime ?? r.summary?.data?.totalTime ?? 0;
     const deaths = (r.deaths?.data?.entries ?? []).filter(
       (e) => e.name === characterName,
     ).length;
+
+    // Build role map from composition.
+    const comp = r.summary?.data?.composition ?? [];
+    const roleByName = new Map<string, GroupRole>();
+    for (const p of comp) {
+      roleByName.set(p.name, normalizeRole(p.specs?.[0]?.role));
+    }
+    const targetRole = roleByName.get(characterName) ?? "unknown";
+
+    // Same-role team-mates (exclude target).
+    let roleMedianDtps: number | null = null;
+    let roleSize = 1;
+    if (duration > 0 && targetRole !== "unknown") {
+      const mates: number[] = [];
+      for (const e of dtEntries) {
+        if (e.name === characterName) continue;
+        const role = roleByName.get(e.name) ?? "unknown";
+        if (role === targetRole && typeof e.total === "number") {
+          mates.push(e.total / (duration / 1000));
+        }
+      }
+      roleSize = mates.length + 1;
+      roleMedianDtps = medianOrNull(mates);
+    }
+
     return {
       deaths,
       damageTaken,
       fightDurationMs: duration,
       dtps: duration > 0 ? damageTaken / (duration / 1000) : 0,
+      role: targetRole,
+      roleMedianDtps,
+      roleSize,
     };
   } catch {
-    // Report may be private, deleted, or otherwise inaccessible. Skip silently.
     return null;
   }
 }

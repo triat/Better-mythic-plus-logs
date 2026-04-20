@@ -89,6 +89,7 @@ export const REPORT_RUN_SUMMARY_QUERY = /* GraphQL */ `
     reportData {
       report(code: $code) {
         code
+        summary: table(fightIDs: [$fightID], dataType: Summary)
         damageTaken: table(fightIDs: [$fightID], dataType: DamageTaken)
         deaths: table(fightIDs: [$fightID], dataType: Deaths)
       }

@@ -52,10 +52,24 @@ const deathColor = (n: number): string => {
   return pc.red(pc.bold(label));
 };
 
+const dtpsCompareTag = (r: MPlusRun): string => {
+  const q = r.quality;
+  if (!q || q.roleMedianDtps === null || q.roleMedianDtps === 0) return "";
+  const deltaPct = (q.dtps - q.roleMedianDtps) / q.roleMedianDtps * 100;
+  const sign = deltaPct >= 0 ? "+" : "";
+  const label = `${sign}${deltaPct.toFixed(0)}% vs role (${q.roleSize - 1} ${q.role} mate${q.roleSize - 1 === 1 ? "" : "s"})`;
+  if (deltaPct <= -10) return pc.green(label);
+  if (deltaPct <= 10) return dim(label);
+  if (deltaPct <= 30) return pc.yellow(label);
+  return pc.red(pc.bold(label));
+};
+
 const renderQuality = (r: MPlusRun): string => {
   if (!r.quality) return "";
   const dtps = formatDps(r.quality.dtps);
-  return `${deathColor(r.quality.deaths)}  ${dim("·")}  ${dtps} dtps`;
+  const cmp = dtpsCompareTag(r);
+  const cmpPart = cmp ? `  ${dim("·")}  ${cmp}` : "";
+  return `${deathColor(r.quality.deaths)}  ${dim("·")}  ${dtps} dtps${cmpPart}`;
 };
 
 const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {

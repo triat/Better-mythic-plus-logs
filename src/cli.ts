@@ -26,7 +26,7 @@ import {
 } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
 import { renderLookup, renderSummary } from "./format-mplus.ts";
-import { parseNameRealm, realmToSlug } from "./util.ts";
+import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
 import { runServer } from "./server.ts";
 import { runWatch } from "./watch.ts";
 
@@ -115,6 +115,8 @@ function resolveTarget(positional: string[]):
   | { name: string; realm: string }
   | null {
   if (positional.length === 1) {
+    const rio = parseRaiderIOUrl(positional[0]!);
+    if (rio) return { name: rio.name, realm: rio.realm };
     return parseNameRealm(positional[0]!);
   }
   if (positional.length >= 2) {

@@ -1,5 +1,5 @@
 import { $ } from "bun";
-import { parseNameRealm } from "./util.ts";
+import { parseNameRealm, parseRaiderIOUrl } from "./util.ts";
 
 export type ClipboardReader = () => Promise<string>;
 
@@ -77,9 +77,19 @@ const REALM_RE = /^[\p{L}][\p{L}'-]{2,29}$/u;
 export const isPlausibleNameRealm = (
   text: string,
 ): { name: string; realm: string } | null => {
-  if (text.length < 4 || text.length > 60) return null;
-  if (/\s/.test(text)) return null;
-  const p = parseNameRealm(text);
+  const t = text.trim();
+
+  // Raider.IO URL takes precedence — e.g. https://raider.io/characters/eu/hyjal/Genkii
+  const rio = parseRaiderIOUrl(t);
+  if (rio) {
+    return NAME_RE.test(rio.name) && REALM_RE.test(rio.realm)
+      ? { name: rio.name, realm: rio.realm }
+      : null;
+  }
+
+  if (t.length < 4 || t.length > 60) return null;
+  if (/\s/.test(t)) return null;
+  const p = parseNameRealm(t);
   if (!p) return null;
   if (!NAME_RE.test(p.name) || !REALM_RE.test(p.realm)) return null;
   return p;

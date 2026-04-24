@@ -259,7 +259,7 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
   <div class="tabs" id="tabs"></div>
 
   <form id="lookupForm">
-    <input type="text" name="character" required placeholder="Name-Realm (e.g. Biwaadrood-Nerzhul)" autofocus autocomplete="off" />
+    <input type="text" name="character" required placeholder="Name-Realm or Raider.IO URL (e.g. Biwaadrood-Nerzhul)" autofocus autocomplete="off" />
     <button type="submit">Look up</button>
   </form>
   <details>

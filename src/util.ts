@@ -21,6 +21,33 @@ export const parseNameRealm = (
   return { name, realm };
 };
 
+// Matches Raider.IO character URLs like
+// https://raider.io/characters/eu/hyjal/Genkii?utm_source=addon
+// (protocol/www optional; trailing path segments / query / fragment ignored).
+const RAIDER_IO_RE =
+  /raider\.io\/characters\/([a-z]{2})\/([^/?#]+)\/([^/?#]+)/i;
+
+export const parseRaiderIOUrl = (
+  text: string,
+): { region: string; realm: string; name: string } | null => {
+  const m = text.match(RAIDER_IO_RE);
+  if (!m) return null;
+  try {
+    return {
+      region: m[1]!.toLowerCase(),
+      realm: decodeURIComponent(m[2]!),
+      name: decodeURIComponent(m[3]!),
+    };
+  } catch {
+    // Malformed URL-encoding — fall back to raw segments.
+    return {
+      region: m[1]!.toLowerCase(),
+      realm: m[2]!,
+      name: m[3]!,
+    };
+  }
+};
+
 export const formatDps = (dps: number): string => {
   if (dps >= 1_000_000) return `${(dps / 1_000_000).toFixed(2)}m`;
   if (dps >= 1_000) return `${(dps / 1_000).toFixed(1)}k`;

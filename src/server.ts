@@ -17,7 +17,7 @@ import {
 import type { Metric } from "./roles.ts";
 import { renderMainPage, renderSetupPage } from "./server-ui.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
-import { parseNameRealm } from "./util.ts";
+import { parseNameRealm, parseRaiderIOUrl } from "./util.ts";
 import { resetAuthCache } from "./wcl/auth.ts";
 
 export interface ServeOptions {
@@ -115,6 +115,8 @@ function parseCharacterInput(
 ): { name: string; realm: string } | null {
   const s = raw.trim();
   if (!s) return null;
+  const rio = parseRaiderIOUrl(s);
+  if (rio) return { name: rio.name, realm: rio.realm };
   const fromDash = parseNameRealm(s);
   if (fromDash) return fromDash;
   const bits = s.split(/\s+/);

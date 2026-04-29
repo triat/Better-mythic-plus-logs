@@ -163,15 +163,6 @@ main { max-width: 1100px; margin: 1.5rem auto; padding: 0 1.5rem; }
 }
 .toolbar button { padding: .3rem .6rem; font-size: .82rem; }
 .from-cache { background: #21262d; color: #56d364; padding: .1rem .4rem; border-radius: 4px; font-size: .7rem; }
-.compare-table {
-  width: 100%; border-collapse: collapse; font-size: .85rem;
-}
-.compare-table th, .compare-table td {
-  text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #21262d;
-}
-.compare-table th { color: #8b949e; font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
-.compare-table tbody tr:hover { background: #161b22; }
-.compare-table .numeric { text-align: right; font-variant-numeric: tabular-nums; }
 .auto-watch {
   display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
   margin: 0 0 .75rem; padding: .5rem .75rem;
@@ -245,6 +236,67 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
 .class-13 { color: #33937F; }
 .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.tab-check {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid #6e7681;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+.tab-check:hover { border-color: #b1bac4; }
+.tab-check.checked { background: #388bfd; border-color: #388bfd; }
+.tab-check.checked::after {
+  content: "";
+  position: absolute;
+  left: 3px; top: 1px;
+  width: 4px; height: 7px;
+  border-right: 1.5px solid white;
+  border-bottom: 1.5px solid white;
+  transform: rotate(45deg);
+}
+button:disabled { cursor: not-allowed; opacity: .65; pointer-events: none; }
+.compare-detail {
+  width: 100%; border-collapse: collapse; font-size: .85rem;
+  margin-top: .25rem;
+}
+.compare-detail th, .compare-detail td {
+  text-align: left; padding: .55rem .75rem; border-bottom: 1px solid #21262d;
+  vertical-align: top;
+}
+.compare-detail thead th { background: #0b0f14; }
+.compare-detail .row-label {
+  color: #8b949e; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
+  width: 14rem; font-weight: 500; vertical-align: middle;
+}
+.compare-detail .char-head { font-weight: 600; }
+.compare-detail .char-head .score-line { font-size: .9rem; color: #c9d1d9; margin-top: .35rem; font-weight: 500; }
+.compare-detail .char-head .rank-line { font-size: .72rem; color: #8b949e; margin-top: .15rem; font-weight: 400; }
+.compare-detail .char-head a { text-decoration: none; color: inherit; }
+.compare-detail .char-head a:hover { text-decoration: underline; }
+.compare-detail .section-row td {
+  background: #0b0f14;
+  color: #8b949e;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: .35rem .75rem;
+  font-weight: 600;
+}
+.compare-detail .cell-best {
+  background: rgba(46, 160, 67, .14);
+  box-shadow: inset 3px 0 0 #2ea043;
+}
+.compare-detail .dungeon-cell { font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; font-size: .82rem; }
+.compare-detail .dungeon-cell .miss { color: #6e7681; }
+.compare-detail .dungeon-cell .level { font-weight: 600; color: #ffa657; }
+.flash-warn { animation: flashwarn .6s ease-out; }
+@keyframes flashwarn {
+  0%, 100% { background: #238636; color: white; }
+  50%      { background: #d29922; color: #0d1117; }
+}
 </style>
 </head>
 <body>
@@ -293,7 +345,7 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
   </div>
 
   <div class="toolbar" id="toolbar" hidden>
-    <button class="ghost" id="compareBtn">Compare all tabs</button>
+    <button class="ghost" id="compareBtn" disabled>Compare selected (0/3)</button>
     <button class="ghost" id="refreshBtn" title="Re-fetch the active tab">↻ Refresh</button>
     <button class="ghost" id="clearBtn" title="Close all tabs">Clear tabs</button>
     <span id="cacheTag"></span>
@@ -441,6 +493,8 @@ const fetchedAtEl = document.getElementById("fetchedAt");
 let activeKey = null;
 let tabs = [];           // summaries (from /api/history)
 let activePayload = null; // full result for currently-shown tab
+let selectedKeys = new Set(); // keys checked for compare (max 3)
+const MAX_COMPARE = 3;
 
 const classShort = { 1:"DK",2:"Druid",3:"Hntr",4:"Mage",5:"Monk",6:"Pal",7:"Priest",8:"Rogue",9:"Sham",10:"Lock",11:"Warr",12:"DH",13:"Evoker" };
 
@@ -454,13 +508,18 @@ function updateFetchedAt(ts, fromCache) {
 }
 
 function renderTabs() {
+  // Drop selections whose tab no longer exists.
+  const tabKeys = new Set(tabs.map((t) => t.key));
+  for (const k of [...selectedKeys]) if (!tabKeys.has(k)) selectedKeys.delete(k);
   tabsEl.innerHTML = tabs.map((t) => {
     const classClass = "class-" + t.charClass;
     const cls = classShort[t.charClass] || "";
     const auto = t.targetAutoDetected ? " auto" : "";
     const sub = "+" + t.targetLevel + auto + (t.spec ? " · " + esc(t.spec) : "");
     const active = t.key === activeKey ? " active" : "";
+    const checked = selectedKeys.has(t.key) ? " checked" : "";
     return '<button class="tab' + active + '" data-key="' + esc(t.key) + '">' +
+      '<span class="tab-check' + checked + '" data-toggle="' + esc(t.key) + '" title="Select for compare"></span>' +
       '<span class="tab-title ' + classClass + '">' + esc(t.label) +
         '<span class="dim" style="font-weight:400"> · ' + cls + '</span>' +
       '</span>' +
@@ -468,6 +527,7 @@ function renderTabs() {
       '<span class="tab-close" data-close="' + esc(t.key) + '" title="Close tab">×</span>' +
     '</button>';
   }).join("");
+  updateCompareButton();
 }
 
 async function loadHistory() {
@@ -502,11 +562,17 @@ async function closeTab(key) {
   try {
     await fetch("/api/history/" + encodeURIComponent(key), { method: "DELETE" });
   } catch {}
+  selectedKeys.delete(key);
   if (activeKey === key) {
     activeKey = null;
     resultEl.innerHTML = "";
     compareEl.hidden = true;
     updateFetchedAt(null, false);
+  }
+  // If compare view is open and we dropped below 2 selected, close it.
+  if (!compareEl.hidden && selectedKeys.size < 2) {
+    compareEl.hidden = true;
+    resultEl.hidden = false;
   }
   await loadHistory();
   if (!activeKey && tabs.length > 0) showTab(tabs[0].key);
@@ -517,6 +583,7 @@ async function clearAllTabs() {
   try { await fetch("/api/history", { method: "DELETE" }); } catch {}
   activeKey = null;
   activePayload = null;
+  selectedKeys.clear();
   resultEl.innerHTML = "";
   compareEl.hidden = true;
   updateFetchedAt(null, false);
@@ -546,64 +613,255 @@ async function runLookup(formValues, refresh) {
   }
 }
 
-function openCompare() {
-  if (tabs.length === 0) return;
-  // Fetch all tab payloads in parallel, build a table.
+function toggleSelect(key) {
+  if (selectedKeys.has(key)) {
+    selectedKeys.delete(key);
+  } else {
+    if (selectedKeys.size >= MAX_COMPARE) {
+      flashCounterLimit();
+      return;
+    }
+    selectedKeys.add(key);
+  }
+  renderTabs();
+}
+
+function updateCompareButton() {
+  const btn = document.getElementById("compareBtn");
+  if (!btn) return;
+  const n = selectedKeys.size;
+  btn.textContent = "Compare selected (" + n + "/" + MAX_COMPARE + ")";
+  btn.disabled = n < 2;
+  if (n >= 2) btn.classList.remove("ghost");
+  else btn.classList.add("ghost");
+}
+
+function flashCounterLimit() {
+  const btn = document.getElementById("compareBtn");
+  if (!btn) return;
+  btn.classList.remove("flash-warn");
+  void btn.offsetWidth; // restart animation
+  btn.classList.add("flash-warn");
+  setTimeout(() => btn.classList.remove("flash-warn"), 700);
+}
+
+function medianNum(xs) {
+  if (xs.length === 0) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 === 0 ? (s[m - 1] + s[m]) / 2 : s[m];
+}
+
+function findRunForDungeon(payload, encounterID) {
+  return payload.perDungeon.runs.find((r) => r.encounterID === encounterID) || null;
+}
+
+function highlightBest(values, mode) {
+  if (mode === "none") return [];
+  const valid = values.map((v, i) => ({ v, i })).filter((x) => x.v !== null && x.v !== undefined);
+  if (valid.length === 0) return [];
+  const best = valid.reduce((acc, x) => {
+    if (mode === "higher") return x.v > acc ? x.v : acc;
+    return x.v < acc ? x.v : acc;
+  }, valid[0].v);
+  // If every selected has the same value, no point highlighting.
+  const allSame = valid.every((x) => x.v === valid[0].v);
+  if (allSame && valid.length === values.length) return [];
+  return valid.filter((x) => x.v === best).map((x) => x.i);
+}
+
+function summaryStatsFromPayload(payload) {
+  const pd = payload.perDungeon;
+  const prev = payload.prevLevelBest;
+  const score = payload.character.scoreTop;
+  const displayedRuns = [];
+  if (prev) displayedRuns.push(prev.best);
+  for (const r of pd.runs) displayedRuns.push(r);
+  const deathsList = displayedRuns.map((r) => (r.quality ? r.quality.deaths : null)).filter((v) => v !== null);
+  const deltaList = displayedRuns.map((r) => {
+    if (!r.quality || !r.quality.peerMedianDtps) return null;
+    return (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
+  }).filter((v) => v !== null);
+  return {
+    targetLevel: payload.targetLevel,
+    targetAutoDetected: payload.targetAutoDetected,
+    dungeonsCovered: pd.dungeonsCovered,
+    totalDungeons: pd.totalDungeonsInSeason,
+    dungeonsAtTarget: pd.dungeonsAtOrAboveTarget,
+    medianLevel: pd.medianLevel,
+    medianParse: pd.medianParse,
+    sumDeaths: deathsList.length > 0 ? deathsList.reduce((a, b) => a + b, 0) : null,
+    medianDtpsDelta: medianNum(deltaList),
+    prevLevelBest: prev,
+    scorePoints: score ? score.points : null,
+    regionRank: score ? score.regionRank : null,
+    serverRank: score ? score.serverRank : null,
+  };
+}
+
+function renderCompareTable(rows) {
+  // rows: [{ tab, payload }]
+  const enriched = rows.map(({ tab, payload }) => ({ tab, payload, stats: summaryStatsFromPayload(payload) }));
+  const N = enriched.length;
+  const colspan = N + 1;
+
+  // Header row: blank label cell + one char-card header per character.
+  const headHtml = '<tr>' +
+    '<th class="row-label"></th>' +
+    enriched.map(({ tab, payload, stats }) => {
+      const cls = "class-" + payload.character.classID;
+      const className = CLASSES[payload.character.classID] || "";
+      const score = stats.scorePoints !== null
+        ? '<div class="score-line">' + stats.scorePoints.toFixed(1) + ' <span class="dim" style="font-weight:400">' + payload.metric.toUpperCase() + '</span></div>'
+        : '';
+      const rank = stats.regionRank
+        ? '<div class="rank-line">region #' + stats.regionRank + ' · server #' + stats.serverRank + '</div>'
+        : '';
+      return '<th class="char-head">' +
+        '<a href="#" data-jump="' + esc(tab.key) + '" class="' + cls + '">' + esc(payload.character.name) + '</a> ' +
+        '<span class="dim" style="font-weight:400">' + esc(payload.character.spec || "") + (payload.character.spec ? " " : "") + esc(className) + '</span>' +
+        score + rank +
+      '</th>';
+    }).join("") +
+  '</tr>';
+
+  // Summary block.
+  const summaryRows = [
+    {
+      label: 'Target level', mode: 'none',
+      values: enriched.map((e) => e.stats.targetLevel),
+      cell: (i) => '+' + enriched[i].stats.targetLevel + (enriched[i].stats.targetAutoDetected ? ' <span class="dim">auto</span>' : ''),
+    },
+    {
+      label: 'Donjons couverts', mode: 'higher',
+      values: enriched.map((e) => e.stats.dungeonsCovered),
+      cell: (i) => enriched[i].stats.dungeonsCovered + '/' + enriched[i].stats.totalDungeons,
+    },
+    {
+      label: 'Donjons ≥ target', mode: 'higher',
+      values: enriched.map((e) => e.stats.dungeonsAtTarget),
+      cell: (i) => enriched[i].stats.dungeonsAtTarget + '/' + enriched[i].stats.totalDungeons,
+    },
+    {
+      label: 'Median key level', mode: 'higher',
+      values: enriched.map((e) => e.stats.medianLevel),
+      cell: (i) => '+' + enriched[i].stats.medianLevel,
+    },
+    {
+      label: 'Median parse %', mode: 'higher',
+      values: enriched.map((e) => e.stats.medianParse),
+      cell: (i) => {
+        const v = enriched[i].stats.medianParse;
+        return '<span class="' + pclass(v) + '">' + v.toFixed(1) + '%</span>';
+      },
+    },
+    {
+      label: 'Σ deaths (runs affichés)', mode: 'lower',
+      values: enriched.map((e) => e.stats.sumDeaths),
+      cell: (i) => {
+        const v = enriched[i].stats.sumDeaths;
+        if (v === null) return '<span class="dim">—</span>';
+        const cls = v === 0 ? 'deaths-0' : (v <= 3 ? 'deaths-low' : 'deaths-high');
+        return '<span class="' + cls + '">' + v + '</span>';
+      },
+    },
+    {
+      label: 'Median Δ DTPS vs peers', mode: 'lower',
+      values: enriched.map((e) => e.stats.medianDtpsDelta),
+      cell: (i) => {
+        const v = enriched[i].stats.medianDtpsDelta;
+        if (v === null) return '<span class="dim">—</span>';
+        return '<span class="' + dtpsDeltaCls(v) + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%</span>';
+      },
+    },
+    {
+      label: 'Best run prev-level', mode: 'higher',
+      values: enriched.map((e) => e.stats.prevLevelBest ? e.stats.prevLevelBest.best.parsePercent : null),
+      cell: (i) => {
+        const prev = enriched[i].stats.prevLevelBest;
+        if (!prev) return '<span class="dim">—</span>';
+        return '+' + prev.level + ' · <span class="' + pclass(prev.best.parsePercent) + '">' + prev.best.parsePercent.toFixed(0) + '%</span>';
+      },
+    },
+  ];
+  const summaryHtml = summaryRows.map((row) => {
+    const winners = new Set(highlightBest(row.values, row.mode));
+    return '<tr>' +
+      '<td class="row-label">' + row.label + '</td>' +
+      enriched.map((_, i) => {
+        const cls = winners.has(i) ? ' class="cell-best"' : '';
+        return '<td' + cls + '>' + row.cell(i) + '</td>';
+      }).join("") +
+    '</tr>';
+  }).join("");
+
+  // Per-dungeon block. Use season list from any payload (same season for all).
+  const seasonDungeons = enriched
+    .map((e) => e.payload.seasonDungeons)
+    .find((s) => s && s.length > 0) || [];
+  const dungeonRowsHtml = seasonDungeons.map((d) => {
+    const runs = enriched.map((e) => findRunForDungeon(e.payload, d.id));
+    if (runs.every((r) => r === null)) return null;
+    const parses = runs.map((r) => r ? r.parsePercent : null);
+    const winners = new Set(highlightBest(parses, 'higher'));
+    const cells = runs.map((r, i) => {
+      const cls = winners.has(i) ? ' cell-best' : '';
+      if (!r) return '<td class="dungeon-cell' + cls + '"><span class="miss">—</span></td>';
+      const parsePart = '<span class="' + pclass(r.parsePercent) + '">' + r.parsePercent.toFixed(0) + '%</span>';
+      let qPart = '';
+      if (r.quality) {
+        const dCls = r.quality.deaths === 0 ? 'deaths-0' : (r.quality.deaths <= 2 ? 'deaths-low' : 'deaths-high');
+        qPart = ' · <span class="' + dCls + '">' + r.quality.deaths + 'd</span>';
+        if (r.quality.peerMedianDtps && r.quality.peerMedianDtps > 0) {
+          const delta = (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
+          const sign = delta >= 0 ? '+' : '';
+          qPart += ' · <span class="' + dtpsDeltaCls(delta) + '">' + sign + delta.toFixed(0) + '%</span>';
+        }
+      }
+      return '<td class="dungeon-cell' + cls + '"><span class="level">+' + r.keyLevel + '</span> · ' + parsePart + qPart + '</td>';
+    }).join("");
+    return '<tr><td class="row-label">' + esc(d.name) + '</td>' + cells + '</tr>';
+  }).filter(Boolean).join("");
+
+  const dungeonSection = dungeonRowsHtml
+    ? '<tr class="section-row"><td colspan="' + colspan + '">Per-dungeon (best run)</td></tr>' + dungeonRowsHtml
+    : '';
+
+  return '<h3>Compare ' + N + ' character' + (N === 1 ? '' : 's') + '</h3>' +
+    '<table class="compare-detail">' +
+      '<thead>' + headHtml + '</thead>' +
+      '<tbody>' +
+        '<tr class="section-row"><td colspan="' + colspan + '">Summary</td></tr>' +
+        summaryHtml +
+        dungeonSection +
+      '</tbody>' +
+    '</table>' +
+    '<p class="dim" style="margin-top:.75rem;font-size:.8rem">Σ deaths and median Δ DTPS computed across displayed runs (prev-level best + per-dungeon bests). Highlight = best on that row.</p>';
+}
+
+async function openCompare() {
+  const keys = [...selectedKeys];
+  if (keys.length < 2) return;
   compareEl.hidden = false;
   resultEl.hidden = true;
   compareEl.innerHTML = '<div class="dim"><span class="spinner"></span> building compare view…</div>';
-  Promise.all(tabs.map(async (t) => {
+  const rows = await Promise.all(keys.map(async (k) => {
     try {
-      const res = await fetch("/api/history/" + encodeURIComponent(t.key));
+      const res = await fetch("/api/history/" + encodeURIComponent(k));
       const d = await res.json();
-      return d.ok ? { tab: t, payload: d.result } : null;
+      if (!d.ok) return null;
+      const tab = tabs.find((t) => t.key === k);
+      return tab ? { tab, payload: d.result } : null;
     } catch { return null; }
-  })).then((rows) => {
-    const valid = rows.filter(Boolean);
-    if (valid.length === 0) {
-      compareEl.innerHTML = '<div class="dim">No tabs to compare.</div>';
-      return;
-    }
-    const rowHtml = valid.map(({ tab, payload }) => {
-      const pd = payload.perDungeon;
-      const prev = payload.prevLevelBest;
-      // medians across displayed runs (includes prev-level-best if present)
-      const displayedRuns = [];
-      if (prev) displayedRuns.push(prev.best);
-      for (const r of pd.runs) displayedRuns.push(r);
-      const deathsList = displayedRuns.map((r) => (r.quality ? r.quality.deaths : null)).filter((v) => v !== null);
-      const deltaList = displayedRuns.map((r) => {
-        if (!r.quality || !r.quality.peerMedianDtps) return null;
-        return (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
-      }).filter((v) => v !== null);
-      const medianNum = (xs) => { if (xs.length === 0) return null; const s = [...xs].sort((a,b)=>a-b); const m = Math.floor(s.length/2); return s.length%2===0 ? (s[m-1]+s[m])/2 : s[m]; };
-      const totalDeaths = deathsList.reduce((a,b) => a + b, 0);
-      const medDelta = medianNum(deltaList);
-      const deltaCell = medDelta === null
-        ? '—'
-        : '<span class="' + dtpsDeltaCls(medDelta) + '">' + (medDelta >= 0 ? "+" : "") + medDelta.toFixed(0) + '%</span>';
-      const score = payload.character.scoreTop;
-      const classClass = "class-" + payload.character.classID;
-      return '<tr data-key="' + esc(tab.key) + '">' +
-        '<td><a href="#" class="' + classClass + '" data-jump="' + esc(tab.key) + '">' + esc(tab.label) + '</a> <span class="dim">' + esc(payload.character.spec || "") + '</span></td>' +
-        '<td class="numeric">' + (score ? score.points.toFixed(0) : '—') + '</td>' +
-        '<td class="numeric">+' + payload.targetLevel + (payload.targetAutoDetected ? ' <span class="dim">auto</span>' : '') + '</td>' +
-        '<td class="numeric">' + pd.dungeonsAtOrAboveTarget + '/' + pd.totalDungeonsInSeason + '</td>' +
-        '<td class="numeric">' + (prev ? ('+' + prev.level + ' · <span class="' + pclass(prev.best.parsePercent) + '">' + prev.best.parsePercent.toFixed(0) + '%</span>') : '—') + '</td>' +
-        '<td class="numeric"><span class="' + (totalDeaths === 0 ? "deaths-0" : (totalDeaths <= 3 ? "deaths-low" : "deaths-high")) + '">' + totalDeaths + '</span></td>' +
-        '<td class="numeric">' + deltaCell + '</td>' +
-        '<td class="numeric">+' + pd.medianLevel + '</td>' +
-      '</tr>';
-    }).join("");
-    compareEl.innerHTML = '<h3>Compare ' + valid.length + ' tab' + (valid.length === 1 ? '' : 's') + '</h3>' +
-      '<table class="compare-table"><thead><tr>' +
-        '<th>Character</th><th>Score</th><th>Target</th><th>Timed ≥target</th><th>Best prev-level</th>' +
-        '<th>Σ deaths</th><th>med Δ dtps</th><th>Med lvl</th>' +
-      '</tr></thead><tbody>' + rowHtml + '</tbody></table>' +
-      '<p class="dim" style="margin-top:.75rem;font-size:.8rem">Σ deaths and median Δ dtps computed across the displayed runs (prev-level + per-dungeon bests).</p>';
-    compareEl.querySelectorAll("[data-jump]").forEach((a) => {
-      a.addEventListener("click", (e) => { e.preventDefault(); showTab(a.getAttribute("data-jump")); });
-    });
+  }));
+  const valid = rows.filter(Boolean);
+  if (valid.length < 2) {
+    compareEl.innerHTML = '<div class="dim">Not enough valid tabs to compare.</div>';
+    return;
+  }
+  compareEl.innerHTML = renderCompareTable(valid);
+  compareEl.querySelectorAll("[data-jump]").forEach((a) => {
+    a.addEventListener("click", (e) => { e.preventDefault(); showTab(a.getAttribute("data-jump")); });
   });
 }
 
@@ -622,6 +880,8 @@ document.getElementById("lookupForm").addEventListener("submit", async (e) => {
 tabsEl.addEventListener("click", (e) => {
   const close = e.target.closest("[data-close]");
   if (close) { e.stopPropagation(); closeTab(close.getAttribute("data-close")); return; }
+  const toggle = e.target.closest("[data-toggle]");
+  if (toggle) { e.stopPropagation(); toggleSelect(toggle.getAttribute("data-toggle")); return; }
   const tab = e.target.closest(".tab");
   if (tab) showTab(tab.getAttribute("data-key"));
 });

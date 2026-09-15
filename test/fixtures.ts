@@ -10,10 +10,8 @@ const WCL_FILES = {
 export type WclFixtureName = keyof typeof WCL_FILES;
 
 // Shape: { character: string; run: MPlusRun; report: <raw WCL report object> }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const loadWclFixture = async (name: WclFixtureName): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, WCL_FILES[name])).text());
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const loadRioFixture = async (): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, "rio-profile-muleyoxo.json")).text());

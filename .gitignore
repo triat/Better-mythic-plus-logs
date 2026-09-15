@@ -12,3 +12,4 @@ bmpl.db
 bmpl.db-journal
 bmpl.db-wal
 bmpl.db-shm
+.superpowers-test-tmp/

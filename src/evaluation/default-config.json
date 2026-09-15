@@ -1,0 +1,60 @@
+{
+  "version": "1",
+  "levelScale": [[8, 1.6], [12, 1.3], [16, 1.0], [20, 0.8], [25, 0.65]],
+  "expectedIlvl": {
+    "season-mn-2": [[10, 300], [15, 315], [20, 325], [25, 332]]
+  },
+  "axes": {
+    "survival": {
+      "subSignals": {
+        "individualDeaths": { "curve": [[0, 100], [0.5, 85], [1, 65], [2, 35], [3, 10]], "weights": { "dps": 3, "healer": 3, "tank": 3 } },
+        "wipeDeaths":       { "curve": [[0, 100], [1, 70], [2, 45]],                      "weights": { "dps": 1, "healer": 1, "tank": 1 } },
+        "avoidableVsPeers": { "curve": [[-40, 100], [-10, 80], [0, 65], [20, 40], [50, 10]], "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "dtpsVsPeers":      { "curve": [[-40, 100], [-10, 80], [0, 65], [20, 40], [50, 10]], "weights": { "dps": 1, "healer": 1, "tank": 0 } },
+        "groupDeaths":      { "curve": [[0, 100], [2, 75], [4, 45], [7, 15]],              "weights": { "dps": 0, "healer": 2, "tank": 0 } }
+      }
+    },
+    "utility": {
+      "subSignals": {
+        "kicksVsPeers":  { "curve": [[-40, 10], [-20, 40], [0, 65], [15, 85], [30, 100]], "weights": { "dps": 3, "healer": 1, "tank": 3 } },
+        "kicksAbsolute": { "curve": [[0, 20], [0.15, 50], [0.3, 80], [0.45, 100]],      "weights": { "dps": 1, "healer": 1, "tank": 1 } },
+        "dispels":       { "curve": [[0, 40], [3, 60], [10, 85], [20, 100]],            "weights": { "dps": 1, "healer": 3, "tank": 1 } }
+      }
+    },
+    "throughput": {
+      "subSignals": {
+        "medianParse":   { "curve": [[0, 10], [25, 35], [50, 60], [75, 80], [95, 100]], "weights": { "dps": 3, "healer": 3, "tank": 3 } },
+        "parseAtTarget": { "curve": [[0, 10], [25, 35], [50, 60], [75, 80], [95, 100]], "weights": { "dps": 2, "healer": 2, "tank": 2 } }
+      }
+    },
+    "consistency": {
+      "subSignals": {
+        "parseSpread":  { "curve": [[0, 100], [10, 85], [20, 60], [35, 30]],   "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "deathsSpread": { "curve": [[0, 100], [0.7, 75], [1.5, 45], [2.5, 20]], "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "damageSpread": { "curve": [[0, 100], [15, 75], [30, 45], [50, 20]],   "weights": { "dps": 1, "healer": 1, "tank": 1 } }
+      }
+    },
+    "preparation": {
+      "subSignals": {
+        "potions":      { "curve": [[0, 20], [2, 55], [4, 85], [6, 100]],      "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "healthstones": { "curve": [[0, 40], [1, 70], [2, 90], [3, 100]],      "weights": { "dps": 1, "healer": 1, "tank": 1 } },
+        "ilvlVsLevel":  { "curve": [[-20, 10], [-10, 45], [0, 75], [10, 100]], "weights": { "dps": 2, "healer": 2, "tank": 2 } }
+      }
+    },
+    "experience": {
+      "subSignals": {
+        "coverage":       { "curve": [[0, 10], [0.5, 45], [0.75, 70], [1, 100]], "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "atTarget":       { "curve": [[0, 20], [0.25, 50], [0.5, 75], [1, 100]], "weights": { "dps": 3, "healer": 3, "tank": 3 } },
+        "medianVsTarget": { "curve": [[-4, 10], [-2, 40], [0, 70], [2, 100]],    "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "activity":       { "curve": [[0, 30], [2, 60], [5, 85], [10, 100]],     "weights": { "dps": 1, "healer": 1, "tank": 1 } }
+      }
+    }
+  },
+  "axisWeights": {
+    "dps":    { "survival": 3, "utility": 2,   "throughput": 3, "consistency": 1.5, "preparation": 1, "experience": 2 },
+    "healer": { "survival": 3, "utility": 2.5, "throughput": 2, "consistency": 1.5, "preparation": 1, "experience": 2 },
+    "tank":   { "survival": 3, "utility": 2,   "throughput": 2, "consistency": 1.5, "preparation": 1, "experience": 2.5 }
+  },
+  "verdict": { "invite": 70, "maybe": 45, "minRuns": 3 },
+  "confidence": { "high": 6, "medium": 3, "consistencyMinRuns": 5 }
+}

@@ -75,3 +75,10 @@ export async function resolveDbPath(): Promise<string> {
   if (override) return override;
   return path.join(path.dirname(await resolveEnvPath()), "bmpl.db");
 }
+
+/** User override for the evaluation rules: BMPL_EVAL_CONFIG, else `evaluation.json` next to .env. May not exist. */
+export async function resolveEvalConfigPath(): Promise<string> {
+  const override = (process.env.BMPL_EVAL_CONFIG ?? "").trim();
+  if (override) return override;
+  return path.join(path.dirname(await resolveEnvPath()), "evaluation.json");
+}

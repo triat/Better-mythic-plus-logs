@@ -139,3 +139,18 @@ describe("parseRunSignals — degraded inputs", () => {
     expect(s.deaths.count).toBe(0);
   });
 });
+
+describe("parseRunSignals — consumables", () => {
+  test("potions and healthstones from playerDetails", async () => {
+    const f = await loadWclFixture("s1-tank");
+    const fb = { keyLevel: 18, affixes: f.run.affixes, encounterID: f.run.encounterID };
+    expect(parseRunSignals(f.report, "Mstercheif", fb)!.consumables).toEqual({ potions: 6, healthstones: 3 });
+    expect(parseRunSignals(f.report, "Biwaadrood", fb)!.consumables).toEqual({ potions: 1, healthstones: 0 });
+  });
+  test("player absent from playerDetails → null", async () => {
+    const f = await loadWclFixture("s1-tank");
+    const fb = { keyLevel: 18, affixes: f.run.affixes, encounterID: f.run.encounterID };
+    expect(parseRunSignals(f.report, "Nobody", fb)!.consumables).toBeNull();
+    expect(parseRunSignals({ ...f.report, summary: null }, "Biwaadrood", fb)!.consumables).toBeNull();
+  });
+});

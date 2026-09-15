@@ -36,13 +36,25 @@ const playersFromSummary = (summary: RawTable | null | undefined): Player[] =>
     role: normalizeRole(p.specs?.[0]?.role),
   }));
 
-const itemLevelFor = (summary: RawTable | null | undefined, name: string): number | null => {
+const playerDetailFor = (summary: RawTable | null | undefined, name: string) => {
   const pd = summary?.data?.playerDetails;
   for (const group of [pd?.dps, pd?.healers, pd?.tanks]) {
     const hit = group?.find((p) => p.name === name);
-    if (hit && typeof hit.minItemLevel === "number") return hit.minItemLevel;
+    if (hit) return hit;
   }
   return null;
+};
+
+const itemLevelFor = (summary: RawTable | null | undefined, name: string): number | null => {
+  const p = playerDetailFor(summary, name);
+  if (p && typeof p.minItemLevel === "number") return p.minItemLevel;
+  return null;
+};
+
+const consumablesFor = (summary: RawTable | null | undefined, name: string) => {
+  const p = playerDetailFor(summary, name);
+  if (!p) return null;
+  return { potions: p.potionUse ?? 0, healthstones: p.healthstoneUse ?? 0 };
 };
 
 /** Per-player totals from a flat table (DamageTaken); absent players → 0. */
@@ -184,6 +196,7 @@ export function parseRunSignals(
     role,
     keystone,
     itemLevel: itemLevelFor(report.summary, characterName),
+    consumables: consumablesFor(report.summary, characterName),
     deaths: { count: events.length, groupTotal: allDeaths.length, events },
     damageTaken,
     interrupts,

@@ -23,6 +23,7 @@ export interface RunSignals {
     affixes: number[];
   };
   itemLevel: number | null;
+  consumables: { potions: number; healthstones: number } | null;
   deaths: { count: number; groupTotal: number; events: DeathEvent[] };
   damageTaken: { total: number; dtps: number; peer: PeerComparison | null };
   interrupts: {
@@ -120,9 +121,9 @@ export interface RawTable {
       specs?: Array<{ spec?: string; role?: string }>;
     }>;
     playerDetails?: {
-      dps?: Array<{ name: string; minItemLevel?: number }>;
-      healers?: Array<{ name: string; minItemLevel?: number }>;
-      tanks?: Array<{ name: string; minItemLevel?: number }>;
+      dps?: Array<{ name: string; minItemLevel?: number; potionUse?: number; healthstoneUse?: number }>;
+      healers?: Array<{ name: string; minItemLevel?: number; potionUse?: number; healthstoneUse?: number }>;
+      tanks?: Array<{ name: string; minItemLevel?: number; potionUse?: number; healthstoneUse?: number }>;
     };
   };
 }

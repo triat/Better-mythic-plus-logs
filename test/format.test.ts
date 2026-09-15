@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
+import { renderEvaluation, renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
+import type { Evaluation } from "../src/evaluation/types.ts";
 import type { SignalSummary } from "../src/signals/summary.ts";
 import { parseRunSignals } from "../src/signals/wcl-run.ts";
 import { formatDuration } from "../src/util.ts";
@@ -74,5 +75,36 @@ describe("renderSummaryLine", () => {
     const summary: SignalSummary = { ...baseSummary, recentTimed: null, recentTotal: null };
     const line = strip(renderSummaryLine(summary));
     expect(line).toContain("RIO recent timed —");
+  });
+});
+
+const evalFixture = (over: Partial<Evaluation> = {}): Evaluation => ({
+  role: "dps", targetLevel: 16, runsUsed: 9, global: 78.4, verdict: "invite", configVersion: "deadbeef",
+  axes: [
+    { key: "survival", score: 82, confidence: "high", evidence: [{ label: "0.2 individual deaths/run", delta: 18, source: "survival.individualDeaths" }, { label: "avoidable +12% vs peers", delta: -6, source: "survival.avoidableVsPeers" }, { label: "x", delta: 1, source: "survival.wipeDeaths" }] },
+    { key: "utility", score: 61, confidence: "high", evidence: [] },
+    { key: "throughput", score: 88, confidence: "high", evidence: [] },
+    { key: "consistency", score: null, confidence: "low", evidence: [] },
+    { key: "preparation", score: 55, confidence: "medium", evidence: [] },
+    { key: "experience", score: 74, confidence: "high", evidence: [] },
+  ],
+  ...over,
+});
+
+describe("renderEvaluation", () => {
+  test("verdict line, axis scores, n/a, two evidences, min confidence", () => {
+    const out = strip(renderEvaluation(evalFixture()));
+    expect(out).toContain("Verdict: INVITE 78");
+    expect(out).toContain("Survival 82");
+    expect(out).toContain("Consistency n/a");
+    expect(out).toContain("(medium confidence, 9 runs)");
+    expect(out).toMatch(/Survival\s+\+18 0\.2 individual deaths\/run\s+·\s+-6 avoidable \+12% vs peers/);
+    expect(out).not.toContain("+1 x");
+  });
+  test("insufficient data", () => {
+    const out = strip(renderEvaluation(evalFixture({ verdict: "insufficient", runsUsed: 2, global: 81 })));
+    expect(out).toContain("INSUFFICIENT DATA (2 runs, 81)");
+    const out2 = strip(renderEvaluation(evalFixture({ verdict: "insufficient", runsUsed: 0, global: null })));
+    expect(out2).toContain("INSUFFICIENT DATA (0 runs)");
   });
 });

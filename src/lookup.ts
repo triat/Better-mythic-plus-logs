@@ -1,4 +1,7 @@
 import { config } from "./config.ts";
+import { getEvalConfig } from "./evaluation/config.ts";
+import { evaluate } from "./evaluation/evaluate.ts";
+import type { Evaluation, EvaluationConfig } from "./evaluation/types.ts";
 import {
   type LookupResult,
   type MPlusData,
@@ -34,6 +37,7 @@ export type LookupOutcome =
       rio: RioProfile | null;
       rioError?: string;
       summary: SignalSummary;
+      evaluation: Evaluation;
     }
   | { ok: false; status: 404; error: string };
 
@@ -41,6 +45,7 @@ interface Deps {
   store?: Store;
   gql?: GqlFn;
   fetchFn?: typeof fetch;
+  evalConfig?: EvaluationConfig;
 }
 
 /** The whole lookup: rankings → analysis → (WCL enrichment ‖ Raider.IO). */
@@ -88,13 +93,24 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     }),
   ]);
 
+  const summary = signalSummary(displayedRuns(result), rioRes.profile);
+  const payloadForEval = {
+    metric: data.metric,
+    targetLevel: result.targetLevel,
+    perDungeon: result.perDungeon,
+    prevLevelBest: result.prevLevelBest,
+    rio: rioRes.profile,
+    summary,
+  };
+
   return {
     ok: true,
     data,
     result,
     rio: rioRes.profile,
     ...(rioRes.error ? { rioError: rioRes.error } : {}),
-    summary: signalSummary(displayedRuns(result), rioRes.profile),
+    summary,
+    evaluation: evaluate(payloadForEval, deps.evalConfig ?? (await getEvalConfig())),
   };
 }
 
@@ -120,5 +136,6 @@ export function buildLookupPayload(o: Extract<LookupOutcome, { ok: true }>, real
     rio: o.rio,
     rioError: o.rioError ?? null,
     summary: o.summary,
+    evaluation: o.evaluation,
   };
 }

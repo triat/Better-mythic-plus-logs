@@ -16,9 +16,12 @@ import type {
 } from "./wcl/types.ts";
 import { classColor, classNames, dim, err, heading, ok } from "./format.ts";
 import { config } from "./config.ts";
+import { getEvalConfig } from "./evaluation/config.ts";
+import { evaluate } from "./evaluation/evaluate.ts";
+import type { EvalPayload } from "./evaluation/inputs.ts";
 import { fetchMplusData, filterBySpec, uniqueSpecs } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
-import { renderLookup, renderSummary } from "./format-mplus.ts";
+import { renderEvaluation, renderLookup, renderSummary } from "./format-mplus.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
 import { closeStore } from "./signals/store.ts";
 import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
@@ -43,6 +46,10 @@ Usage:
                                      Start the local web UI at http://localhost:<port>
                                      (default 3000) and auto-open your browser.
                                      First run shows a setup page for creds.
+  bmpl evaluate <payload.json> [--json]
+                                     Re-run the evaluation model on a saved lookup
+                                     (--json output). Uses evaluation.json next to
+                                     .env if present.
   bmpl char <name> <realm>           Basic character info.
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).
@@ -151,8 +158,20 @@ async function cmdLookup(
     closeStore();
     return;
   }
-  console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary));
+  console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary, o.evaluation));
   closeStore();
+}
+
+async function cmdEvaluate(file: string, json: boolean): Promise<void> {
+  const f = Bun.file(file);
+  if (!(await f.exists())) {
+    console.error(err(`✗ file not found: ${file}`));
+    process.exit(1);
+  }
+  const payload = JSON.parse(await f.text()) as EvalPayload;
+  const ev = evaluate(payload, await getEvalConfig());
+  if (json) console.log(JSON.stringify(ev, null, 2));
+  else console.log(renderEvaluation(ev));
 }
 
 async function cmdMplus(
@@ -371,6 +390,17 @@ async function main(): Promise<void> {
           enrich,
           json,
         );
+        break;
+      }
+      case "evaluate": {
+        const json = hasFlag(rest, "--json");
+        const positional = stripFlags(rest, [], ["--json"]);
+        const file = positional[0];
+        if (!file) {
+          console.error(err("Usage: bmpl evaluate <payload.json> [--json]"));
+          process.exit(2);
+        }
+        await cmdEvaluate(file, json);
         break;
       }
       case "mplus": {

@@ -287,6 +287,8 @@ const broadcast = (event: string, data: unknown): void => {
 // a watcher event. A `:` line is an SSE comment — the browser ignores it
 // but it keeps the socket live through any reverse proxies.
 const HEARTBEAT_BYTES = sseEncoder.encode(`: ping\n\n`);
+// unref: this module is imported by cli.ts for every command (not just `serve`),
+// so this timer must not keep the process alive when no server is running.
 setInterval(() => {
   for (const c of sseClients) {
     try {
@@ -295,7 +297,7 @@ setInterval(() => {
       /* client closed */
     }
   }
-}, 20_000);
+}, 20_000).unref();
 
 // --- Clipboard watcher state machine ---------------------------------------
 

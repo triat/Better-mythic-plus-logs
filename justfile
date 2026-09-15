@@ -58,6 +58,10 @@ watch *flags:
 serve *flags:
     bun src/cli.ts serve {{flags}}
 
+# re-run the evaluation model on a saved `bmpl lookup --json` payload
+evaluate file *flags:
+    bun src/cli.ts evaluate {{file}} {{flags}}
+
 # build a standalone binary for the current platform (./bmpl)
 build:
     bun build src/cli.ts --compile --outfile bmpl

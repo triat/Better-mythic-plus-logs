@@ -1,4 +1,5 @@
 import pc from "picocolors";
+import type { AxisKey, Evaluation } from "./evaluation/types.ts";
 import type { LookupResult, MPlusData, MPlusRun } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
 import {
@@ -147,18 +148,53 @@ export const renderSummaryLine = (summary: SignalSummary): string => {
   return dim("  ") + tiles.join(dim("  ·  "));
 };
 
+const AXIS_LABEL: Record<AxisKey, string> = {
+  survival: "Survival", utility: "Utility", throughput: "Throughput",
+  consistency: "Consistency", preparation: "Preparation", experience: "Experience",
+};
+const CONF_RANK = { low: 0, medium: 1, high: 2 } as const;
+
+export const renderEvaluation = (ev: Evaluation): string => {
+  const runs = `${ev.runsUsed} run${ev.runsUsed === 1 ? "" : "s"}`;
+  const g = ev.global === null ? null : Math.round(ev.global);
+  let verdict: string;
+  switch (ev.verdict) {
+    case "invite": verdict = pc.green(pc.bold(`INVITE ${g}`)); break;
+    case "maybe": verdict = pc.yellow(pc.bold(`MAYBE ${g}`)); break;
+    case "pass": verdict = pc.red(pc.bold(`PASS ${g}`)); break;
+    default: verdict = dim(`INSUFFICIENT DATA (${runs}${g === null ? "" : `, ${g}`})`);
+  }
+  const scored = ev.axes.filter((a) => a.score !== null);
+  const minConf = scored.length === 0 ? "low" : scored.reduce((m, a) => (CONF_RANK[a.confidence] < CONF_RANK[m] ? a.confidence : m), "high" as Evaluation["axes"][number]["confidence"]);
+  const axisPart = ev.axes.map((a) => `${AXIS_LABEL[a.key]} ${a.score === null ? dim("n/a") : pc.bold(String(Math.round(a.score)))}`).join("  ");
+  const lines = [`${heading("Verdict:")} ${verdict}  ${dim("·")}  ${axisPart}  ${dim(`(${minConf} confidence, ${runs})`)}`];
+  for (const a of ev.axes) {
+    if (a.evidence.length === 0) continue;
+    const ev2 = a.evidence.slice(0, 2).map((e) => {
+      const d = Math.round(e.delta);
+      const tag = `${d >= 0 ? "+" : "-"}${Math.abs(d)}`;
+      return `${d >= 0 ? pc.green(tag) : pc.red(tag)} ${e.label}`;
+    });
+    lines.push(`  ${AXIS_LABEL[a.key].padEnd(12)} ${ev2.join(`  ${dim("·")}  `)}`);
+  }
+  return lines.join("\n");
+};
+
 export const renderLookup = (
   data: MPlusData,
   result: LookupResult,
   rio: RioProfile | null,
   rioError: string | undefined,
   summary: SignalSummary,
+  evaluation: Evaluation,
 ): string => {
   const lines: string[] = [];
   lines.push(renderHeader(data));
   lines.push("");
 
   lines.push(renderSummaryLine(summary));
+  lines.push("");
+  lines.push(renderEvaluation(evaluation));
 
   const autoTag = result.targetAutoDetected
     ? dim(" (auto — highest key run)")

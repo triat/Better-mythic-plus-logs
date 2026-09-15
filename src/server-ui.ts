@@ -408,25 +408,42 @@ const pclass = (p) => {
 const wclUrl = (code, fightID) => "https://www.warcraftlogs.com/reports/" + encodeURIComponent(code) + "#fight=" + fightID;
 
 const deathsCls = (n) => n === 0 ? "deaths-0" : (n <= 2 ? "deaths-low" : "deaths-high");
-const dtpsDeltaCls = (p) => {
-  if (p <= -10) return "deaths-0";
-  if (p <= 10) return "";
-  if (p <= 30) return "deaths-low";
-  return "deaths-high";
-};
-const qualityLine = (r) => {
-  if (!r.quality) return "";
-  const deaths = '<span class="' + deathsCls(r.quality.deaths) + '">' + r.quality.deaths + ' death' + (r.quality.deaths === 1 ? '' : 's') + '</span>';
-  const dtps = fmtAmount(r.quality.dtps) + ' dtps';
-  let cmp = '';
-  if (r.quality.peerMedianDtps && r.quality.peerMedianDtps > 0) {
-    const delta = (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
-    const sign = delta >= 0 ? '+' : '';
-    const peers = r.quality.peerCount;
-    const label = sign + delta.toFixed(0) + '% vs ' + peers + ' dps peer' + (peers === 1 ? '' : 's');
-    cmp = ' · <span class="' + dtpsDeltaCls(delta) + '">' + esc(label) + '</span>';
+const fmtDuration = (ms) => { const t = Math.round(ms / 1000); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+const lowerCls = (p) => (p <= -10 ? "deaths-0" : p <= 10 ? "" : p <= 30 ? "deaths-low" : "deaths-high");
+const signalsLine = (r) => {
+  const s = r.signals;
+  if (!s) return "";
+  const wipes = s.deaths.events.filter((e) => e.inWipe).length;
+  const parts = [];
+  parts.push('<span class="' + deathsCls(s.deaths.count) + '">' + s.deaths.count + ' death' + (s.deaths.count === 1 ? '' : 's') + (wipes ? ' (' + wipes + ' in wipe)' : '') + '</span>');
+  let dt = fmtAmount(s.damageTaken.dtps) + ' dtps';
+  if (s.damageTaken.peer && s.damageTaken.peer.median > 0) {
+    const d = (s.damageTaken.dtps - s.damageTaken.peer.median) / s.damageTaken.peer.median * 100;
+    dt += ' <span class="' + lowerCls(d) + '">' + (d >= 0 ? '+' : '') + d.toFixed(0) + '% vs ' + s.damageTaken.peer.count + ' dps</span>';
   }
-  return '<span class="quality">' + deaths + ' · ' + dtps + cmp + '</span>';
+  parts.push(dt);
+  if (s.avoidableDamage) {
+    let av = 'avoidable ' + fmtAmount(s.avoidableDamage.perMinute) + '/min';
+    const p = s.avoidableDamage.peer;
+    if (p && p.median > 0) {
+      const d = (s.avoidableDamage.perMinute - p.median) / p.median * 100;
+      av += ' <span class="' + lowerCls(d) + '">(' + (d >= 0 ? '+' : '') + d.toFixed(0) + '%)</span>';
+    }
+    parts.push(av);
+  }
+  const i = s.interrupts;
+  if (i.usage === null) parts.push('<span class="dim">kicks ' + i.count + ' (no kick on spec)</span>');
+  else {
+    let k = 'kicks ' + i.count + '/' + Math.round(i.capacity);
+    if (i.peer) {
+      const d = (i.usage - i.peer.median) * 100;
+      const cls = d >= 0 ? 'deaths-0' : d < -25 ? 'deaths-high' : 'dim';
+      k += ' <span class="' + cls + '">(peer ' + Math.round(i.peer.median * 100) + '%)</span>';
+    }
+    parts.push(k);
+  }
+  parts.push('dispels ' + s.dispels.count);
+  return '<span class="quality">' + parts.join(' · ') + '</span>';
 };
 const tile = (label, valueHtml, valueCls = "", isEmpty = false) => {
   const cls = "tile" + (isEmpty ? " empty" : "");
@@ -439,14 +456,20 @@ const tile = (label, valueHtml, valueCls = "", isEmpty = false) => {
 const runRow = (r, metric) => {
   const stale = ageDays(r.startTime) >= STALE_DAYS;
   return '<div class="run">' +
-    '<span class="level">+' + r.keyLevel + '</span>' +
+    '<span class="level">+' + r.keyLevel +
+      (r.signals && !r.signals.partial
+        ? (r.signals.keystone.timed
+            ? ' <span class="ok">✓+' + r.signals.keystone.chests + ' ' + fmtDuration(r.signals.keystone.timeMs) + '</span>'
+            : ' <span class="deaths-high">✗ depleted ' + fmtDuration(r.signals.keystone.timeMs) + '</span>')
+        : '') +
+    '</span>' +
     '<span class="dungeon">' + esc(r.encounterName) + '</span>' +
     '<span class="amount">' + fmtAmount(r.amount) + ' <span class="metric">' + metric + '</span></span>' +
     '<span class="parse ' + pclass(r.parsePercent) + '">' + r.parsePercent.toFixed(1) + '%</span>' +
     '<span class="spec">' + esc(r.spec) + '</span>' +
     '<span class="age' + (stale ? ' stale' : '') + '">' + fmtAge(r.startTime) + '</span>' +
     '<a href="' + wclUrl(r.reportCode, r.fightID) + '" target="_blank" rel="noopener" title="Open log">↗</a>' +
-    qualityLine(r) +
+    signalsLine(r) +
   '</div>';
 };
 
@@ -474,25 +497,29 @@ const render = (payload) => {
   html += '</div>';
 
   // Stat tiles
+  html += '<div class="tiles">';
   if (hasRuns) {
-    html += '<div class="tiles">';
     html += tile('Median ' + metricLabel, fmtAmount(perDungeon.medianAmount));
     html += tile('Median parse', '<span class="' + pclass(stats.medianParse) + '">' + stats.medianParse.toFixed(1) + '%</span>');
-    if (stats.avgDeaths !== null) {
-      const v = stats.avgDeaths;
-      const dCls = v === 0 ? 'deaths-0' : (v <= 2 ? 'deaths-low' : 'deaths-high');
-      html += tile('Avg deaths', '<span class="' + dCls + '">' + v.toFixed(1) + '</span>');
-    } else {
-      html += tile('Avg deaths', '<span class="dim">—</span>', '', true);
-    }
-    if (stats.medianDtpsDelta !== null) {
-      const v = stats.medianDtpsDelta;
-      html += tile('Δ DTPS vs peers', '<span class="' + dtpsDeltaCls(v) + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%</span>');
-    } else {
-      html += tile('Δ DTPS vs peers', '<span class="dim">—</span>', '', true);
-    }
-    html += '</div>';
   }
+  const sm = payload.summary;
+  const dash = '<span class="dim">—</span>';
+  const delta = (v, unit, lowerBetter) => {
+    if (v === null) return dash;
+    const good = lowerBetter ? v <= -10 : v >= 0;
+    const bad = lowerBetter ? v > 30 : v < -25;
+    return '<span class="' + (good ? 'deaths-0' : bad ? 'deaths-high' : '') + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + unit + '</span>';
+  };
+  html += tile('Timed (shown)', sm.timedShown === null ? dash : '<span class="' + (sm.timedShown === sm.runsWithSignals ? 'ok' : 'warn') + '">' + sm.timedShown + '/' + sm.runsWithSignals + '</span>', '', sm.timedShown === null);
+  html += tile('Avg deaths', sm.avgDeaths === null ? dash : '<span class="' + deathsCls(Math.round(sm.avgDeaths)) + '">' + sm.avgDeaths.toFixed(1) + '</span>' + (sm.deathsInWipes ? '<span class="tile-sub">' + sm.deathsInWipes + ' in wipes</span>' : ''), '', sm.avgDeaths === null);
+  html += tile('Δ DTPS vs peers', delta(sm.dtpsDeltaPct, '%', true), '', sm.dtpsDeltaPct === null);
+  html += tile('Avoidable vs peers', delta(sm.avoidableDeltaPct, '%', true), '', sm.avoidableDeltaPct === null);
+  html += tile('Kicks vs peers', delta(sm.kicksDeltaPts, 'pts', false), '', sm.kicksDeltaPts === null);
+  html += tile('ilvl', sm.ilvl === null ? dash : String(sm.ilvl), '', sm.ilvl === null);
+  const recentCls = sm.recentTotal === null ? '' : sm.recentTotal === 0 ? 'dim' : (sm.recentTimed / sm.recentTotal >= 0.8 ? 'ok' : sm.recentTimed / sm.recentTotal < 0.5 ? 'deaths-high' : 'warn');
+  html += tile('RIO recent timed', sm.recentTotal === null ? dash : '<span class="' + recentCls + '">' + sm.recentTimed + '/' + sm.recentTotal + '</span>', '', sm.recentTotal === null);
+  html += tile('Prev season', sm.prevSeason ? sm.prevSeason.all.toFixed(0) + '<span class="tile-sub">' + esc(sm.prevSeason.best.role) + '</span>' : '<span class="dim">— no data (reroll?)</span>', '', !sm.prevSeason);
+  html += '</div>';
 
   if (!hasRuns) {
     html += '<div class="no-runs">No M+ runs indexed this season.</div>';
@@ -516,6 +543,26 @@ const render = (payload) => {
       if (missing.length > 0) html += '<div class="dim" style="margin-top:.5rem;font-size:.8rem">(no runs in: ' + esc(missing.join(", ")) + ')</div>';
     }
     html += '</div>';
+  }
+
+  // Raider.IO recent runs
+  if (payload.rio) {
+    const rio = payload.rio;
+    html += '<div class="section"><h3>Recent (Raider.IO) <small>· <a href="' + esc(rio.profileUrl) + '" target="_blank" rel="noopener">profile ↗</a></small></h3>';
+    if (rio.recentRuns.length === 0) html += '<div class="dim">(no recent runs)</div>';
+    for (const r of rio.recentRuns.slice(0, 10)) {
+      html += '<div class="run">' +
+        '<span class="level">+' + r.level + '</span>' +
+        '<span class="dungeon">' + esc(r.dungeon) + '</span>' +
+        '<span class="' + (r.chests > 0 ? 'ok' : 'deaths-high') + '">' + (r.chests > 0 ? '✓+' + r.chests : '✗ depleted') + '</span>' +
+        '<span class="dim">' + fmtDuration(r.clearMs) + ' / ' + fmtDuration(r.parMs) + '</span>' +
+        '<span class="age">' + fmtAge(r.completedAt) + '</span>' +
+        '<a href="' + esc(r.url) + '" target="_blank" rel="noopener" title="Open on Raider.IO">↗</a>' +
+      '</div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div class="section dim">Raider.IO: ' + esc(payload.rioError || 'no data') + '</div>';
   }
 
   return html;
@@ -712,14 +759,7 @@ function summaryStatsFromPayload(payload) {
   const pd = payload.perDungeon;
   const prev = payload.prevLevelBest;
   const score = payload.character.scoreTop;
-  const displayedRuns = [];
-  if (prev) displayedRuns.push(prev.best);
-  for (const r of pd.runs) displayedRuns.push(r);
-  const deathsList = displayedRuns.map((r) => (r.quality ? r.quality.deaths : null)).filter((v) => v !== null);
-  const deltaList = displayedRuns.map((r) => {
-    if (!r.quality || !r.quality.peerMedianDtps) return null;
-    return (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
-  }).filter((v) => v !== null);
+  const sm = payload.summary;
   return {
     targetLevel: payload.targetLevel,
     targetAutoDetected: payload.targetAutoDetected,
@@ -728,8 +768,15 @@ function summaryStatsFromPayload(payload) {
     dungeonsAtTarget: pd.dungeonsAtOrAboveTarget,
     medianLevel: pd.medianLevel,
     medianParse: pd.medianParse,
-    avgDeaths: deathsList.length > 0 ? deathsList.reduce((a, b) => a + b, 0) / deathsList.length : null,
-    medianDtpsDelta: medianNum(deltaList),
+    avgDeaths: sm.avgDeaths,
+    medianDtpsDelta: sm.dtpsDeltaPct,
+    timedShown: sm.timedShown, runsWithSignals: sm.runsWithSignals,
+    avoidableDelta: sm.avoidableDeltaPct,
+    kicksDelta: sm.kicksDeltaPts,
+    ilvl: sm.ilvl,
+    recentTimed: sm.recentTimed, recentTotal: sm.recentTotal,
+    prevSeason: sm.prevSeason ? sm.prevSeason.all : null,
+    prevSeasonRole: sm.prevSeason ? sm.prevSeason.best.role : null,
     prevLevelBest: prev,
     scorePoints: score ? score.points : null,
     regionRank: score ? score.regionRank : null,
@@ -822,9 +869,28 @@ function renderCompareTable(rows) {
       cell: (i) => {
         const v = enriched[i].stats.medianDtpsDelta;
         if (v === null) return '<span class="dim">—</span>';
-        return '<span class="' + dtpsDeltaCls(v) + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%</span>';
+        return '<span class="' + lowerCls(v) + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%</span>';
       },
     },
+    { label: 'Timed (shown runs)', mode: 'higher',
+      values: enriched.map((e) => e.stats.runsWithSignals ? e.stats.timedShown / e.stats.runsWithSignals : null),
+      cell: (i) => { const s = enriched[i].stats; return s.timedShown === null ? '<span class="dim">—</span>' : s.timedShown + '/' + s.runsWithSignals; } },
+    { label: 'Avoidable dmg vs peers', mode: 'lower',
+      values: enriched.map((e) => e.stats.avoidableDelta),
+      cell: (i) => { const v = enriched[i].stats.avoidableDelta; return v === null ? '<span class="dim">—</span>' : '<span class="' + lowerCls(v) + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%</span>'; } },
+    { label: 'Kicks vs peers', mode: 'higher',
+      values: enriched.map((e) => e.stats.kicksDelta),
+      cell: (i) => { const v = enriched[i].stats.kicksDelta; return v === null ? '<span class="dim">—</span>' : (v >= 0 ? '+' : '') + v.toFixed(0) + ' pts'; } },
+    { label: 'ilvl', mode: 'higher', values: enriched.map((e) => e.stats.ilvl),
+      cell: (i) => enriched[i].stats.ilvl === null ? '<span class="dim">—</span>' : String(enriched[i].stats.ilvl) },
+    { label: 'RIO recent timed', mode: 'higher',
+      values: enriched.map((e) => {
+        const s = e.stats;
+        return (s.recentTotal === null || s.recentTotal === 0) ? null : s.recentTimed / s.recentTotal;
+      }),
+      cell: (i) => { const s = enriched[i].stats; return s.recentTotal === null ? '<span class="dim">—</span>' : s.recentTimed + '/' + s.recentTotal; } },
+    { label: 'Prev season', mode: 'higher', values: enriched.map((e) => e.stats.prevSeason),
+      cell: (i) => { const s = enriched[i].stats; return s.prevSeason === null ? '<span class="dim">— no data (reroll?)</span>' : s.prevSeason.toFixed(0) + ' <span class="dim">' + esc(s.prevSeasonRole) + '</span>'; } },
     {
       label: 'Best run prev-level', mode: 'higher',
       values: enriched.map((e) => e.stats.prevLevelBest ? e.stats.prevLevelBest.best.parsePercent : null),
@@ -860,16 +926,20 @@ function renderCompareTable(rows) {
       if (!r) return '<td class="dungeon-cell' + cls + '"><span class="miss">—</span></td>';
       const parsePart = '<span class="' + pclass(r.parsePercent) + '">' + r.parsePercent.toFixed(0) + '%</span>';
       let qPart = '';
-      if (r.quality) {
-        const dCls = r.quality.deaths === 0 ? 'deaths-0' : (r.quality.deaths <= 2 ? 'deaths-low' : 'deaths-high');
-        qPart = ' · <span class="' + dCls + '">' + r.quality.deaths + 'd</span>';
-        if (r.quality.peerMedianDtps && r.quality.peerMedianDtps > 0) {
-          const delta = (r.quality.dtps - r.quality.peerMedianDtps) / r.quality.peerMedianDtps * 100;
+      let levelPrefix = '';
+      if (r.signals && !r.signals.partial) {
+        levelPrefix = (r.signals.keystone.timed ? '<span class="ok">✓</span>' : '<span class="deaths-high">✗</span>') + ' ';
+      }
+      if (r.signals) {
+        qPart = ' · <span class="' + deathsCls(r.signals.deaths.count) + '">' + r.signals.deaths.count + 'd</span>';
+        const p = r.signals.damageTaken.peer;
+        if (p && p.median > 0) {
+          const delta = (r.signals.damageTaken.dtps - p.median) / p.median * 100;
           const sign = delta >= 0 ? '+' : '';
-          qPart += ' · <span class="' + dtpsDeltaCls(delta) + '">' + sign + delta.toFixed(0) + '%</span>';
+          qPart += ' · <span class="' + lowerCls(delta) + '">' + sign + delta.toFixed(0) + '%</span>';
         }
       }
-      return '<td class="dungeon-cell' + cls + '"><span class="level">+' + r.keyLevel + '</span> · ' + parsePart + qPart + '</td>';
+      return '<td class="dungeon-cell' + cls + '">' + levelPrefix + '<span class="level">+' + r.keyLevel + '</span> · ' + parsePart + qPart + '</td>';
     }).join("");
     return '<tr><td class="row-label">' + esc(d.name) + '</td>' + cells + '</tr>';
   }).filter(Boolean).join("");

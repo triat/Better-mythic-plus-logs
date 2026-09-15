@@ -14,9 +14,17 @@ For a given character and target key level, `bmpl lookup` shows:
 - **Per-dungeon profile**: one best run per dungeon in the season (8 entries),
   sorted by key level. Median stats, coverage (`6/8 at or above +18`), and a
   stale-data warning for runs older than 14 days.
-- **Gameplay quality per run**: **deaths** (green 0 / yellow 1-2 / red ≥3) and
-  **DTPS** (damage taken per second — proxy for avoidable damage). Fetched
-  from each run's raw log. Skip with `--no-stats` to save API budget.
+- **Gameplay quality per run** (fetched from each run's raw log, cached forever
+  in a local `bmpl.db`): **timed / depleted** with chest count and clear time,
+  **deaths** with what killed them and whether it was a group wipe, **DTPS vs
+  the DPS in the same group**, **avoidable damage** (Blizzard's in-game
+  classification, list courtesy of
+  [postmortem](https://github.com/Sharpened-Banana/postmortem)), **interrupts
+  normalized by the spec's kick cooldown** vs peers, and **dispels**. Skip with
+  `--no-stats` to save API budget (~10 pts per uncached run).
+- **Raider.IO profile** (free, no key): item level, last 10 runs with
+  timed/depleted, current + previous season score per role. A missing previous
+  season shows `—` — the player may simply have rerolled.
 
 If you don't pass `--level`, the target auto-detects to the character's
 highest key run — so `bmpl lookup Biwaadrood-Nerzhul` "just works".
@@ -28,6 +36,10 @@ The metric also auto-selects: `hps` for healers, `dps` for DPS and tanks.
 - [Bun](https://bun.sh/) 1.3+ (for running from source / building)
 - A Warcraft Logs v2 API client — free, see below
 - `just` (optional but recommended) — https://github.com/casey/just
+
+`bmpl` caches WCL run enrichment and Raider.IO responses in a local SQLite
+file, `bmpl.db`, created next to your `.env`. It's git-ignored; override the
+location with `BMPL_DB_PATH` if you want it elsewhere.
 
 ## Getting Warcraft Logs API credentials
 
@@ -135,6 +147,7 @@ just m Biwaadrood-Nerzhul     # full M+ summary, per-key-level breakdown
 just c Biwaadrood-Nerzhul     # basic character info
 just ping                     # auth + rate-limit budget
 just zones                    # list WCL zones (M+ filter: `just zones`)
+just test                     # run the test suite
 just --list                   # all recipes
 ```
 

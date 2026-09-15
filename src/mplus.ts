@@ -1,30 +1,10 @@
 import { config } from "./config.ts";
 import { type Metric, isHealerSpec, metricForSpec } from "./roles.ts";
+import type { RunSignals } from "./signals/types.ts";
 import { realmToSlug } from "./util.ts";
 import { gql } from "./wcl/client.ts";
-import {
-  CHARACTER_METRIC_PROBE_QUERY,
-  REPORT_RUN_SUMMARY_QUERY,
-  ZONES_QUERY,
-} from "./wcl/queries.ts";
+import { CHARACTER_METRIC_PROBE_QUERY, ZONES_QUERY } from "./wcl/queries.ts";
 import type { ZonesData } from "./wcl/types.ts";
-
-export type GroupRole = "dps" | "healer" | "tank" | "unknown";
-
-export interface RunQuality {
-  deaths: number;
-  damageTaken: number;
-  fightDurationMs: number;
-  dtps: number;
-  role: GroupRole;
-  // Median DTPS across "peers" in this fight — i.e. all DPS except the target.
-  // The idea: everyone except the tank is expected to survive avoidable
-  // mechanics, and DPS make the cleanest baseline (healers often take less
-  // because of positioning, tanks take much more by design). Tanks get no
-  // peer comparison (peerCount = 0).
-  peerMedianDtps: number | null;
-  peerCount: number;
-}
 
 export interface MPlusRun {
   encounterID: number;
@@ -38,8 +18,8 @@ export interface MPlusRun {
   fightID: number;
   startTime: number;
   score: number;
-  // Populated only for runs we chose to display (see enrichLookupResult).
-  quality?: RunQuality;
+  // Populated only for runs we chose to display (see signals/enrich.ts).
+  signals?: RunSignals;
 }
 
 export interface CharacterIdentity {
@@ -424,128 +404,6 @@ export const inferTargetLevel = (runs: MPlusRun[]): number | null => {
   if (runs.length === 0) return null;
   return Math.max(...runs.map((r) => r.keyLevel));
 };
-
-interface TableDataPayload {
-  totalTime?: number;
-  entries?: Array<{ name: string; total?: number }>;
-}
-
-interface SummaryTableData {
-  totalTime?: number;
-  composition?: Array<{
-    name: string;
-    specs?: Array<{ role?: string }>;
-  }>;
-}
-
-interface ReportSummaryResponse {
-  reportData: {
-    report: {
-      code: string;
-      summary: { data?: SummaryTableData } | null;
-      damageTaken: { data?: TableDataPayload } | null;
-      deaths: { data?: TableDataPayload } | null;
-    } | null;
-  };
-}
-
-const normalizeRole = (raw: string | undefined): GroupRole => {
-  const r = (raw ?? "").toLowerCase();
-  if (r === "dps" || r === "healer" || r === "tank") return r;
-  return "unknown";
-};
-
-const medianOrNull = (xs: number[]): number | null => {
-  if (xs.length === 0) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 === 0 ? (s[m - 1]! + s[m]!) / 2 : s[m]!;
-};
-
-async function fetchRunSummary(
-  run: MPlusRun,
-  characterName: string,
-): Promise<RunQuality | null> {
-  try {
-    const resp = await gql<ReportSummaryResponse>(REPORT_RUN_SUMMARY_QUERY, {
-      code: run.reportCode,
-      fightID: run.fightID,
-    });
-    const r = resp.reportData.report;
-    if (!r) return null;
-
-    const dt = r.damageTaken?.data;
-    const dtEntries = dt?.entries ?? [];
-    const targetEntry = dtEntries.find((e) => e.name === characterName);
-    const damageTaken = targetEntry?.total ?? 0;
-    const duration = dt?.totalTime ?? r.summary?.data?.totalTime ?? 0;
-    const deaths = (r.deaths?.data?.entries ?? []).filter(
-      (e) => e.name === characterName,
-    ).length;
-
-    // Build role map from composition.
-    const comp = r.summary?.data?.composition ?? [];
-    const roleByName = new Map<string, GroupRole>();
-    for (const p of comp) {
-      roleByName.set(p.name, normalizeRole(p.specs?.[0]?.role));
-    }
-    const targetRole = roleByName.get(characterName) ?? "unknown";
-
-    // Peer comparison: for non-tanks, median DTPS across all DPS in the group
-    // (excluding the target). Tanks get no peer comparison.
-    let peerMedianDtps: number | null = null;
-    let peerCount = 0;
-    if (duration > 0 && targetRole !== "tank") {
-      const peers: number[] = [];
-      for (const e of dtEntries) {
-        if (e.name === characterName) continue;
-        const peerRole = roleByName.get(e.name) ?? "unknown";
-        if (peerRole === "dps" && typeof e.total === "number") {
-          peers.push(e.total / (duration / 1000));
-        }
-      }
-      peerCount = peers.length;
-      peerMedianDtps = medianOrNull(peers);
-    }
-
-    return {
-      deaths,
-      damageTaken,
-      fightDurationMs: duration,
-      dtps: duration > 0 ? damageTaken / (duration / 1000) : 0,
-      role: targetRole,
-      peerMedianDtps,
-      peerCount,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Pulls deaths + damage-taken from WCL's per-report Summary table and attaches
- * it to the runs displayed in the lookup (prev-level best + per-dungeon bests).
- * Mutates the MPlusRun objects in place. Safe to call multiple times.
- * Runs all requests in parallel — API cost ~= 2-3 pts per run enriched.
- */
-export async function enrichLookupResult(
-  data: MPlusData,
-  result: LookupResult,
-): Promise<void> {
-  const toEnrich: MPlusRun[] = [];
-  if (result.prevLevelBest) toEnrich.push(result.prevLevelBest.best);
-  for (const r of result.perDungeon.runs) toEnrich.push(r);
-  // Deduplicate: if prev-level-best happens to be in per-dungeon, only fetch once.
-  const unique = [
-    ...new Map(toEnrich.map((r) => [`${r.reportCode}:${r.fightID}`, r])).values(),
-  ];
-  const results = await Promise.all(
-    unique.map((r) => fetchRunSummary(r, data.character.name)),
-  );
-  results.forEach((q, i) => {
-    if (q) unique[i]!.quality = q;
-  });
-}
 
 export function analyzeLookup(
   runs: MPlusRun[],

@@ -2,8 +2,8 @@
 // reductions. `null` = the spec has no interrupt. Keyed by the class name
 // and spec name exactly as WCL's Summary `composition` reports them.
 const KICK_CD: Record<string, number | null> = {
-  "Death Knight:Blood": 15, "Death Knight:Frost": 15, "Death Knight:Unholy": 15,        // Mind Freeze
-  "Demon Hunter:Havoc": 15, "Demon Hunter:Vengeance": 15, "Demon Hunter:Devourer": 15,  // Disrupt
+  "DeathKnight:Blood": 15, "DeathKnight:Frost": 15, "DeathKnight:Unholy": 15,        // Mind Freeze
+  "DemonHunter:Havoc": 15, "DemonHunter:Vengeance": 15, "DemonHunter:Devourer": 15,  // Disrupt
   "Druid:Balance": 60,                                                                   // Solar Beam
   "Druid:Feral": 15, "Druid:Guardian": 15,                                               // Skull Bash
   "Druid:Restoration": null,
@@ -23,5 +23,10 @@ const KICK_CD: Record<string, number | null> = {
   "Warrior:Arms": 15, "Warrior:Fury": 15, "Warrior:Protection": 15,                      // Pummel
 };
 
+// WCL's `composition[].type` reports multi-word classes with no space
+// (e.g. "DeathKnight", "DemonHunter"); normalize both sides so lookups
+// work regardless of spacing.
+const normalizeClassName = (className: string): string => className.replace(/\s+/g, "");
+
 export const kickCooldownFor = (className: string, spec: string): number | null =>
-  KICK_CD[`${className}:${spec}`] ?? null;
+  KICK_CD[`${normalizeClassName(className)}:${spec}`] ?? null;

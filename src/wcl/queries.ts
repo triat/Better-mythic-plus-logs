@@ -84,14 +84,37 @@ export const CHARACTER_METRIC_PROBE_QUERY = /* GraphQL */ `
   }
 `;
 
+const RUN_SUMMARY_FIELDS = /* GraphQL */ `
+        code
+        fights(fightIDs: [$fightID]) {
+          id encounterID keystoneLevel keystoneBonus keystoneTime keystoneAffixes startTime endTime
+        }
+        summary: table(fightIDs: [$fightID], dataType: Summary)
+        damageTaken: table(fightIDs: [$fightID], dataType: DamageTaken)
+        deaths: table(fightIDs: [$fightID], dataType: Deaths)
+        interrupts: table(fightIDs: [$fightID], dataType: Interrupts)
+        dispels: table(fightIDs: [$fightID], dataType: Dispels)
+`;
+
 export const REPORT_RUN_SUMMARY_QUERY = /* GraphQL */ `
   query ReportRunSummary($code: String!, $fightID: Int!) {
     reportData {
       report(code: $code) {
-        code
-        summary: table(fightIDs: [$fightID], dataType: Summary)
-        damageTaken: table(fightIDs: [$fightID], dataType: DamageTaken)
-        deaths: table(fightIDs: [$fightID], dataType: Deaths)
+${RUN_SUMMARY_FIELDS}
+      }
+    }
+  }
+`;
+
+// Same, plus a DamageTaken table restricted to the dungeon's avoidable
+// spell list (see src/signals/avoidable). Separate query because passing
+// a null filterExpression would return *all* damage taken.
+export const REPORT_RUN_SUMMARY_WITH_AVOIDABLE_QUERY = /* GraphQL */ `
+  query ReportRunSummaryWithAvoidable($code: String!, $fightID: Int!, $avoidFilter: String!) {
+    reportData {
+      report(code: $code) {
+${RUN_SUMMARY_FIELDS}
+        avoidable: table(fightIDs: [$fightID], dataType: DamageTaken, filterExpression: $avoidFilter)
       }
     }
   }

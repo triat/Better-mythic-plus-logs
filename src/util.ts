@@ -1,12 +1,25 @@
+// Strip diacritics from Latin letters only. Cyrillic letters like "\u0439"
+// (\u0438 + combining breve) and "\u0451" (\u0435 + combining diaeresis) decompose into
+// the same combining-mark range as Latin accents, so a blanket NFKD-strip
+// would mangle them. We per-char decompose and only drop marks whose base
+// is ASCII alphanumeric.
+const stripLatinDiacritics = (s: string): string =>
+  [...s]
+    .map((ch) => {
+      const dec = ch.normalize("NFKD");
+      return /^[a-z0-9]/.test(dec) ? dec.replace(/[\u0300-\u036f]/g, "") : ch;
+    })
+    .join("");
+
 export const realmToSlug = (realm: string): string =>
-  realm
-    .trim()
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+  stripLatinDiacritics(
+    realm
+      .trim()
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .toLowerCase(),
+  )
     .replace(/['\u2018\u2019\u02bc]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
 
 export const parseNameRealm = (

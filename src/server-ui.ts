@@ -188,6 +188,24 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
 .char-card h2 { font-size: 1.25rem; }
 .char-card .score { font-size: 1.7rem; font-weight: 600; }
 .char-card .metaline { color: #8b949e; font-size: .85rem; margin-top: .25rem; }
+.tiles { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; }
+.tile {
+  padding: .4rem .65rem;
+  background: #0b0f14;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  min-width: 5.5rem;
+  display: flex; flex-direction: column; gap: .15rem;
+}
+.tile .tile-label {
+  color: #8b949e; font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.tile .tile-value { color: #e6edf3; font-size: 1rem; font-weight: 600; line-height: 1.1; }
+.tile .tile-value .tile-sub { color: #8b949e; font-weight: 400; font-size: .75rem; margin-left: .15rem; }
+.tile .tile-value.lvl { color: #ffa657; }
+.tile.empty .tile-value { color: #6e7681; font-weight: 400; }
+.no-runs { color: #8b949e; font-size: .85rem; margin-top: .85rem; }
 .section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
 .section h3 { font-size: 1rem; margin-bottom: .5rem; }
 .section h3 small { color: #8b949e; font-weight: normal; font-size: .85rem; }
@@ -225,7 +243,6 @@ details > summary { cursor: pointer; color: #8b949e; font-size: .85rem; user-sel
 /* percentile colors, mirror format.ts */
 .p-legendary { color: #ff8000; }
 .p-magenta { color: #a35fe0; }
-.p-red { color: #ef4444; }
 .p-blue { color: #58a6ff; }
 .p-green { color: #56d364; }
 .p-gray { color: #8b949e; }
@@ -271,7 +288,12 @@ button:disabled { cursor: not-allowed; opacity: .65; pointer-events: none; }
   color: #8b949e; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
   width: 14rem; font-weight: 500; vertical-align: middle;
 }
-.compare-detail .char-head { font-weight: 600; }
+.compare-detail .char-head {
+  font-weight: 600;
+  box-shadow: inset 0 3px 0 currentColor;
+  padding-top: .9rem;
+  background: linear-gradient(180deg, color-mix(in srgb, currentColor 12%, transparent) 0%, transparent 60%);
+}
 .compare-detail .char-head .score-line { font-size: .9rem; color: #c9d1d9; margin-top: .35rem; font-weight: 500; }
 .compare-detail .char-head .rank-line { font-size: .72rem; color: #8b949e; margin-top: .15rem; font-weight: 400; }
 .compare-detail .char-head a { text-decoration: none; color: inherit; }
@@ -377,8 +399,7 @@ const fmtAge = (startMs, now = Date.now()) => {
 };
 const ageDays = (ms) => Math.max(0, (Date.now() - ms) / 86400000);
 const pclass = (p) => {
-  if (p >= 99) return "p-legendary";
-  if (p >= 95) return "p-red";
+  if (p >= 95) return "p-legendary";
   if (p >= 75) return "p-magenta";
   if (p >= 50) return "p-blue";
   if (p >= 25) return "p-green";
@@ -407,6 +428,14 @@ const qualityLine = (r) => {
   }
   return '<span class="quality">' + deaths + ' · ' + dtps + cmp + '</span>';
 };
+const tile = (label, valueHtml, valueCls = "", isEmpty = false) => {
+  const cls = "tile" + (isEmpty ? " empty" : "");
+  const vCls = "tile-value" + (valueCls ? " " + valueCls : "");
+  return '<div class="' + cls + '">' +
+    '<div class="tile-label">' + label + '</div>' +
+    '<div class="' + vCls + '">' + valueHtml + '</div>' +
+  '</div>';
+};
 const runRow = (r, metric) => {
   const stale = ageDays(r.startTime) >= STALE_DAYS;
   return '<div class="run">' +
@@ -422,10 +451,13 @@ const runRow = (r, metric) => {
 };
 
 const render = (payload) => {
-  const { character, zone, metric, metricAutoSelected, alternateMetricHasData, runsIndexed, specFilter, targetLevel, targetAutoDetected, atOrAboveTargetCount, prevLevelBest, perDungeon, seasonDungeons } = payload;
+  const { character, zone, metric, metricAutoSelected, alternateMetricHasData, runsIndexed, specFilter, targetLevel, perDungeon, seasonDungeons } = payload;
   const className = CLASSES[character.classID] || ("class " + character.classID);
   const specClass = "class-" + character.classID;
   const score = character.scoreTop;
+  const stats = summaryStatsFromPayload(payload);
+  const hasRuns = perDungeon.runs.length > 0;
+  const metricLabel = metric.toUpperCase();
 
   let html = '<div class="char-card">';
   html += '<h2>' + esc(character.name) + ' <span class="' + specClass + '">' + esc(character.spec || "") + (character.spec ? " " : "") + className + '</span></h2>';
@@ -439,25 +471,31 @@ const render = (payload) => {
     html += ' <span class="dim">(auto; also has ' + other + ' data)</span>';
   }
   if (specFilter) html += ' · <span class="warn">filter: ' + esc(specFilter) + '</span>';
-  html += '</div></div>';
+  html += '</div>';
 
-  // Target block
-  html += '<div class="section">';
-  html += '<h3>Target key level: +' + targetLevel + (targetAutoDetected ? ' <small>(auto — highest key run)</small>' : '') + '</h3>';
-  if (atOrAboveTargetCount > 0) {
-    html += '<div class="banner-ok">✓ has ' + atOrAboveTargetCount + ' run(s) at or above +' + targetLevel + '</div>';
+  // Stat tiles
+  if (hasRuns) {
+    html += '<div class="tiles">';
+    html += tile('Median ' + metricLabel, fmtAmount(perDungeon.medianAmount));
+    html += tile('Median parse', '<span class="' + pclass(stats.medianParse) + '">' + stats.medianParse.toFixed(1) + '%</span>');
+    if (stats.avgDeaths !== null) {
+      const v = stats.avgDeaths;
+      const dCls = v === 0 ? 'deaths-0' : (v <= 2 ? 'deaths-low' : 'deaths-high');
+      html += tile('Avg deaths', '<span class="' + dCls + '">' + v.toFixed(1) + '</span>');
+    } else {
+      html += tile('Avg deaths', '<span class="dim">—</span>', '', true);
+    }
+    if (stats.medianDtpsDelta !== null) {
+      const v = stats.medianDtpsDelta;
+      html += tile('Δ DTPS vs peers', '<span class="' + dtpsDeltaCls(v) + '">' + (v >= 0 ? '+' : '') + v.toFixed(0) + '%</span>');
+    } else {
+      html += tile('Δ DTPS vs peers', '<span class="dim">—</span>', '', true);
+    }
+    html += '</div>';
   }
-  if (prevLevelBest) {
-    const gap = targetLevel - prevLevelBest.level;
-    const label = gap === 1
-      ? 'Best run at previous level (+' + prevLevelBest.level + ')'
-      : '<span class="warn">Best run at closest available level (+' + prevLevelBest.level + ', ' + gap + ' below target)</span>';
-    html += '<h4 style="margin-top:.75rem">' + label + ' <small class="dim">· ' + prevLevelBest.runsAtLevel + ' run(s) indexed at +' + prevLevelBest.level + '</small></h4>';
-    html += runRow(prevLevelBest.best, metric);
-  } else if (atOrAboveTargetCount === 0) {
-    html += '<div class="dim">(no runs found at all — character has no M+ data this season)</div>';
-  } else {
-    html += '<div class="dim">(no runs below +' + targetLevel + ' — player only has runs at or above target)</div>';
+
+  if (!hasRuns) {
+    html += '<div class="no-runs">No M+ runs indexed this season.</div>';
   }
   html += '</div>';
 
@@ -690,7 +728,7 @@ function summaryStatsFromPayload(payload) {
     dungeonsAtTarget: pd.dungeonsAtOrAboveTarget,
     medianLevel: pd.medianLevel,
     medianParse: pd.medianParse,
-    sumDeaths: deathsList.length > 0 ? deathsList.reduce((a, b) => a + b, 0) : null,
+    avgDeaths: deathsList.length > 0 ? deathsList.reduce((a, b) => a + b, 0) / deathsList.length : null,
     medianDtpsDelta: medianNum(deltaList),
     prevLevelBest: prev,
     scorePoints: score ? score.points : null,
@@ -717,8 +755,8 @@ function renderCompareTable(rows) {
       const rank = stats.regionRank
         ? '<div class="rank-line">region #' + stats.regionRank + ' · server #' + stats.serverRank + '</div>'
         : '';
-      return '<th class="char-head">' +
-        '<a href="#" data-jump="' + esc(tab.key) + '" class="' + cls + '">' + esc(payload.character.name) + '</a> ' +
+      return '<th class="char-head ' + cls + '">' +
+        '<a href="#" data-jump="' + esc(tab.key) + '">' + esc(payload.character.name) + '</a> ' +
         '<span class="dim" style="font-weight:400">' + esc(payload.character.spec || "") + (payload.character.spec ? " " : "") + esc(className) + '</span>' +
         score + rank +
       '</th>';
@@ -726,6 +764,9 @@ function renderCompareTable(rows) {
   '</tr>';
 
   // Summary block.
+  const allMetrics = enriched.map((e) => e.payload.metric);
+  const sameMetric = allMetrics.every((m) => m === allMetrics[0]);
+  const medianAmountLabel = sameMetric ? 'Median ' + allMetrics[0].toUpperCase() : 'Median output';
   const summaryRows = [
     {
       label: 'Target level', mode: 'none',
@@ -748,6 +789,16 @@ function renderCompareTable(rows) {
       cell: (i) => '+' + enriched[i].stats.medianLevel,
     },
     {
+      label: medianAmountLabel, mode: sameMetric ? 'higher' : 'none',
+      values: enriched.map((e) => e.payload.perDungeon.medianAmount ?? null),
+      cell: (i) => {
+        const amt = enriched[i].payload.perDungeon.medianAmount;
+        if (amt == null) return '<span class="dim">—</span>';
+        const m = enriched[i].payload.metric;
+        return fmtAmount(amt) + (sameMetric ? '' : ' <span class="dim" style="font-size:.75rem">' + m + '</span>');
+      },
+    },
+    {
       label: 'Median parse %', mode: 'higher',
       values: enriched.map((e) => e.stats.medianParse),
       cell: (i) => {
@@ -756,13 +807,13 @@ function renderCompareTable(rows) {
       },
     },
     {
-      label: 'Σ deaths (runs affichés)', mode: 'lower',
-      values: enriched.map((e) => e.stats.sumDeaths),
+      label: 'Avg deaths (runs affichés)', mode: 'lower',
+      values: enriched.map((e) => e.stats.avgDeaths),
       cell: (i) => {
-        const v = enriched[i].stats.sumDeaths;
+        const v = enriched[i].stats.avgDeaths;
         if (v === null) return '<span class="dim">—</span>';
-        const cls = v === 0 ? 'deaths-0' : (v <= 3 ? 'deaths-low' : 'deaths-high');
-        return '<span class="' + cls + '">' + v + '</span>';
+        const cls = v === 0 ? 'deaths-0' : (v <= 2 ? 'deaths-low' : 'deaths-high');
+        return '<span class="' + cls + '">' + v.toFixed(1) + '</span>';
       },
     },
     {
@@ -836,7 +887,7 @@ function renderCompareTable(rows) {
         dungeonSection +
       '</tbody>' +
     '</table>' +
-    '<p class="dim" style="margin-top:.75rem;font-size:.8rem">Σ deaths and median Δ DTPS computed across displayed runs (prev-level best + per-dungeon bests). Highlight = best on that row.</p>';
+    '<p class="dim" style="margin-top:.75rem;font-size:.8rem">Avg deaths and median Δ DTPS computed across displayed runs (prev-level best + per-dungeon bests). Highlight = best on that row.</p>';
 }
 
 async function openCompare() {

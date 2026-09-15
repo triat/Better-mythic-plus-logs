@@ -174,10 +174,10 @@ CREATE TABLE IF NOT EXISTS rio_profile (
   from the same tables costs zero points.
 - `rio_profile` TTL 1 h. `refresh: true` on `/api/lookup` bypasses the TTL.
   WCL raw is never invalidated, even on refresh.
-- Rows written for a query version are tagged by the query itself: if
-  `REPORT_RUN_SUMMARY_QUERY` later gains a table, bump a `QUERY_VERSION`
-  constant stored in a `meta` table; on mismatch the store is treated as empty
-  for `wcl_run_raw` (rows are still kept — a future migration may reuse them).
+- Each `wcl_run_raw` row carries the `query_version` it was fetched with; if
+  `REPORT_RUN_SUMMARY_QUERY` later gains a table, bump the `QUERY_VERSION`
+  constant and older rows are ignored (kept on disk — a future migration may
+  reuse them).
 - The server's in-memory `history` (payload cache, 20 entries) is unchanged.
 - The compiled binary embeds `bun:sqlite`; nothing extra to ship.
 
@@ -196,7 +196,9 @@ src/wcl/queries.ts   REPORT_RUN_SUMMARY_QUERY += fights(...) + Interrupts + Disp
 src/signals/kick-cooldowns.ts   spec → kick cooldown seconds
 src/signals/avoidable/season-mn-2.json   avoidable spell IDs per WCL encounterID
 src/mplus.ts         loses fetchRunSummary / enrichLookupResult / RunQuality; keeps rankings fetch + analyzeLookup
-src/config.ts        adds dbPath
+src/setup.ts         adds resolveDbPath() (BMPL_DB_PATH override, else bmpl.db next to .env)
+src/signals/summary.ts  signalSummary(runs, rio) — cross-run aggregates shipped in the payload as `summary`, so CLI and web render the same numbers
+src/lookup.ts        performLookup() + buildLookupPayload() — one lookup flow shared by cli/server/watch (replaces three copies)
 ```
 
 Rules:

@@ -31,6 +31,54 @@ highest key run — so `bmpl lookup Biwaadrood-Nerzhul` "just works".
 
 The metric also auto-selects: `hps` for healers, `dps` for DPS and tanks.
 
+## Verdict and axes
+
+On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
+**verdict** — `INVITE` / `MAYBE` / `PASS` / `INSUFFICIENT DATA` — with a
+0–100 global score, from six axes:
+
+- **Survival** — deaths (individual and in wipes), damage taken vs. the
+  group's peers, avoidable damage vs. peers, and (for healers) teammate
+  deaths.
+- **Utility** — interrupts vs. peers, normalized by the spec's kick cooldown
+  and capacity, plus dispels. `n/a` for a spec with no kick that isn't a
+  healer — there's nothing to measure.
+- **Throughput** — median parse % across runs, and parse % specifically at
+  the target key level.
+- **Consistency** — spread (variance) of parse, deaths, and damage taken
+  across runs. Needs at least 5 runs; below that it's `n/a`.
+- **Preparation** — potions and healthstones used per run, and item level
+  vs. the season's expected curve at the target level.
+- **Experience** — dungeon coverage, share of dungeons at/above target,
+  median key level vs. target, recent activity (runs in the last 7 days),
+  plus a small bonus — never a penalty — for a strong previous-season score.
+
+Every axis lists its **evidence**: the specific sub-signals that moved the
+score, in plain language. **Timed vs. depleted is deliberately not scored**
+— it's shown in the run list as context, but a depleted key on an otherwise
+strong run isn't held against the player (it's usually the group's fault,
+not theirs). With fewer than 3 enriched runs the verdict is always
+`INSUFFICIENT DATA` — there just isn't enough signal yet.
+
+The scoring rules — curves, weights, thresholds — live in
+`src/evaluation/default-config.json` and are yours to tune:
+
+```bash
+cp src/evaluation/default-config.json evaluation.json
+# edit evaluation.json — override only the keys you want, the rest
+# deep-merges with the defaults
+```
+
+`bmpl` looks for `evaluation.json` next to `.env`, or a path in
+`BMPL_EVAL_CONFIG` if set. To see the effect of a config change without
+spending API points, save a payload once (`bmpl lookup Name-Realm --json >
+saved.json`) and replay it through the model:
+
+```bash
+bmpl evaluate saved.json          # human-readable verdict block
+bmpl evaluate saved.json --json   # structured output
+```
+
 ## Requirements
 
 - [Bun](https://bun.sh/) 1.3+ (for running from source / building)
@@ -147,6 +195,7 @@ just m Biwaadrood-Nerzhul     # full M+ summary, per-key-level breakdown
 just c Biwaadrood-Nerzhul     # basic character info
 just ping                     # auth + rate-limit budget
 just zones                    # list WCL zones (M+ filter: `just zones`)
+just evaluate saved.json      # re-run the evaluation model on a saved lookup
 just test                     # run the test suite
 just --list                   # all recipes
 ```

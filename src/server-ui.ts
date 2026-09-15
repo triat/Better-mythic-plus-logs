@@ -40,6 +40,22 @@ h1, h2, h3, h4 { margin: 0 0 .75rem; }
 .err { color: #f85149; background: #490202; padding: .6rem .8rem; border-radius: 6px; }
 .ok { color: #56d364; }
 .tag { display: inline-block; font-size: .75rem; padding: .1rem .45rem; border-radius: 999px; background: #21262d; color: #8b949e; }
+.verdict { margin-top: .75rem; padding: .45rem .75rem; border-radius: 6px; font-weight: 700; letter-spacing: .03em; display: inline-flex; gap: .75rem; align-items: baseline; }
+.verdict .verdict-sub { font-weight: 400; font-size: .75rem; color: #8b949e; letter-spacing: 0; }
+.verdict-invite { background: #0a2e1a; color: #56d364; border: 1px solid #1f6f3a; }
+.verdict-maybe { background: #2e2a0a; color: #e3b341; border: 1px solid #7a6a1f; }
+.verdict-pass { background: #2e0a0a; color: #f85149; border: 1px solid #7a1f1f; }
+.verdict-insufficient { background: #161b22; color: #8b949e; border: 1px solid #30363d; }
+.axes { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.axis { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 9rem; }
+.axis summary { list-style: none; cursor: pointer; padding: .4rem .65rem; display: flex; gap: .4rem; align-items: center; }
+.axis summary::-webkit-details-marker { display: none; }
+.axis .axis-label { color: #8b949e; font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; flex: 1; }
+.axis .axis-score { font-size: 1rem; font-weight: 600; color: #e6edf3; }
+.conf { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.conf-high { background: #56d364; } .conf-medium { background: #e3b341; } .conf-low { background: #6e7681; }
+.evidence { list-style: none; padding: .25rem .65rem .5rem; margin: 0; font-size: .78rem; color: #c9d1d9; }
+.evidence li { padding: .1rem 0; }
 `;
 
 export const renderSetupPage = (hasExisting: boolean): string => /* html */ `
@@ -379,6 +395,7 @@ button:disabled { cursor: not-allowed; opacity: .65; pointer-events: none; }
 </main>
 <script>
 const CLASSES = {1:"Death Knight",2:"Druid",3:"Hunter",4:"Mage",5:"Monk",6:"Paladin",7:"Priest",8:"Rogue",9:"Shaman",10:"Warlock",11:"Warrior",12:"Demon Hunter",13:"Evoker"};
+const AXIS_LABEL = { survival: 'Survival', utility: 'Utility', throughput: 'Throughput', consistency: 'Consistency', preparation: 'Preparation', experience: 'Experience' };
 const STALE_DAYS = 14;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtAmount = (n) => {
@@ -501,6 +518,27 @@ const render = (payload) => {
     html += ' <span class="dim">(auto; also has ' + other + ' data)</span>';
   }
   if (specFilter) html += ' · <span class="warn">filter: ' + esc(specFilter) + '</span>';
+  html += '</div>';
+
+  const ev = payload.evaluation;
+  const verdictCls = { invite: 'verdict-invite', maybe: 'verdict-maybe', pass: 'verdict-pass', insufficient: 'verdict-insufficient' }[ev.verdict];
+  const g = ev.global === null ? null : Math.round(ev.global);
+  const runsTxt = ev.runsUsed + ' run' + (ev.runsUsed === 1 ? '' : 's');
+  const verdictTxt = ev.verdict === 'insufficient'
+    ? 'INSUFFICIENT DATA (' + runsTxt + (g === null ? '' : ', ' + g) + ')'
+    : ev.verdict.toUpperCase() + ' ' + g;
+  html += '<div class="verdict ' + verdictCls + '">' + verdictTxt + '<span class="verdict-sub">' + runsTxt + ' · config ' + esc(ev.configVersion) + '</span></div>';
+  html += '<div class="axes">';
+  for (const a of ev.axes) {
+    const dot = '<span class="conf conf-' + a.confidence + '" title="' + a.confidence + ' confidence"></span>';
+    const val = a.score === null ? '<span class="dim">n/a</span>' : String(Math.round(a.score));
+    const evid = a.evidence.map((e) => {
+      const d = Math.round(e.delta);
+      return '<li><span class="' + (d >= 0 ? 'deaths-0' : 'deaths-high') + '">' + (d >= 0 ? '+' : '-') + Math.abs(d) + '</span> ' + esc(e.label) + '</li>';
+    }).join('');
+    html += '<details class="axis"><summary><span class="axis-label">' + AXIS_LABEL[a.key] + '</span> ' + dot + '<span class="axis-score">' + val + '</span></summary>' +
+      (evid ? '<ul class="evidence">' + evid + '</ul>' : '<div class="dim" style="padding:.25rem .5rem">no data</div>') + '</details>';
+  }
   html += '</div>';
 
   // Stat tiles
@@ -785,6 +823,7 @@ function summaryStatsFromPayload(payload) {
     scorePoints: score ? score.points : null,
     regionRank: score ? score.regionRank : null,
     serverRank: score ? score.serverRank : null,
+    evaluation: payload.evaluation,
   };
 }
 
@@ -818,12 +857,54 @@ function renderCompareTable(rows) {
   const allMetrics = enriched.map((e) => e.payload.metric);
   const sameMetric = allMetrics.every((m) => m === allMetrics[0]);
   const medianAmountLabel = sameMetric ? 'Median ' + allMetrics[0].toUpperCase() : 'Median output';
+  const verdictRow = {
+    label: 'Verdict', mode: 'none',
+    values: enriched.map((e) => (e.stats.evaluation ? e.stats.evaluation.verdict : null)),
+    cell: (i) => {
+      const ev = enriched[i].stats.evaluation;
+      if (!ev) return '<span class="dim">—</span>';
+      const verdictCls = { invite: 'verdict-invite', maybe: 'verdict-maybe', pass: 'verdict-pass', insufficient: 'verdict-insufficient' }[ev.verdict];
+      const g = ev.global === null ? null : Math.round(ev.global);
+      const runsTxt = ev.runsUsed + ' run' + (ev.runsUsed === 1 ? '' : 's');
+      const verdictTxt = ev.verdict === 'insufficient'
+        ? 'INSUFFICIENT (' + runsTxt + (g === null ? '' : ', ' + g) + ')'
+        : ev.verdict.toUpperCase() + ' ' + g;
+      return '<span class="verdict ' + verdictCls + '" style="margin-top:0;padding:.2rem .55rem;font-size:.78rem">' + verdictTxt + '</span>';
+    },
+  };
+  const globalRow = {
+    label: 'Global', mode: 'higher',
+    values: enriched.map((e) => (e.stats.evaluation ? e.stats.evaluation.global : null)),
+    cell: (i) => {
+      const ev = enriched[i].stats.evaluation;
+      const v = ev ? ev.global : null;
+      return v === null || v === undefined ? '<span class="dim">—</span>' : String(Math.round(v));
+    },
+  };
+  const axisRows = Object.keys(AXIS_LABEL).map((key) => ({
+    label: AXIS_LABEL[key], mode: 'higher',
+    values: enriched.map((e) => {
+      const ev = e.stats.evaluation;
+      if (!ev) return null;
+      const a = ev.axes.find((x) => x.key === key);
+      return a ? a.score : null;
+    }),
+    cell: (i) => {
+      const ev = enriched[i].stats.evaluation;
+      const a = ev ? ev.axes.find((x) => x.key === key) : null;
+      return a && a.score !== null ? String(Math.round(a.score)) : '<span class="dim">n/a</span>';
+    },
+  }));
+
   const summaryRows = [
     {
       label: 'Target level', mode: 'none',
       values: enriched.map((e) => e.stats.targetLevel),
       cell: (i) => '+' + enriched[i].stats.targetLevel + (enriched[i].stats.targetAutoDetected ? ' <span class="dim">auto</span>' : ''),
     },
+    verdictRow,
+    globalRow,
+    ...axisRows,
     {
       label: 'Donjons couverts', mode: 'higher',
       values: enriched.map((e) => e.stats.dungeonsCovered),

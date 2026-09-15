@@ -1,6 +1,7 @@
 import { config } from "./config.ts";
 import { getEvalConfig } from "./evaluation/config.ts";
 import { evaluate } from "./evaluation/evaluate.ts";
+import type { EvalPayload } from "./evaluation/inputs.ts";
 import type { Evaluation, EvaluationConfig } from "./evaluation/types.ts";
 import {
   type LookupResult,
@@ -115,6 +116,12 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
 }
 
 export type LookupPayload = ReturnType<typeof buildLookupPayload>;
+
+// Compile-time contract: the JSON emitted for `bmpl lookup --json` (and /api/lookup) must
+// remain a valid `bmpl evaluate` input. If this stops type-checking, either buildLookupPayload
+// dropped/renamed a field evaluate() needs, or EvalPayload grew a field lookup doesn't provide.
+const _evalPayloadContract: EvalPayload = null as unknown as LookupPayload;
+void _evalPayloadContract;
 
 /** JSON emitted by `/api/lookup` and `bmpl lookup --json`. */
 export function buildLookupPayload(o: Extract<LookupOutcome, { ok: true }>, realm: string) {

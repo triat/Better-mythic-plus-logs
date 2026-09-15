@@ -17,6 +17,7 @@ describe("bmpl evaluate <payload.json>", () => {
     expect(out).toContain("INSUFFICIENT DATA (1 run");
     expect(out).toContain("Survival");
     const js = Bun.spawnSync(["bun", "src/cli.ts", "evaluate", p, "--json"], { cwd: path.join(import.meta.dir, "..", ".."), env: { ...process.env, BMPL_EVAL_CONFIG: path.join(tmp, "none.json") } });
+    expect(js.exitCode).toBe(0);
     const ev = JSON.parse(js.stdout.toString());
     expect(ev.role).toBe("healer");
     expect(ev.axes.length).toBe(6);
@@ -25,5 +26,19 @@ describe("bmpl evaluate <payload.json>", () => {
     const proc = Bun.spawnSync(["bun", "src/cli.ts", "evaluate", path.join(tmp, "nope.json")], { cwd: path.join(import.meta.dir, "..", "..") });
     expect(proc.exitCode).toBe(1);
     expect(proc.stderr.toString()).toMatch(/nope\.json/);
+  });
+  test("file is valid JSON but not a lookup payload → exit 1 with a message", async () => {
+    const p = path.join(tmp, "not-a-payload.json");
+    await Bun.write(p, JSON.stringify({ hello: "world" }));
+    const proc = Bun.spawnSync(["bun", "src/cli.ts", "evaluate", p], { cwd: path.join(import.meta.dir, "..", "..") });
+    expect(proc.exitCode).toBe(1);
+    expect(proc.stderr.toString()).toMatch(/not a bmpl lookup --json payload/);
+  });
+  test("file is not valid JSON at all → exit 1 with the same message", async () => {
+    const p = path.join(tmp, "not-json.json");
+    await Bun.write(p, "not json at all");
+    const proc = Bun.spawnSync(["bun", "src/cli.ts", "evaluate", p], { cwd: path.join(import.meta.dir, "..", "..") });
+    expect(proc.exitCode).toBe(1);
+    expect(proc.stderr.toString()).toMatch(/not a bmpl lookup --json payload/);
   });
 });

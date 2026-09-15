@@ -38,7 +38,7 @@ export type AxisKey =
 
 export interface Evidence {
   label: string;   // "0 deaths on 7/9 runs"
-  delta: number;   // weight × (subScore − 50); signed contribution vs neutral
+  delta: number;   // contribution in axis points vs neutral 50: w_i × (s_i − 50) / Σw; deltas sum to score − 50
   source: string;  // sub-signal id, e.g. "survival.individualDeaths"
 }
 
@@ -70,15 +70,21 @@ else `dps`.
   between sorted control points, clamped at both ends. Points must be strictly
   increasing in x (validated at config load).
 - `levelScale(level, points)` — same interpolation; the result multiplies the
-  raw x of level-sensitive signals (deaths, group deaths). Initial:
-  `[[8,1.6],[12,1.3],[16,1.0],[20,0.8],[25,0.65]]` — 2 deaths at +8 count as
-  1.25 at +16.
+  raw x of level-sensitive signals (deaths, group deaths) **per run, using the
+  key level of that run** (`signals.keystone.level`), then the scaled values
+  are averaged. Initial: `[[8,1.6],[12,1.3],[16,1.0],[20,0.8],[25,0.65]]` —
+  2 deaths in a +8 count as 1.25 in a +16. (Scaling by the *target* level was
+  the first design; it inverted the effect under `--level N` above the
+  player's runs — final review 2026-09-16.)
 - `stddev(xs)` — population standard deviation; `null` if `xs.length < 2`.
 - Axis aggregation: `score = Σ(w_i × s_i) / Σ(w_i)` over the sub-signals that
   are **available**; a missing sub-signal is ignored, never counted as 0. No
   available sub-signal → `score: null`.
 - Evidence: every available sub-signal emits one `Evidence` with
-  `delta = w_i × (s_i − 50)` and a human label built from its raw input.
+  `delta = w_i × (s_i − 50) / Σw` (axis points; the deltas of an axis sum to
+  `score − 50`) and a human label built from its raw input.
+- Scores are rounded to integers (axes and global) **before** the verdict is
+  derived, so what is displayed and what is judged are the same number.
 - Confidence per axis: `high` if `runsUsed ≥ 6`, `medium` if `3–5`, `low`
   otherwise; Consistency additionally forces `low` when `runsUsed < 5`.
 
@@ -113,11 +119,11 @@ Curves are `[x, score]` control points. All values below are the **initial**
 
 | id | input | curve | weights |
 |---|---|---|---|
-| `individualDeaths` | mean over runs of deaths with `!inWipe`, × `levelScale(targetLevel)` | `[0,100] [0.5,85] [1,65] [2,35] [3,10]` | 3 / 3 / 3 |
+| `individualDeaths` | mean over runs of `deaths(!inWipe) × levelScale(run key level)` (label shows the raw mean) | `[0,100] [0.5,85] [1,65] [2,35] [3,10]` | 3 / 3 / 3 |
 | `wipeDeaths` | mean over runs of deaths with `inWipe` | `[0,100] [1,70] [2,45]` | 1 / 1 / 1 |
 | `avoidableVsPeers` | `Δ%` of `avoidableDamage.perMinute` (runs with a peer) | `[-40,100] [-10,80] [0,65] [20,40] [50,10]` | 2 / 2 / 2 |
 | `dtpsVsPeers` | `Δ%` of `damageTaken.dtps` (runs with a peer) | same | 1 / 1 / — |
-| `groupDeaths` | mean over runs of `deaths.groupTotal − deaths.count`, × `levelScale` | `[0,100] [2,75] [4,45] [7,15]` | — / 2 / — |
+| `groupDeaths` | mean over runs of `(groupTotal − count) × levelScale(run key level)` (label shows the raw mean) | `[0,100] [2,75] [4,45] [7,15]` | — / 2 / — |
 
 ### Utility
 
@@ -128,8 +134,9 @@ Curves are `[x, score]` control points. All values below are the **initial**
 | `dispels` | median `dispels.count` per run | `[0,40] [3,60] [10,85] [20,100]` | 1 / 3 / 1 |
 
 A spec without a kick (`kickCooldownS === null` on every run) has no kick
-sub-signals. If additionally every run has `dispels.count === 0` **and** the
-role is not healer, the axis is `null` ("n/a"). Healers always get the dispel
+sub-signals. If additionally the median dispels per run is 0 **and** the
+role is not healer, the axis is `null` ("n/a") — a single incidental dispel
+must not flip the axis. Healers always get the dispel
 sub-signal (0 dispels is information for a healer).
 
 ### Throughput
@@ -141,9 +148,10 @@ sub-signal (0 dispels is information for a healer).
 
 ### Consistency
 
-Forced `confidence: "low"` and neutral inputs when `runsUsed < 5`: each
-sub-signal whose sample is `< 5` is unavailable, so the axis becomes `null`
-when fewer than 5 runs — displayed as "n/a (needs ≥ 5 runs)".
+Each sub-signal whose own sample is `< 5` is unavailable (parse/deaths:
+runs with signals; damage: runs with a peer comparison), so the axis becomes
+`null` with `confidence: "low"` when fewer than 5 runs — displayed as
+"n/a (needs ≥ 5 runs)".
 
 | id | input | curve | weights |
 |---|---|---|---|
@@ -159,7 +167,9 @@ when fewer than 5 runs — displayed as "n/a (needs ≥ 5 runs)".
 | `healthstones` | mean `consumables.healthstones` | `[0,40] [1,70] [2,90] [3,100]` | 1 |
 | `ilvlVsLevel` | `rio.itemLevel − expectedIlvl(targetLevel)` (only if `rio.itemLevel`) | `[-20,10] [-10,45] [0,75] [10,100]` | 2 |
 
-`expectedIlvl` is a curve in the config, per season; initial for Midnight S2
+`expectedIlvl` is a curve in the config, per season (unknown/absent slug →
+the **last** configured season, i.e. the newest after a user override merges);
+initial for Midnight S2
 `[[10,300],[15,315],[20,325],[25,332]]` — **to validate against real
 profiles** (fixture: Muleyoxo ilvl 322 at +21, Biwaadrood 280–284 at +18 in S1).
 

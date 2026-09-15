@@ -1,14 +1,14 @@
-import { curve } from "../curve.ts";
+import { curve, signed } from "../curve.ts";
 import { scoreAxis } from "../axis.ts";
 import type { EvalInputs } from "../inputs.ts";
 import type { AxisScore, EvaluationConfig } from "../types.ts";
 
-const signed = (v: number, digits = 0) => `${v >= 0 ? "+" : ""}${v.toFixed(digits)}`;
-
 export function scorePreparation(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
   const p = i.preparation;
-  const firstKey = Object.keys(cfg.expectedIlvl)[0]!;
-  const slug = i.seasonSlug !== null && i.seasonSlug in cfg.expectedIlvl ? i.seasonSlug : firstKey;
+  // Object key order in expectedIlvl follows deep-merge order: defaults first, then the user's
+  // override keys appended last — so the last key is the newest known season.
+  const lastKey = Object.keys(cfg.expectedIlvl).at(-1)!;
+  const slug = i.seasonSlug !== null && i.seasonSlug in cfg.expectedIlvl ? i.seasonSlug : lastKey;
   const expected = curve(i.targetLevel, cfg.expectedIlvl[slug]!);
   const ilvlVsLevel = p.ilvl === null ? null : p.ilvl - expected;
   return scoreAxis("preparation", [

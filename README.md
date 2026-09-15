@@ -41,8 +41,9 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   group's peers, avoidable damage vs. peers, and (for healers) teammate
   deaths.
 - **Utility** — interrupts vs. peers, normalized by the spec's kick cooldown
-  and capacity, plus dispels. `n/a` for a spec with no kick that isn't a
-  healer — there's nothing to measure.
+  and capacity, plus dispels. `n/a` only when the spec has no kick *and*
+  dispels aren't a regular part of that player's kit (median dispels/run is
+  0) — healers are always scored, since dispel usage alone is signal.
 - **Throughput** — median parse % across runs, and parse % specifically at
   the target key level.
 - **Consistency** — spread (variance) of parse, deaths, and damage taken
@@ -61,18 +62,30 @@ not theirs). With fewer than 3 enriched runs the verdict is always
 `INSUFFICIENT DATA` — there just isn't enough signal yet.
 
 The scoring rules — curves, weights, thresholds — live in
-`src/evaluation/default-config.json` and are yours to tune:
+`src/evaluation/default-config.json` and are yours to tune. You don't need to
+copy the whole file: `evaluation.json` deep-merges into the defaults, so it
+only needs the keys you want to change. For example, to raise the invite bar
+and make one Survival curve harsher:
 
-```bash
-cp src/evaluation/default-config.json evaluation.json
-# edit evaluation.json — override only the keys you want, the rest
-# deep-merges with the defaults
+```json
+{
+  "verdict": { "invite": 75 },
+  "axes": {
+    "survival": {
+      "subSignals": {
+        "individualDeaths": { "curve": [[0, 100], [1, 60], [3, 10]] }
+      }
+    }
+  }
+}
 ```
 
 `bmpl` looks for `evaluation.json` next to `.env`, or a path in
-`BMPL_EVAL_CONFIG` if set. To see the effect of a config change without
-spending API points, save a payload once (`bmpl lookup Name-Realm --json >
-saved.json`) and replay it through the model:
+`BMPL_EVAL_CONFIG` if set. `bmpl serve` reads the config once at startup —
+restart the server after editing `evaluation.json` for changes to take
+effect. To see the effect of a config change without spending API points,
+save a payload once (`bmpl lookup Name-Realm --json > saved.json`) and
+replay it through the model:
 
 ```bash
 bmpl evaluate saved.json          # human-readable verdict block

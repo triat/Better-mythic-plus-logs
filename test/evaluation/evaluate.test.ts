@@ -21,6 +21,25 @@ describe("globalScore / verdictFor", () => {
     expect(verdictFor(90, 2, cfg)).toBe("insufficient");
     expect(verdictFor(null, 9, cfg)).toBe("insufficient");
   });
+  test("display and verdict agree at the rounding boundary (I1)", () => {
+    // A single scored axis makes the raw weighted mean equal to that axis's score exactly,
+    // regardless of its weight — the other five axes are null and excluded from the mean.
+    const axesAt = (score: number): AxisScore[] => [
+      ax("survival", score), ax("utility", null), ax("throughput", null),
+      ax("consistency", null), ax("preparation", null), ax("experience", null),
+    ];
+    const raw696 = globalScore(axesAt(69.6), "dps", cfg);
+    expect(raw696).toBeCloseTo(69.6, 6);
+    const rounded696 = raw696 === null ? null : Math.round(raw696);
+    expect(rounded696).toBe(70);
+    expect(verdictFor(rounded696, 3, cfg)).toBe("invite");
+
+    const raw694 = globalScore(axesAt(69.4), "dps", cfg);
+    expect(raw694).toBeCloseTo(69.4, 6);
+    const rounded694 = raw694 === null ? null : Math.round(raw694);
+    expect(rounded694).toBe(69);
+    expect(verdictFor(rounded694, 3, cfg)).toBe("maybe");
+  });
 });
 
 describe("evaluate", () => {

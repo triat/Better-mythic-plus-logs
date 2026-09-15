@@ -24,9 +24,11 @@ export function verdictFor(global: number | null, runsUsed: number, cfg: Evaluat
 
 /** Pure: same payload + same config → same evaluation. */
 export function evaluate(payload: EvalPayload, cfg: EvaluationConfig): Evaluation {
-  const inputs = collectInputs(payload);
+  const inputs = collectInputs(payload, cfg);
   const axes = scoreAllAxes(inputs, cfg);
-  const global = globalScore(axes, inputs.role, cfg);
+  const rawGlobal = globalScore(axes, inputs.role, cfg);
+  // Rounded once here so the verdict threshold and every rendered global (CLI, web) agree.
+  const global = rawGlobal === null ? null : Math.round(rawGlobal);
   return {
     role: inputs.role,
     targetLevel: inputs.targetLevel,

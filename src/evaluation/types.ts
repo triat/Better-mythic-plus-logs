@@ -7,6 +7,7 @@ export type CurvePoints = [number, number][];
 
 export interface Evidence {
   label: string;
+  /** Contribution in axis points vs. neutral 50; sums to score − 50. Comparable across axes. */
   delta: number;
   source: string; // "<axis>.<subSignalId>"
 }
@@ -15,6 +16,7 @@ export interface AxisScore {
   key: AxisKey;
   score: number | null;
   confidence: Confidence;
+  /** Sorted by |delta| descending. */
   evidence: Evidence[];
 }
 

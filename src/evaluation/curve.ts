@@ -5,6 +5,9 @@ export { median };
 
 export const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
 
+/** Signed, fixed-precision string: `+12`, `-3.5`, `+0`. */
+export const signed = (v: number, digits = 0): string => `${v >= 0 ? "+" : ""}${v.toFixed(digits)}`;
+
 /** Piecewise-linear interpolation over sorted [x, y] points, clamped at both ends. */
 export function curve(x: number, points: CurvePoints): number {
   if (points.length === 0) throw new Error("curve: no control points");

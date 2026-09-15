@@ -1,12 +1,11 @@
 import { confidenceFor, scoreAxis } from "../axis.ts";
+import { signed } from "../curve.ts";
 import type { EvalInputs } from "../inputs.ts";
 import type { AxisScore, EvaluationConfig } from "../types.ts";
 
-const signed = (v: number, digits = 0) => `${v >= 0 ? "+" : ""}${v.toFixed(digits)}`;
-
 export function scoreUtility(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
   const u = i.utility;
-  if (!u.hasKick && !u.anyDispel && i.role !== "healer") {
+  if (!u.hasKick && !u.dispelsCommon && i.role !== "healer") {
     return { key: "utility", score: null, confidence: confidenceFor(i.runsUsed, cfg), evidence: [] };
   }
   return scoreAxis("utility", [

@@ -7,14 +7,15 @@ import { scorePreparation } from "../../src/evaluation/axes/preparation.ts";
 import { scoreSurvival } from "../../src/evaluation/axes/survival.ts";
 import { scoreUtility } from "../../src/evaluation/axes/utility.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
-import type { EvalInputs } from "../../src/evaluation/inputs.ts";
+import { collectInputs, type EvalInputs } from "../../src/evaluation/inputs.ts";
+import { deaths, payloadWith, runWith } from "./helpers.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
 
 const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   role: "dps", targetLevel: 16, runsUsed: 6, seasonSlug: "season-mn-2",
-  survival: { individualDeaths: null, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: null },
-  utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, anyDispel: false },
+  survival: { individualDeaths: null, individualDeathsScaled: null, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: null, groupDeathsScaled: null },
+  utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, dispelsCommon: false },
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
   preparation: { potions: null, healthstones: null, ilvl: null },
@@ -25,14 +26,16 @@ const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
 describe("scoreAxis engine", () => {
   test("weighted mean, evidence delta and order, skips null and zero-weight", () => {
     const a = scoreAxis("survival", [
-      { id: "individualDeaths", value: 1, label: (r) => `${r} deaths` },   // 65, w3 → delta +45
+      { id: "individualDeaths", value: 1, label: (r) => `${r} deaths` },   // 65, w3 → delta +3×15/5 = +9
       { id: "wipeDeaths", value: null, label: () => "x" },
-      { id: "avoidableVsPeers", value: 50, label: (r) => `${r}%` },        // 10, w2 → delta -80
+      { id: "avoidableVsPeers", value: 50, label: (r) => `${r}%` },        // 10, w2 → delta +2×-40/5 = -16
       { id: "groupDeaths", value: 0, label: () => "g" },                    // weight 0 for dps → skipped
     ], "dps", cfg, 6);
-    expect(a.score).toBeCloseTo((3 * 65 + 2 * 10) / 5, 6);
+    // Σw = 3+2 = 5 ; score = (3×65 + 2×10)/5 = 43
+    expect(a.score).toBe(43);
     expect(a.evidence.map((e) => e.source)).toEqual(["survival.avoidableVsPeers", "survival.individualDeaths"]);
-    expect(a.evidence[0]!.delta).toBe(-80);
+    expect(a.evidence[0]!.delta).toBe(-16);
+    expect(a.evidence[1]!.delta).toBe(9);
     expect(a.evidence[1]!.label).toBe("1 deaths");
     expect(a.confidence).toBe("high");
   });
@@ -51,19 +54,45 @@ describe("scoreAxis engine", () => {
 });
 
 describe("survival", () => {
-  test("level scaling: 2 deaths at +8 score like 1.25 at +16; tank has no dtps sub-signal", () => {
-    const at8 = scoreSurvival(baseInputs({ targetLevel: 8, survival: { individualDeaths: 1.25, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: 20, groupDeaths: null } }), cfg);
-    // 1.25 × 1.6 = 2 → 35 ; dtps +20 → 40 ; dps weights 3,1 → (105+40)/4
-    expect(at8.score).toBeCloseTo(145 / 4, 6);
-    const tank = scoreSurvival(baseInputs({ role: "tank", survival: { individualDeaths: 0, wipeDeaths: 0, avoidableVsPeers: 0, dtpsVsPeers: 50, groupDeaths: 9 } }), cfg);
+  test("scoreSurvival consumes the pre-scaled mean (scaling itself happens in collectInputs, per run); tank has no dtps sub-signal", () => {
+    // individualDeathsScaled as collectInputs would produce it for runs at key level 8
+    // (levelScale(8) = 1.6): raw mean 1.25 × 1.6 = 2 → curve(2) = 35. dtps +20% vs peers → 40.
+    const at8 = scoreSurvival(
+      baseInputs({
+        survival: { individualDeaths: 1.25, individualDeathsScaled: 2, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: 20, groupDeaths: null, groupDeathsScaled: null },
+      }),
+      cfg,
+    );
+    // dps weights individualDeaths=3, dtpsVsPeers=1 → (3×35 + 1×40)/4 = 145/4 = 36.25 → round 36
+    expect(at8.score).toBe(36);
+
+    const tank = scoreSurvival(
+      baseInputs({
+        role: "tank",
+        survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: 0, avoidableVsPeers: 0, dtpsVsPeers: 50, groupDeaths: 9, groupDeathsScaled: 9 },
+      }),
+      cfg,
+    );
     expect(tank.evidence.map((e) => e.source)).not.toContain("survival.dtpsVsPeers");
     expect(tank.evidence.map((e) => e.source)).not.toContain("survival.groupDeaths");
-    expect(tank.score).toBeCloseTo((3 * 100 + 1 * 100 + 2 * 65) / 6, 6);
+    // tank weights individualDeaths=3, wipeDeaths=1, avoidableVsPeers=2 → (3×100 + 1×100 + 2×65)/6 = 530/6 = 88.33 → round 88
+    expect(tank.score).toBe(88);
   });
   test("healer counts teammate deaths", () => {
-    const h = scoreSurvival(baseInputs({ role: "healer", survival: { individualDeaths: 0, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: 4 } }), cfg);
+    const h = scoreSurvival(
+      baseInputs({ role: "healer", survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: 4, groupDeathsScaled: 4 } }),
+      cfg,
+    );
     expect(h.evidence.map((e) => e.source)).toContain("survival.groupDeaths");
-    expect(h.score).toBeCloseTo((3 * 100 + 2 * 45) / 5, 6);
+    // healer weights individualDeaths=3, groupDeaths=2 → (3×100 + 2×45)/5 = 390/5 = 78
+    expect(h.score).toBe(78);
+  });
+  test("survival score is independent of targetLevel — scaling depends only on the run's own key level", () => {
+    const runsAt12 = () => [runWith({ keystone: { level: 12, chests: 2, timed: true, timeMs: 1_500_000, affixes: [] }, deaths: deaths(2) })];
+    const at12 = scoreSurvival(collectInputs(payloadWith(runsAt12(), { targetLevel: 12 }), cfg), cfg);
+    const at20 = scoreSurvival(collectInputs(payloadWith(runsAt12(), { targetLevel: 20 }), cfg), cfg);
+    expect(at12.score).toBe(at20.score);
+    expect(at12.evidence).toEqual(at20.evidence);
   });
 });
 
@@ -72,12 +101,13 @@ describe("utility", () => {
     expect(scoreUtility(baseInputs(), cfg).score).toBeNull();
   });
   test("healer without kick still scored on dispels (0 dispels is information)", () => {
-    const h = scoreUtility(baseInputs({ role: "healer", utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: 0, anyDispel: false } }), cfg);
+    const h = scoreUtility(baseInputs({ role: "healer", utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: 0, dispelsCommon: false } }), cfg);
     expect(h.score).toBe(40);
   });
   test("dps with kicks: peers and absolute", () => {
-    const d = scoreUtility(baseInputs({ utility: { hasKick: true, kicksVsPeers: 15, kicksAbsolute: 0.3, dispels: 3, anyDispel: true } }), cfg);
-    expect(d.score).toBeCloseTo((3 * 85 + 1 * 80 + 1 * 60) / 5, 6);
+    const d = scoreUtility(baseInputs({ utility: { hasKick: true, kicksVsPeers: 15, kicksAbsolute: 0.3, dispels: 3, dispelsCommon: true } }), cfg);
+    // dps weights kicksVsPeers=3, kicksAbsolute=1, dispels=1 → (3×85 + 1×80 + 1×60)/5 = 395/5 = 79
+    expect(d.score).toBe(79);
   });
 });
 
@@ -89,7 +119,8 @@ describe("consistency", () => {
   });
   test("scores spreads", () => {
     const c = scoreConsistency(baseInputs({ consistency: { sample: 6, parseSpread: 10, deathsSpread: 1.5, damageSpread: null } }), cfg);
-    expect(c.score).toBeCloseTo((2 * 85 + 2 * 45) / 4, 6);
+    // weights parseSpread=2, deathsSpread=2 → (2×85 + 2×45)/4 = 260/4 = 65
+    expect(c.score).toBe(65);
   });
 });
 
@@ -100,7 +131,7 @@ describe("preparation", () => {
     expect(p.score).toBe(100);
     expect(p.evidence.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl +10 vs expected");
   });
-  test("unknown season slug falls back to the first curve", () => {
+  test("unknown season slug falls back to the last expectedIlvl curve", () => {
     const p = scorePreparation(baseInputs({ seasonSlug: "season-xx-9", targetLevel: 20, preparation: { potions: null, healthstones: null, ilvl: 315 } }), cfg);
     expect(p.score).toBe(45);
   });
@@ -109,15 +140,17 @@ describe("preparation", () => {
 describe("experience", () => {
   test("previous season is a capped bonus; absent adds nothing", () => {
     const base = { coverage: 1, atTarget: 1, medianVsTarget: 0, activity: null };
+    // weights coverage=2, atTarget=3, medianVsTarget=2 (activity null → skipped) → Σw 7
+    // (2×100 + 3×100 + 2×70)/7 = 640/7 = 91.4285… → base axis score rounds to 91 (I1).
     const none = scoreExperience(baseInputs({ experience: { ...base, prevSeasonAll: null } }), cfg);
-    expect(none.score).toBeCloseTo((2 * 100 + 3 * 100 + 2 * 70) / 7, 6);
+    expect(none.score).toBe(91);
     expect(none.evidence.find((e) => e.source === "experience.prevSeasonBonus")).toBeUndefined();
+    // bonus = min(10, 2000/400) = 5 ; 91 + 5 = 96
     const some = scoreExperience(baseInputs({ experience: { ...base, prevSeasonAll: 2000 } }), cfg);
-    expect(some.score).toBeCloseTo((2 * 100 + 3 * 100 + 2 * 70) / 7 + 5, 6);
+    expect(some.score).toBe(96);
+    // bonus = min(10, 9000/400) = 10 ; 91 + 10 = 101 → clamped to 100
     const big = scoreExperience(baseInputs({ experience: { ...base, prevSeasonAll: 9000 } }), cfg);
-    // (2*100+3*100+2*70)/7 + 10 = 101.43 > 100, so the overall clamp (see "bonus is
-    // clamped to 100" below, and the "score = clamp(score + bonus, 0, 100)" rule) caps it at 100.
-    expect(big.score).toBeCloseTo(100, 6);
+    expect(big.score).toBe(100);
     expect(big.evidence.find((e) => e.source === "experience.prevSeasonBonus")!.delta).toBe(10);
   });
   test("bonus is clamped to 100", () => {

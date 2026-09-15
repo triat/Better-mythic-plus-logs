@@ -162,14 +162,35 @@ async function cmdLookup(
   closeStore();
 }
 
+/** Structural check only — enough to catch "wrong file" without re-validating the whole shape. */
+function looksLikeEvalPayload(v: unknown): v is EvalPayload {
+  if (typeof v !== "object" || v === null) return false;
+  const o = v as Record<string, unknown>;
+  if (typeof o.targetLevel !== "number") return false;
+  if (typeof o.summary !== "object" || o.summary === null) return false;
+  const perDungeon = o.perDungeon as Record<string, unknown> | undefined;
+  if (typeof perDungeon !== "object" || perDungeon === null || !Array.isArray(perDungeon.runs)) return false;
+  return true;
+}
+
 async function cmdEvaluate(file: string, json: boolean): Promise<void> {
   const f = Bun.file(file);
   if (!(await f.exists())) {
     console.error(err(`✗ file not found: ${file}`));
     process.exit(1);
   }
-  const payload = JSON.parse(await f.text()) as EvalPayload;
-  const ev = evaluate(payload, await getEvalConfig());
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await f.text());
+  } catch {
+    console.error(err(`✗ not a bmpl lookup --json payload: ${file}`));
+    process.exit(1);
+  }
+  if (!looksLikeEvalPayload(parsed)) {
+    console.error(err(`✗ not a bmpl lookup --json payload: ${file}`));
+    process.exit(1);
+  }
+  const ev = evaluate(parsed as EvalPayload, await getEvalConfig());
   if (json) console.log(JSON.stringify(ev, null, 2));
   else console.log(renderEvaluation(ev));
 }

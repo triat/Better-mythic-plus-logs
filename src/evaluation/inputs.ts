@@ -1,7 +1,7 @@
 import type { SignalSummary } from "../signals/summary.ts";
 import type { RioProfile, RunSignals } from "../signals/types.ts";
-import { mean, median, stddev } from "./curve.ts";
-import type { Role } from "./types.ts";
+import { curve, mean, median, stddev } from "./curve.ts";
+import type { EvaluationConfig, Role } from "./types.ts";
 
 export interface EvalRun {
   keyLevel: number;
@@ -33,18 +33,25 @@ export interface EvalInputs {
   runsUsed: number;
   seasonSlug: string | null;
   survival: {
+    /** Raw mean deaths/run — unscaled, for labels. */
     individualDeaths: number | null;
+    /** Mean of (deaths × levelScale(run's own key level)) — for the curve. */
+    individualDeathsScaled: number | null;
     wipeDeaths: number | null;
     avoidableVsPeers: number | null;
     dtpsVsPeers: number | null;
+    /** Raw mean teammate deaths/run — unscaled, for labels. */
     groupDeaths: number | null;
+    /** Mean of (teammate deaths × levelScale(run's own key level)) — for the curve. */
+    groupDeathsScaled: number | null;
   };
   utility: {
     hasKick: boolean;
     kicksVsPeers: number | null;
     kicksAbsolute: number | null;
     dispels: number | null;
-    anyDispel: boolean;
+    /** True only when the median dispels/run is > 0 — dispels are a regular part of this kit. */
+    dispelsCommon: boolean;
   };
   throughput: { medianParse: number | null; parseAtTarget: number | null };
   consistency: { sample: number; parseSpread: number | null; deathsSpread: number | null; damageSpread: number | null };
@@ -80,7 +87,7 @@ const damageDeltaPct = (s: RunSignals): number | null => {
   return null;
 };
 
-export function collectInputs(payload: EvalPayload): EvalInputs {
+export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): EvalInputs {
   const runs = evalRuns(payload);
   const withSig = runs.filter((r) => r.signals !== undefined);
   const sig = withSig.map((r) => r.signals!);
@@ -89,8 +96,17 @@ export function collectInputs(payload: EvalPayload): EvalInputs {
   const runsUsed = withSig.length;
   const seasonSlug = payload.rio?.seasons[0]?.slug ?? null;
 
+  // A `partial` run's keystone came from ranking data rather than the fight itself — trust
+  // the run's own keyLevel over signals.keystone.level in that case.
+  const levelFor = (r: EvalRun): number => (r.signals!.partial ? r.keyLevel : r.signals!.keystone.level);
+
   // --- survival ---
+  // Level scaling uses each run's own key level (not the payload's targetLevel), so asking for
+  // a harder key doesn't make the same deaths look artificially better or worse.
   const individualDeaths = mean(sig.map((s) => s.deaths.events.filter((e) => !e.inWipe).length));
+  const individualDeathsScaled = mean(
+    withSig.map((r) => r.signals!.deaths.events.filter((e) => !e.inWipe).length * curve(levelFor(r), cfg.levelScale)),
+  );
   const wipeDeaths = mean(sig.map((s) => s.deaths.events.filter((e) => e.inWipe).length));
   const avoidableVsPeers = median(
     nums(
@@ -105,6 +121,9 @@ export function collectInputs(payload: EvalPayload): EvalInputs {
     nums(sig.map((s) => (s.damageTaken.peer && s.damageTaken.peer.median > 0 ? pct(s.damageTaken.dtps, s.damageTaken.peer.median) : null))),
   );
   const groupDeaths = mean(sig.map((s) => s.deaths.groupTotal - s.deaths.count));
+  const groupDeathsScaled = mean(
+    withSig.map((r) => (r.signals!.deaths.groupTotal - r.signals!.deaths.count) * curve(levelFor(r), cfg.levelScale)),
+  );
 
   // --- utility ---
   const hasKick = sig.some((s) => s.interrupts.kickCooldownS !== null);
@@ -113,17 +132,20 @@ export function collectInputs(payload: EvalPayload): EvalInputs {
   );
   const kicksAbsolute = median(nums(sig.map((s) => (s.interrupts.usage !== null ? s.interrupts.usage : null))));
   const dispels = median(sig.map((s) => s.dispels.count));
-  const anyDispel = sig.some((s) => s.dispels.count > 0);
+  const dispelsCommon = (dispels ?? 0) > 0;
 
   // --- throughput ---
   const medianParse = payload.perDungeon.runs.length > 0 ? payload.perDungeon.medianParse : null;
   const parseAtTarget = median(runs.filter((r) => r.keyLevel >= payload.targetLevel - 1).map((r) => r.parsePercent));
 
   // --- consistency ---
+  // Each spread is null unless its own contributing sample size clears the confidence floor.
   const sample = runsUsed;
-  const parseSpread = stddev(withSig.map((r) => r.parsePercent));
-  const deathsSpread = stddev(sig.map((s) => s.deaths.count));
-  const damageSpread = stddev(nums(sig.map(damageDeltaPct)));
+  const minRuns = cfg.confidence.consistencyMinRuns;
+  const parseSpread = withSig.length >= minRuns ? stddev(withSig.map((r) => r.parsePercent)) : null;
+  const deathsSpread = sig.length >= minRuns ? stddev(sig.map((s) => s.deaths.count)) : null;
+  const damageDeltas = nums(sig.map(damageDeltaPct));
+  const damageSpread = damageDeltas.length >= minRuns ? stddev(damageDeltas) : null;
 
   // --- preparation ---
   const withConsumables = sig.filter((s) => s.consumables !== null);
@@ -144,8 +166,8 @@ export function collectInputs(payload: EvalPayload): EvalInputs {
     targetLevel: payload.targetLevel,
     runsUsed,
     seasonSlug,
-    survival: { individualDeaths, wipeDeaths, avoidableVsPeers, dtpsVsPeers, groupDeaths },
-    utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, anyDispel },
+    survival: { individualDeaths, individualDeathsScaled, wipeDeaths, avoidableVsPeers, dtpsVsPeers, groupDeaths, groupDeathsScaled },
+    utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, dispelsCommon },
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },
     preparation: { potions, healthstones, ilvl },

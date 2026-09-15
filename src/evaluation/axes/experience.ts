@@ -1,0 +1,27 @@
+import { clamp } from "../curve.ts";
+import { scoreAxis } from "../axis.ts";
+import type { EvalInputs } from "../inputs.ts";
+import type { AxisScore, EvaluationConfig, Evidence } from "../types.ts";
+
+const signed = (v: number, digits = 0) => `${v >= 0 ? "+" : ""}${v.toFixed(digits)}`;
+
+export function scoreExperience(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
+  const e = i.experience;
+  const result = scoreAxis("experience", [
+    { id: "coverage", value: e.coverage, label: (r) => `${(r * 100).toFixed(0)}% dungeons covered` },
+    { id: "atTarget", value: e.atTarget, label: (r) => `${(r * 100).toFixed(0)}% dungeons at/above target` },
+    { id: "medianVsTarget", value: e.medianVsTarget, label: (r) => `median key ${signed(r)} vs target` },
+    { id: "activity", value: e.activity, label: (r) => `${r} runs in last 7 days` },
+  ], i.role, cfg, i.runsUsed);
+
+  if (e.prevSeasonAll === null || result.score === null) return result;
+
+  const bonus = Math.min(10, e.prevSeasonAll / 400);
+  const score = clamp(result.score + bonus, 0, 100);
+  const evidence: Evidence[] = [
+    ...result.evidence,
+    { label: `previous season ${e.prevSeasonAll.toFixed(0)}`, delta: bonus, source: "experience.prevSeasonBonus" },
+  ];
+  evidence.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  return { ...result, score, evidence };
+}

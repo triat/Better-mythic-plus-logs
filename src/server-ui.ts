@@ -406,6 +406,12 @@ const pclass = (p) => {
   return "p-gray";
 };
 const wclUrl = (code, fightID) => "https://www.warcraftlogs.com/reports/" + encodeURIComponent(code) + "#fight=" + fightID;
+// Raider.IO URLs come from a third-party API response — only ever emit an
+// <a href> when they actually point at raider.io, else fall back to plain text.
+// (No backslashes here on purpose: this whole page is a TS template literal,
+// so a regex literal's escapes would need doubling — a plain prefix check
+// is equivalent and avoids that trap.)
+const rioHref = (url) => (typeof url === "string" && url.startsWith("https://raider.io/") ? url : null);
 
 const deathsCls = (n) => n === 0 ? "deaths-0" : (n <= 2 ? "deaths-low" : "deaths-high");
 const fmtDuration = (ms) => { const t = Math.round(ms / 1000); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
@@ -432,7 +438,8 @@ const signalsLine = (r) => {
     parts.push(av);
   }
   const i = s.interrupts;
-  if (i.usage === null) parts.push('<span class="dim">kicks ' + i.count + ' (no kick on spec)</span>');
+  if (i.kickCooldownS === null) parts.push('<span class="dim">kicks ' + i.count + ' (no kick on spec)</span>');
+  else if (i.capacity === null || i.usage === null) parts.push('kicks ' + i.count);
   else {
     let k = 'kicks ' + i.count + '/' + Math.round(i.capacity);
     if (i.peer) {
@@ -548,16 +555,20 @@ const render = (payload) => {
   // Raider.IO recent runs
   if (payload.rio) {
     const rio = payload.rio;
-    html += '<div class="section"><h3>Recent (Raider.IO) <small>· <a href="' + esc(rio.profileUrl) + '" target="_blank" rel="noopener">profile ↗</a></small></h3>';
+    const profileHref = rioHref(rio.profileUrl);
+    html += '<div class="section"><h3>Recent (Raider.IO) <small>· ' +
+      (profileHref ? '<a href="' + esc(profileHref) + '" target="_blank" rel="noopener">profile ↗</a>' : 'profile') +
+      '</small></h3>';
     if (rio.recentRuns.length === 0) html += '<div class="dim">(no recent runs)</div>';
     for (const r of rio.recentRuns.slice(0, 10)) {
+      const runHref = rioHref(r.url);
       html += '<div class="run">' +
         '<span class="level">+' + r.level + '</span>' +
         '<span class="dungeon">' + esc(r.dungeon) + '</span>' +
         '<span class="' + (r.chests > 0 ? 'ok' : 'deaths-high') + '">' + (r.chests > 0 ? '✓+' + r.chests : '✗ depleted') + '</span>' +
         '<span class="dim">' + fmtDuration(r.clearMs) + ' / ' + fmtDuration(r.parMs) + '</span>' +
         '<span class="age">' + fmtAge(r.completedAt) + '</span>' +
-        '<a href="' + esc(r.url) + '" target="_blank" rel="noopener" title="Open on Raider.IO">↗</a>' +
+        (runHref ? '<a href="' + esc(runHref) + '" target="_blank" rel="noopener" title="Open on Raider.IO">↗</a>' : '') +
       '</div>';
     }
     html += '</div>';
@@ -728,13 +739,6 @@ function flashCounterLimit() {
   void btn.offsetWidth; // restart animation
   btn.classList.add("flash-warn");
   setTimeout(() => btn.classList.remove("flash-warn"), 700);
-}
-
-function medianNum(xs) {
-  if (xs.length === 0) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 === 0 ? (s[m - 1] + s[m]) / 2 : s[m];
 }
 
 function findRunForDungeon(payload, encounterID) {

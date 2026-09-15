@@ -37,6 +37,16 @@ describe("renderRunSignals", () => {
     expect(line).toContain("kicks 1 (no kick on spec)");
     expect(line).toContain("dispels 9");
   });
+
+  test("kicks with a known cooldown but no capacity (e.g. 0-duration run) renders plain, not '(no kick on spec)'", async () => {
+    const f = await loadWclFixture("s1-tank");
+    const s = parseRunSignals(f.report, "Biwaadrood", { keyLevel: 18, affixes: [], encounterID: f.run.encounterID })!;
+    expect(s.interrupts.kickCooldownS).not.toBeNull();
+    const broken = { ...s, interrupts: { ...s.interrupts, capacity: null, usage: null } };
+    const line = strip(renderRunSignals(broken));
+    expect(line).toContain("kicks 23");
+    expect(line).not.toContain("no kick on spec");
+  });
 });
 
 describe("renderSummaryLine", () => {

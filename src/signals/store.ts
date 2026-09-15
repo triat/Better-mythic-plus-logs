@@ -2,8 +2,11 @@ import { Database } from "bun:sqlite";
 import { resolveDbPath } from "../setup.ts";
 import type { RawRunReport } from "./types.ts";
 
-// Bump when REPORT_RUN_SUMMARY_QUERY gains/loses fields: older raw rows are
-// then ignored (kept on disk for a possible migration) and re-fetched.
+// Bump when REPORT_RUN_SUMMARY_QUERY gains/loses fields, or when the
+// avoidable-damage spell list changes materially: older raw rows are then
+// ignored (INSERT OR REPLACE overwrites them on the next fetch — nothing is
+// migrated) and re-fetched. Rows cached under an older QUERY_VERSION keep the
+// `avoidable` spell-list snapshot they were fetched with until re-fetched.
 export const QUERY_VERSION = 2;
 export const RIO_TTL_MS = 60 * 60 * 1000;
 
@@ -47,6 +50,9 @@ const rioKey = (region: string, realmSlug: string, name: string) =>
 export function openStore(path: string): Store {
   const db = new Database(path, { create: true });
   db.exec("PRAGMA journal_mode = WAL");
+  // The CLI and the local server may open the same db file concurrently;
+  // wait rather than throwing SQLITE_BUSY on a write collision.
+  db.exec("PRAGMA busy_timeout = 5000");
   db.exec(SCHEMA);
 
   const getRun = db.query<{ json: string }, [string, number, number]>(
@@ -88,10 +94,39 @@ export function openStore(path: string): Store {
   };
 }
 
+/**
+ * Open the store at `path`, falling back to an in-memory store if opening it
+ * fails (e.g. an unwritable/missing directory) — a broken cache must not
+ * fail every lookup.
+ */
+export function openStoreOrMemory(path: string): Store {
+  try {
+    return openStore(path);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`bmpl: cache unavailable (${msg}), running without cache`);
+    return openStore(":memory:");
+  }
+}
+
 let singleton: Promise<Store> | null = null;
+let opened: Store | null = null;
 
 /** Process-wide store at the resolved db path (next to .env). */
 export const getStore = (): Promise<Store> => {
-  if (!singleton) singleton = resolveDbPath().then(openStore);
+  if (!singleton) {
+    const p = resolveDbPath().then(openStoreOrMemory);
+    // Never cache a rejected promise — a transient failure (e.g. resolving
+    // the .env path) should not stay sticky for the rest of the process.
+    p.then((s) => { opened = s; }).catch(() => { singleton = null; });
+    singleton = p;
+  }
   return singleton;
 };
+
+/** Close the process-wide store (if one was ever opened) and reset it. */
+export function closeStore(): void {
+  opened?.close();
+  opened = null;
+  singleton = null;
+}

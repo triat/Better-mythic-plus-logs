@@ -4,6 +4,7 @@ import type { Store } from "./store.ts";
 import type { RioProfile } from "./types.ts";
 
 export const RIO_RETRY_DELAYS_MS = [1000, 2000, 4000];
+export const RIO_TIMEOUT_MS = 10_000;
 
 export interface RioFetchResult {
   profile: RioProfile | null;
@@ -33,15 +34,19 @@ export async function fetchRioProfile(
   const slug = realmToSlug(realm);
 
   if (!opts.refresh) {
-    const hit = store.getRio(region, slug, name, { now: now() });
-    if (hit) return { profile: parseRioProfile(hit.raw, hit.fetchedAt), fromCache: true };
+    try {
+      const hit = store.getRio(region, slug, name, { now: now() });
+      if (hit) return { profile: parseRioProfile(hit.raw, hit.fetchedAt), fromCache: true };
+    } catch {
+      // Cache lookup failed (e.g. SQLite error) — proceed to fetch.
+    }
   }
 
   const url = rioProfileUrl(region, slug, name);
   let lastError = "Raider.IO unavailable";
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetchFn(url);
+      const res = await fetchFn(url, { signal: AbortSignal.timeout(RIO_TIMEOUT_MS) });
       if (res.ok) {
         const raw: unknown = await res.json();
         const t = now();

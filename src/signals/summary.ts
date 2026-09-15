@@ -32,7 +32,11 @@ export function signalSummary(runs: MPlusRun[], rio: RioProfile | null): SignalS
     .filter((v): v is number => v !== null);
 
   let prevSeason: SignalSummary["prevSeason"] = null;
-  const prev = rio?.seasons[1];
+  const seasons = rio?.seasons ?? [];
+  const currentSlug = seasons[0]?.slug;
+  // Raider.IO returns a present entry with `scores.all: 0` for a season the
+  // character never played — that must render as absence, not a score.
+  const prev = seasons.find((s) => s.slug !== currentSlug && s.all > 0);
   if (prev) {
     const roles = [
       { role: "dps" as const, score: prev.dps },

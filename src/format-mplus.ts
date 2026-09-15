@@ -53,7 +53,8 @@ const avoidableText = (s: RunSignals): string | null => {
 
 const kicksText = (s: RunSignals): string => {
   const i = s.interrupts;
-  if (i.capacity === null || i.usage === null) return dim(`kicks ${i.count} (no kick on spec)`);
+  if (i.kickCooldownS === null) return dim(`kicks ${i.count} (no kick on spec)`);
+  if (i.capacity === null || i.usage === null) return `kicks ${i.count}`;
   const base = `kicks ${i.count}/${Math.round(i.capacity)}`;
   if (!i.peer) return base;
   const peerPct = `(peer ${Math.round(i.peer.median * 100)}%)`;

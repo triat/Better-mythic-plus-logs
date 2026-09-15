@@ -44,4 +44,27 @@ describe("signalSummary", () => {
     const rio = parseRioProfile({ ...raw, mythic_plus_scores_by_season: [raw.mythic_plus_scores_by_season[0]] }, 0);
     expect(signalSummary([], rio).prevSeason).toBeNull();
   });
+
+  test("prevSeason is null when the previous season is present but score 0 (never played, not a reroll signal)", async () => {
+    const raw = await loadRioFixture();
+    const seasons = raw.mythic_plus_scores_by_season;
+    const unplayed = { ...seasons[1], scores: { ...seasons[1].scores, all: 0 } };
+    const rio = parseRioProfile({ ...raw, mythic_plus_scores_by_season: [seasons[0], unplayed] }, 0);
+    expect(signalSummary([], rio).prevSeason).toBeNull();
+  });
+
+  test("prevSeason is resolved by slug, not by index [1]", async () => {
+    const raw = await loadRioFixture();
+    const seasons = raw.mythic_plus_scores_by_season; // [season-mn-2 (current), season-mn-1 (prev)]
+    // A same-slug duplicate at index 1 must be skipped in favor of the real
+    // previous season at index 2 — the fix must key on slug, not position.
+    const dupOfCurrent = { ...seasons[0] };
+    const rio = parseRioProfile(
+      { ...raw, mythic_plus_scores_by_season: [seasons[0], dupOfCurrent, seasons[1]] },
+      0,
+    );
+    const s = signalSummary([], rio);
+    expect(s.prevSeason?.slug).toBe("season-mn-1");
+    expect(s.prevSeason?.all).toBe(4152.7);
+  });
 });

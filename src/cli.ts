@@ -20,6 +20,7 @@ import { fetchMplusData, filterBySpec, uniqueSpecs } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
 import { renderLookup, renderSummary } from "./format-mplus.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
+import { closeStore } from "./signals/store.ts";
 import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
 import { runServer } from "./server.ts";
 import { runWatch } from "./watch.ts";
@@ -142,13 +143,16 @@ async function cmdLookup(
   const o = await performLookup({ name, realm, level: targetLevel, spec, metric, enrich });
   if (!o.ok) {
     console.error(json ? o.error : err("✗ " + o.error));
+    closeStore();
     process.exit(1);
   }
   if (json) {
     console.log(JSON.stringify(buildLookupPayload(o, realm), null, 2));
+    closeStore();
     return;
   }
   console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary));
+  closeStore();
 }
 
 async function cmdMplus(
@@ -199,9 +203,11 @@ async function cmdMplus(
         2,
       ),
     );
+    closeStore();
     return;
   }
   console.log(renderSummary(data));
+  closeStore();
 }
 
 async function cmdZones(filterMplus: boolean): Promise<void> {

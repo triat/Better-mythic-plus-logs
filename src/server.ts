@@ -9,6 +9,7 @@ import { dim, err, heading, ok } from "./format.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
 import { renderMainPage, renderSetupPage } from "./server-ui.ts";
+import { closeStore } from "./signals/store.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
 import { parseNameRealm, parseRaiderIOUrl } from "./util.ts";
 import { resetAuthCache } from "./wcl/auth.ts";
@@ -411,6 +412,13 @@ const openBrowser = (url: string): void => {
 };
 
 export async function runServer(opts: ServeOptions): Promise<void> {
+  if (process.listenerCount("SIGINT") === 0) {
+    process.on("SIGINT", () => {
+      closeStore();
+      process.exit(0);
+    });
+  }
+
   const envPathHint = await resolveEnvPath();
 
   const server = Bun.serve({
@@ -530,7 +538,10 @@ export async function runServer(opts: ServeOptions): Promise<void> {
       }
       if (req.method === "POST" && path === "/api/quit") {
         stopWatcher();
-        queueMicrotask(() => setTimeout(() => process.exit(0), 120));
+        queueMicrotask(() => setTimeout(() => {
+          closeStore();
+          process.exit(0);
+        }, 120));
         return jsonResponse({ ok: true });
       }
       if (req.method === "GET" && path === "/api/status") {

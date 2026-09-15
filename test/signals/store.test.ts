@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { QUERY_VERSION, RIO_TTL_MS, openStore } from "../../src/signals/store.ts";
+import { QUERY_VERSION, RIO_TTL_MS, openStore, openStoreOrMemory } from "../../src/signals/store.ts";
 import { loadWclFixture } from "../fixtures.ts";
 
 describe("store", () => {
@@ -47,6 +47,19 @@ describe("store", () => {
     const s = openStore(":memory:");
     s.putRio("eu", "nerzhul", "Biwaadrood", { a: 1 }, 5);
     expect(s.getRio("EU", "nerzhul", "biwaadrood", { now: 6 })?.raw).toEqual({ a: 1 });
+    s.close();
+  });
+
+  test("busy_timeout pragma is set (CLI + server may write the db concurrently)", () => {
+    const s = openStore(":memory:");
+    expect((s._db.query("PRAGMA busy_timeout").get() as { timeout: number }).timeout).toBe(5000);
+    s.close();
+  });
+
+  test("openStoreOrMemory falls back to a working in-memory store when the path is unwritable", () => {
+    const s = openStoreOrMemory("/nonexistent-dir-xyz/bmpl.db");
+    s.putWclRun("A", 1, { code: "A" });
+    expect(s.getWclRun("A", 1)?.code).toBe("A");
     s.close();
   });
 });

@@ -7,6 +7,7 @@ import { dim, err, heading, ok } from "./format.ts";
 import { renderLookup } from "./format-mplus.ts";
 import { performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
+import { closeStore } from "./signals/store.ts";
 
 export interface WatchOptions {
   level: number | null;
@@ -19,6 +20,13 @@ export interface WatchOptions {
 const divider = () => dim("─".repeat(60));
 
 export async function runWatch(opts: WatchOptions): Promise<void> {
+  if (process.listenerCount("SIGINT") === 0) {
+    process.on("SIGINT", () => {
+      closeStore();
+      process.exit(0);
+    });
+  }
+
   const clipboard = await detectClipboardReader();
   const levelLabel = opts.level === null ? "auto" : `+${opts.level}`;
   console.log(

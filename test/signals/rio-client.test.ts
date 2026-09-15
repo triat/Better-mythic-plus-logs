@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { RIO_RETRY_DELAYS_MS, fetchRioProfile } from "../../src/signals/rio-client.ts";
+import { RIO_RETRY_DELAYS_MS, RIO_TIMEOUT_MS, fetchRioProfile } from "../../src/signals/rio-client.ts";
 import { openStore } from "../../src/signals/store.ts";
 import { loadRioFixture } from "../fixtures.ts";
 
@@ -51,6 +51,20 @@ describe("fetchRioProfile", () => {
     expect(delays).toEqual(RIO_RETRY_DELAYS_MS);
     expect(r.profile).toBeNull();
     expect(r.error).toBe("Raider.IO unavailable (HTTP 502)");
+    store.close();
+  });
+
+  test("fetchFn is called with an abort signal (bounded timeout)", async () => {
+    const raw = await loadRioFixture();
+    const store = openStore(":memory:");
+    let capturedInit: RequestInit | undefined;
+    const fetchFn = (async (_u: string | URL | Request, init?: RequestInit) => {
+      capturedInit = init;
+      return jsonResp(raw);
+    }) as unknown as typeof fetch;
+    await fetchRioProfile("EU", "Silvermoon", "Muleyoxo", store, { fetchFn, sleep: noSleep });
+    expect(capturedInit?.signal).toBeInstanceOf(AbortSignal);
+    expect(RIO_TIMEOUT_MS).toBe(10_000);
     store.close();
   });
 

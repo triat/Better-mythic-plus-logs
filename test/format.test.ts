@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { renderRunSignals } from "../src/format-mplus.ts";
+import { renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
+import type { SignalSummary } from "../src/signals/summary.ts";
 import { parseRunSignals } from "../src/signals/wcl-run.ts";
 import { formatDuration } from "../src/util.ts";
 import { loadWclFixture } from "./fixtures.ts";
@@ -35,5 +36,33 @@ describe("renderRunSignals", () => {
     expect(line).toMatch(/avoidable [\d.]+k\/min \(-?\d+%\)/);
     expect(line).toContain("kicks 1 (no kick on spec)");
     expect(line).toContain("dispels 9");
+  });
+});
+
+describe("renderSummaryLine", () => {
+  const baseSummary: SignalSummary = {
+    runsWithSignals: 0,
+    timedShown: null,
+    avgDeaths: null,
+    deathsInWipes: null,
+    dtpsDeltaPct: null,
+    kicksDeltaPts: null,
+    avoidableDeltaPct: null,
+    ilvl: null,
+    recentTimed: null,
+    recentTotal: null,
+    prevSeason: null,
+  };
+
+  test("recentTotal 0 (profile fetched, zero recent runs) renders 0/0, not —", () => {
+    const summary: SignalSummary = { ...baseSummary, recentTimed: 0, recentTotal: 0 };
+    const line = strip(renderSummaryLine(summary));
+    expect(line).toContain("RIO recent timed 0/0");
+  });
+
+  test("recentTotal null (no RIO data) renders —", () => {
+    const summary: SignalSummary = { ...baseSummary, recentTimed: null, recentTotal: null };
+    const line = strip(renderSummaryLine(summary));
+    expect(line).toContain("RIO recent timed —");
   });
 });

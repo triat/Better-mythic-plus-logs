@@ -126,17 +126,7 @@ const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
   return `${mainLine}${qualityLine}\n${indent}${dim("  → ")}${url}`;
 };
 
-export const renderLookup = (
-  data: MPlusData,
-  result: LookupResult,
-  rio: RioProfile | null,
-  rioError: string | undefined,
-  summary: SignalSummary,
-): string => {
-  const lines: string[] = [];
-  lines.push(renderHeader(data));
-  lines.push("");
-
+export const renderSummaryLine = (summary: SignalSummary): string => {
   const fmtDelta = (v: number | null, unit: "%" | "pts", lowerBetter: boolean): string => {
     if (v === null) return dim("—");
     const label = `${v >= 0 ? "+" : ""}${v.toFixed(0)}${unit}`;
@@ -151,9 +141,23 @@ export const renderLookup = (
   tiles.push(`avoidable ${fmtDelta(summary.avoidableDeltaPct, "%", true)}`);
   tiles.push(`kicks ${fmtDelta(summary.kicksDeltaPts, "pts", false)}`);
   tiles.push(`ilvl ${summary.ilvl ?? dim("—")}`);
-  tiles.push(`RIO recent timed ${summary.recentTotal ? `${summary.recentTimed}/${summary.recentTotal}` : dim("—")}`);
+  tiles.push(`RIO recent timed ${summary.recentTotal === null ? dim("—") : `${summary.recentTimed}/${summary.recentTotal}`}`);
   tiles.push(`prev season ${summary.prevSeason ? `${summary.prevSeason.all.toFixed(0)} (${summary.prevSeason.best.role})` : dim("— no data (reroll?)")}`);
-  lines.push(dim("  ") + tiles.join(dim("  ·  ")));
+  return dim("  ") + tiles.join(dim("  ·  "));
+};
+
+export const renderLookup = (
+  data: MPlusData,
+  result: LookupResult,
+  rio: RioProfile | null,
+  rioError: string | undefined,
+  summary: SignalSummary,
+): string => {
+  const lines: string[] = [];
+  lines.push(renderHeader(data));
+  lines.push("");
+
+  lines.push(renderSummaryLine(summary));
 
   const autoTag = result.targetAutoDetected
     ? dim(" (auto — highest key run)")

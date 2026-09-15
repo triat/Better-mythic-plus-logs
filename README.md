@@ -159,7 +159,7 @@ just --list                   # all recipes
 | `--spec <name>` | Filter to one spec (`Augmentation`, `Restoration`, …). Case-insensitive |
 | `--metric dps \| hps` | Override the auto-selected metric |
 | `--json` | Structured output (lookup / mplus only) |
-| `--no-stats` | Skip per-run enrichment (deaths + DTPS). Saves ~40 pts/lookup |
+| `--no-stats` | Skip per-run WCL enrichment (timed state, deaths, DTPS, avoidable, kicks, dispels). Saves ~90 pts on an uncached lookup; Raider.IO is still fetched |
 | `--interval <ms>` | Clipboard poll rate for `watch` (default 750ms) |
 
 ## Windows
@@ -220,11 +220,16 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
 ## API cost
 
 - Auth: 0 pts (OAuth2 token is cached in memory)
-- `lookup` basic (no stats): ~5 pts per character. 3600 pts/hr → ~700 lookups/hr
-- `lookup` with stats enrichment (default): ~45 pts per character (1 `report.table`
-  query per displayed run, up to 9 parallel queries). 3600 pts/hr → ~80 lookups/hr
-- `mplus`: ~5 pts per character (no enrichment; unchanged)
-- Pass `--no-stats` to drop back to the 5-pt cost for `lookup` and `watch`
+- `lookup` with stats enrichment (default), fully uncached: ~100 pts per
+  character (≈10 pts per displayed run's `report.table` queries, up to 9
+  displayed runs, + ~10 pts for the rankings query). Raider.IO enrichment is
+  a separate, free API and doesn't count against this budget.
+- `lookup` where the displayed runs are already cached in `bmpl.db`: ~10 pts
+  (just the rankings query — per-run enrichment is a cache hit)
+- `lookup --no-stats`: ~10 pts per character (rankings query only; Raider.IO
+  is still fetched)
+- `mplus`: ~10 pts per character (no enrichment; unchanged)
+- 3600 pts/hr → ~36 fully-uncached lookups/hr, or ~360/hr once runs are cached
 
 ## Repo layout
 
@@ -233,14 +238,29 @@ src/
   cli.ts          command dispatch
   config.ts       env → config
   mplus.ts        fetch + analyze (auto-metric, spec filter, per-dungeon)
+  lookup.ts       shared lookup flow: rankings → analysis → (WCL enrichment ‖ Raider.IO)
   watch.ts        clipboard polling
   roles.ts        spec → role mapping
   util.ts         realm slugging, age formatting
   format.ts       color helpers
   format-mplus.ts rendering
   wcl/            OAuth2 + GraphQL client + queries + types
+  signals/        gameplay-quality signals (the "vetting" layer)
+    types.ts          shared types (RunSignals, RioProfile, ...)
+    wcl-run.ts         parse a raw WCL run report into RunSignals
+    enrich.ts          fetch/parse signals for the runs a lookup displays
+    kick-cooldowns.ts  per-spec interrupt cooldowns
+    peers.ts           peer-comparison medians
+    rio-client.ts      Raider.IO fetch with retry/backoff + cache
+    rio-profile.ts     parse a raw Raider.IO profile
+    summary.ts         cross-run aggregates (tiles / compare rows)
+    store.ts           SQLite cache (WCL runs + Raider.IO profiles)
+    avoidable/         per-dungeon avoidable-damage spell lists
 scripts/
-  introspect.ts   GraphQL schema explorer (dev-only)
+  introspect.ts                    GraphQL schema explorer (dev-only)
+  import-postmortem-avoidable.ts   regenerate signals/avoidable/*.json from postmortem
+test/
+  *.test.ts, signals/*.test.ts, fixtures/   bun:test suite + fixture data
 ```
 
 ## Troubleshooting

@@ -68,3 +68,10 @@ export async function writeCredentials(
 
   return envPath;
 }
+
+/** SQLite cache path: BMPL_DB_PATH, else `bmpl.db` next to the .env we use. */
+export async function resolveDbPath(): Promise<string> {
+  const override = (process.env.BMPL_DB_PATH ?? "").trim();
+  if (override) return override;
+  return path.join(path.dirname(await resolveEnvPath()), "bmpl.db");
+}

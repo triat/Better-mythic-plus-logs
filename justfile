@@ -76,6 +76,10 @@ build-windows-native:
 introspect type="Character":
     bun scripts/introspect.ts {{type}}
 
+# refresh the avoidable-damage spell list from postmortem
+import-avoidable:
+    bun scripts/import-postmortem-avoidable.ts
+
 # dump raw zoneRankings JSON for a char
 raw-rankings name realm zone *flags:
     bun src/cli.ts raw-rankings {{name}} {{realm}} --zone {{zone}} {{flags}}

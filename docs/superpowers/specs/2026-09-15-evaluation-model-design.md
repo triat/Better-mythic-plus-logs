@@ -155,8 +155,8 @@ when fewer than 5 runs — displayed as "n/a (needs ≥ 5 runs)".
 
 | id | input | curve | weights |
 |---|---|---|---|
-| `potions` | mean `consumables.potions` per run (runs with consumables) | `[0,20] [1,55] [2,85] [3,100]` | 2 |
-| `healthstones` | mean `consumables.healthstones` | `[0,40] [1,80] [2,100]` | 1 |
+| `potions` | mean `consumables.potions` per run (runs with consumables) | `[0,20] [2,55] [4,85] [6,100]` (fixtures: serious players use 5–6 combat potions per key) | 2 |
+| `healthstones` | mean `consumables.healthstones` | `[0,40] [1,70] [2,90] [3,100]` | 1 |
 | `ilvlVsLevel` | `rio.itemLevel − expectedIlvl(targetLevel)` (only if `rio.itemLevel`) | `[-20,10] [-10,45] [0,75] [10,100]` | 2 |
 
 `expectedIlvl` is a curve in the config, per season; initial for Midnight S2

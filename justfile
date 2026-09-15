@@ -10,6 +10,10 @@ install:
 check:
     bun run typecheck
 
+# run unit tests
+test *args:
+    bun test {{args}}
+
 # dev watch mode — pass CLI args after: `just dev ping`
 dev *args:
     bun --watch src/cli.ts {{args}}

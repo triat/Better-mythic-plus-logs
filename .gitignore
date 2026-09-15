@@ -8,3 +8,7 @@ bmpl
 bmpl.exe
 *.log
 .DS_Store
+bmpl.db
+bmpl.db-journal
+bmpl.db-wal
+bmpl.db-shm

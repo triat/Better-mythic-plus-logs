@@ -5,14 +5,7 @@ import {
 } from "./clipboard.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import { renderLookup } from "./format-mplus.ts";
-import {
-  analyzeLookup,
-  enrichLookupResult,
-  fetchMplusData,
-  filterBySpec,
-  inferTargetLevel,
-  uniqueSpecs,
-} from "./mplus.ts";
+import { performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
 
 export interface WatchOptions {
@@ -87,40 +80,18 @@ export async function runWatch(opts: WatchOptions): Promise<void> {
     console.log(divider());
 
     try {
-      const data = await fetchMplusData(parsed.name, parsed.realm, {
+      const o = await performLookup({
+        name: parsed.name,
+        realm: parsed.realm,
+        level: opts.level,
+        spec: opts.spec,
         metric: opts.metric,
-        specFilter: opts.spec,
+        enrich: opts.enrich,
       });
-      const runs = opts.spec ? filterBySpec(data.runs, opts.spec) : data.runs;
-      if (opts.spec && runs.length === 0) {
-        const avail = uniqueSpecs(data.runs);
-        console.log(
-          err(
-            `No runs for spec "${opts.spec}". Specs on this character: ${
-              avail.length > 0 ? avail.join(", ") : "(none)"
-            }.`,
-          ),
-        );
+      if (!o.ok) {
+        console.log(err("✗ " + o.error));
       } else {
-        const filtered = opts.spec
-          ? { ...data, runs, specFilter: opts.spec }
-          : data;
-        const inferred = inferTargetLevel(filtered.runs);
-        const effective = opts.level ?? inferred;
-        if (effective === null) {
-          console.log(
-            err("✗ no runs found — cannot auto-detect target level."),
-          );
-        } else {
-          const result = analyzeLookup(
-            filtered.runs,
-            effective,
-            filtered.seasonDungeons,
-            opts.level === null,
-          );
-          if (opts.enrich) await enrichLookupResult(filtered, result);
-          console.log(renderLookup(filtered, result));
-        }
+        console.log(renderLookup(o.data, o.result));
       }
     } catch (e) {
       console.error(

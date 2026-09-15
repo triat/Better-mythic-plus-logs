@@ -45,33 +45,6 @@ export const renderHeader = (data: MPlusData): string => {
   return lines.join("\n");
 };
 
-const deathColor = (n: number): string => {
-  const label = `${n} death${n === 1 ? "" : "s"}`;
-  if (n === 0) return pc.green(label);
-  if (n <= 2) return pc.yellow(label);
-  return pc.red(pc.bold(label));
-};
-
-const dtpsCompareTag = (r: MPlusRun): string => {
-  const q = r.quality;
-  if (!q || q.peerMedianDtps === null || q.peerMedianDtps === 0) return "";
-  const deltaPct = (q.dtps - q.peerMedianDtps) / q.peerMedianDtps * 100;
-  const sign = deltaPct >= 0 ? "+" : "";
-  const label = `${sign}${deltaPct.toFixed(0)}% vs ${q.peerCount} dps peer${q.peerCount === 1 ? "" : "s"}`;
-  if (deltaPct <= -10) return pc.green(label);
-  if (deltaPct <= 10) return dim(label);
-  if (deltaPct <= 30) return pc.yellow(label);
-  return pc.red(pc.bold(label));
-};
-
-const renderQuality = (r: MPlusRun): string => {
-  if (!r.quality) return "";
-  const dtps = formatDps(r.quality.dtps);
-  const cmp = dtpsCompareTag(r);
-  const cmpPart = cmp ? `  ${dim("·")}  ${cmp}` : "";
-  return `${deathColor(r.quality.deaths)}  ${dim("·")}  ${dtps} dtps${cmpPart}`;
-};
-
 const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
   const amount = formatDps(r.amount);
   const parse = percentileColor(r.parsePercent);
@@ -83,9 +56,7 @@ const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
       ? pc.yellow(ageText)
       : dim(ageText);
   const mainLine = `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}%  ${dim(r.spec)}  ${ageTag}`;
-  const quality = renderQuality(r);
-  const qualityLine = quality ? `\n${indent}   ${quality}` : "";
-  return `${mainLine}${qualityLine}\n${indent}${dim("  → ")}${url}`;
+  return `${mainLine}\n${indent}${dim("  → ")}${url}`;
 };
 
 export const renderLookup = (

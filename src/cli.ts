@@ -16,16 +16,10 @@ import type {
 } from "./wcl/types.ts";
 import { classColor, classNames, dim, err, heading, ok } from "./format.ts";
 import { config } from "./config.ts";
-import {
-  analyzeLookup,
-  enrichLookupResult,
-  fetchMplusData,
-  filterBySpec,
-  inferTargetLevel,
-  uniqueSpecs,
-} from "./mplus.ts";
+import { fetchMplusData, filterBySpec, uniqueSpecs } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
 import { renderLookup, renderSummary } from "./format-mplus.ts";
+import { buildLookupPayload, performLookup } from "./lookup.ts";
 import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
 import { runServer } from "./server.ts";
 import { runWatch } from "./watch.ts";
@@ -145,59 +139,16 @@ async function cmdLookup(
   enrich: boolean,
   json: boolean,
 ): Promise<void> {
-  let data = await fetchMplusData(name, realm, {
-    metric,
-    specFilter: spec,
-  });
-  data = applySpecFilter(data, spec, json);
-  const inferred = inferTargetLevel(data.runs);
-  const effective = targetLevel ?? inferred;
-  if (effective === null) {
-    console.error(
-      err(
-        "✗ cannot auto-detect --level: no runs found for this character. Pass --level <N> explicitly.",
-      ),
-    );
+  const o = await performLookup({ name, realm, level: targetLevel, spec, metric, enrich });
+  if (!o.ok) {
+    console.error(json ? o.error : err("✗ " + o.error));
     process.exit(1);
   }
-  const result = analyzeLookup(
-    data.runs,
-    effective,
-    data.seasonDungeons,
-    targetLevel === null,
-  );
-  if (enrich) await enrichLookupResult(data, result);
   if (json) {
-    console.log(
-      JSON.stringify(
-        {
-          character: {
-            ...data.character,
-            realmSlug: realmToSlug(realm),
-            region: config.region,
-          },
-          zone: {
-            id: data.zoneID,
-            name: data.zoneName,
-            partition: data.partition,
-          },
-          metric: data.metric,
-          metricAutoSelected: data.metricAutoSelected,
-          specFilter: data.specFilter,
-          runsIndexed: data.runs.length,
-          seasonDungeons: data.seasonDungeons,
-          targetLevel: result.targetLevel,
-          atOrAboveTargetCount: result.atOrAboveTarget.length,
-          prevLevelBest: result.prevLevelBest,
-          perDungeon: result.perDungeon,
-        },
-        null,
-        2,
-      ),
-    );
+    console.log(JSON.stringify(buildLookupPayload(o, realm), null, 2));
     return;
   }
-  console.log(renderLookup(data, result));
+  console.log(renderLookup(o.data, o.result));
 }
 
 async function cmdMplus(

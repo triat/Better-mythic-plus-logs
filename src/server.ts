@@ -6,14 +6,7 @@ import {
 } from "./clipboard.ts";
 import { hasCredentials } from "./config.ts";
 import { dim, err, heading, ok } from "./format.ts";
-import {
-  analyzeLookup,
-  enrichLookupResult,
-  fetchMplusData,
-  filterBySpec,
-  inferTargetLevel,
-  uniqueSpecs,
-} from "./mplus.ts";
+import { buildLookupPayload, performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
 import { renderMainPage, renderSetupPage } from "./server-ui.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
@@ -168,57 +161,17 @@ export async function runLookupWithCache(opts: {
   }
 
   try {
-    const data = await fetchMplusData(target.name, target.realm, {
+    const o = await performLookup({
+      name: target.name,
+      realm: target.realm,
+      level: opts.level,
+      spec: opts.spec,
       metric: opts.metric ?? undefined,
-      specFilter: opts.spec,
+      enrich: true,
+      refresh: opts.refresh,
     });
-    const runs = opts.spec ? filterBySpec(data.runs, opts.spec) : data.runs;
-    if (opts.spec && runs.length === 0) {
-      const avail = uniqueSpecs(data.runs);
-      return {
-        ok: false,
-        status: 404,
-        error: `No runs for spec "${opts.spec}". ${
-          avail.length > 0
-            ? "Specs on this character: " + avail.join(", ")
-            : "Character has no runs this season."
-        }`,
-      };
-    }
-    const filtered = opts.spec ? { ...data, runs, specFilter: opts.spec } : data;
-    const inferred = inferTargetLevel(filtered.runs);
-    const effective = opts.level ?? inferred;
-    if (effective === null) {
-      return {
-        ok: false,
-        status: 404,
-        error:
-          "No runs found — cannot auto-detect target level. Pass `level` explicitly.",
-      };
-    }
-    const result = analyzeLookup(
-      filtered.runs,
-      effective,
-      filtered.seasonDungeons,
-      opts.level === null,
-    );
-    await enrichLookupResult(filtered, result);
-
-    const payload = {
-      character: filtered.character,
-      zone: {
-        id: filtered.zoneID,
-        name: filtered.zoneName,
-        partition: filtered.partition,
-      },
-      metric: filtered.metric,
-      metricAutoSelected: filtered.metricAutoSelected,
-      alternateMetricHasData: filtered.alternateMetricHasData,
-      specFilter: filtered.specFilter,
-      runsIndexed: filtered.runs.length,
-      seasonDungeons: filtered.seasonDungeons,
-      ...result,
-    };
+    if (!o.ok) return { ok: false, status: o.status, error: o.error };
+    const payload = buildLookupPayload(o, target.realm);
 
     addHistoryEntry({
       key,
@@ -231,10 +184,10 @@ export async function runLookupWithCache(opts: {
       fetchedAt: Date.now(),
       result: payload,
       label: requestCharacter,
-      charClass: filtered.character.classID,
-      spec: filtered.character.spec,
-      targetLevel: result.targetLevel,
-      targetAutoDetected: result.targetAutoDetected,
+      charClass: o.data.character.classID,
+      spec: o.data.character.spec,
+      targetLevel: o.result.targetLevel,
+      targetAutoDetected: o.result.targetAutoDetected,
     });
 
     return { ok: true, key, result: payload, fromCache: false };

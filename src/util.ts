@@ -70,6 +70,13 @@ export const formatDps = (dps: number): string => {
 export const formatInt = (n: number): string =>
   n.toLocaleString("en-US");
 
+export const formatDuration = (ms: number): string => {
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+};
+
 export const wclReportUrl = (code: string, fightID: number): string =>
   `https://www.warcraftlogs.com/reports/${code}#fight=${fightID}`;
 

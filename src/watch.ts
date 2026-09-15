@@ -91,7 +91,7 @@ export async function runWatch(opts: WatchOptions): Promise<void> {
       if (!o.ok) {
         console.log(err("✗ " + o.error));
       } else {
-        console.log(renderLookup(o.data, o.result));
+        console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary));
       }
     } catch (e) {
       console.error(

@@ -148,7 +148,7 @@ async function cmdLookup(
     console.log(JSON.stringify(buildLookupPayload(o, realm), null, 2));
     return;
   }
-  console.log(renderLookup(o.data, o.result));
+  console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary));
 }
 
 async function cmdMplus(

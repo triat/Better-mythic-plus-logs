@@ -1,4 +1,4 @@
-import type { LookupResult, MPlusData, MPlusRun } from "../mplus.ts";
+import type { LookupResult, MPlusRun } from "../mplus.ts";
 import { gql as realGql } from "../wcl/client.ts";
 import {
   REPORT_RUN_SUMMARY_QUERY,
@@ -76,10 +76,3 @@ export async function enrichRuns(
     }),
   );
 }
-
-export const enrichLookupResult = (
-  data: MPlusData,
-  result: LookupResult,
-  store: Store,
-  deps: Deps = {},
-): Promise<void> => enrichRuns(displayedRuns(result), data.character.name, store, deps);

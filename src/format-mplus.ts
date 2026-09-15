@@ -8,11 +8,76 @@ import {
   heading,
   percentileColor,
 } from "./format.ts";
-import { ageInDays, formatAge, formatDps, wclReportUrl } from "./util.ts";
+import type { SignalSummary } from "./signals/summary.ts";
+import type { RioProfile, RunSignals } from "./signals/types.ts";
+import { ageInDays, formatAge, formatDps, formatDuration, wclReportUrl } from "./util.ts";
 
 const STALE_DAYS = 14;
 
 const metricLabel = (m: Metric): string => m;
+
+const deathsText = (s: RunSignals): string => {
+  const n = s.deaths.count;
+  const wipes = s.deaths.events.filter((e) => e.inWipe).length;
+  const label = `${n} death${n === 1 ? "" : "s"}` + (wipes > 0 ? ` (${wipes} in wipe)` : "");
+  if (n === 0) return pc.green(label);
+  if (n <= 2) return pc.yellow(label);
+  return pc.red(pc.bold(label));
+};
+
+const lowerIsBetter = (deltaPct: number, label: string): string => {
+  if (deltaPct <= -10) return pc.green(label);
+  if (deltaPct <= 10) return dim(label);
+  if (deltaPct <= 30) return pc.yellow(label);
+  return pc.red(pc.bold(label));
+};
+
+const dtpsText = (s: RunSignals): string => {
+  const base = `${formatDps(s.damageTaken.dtps)} dtps`;
+  const p = s.damageTaken.peer;
+  if (!p || p.median <= 0) return base;
+  const delta = ((s.damageTaken.dtps - p.median) / p.median) * 100;
+  const sign = delta >= 0 ? "+" : "";
+  return `${base} ${lowerIsBetter(delta, `${sign}${delta.toFixed(0)}% vs ${p.count} dps peer${p.count === 1 ? "" : "s"}`)}`;
+};
+
+const avoidableText = (s: RunSignals): string | null => {
+  const a = s.avoidableDamage;
+  if (!a) return null;
+  const base = `avoidable ${formatDps(a.perMinute)}/min`;
+  if (!a.peer || a.peer.median <= 0) return base;
+  const delta = ((a.perMinute - a.peer.median) / a.peer.median) * 100;
+  const sign = delta >= 0 ? "+" : "";
+  return `${base} ${lowerIsBetter(delta, `(${sign}${delta.toFixed(0)}%)`)}`;
+};
+
+const kicksText = (s: RunSignals): string => {
+  const i = s.interrupts;
+  if (i.capacity === null || i.usage === null) return dim(`kicks ${i.count} (no kick on spec)`);
+  const base = `kicks ${i.count}/${Math.round(i.capacity)}`;
+  if (!i.peer) return base;
+  const peerPct = `(peer ${Math.round(i.peer.median * 100)}%)`;
+  const delta = (i.usage - i.peer.median) * 100;
+  const colored = delta >= 0 ? pc.green(peerPct) : delta < -25 ? pc.red(peerPct) : dim(peerPct);
+  return `${base} ${colored}`;
+};
+
+export const renderRunSignals = (s: RunSignals): string => {
+  const parts = [deathsText(s), dtpsText(s)];
+  const av = avoidableText(s);
+  if (av) parts.push(av);
+  parts.push(kicksText(s), `dispels ${s.dispels.count}`);
+  return parts.join(`  ${dim("·")}  `);
+};
+
+const keyBadge = (r: MPlusRun): string => {
+  const level = pc.bold(`+${r.keyLevel}`);
+  const s = r.signals;
+  if (!s || s.partial) return level;
+  return s.keystone.timed
+    ? `${level} ${pc.green(`✓+${s.keystone.chests} ${formatDuration(s.keystone.timeMs)}`)}`
+    : `${level} ${pc.red(`✗ depleted ${formatDuration(s.keystone.timeMs)}`)}`;
+};
 
 export const renderHeader = (data: MPlusData): string => {
   const c = data.character;
@@ -48,7 +113,7 @@ export const renderHeader = (data: MPlusData): string => {
 const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
   const amount = formatDps(r.amount);
   const parse = percentileColor(r.parsePercent);
-  const level = pc.bold(`+${r.keyLevel}`);
+  const level = keyBadge(r);
   const url = dim(wclReportUrl(r.reportCode, r.fightID));
   const ageText = formatAge(r.startTime);
   const ageTag =
@@ -56,16 +121,40 @@ const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
       ? pc.yellow(ageText)
       : dim(ageText);
   const mainLine = `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}%  ${dim(r.spec)}  ${ageTag}`;
-  return `${mainLine}\n${indent}${dim("  → ")}${url}`;
+  const quality = r.signals ? renderRunSignals(r.signals) : "";
+  const qualityLine = quality ? `\n${indent}   ${quality}` : "";
+  return `${mainLine}${qualityLine}\n${indent}${dim("  → ")}${url}`;
 };
 
 export const renderLookup = (
   data: MPlusData,
   result: LookupResult,
+  rio: RioProfile | null,
+  rioError: string | undefined,
+  summary: SignalSummary,
 ): string => {
   const lines: string[] = [];
   lines.push(renderHeader(data));
   lines.push("");
+
+  const fmtDelta = (v: number | null, unit: "%" | "pts", lowerBetter: boolean): string => {
+    if (v === null) return dim("—");
+    const label = `${v >= 0 ? "+" : ""}${v.toFixed(0)}${unit}`;
+    const good = lowerBetter ? v <= -10 : v >= 0;
+    const bad = lowerBetter ? v > 30 : v < -25;
+    return good ? pc.green(label) : bad ? pc.red(label) : dim(label);
+  };
+  const tiles: string[] = [];
+  tiles.push(`timed ${summary.timedShown === null ? dim("—") : `${summary.timedShown}/${summary.runsWithSignals}`}`);
+  tiles.push(`avg deaths ${summary.avgDeaths === null ? dim("—") : summary.avgDeaths.toFixed(1)}${summary.deathsInWipes ? dim(` (${summary.deathsInWipes} in wipes)`) : ""}`);
+  tiles.push(`Δdtps ${fmtDelta(summary.dtpsDeltaPct, "%", true)}`);
+  tiles.push(`avoidable ${fmtDelta(summary.avoidableDeltaPct, "%", true)}`);
+  tiles.push(`kicks ${fmtDelta(summary.kicksDeltaPts, "pts", false)}`);
+  tiles.push(`ilvl ${summary.ilvl ?? dim("—")}`);
+  tiles.push(`RIO recent timed ${summary.recentTotal ? `${summary.recentTimed}/${summary.recentTotal}` : dim("—")}`);
+  tiles.push(`prev season ${summary.prevSeason ? `${summary.prevSeason.all.toFixed(0)} (${summary.prevSeason.best.role})` : dim("— no data (reroll?)")}`);
+  lines.push(dim("  ") + tiles.join(dim("  ·  ")));
+
   const autoTag = result.targetAutoDetected
     ? dim(" (auto — highest key run)")
     : "";
@@ -141,6 +230,18 @@ export const renderLookup = (
         lines.push(dim(`    (no runs in: ${missing.join(", ")})`));
       }
     }
+  }
+
+  lines.push("");
+  if (rio) {
+    lines.push(heading("Recent (Raider.IO)") + dim(`  · ${rio.profileUrl}`));
+    for (const r of rio.recentRuns.slice(0, 10)) {
+      const timed = r.chests > 0 ? pc.green(`✓+${r.chests}`) : pc.red("✗");
+      lines.push(`    ${pc.bold(`+${r.level}`)} ${r.dungeon.padEnd(24)} ${timed} ${formatDuration(r.clearMs)}/${formatDuration(r.parMs)}  ${dim(formatAge(r.completedAt))}`);
+    }
+    if (rio.recentRuns.length === 0) lines.push(dim("    (no recent runs on Raider.IO)"));
+  } else {
+    lines.push(dim(`  Raider.IO: ${rioError ?? "no data"}`));
   }
 
   return lines.join("\n");

@@ -75,18 +75,18 @@ serve *flags:
 evaluate file *flags:
     bun src/cli.ts evaluate {{file}} {{flags}}
 
-# build a standalone binary for the current platform (./bmpl)
-build:
+# build a standalone binary for the current platform (./bmpl) — builds the web front first
+build: web-build
     bun build src/cli.ts --compile --outfile bmpl
 
 # cross-compile a standalone Windows executable (./bmpl.exe)
 # Note: --windows-hide-console is only available when compiling ON Windows;
 # for a truly console-free launch, run this recipe on a Windows host.
-build-windows:
+build-windows: web-build
     bun build src/cli.ts --compile --target=bun-windows-x64 --outfile bmpl.exe
 
 # build on Windows (PowerShell) — adds --windows-hide-console so double-click has no console flash
-build-windows-native:
+build-windows-native: web-build
     bun build src/cli.ts --compile --windows-hide-console --windows-title="bmpl" --outfile bmpl.exe
 
 # introspect a GraphQL type (defaults to Character)

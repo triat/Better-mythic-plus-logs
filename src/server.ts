@@ -1,3 +1,4 @@
+import type { Server } from "bun";
 import pc from "picocolors";
 import {
   type ClipboardBackend,
@@ -8,15 +9,18 @@ import { hasCredentials } from "./config.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
-import { renderMainPage, renderSetupPage } from "./server-ui.ts";
 import { closeStore } from "./signals/store.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
 import { parseNameRealm, parseRaiderIOUrl } from "./util.ts";
 import { resetAuthCache } from "./wcl/auth.ts";
+import { createStaticHandler, defaultAssetLoader } from "./web-static.ts";
+import type { AssetLoader } from "./web-static.ts";
 
 export interface ServeOptions {
   port: number;
   open: boolean;
+  /** Test hook: where the built front lives. Default: embedded web/dist. */
+  assets?: AssetLoader;
 }
 
 interface LookupRequest {
@@ -94,9 +98,6 @@ const jsonResponse = (data: unknown, status = 200): Response =>
     status,
     headers: { "Content-Type": "application/json" },
   });
-
-const html = (body: string): Response =>
-  new Response(body, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 
 const parseMetric = (raw: string | null | undefined): Metric | undefined => {
   if (!raw) return undefined;
@@ -413,7 +414,10 @@ const openBrowser = (url: string): void => {
   }
 };
 
-export async function runServer(opts: ServeOptions): Promise<void> {
+// Installed bun-types (1.3.12) requires an explicit WebSocketData type argument on
+// `Server` (it had none when this task was verified on Bun 1.3.4); `undefined` matches
+// `Bun.serve`'s default here since we don't use the websocket upgrade API.
+export async function runServer(opts: ServeOptions): Promise<Server<undefined>> {
   if (process.listenerCount("SIGINT") === 0) {
     process.on("SIGINT", () => {
       closeStore();
@@ -422,6 +426,7 @@ export async function runServer(opts: ServeOptions): Promise<void> {
   }
 
   const envPathHint = await resolveEnvPath();
+  const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader);
 
   const server = Bun.serve({
     port: opts.port,
@@ -432,14 +437,9 @@ export async function runServer(opts: ServeOptions): Promise<void> {
       const url = new URL(req.url);
       const path = url.pathname;
 
-      if (req.method === "GET" && path === "/") {
-        if (!hasCredentials()) {
-          return Response.redirect("/setup", 302);
-        }
-        return html(renderMainPage());
-      }
-      if (req.method === "GET" && path === "/setup") {
-        return html(renderSetupPage(hasCredentials()));
+      if (req.method === "GET") {
+        const staticRes = await serveStatic(path);
+        if (staticRes) return staticRes;
       }
       if (req.method === "POST" && path === "/api/setup") {
         return handleSetup(req);
@@ -572,4 +572,6 @@ export async function runServer(opts: ServeOptions): Promise<void> {
     // tiny delay so the server is ready before the browser hits it
     setTimeout(() => openBrowser(url), 80);
   }
+
+  return server;
 }

@@ -9,7 +9,7 @@
   "scripts": {
     "start": "bun src/cli.ts",
     "dev": "bun --watch src/cli.ts",
-    "build": "bun build src/cli.ts --compile --outfile bmpl",
+    "build": "bun run --cwd web build && bun build src/cli.ts --compile --outfile bmpl",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },

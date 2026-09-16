@@ -3,6 +3,7 @@ import { api } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest } from "./types.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { useSse } from "./useSse.ts";
+import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import { EMPTY_FORM, Header } from "./components/Header.tsx";
 import type { LookupForm } from "./components/Header.tsx";
@@ -192,9 +193,31 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
           <Detail payload={activePayload} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} onRefresh={onRefresh} />
         )}
         {!empty && !compareOpen && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
-        {compareOpen && <div className="muted">compare view (Task 9)</div>}
+        {compareOpen && (
+          <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => void showTab(k)} />
+        )}
       </main>
       <Toast message={toast} onClose={closeToast} />
     </>
   );
+}
+
+function CompareLoader(p: {
+  keys: string[];
+  tabs: HistoryItem[];
+  cache: Map<string, LookupPayload>;
+  fetchPayload: (key: string) => Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }>;
+  onJump: (key: string) => void;
+}) {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    Promise.all(p.keys.map((k) => p.fetchPayload(k))).then(() => { if (alive) bump((n) => n + 1); });
+    return () => { alive = false; };
+  }, [p.keys.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const entries = p.keys
+    .map((k) => ({ item: p.tabs.find((t) => t.key === k), payload: p.cache.get(k) }))
+    .filter((e): e is { item: HistoryItem; payload: LookupPayload } => !!e.item && !!e.payload);
+  if (entries.length < 2) return <div className="muted"><span className="spinner" /> building compare view…</div>;
+  return <Compare entries={entries} onJump={p.onJump} />;
 }

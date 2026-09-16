@@ -67,8 +67,11 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   const [stopped, setStopped] = useState(false);
   const payloads = useRef(new Map<string, LookupPayload>());
   // Re-render trigger for the payload cache (a ref does not re-render on its own).
-  const [, bump] = useState(0);
+  const [tick, bump] = useState(0);
   const touch = () => bump((n) => n + 1);
+  // Latest active key for async callbacks that outlive a tab switch (see reloadActive).
+  const activeKeyRef = useRef(activeKey);
+  activeKeyRef.current = activeKey;
 
   const loadHistory = useCallback(async (): Promise<HistoryItem[]> => {
     const r = await api.history();
@@ -122,6 +125,12 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   useEffect(() => {
     loadHistory().then((items) => { if (items.length > 0) void showTab(items[0]!.key); });
   }, [loadHistory, showTab]);
+
+  // Self-heal: whenever the cache was cleared (e.g. by a reload that raced a tab switch),
+  // re-fetch the active tab so it never sits on "loading…". `tick` re-runs this after touch().
+  useEffect(() => {
+    if (activeKey && !payloads.current.has(activeKey)) void fetchPayload(activeKey);
+  }, [activeKey, fetchPayload, tick]);
 
   const runLookup = useCallback(async (req: LookupRequest, refresh: boolean) => {
     setBusy(`${refresh ? "refreshing" : "looking up"} ${req.character}…`);
@@ -205,18 +214,20 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   /** Drop every cached payload (analyses/table edits affect all tabs server-side) and reload the active one. */
   const reloadActive = useCallback(async () => {
     payloads.current.clear();
-    if (activeKey) await fetchPayload(activeKey);
+    const key = activeKeyRef.current;
+    if (key) await fetchPayload(key);
     touch();
-  }, [activeKey, fetchPayload]);
+  }, [fetchPayload]);
 
   const analyze = useCallback(async (run: { reportCode: string; fightID: number }, force = false) => {
     if (!activePayload) return;
     const key = `${run.reportCode}:${run.fightID}`;
     setAnalyzing(key);
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
-    setAnalyzing(null);
-    if (!r.ok) { setToast(r.error); return false; }
+    if (!r.ok) { setAnalyzing(null); setToast(r.error); return false; }
+    // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
+    setAnalyzing(null);
     return true;
   }, [activePayload, reloadActive]);
 

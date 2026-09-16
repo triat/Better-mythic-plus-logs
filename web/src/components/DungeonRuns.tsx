@@ -78,7 +78,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
           </button>
         )}
         {run.signals && a && (
-          <button type="button" className={"btn btn-sm" + (expanded ? " active" : "")} onClick={onToggle}>
+          <button type="button" className={"btn btn-sm" + (expanded ? " active" : "")} onClick={onToggle} aria-expanded={expanded}>
             Analyzed ✓ <span className={"chev" + (expanded ? " open" : "")}>›</span>
           </button>
         )}

@@ -146,7 +146,7 @@ describe("renderDeepdive", () => {
         { id: 642, name: "Divine Shield", cooldownS: 300, durationS: 8, kind: "immunity", origin: "override", casts: 5, capacity: 6, usage: 5 / 6, observedMinIntervalS: 310, cdMismatch: false },
       ],
       deaths: [
-        { atMs: 1_764_223, inWipe: false, killingHits: [{ name: "Cosmic Crash", amount: 559197, share: 0.55 }, { name: "Unstable Singularity", amount: 458887, share: 0.45 }], killingBlow: "Unstable Singularity", available: ["Divine Shield"], active: [], onCooldown: [{ name: "Divine Protection", readyInS: 12 }], verdict: "immunity available" },
+        { atMs: 1_764_223, inWipe: false, killingHits: [{ id: 1300372, name: "Cosmic Crash", amount: 559197, share: 0.55 }, { id: 1264188, name: "Unstable Singularity", amount: 458887, share: 0.45 }], killingBlow: "Unstable Singularity", available: ["Divine Shield"], active: [], onCooldown: [{ name: "Divine Protection", readyInS: 12 }], verdict: "immunity available" },
         { atMs: 100_000, inWipe: true, killingHits: [], killingBlow: null, available: [], active: ["Divine Protection"], onCooldown: [], verdict: "covered" },
       ],
     };

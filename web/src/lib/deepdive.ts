@@ -18,7 +18,9 @@ export function unanalyzedRuns(p: LookupPayload): MPlusRun[] {
 }
 
 export interface UsageRow { id: number; name: string; kind: DefensiveUse["kind"]; counts: string; pct: number; pctText: string; cls: string; cd: string; mismatch: boolean; origin: DefensiveUse["origin"]; countsUsage: boolean }
-export interface DeathLine { time: string; verdict: DeathAnalysis["verdict"]; cls: string; wipe: boolean; hits: string; blow: string | null; states: { text: string; cls: string }[] }
+/** A spell mention: `id` null when WCL gave no guid (no Wowhead link then). */
+export interface SpellRef { id: number | null; name: string }
+export interface DeathLine { time: string; verdict: DeathAnalysis["verdict"]; cls: string; wipe: boolean; hits: (SpellRef & { text: string })[]; blow: string | null; states: (SpellRef & { text: string; cls: string })[] }
 export interface PanelModel {
   title: string; meta: string; notice: string | null;
   usage: UsageRow[]; majorsText: string | null;
@@ -41,14 +43,14 @@ const usageRow = (u: DefensiveUse): UsageRow => {
   };
 };
 
-const deathLine = (x: DeathAnalysis): DeathLine => ({
+const deathLine = (x: DeathAnalysis, idOf: (name: string) => number | null): DeathLine => ({
   time: mmss(x.atMs), verdict: x.verdict, cls: verdictTone(x.verdict), wipe: x.inWipe,
-  hits: x.killingHits.map((h) => `${h.name} ${Math.round(h.share * 100)}%`).join(" · "),
+  hits: x.killingHits.map((h) => ({ id: h.id, name: h.name, text: `${Math.round(h.share * 100)}%` })),
   blow: x.killingBlow ? `killing blow: ${x.killingBlow}` : null,
   states: [
-    ...x.active.map((n) => ({ text: `${n} active`, cls: "tone-good" })),
-    ...x.available.map((n) => ({ text: `${n} available`, cls: "tone-bad" })),
-    ...x.onCooldown.map((c) => ({ text: `${c.name} on cd · ${c.readyInS} s left`, cls: "faint" })),
+    ...x.active.map((n) => ({ id: idOf(n), name: n, text: "active", cls: "tone-good" })),
+    ...x.available.map((n) => ({ id: idOf(n), name: n, text: "available", cls: "tone-bad" })),
+    ...x.onCooldown.map((c) => ({ id: idOf(c.name), name: c.name, text: `on cd · ${c.readyInS} s left`, cls: "faint" })),
   ],
 });
 
@@ -73,8 +75,8 @@ export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: st
     usage: d.defensives.map(usageRow),
     majorsText: d.majorUsage === null ? null : `majors used ${Math.round(d.majorUsage * 100)}% of possible`,
     deathsHeadline: d.deaths.length === 0 ? "No deaths" : `${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`,
-    deaths: d.deaths.map(deathLine),
-    unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: `${u.name} · ${u.casts}× · ${u.uptimeS} s up` })),
+    deaths: d.deaths.map((x) => deathLine(x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
+    unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: ` · ${u.casts}× · ${u.uptimeS} s up` })),
     tableUsed: `Table used: ${specClass} · ${d.defensives.length} entries · ${overrides} from your override`,
   };
 }

@@ -149,6 +149,10 @@ your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"` or
 override, override entries marked); `bmpl defensives --check` validates the
 override file without printing anything else.
 
+Every spell name in the panel links to Wowhead and shows the spell's tooltip
+on hover (Wowhead's `tooltips.js`, loaded from `wow.zamimg.com` — the only
+third-party script in the UI; without internet the names are plain links).
+
 The shipped table (`src/deepdive/defensives.json`, version `mn-2.2`) was
 audited on 2026-09-16 against the top 2 Voidscar Arena runs of every spec:
 entries nobody cast were dropped, ids corrected, audit noise (beacons, raid

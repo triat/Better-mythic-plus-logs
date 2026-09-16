@@ -48,7 +48,7 @@ function deathOf(entry: RawTableEntry, atMs: number, inWipe: boolean, raw: RawDe
   const abilities = (entry.damage?.abilities ?? []).filter((a) => typeof a.total === "number");
   const sum = abilities.reduce((s, a) => s + (a.total ?? 0), 0);
   const killingHits = [...abilities].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 3)
-    .map((a) => ({ name: a.name, amount: a.total ?? 0, share: sum > 0 ? (a.total ?? 0) / sum : 0 }));
+    .map((a) => ({ id: a.guid ?? null, name: a.name, amount: a.total ?? 0, share: sum > 0 ? (a.total ?? 0) / sum : 0 }));
   const deathTs = fightStart + atMs;
   const available: string[] = [];
   const active: string[] = [];

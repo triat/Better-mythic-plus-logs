@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DefensiveKind, OverrideEntry, RunDefensives } from "../types.ts";
 import { costText, panelModel } from "../lib/deepdive.ts";
+import { SpellLink, useWowheadRefresh } from "./SpellLink.tsx";
 
 interface Props {
   d: RunDefensives;
@@ -15,6 +16,7 @@ const KINDS: DefensiveKind[] = ["major", "immunity", "minor"];
 
 export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Props) {
   const m = panelModel(d, Date.now(), tableWarning);
+  useWowheadRefresh(d);
   const [tableOpen, setTableOpen] = useState(false);
   // Inline "add" form: which unlisted id, as which kind.
   const [adding, setAdding] = useState<{ id: number; name: string; kind: DefensiveKind } | null>(null);
@@ -54,7 +56,7 @@ export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Pro
           <div className="dd-usage">
             {m.usage.map((u) => (
               <div key={u.id} className="dd-row">
-                <span>{u.name}{u.origin === "override" && <span className="faint"> · override</span>}</span>
+                <span><SpellLink id={u.id} name={u.name} />{u.origin === "override" && <span className="faint"> · override</span>}</span>
                 <span className="faint">{u.kind}</span>
                 <span className="mono">{u.counts}</span>
                 <span className={"mono " + u.cls}>{u.pctText}</span>
@@ -72,8 +74,8 @@ export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Pro
         <div key={i} className={"dd-death" + (x.wipe ? " dd-wipe" : "")}>
           <span className="mono">{x.time}</span>
           <span className={x.cls}>{x.verdict}{x.wipe && <span className="chip"> wipe</span>}</span>
-          <span className="faint">{x.hits || "—"}{x.blow && <span> · {x.blow}</span>}</span>
-          <span className="dd-states">{x.states.map((s, j) => <span key={j} className={s.cls}>{j > 0 && <span className="faint"> · </span>}{s.text}</span>)}</span>
+          <span className="faint">{x.hits.length === 0 ? "—" : x.hits.map((h, j) => <span key={j}>{j > 0 && " · "}<SpellLink id={h.id} name={h.name} /> {h.text}</span>)}{x.blow && <span> · {x.blow}</span>}</span>
+          <span className="dd-states">{x.states.map((s, j) => <span key={j} className={s.cls}>{j > 0 && <span className="faint"> · </span>}<SpellLink id={s.id} name={s.name} /> {s.text}</span>)}</span>
         </div>
       ))}
 
@@ -81,7 +83,7 @@ export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Pro
       {m.unlisted.length === 0 && <div className="faint dd-foot">Every self-cast buff is in the table.</div>}
       {m.unlisted.map((u) => (
         <div key={u.id} className="dd-audit">
-          <span>{u.text}</span>
+          <span><SpellLink id={u.id} name={u.name} />{u.text}</span>
           {adding?.id === u.id ? (
             <span className="dd-form">
               <label>cd <input className="mono" value={cd} onChange={(e) => setCd(e.target.value)} size={4} /> s</label>
@@ -103,7 +105,7 @@ export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Pro
       </button>
       {tableOpen && d.defensives.map((u) => (
         <div key={u.id} className="dd-audit">
-          <span>{u.name} <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s{u.origin === "override" ? " · override" : ""}</span></span>
+          <span><SpellLink id={u.id} name={u.name} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s{u.origin === "override" ? " · override" : ""}</span></span>
           {editing?.id === u.id ? (
             <span className="dd-form">
               <label>cd <input className="mono" value={editing.cd} onChange={(e) => setEditing({ id: u.id, cd: e.target.value })} size={4} /> s</label>

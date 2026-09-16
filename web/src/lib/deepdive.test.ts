@@ -10,7 +10,7 @@ const dd = (over: Partial<RunDefensives> = {}): RunDefensives => ({
     { id: 1022, name: "Blessing of Protection", cooldownS: 300, durationS: 10, kind: "minor", origin: "shipped", casts: 3, capacity: 6, usage: 0.5, observedMinIntervalS: null, cdMismatch: false },
   ],
   deaths: [
-    { atMs: 1_764_223, inWipe: false, killingHits: [{ name: "Cosmic Crash", amount: 559197, share: 0.55 }, { name: "Unstable Singularity", amount: 458887, share: 0.45 }], killingBlow: "Unstable Singularity", available: ["Divine Shield"], active: [], onCooldown: [{ name: "Divine Protection", readyInS: 12 }], verdict: "immunity available" },
+    { atMs: 1_764_223, inWipe: false, killingHits: [{ id: 1300372, name: "Cosmic Crash", amount: 559197, share: 0.55 }, { id: 1264188, name: "Unstable Singularity", amount: 458887, share: 0.45 }], killingBlow: "Unstable Singularity", available: ["Divine Shield"], active: [], onCooldown: [{ name: "Divine Protection", readyInS: 12 }], verdict: "immunity available" },
     { atMs: 100_000, inWipe: true, killingHits: [], killingBlow: null, available: [], active: ["Divine Protection"], onCooldown: [], verdict: "covered" },
   ],
   majorUsage: 0.87, avoidableDeaths: 1, countedDeaths: 1,
@@ -56,13 +56,13 @@ describe("panelModel", () => {
     expect(m.deathsHeadline).toBe("1/1 deaths with a defensive available");
     expect(m.deaths[0]).toEqual({
       time: "29:24", verdict: "immunity available", cls: "tone-bad", wipe: false,
-      hits: "Cosmic Crash 55% · Unstable Singularity 45%", blow: "killing blow: Unstable Singularity",
-      states: [{ text: "Divine Shield available", cls: "tone-bad" }, { text: "Divine Protection on cd · 12 s left", cls: "faint" }],
+      hits: [{ id: 1300372, name: "Cosmic Crash", text: "55%" }, { id: 1264188, name: "Unstable Singularity", text: "45%" }], blow: "killing blow: Unstable Singularity",
+      states: [{ id: 642, name: "Divine Shield", text: "available", cls: "tone-bad" }, { id: 498, name: "Divine Protection", text: "on cd · 12 s left", cls: "faint" }],
     });
     expect(m.deaths[1]!.wipe).toBe(true);
     expect(m.deaths[1]!.cls).toBe("tone-good");
-    expect(m.deaths[1]!.states).toEqual([{ text: "Divine Protection active", cls: "tone-good" }]);
-    expect(m.unlisted).toEqual([{ id: 31821, name: "Aura Mastery", text: "Aura Mastery · 2× · 16 s up" }]);
+    expect(m.deaths[1]!.states).toEqual([{ id: 498, name: "Divine Protection", text: "active", cls: "tone-good" }]);
+    expect(m.unlisted).toEqual([{ id: 31821, name: "Aura Mastery", text: " · 2× · 16 s up" }]);
     expect(m.tableUsed).toBe("Table used: Holy Paladin · 3 entries · 1 from your override");
     expect(m.notice).toBeNull();
   });

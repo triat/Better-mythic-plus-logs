@@ -213,3 +213,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
   .dd-death { grid-template-columns: 48px minmax(0, 1fr); }
   .dd-death .dd-states { grid-column: 1 / -1; }
 }
+/* Spell names link to Wowhead (tooltip on hover via tooltips.js). */
+a.spell { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--faint); }
+a.spell:hover { color: var(--link); border-bottom-color: var(--link); }

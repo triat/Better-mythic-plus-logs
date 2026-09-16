@@ -78,7 +78,7 @@ export type DeathVerdict = "immunity available" | "defensive available" | "cover
 export interface DeathAnalysis {
   atMs: number;
   inWipe: boolean;
-  killingHits: { name: string; amount: number; share: number }[];
+  killingHits: { id: number | null; name: string; amount: number; share: number }[]; // id = WCL spell guid (Wowhead link)
   killingBlow: string | null;
   available: string[];
   active: string[];

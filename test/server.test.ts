@@ -2,12 +2,11 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Server } from "bun";
 import { runServer } from "../src/server.ts";
 import { createStaticHandler } from "../src/web-static.ts";
 
 let dir: string;
-let server: Server;
+let server: Awaited<ReturnType<typeof runServer>>;
 
 beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), "bmpl-web-"));

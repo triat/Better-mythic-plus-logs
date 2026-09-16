@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
-import type { HistoryItem, LookupPayload, LookupRequest } from "./types.ts";
+import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from "./types.ts";
+import { unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { STORAGE_KEY, parseStoredKey, reevalHint } from "./lib/keyLevel.ts";
 import { useSse } from "./useSse.ts";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
+import type { DeepdiveActions } from "./components/Detail.tsx";
 import { EMPTY_FORM, Header } from "./components/Header.tsx";
 import type { LookupForm } from "./components/Header.tsx";
 import { Home } from "./components/Home.tsx";
@@ -193,10 +195,52 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
     setStopped(true);
   };
 
-  if (stopped) return <main className="stopped"><h2>bmpl stopped</h2><p className="muted">You can close this tab.</p></main>;
-
   const activeTab = tabs.find((t) => t.key === activeKey) ?? null;
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
+
+  // --- run deep-dive ---
+  const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+
+  /** Drop every cached payload (analyses/table edits affect all tabs server-side) and reload the active one. */
+  const reloadActive = useCallback(async () => {
+    payloads.current.clear();
+    if (activeKey) await fetchPayload(activeKey);
+    touch();
+  }, [activeKey, fetchPayload]);
+
+  const analyze = useCallback(async (run: { reportCode: string; fightID: number }, force = false) => {
+    if (!activePayload) return;
+    const key = `${run.reportCode}:${run.fightID}`;
+    setAnalyzing(key);
+    const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
+    setAnalyzing(null);
+    if (!r.ok) { setToast(r.error); return false; }
+    await reloadActive();
+    return true;
+  }, [activePayload, reloadActive]);
+
+  const analyzeAll = useCallback(async () => {
+    if (!activePayload) return;
+    const todo = unanalyzedRuns(activePayload);
+    for (let i = 0; i < todo.length; i++) {
+      setProgress(`Analyzing ${i + 1}/${todo.length}…`);
+      const ok = await analyze(todo[i]!);
+      if (!ok) break; // a 402/502 stops the batch; the toast says why
+    }
+    setProgress(null);
+  }, [activePayload, analyze]);
+
+  const patchDefensives = useCallback(async (className: string, spec: string, patch: OverrideEntry) => {
+    const r = await api.patchDefensives({ className, spec, patch });
+    if (!r.ok) { setToast(r.error); return; }
+    await reloadActive();
+  }, [reloadActive]);
+
+  const deepdiveActions: DeepdiveActions = { analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives };
+
+  if (stopped) return <main className="stopped"><h2>bmpl stopped</h2><p className="muted">You can close this tab.</p></main>;
+
   const empty = tabs.length === 0;
   // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
   // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
@@ -219,7 +263,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
       <main className={"content" + (empty ? " content-home" : "")}>
         {empty && <Home envPath={envPath} />}
         {!empty && !showCompare && activePayload && (
-          <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} />
+          <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
         )}
         {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
         {showCompare && (

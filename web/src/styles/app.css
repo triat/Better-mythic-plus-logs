@@ -48,3 +48,8 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .err { color: var(--red); background: #490202; padding: .6rem .8rem; border-radius: var(--radius); }
 .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--link); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* radar */
+.radar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.radar-legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+.radar-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }

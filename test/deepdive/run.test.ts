@@ -28,12 +28,16 @@ describe("runDeepdive", () => {
     const gql = async <T,>(q: string) => {
       queries.push(q.includes("rateLimitData") && !q.includes("reportData") ? "ping" : "deepdive");
       if (queries[queries.length - 1] === "ping") return ping(spent) as T;
-      return { ...ping(spent), reportData: { report: { fights: [{ startTime: f.deepdive.fightStart, endTime: f.deepdive.fightEnd }], casts: f.deepdive.casts, buffs: f.deepdive.buffs, castEvents: { data: f.deepdive.castEvents.map((e: { timestamp: number; abilityGameID: number }) => ({ ...e, type: "cast" })), nextPageTimestamp: null } } } } as T;
+      return { ...ping(spent + 3), reportData: { report: { fights: [{ startTime: f.deepdive.fightStart, endTime: f.deepdive.fightEnd }], casts: f.deepdive.casts, buffs: f.deepdive.buffs, castEvents: { data: f.deepdive.castEvents.map((e: { timestamp: number; abilityGameID: number }) => ({ ...e, type: "cast" })), nextPageTimestamp: null } } } } as T;
     };
     const first = await runDeepdive(req, { store, tables, gql });
     expect(first.ok).toBe(true);
     expect(queries).toEqual(["ping", "deepdive"]);
-    if (first.ok) { expect(first.fromCache).toBe(false); expect(first.result.defensives.find((d) => d.id === 498)!.casts).toBe(27); }
+    if (first.ok) {
+      expect(first.fromCache).toBe(false);
+      expect(first.pointsSpent).toBe(3); // deep-dive counter minus the PING's counter
+      expect(first.result.defensives.find((d) => d.id === 498)!.casts).toBe(27);
+    }
     const second = await runDeepdive(req, { store, tables, gql });
     expect(queries.length).toBe(2);
     if (second.ok) expect(second.fromCache).toBe(true);

@@ -199,3 +199,17 @@ export const REPORT_DEEPDIVE_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+/** Same as REPORT_DEEPDIVE_QUERY without the cast events: used when the effective table has no ids to filter on. */
+export const REPORT_DEEPDIVE_NO_EVENTS_QUERY = /* GraphQL */ `
+  query ReportDeepDiveNoEvents($code: String!, $fightID: Int!, $actorID: Int!) {
+    rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn }
+    reportData {
+      report(code: $code) {
+        fights(fightIDs: [$fightID]) { startTime endTime }
+        casts: table(fightIDs: [$fightID], dataType: Casts, sourceID: $actorID)
+        buffs: table(fightIDs: [$fightID], dataType: Buffs, targetID: $actorID)
+      }
+    }
+  }
+`;

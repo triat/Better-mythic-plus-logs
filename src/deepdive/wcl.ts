@@ -1,6 +1,6 @@
 import type { GqlFn } from "../signals/enrich.ts";
 import type { RawTable } from "../signals/types.ts";
-import { REPORT_DEEPDIVE_QUERY } from "../wcl/queries.ts";
+import { REPORT_DEEPDIVE_NO_EVENTS_QUERY, REPORT_DEEPDIVE_QUERY } from "../wcl/queries.ts";
 import type { RateLimitData } from "../wcl/types.ts";
 import type { RawDeepDive } from "./types.ts";
 
@@ -29,37 +29,47 @@ interface DeepDiveResponse extends RateLimitData {
 
 export const castFilter = (ids: number[]): string => `ability.id in (${ids.join(", ")})`;
 
-// Points spent by the previous deep-dive query in this process; the counter WCL returns is
-// cumulative for the hour, so the difference between two consecutive answers is one query's cost.
-let lastSpent: number | null = null;
-/** Test-only: other test files' deep-dive fetches share this process-wide baseline. */
-export const resetPointsBaseline = (): void => { lastSpent = null; };
+export interface FetchOpts {
+  code: string;
+  fightID: number;
+  character: string;
+  actorID: number;
+  ids: number[];
+  /** `pointsSpentThisHour` read just before this fetch (the PING pre-check); without it `pointsSpent` is null. */
+  pointsBefore?: number;
+}
 
-export interface FetchOpts { code: string; fightID: number; character: string; actorID: number; ids: number[] }
-
-/** The one network call of a deep-dive. Throws BudgetLowError before spending when the hour's budget is nearly gone. */
+/**
+ * The one network call of a deep-dive. With no ids to filter on, the cast events are not
+ * requested at all. Throws BudgetLowError before requesting a *subsequent* events page when
+ * the hour's budget is nearly gone (the caller's PING pre-check guards the first page).
+ */
 export async function fetchRawDeepDive(gql: GqlFn, o: FetchOpts): Promise<RawDeepDive> {
   const events: RawDeepDive["castEvents"] = [];
   let startTime: number | null = null;
   let pages = 0;
   let truncated = false;
   let first: DeepDiveResponse | null = null;
-  let spentBefore = lastSpent;
+  let lastCounter = 0;
+  const withEvents = o.ids.length > 0;
   for (;;) {
-    const resp: DeepDiveResponse = await gql<DeepDiveResponse>(REPORT_DEEPDIVE_QUERY, { code: o.code, fightID: o.fightID, actorID: o.actorID, filter: castFilter(o.ids), startTime });
+    const resp: DeepDiveResponse = withEvents
+      ? await gql<DeepDiveResponse>(REPORT_DEEPDIVE_QUERY, { code: o.code, fightID: o.fightID, actorID: o.actorID, filter: castFilter(o.ids), startTime })
+      : await gql<DeepDiveResponse>(REPORT_DEEPDIVE_NO_EVENTS_QUERY, { code: o.code, fightID: o.fightID, actorID: o.actorID });
     const rl = resp.rateLimitData;
-    if (rl.limitPerHour - rl.pointsSpentThisHour < MIN_BUDGET_POINTS) throw new BudgetLowError(rl.limitPerHour - rl.pointsSpentThisHour);
     if (!resp.reportData.report) throw new Error(`WCL: report ${o.code} not found`);
     first ??= resp;
     pages++;
+    lastCounter = rl.pointsSpentThisHour;
     for (const e of resp.reportData.report.castEvents?.data ?? []) {
       if (typeof e.timestamp === "number" && typeof e.abilityGameID === "number")
         events.push({ timestamp: e.timestamp, abilityGameID: e.abilityGameID, sourceID: e.sourceID as number | undefined, targetID: e.targetID as number | undefined });
     }
-    const next: number | null = resp.reportData.report.castEvents?.nextPageTimestamp ?? null;
-    lastSpent = rl.pointsSpentThisHour;
+    const next: number | null = withEvents ? (resp.reportData.report.castEvents?.nextPageTimestamp ?? null) : null;
     if (next === null) break;
     if (pages >= MAX_EVENT_PAGES) { truncated = true; break; }
+    const left = rl.limitPerHour - rl.pointsSpentThisHour;
+    if (left < MIN_BUDGET_POINTS) throw new BudgetLowError(left);
     startTime = next;
   }
   const report = first!.reportData.report!;
@@ -77,6 +87,6 @@ export async function fetchRawDeepDive(gql: GqlFn, o: FetchOpts): Promise<RawDee
     tableIds: [...o.ids],
     truncated,
     fetchedAt: Date.now(),
-    pointsSpent: spentBefore === null || lastSpent === null ? null : Math.max(0, Math.round((lastSpent - spentBefore) * 10) / 10),
+    pointsSpent: o.pointsBefore === undefined ? null : Math.max(0, Math.round((lastCounter - o.pointsBefore) * 10) / 10),
   };
 }

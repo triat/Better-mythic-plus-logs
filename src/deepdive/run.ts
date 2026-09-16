@@ -37,7 +37,7 @@ export async function runDeepdive(req: DeepdiveRequest, deps: RunDeps): Promise<
     const ping = await gql<RateLimitData>(PING_QUERY);
     const left = ping.rateLimitData.limitPerHour - ping.rateLimitData.pointsSpentThisHour;
     if (left < MIN_BUDGET_POINTS) return { ok: false, status: 402, error: new BudgetLowError(left).message };
-    const raw = await fetchRawDeepDive(gql, { code: req.reportCode, fightID: req.fightID, character: req.character, actorID: player.actorID, ids });
+    const raw = await fetchRawDeepDive(gql, { code: req.reportCode, fightID: req.fightID, character: req.character, actorID: player.actorID, ids, pointsBefore: ping.rateLimitData.pointsSpentThisHour });
     deps.store.putDeepDive(req.reportCode, req.fightID, req.character, raw);
     const result = analyzeCached(deps.store, deps.tables, req, req.character);
     if (!result) return { ok: false, status: 502, error: "analysis failed on the fetched data" };

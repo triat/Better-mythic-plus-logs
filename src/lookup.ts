@@ -127,7 +127,7 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     summary,
     evaluation: evaluate(payloadForEval, deps.evalConfig ?? (await getEvalConfig())),
     deepdive,
-    deepdiveSummary: deepdiveSummary(deepdive),
+    deepdiveSummary: deepdiveSummary(deepdive, tables.warning),
   };
 }
 

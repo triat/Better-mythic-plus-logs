@@ -30,7 +30,7 @@ async function payloadFor(names: Array<"s2-healer" | "s2-rogue">) {
     character: { id: 1, name: character, classID: 6, spec: "Holy", scoreTop: null, realmSlug: "hyjal", region: "eu" },
     zone: { id: 1, name: "z", partition: 1 }, metricAutoSelected: true, alternateMetricHasData: false, specFilter: null, runsIndexed: runs.length, seasonDungeons: [],
     targetAutoDetected: true, atOrAboveTargetCount: 0, rioError: null,
-    ...base, evaluation: evaluate(base, cfg), deepdive: [], deepdiveSummary: { analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
+    ...base, evaluation: evaluate(base, cfg), deepdive: [], deepdiveSummary: { tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
   } as unknown as LookupPayload;
   return { payload, store, fixtures };
 }
@@ -66,6 +66,10 @@ describe("attachDeepdive", () => {
     // Below deepdiveMinRuns: no deep-dive evidence yet.
     expect(one.evaluation.axes.find((a) => a.key === "survival")!.evidence.some((e) => e.source === "survival.defensiveUsage")).toBe(false);
     expect(JSON.stringify(payload)).toBe(before);
+    expect(one.deepdiveSummary.tableWarning).toBeNull();
+    // An ignored override file travels with the payload so the UI can name it.
+    const warned = attachDeepdive(payload, store, { ...tables, warning: "bmpl: ignoring /x/defensives.json: bad" }, cfg);
+    expect(warned.deepdiveSummary.tableWarning).toBe("bmpl: ignoring /x/defensives.json: bad");
     store.close();
   });
 });

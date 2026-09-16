@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { LookupPayload, MPlusRun } from "../types.ts";
 import { STALE_DAYS } from "../lib/format.ts";
-import { analysisFor, costText, unanalyzedRuns } from "../lib/deepdive.ts";
+import { analysisFor, costText, tableWarningText, unanalyzedRuns } from "../lib/deepdive.ts";
 import { missingDungeons, runRows, runsHeadline } from "../lib/runs.ts";
 import type { RunRowModel } from "../lib/runs.ts";
 import type { DeepdiveActions } from "./Detail.tsx";
@@ -13,6 +13,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
   const rows = runRows(payload);
   const missing = missingDungeons(payload);
   const pending = unanalyzedRuns(payload).length;
+  const tableWarning = tableWarningText(payload.deepdiveSummary.tableWarning);
   if (rows.length === 0) return <section className="card muted">No M+ runs indexed this season.</section>;
   return (
     <section className="card section">
@@ -27,6 +28,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
       </div>
       {open && (
         <div className="runs">
+          {tableWarning && <div className="dd-notice tone-warn" style={{ padding: "0 10px" }}>{tableWarning}</div>}
           {rows.map((r) => (
             <RunRow
               key={r.key} r={r} payload={payload} deepdive={deepdive}
@@ -85,7 +87,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
         <a href={r.url} target="_blank" rel="noopener" title="Open log">↗</a>
       </div>
       {expanded && a && (
-        <RunDeepDive d={a} busy={anyBusy} onReanalyze={() => void deepdive.analyze(run, true)} onPatch={(patch) => deepdive.patch(a.className, a.spec, patch)} />
+        <RunDeepDive d={a} tableWarning={payload.deepdiveSummary.tableWarning} busy={anyBusy} onReanalyze={() => void deepdive.analyze(run, true)} onPatch={(patch) => deepdive.patch(a.className, a.spec, patch)} />
       )}
     </>
   );

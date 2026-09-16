@@ -17,9 +17,14 @@ describe("deepdiveSummary", () => {
     expect(s.avoidableDeathShare).toBeCloseTo(0.5, 9);
   });
   test("nulls when nothing to aggregate", () => {
-    expect(deepdiveSummary([])).toEqual({ analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 });
+    expect(deepdiveSummary([])).toEqual({ tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 });
     const noDeaths = deepdiveSummary([run(0.5, 0, 0), run(null, 0, 0)]);
     expect(noDeaths.avoidableDeathShare).toBeNull();
     expect(noDeaths.majorUsage).toBe(0.5);
+  });
+  test("carries the override file's load warning; null when the file is fine", () => {
+    expect(deepdiveSummary([]).tableWarning).toBeNull();
+    expect(deepdiveSummary([], undefined).tableWarning).toBeNull();
+    expect(deepdiveSummary([run(0.5, 0, 0)], "bmpl: ignoring /x/defensives.json: bad").tableWarning).toBe("bmpl: ignoring /x/defensives.json: bad");
   });
 });

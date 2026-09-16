@@ -52,11 +52,18 @@ const deathLine = (x: DeathAnalysis): DeathLine => ({
   ],
 });
 
-export function panelModel(d: RunDefensives, now = Date.now()): PanelModel {
+/** The table-override load error (payload.deepdiveSummary.tableWarning) as a UI line; null when the file is fine or absent. */
+export const tableWarningText = (warning: string | null | undefined): string | null =>
+  warning ? `Your defensives.json is ignored: ${warning}` : null;
+
+export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: string | null): PanelModel {
   const specClass = `${d.spec} ${d.className}`;
   const overrides = d.defensives.filter((u) => u.origin === "override").length;
+  // Precedence: an ignored override file (the run was analyzed against the shipped table) beats every per-run notice.
   let notice: string | null = null;
-  if (d.tableMissing) notice = `No defensives table for ${specClass} yet — add entries from the audit below.`;
+  const warning = tableWarningText(tableWarning);
+  if (warning) notice = warning;
+  else if (d.tableMissing) notice = `No defensives table for ${specClass} yet — add entries from the audit below.`;
   else if (d.staleTable) notice = "The table changed since this run was analyzed — re-analyze to include the new entries.";
   else if (d.truncated) notice = "Cast events were truncated (more than 5 pages) — counts may be low.";
   return {

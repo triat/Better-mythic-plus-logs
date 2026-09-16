@@ -4,6 +4,8 @@ import { costText, panelModel } from "../lib/deepdive.ts";
 
 interface Props {
   d: RunDefensives;
+  /** payload.deepdiveSummary.tableWarning: the override file was ignored. */
+  tableWarning?: string | null;
   busy: boolean;
   onReanalyze: () => void;
   onPatch: (patch: OverrideEntry) => Promise<void>;
@@ -11,8 +13,8 @@ interface Props {
 
 const KINDS: DefensiveKind[] = ["major", "immunity", "minor"];
 
-export function RunDeepDive({ d, busy, onReanalyze, onPatch }: Props) {
-  const m = panelModel(d);
+export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Props) {
+  const m = panelModel(d, Date.now(), tableWarning);
   const [tableOpen, setTableOpen] = useState(false);
   // Inline "add" form: which unlisted id, as which kind.
   const [adding, setAdding] = useState<{ id: number; name: string; kind: DefensiveKind } | null>(null);

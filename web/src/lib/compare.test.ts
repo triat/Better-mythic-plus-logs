@@ -23,7 +23,7 @@ const payload = (over: Record<string, unknown>): LookupPayload =>
     prevLevelBest: null,
     summary: { runsWithSignals: 1, timedShown: 1, avgDeaths: 0.7, deathsInWipes: 0, dtpsDeltaPct: -12, kicksDeltaPts: null, avoidableDeltaPct: null, ilvl: 322, recentTimed: 9, recentTotal: 10, prevSeason: null },
     deepdive: [],
-    deepdiveSummary: { analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
+    deepdiveSummary: { tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
     evaluation: { role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
       axes: [{ key: "survival", score: 82, confidence: "high", evidence: [] }, { key: "utility", score: 61, confidence: "high", evidence: [] }, { key: "throughput", score: 88, confidence: "high", evidence: [] }, { key: "consistency", score: null, confidence: "low", evidence: [] }, { key: "preparation", score: 55, confidence: "medium", evidence: [] }, { key: "experience", score: 74, confidence: "high", evidence: [] }] },
     ...over,
@@ -67,7 +67,7 @@ describe("compareSections", () => {
     expect(s.find((x) => x.title === "Summary")!.rows.find((r) => r.label === "Median HPS")!.cells.map((c) => c.text)).toEqual(["312.0k", "312.0k"]);
   });
   test("Defensives row: higher usage wins, dash without analyses", () => {
-    const a = payload({ deepdiveSummary: { analyzedRuns: 2, majorUsage: 0.8, avoidableDeathShare: 0.5, avoidableDeaths: 1, countedDeaths: 2 } });
+    const a = payload({ deepdiveSummary: { tableWarning: null, analyzedRuns: 2, majorUsage: 0.8, avoidableDeathShare: 0.5, avoidableDeaths: 1, countedDeaths: 2 } });
     const b = payload({});
     const s = compareSections([a, b]);
     const row = s.find((x) => x.title === "Summary")!.rows.find((r) => r.label === "Defensives")!;

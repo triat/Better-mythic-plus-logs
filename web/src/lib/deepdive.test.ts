@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { LookupPayload, RunDefensives } from "../types.ts";
-import { analysisFor, costText, defensivesCell, panelModel, unanalyzedRuns } from "./deepdive.ts";
+import { analysisFor, costText, defensivesCell, panelModel, tableWarningText, unanalyzedRuns } from "./deepdive.ts";
 
 const dd = (over: Partial<RunDefensives> = {}): RunDefensives => ({
   reportCode: "ABC", fightID: 3, character: "Muleyoxo", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
@@ -25,7 +25,7 @@ const payload = (deepdive: RunDefensives[], runs = [{ reportCode: "ABC", fightID
     perDungeon: { runs: runs.map((r) => ({ ...r, signals: {} })) },
     prevLevelBest: null,
     deepdive,
-    deepdiveSummary: { analyzedRuns: deepdive.length, majorUsage: deepdive[0]?.majorUsage ?? null, avoidableDeathShare: deepdive.length ? 1 : null, avoidableDeaths: deepdive.length, countedDeaths: deepdive.length },
+    deepdiveSummary: { tableWarning: null, analyzedRuns: deepdive.length, majorUsage: deepdive[0]?.majorUsage ?? null, avoidableDeathShare: deepdive.length ? 1 : null, avoidableDeaths: deepdive.length, countedDeaths: deepdive.length },
   }) as unknown as LookupPayload;
 
 describe("analysisFor / unanalyzedRuns / costText", () => {
@@ -75,6 +75,14 @@ describe("panelModel", () => {
     expect(panelModel(dd({ truncated: true })).notice).toBe("Cast events were truncated (more than 5 pages) — counts may be low.");
     expect(panelModel(dd({ pointsSpent: null })).meta).toMatch(/analyzed .* ago$/);
   });
+  test("an ignored override file outranks every other notice and names the file", () => {
+    const warning = "bmpl: ignoring /home/me/.config/bmpl/defensives.json: Unexpected token";
+    expect(panelModel(dd({ tableMissing: true, staleTable: true, truncated: true }), 0, warning).notice).toBe(`Your defensives.json is ignored: ${warning}`);
+    expect(panelModel(dd(), 0, null).notice).toBeNull();
+    expect(tableWarningText(warning)).toBe(`Your defensives.json is ignored: ${warning}`);
+    expect(tableWarningText(null)).toBeNull();
+    expect(tableWarningText(undefined)).toBeNull();
+  });
 });
 
 describe("defensivesCell", () => {
@@ -82,7 +90,7 @@ describe("defensivesCell", () => {
     expect(defensivesCell(payload([dd()]))).toEqual({ text: "87% · 1/1 avoidable", value: 0.87 });
     expect(defensivesCell(payload([]))).toEqual({ text: "—", value: null });
     const noDeaths = payload([dd({ countedDeaths: 0, avoidableDeaths: 0 })]);
-    noDeaths.deepdiveSummary = { analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
+    noDeaths.deepdiveSummary = { tableWarning: null, analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
     expect(defensivesCell(noDeaths)).toEqual({ text: "50% · no deaths", value: 0.5 });
   });
 });

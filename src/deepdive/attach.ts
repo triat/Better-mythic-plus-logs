@@ -30,6 +30,6 @@ export function attachDeepdive(payload: LookupPayload, store: Store, tables: Loa
   const deepdive = evalRuns(payload)
     .map((r) => analyzeCached(store, tables, r, character))
     .filter((d): d is RunDefensives => d !== null);
-  const next = { ...payload, deepdive, deepdiveSummary: deepdiveSummary(deepdive) };
+  const next = { ...payload, deepdive, deepdiveSummary: deepdiveSummary(deepdive, tables.warning) };
   return { ...next, evaluation: evaluate(next, cfg) };
 }

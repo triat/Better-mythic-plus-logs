@@ -108,6 +108,8 @@ export interface RunDefensives {
 }
 
 export interface DeepdiveSummary {
+  /** The user's defensives.json was ignored (unreadable/invalid): the message names the file and the error. */
+  tableWarning: string | null;
   analyzedRuns: number;
   majorUsage: number | null;
   avoidableDeathShare: number | null;

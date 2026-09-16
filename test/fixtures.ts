@@ -15,3 +15,14 @@ export const loadWclFixture = async (name: WclFixtureName): Promise<any> =>
 
 export const loadRioFixture = async (): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, "rio-profile-muleyoxo.json")).text());
+
+const DEEPDIVE_FILES = {
+  "s2-healer": "deepdive-s2-voidscar-arena-healer.json",
+  "s2-rogue": "deepdive-s2-temple-of-sethraliss-rogue.json",
+} as const;
+
+export type DeepdiveFixtureName = keyof typeof DEEPDIVE_FILES;
+
+// Shape: { character: string; run: MPlusRun; report: RawRunReport; deepdive: RawDeepDive }
+export const loadDeepdiveFixture = async (name: DeepdiveFixtureName): Promise<any> =>
+  JSON.parse(await Bun.file(path.join(dir, DEEPDIVE_FILES[name])).text());

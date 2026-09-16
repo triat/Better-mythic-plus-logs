@@ -180,3 +180,22 @@ export const CHARACTER_BASIC_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Deep-dive: one request per (report, fight, actor). Casts/Buffs tables (~1 pt each) plus the
+// cast events of the defensives we know about (~1 pt per page; one page for a whole key).
+export const REPORT_DEEPDIVE_QUERY = /* GraphQL */ `
+  query ReportDeepDive($code: String!, $fightID: Int!, $actorID: Int!, $filter: String!, $startTime: Float) {
+    rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn }
+    reportData {
+      report(code: $code) {
+        fights(fightIDs: [$fightID]) { startTime endTime }
+        casts: table(fightIDs: [$fightID], dataType: Casts, sourceID: $actorID)
+        buffs: table(fightIDs: [$fightID], dataType: Buffs, targetID: $actorID)
+        castEvents: events(fightIDs: [$fightID], dataType: Casts, sourceID: $actorID, filterExpression: $filter, limit: 500, startTime: $startTime) {
+          data
+          nextPageTimestamp
+        }
+      }
+    }
+  }
+`;

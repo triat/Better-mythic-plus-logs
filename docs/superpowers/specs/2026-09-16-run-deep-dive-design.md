@@ -1,6 +1,6 @@
 # Run deep-dive: defensive cooldowns — design
 
-**Status:** approved in discussion, spec under review
+**Status:** implemented 2026-09-16 (plan `docs/superpowers/plans/2026-09-16-run-deep-dive.md`; 18 commits a87090c..fb97eb7)
 **Sub-project:** 4 of the bmpl roadmap (signals → evaluation → web front → **run deep-dive**)
 **Depends on:** `2026-09-15-signals-design.md` (raw store, `RunSignals.deaths`), `2026-09-15-evaluation-model-design.md` (axes, config, evidence), `2026-09-16-web-front-design.md` (Detail screen, `web/src/lib` view models)
 

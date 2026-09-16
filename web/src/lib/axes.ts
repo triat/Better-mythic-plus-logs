@@ -48,7 +48,7 @@ export function heroStats(p: LookupPayload): HeroStat[] {
   const out: HeroStat[] = [];
   const s = p.character.scoreTop;
   if (s) out.push({ label: `${p.metric.toUpperCase()} score`, value: s.points.toFixed(0) });
-  if (p.summary.ilvl !== null) out.push({ label: "ilvl", value: String(p.summary.ilvl) });
+  if (p.summary.ilvl !== null) out.push({ label: "ilvl", value: String(Math.round(p.summary.ilvl)) });
   if (s) out.push({ label: "region", value: `#${s.regionRank}` }, { label: "server", value: `#${s.serverRank}` });
   if (p.summary.prevSeason) out.push({ label: "prev season", value: p.summary.prevSeason.all.toFixed(0), sub: p.summary.prevSeason.best.role });
   return out;

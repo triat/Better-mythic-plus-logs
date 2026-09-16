@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest } from "./types.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
+import { STORAGE_KEY, parseStoredKey, reevalHint } from "./lib/keyLevel.ts";
 import { useSse } from "./useSse.ts";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
@@ -33,15 +34,25 @@ export function App() {
   return <Main envPath={screen.envPath} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", envPath: screen.envPath, hasCredentials: true }); }} />;
 }
 
-const formToRequest = (f: LookupForm): LookupRequest => ({
+const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
   character: f.character.trim(),
-  level: f.level || null,
+  level,
   spec: f.spec.trim() || null,
   metric: f.metric || null,
 });
 
+const readStoredKey = (): number | null => {
+  try { return parseStoredKey(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+};
+const writeStoredKey = (v: number | null): void => {
+  try { v === null ? localStorage.removeItem(STORAGE_KEY) : localStorage.setItem(STORAGE_KEY, String(v)); } catch { /* private mode etc. */ }
+};
+
 function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
+  // "Your key": the level every lookup is evaluated for (null = auto). Remembered per browser.
+  const [yourKey, setYourKey] = useState<number | null>(readStoredKey);
+  const onKeyChange = (v: number | null) => { setYourKey(v); writeStoredKey(v); };
   const [tabs, setTabs] = useState<HistoryItem[]>([]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -123,7 +134,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
     await loadHistory();
   }, [loadHistory]);
 
-  const onLookup = () => void runLookup(formToRequest(form), false);
+  const onLookup = () => void runLookup(formToRequest(form, yourKey), false);
   const onRefresh = () => {
     const t = tabs.find((x) => x.key === activeKey);
     if (t) void runLookup(t.request, true);
@@ -139,6 +150,18 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
       if (next) void showTab(next);
     }
     if (selected.filter((k) => k !== key).length < 2) setCompareOpen(false);
+  };
+
+  /** Re-run the active tab's lookup for "your key" and drop the old tab (the cache key includes the level). */
+  const reevaluate = async () => {
+    const t = tabs.find((x) => x.key === activeKey);
+    if (!t) return;
+    const oldKey = t.key;
+    await runLookup({ ...t.request, level: yourKey }, false);
+    // runLookup activated the new key; the old entry is redundant now.
+    await api.removeHistory(oldKey);
+    payloads.current.delete(oldKey);
+    await loadHistory();
   };
 
   const clearAll = async () => {
@@ -159,7 +182,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   });
 
   const onWatchToggle = async (wanted: boolean) => {
-    const r = wanted ? await api.watchStart({ level: form.level || null, spec: form.spec || null, metric: form.metric || null }) : await api.watchStop();
+    const r = wanted ? await api.watchStart({ level: yourKey, spec: form.spec.trim() || null, metric: form.metric || null }) : await api.watchStop();
     if (!r.ok) setToast(r.error);
     // The `status` SSE event is the source of truth for the toggle.
   };
@@ -182,7 +205,8 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   return (
     <>
       <Header
-        form={form} onChange={setForm} onLookup={onLookup} busy={busy}
+        form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
+        onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty}
       />
@@ -195,7 +219,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
       <main className={"content" + (empty ? " content-home" : "")}>
         {empty && <Home envPath={envPath} />}
         {!empty && !showCompare && activePayload && (
-          <Detail payload={activePayload} />
+          <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab.request.level) : null} onReevaluate={() => void reevaluate()} />
         )}
         {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
         {showCompare && (

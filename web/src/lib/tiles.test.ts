@@ -36,6 +36,8 @@ describe("tiles", () => {
     expect(t.find((x) => x.label === "Kicks vs peers")).toEqual({ label: "Kicks vs peers", value: "+4pts", cls: "tone-good", empty: false });
     expect(t.find((x) => x.label === "RIO recent timed")!.cls).toBe("tone-bad");
     expect(t.find((x) => x.label === "Prev season")).toEqual({ label: "Prev season", value: "— no data (reroll?)", cls: "", empty: true });
+    // Raider.IO reports fractional equipped item levels.
+    expect(tiles(payload({ ilvl: 322.875 })).find((x) => x.label === "ilvl")!.value).toBe("323");
     const none = tiles(payload({ runsWithSignals: 0, timedShown: null, avgDeaths: null, recentTotal: 0, recentTimed: 0 }, { runs: [] }));
     expect(none.find((x) => x.label === "Timed (shown)")!.empty).toBe(true);
     expect(none.find((x) => x.label === "RIO recent timed")).toEqual({ label: "RIO recent timed", value: "0/0", cls: "", empty: false });

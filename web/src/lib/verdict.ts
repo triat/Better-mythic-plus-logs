@@ -19,7 +19,7 @@ export interface VerdictView {
 
 const runs = (n: number) => `${n} run${n === 1 ? "" : "s"} scored`;
 
-export function verdictView(ev: Evaluation): VerdictView {
+export function verdictView(ev: Evaluation, autoTarget = false): VerdictView {
   if (ev.verdict === "insufficient" || ev.global === null) {
     return { label: "NOT ENOUGH DATA", score: null, cls: "badge-insufficient", sub: `only ${runs(ev.runsUsed)}` };
   }
@@ -27,7 +27,7 @@ export function verdictView(ev: Evaluation): VerdictView {
     label: ev.verdict.toUpperCase(),
     score: String(Math.round(ev.global)),
     cls: `badge-${ev.verdict}`,
-    sub: `for a +${ev.targetLevel} · ${runs(ev.runsUsed)} · confidence per axis`,
+    sub: `for a +${ev.targetLevel}${autoTarget ? " (auto)" : ""} · ${runs(ev.runsUsed)} · confidence per axis`,
   };
 }
 

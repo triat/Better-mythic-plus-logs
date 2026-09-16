@@ -1,12 +1,16 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { KeyStepper } from "./KeyStepper.tsx";
 
-export interface LookupForm { character: string; level: string; spec: string; metric: "" | "dps" | "hps" }
-export const EMPTY_FORM: LookupForm = { character: "", level: "", spec: "", metric: "" };
+export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
+export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
 
 interface Props {
   form: LookupForm;
   onChange: (f: LookupForm) => void;
+  yourKey: number | null;
+  keyFallback: number | null;
+  onKeyChange: (v: number | null) => void;
   onLookup: () => void;
   busy: string | null;              // "looking up X…" / "refreshing X…"
   watchActive: boolean;
@@ -25,9 +29,6 @@ export function Header(p: Props) {
   const set = (patch: Partial<LookupForm>) => p.onChange({ ...p.form, ...patch });
   const chips = (
     <span className="chips">
-      <button type="button" className="chip" onClick={() => setOpen((o) => !o)} title="Options">
-        level {p.form.level || "auto"}
-      </button>
       <button type="button" className="chip" onClick={() => setOpen((o) => !o)} title="Options">
         spec {p.form.spec || "any"}
       </button>
@@ -48,6 +49,7 @@ export function Header(p: Props) {
         />
         {chips}
       </div>
+      <KeyStepper value={p.yourKey} fallback={p.keyFallback} onChange={p.onKeyChange} />
       <button type="submit" className="btn btn-primary btn-lg" disabled={!!p.busy}>
         {p.busy ? <span className="spinner" /> : null} Look up
       </button>
@@ -55,8 +57,6 @@ export function Header(p: Props) {
   );
   const options = open && (
     <div className="options">
-      <label>Target level <span className="faint">(blank = auto)</span>
-        <input type="number" min={2} max={40} value={p.form.level} onChange={(e) => set({ level: e.target.value })} /></label>
       <label>Spec filter
         <input value={p.form.spec} placeholder="e.g. Augmentation" onChange={(e) => set({ spec: e.target.value })} /></label>
       <label>Metric

@@ -29,7 +29,7 @@ export function tiles(p: LookupPayload): TileModel[] {
     : { label: "Avoidable vs peers", value: signed(sm.avoidableDeltaPct, 0, "%"), cls: toneClass(lowerTone(sm.avoidableDeltaPct)), empty: false });
   out.push(sm.kicksDeltaPts === null ? empty("Kicks vs peers")
     : { label: "Kicks vs peers", value: signed(sm.kicksDeltaPts, 0, "pts"), cls: toneClass(higherTone(sm.kicksDeltaPts)), empty: false });
-  out.push(sm.ilvl === null ? empty("ilvl") : { label: "ilvl", value: String(sm.ilvl), cls: "", empty: false });
+  out.push(sm.ilvl === null ? empty("ilvl") : { label: "ilvl", value: String(Math.round(sm.ilvl)), cls: "", empty: false });
   if (sm.recentTotal === null || sm.recentTimed === null) out.push(empty("RIO recent timed"));
   else {
     const ratio = sm.recentTotal === 0 ? null : sm.recentTimed / sm.recentTotal;

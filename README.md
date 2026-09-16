@@ -199,9 +199,14 @@ After that, four screens:
 - **Setup** — the first-run flow above, also reachable any time via the
   **Re-configure** button.
 
-The header also has a **Clipboard watch** toggle (the hands-free flow below,
-without needing a terminal) and a **Quit** button to shut down the server. No
-terminal knowledge needed.
+The header also has a **Your key** stepper (`− +18 + · auto`): the key you are
+filling, remembered by your browser and applied to every lookup and to the
+clipboard watcher. If a profile was evaluated for another level, its hero shows
+a **re-evaluate for +N** link that re-runs it for your key and replaces the tab
+(cached data, no extra API cost). Profiles show as compact chips that wrap onto
+as many rows as needed. There is also a **Clipboard watch** toggle (the
+hands-free flow below, without needing a terminal) and a **Quit** button to
+shut down the server. No terminal knowledge needed.
 
 This is the intended "share with friends" mode — ship them `bmpl.exe` (see the
 Windows section below), they double-click, the browser opens, they're set up

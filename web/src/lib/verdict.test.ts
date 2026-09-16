@@ -19,6 +19,7 @@ describe("verdict", () => {
     expect(verdictView(ev({ verdict: "maybe", global: 52.4, runsUsed: 1 })).score).toBe("52");
     expect(verdictView(ev({ verdict: "maybe", global: 52.4, runsUsed: 1 })).sub).toBe("for a +21 · 1 run scored · confidence per axis");
     expect(verdictView(ev({ verdict: "pass", global: 31 })).cls).toBe("badge-pass");
+    expect(verdictView(ev({}), true).sub).toBe("for a +21 (auto) · 9 runs scored · confidence per axis");
   });
   test("insufficient view has no score and no threshold", () => {
     expect(verdictView(ev({ verdict: "insufficient", global: null, runsUsed: 2 }))).toEqual({

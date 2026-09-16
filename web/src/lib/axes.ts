@@ -13,6 +13,7 @@ export interface AxisRowModel {
   top: EvidenceView[];
   all: EvidenceView[];
   note: string | null;
+  badge: string | null;
 }
 
 const view = (e: AxisScore["evidence"][number]): EvidenceView => ({
@@ -36,6 +37,7 @@ export function axisRows(ev: Evaluation): AxisRowModel[] {
       top: all.slice(0, 2),
       all,
       note: score === null ? "not enough data for this axis" : all.length === 0 ? "no evidence" : null,
+      badge: key === "survival" && ev.analyzedRuns > 0 ? `${ev.analyzedRuns} run${ev.analyzedRuns === 1 ? "" : "s"} analyzed` : null,
     };
   });
 }

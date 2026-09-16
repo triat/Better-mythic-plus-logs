@@ -41,7 +41,11 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
 
 - **Survival** — deaths (individual and in wipes), damage taken vs. the
   group's peers, avoidable damage vs. peers, and (for healers) teammate
-  deaths.
+  deaths. Once at least `confidence.deepdiveMinRuns` (2 by default) of a
+  character's shown runs have been deep-dive analyzed (see "Deep-dive:
+  defensive cooldowns" below), two more sub-signals feed in: defensive
+  cooldown usage and the share of deaths where a defensive was available and
+  unused.
 - **Utility** — interrupts vs. peers, normalized by the spec's kick cooldown
   and capacity, plus dispels. Kicks and dispels are each `n/a` when the spec
   has no such ability (rogues, warriors and death knights have no dispel or
@@ -250,6 +254,16 @@ After that, four screens:
 - **Setup** — the first-run flow above, also reachable any time via the
   **Re-configure** button.
 
+**Deep-dive a run.** Any run with signals in the Detail screen's per-dungeon
+list has an **Analyze · ~3 pts** button, plus an **Analyze all shown** button
+that runs through every not-yet-analyzed run one at a time (same "stop before
+spending on the next one" budget check as a single run). The panel that opens
+shows, per defensive cooldown, usage vs. capacity, every death with what was
+available and unused, and an audit of self-cast buffs not yet in the
+defensives table. Corrections you make there — add / ignore / edit cooldown /
+remove — are saved to a `defensives.json` next to your `.env` and applied to
+every open tab immediately, at 0 pts.
+
 The header also has a **Your key** stepper (`− +18 + · auto`): the key you are
 filling, remembered by your browser and applied to every lookup and to the
 clipboard watcher. If a profile was evaluated for another level, its hero shows
@@ -390,6 +404,8 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
 - `lookup --no-stats`: ~10 pts per character (rankings query only; Raider.IO
   is still fetched)
 - `mplus`: ~10 pts per character (no enrichment; unchanged)
+- `analyze`: ~3 pts per run, once ever (cached forever); re-opening tabs or
+  correcting the table costs 0
 - 3600 pts/hr → ~36 fully-uncached lookups/hr, or ~360/hr once runs are cached
 
 ## Repo layout
@@ -420,6 +436,16 @@ src/
     summary.ts         cross-run aggregates (tiles / compare rows)
     store.ts           SQLite cache (WCL runs + Raider.IO profiles)
     avoidable/         per-dungeon avoidable-damage spell lists
+  deepdive/       defensive-cooldown deep-dive (the "bmpl analyze" layer)
+    types.ts          shared types (RunDefensives, DefensiveUse, DeepdiveSummary, ...)
+    defensives.json   shipped per-spec defensive tables
+    table.ts          effective table: shipped + override, patch/add/ignore
+    wcl.ts            fetch a run's cast/buff/death events from WCL
+    analyze.ts        usage-vs-capacity + per-death defensive audit
+    aggregate.ts      cross-run summary + Survival sub-signals
+    attach.ts         attaches deepdive/deepdiveSummary to a lookup payload
+    player.ts         per-character analyzed-runs bookkeeping
+    run.ts            analyze one run end to end
 scripts/
   introspect.ts                    GraphQL schema explorer (dev-only)
   import-postmortem-avoidable.ts   regenerate signals/avoidable/*.json from postmortem

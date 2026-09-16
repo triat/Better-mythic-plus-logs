@@ -1,5 +1,6 @@
 import type { LookupPayload, MPlusRun } from "../types.ts";
 import { radarPoints } from "./axes.ts";
+import { defensivesCell } from "./deepdive.ts";
 import { deathsTone, fmtAmount, higherTone, lowerTone, parseTier, signed, toneClass } from "./format.ts";
 import { AXIS_LABELS, AXIS_ORDER } from "./verdict.ts";
 
@@ -63,6 +64,7 @@ export function compareSections(ps: LookupPayload[]): CompareSection[] {
         sm.map((s) => (s.timedShown === null ? cell(DASH, "faint") : cell(`${s.timedShown}/${s.runsWithSignals}`)))),
       row("Avoidable dmg vs peers", "lower", sm.map((s) => s.avoidableDeltaPct), sm.map((s) => (s.avoidableDeltaPct === null ? cell(DASH, "faint") : cell(signed(s.avoidableDeltaPct, 0, "%"), toneClass(lowerTone(s.avoidableDeltaPct)))))),
       row("Kicks vs peers", "higher", sm.map((s) => s.kicksDeltaPts), sm.map((s) => (s.kicksDeltaPts === null ? cell(DASH, "faint") : cell(signed(s.kicksDeltaPts, 0, " pts"), toneClass(higherTone(s.kicksDeltaPts)))))),
+      row("Defensives", "higher", ps.map((p) => defensivesCell(p).value), ps.map((p) => { const c = defensivesCell(p); return cell(c.text, c.value === null ? "faint" : ""); })),
       row("ilvl", "higher", sm.map((s) => s.ilvl), sm.map((s) => cell(s.ilvl === null ? DASH : String(Math.round(s.ilvl)), s.ilvl === null ? "faint" : ""))),
       row("RIO recent timed", "higher", sm.map((s) => (s.recentTotal === null || s.recentTotal === 0 || s.recentTimed === null ? null : s.recentTimed / s.recentTotal)),
         sm.map((s) => (s.recentTotal === null ? cell(DASH, "faint") : cell(`${s.recentTimed}/${s.recentTotal}`)))),

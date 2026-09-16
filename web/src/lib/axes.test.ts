@@ -46,6 +46,13 @@ describe("axes view model", () => {
   test("radarPoints in AXIS_ORDER", () => {
     expect(radarPoints(ev)).toEqual([82, 61, 88, null, 55, 74]);
   });
+  test("survival carries an analyzed-runs badge when deep-dive evidence exists", () => {
+    const rows = axisRows({ ...ev, analyzedRuns: 3 });
+    expect(rows.find((r) => r.key === "survival")!.badge).toBe("3 runs analyzed");
+    expect(rows.find((r) => r.key === "utility")!.badge).toBeNull();
+    expect(axisRows({ ...ev, analyzedRuns: 1 }).find((r) => r.key === "survival")!.badge).toBe("1 run analyzed");
+    expect(axisRows(ev).find((r) => r.key === "survival")!.badge).toBeNull();
+  });
   test("heroStats", () => {
     const payload = {
       metric: "hps",

@@ -22,7 +22,9 @@ const payload = (over: Record<string, unknown>): LookupPayload =>
     perDungeon: { runs: [{ encounterID: 1, keyLevel: 21, parsePercent: 79.4, signals: undefined }], dungeonsCovered: 1, totalDungeonsInSeason: 2, dungeonsAtOrAboveTarget: 1, medianLevel: 21, medianAmount: 312_000, medianParse: 79.4 },
     prevLevelBest: null,
     summary: { runsWithSignals: 1, timedShown: 1, avgDeaths: 0.7, deathsInWipes: 0, dtpsDeltaPct: -12, kicksDeltaPts: null, avoidableDeltaPct: null, ilvl: 322, recentTimed: 9, recentTotal: 10, prevSeason: null },
-    evaluation: { role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, configVersion: "x",
+    deepdive: [],
+    deepdiveSummary: { analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
+    evaluation: { role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
       axes: [{ key: "survival", score: 82, confidence: "high", evidence: [] }, { key: "utility", score: 61, confidence: "high", evidence: [] }, { key: "throughput", score: 88, confidence: "high", evidence: [] }, { key: "consistency", score: null, confidence: "low", evidence: [] }, { key: "preparation", score: 55, confidence: "medium", evidence: [] }, { key: "experience", score: 74, confidence: "high", evidence: [] }] },
     ...over,
   }) as unknown as LookupPayload;
@@ -63,5 +65,13 @@ describe("compareSections", () => {
   test("same metric keeps the metric label", () => {
     const s = compareSections([a, payload({ character: { name: "C", classID: 7, spec: null, scoreTop: null } })]);
     expect(s.find((x) => x.title === "Summary")!.rows.find((r) => r.label === "Median HPS")!.cells.map((c) => c.text)).toEqual(["312.0k", "312.0k"]);
+  });
+  test("Defensives row: higher usage wins, dash without analyses", () => {
+    const a = payload({ deepdiveSummary: { analyzedRuns: 2, majorUsage: 0.8, avoidableDeathShare: 0.5, avoidableDeaths: 1, countedDeaths: 2 } });
+    const b = payload({});
+    const s = compareSections([a, b]);
+    const row = s.find((x) => x.title === "Summary")!.rows.find((r) => r.label === "Defensives")!;
+    expect(row.cells[0]).toEqual({ text: "80% · 1/2 avoidable", cls: "", best: true });
+    expect(row.cells[1]).toEqual({ text: "—", cls: "faint", best: false });
   });
 });

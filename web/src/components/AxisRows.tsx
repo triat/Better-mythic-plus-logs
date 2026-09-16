@@ -15,6 +15,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
             <div className="axis-name">
               <span className="conf" style={{ background: confidenceColor(r.confidence) }} />
               <span className="label-caps">{r.label}</span>
+              {r.badge && <span className="chip" title="Deep-dive analyses feed this axis">{r.badge}</span>}
             </div>
             <div className="axis-score mono">{na ? "n/a" : Math.round(r.score!)}</div>
             <div className="axis-evidence">

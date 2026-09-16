@@ -27,6 +27,7 @@ export interface Evaluation {
   global: number | null;
   verdict: Verdict;
   runsUsed: number;
+  analyzedRuns: number;
   configVersion: string;
 }
 
@@ -44,5 +45,5 @@ export interface EvaluationConfig {
   axes: Record<AxisKey, AxisConfig>;
   axisWeights: Record<Role, Record<AxisKey, number>>;
   verdict: { invite: number; maybe: number; minRuns: number };
-  confidence: { high: number; medium: number; consistencyMinRuns: number };
+  confidence: { high: number; medium: number; consistencyMinRuns: number; deepdiveMinRuns: number };
 }

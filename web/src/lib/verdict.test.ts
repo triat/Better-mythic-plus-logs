@@ -3,7 +3,7 @@ import type { Evaluation } from "../types.ts";
 import { AXIS_LABELS, AXIS_ORDER, confidenceColor, verdictView } from "./verdict.ts";
 
 const ev = (over: Partial<Evaluation>): Evaluation => ({
-  role: "healer", targetLevel: 21, axes: [], global: 78, verdict: "invite", runsUsed: 9, configVersion: "deadbeef", ...over,
+  role: "healer", targetLevel: 21, axes: [], global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "deadbeef", ...over,
 });
 
 describe("verdict", () => {

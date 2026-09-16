@@ -36,6 +36,7 @@ export function evaluate(payload: EvalPayload, cfg: EvaluationConfig): Evaluatio
     global,
     verdict: verdictFor(global, inputs.runsUsed, cfg),
     runsUsed: inputs.runsUsed,
+    analyzedRuns: inputs.analyzedRuns,
     configVersion: configVersion(cfg),
   };
 }

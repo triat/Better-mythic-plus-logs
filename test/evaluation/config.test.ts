@@ -42,6 +42,10 @@ describe("validateConfig", () => {
     expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { axes: { survival: { subSignals: { foo: { curve: [[0, 1]], weights: { dps: 1, healer: 1, tank: 1 } } } } } }))).toThrow(/axes\.survival\.subSignals\.foo/);
     expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { bogus: 1 }))).toThrow(/bogus/);
   });
+  test("confidence.deepdiveMinRuns is required and numeric", () => {
+    expect(validateConfig(DEFAULT_CONFIG).confidence.deepdiveMinRuns).toBe(2);
+    expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { confidence: { deepdiveMinRuns: "x" } }))).toThrow(/deepdiveMinRuns/);
+  });
 });
 
 describe("deepMerge", () => {

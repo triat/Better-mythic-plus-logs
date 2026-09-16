@@ -1,3 +1,5 @@
+import { deepdiveSummary } from "../deepdive/aggregate.ts";
+import type { RunDefensives } from "../deepdive/types.ts";
 import type { SignalSummary } from "../signals/summary.ts";
 import type { RioProfile, RunSignals } from "../signals/types.ts";
 import { curve, mean, median, stddev } from "./curve.ts";
@@ -25,12 +27,15 @@ export interface EvalPayload {
   prevLevelBest: { best: EvalRun } | null;
   rio: RioProfile | null;
   summary: SignalSummary;
+  /** Deep-dive analyses of displayed runs (optional; 0 pts — from the raw cache). */
+  deepdive?: RunDefensives[];
 }
 
 export interface EvalInputs {
   role: Role;
   targetLevel: number;
   runsUsed: number;
+  analyzedRuns: number;
   seasonSlug: string | null;
   survival: {
     /** Raw mean deaths/run — unscaled, for labels. */
@@ -44,6 +49,12 @@ export interface EvalInputs {
     groupDeaths: number | null;
     /** Mean of (teammate deaths × levelScale(run's own key level)) — for the curve. */
     groupDeathsScaled: number | null;
+    /** Deep-dive: median over analyzed runs of mean major/immunity usage; null under deepdiveMinRuns. */
+    defensiveUsage: number | null;
+    /** Deep-dive: avoidable / counted deaths; null under deepdiveMinRuns or with no counted death. */
+    avoidableDeathShare: number | null;
+    avoidableDeathsCount: number;
+    countedDeathsCount: number;
   };
   utility: {
     hasKick: boolean;
@@ -125,6 +136,14 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     withSig.map((r) => (r.signals!.deaths.groupTotal - r.signals!.deaths.count) * curve(levelFor(r), cfg.levelScale)),
   );
 
+  // --- deep-dive (defensives) ---
+  // Only analyses of runs this evaluation looks at; below the floor the two signals are n/a.
+  const shown = new Set(runs.map((r) => `${r.reportCode}:${r.fightID}`));
+  const dd = deepdiveSummary((payload.deepdive ?? []).filter((d) => shown.has(`${d.reportCode}:${d.fightID}`)));
+  const ddOk = dd.analyzedRuns >= cfg.confidence.deepdiveMinRuns;
+  const defensiveUsage = ddOk ? dd.majorUsage : null;
+  const avoidableDeathShare = ddOk ? dd.avoidableDeathShare : null;
+
   // --- utility ---
   const hasKick = sig.some((s) => s.interrupts.kickCooldownS !== null);
   const kicksVsPeers = median(
@@ -169,8 +188,12 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     role,
     targetLevel: payload.targetLevel,
     runsUsed,
+    analyzedRuns: dd.analyzedRuns,
     seasonSlug,
-    survival: { individualDeaths, individualDeathsScaled, wipeDeaths, avoidableVsPeers, dtpsVsPeers, groupDeaths, groupDeathsScaled },
+    survival: {
+      individualDeaths, individualDeathsScaled, wipeDeaths, avoidableVsPeers, dtpsVsPeers, groupDeaths, groupDeathsScaled,
+      defensiveUsage, avoidableDeathShare, avoidableDeathsCount: dd.avoidableDeaths, countedDeathsCount: dd.countedDeaths,
+    },
     utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, hasDispel },
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },

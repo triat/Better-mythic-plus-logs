@@ -104,9 +104,14 @@ export function validateConfig(obj: unknown): EvaluationConfig {
   if (verdict.maybe > verdict.invite) fail("verdict.maybe", "must be ≤ verdict.invite");
 
   if (!isObj(obj.confidence)) fail("confidence", "must be an object");
-  expectKeys(obj.confidence as Record<string, unknown>, ["high", "medium", "consistencyMinRuns"], "confidence");
+  expectKeys(obj.confidence as Record<string, unknown>, ["high", "medium", "consistencyMinRuns", "deepdiveMinRuns"], "confidence");
   const cf = obj.confidence as Record<string, unknown>;
-  const confidence = { high: checkNumber(cf.high, "confidence.high"), medium: checkNumber(cf.medium, "confidence.medium"), consistencyMinRuns: checkNumber(cf.consistencyMinRuns, "confidence.consistencyMinRuns") };
+  const confidence = {
+    high: checkNumber(cf.high, "confidence.high"),
+    medium: checkNumber(cf.medium, "confidence.medium"),
+    consistencyMinRuns: checkNumber(cf.consistencyMinRuns, "confidence.consistencyMinRuns"),
+    deepdiveMinRuns: checkNumber(cf.deepdiveMinRuns, "confidence.deepdiveMinRuns"),
+  };
 
   return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, verdict, confidence };
 }

@@ -147,6 +147,32 @@ describe("collectInputs — throughput / consistency / preparation / experience"
   });
 });
 
+describe("collectInputs — deep-dive", () => {
+  const dd = (reportCode: string, majorUsage: number | null, avoidable: number, counted: number) => ({
+    reportCode, fightID: 1, character: "X", className: "C", spec: "S", tableMissing: false, tableVersion: "t",
+    defensives: [], deaths: [], majorUsage, avoidableDeaths: avoidable, countedDeaths: counted, unlisted: [], staleTable: false, truncated: false, fetchedAt: 0, pointsSpent: null,
+  });
+  test("null below deepdiveMinRuns (2), populated at or above; only analyses of evaluated runs count", () => {
+    const a = runWith({}); const b = runWith({}); const c = runWith({});
+    const one = collectInputs(payloadWith([a, b, c], { deepdive: [dd(a.reportCode, 0.5, 1, 1)] }), cfg);
+    expect(one.analyzedRuns).toBe(1);
+    expect(one.survival.defensiveUsage).toBeNull();
+    expect(one.survival.avoidableDeathShare).toBeNull();
+    const two = collectInputs(payloadWith([a, b, c], { deepdive: [dd(a.reportCode, 0.5, 1, 1), dd(b.reportCode, 0.3, 0, 1), dd("NOT-SHOWN", 0, 5, 5)] }), cfg);
+    expect(two.analyzedRuns).toBe(2);
+    expect(two.survival.defensiveUsage).toBeCloseTo(0.4, 9);
+    expect(two.survival.avoidableDeathShare).toBeCloseTo(0.5, 9);
+    expect(two.survival.avoidableDeathsCount).toBe(1);
+    expect(two.survival.countedDeathsCount).toBe(2);
+  });
+  test("avoidableDeathShare is null with zero counted deaths even when usage is present", () => {
+    const a = runWith({}); const b = runWith({});
+    const i = collectInputs(payloadWith([a, b], { deepdive: [dd(a.reportCode, 0.5, 0, 0), dd(b.reportCode, 0.7, 0, 0)] }), cfg);
+    expect(i.survival.defensiveUsage).toBeCloseTo(0.6, 9);
+    expect(i.survival.avoidableDeathShare).toBeNull();
+  });
+});
+
 describe("collectInputs — fixtures", () => {
   test("S1 tank run", async () => {
     const i = collectInputs(await fixturePayload("s1-tank", false), cfg);

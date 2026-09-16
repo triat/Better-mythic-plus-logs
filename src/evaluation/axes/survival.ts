@@ -12,5 +12,7 @@ export function scoreSurvival(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
     { id: "avoidableVsPeers", value: s.avoidableVsPeers, label: (r) => `avoidable ${signed(r)}% vs peers` },
     { id: "dtpsVsPeers", value: s.dtpsVsPeers, label: (r) => `DTPS ${signed(r)}% vs peers` },
     { id: "groupDeaths", value: s.groupDeathsScaled, raw: s.groupDeaths ?? undefined, label: (r) => `${r.toFixed(1)} teammate deaths/run` },
+    { id: "defensiveUsage", value: s.defensiveUsage, label: (r) => `majors used ${Math.round(r * 100)}% of possible (${i.analyzedRuns} run${i.analyzedRuns === 1 ? "" : "s"})` },
+    { id: "avoidableDeaths", value: s.avoidableDeathShare, label: () => `${s.avoidableDeathsCount}/${s.countedDeathsCount} deaths with a defensive available` },
   ], i.role, cfg, i.runsUsed);
 }

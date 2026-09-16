@@ -11,7 +11,9 @@
         "wipeDeaths":       { "curve": [[0, 100], [1, 70], [2, 45]],                      "weights": { "dps": 1, "healer": 1, "tank": 1 } },
         "avoidableVsPeers": { "curve": [[-40, 100], [-10, 80], [0, 65], [20, 40], [50, 10]], "weights": { "dps": 2, "healer": 2, "tank": 2 } },
         "dtpsVsPeers":      { "curve": [[-40, 100], [-10, 80], [0, 65], [20, 40], [50, 10]], "weights": { "dps": 1, "healer": 1, "tank": 0 } },
-        "groupDeaths":      { "curve": [[0, 100], [2, 75], [4, 45], [7, 15]],              "weights": { "dps": 0, "healer": 2, "tank": 0 } }
+        "groupDeaths":      { "curve": [[0, 100], [2, 75], [4, 45], [7, 15]],              "weights": { "dps": 0, "healer": 2, "tank": 0 } },
+        "defensiveUsage":   { "curve": [[0, 20], [0.3, 55], [0.6, 85], [0.9, 100]],       "weights": { "dps": 2, "healer": 2, "tank": 2 } },
+        "avoidableDeaths":  { "curve": [[0, 100], [0.34, 60], [0.67, 30], [1, 10]],        "weights": { "dps": 3, "healer": 3, "tank": 3 } }
       }
     },
     "utility": {
@@ -56,5 +58,5 @@
     "tank":   { "survival": 3, "utility": 2,   "throughput": 2, "consistency": 0, "preparation": 1, "experience": 2.5 }
   },
   "verdict": { "invite": 70, "maybe": 45, "minRuns": 3 },
-  "confidence": { "high": 6, "medium": 3, "consistencyMinRuns": 5 }
+  "confidence": { "high": 6, "medium": 3, "consistencyMinRuns": 5, "deepdiveMinRuns": 2 }
 }

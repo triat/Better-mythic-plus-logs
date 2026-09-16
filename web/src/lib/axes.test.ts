@@ -6,7 +6,7 @@ const axis = (key: AxisScore["key"], score: number | null, evidence: AxisScore["
   ({ key, score, confidence, evidence } as AxisScore);
 
 const ev: Evaluation = {
-  role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, configVersion: "x",
+  role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
   axes: [
     axis("throughput", 88, [
       { label: "median parse 86%", delta: 27.4, source: "throughput.medianParse" },

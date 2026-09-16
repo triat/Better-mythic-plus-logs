@@ -13,8 +13,8 @@ import { deaths, payloadWith, runWith } from "./helpers.ts";
 const cfg = validateConfig(DEFAULT_CONFIG);
 
 const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
-  role: "dps", targetLevel: 16, runsUsed: 6, seasonSlug: "season-mn-2",
-  survival: { individualDeaths: null, individualDeathsScaled: null, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: null, groupDeathsScaled: null },
+  role: "dps", targetLevel: 16, runsUsed: 6, analyzedRuns: 0, seasonSlug: "season-mn-2",
+  survival: { individualDeaths: null, individualDeathsScaled: null, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: null, groupDeathsScaled: null, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 },
   utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, hasDispel: true },
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
@@ -59,7 +59,7 @@ describe("survival", () => {
     // (levelScale(8) = 1.6): raw mean 1.25 × 1.6 = 2 → curve(2) = 35. dtps +20% vs peers → 40.
     const at8 = scoreSurvival(
       baseInputs({
-        survival: { individualDeaths: 1.25, individualDeathsScaled: 2, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: 20, groupDeaths: null, groupDeathsScaled: null },
+        survival: { individualDeaths: 1.25, individualDeathsScaled: 2, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: 20, groupDeaths: null, groupDeathsScaled: null, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 },
       }),
       cfg,
     );
@@ -69,7 +69,7 @@ describe("survival", () => {
     const tank = scoreSurvival(
       baseInputs({
         role: "tank",
-        survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: 0, avoidableVsPeers: 0, dtpsVsPeers: 50, groupDeaths: 9, groupDeathsScaled: 9 },
+        survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: 0, avoidableVsPeers: 0, dtpsVsPeers: 50, groupDeaths: 9, groupDeathsScaled: 9, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 },
       }),
       cfg,
     );
@@ -80,7 +80,7 @@ describe("survival", () => {
   });
   test("healer counts teammate deaths", () => {
     const h = scoreSurvival(
-      baseInputs({ role: "healer", survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: 4, groupDeathsScaled: 4 } }),
+      baseInputs({ role: "healer", survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: 4, groupDeathsScaled: 4, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 } }),
       cfg,
     );
     expect(h.evidence.map((e) => e.source)).toContain("survival.groupDeaths");
@@ -93,6 +93,15 @@ describe("survival", () => {
     const at20 = scoreSurvival(collectInputs(payloadWith(runsAt12(), { targetLevel: 20 }), cfg), cfg);
     expect(at12.score).toBe(at20.score);
     expect(at12.evidence).toEqual(at20.evidence);
+  });
+  test("deep-dive sub-signals score and label from the counts", () => {
+    const a = scoreSurvival(baseInputs({ analyzedRuns: 3, survival: { ...baseInputs().survival, defensiveUsage: 0.6, avoidableDeathShare: 2 / 3, avoidableDeathsCount: 2, countedDeathsCount: 3 } }), cfg);
+    const usage = a.evidence.find((e) => e.source === "survival.defensiveUsage")!;
+    expect(usage.label).toBe("majors used 60% of possible (3 runs)");
+    const deaths = a.evidence.find((e) => e.source === "survival.avoidableDeaths")!;
+    expect(deaths.label).toBe("2/3 deaths with a defensive available");
+    expect(deaths.delta).toBeLessThan(0);   // 0.67 → 30 on the curve
+    expect(usage.delta).toBeGreaterThan(0); // 0.6 → 85
   });
 });
 

@@ -1,7 +1,7 @@
 export const CENTER = 150;
 export const R = 110;
 export const LABEL_R = 132;
-export const RADAR_VIEWBOX = "-45 -5 390 310";
+export const RADAR_VIEWBOX = "-70 -5 440 310";
 export const ANGLES_DEG: readonly number[] = [-90, -30, 30, 90, 150, 210];
 export type Point = [number, number];
 

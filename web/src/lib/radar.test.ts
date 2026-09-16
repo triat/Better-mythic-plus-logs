@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { ANGLES_DEG, axisLabelPos, axisPoint, polygonPoints, ringPoints } from "./radar.ts";
+import { ANGLES_DEG, RADAR_VIEWBOX, axisLabelPos, axisPoint, polygonPoints, ringPoints } from "./radar.ts";
 
 describe("radar geometry", () => {
   test("angles", () => {
     expect(ANGLES_DEG).toEqual([-90, -30, 30, 90, 150, 210]);
+  });
+  test("viewBox has side room for labels", () => {
+    expect(RADAR_VIEWBOX).toBe("-70 -5 440 310");
   });
   test("axisPoint", () => {
     expect(axisPoint(0, 100)).toEqual([150, 40]);

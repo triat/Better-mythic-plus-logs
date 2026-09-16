@@ -190,7 +190,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
         onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
         onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache}
       />
-      <main className="content">
+      <main className={"content" + (empty ? " content-home" : "")}>
         {empty && <Home envPath={envPath} />}
         {!empty && !showCompare && activePayload && (
           <Detail payload={activePayload} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} onRefresh={onRefresh} />

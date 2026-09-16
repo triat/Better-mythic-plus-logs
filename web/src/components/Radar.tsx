@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function Radar({ series, size = 420, showScores = false }: Props) {
-  const height = Math.round((size * 310) / 390);
+  const height = Math.round((size * 310) / 440);
   const first = series[0];
   return (
     <svg width={size} height={height} viewBox={RADAR_VIEWBOX} role="img" aria-label="Six-axis radar">

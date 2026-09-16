@@ -49,3 +49,7 @@ export const wclUrl = (code: string, fightID: number): string =>
 /** Raider.IO URLs come from a third-party API: only link when they really point at raider.io. */
 export const rioHref = (url: unknown): string | null =>
   typeof url === "string" && url.startsWith("https://raider.io/") ? url : null;
+
+/** "twisting-nether" → "Twisting Nether"; "kel'thuzad" → "Kel'Thuzad". */
+export const realmName = (slug: string): string =>
+  slug.split("-").map((w) => w.split("'").map((p) => (p ? p[0]!.toUpperCase() + p.slice(1) : p)).join("'")).join(" ");

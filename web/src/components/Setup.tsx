@@ -19,6 +19,7 @@ export function Setup({ envPath, hasCredentials, onDone }: Props) {
   return (
     <main className="setup">
       <h1>bmpl · setup</h1>
+      {hasCredentials && <p><a href="/">← Back to lookups</a></p>}
       <p className="muted">Paste your Warcraft Logs API credentials. They are saved locally to <code className="mono">{envPath}</code> and used only to talk to the WCL API.</p>
       {hasCredentials && <p className="tone-warn">⚠ Credentials are already set; saving will replace them.</p>}
       <div className="card">

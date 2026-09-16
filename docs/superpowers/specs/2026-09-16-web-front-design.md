@@ -259,7 +259,7 @@ inline.
 
 ## Radar (`lib/radar.ts` + `Radar.tsx`)
 
-- `viewBox -45 -5 390 310` (labels need side room; inline SVG clips), center `(150,150)`, `R = 110`. Axis order fixed:
+- `viewBox -70 -5 440 310` (labels need side room; inline SVG clips), center `(150,150)`, `R = 110`. Axis order fixed:
   survival, utility, throughput, consistency, preparation, experience; angles
   `-90°, -30°, 30°, 90°, 150°, 210°`.
 - `axisPoint(i, score)` → `(150 + R·score/100·cos θ, 150 + R·score/100·sin θ)`, rounded to 1

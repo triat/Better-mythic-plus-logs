@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
-  ageDays, deathsTone, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, rioHref, signed, toneClass, wclUrl,
+  ageDays, deathsTone, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, realmName, rioHref, signed, toneClass, wclUrl,
 } from "./format.ts";
 
 describe("format", () => {
@@ -51,6 +51,12 @@ describe("format", () => {
     expect(higherTone(-26)).toBe("bad");
     expect(toneClass("good")).toBe("tone-good");
     expect(toneClass("neutral")).toBe("");
+  });
+  test("realmName", () => {
+    expect(realmName("silvermoon")).toBe("Silvermoon");
+    expect(realmName("twisting-nether")).toBe("Twisting Nether");
+    expect(realmName("kel'thuzad")).toBe("Kel'Thuzad");
+    expect(realmName("")).toBe("");
   });
   test("links", () => {
     expect(wclUrl("AbC/1", 7)).toBe("https://www.warcraftlogs.com/reports/AbC%2F1#fight=7");

@@ -1,6 +1,7 @@
 import { classHex, className } from "@shared/wow/classes.ts";
 import type { LookupPayload } from "../types.ts";
 import { axisRows, heroStats, radarPoints } from "../lib/axes.ts";
+import { realmName } from "../lib/format.ts";
 import { verdictView } from "../lib/verdict.ts";
 import { AxisRows } from "./AxisRows.tsx";
 import { Radar } from "./Radar.tsx";
@@ -16,7 +17,7 @@ export function VerdictHero({ payload }: { payload: LookupPayload }) {
         <div className="identity">
           <span className="name" style={{ color }}>{c.name}</span>
           <span style={{ color }}>{c.spec ? `${c.spec} ` : ""}{className(c.classID)}</span>
-          <span className="muted">{c.realmSlug} · {c.region.toUpperCase()}</span>
+          <span className="muted">{realmName(c.realmSlug)} · {c.region.toUpperCase()}</span>
         </div>
         <div className={"badge " + v.cls}>
           <span className="badge-label">{v.label}</span>

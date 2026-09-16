@@ -4,6 +4,7 @@ import { axisRows, heroStats, radarPoints } from "../lib/axes.ts";
 import { realmName } from "../lib/format.ts";
 import { verdictView } from "../lib/verdict.ts";
 import type { ReevalHint } from "../lib/keyLevel.ts";
+import { AxisLegend } from "./AxisLegend.tsx";
 import { AxisRows } from "./AxisRows.tsx";
 import { Radar } from "./Radar.tsx";
 
@@ -12,6 +13,7 @@ export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPa
   const v = verdictView(payload.evaluation, payload.targetAutoDetected);
   const color = classHex(c.classID);
   const other = payload.metric === "hps" ? "dps" : "hps";
+  const rows = axisRows(payload.evaluation);
   return (
     <section className="card hero">
       <div className="hero-left">
@@ -43,12 +45,13 @@ export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPa
           {payload.metricAutoSelected && payload.alternateMetricHasData && <> · metric auto-selected; {other} data exists too</>}
           {payload.specFilter && <> · <span className="tone-warn">filter: {payload.specFilter}</span></>}
         </div>
-        <AxisRows rows={axisRows(payload.evaluation)} />
+        <AxisRows rows={rows} />
       </div>
       <div className="radar-wrap">
         <Radar series={[{ points: radarPoints(payload.evaluation), color, label: c.name }]} showScores />
         <div className="faint" style={{ fontSize: 11 }}>rings = 25 / 50 / 75 / 100 · hollow point = not applicable</div>
       </div>
+      <AxisLegend rows={rows} />
     </section>
   );
 }

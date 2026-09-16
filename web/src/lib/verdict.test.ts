@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Evaluation } from "../types.ts";
-import { AXIS_DESCRIPTIONS, AXIS_LABELS, AXIS_ORDER, confidenceColor, verdictView } from "./verdict.ts";
+import { AXIS_DESCRIPTIONS, AXIS_LABELS, AXIS_ORDER, AXIS_WEIGHTS, confidenceColor, verdictView } from "./verdict.ts";
 
 const ev = (over: Partial<Evaluation>): Evaluation => ({
   role: "healer", targetLevel: 21, axes: [], global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "deadbeef", ...over,
@@ -11,9 +11,12 @@ describe("verdict", () => {
     expect(AXIS_ORDER).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
     expect(AXIS_LABELS.throughput).toBe("Throughput");
   });
-  test("every axis has a description naming its weight", () => {
-    for (const k of AXIS_ORDER) expect(AXIS_DESCRIPTIONS[k]).toMatch(/weight \d/i);
-    expect(AXIS_DESCRIPTIONS.consistency).toContain("weight 0");
+  test("every axis has a description and a weight line", () => {
+    for (const k of AXIS_ORDER) {
+      expect(AXIS_DESCRIPTIONS[k].length).toBeGreaterThan(40);
+      expect(AXIS_WEIGHTS[k]).toMatch(/^weight \d/);
+    }
+    expect(AXIS_WEIGHTS.consistency).toContain("weight 0");
   });
   test("invite/maybe/pass views", () => {
     expect(verdictView(ev({}))).toEqual({

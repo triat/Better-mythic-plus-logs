@@ -50,7 +50,7 @@ export function Radar({ series, size = 420, showScores = false }: Props) {
         const na = score === null;
         const text = AXIS_LABELS[key].toUpperCase() + (score === undefined ? "" : na ? " n/a" : ` ${Math.round(score)}`);
         return (
-          <text key={key} x={x} y={y} textAnchor={anchor} fontSize="10" fontWeight="600" letterSpacing="0.6" fill={na ? "#6e7681" : "#8b949e"}>
+          <text key={key} className="radar-label" x={x} y={y} textAnchor={anchor} fontSize="10" fontWeight="600" letterSpacing="0.6" fill={na ? "#6e7681" : "#8b949e"}>
             <title>{AXIS_DESCRIPTIONS[key]}</title>
             {text}
           </text>

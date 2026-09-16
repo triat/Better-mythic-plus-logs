@@ -1,6 +1,6 @@
 import type { AxisKey } from "../types.ts";
 import { ANGLES_DEG, RADAR_VIEWBOX, axisLabelPos, axisPoint, polygonPoints, ringPoints } from "../lib/radar.ts";
-import { AXIS_LABELS, AXIS_ORDER } from "../lib/verdict.ts";
+import { AXIS_DESCRIPTIONS, AXIS_LABELS, AXIS_ORDER } from "../lib/verdict.ts";
 
 export interface RadarSeries {
   /** Six scores in AXIS_ORDER; null = not applicable. */
@@ -51,6 +51,7 @@ export function Radar({ series, size = 420, showScores = false }: Props) {
         const text = AXIS_LABELS[key].toUpperCase() + (score === undefined ? "" : na ? " n/a" : ` ${Math.round(score)}`);
         return (
           <text key={key} x={x} y={y} textAnchor={anchor} fontSize="10" fontWeight="600" letterSpacing="0.6" fill={na ? "#6e7681" : "#8b949e"}>
+            <title>{AXIS_DESCRIPTIONS[key]}</title>
             {text}
           </text>
         );

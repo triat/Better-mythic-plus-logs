@@ -11,7 +11,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
         const expanded = open === r.key;
         const shown = expanded ? r.all : r.top;
         return (
-          <div key={r.key} className={"axis inset" + (na ? " axis-na" : "")} onClick={() => setOpen(expanded ? null : r.key)} title={r.confidence ? `${r.confidence} confidence` : "not applicable"}>
+          <div key={r.key} className={"axis inset" + (na ? " axis-na" : "")} onClick={() => setOpen(expanded ? null : r.key)} title={`${r.description}\n\n${r.confidence ? `${r.confidence} confidence` : "not applicable"} · click for details`}>
             <div className="axis-name">
               <span className="conf" style={{ background: confidenceColor(r.confidence) }} />
               <span className="label-caps">{r.label}</span>
@@ -19,6 +19,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
             </div>
             <div className="axis-score mono">{na ? "n/a" : Math.round(r.score!)}</div>
             <div className="axis-evidence">
+              {expanded && <div className="axis-desc muted">{r.description}</div>}
               {shown.map((e, i) => (
                 <span key={i}>
                   {i > 0 && <span className="faint"> · </span>}

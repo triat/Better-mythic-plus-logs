@@ -1,12 +1,14 @@
 import type { AxisKey, AxisScore, Confidence, Evaluation, LookupPayload } from "../types.ts";
 import { signed } from "./format.ts";
-import { AXIS_LABELS, AXIS_ORDER } from "./verdict.ts";
+import { AXIS_DESCRIPTIONS, AXIS_LABELS, AXIS_ORDER } from "./verdict.ts";
 
 export interface EvidenceView { label: string; delta: string; tone: "good" | "bad" }
 
 export interface AxisRowModel {
   key: AxisKey;
   label: string;
+  /** What the axis measures (AXIS_DESCRIPTIONS). */
+  description: string;
   score: number | null;
   confidence: Confidence | null;
   /** Up to two strongest evidence entries (by |delta|). */
@@ -32,6 +34,7 @@ export function axisRows(ev: Evaluation): AxisRowModel[] {
     return {
       key,
       label: AXIS_LABELS[key],
+      description: AXIS_DESCRIPTIONS[key],
       score,
       confidence: score === null ? null : a?.confidence ?? null,
       top: all.slice(0, 2),

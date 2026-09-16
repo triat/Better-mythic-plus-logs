@@ -10,6 +10,25 @@ export const AXIS_LABELS: Record<AxisKey, string> = {
   experience: "Experience",
 };
 
+/**
+ * What each axis measures — the sub-signals of src/evaluation/default-config.json in plain words,
+ * with the role weight used for the verdict. Shown on hover and when an axis row is expanded.
+ */
+export const AXIS_DESCRIPTIONS: Record<AxisKey, string> = {
+  survival:
+    "Deaths and damage taken over the shown runs: individual deaths per run (scaled by key level), deaths during wipes, avoidable damage and damage taken per second vs the run's peers, teammate deaths (healers only). Once 2+ runs are deep-dived: major defensive usage and deaths with a defensive available. Weight 3 for every role.",
+  utility:
+    "Interrupts and dispels: kick usage vs the run's peers and vs the spec's own kick capacity (fight length / kick cooldown), dispels per run when the kit can dispel. Weight 2 (healer 2.5).",
+  throughput:
+    "Warcraft Logs parses: the median parse over the shown runs and the parse on runs at the target level (unranked logs are ignored). Weight 3 for dps, 2 for healer and tank.",
+  consistency:
+    "How much parses, deaths and damage-vs-peers vary from run to run (needs 5 runs with stats). Informational only: weight 0 in the verdict.",
+  preparation:
+    "Potions and healthstones per run, item level vs what the target key expects this season. Weight 1.",
+  experience:
+    "Season coverage: share of the season's dungeons run, share at or above the target level, median key vs target, runs in the last 7 days (Raider.IO), plus a bonus for the previous season's score. Weight 2 (tank 2.5).",
+};
+
 export interface VerdictView {
   label: string;
   score: string | null;

@@ -64,7 +64,7 @@ src/deepdive/
   store.ts               getDeepDive/putDeepDive on bmpl.db (table wcl_deepdive), DEEPDIVE_QUERY_VERSION
 src/evaluation/          survival gains two sub-signals (inputs.ts, axes/survival.ts, default-config.json)
 src/lookup.ts            payload.deepdive: RunDefensives[] for displayed runs already analyzed (store only, 0 pts)
-src/server.ts            POST /api/deepdive, POST /api/deepdive/batch, GET/POST /api/defensives, SSE `deepdive`
+src/server.ts            POST /api/deepdive, GET/POST /api/defensives, history refresh after analyses / table edits
 src/cli.ts               bmpl analyze, bmpl defensives
 src/format-mplus.ts      renderDeepDive(run)
 web/src/lib/deepdive.ts  view model (rows, death lines, audit) — tested
@@ -243,7 +243,7 @@ for any sub-signal (`confidence.deepdiveMinRuns` joins `consistencyMinRuns`).
 | Route | Body / query | Response |
 |---|---|---|
 | `POST /api/deepdive` | `{ reportCode, fightID, character, force?: boolean }` | `{ ok, result: RunDefensives, fromCache, pointsSpent }`; `402` budget low; `404` run not in the raw store (analyze requires a prior lookup that enriched the run); WCL errors relayed as `502 { error }` |
-| `POST /api/deepdive/batch` | `{ runs: [{ reportCode, fightID, character }] }` | `{ ok, started: n }`; runs sequentially; each completion broadcasts SSE `deepdive { reportCode, fightID, ok, pointsSpent?, error? }`; the batch stops on a `402` |
+| *(no batch route)* | — | "Analyze all shown" is a client-side sequential loop over `POST /api/deepdive` that stops on the first error (a `402` included) and shows inline progress — same behaviour, one route and no SSE event fewer (ruled at plan time, 2026-09-16) |
 | `GET /api/defensives?class=&spec=` | — | `{ ok, entries: (DefensiveSpell & { origin })[], tableMissing, overridePath }` |
 | `POST /api/defensives` | `{ className, spec, patch: OverrideEntry }` | writes/merges the user override file, returns the new effective entries; `400` with the validation message on a bad patch |
 | `POST /api/lookup` (existing) | — | payload gains `deepdive: RunDefensives[]` from the store (0 pts) |
@@ -266,8 +266,8 @@ raw rows; analysis is recomputed on read (it is microseconds).
 ## Web UI (Detail)
 
 - Each run row gets a right-side action: **Analyze · ~3 pts** (or **Analyzed ✓** with a
-  chevron). The runs section header gets **Analyze all shown (~N pts)** which calls the batch
-  route and shows per-run progress from the SSE events; disabled while running.
+  chevron). The runs section header gets **Analyze all shown (~N pts)** which analyzes the
+  pending runs one after the other and shows "Analyzing i/n…"; disabled while running.
 - The analyzed row expands into a **Defensives** panel (`RunDeepDive.tsx`), three blocks:
   1. **Usage** table: `name · kind · casts / capacity · usage % · CD table (obs. min interval)`;
      `cdMismatch` rows show a yellow "talent?" chip.
@@ -299,8 +299,8 @@ raw rows; analysis is recomputed on read (it is microseconds).
   raw row and show a warning line.
 - Override file unreadable/invalid JSON: the shipped table is used, the UI banner names the
   file and the error; `POST /api/defensives` refuses until fixed.
-- Concurrency: the batch route runs one run at a time; a second batch while one runs returns
-  `409`.
+- Concurrency: the UI disables every Analyze action while one is running; the server accepts
+  concurrent requests (each is independent and idempotent on the cache).
 
 ## Tests
 

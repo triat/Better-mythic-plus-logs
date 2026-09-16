@@ -4,7 +4,7 @@ import { RioSection } from "./RioSection.tsx";
 import { SignalTiles } from "./SignalTiles.tsx";
 import { VerdictHero } from "./VerdictHero.tsx";
 
-export interface DetailProps { payload: LookupPayload; fetchedAt: number | null; fromCache: boolean; onRefresh: () => void }
+export interface DetailProps { payload: LookupPayload }
 
 export function Detail({ payload }: DetailProps) {
   return (

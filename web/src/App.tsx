@@ -62,6 +62,8 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
     if (!r.ok) return [];
     setTabs(r.items);
     setSelected((s) => pruneSelection(s, r.items.map((i) => i.key)));
+    const keep = new Set(r.items.map((i) => i.key));
+    for (const k of [...payloads.current.keys()]) if (!keep.has(k)) payloads.current.delete(k);
     return r.items;
   }, []);
 
@@ -152,7 +154,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   const sseConnected = useSse({
     status: (s) => setWatch({ active: s.active, label: s.backend }),
     searching: (d) => setWatch((w) => ({ ...w, label: `looking up ${d.character}…` })),
-    result: async (d) => { await loadHistory(); await showTab(d.key); setFromCache(d.fromCache); },
+    result: async (d) => { await loadHistory(); if (!d.fromCache) payloads.current.delete(d.key); await showTab(d.key); setFromCache(d.fromCache); },
     error: (d) => setToast(d.message),
   });
 
@@ -193,7 +195,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
       <main className={"content" + (empty ? " content-home" : "")}>
         {empty && <Home envPath={envPath} />}
         {!empty && !showCompare && activePayload && (
-          <Detail payload={activePayload} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} onRefresh={onRefresh} />
+          <Detail payload={activePayload} />
         )}
         {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
         {showCompare && (

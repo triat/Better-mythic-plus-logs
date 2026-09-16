@@ -193,8 +193,8 @@ clipboard watch is on", and a one-line note showing the WCL credentials source (
 ### Detail (`Detail.tsx`) — one active tab
 
 1. **VerdictHero** (card):
-   - left: name (class color) + realm/region, spec + role, "Target +N (auto-detected)" chip,
-     "fetched Xh ago · cached" line, Refresh link.
+   - left: name (class color) + realm/region, spec + role, "Target +N (auto-detected)" chip
+     (the "fetched · cached" line and the Refresh button live in the tab strip, next to Compare).
    - center: verdict badge `INVITE 78` / `MAYBE 52` / `PASS 31` (existing badge classes), sub-line
      `for a +21 · 9 runs scored · confidence per axis` (`evaluation.targetLevel`,
      `evaluation.runsUsed`). When `evaluation.verdict === "insufficient"` the badge reads
@@ -218,8 +218,8 @@ clipboard watch is on", and a one-line note showing the WCL credentials source (
    Dungeons of the season with no run are listed at the bottom, muted: `no run indexed`.
    Metric note when `metricAutoSelected && alternateMetricHasData`: "auto-selected; the other
    metric has data too".
-4. **RioSection** (collapsed by default): current/previous season scores (best role), item
-   level, recent runs (timed count) and best runs; or `rioError` text in muted red when `rio`
+4. **RioSection** (collapsed by default): current season score, recent-run count with timed
+   count and last-run age, the last 10 recent runs; or `rioError` text in muted red when `rio`
    is null.
 
 ### Compare (`Compare.tsx`) — 2 or 3 tabs selected
@@ -269,8 +269,8 @@ inline.
   Never plotted as 0.
 - Series: `{ points: (number|null)[6], color, label }`. Fill `color` at 14 % opacity, stroke
   2 px, `stroke-linejoin round`; vertices as 3.5 px dots. Labels outside the outer ring at
-  `R + 22`, `text-anchor` by quadrant, font 11 px uppercase muted; the label's score is not
-  repeated (it lives in AxisRows / the compare table).
+  `R + 22`, `text-anchor` by quadrant, font 11 px uppercase muted; the single-series detail radar
+  appends the score to each label (as in the approved canvas); the compare radar shows labels only.
 - Tests (`lib/radar.test.ts`): the six angles; `axisPoint(0,100) = (150,40)`;
   `axisPoint(1,61) = (208.1,116.5)`; a null score maps to `(150,150)`; `polygonPoints` string
   for the canvas sample `[82,61,88,null,55,74]` equals

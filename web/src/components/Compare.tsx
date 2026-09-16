@@ -8,14 +8,14 @@ import { Radar } from "./Radar.tsx";
 export interface CompareEntry { item: HistoryItem; payload: LookupPayload }
 
 export function Compare({ entries, onJump }: { entries: CompareEntry[]; onJump: (key: string) => void }) {
-  const series = entries.map((e) => ({ points: radarPoints(e.payload.evaluation), color: classHex(e.payload.character.classID), label: e.payload.character.name }));
+  const series = entries.map((e) => ({ points: radarPoints(e.payload.evaluation), color: classHex(e.payload.character.classID), label: e.payload.character.name, id: e.item.key }));
   const sections = compareSections(entries.map((e) => e.payload));
   return (
     <section className="card compare">
       <div className="radar-wrap">
         <Radar series={series} size={380} />
         <div className="radar-legend">
-          {series.map((s) => <span key={s.label}><i style={{ background: s.color }} />{s.label}</span>)}
+          {series.map((s, i) => <span key={s.id ?? `${i}:${s.label}`}><i style={{ background: s.color }} />{s.label}</span>)}
         </div>
       </div>
       <div className="compare-table-wrap">

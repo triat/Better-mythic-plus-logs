@@ -7,6 +7,7 @@ export interface RadarSeries {
   points: readonly (number | null)[];
   color: string;
   label: string;
+  id?: string;
 }
 
 interface Props {
@@ -30,8 +31,8 @@ export function Radar({ series, size = 420, showScores = false }: Props) {
         stroke="#21262d"
         strokeWidth="1"
       />
-      {series.map((s) => (
-        <g key={s.label}>
+      {series.map((s, i) => (
+        <g key={s.id ?? `${i}:${s.label}`}>
           <polygon points={polygonPoints(s.points)} fill={s.color} fillOpacity="0.14" stroke={s.color} strokeWidth="2" strokeLinejoin="round" />
           {s.points.map((p, i) => {
             const [cx, cy] = axisPoint(i, p);

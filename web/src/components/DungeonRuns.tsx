@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { LookupPayload } from "../types.ts";
+import { STALE_DAYS } from "../lib/format.ts";
 import { missingDungeons, runRows, runsHeadline } from "../lib/runs.ts";
 
 export function DungeonRuns({ payload }: { payload: LookupPayload }) {
@@ -33,7 +34,7 @@ export function DungeonRuns({ payload }: { payload: LookupPayload }) {
               <div className="mono">{r.amount} <span className="muted" style={{ fontSize: 11 }}>{r.metric}</span></div>
               <div className={"mono " + r.parseCls} style={{ fontWeight: 600 }}>{r.parse}</div>
               <div className="muted">{r.spec}</div>
-              <div className={r.stale ? "tone-warn" : "muted"} title={r.stale ? `older than ${14} days` : undefined}>{r.age}{r.stale ? " · stale" : ""}</div>
+              <div className={r.stale ? "tone-warn" : "muted"} title={r.stale ? `older than ${STALE_DAYS} days` : undefined}>{r.age}{r.stale ? " · stale" : ""}</div>
               <a href={r.url} target="_blank" rel="noopener" title="Open log">↗</a>
             </div>
           ))}

@@ -142,6 +142,22 @@ describe("analyzeRun — audit", () => {
     expect(analyzeRun(synthetic([], [])).staleTable).toBe(false);
     expect(analyzeRun({ ...synthetic([], []), table: { ...table, entries: [...table.entries, extra] } }).staleTable).toBe(true);
   });
+  test("an entry added after the fetch is listed (Casts-table count) but never judged at a death", () => {
+    const extra = { id: 77, name: "New", cooldownS: 60, durationS: 5, kind: "major" as const, origin: "override" as const };
+    // Wall and Bubble both on cooldown at the death → "nothing available"; the new major must not flip it to "defensive available".
+    const base = synthetic([[1, 250], [2, 100]], [300], { castsTable: [[77, "New", 4]] });
+    const r = analyzeRun({ ...base, table: { ...table, entries: [...table.entries, extra] } });
+    expect(r.staleTable).toBe(true);
+    const use = r.defensives.find((d) => d.id === 77)!;
+    expect(use.casts).toBe(4);
+    expect(use.observedMinIntervalS).toBeNull();
+    const d = r.deaths[0]!;
+    expect(d.available).not.toContain("New");
+    expect(d.active).not.toContain("New");
+    expect(d.onCooldown.map((c) => c.name)).not.toContain("New");
+    expect(d.verdict).toBe("nothing available");
+    expect(r.avoidableDeaths).toBe(0);
+  });
   test("tableMissing still audits", () => {
     const r = analyzeRun({ ...synthetic([], [], { buffs: [[50, "X", 1]], castsTable: [[50, "X", 1]] }), table: { key: "Test:Spec", entries: [], ignored: [], tableMissing: true } });
     expect(r.tableMissing).toBe(true);

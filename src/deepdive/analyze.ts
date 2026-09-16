@@ -24,7 +24,8 @@ function usageOf(raw: RawDeepDive, fightS: number, table: SpecDefensives): Defen
   for (const e of raw.casts?.data?.entries ?? []) if (typeof e.guid === "number") tableCounts.set(e.guid, e.total ?? 0);
   return table.entries.map((d) => {
     const times = raw.castEvents.filter((e) => e.abilityGameID === d.id).map((e) => e.timestamp).sort((a, b) => a - b);
-    const casts = times.length > 0 ? times.length : tableCounts.get(d.id) ?? 0;
+    // Exact timestamps when the events were filtered on this id; otherwise the Casts table total (ids added after the fetch).
+    const casts = Math.max(times.length, tableCounts.get(d.id) ?? 0);
     let minGap: number | null = null;
     for (let i = 1; i < times.length; i++) {
       const gap = (times[i]! - times[i - 1]!) / 1000;
@@ -42,19 +43,22 @@ function usageOf(raw: RawDeepDive, fightS: number, table: SpecDefensives): Defen
   });
 }
 
-function deathOf(entry: RawTableEntry, atMs: number, inWipe: boolean, raw: RawDeepDive, table: SpecDefensives): DeathAnalysis {
+function deathOf(entry: RawTableEntry, atMs: number, inWipe: boolean, raw: RawDeepDive, table: SpecDefensives, fightStart: number): DeathAnalysis {
   const abilities = (entry.damage?.abilities ?? []).filter((a) => typeof a.total === "number");
   const sum = abilities.reduce((s, a) => s + (a.total ?? 0), 0);
   const killingHits = [...abilities].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 3)
     .map((a) => ({ name: a.name, amount: a.total ?? 0, share: sum > 0 ? (a.total ?? 0) / sum : 0 }));
-  const deathTs = raw.fightStart + atMs;
+  const deathTs = fightStart + atMs;
   const available: string[] = [];
   const active: string[] = [];
   const onCooldown: { name: string; readyInS: number }[] = [];
   let immunityAvail = false;
   let majorAvail = false;
   let anyActive = false;
+  // Only ids the events were filtered on can be judged: an entry added after the fetch has no
+  // events by construction and would always read as "available" (the row is stale — re-analyze).
   for (const d of table.entries) {
+    if (!raw.tableIds.includes(d.id)) continue;
     const before = raw.castEvents.filter((e) => e.abilityGameID === d.id && e.timestamp <= deathTs).map((e) => e.timestamp);
     const last = before.length > 0 ? Math.max(...before) : null;
     const isActive = last !== null && d.durationS > 0 && deathTs - last <= d.durationS * 1000;
@@ -92,7 +96,7 @@ export function analyzeRun(i: AnalyzeInput): RunDefensives {
   const deaths = myEntries.map((e) => {
     const atMs = (e.timestamp as number) - fightStart;
     const ev = i.signals.deaths.events.find((d) => d.atMs === atMs);
-    return deathOf(e, atMs, ev?.inWipe ?? false, i.raw, i.table);
+    return deathOf(e, atMs, ev?.inWipe ?? false, i.raw, i.table, fightStart);
   }).sort((a, b) => a.atMs - b.atMs);
   const majors = defensives.filter((d) => d.kind !== "minor");
   const counted = deaths.filter((d) => !d.inWipe);

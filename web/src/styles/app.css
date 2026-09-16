@@ -110,3 +110,23 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .setup code { background: var(--bg); padding: .1rem .4rem; border-radius: 4px; font-size: .9rem; }
 .setup-form { display: flex; flex-direction: column; gap: 12px; margin-top: 1.5rem; }
 .setup-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+
+/* verdict hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; }
+.hero-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.identity { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.identity .name { font-size: 22px; font-weight: 700; }
+.stats { display: flex; gap: 18px; font-size: 13px; flex-wrap: wrap; }
+.stats b { color: var(--text); font-weight: 600; }
+.metaline { font-size: 12px; }
+.metaline b { color: var(--text-soft); }
+.axes { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.axis { display: grid; grid-template-columns: 120px 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 10px; cursor: pointer; }
+.axis:hover { border-color: var(--border); }
+.axis-na { border-style: dashed; }
+.axis-na .label-caps, .axis-na .axis-score { color: var(--faint); }
+.axis-name { display: flex; align-items: center; gap: 6px; }
+.conf { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.axis-score { font-size: 16px; font-weight: 700; text-align: right; }
+.axis-na .axis-score { font-size: 13px; font-weight: 600; }
+.axis-evidence { font-size: 12px; color: var(--text-soft); }

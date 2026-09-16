@@ -1,4 +1,14 @@
-import type { HistoryItem, LookupPayload, LookupRequest, WatchOpts, WatchStatus } from "./types.ts";
+import type {
+  DefensivesPatch,
+  DefensivesResponse,
+  DeepdiveRequest,
+  HistoryItem,
+  LookupPayload,
+  LookupRequest,
+  RunDefensives,
+  WatchOpts,
+  WatchStatus,
+} from "./types.ts";
 
 export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -36,4 +46,9 @@ export const api = {
   watchStart: (opts: WatchOpts) => call<WatchStatus>("/api/watch/start", post(opts)),
   watchStop: () => call<{ active: false }>("/api/watch/stop", post()),
   quit: () => call<Record<never, never>>("/api/quit", post()),
+  deepdive: (req: DeepdiveRequest) =>
+    call<{ result: RunDefensives; fromCache: boolean; pointsSpent: number | null }>("/api/deepdive", post(req)),
+  defensives: (className: string, spec: string) =>
+    call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
+  patchDefensives: (body: DefensivesPatch) => call<DefensivesResponse>("/api/defensives", post(body)),
 };

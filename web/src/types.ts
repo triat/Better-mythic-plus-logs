@@ -1,10 +1,21 @@
 // Types only. Anything runtime from src/ is forbidden here (see spec).
+import type { EffectiveEntry, OverrideEntry } from "@shared/deepdive/types.ts";
+
 export type { LookupPayload } from "@shared/lookup.ts";
 export type { AxisKey, AxisScore, Confidence, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";
 export type { Metric } from "@shared/roles.ts";
+export type {
+  RunDefensives,
+  DeathAnalysis,
+  DefensiveUse,
+  EffectiveEntry,
+  OverrideEntry,
+  DeepdiveSummary,
+  DefensiveKind,
+} from "@shared/deepdive/types.ts";
 
 /** One row of GET /api/history (server's `historySummary`). */
 export interface HistoryItem {
@@ -36,4 +47,26 @@ export interface WatchStatus {
   active: boolean;
   opts: WatchOpts | null;
   backend: string | null;
+}
+
+export interface DeepdiveRequest {
+  reportCode: string;
+  fightID: number;
+  character: string;
+  force?: boolean;
+}
+
+export interface DefensivesResponse {
+  key: string;
+  entries: EffectiveEntry[];
+  ignored: number[];
+  tableMissing: boolean;
+  overridePath: string;
+  warning?: string | null;
+}
+
+export interface DefensivesPatch {
+  className: string;
+  spec: string;
+  patch: OverrideEntry;
 }

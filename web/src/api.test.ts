@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { api } from "./api.ts";
+import type { RunDefensives } from "./types.ts";
 
 const realFetch = globalThis.fetch;
 const mock = (fn: (url: string, init?: RequestInit) => Response | Promise<Response>) => {
@@ -40,5 +41,19 @@ describe("api", () => {
     expect(JSON.parse(String(seen[0]!.init?.body))).toEqual({ character: "A-B", level: "20", refresh: true });
     expect(seen[1]!.url).toBe("/api/history/k%2F1");
     expect(seen[1]!.init?.method).toBe("DELETE");
+  });
+
+  test("deepdive posts JSON and returns the analysis", async () => {
+    const seen: { url: string; init?: RequestInit }[] = [];
+    const result = { reportCode: "ABC", fightID: 3 } as unknown as RunDefensives;
+    mock((url, init) => {
+      seen.push({ url, init });
+      return Response.json({ ok: true, result, fromCache: false, pointsSpent: 3 });
+    });
+    const r = await api.deepdive({ reportCode: "ABC", fightID: 3, character: "Muleyoxo" });
+    expect(seen[0]!.url).toBe("/api/deepdive");
+    expect(seen[0]!.init?.method).toBe("POST");
+    expect(JSON.parse(String(seen[0]!.init?.body))).toEqual({ reportCode: "ABC", fightID: 3, character: "Muleyoxo" });
+    expect(r).toEqual({ ok: true, result, fromCache: false, pointsSpent: 3 });
   });
 });

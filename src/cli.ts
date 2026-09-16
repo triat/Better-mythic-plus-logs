@@ -210,6 +210,17 @@ async function cmdEvaluate(file: string, json: boolean): Promise<void> {
   else console.log(renderEvaluation(ev));
 }
 
+/** Which shown runs `bmpl analyze` reports (`wanted`) and which of them cost a fetch (`toFetch`); `unknown` = --run keys not among the shown runs. Pure. */
+export function selectRuns<R extends { reportCode: string; fightID: number }>(
+  shown: R[], analyzedKeys: Set<string>, runKeys: string[], all: boolean, force: boolean,
+): { wanted: R[]; toFetch: R[]; unknown: string[] } {
+  const key = (r: R) => `${r.reportCode}:${r.fightID}`;
+  const wanted = shown.filter((r) => all || runKeys.includes(key(r)));
+  const toFetch = wanted.filter((r) => force || !analyzedKeys.has(key(r)));
+  const unknown = runKeys.filter((k) => !shown.some((r) => key(r) === k));
+  return { wanted, toFetch, unknown };
+}
+
 async function cmdAnalyze(
   name: string, realm: string, targetLevel: number | null, spec: string | null,
   runKeys: string[], all: boolean, force: boolean, yes: boolean, json: boolean,
@@ -230,12 +241,11 @@ async function cmdAnalyze(
     closeStore();
     return;
   }
-  const wanted = shown.filter((r) => (all || runKeys.includes(key(r))) && (force || !analyzed.has(key(r))));
-  const unknown = runKeys.filter((k) => !shown.some((r) => key(r) === k));
+  // Already-analyzed runs are shown from the cache (0 pts); only `toFetch` costs points and needs the confirmation.
+  const { wanted, toFetch, unknown } = selectRuns(shown, analyzed, runKeys, all, force);
   if (unknown.length > 0) { console.error(err(`✗ not among the shown runs: ${unknown.join(", ")}`)); closeStore(); process.exit(2); }
-  if (wanted.length === 0) { console.log(dim("nothing to analyze (already analyzed — use --force to re-fetch)")); }
-  else if (!yes && !json) {
-    const go = confirm(`Analyze ${wanted.length} run${wanted.length === 1 ? "" : "s"} for ~${wanted.length * estimateDeepdiveCost()} WCL pts?`);
+  if (toFetch.length > 0 && !yes && !json) {
+    const go = confirm(`Analyze ${toFetch.length} run${toFetch.length === 1 ? "" : "s"} for ~${toFetch.length * estimateDeepdiveCost()} WCL pts?`);
     if (!go) { closeStore(); process.exit(0); }
   }
   const [store, tables] = await Promise.all([getStore(), getDefensives()]);
@@ -650,4 +660,4 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+if (import.meta.main) main();

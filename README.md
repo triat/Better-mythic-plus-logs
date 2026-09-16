@@ -97,6 +97,8 @@ bmpl evaluate saved.json --json   # structured output
 - [Bun](https://bun.sh/) 1.3+ (for running from source / building)
 - A Warcraft Logs v2 API client — free, see below
 - `just` (optional but recommended) — https://github.com/casey/just
+- For building from source: the web front builds with Vite (`just web-install`
+  once, then `just build`). Node is not required — Bun runs Vite.
 
 `bmpl` caches WCL run enrichment and Raider.IO responses in a local SQLite
 file, `bmpl.db`, created next to your `.env`. It's git-ignored; override the
@@ -175,10 +177,23 @@ On first run, the browser lands on a setup page that walks you through creating
 a Warcraft Logs API client and saves the creds to `.env` automatically — no
 manual file editing required.
 
-After that, you get a single input field: paste a `Name-Realm`, hit **Look up**,
-see the same vetting view the CLI produces but rendered as HTML. There's a
-**Quit** button in the header to shut down the server. No terminal knowledge
-needed.
+After that, four screens:
+
+- **Home** — a big search box: paste a `Name-Realm`, hit **Look up**.
+- **Detail** — the verdict badge and 0–100 score, the six axes (Survival,
+  Utility, Throughput, Consistency, Preparation, Experience) each with a
+  confidence dot and its evidence, a radar chart, signal tiles, the best run
+  per dungeon with that run's own signals, and a collapsed Raider.IO section.
+- **Compare** — 2–3 characters side by side: their radars overlaid in their
+  class colors, and a pivoted table (one row per stat, one column per
+  character) with verdict badges in the header and the best value in each row
+  highlighted.
+- **Setup** — the first-run flow above, also reachable any time via the
+  **Re-configure** button.
+
+The header also has a **Clipboard watch** toggle (the hands-free flow below,
+without needing a terminal) and a **Quit** button to shut down the server. No
+terminal knowledge needed.
 
 This is the intended "share with friends" mode — ship them `bmpl.exe` (see the
 Windows section below), they double-click, the browser opens, they're set up
@@ -212,6 +227,26 @@ just evaluate saved.json      # re-run the evaluation model on a saved lookup
 just test                     # run the test suite
 just --list                   # all recipes
 ```
+
+### Web front development
+
+The UI is a Vite + React app in `web/`, embedded into the binary at build time.
+
+- `just web-install` — install its dependencies (once)
+- `just serve --no-open` in one terminal, `just web-dev` in another →
+  http://localhost:5173 with hot reload; `/api` is proxied to the Bun server
+  on :3000
+- `just web-build` — produce `web/dist/` (fixed names: `index.html`,
+  `assets/app.js`, `assets/app.css`)
+- `just build` — builds the front, then the binary (`bun build --compile`
+  embeds `web/dist`)
+- `just check` — typechecks both trees; `bun test` runs the front's
+  pure-module tests too
+
+Rules: `web/` imports **types only** from `src/` (plus `src/wow/classes.ts`),
+and all rendering logic lives in tested pure modules under `web/src/lib/`.
+Without `web/dist`, `bmpl serve` answers 503 on `/` ("web UI not built") while
+the API keeps working.
 
 ### Flags (shared across `lookup`, `mplus`, `watch`)
 
@@ -306,6 +341,9 @@ src/
   util.ts         realm slugging, age formatting
   format.ts       color helpers
   format-mplus.ts rendering
+  web-static.ts   maps request paths to embedded web/dist assets
+  web-assets.ts   embeds web/dist into the binary at build time
+  wow/classes.ts  class names + hex colors (shared by CLI and web front)
   wcl/            OAuth2 + GraphQL client + queries + types
   signals/        gameplay-quality signals (the "vetting" layer)
     types.ts          shared types (RunSignals, RioProfile, ...)
@@ -323,6 +361,18 @@ scripts/
   import-postmortem-avoidable.ts   regenerate signals/avoidable/*.json from postmortem
 test/
   *.test.ts, signals/*.test.ts, fixtures/   bun:test suite + fixture data
+web/
+  src/
+    lib/          pure, tested view models (format, verdict, radar, history,
+                   axes, tiles, runs, compare)
+    components/   Home, Detail, Compare, Setup, Header, Tabs, Toast,
+                   VerdictHero, AxisRows, Radar, SignalTiles, DungeonRuns,
+                   RioSection
+    api.ts        fetch wrapper for /api/*
+    types.ts      type-only re-exports from src/
+    styles/       CSS
+  dist/           built output (git-ignored), embedded into the binary by
+                   src/web-assets.ts
 ```
 
 ## Troubleshooting

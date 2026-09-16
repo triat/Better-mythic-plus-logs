@@ -18,7 +18,7 @@ const payload = (over: Record<string, unknown>): LookupPayload =>
     metric: "hps",
     character: { name: "A", classID: 7, spec: "Holy", scoreTop: null },
     targetLevel: 21, targetAutoDetected: true,
-    seasonDungeons: [{ id: 1, name: "Voidscar Arena" }, { id: 2, name: "Den of Nalorakk" }],
+    seasonDungeons: [{ id: 1, name: "Voidscar Arena" }, { id: 2, name: "Den of Nalorakk" }, { id: 3, name: "Kings' Rest" }],
     perDungeon: { runs: [{ encounterID: 1, keyLevel: 21, parsePercent: 79.4, signals: undefined }], dungeonsCovered: 1, totalDungeonsInSeason: 2, dungeonsAtOrAboveTarget: 1, medianLevel: 21, medianAmount: 312_000, medianParse: 79.4 },
     prevLevelBest: null,
     summary: { runsWithSignals: 1, timedShown: 1, avgDeaths: 0.7, deathsInWipes: 0, dtpsDeltaPct: -12, kicksDeltaPts: null, avoidableDeltaPct: null, ilvl: 322, recentTimed: 9, recentTotal: 10, prevSeason: null },
@@ -39,11 +39,10 @@ describe("compareSections", () => {
   const sections = compareSections([a, b]);
   const row = (title: string, label: string) => sections.find((s) => s.title === title)!.rows.find((r) => r.label === label)!;
 
-  test("verdict + score + axes", () => {
-    expect(row("Verdict", "Verdict").cells.map((c) => c.badge?.label)).toEqual(["INVITE", "MAYBE"]);
-    expect(row("Verdict", "Score").cells.map((c) => [c.text, c.best])).toEqual([["78", true], ["66", false]]);
-    expect(row("Verdict", "Survival").cells.map((c) => [c.text, c.best])).toEqual([["82", false], ["100", true]]);
-    expect(row("Verdict", "Consistency").cells.map((c) => [c.text, c.best])).toEqual([["n/a", false], ["72", true]]);
+  test("score + axes", () => {
+    expect(row("Evaluation", "Score").cells.map((c) => [c.text, c.best])).toEqual([["78", true], ["66", false]]);
+    expect(row("Evaluation", "Survival").cells.map((c) => [c.text, c.best])).toEqual([["82", false], ["100", true]]);
+    expect(row("Evaluation", "Consistency").cells.map((c) => [c.text, c.best])).toEqual([["n/a", false], ["72", true]]);
   });
   test("summary rows", () => {
     expect(row("Summary", "Target level").cells.map((c) => c.text)).toEqual(["+21 auto", "+18 auto"]);
@@ -57,6 +56,7 @@ describe("compareSections", () => {
   test("per-dungeon rows only where someone has a run", () => {
     const d = sections.find((s) => s.title === "Per-dungeon (best run)")!;
     expect(d.rows.map((r) => r.label)).toEqual(["Voidscar Arena", "Den of Nalorakk"]);
+    expect(d.rows.map((r) => r.label)).not.toContain("Kings' Rest");
     expect(d.rows[0]!.cells.map((c) => [c.text, c.best])).toEqual([["+21 · 79%", false], ["+18 · 90%", true]]);
     expect(d.rows[1]!.cells[0]!.text).toBe("—");
   });

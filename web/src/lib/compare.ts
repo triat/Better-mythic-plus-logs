@@ -1,8 +1,7 @@
 import type { LookupPayload, MPlusRun } from "../types.ts";
 import { radarPoints } from "./axes.ts";
 import { deathsTone, fmtAmount, higherTone, lowerTone, parseTier, signed, toneClass } from "./format.ts";
-import { AXIS_LABELS, AXIS_ORDER, verdictView } from "./verdict.ts";
-import type { VerdictView } from "./verdict.ts";
+import { AXIS_LABELS, AXIS_ORDER } from "./verdict.ts";
 
 export type Mode = "higher" | "lower" | "none";
 
@@ -16,7 +15,7 @@ export function bestIndices(values: readonly (number | null)[], mode: Mode): num
   return valid.filter((x) => x.v === best).map((x) => x.i);
 }
 
-export interface CompareCell { text: string; cls: string; best: boolean; badge?: VerdictView }
+export interface CompareCell { text: string; cls: string; best: boolean }
 export interface CompareRow { label: string; cells: CompareCell[] }
 export interface CompareSection { title: string; rows: CompareRow[] }
 
@@ -33,10 +32,9 @@ const findRun = (p: LookupPayload, encounterID: number): MPlusRun | null =>
 
 export function compareSections(ps: LookupPayload[]): CompareSection[] {
   const evs = ps.map((p) => p.evaluation);
-  const verdict: CompareSection = {
-    title: "Verdict",
+  const evaluation: CompareSection = {
+    title: "Evaluation",
     rows: [
-      row("Verdict", "none", ps.map(() => null), evs.map((ev) => ({ ...cell(""), badge: verdictView(ev) }))),
       row("Score", "higher", evs.map((ev) => ev.global), evs.map((ev) => cell(ev.global === null ? DASH : String(Math.round(ev.global))))),
       ...AXIS_ORDER.map((key, i) =>
         row(AXIS_LABELS[key], "higher", evs.map((ev) => radarPoints(ev)[i] ?? null),
@@ -94,5 +92,5 @@ export function compareSections(ps: LookupPayload[]): CompareSection[] {
     })));
   }
 
-  return [verdict, summary, { title: "Per-dungeon (best run)", rows: dungeonRows }];
+  return [evaluation, summary, { title: "Per-dungeon (best run)", rows: dungeonRows }];
 }

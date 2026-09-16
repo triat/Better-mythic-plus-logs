@@ -173,6 +173,9 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   const activeTab = tabs.find((t) => t.key === activeKey) ?? null;
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
   const empty = tabs.length === 0;
+  // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
+  // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
+  const showCompare = compareOpen && selected.length >= 2;
 
   return (
     <>
@@ -182,18 +185,18 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty}
       />
       <Tabs
-        items={tabs} activeKey={activeKey} selected={selected} compareOpen={compareOpen}
+        items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
         onSelectTab={(k) => void showTab(k)} onToggle={(k) => setSelected((s) => toggleSelection(s, k))}
         onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
         onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache}
       />
       <main className="content">
         {empty && <Home envPath={envPath} />}
-        {!empty && !compareOpen && activePayload && (
+        {!empty && !showCompare && activePayload && (
           <Detail payload={activePayload} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} onRefresh={onRefresh} />
         )}
-        {!empty && !compareOpen && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
-        {compareOpen && (
+        {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
+        {showCompare && (
           <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => void showTab(k)} />
         )}
       </main>

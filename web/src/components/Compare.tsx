@@ -2,6 +2,7 @@ import { classHex, className } from "@shared/wow/classes.ts";
 import type { HistoryItem, LookupPayload } from "../types.ts";
 import { radarPoints } from "../lib/axes.ts";
 import { compareSections } from "../lib/compare.ts";
+import { verdictView } from "../lib/verdict.ts";
 import { Radar } from "./Radar.tsx";
 
 export interface CompareEntry { item: HistoryItem; payload: LookupPayload }
@@ -22,12 +23,21 @@ export function Compare({ entries, onJump }: { entries: CompareEntry[]; onJump: 
           <thead>
             <tr>
               <th />
-              {entries.map((e) => (
-                <th key={e.item.key}>
-                  <a href="#" onClick={(ev) => { ev.preventDefault(); onJump(e.item.key); }} style={{ color: classHex(e.payload.character.classID) }}>{e.payload.character.name}</a>
-                  <div className="muted" style={{ fontWeight: 400 }}>{e.payload.character.spec ? `${e.payload.character.spec} ` : ""}{className(e.payload.character.classID)}</div>
-                </th>
-              ))}
+              {entries.map((e) => {
+                const v = verdictView(e.payload.evaluation);
+                return (
+                  <th key={e.item.key}>
+                    <a href="#" onClick={(ev) => { ev.preventDefault(); onJump(e.item.key); }} style={{ color: classHex(e.payload.character.classID) }}>{e.payload.character.name}</a>
+                    <div className="muted" style={{ fontWeight: 400 }}>{e.payload.character.spec ? `${e.payload.character.spec} ` : ""}{className(e.payload.character.classID)}</div>
+                    <div>
+                      <span className={"badge badge-sm " + v.cls}>
+                        <span className="badge-label">{v.label}</span>
+                        {v.score !== null && <span className="badge-score mono">{v.score}</span>}
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -39,12 +49,7 @@ export function Compare({ entries, onJump }: { entries: CompareEntry[]; onJump: 
                     <td className="row-label">{r.label}</td>
                     {r.cells.map((c, i) => (
                       <td key={i} className={(c.best ? "cell-best " : "") + c.cls}>
-                        {c.badge ? (
-                          <span className={"badge badge-sm " + c.badge.cls}>
-                            <span className="badge-label">{c.badge.label}</span>
-                            {c.badge.score !== null && <span className="badge-score mono">{c.badge.score}</span>}
-                          </span>
-                        ) : c.text}
+                        {c.text}
                       </td>
                     ))}
                   </tr>

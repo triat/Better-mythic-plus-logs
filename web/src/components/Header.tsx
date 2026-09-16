@@ -1,0 +1,89 @@
+import { useState } from "react";
+import type { FormEvent } from "react";
+
+export interface LookupForm { character: string; level: string; spec: string; metric: "" | "dps" | "hps" }
+export const EMPTY_FORM: LookupForm = { character: "", level: "", spec: "", metric: "" };
+
+interface Props {
+  form: LookupForm;
+  onChange: (f: LookupForm) => void;
+  onLookup: () => void;
+  busy: string | null;              // "looking up X…" / "refreshing X…"
+  watchActive: boolean;
+  watchLabel: string | null;        // backend label or "looking up X…"
+  onWatchToggle: (wanted: boolean) => void;
+  sseConnected: boolean;
+  onSetup: () => void;
+  onQuit: () => void;
+  /** Big centered variant for the empty state. */
+  hero?: boolean;
+}
+
+export function Header(p: Props) {
+  const [open, setOpen] = useState(false);
+  const submit = (e: FormEvent) => { e.preventDefault(); if (p.form.character.trim()) p.onLookup(); };
+  const set = (patch: Partial<LookupForm>) => p.onChange({ ...p.form, ...patch });
+  const chips = (
+    <span className="chips">
+      <button type="button" className="chip" onClick={() => setOpen((o) => !o)} title="Options">
+        level {p.form.level || "auto"}
+      </button>
+      <button type="button" className="chip" onClick={() => setOpen((o) => !o)} title="Options">
+        spec {p.form.spec || "any"}
+      </button>
+      {p.form.metric && <span className="chip">{p.form.metric}</span>}
+    </span>
+  );
+  const search = (
+    <form className={"search" + (p.hero ? " search-hero" : "")} onSubmit={submit}>
+      <div className="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <input
+          value={p.form.character}
+          onChange={(e) => set({ character: e.target.value })}
+          placeholder="Name-Realm or Raider.IO URL"
+          autoFocus
+          autoComplete="off"
+          spellCheck={false}
+        />
+        {chips}
+      </div>
+      <button type="submit" className="btn btn-primary btn-lg" disabled={!!p.busy}>
+        {p.busy ? <span className="spinner" /> : null} Look up
+      </button>
+    </form>
+  );
+  const options = open && (
+    <div className="options">
+      <label>Target level <span className="faint">(blank = auto)</span>
+        <input type="number" min={2} max={40} value={p.form.level} onChange={(e) => set({ level: e.target.value })} /></label>
+      <label>Spec filter
+        <input value={p.form.spec} placeholder="e.g. Augmentation" onChange={(e) => set({ spec: e.target.value })} /></label>
+      <label>Metric
+        <select value={p.form.metric} onChange={(e) => set({ metric: e.target.value as LookupForm["metric"] })}>
+          <option value="">auto</option><option value="dps">dps</option><option value="hps">hps</option>
+        </select></label>
+    </div>
+  );
+  return (
+    <header className={"top" + (p.hero ? " top-hero" : "")}>
+      <div className="top-row">
+        <div className="brand">bmpl</div>
+        {!p.hero && search}
+        <div className="grow" />
+        <label className={"watch" + (p.watchActive ? " on" : "")} title="Look up whatever Name-Realm you copy to the clipboard">
+          <input type="checkbox" checked={p.watchActive} onChange={(e) => p.onWatchToggle(e.target.checked)} />
+          <span className="switch" />
+          <span>Clipboard watch <b>{p.watchActive ? "on" : "off"}</b></span>
+          {p.watchLabel && <span className="muted">· {p.watchLabel}</span>}
+        </label>
+        {!p.sseConnected && <span className="muted" title="Reconnecting…">live updates disconnected</span>}
+        <button className="btn" onClick={p.onSetup}>Re-configure</button>
+        <button className="btn" onClick={p.onQuit}>Quit</button>
+      </div>
+      {p.hero && <div className="hero-search">{search}</div>}
+      {options}
+      {p.busy && <div className="busy muted"><span className="spinner" /> {p.busy}</div>}
+    </header>
+  );
+}

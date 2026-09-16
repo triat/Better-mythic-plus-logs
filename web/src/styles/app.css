@@ -53,3 +53,60 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .radar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 .radar-legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
 .radar-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+/* header */
+.top { border-bottom: 1px solid var(--border-soft); padding: 12px 24px; display: flex; flex-direction: column; gap: 10px; }
+.top-row { display: flex; align-items: center; gap: 16px; }
+.brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+.grow { flex: 1; }
+.search { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 760px; }
+.search-box { display: flex; align-items: center; gap: 8px; flex: 1; background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px; color: var(--muted); }
+.search-box:focus-within { border-color: var(--link); }
+.search-box input { flex: 1; background: transparent; border: 0; height: 100%; padding: 0; color: var(--text); font-size: 14px; }
+.chips { display: flex; gap: 6px; }
+.chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; background: transparent; cursor: pointer; }
+.chip:hover { color: var(--text); }
+.options { display: flex; gap: 16px; }
+.options label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.options input, .options select { width: 200px; }
+.busy { font-size: 13px; }
+.watch { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.watch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.watch .switch { width: 30px; height: 18px; border-radius: 999px; background: var(--border); position: relative; transition: background .15s; }
+.watch .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; }
+.watch.on .switch { background: var(--button); }
+.watch.on .switch::after { left: 14px; }
+.watch b { color: var(--green); font-weight: 600; }
+.watch:not(.on) b { color: var(--muted); }
+.top-hero { padding-bottom: 0; border-bottom: 0; }
+.hero-search { display: flex; justify-content: center; padding: 140px 0 24px; }
+.hero-search .search { max-width: 760px; }
+.hero-search .search-box { height: 48px; font-size: 16px; }
+
+/* tabs */
+.tabs { display: flex; align-items: center; gap: 6px; padding: 10px 24px; border-bottom: 1px solid var(--border-soft); flex-wrap: wrap; }
+.tab { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-soft); border-radius: 8px; padding: 6px 10px 6px 8px; cursor: pointer; background: transparent; }
+.tab:hover { border-color: var(--border); }
+.tab.active { background: var(--card); border-color: var(--border); }
+.tab-check { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.tab-check.checked { background: var(--link); border-color: var(--link); }
+.tab-text { display: flex; flex-direction: column; line-height: 1.2; }
+.tab-title { font-size: 13px; font-weight: 600; }
+.tab-sub { font-size: 11px; color: var(--muted); }
+.tab-close { border: 0; background: transparent; color: var(--faint); font-size: 16px; line-height: 1; padding: 0 2px; cursor: pointer; }
+.tab-close:hover { color: var(--red); }
+.tab-meta { font-size: 12px; }
+
+/* content */
+.content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+.home { text-align: center; padding-top: 8px; }
+.stopped { max-width: 500px; margin: 4rem auto; text-align: center; }
+.toast { position: fixed; right: 24px; bottom: 24px; display: flex; gap: 12px; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+.toast-close { background: transparent; border: 0; color: inherit; font-size: 18px; cursor: pointer; }
+
+/* setup */
+.setup { max-width: 620px; margin: 4rem auto; padding: 0 1.5rem; }
+.setup ol { padding-left: 1.2rem; } .setup ol li { margin-bottom: .5rem; }
+.setup code { background: var(--bg); padding: .1rem .4rem; border-radius: 4px; font-size: .9rem; }
+.setup-form { display: flex; flex-direction: column; gap: 12px; margin-top: 1.5rem; }
+.setup-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }

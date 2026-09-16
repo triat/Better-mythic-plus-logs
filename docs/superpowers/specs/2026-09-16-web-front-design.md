@@ -121,8 +121,16 @@ export async function serveWebAsset(pathname: string): Promise<Response | null>;
 
 - `GET /` and `GET /setup` → `index.html` (no more server-side redirect to `/setup`; the app reads
   `/api/status`). `GET /assets/app.js|app.css` → the file. All three: `Cache-Control: no-cache`.
-- If a file does not exist on disk (dev tree, `web/dist` not built), `serveWebAsset` returns
-  `503` with the plain-text body `web UI not built — run: just web-build`.
+- `server.ts` never imports `web-assets.ts` statically. It loads it once, lazily, through a
+  guarded dynamic import: `try { assets = await import("./web-assets.ts") } catch { assets = null }`.
+  When `web/dist` is not built (dev tree, `bun test`), the resolve error is caught and every
+  static route answers `503` with the plain-text body `web UI not built — run: just web-build`;
+  the `/api/*` routes keep working. **Verified on Bun 1.3.4** (probe in the design session):
+  static `with { type: "file" }` imports inside `web-assets.ts` are embedded by
+  `bun build --compile` even when reached through the dynamic import; compiling with `web/dist`
+  missing fails with `Could not resolve` (desired); a *dynamic* import that itself carries
+  `with { type: "file" }` must NOT be used — it bundles but throws
+  `ReferenceError: require_dist is not defined` in the compiled binary.
 - Every `/api/*` route is untouched. `Response.redirect("/setup")` and the two `render*Page`
   imports go away.
 
@@ -281,7 +289,8 @@ inline.
   (three tiny files written by the test) and asserts: `GET /` and `GET /setup` return the HTML
   with `no-cache`; `GET /assets/app.js` returns the JS with the JS content type; `GET /nope`
   is 404; with the fixture removed, `GET /` is 503 with the "not built" message. `runServer`
-  gains an optional `assetsDir` override for this (default: the embedded files).
+  gains an optional `assets` override (`{ index, appJs, appCss }` file paths) for this test;
+  the default is the lazily imported `web-assets.ts`.
 - Existing tests keep passing; `test/format.test.ts` is unaffected (CLI rendering stays).
 - Manual check before merge: `just web-build && just build && ./bmpl serve` renders the four
   screens from a real lookup; `just web-dev` hot-reloads against `just serve --no-open`.

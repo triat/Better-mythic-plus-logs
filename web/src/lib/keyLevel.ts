@@ -21,10 +21,14 @@ export function parseStoredKey(raw: string | null): number | null {
 
 export interface ReevalHint { label: string; action: string }
 
-/** Shown on a tab whose lookup was requested for another level than "your key". */
-export function reevalHint(yourKey: number | null, tabLevel: number | null): ReevalHint | null {
-  if (yourKey === tabLevel) return null;
-  return yourKey === null
-    ? { label: "Your key is auto", action: "re-evaluate with auto-detected level" }
-    : { label: `Your key is +${yourKey}`, action: `re-evaluate for +${yourKey}` };
+/**
+ * Shown on a tab that was not evaluated for "your key": an explicit key that differs from the
+ * tab's effective level, or "auto" while the tab's level was requested explicitly.
+ */
+export function reevalHint(yourKey: number | null, tab: { targetLevel: number; targetAutoDetected: boolean }): ReevalHint | null {
+  if (yourKey === null) {
+    return tab.targetAutoDetected ? null : { label: "Your key is auto", action: "re-evaluate with auto-detected level" };
+  }
+  if (yourKey === tab.targetLevel) return null;
+  return { label: `Your key is +${yourKey}`, action: `re-evaluate for +${yourKey}` };
 }

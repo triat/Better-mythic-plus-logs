@@ -10,6 +10,8 @@ import { dim, err, heading, ok } from "./format.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
 import { closeStore } from "./signals/store.ts";
+import { History } from "./server-history.ts";
+import type { HistoryEntry } from "./server-history.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
 import { parseNameRealm, parseRaiderIOUrl } from "./util.ts";
 import { resetAuthCache } from "./wcl/auth.ts";
@@ -31,51 +33,7 @@ interface LookupRequest {
   refresh?: boolean;
 }
 
-interface HistoryEntry {
-  key: string;
-  request: {
-    character: string;
-    level: number | null;
-    spec: string | null;
-    metric: Metric | null;
-  };
-  fetchedAt: number;
-  // Full payload sent to the client (same shape as a non-cached /api/lookup response).
-  result: unknown;
-  // Summary fields used to render the tab strip + compare view.
-  label: string;
-  charClass: number;
-  spec: string | null;
-  targetLevel: number;
-  targetAutoDetected: boolean;
-}
-
-const HISTORY_MAX = 20;
-const history = new Map<string, HistoryEntry>();
-
-const cacheKey = (
-  character: string,
-  level: number | null,
-  spec: string | null,
-  metric: Metric | null,
-): string =>
-  JSON.stringify([
-    character.trim().toLowerCase(),
-    level ?? "auto",
-    spec ? spec.trim().toLowerCase() : "",
-    metric ?? "",
-  ]);
-
-const addHistoryEntry = (entry: HistoryEntry): void => {
-  // Re-insert at the end (newest wins).
-  history.delete(entry.key);
-  history.set(entry.key, entry);
-  while (history.size > HISTORY_MAX) {
-    const oldest = history.keys().next().value;
-    if (oldest === undefined) break;
-    history.delete(oldest);
-  }
-};
+const history = new History(20);
 
 const historySummary = (entry: HistoryEntry) => ({
   key: entry.key,
@@ -153,13 +111,11 @@ export async function runLookupWithCache(opts: {
   }
 
   const requestCharacter = `${target.name}-${target.realm}`;
-  const key = cacheKey(requestCharacter, opts.level, opts.spec, opts.metric);
+  const request = { character: requestCharacter, level: opts.level, spec: opts.spec, metric: opts.metric };
 
-  if (!opts.refresh && history.has(key)) {
-    const entry = history.get(key)!;
-    history.delete(key);
-    history.set(key, entry);
-    return { ok: true, key, result: entry.result, fromCache: true };
+  if (!opts.refresh) {
+    const hit = history.cached(request);
+    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true };
   }
 
   try {
@@ -175,15 +131,8 @@ export async function runLookupWithCache(opts: {
     if (!o.ok) return { ok: false, status: o.status, error: o.error };
     const payload = buildLookupPayload(o, target.realm);
 
-    addHistoryEntry({
-      key,
-      request: {
-        character: requestCharacter,
-        level: opts.level,
-        spec: opts.spec,
-        metric: opts.metric,
-      },
-      fetchedAt: Date.now(),
+    // Keyed by the *effective* level: an auto-detected +21 and an explicit +21 are one tab.
+    const entry = history.record(request, {
       result: payload,
       label: requestCharacter,
       charClass: o.data.character.classID,
@@ -192,7 +141,7 @@ export async function runLookupWithCache(opts: {
       targetAutoDetected: o.result.targetAutoDetected,
     });
 
-    return { ok: true, key, result: payload, fromCache: false };
+    return { ok: true, key: entry.key, result: payload, fromCache: false };
   } catch (e) {
     return {
       ok: false,
@@ -449,7 +398,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       }
       if (req.method === "GET" && path === "/api/history") {
         // Newest first for the UI.
-        const items = [...history.values()].reverse().map(historySummary);
+        const items = history.list().map(historySummary);
         return jsonResponse({ ok: true, items });
       }
       if (req.method === "GET" && path.startsWith("/api/history/")) {
@@ -464,7 +413,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       }
       if (req.method === "DELETE" && path.startsWith("/api/history/")) {
         const key = decodeURIComponent(path.slice("/api/history/".length));
-        const removed = history.delete(key);
+        const removed = history.remove(key);
         return jsonResponse({ ok: removed });
       }
       if (req.method === "GET" && path === "/api/events") {

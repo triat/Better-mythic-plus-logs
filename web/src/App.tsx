@@ -219,7 +219,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
       <main className={"content" + (empty ? " content-home" : "")}>
         {empty && <Home envPath={envPath} />}
         {!empty && !showCompare && activePayload && (
-          <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab.request.level) : null} onReevaluate={() => void reevaluate()} />
+          <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} />
         )}
         {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
         {showCompare && (

@@ -23,10 +23,13 @@ describe("key level", () => {
     expect(parseStoredKey("99")).toBeNull();
     expect(parseStoredKey("x")).toBeNull();
   });
-  test("reevalHint only when your key differs from the tab's requested level", () => {
-    expect(reevalHint(18, 21)).toEqual({ label: "Your key is +18", action: "re-evaluate for +18" });
-    expect(reevalHint(null, 21)).toEqual({ label: "Your key is auto", action: "re-evaluate with auto-detected level" });
-    expect(reevalHint(18, 18)).toBeNull();
-    expect(reevalHint(null, null)).toBeNull();
+  test("reevalHint compares against the tab's effective level", () => {
+    const auto21 = { targetLevel: 21, targetAutoDetected: true };
+    const explicit18 = { targetLevel: 18, targetAutoDetected: false };
+    expect(reevalHint(18, auto21)).toEqual({ label: "Your key is +18", action: "re-evaluate for +18" });
+    expect(reevalHint(21, auto21)).toBeNull();            // auto resolved to 21 = same tab
+    expect(reevalHint(null, auto21)).toBeNull();
+    expect(reevalHint(null, explicit18)).toEqual({ label: "Your key is auto", action: "re-evaluate with auto-detected level" });
+    expect(reevalHint(18, explicit18)).toBeNull();
   });
 });

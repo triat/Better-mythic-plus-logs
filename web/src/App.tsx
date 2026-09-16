@@ -47,6 +47,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
   const [compareOpen, setCompareOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
   const [fromCache, setFromCache] = useState(false);
   const [watch, setWatch] = useState<{ active: boolean; label: string | null }>({ active: false, label: null });
   const [stopped, setStopped] = useState(false);
@@ -63,26 +64,42 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
     return r.items;
   }, []);
 
-  const fetchPayload = useCallback(async (key: string): Promise<LookupPayload | null> => {
+  /** On a 404 (server restarted / key evicted), `items` is the fresh (already reloaded) tab list. */
+  const fetchPayload = useCallback(async (key: string): Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }> => {
     const cached = payloads.current.get(key);
-    if (cached) return cached;
+    if (cached) return { payload: cached, items: null };
     const r = await api.historyEntry(key);
     if (!r.ok) {
       // Server restarted or key evicted: drop the stale tab.
-      await loadHistory();
+      const items = await loadHistory();
       setToast(r.error);
-      return null;
+      return { payload: null, items };
     }
     payloads.current.set(key, r.result);
     touch();
-    return r.result;
+    return { payload: r.result, items: null };
   }, [loadHistory]);
 
   const showTab = useCallback(async (key: string) => {
     setCompareOpen(false);
     setActiveKey(key);
     setFromCache(true);
-    await fetchPayload(key);
+    const { payload, items } = await fetchPayload(key);
+    if (payload === null) {
+      // The failed key is gone from `items` (loadHistory reflects the server's current
+      // history). Fall back to the first remaining tab, once — if that also fails,
+      // leave `activeKey` null rather than recursing further.
+      const fallback = items?.[0]?.key ?? null;
+      if (!fallback) {
+        setActiveKey((cur) => (cur === key ? null : cur));
+        return;
+      }
+      setActiveKey((cur) => (cur === key ? fallback : cur));
+      const { payload: fallbackPayload } = await fetchPayload(fallback);
+      if (fallbackPayload === null) {
+        setActiveKey((cur) => (cur === fallback ? null : cur));
+      }
+    }
   }, [fetchPayload]);
 
   // Boot: history → most recent tab.
@@ -177,7 +194,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
         {!empty && !compareOpen && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
         {compareOpen && <div className="muted">compare view (Task 9)</div>}
       </main>
-      <Toast message={toast} onClose={() => setToast(null)} />
+      <Toast message={toast} onClose={closeToast} />
     </>
   );
 }

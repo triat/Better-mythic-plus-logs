@@ -51,9 +51,9 @@
     }
   },
   "axisWeights": {
-    "dps":    { "survival": 3, "utility": 2,   "throughput": 3, "consistency": 1.5, "preparation": 1, "experience": 2 },
-    "healer": { "survival": 3, "utility": 2.5, "throughput": 2, "consistency": 1.5, "preparation": 1, "experience": 2 },
-    "tank":   { "survival": 3, "utility": 2,   "throughput": 2, "consistency": 1.5, "preparation": 1, "experience": 2.5 }
+    "dps":    { "survival": 3, "utility": 2,   "throughput": 3, "consistency": 0, "preparation": 1, "experience": 2 },
+    "healer": { "survival": 3, "utility": 2.5, "throughput": 2, "consistency": 0, "preparation": 1, "experience": 2 },
+    "tank":   { "survival": 3, "utility": 2,   "throughput": 2, "consistency": 0, "preparation": 1, "experience": 2.5 }
   },
   "verdict": { "invite": 70, "maybe": 45, "minRuns": 3 },
   "confidence": { "high": 6, "medium": 3, "consistencyMinRuns": 5 }

@@ -49,9 +49,9 @@ export interface EvalInputs {
     hasKick: boolean;
     kicksVsPeers: number | null;
     kicksAbsolute: number | null;
+    /** Median dispels/run; null when the kit cannot dispel at all. */
     dispels: number | null;
-    /** True only when the median dispels/run is > 0 — dispels are a regular part of this kit. */
-    dispelsCommon: boolean;
+    hasDispel: boolean;
   };
   throughput: { medianParse: number | null; parseAtTarget: number | null };
   consistency: { sample: number; parseSpread: number | null; deathsSpread: number | null; damageSpread: number | null };
@@ -131,18 +131,22 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     nums(sig.map((s) => (s.interrupts.usage !== null && s.interrupts.peer ? s.interrupts.usage * 100 - s.interrupts.peer.median * 100 : null))),
   );
   const kicksAbsolute = median(nums(sig.map((s) => (s.interrupts.usage !== null ? s.interrupts.usage : null))));
-  const dispels = median(sig.map((s) => s.dispels.count));
-  const dispelsCommon = (dispels ?? 0) > 0;
+  // A kit with no dispel/purge (rogue, warrior, DK) is n/a, not 0 per run.
+  const hasDispel = sig.some((s) => s.dispels.available);
+  const dispels = hasDispel ? median(sig.map((s) => s.dispels.count)) : null;
 
   // --- throughput ---
-  const medianParse = payload.perDungeon.runs.length > 0 ? payload.perDungeon.medianParse : null;
-  const parseAtTarget = median(runs.filter((r) => r.keyLevel >= payload.targetLevel - 1).map((r) => r.parsePercent));
+  // A 0% parse is an unranked log (WCL has not ranked the fight), not a worst-in-bracket run.
+  const ranked = (r: EvalRun) => r.parsePercent > 0;
+  const medianParse = payload.perDungeon.runs.some(ranked) ? payload.perDungeon.medianParse : null;
+  const parseAtTarget = median(runs.filter((r) => ranked(r) && r.keyLevel >= payload.targetLevel - 1).map((r) => r.parsePercent));
 
   // --- consistency ---
   // Each spread is null unless its own contributing sample size clears the confidence floor.
   const sample = runsUsed;
   const minRuns = cfg.confidence.consistencyMinRuns;
-  const parseSpread = withSig.length >= minRuns ? stddev(withSig.map((r) => r.parsePercent)) : null;
+  const rankedSig = withSig.filter(ranked);
+  const parseSpread = rankedSig.length >= minRuns ? stddev(rankedSig.map((r) => r.parsePercent)) : null;
   const deathsSpread = sig.length >= minRuns ? stddev(sig.map((s) => s.deaths.count)) : null;
   const damageDeltas = nums(sig.map(damageDeltaPct));
   const damageSpread = damageDeltas.length >= minRuns ? stddev(damageDeltas) : null;
@@ -167,7 +171,7 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     runsUsed,
     seasonSlug,
     survival: { individualDeaths, individualDeathsScaled, wipeDeaths, avoidableVsPeers, dtpsVsPeers, groupDeaths, groupDeathsScaled },
-    utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, dispelsCommon },
+    utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, hasDispel },
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },
     preparation: { potions, healthstones, ilvl },

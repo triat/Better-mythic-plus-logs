@@ -26,8 +26,10 @@ For a given character and target key level, `bmpl lookup` shows:
   timed/depleted, current + previous season score per role. A missing previous
   season shows `—` — the player may simply have rerolled.
 
-If you don't pass `--level`, the target auto-detects to the character's
-highest key run — so `bmpl lookup Biwaadrood-Nerzhul` "just works".
+If you don't pass `--level`, the target auto-detects to the level the
+character actually plays at — the median of their best run per dungeon, not
+their single highest key (which is often a lone depleted push) — so
+`bmpl lookup Biwaadrood-Nerzhul` "just works".
 
 The metric also auto-selects: `hps` for healers, `dps` for DPS and tanks.
 
@@ -41,13 +43,19 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   group's peers, avoidable damage vs. peers, and (for healers) teammate
   deaths.
 - **Utility** — interrupts vs. peers, normalized by the spec's kick cooldown
-  and capacity, plus dispels. `n/a` only when the spec has no kick *and*
-  dispels aren't a regular part of that player's kit (median dispels/run is
-  0) — healers are always scored, since dispel usage alone is signal.
+  and capacity, plus dispels. Kicks and dispels are each `n/a` when the spec
+  has no such ability (rogues, warriors and death knights have no dispel or
+  purge at all); the axis is `n/a` only when neither applies — healers are
+  always scored, since dispel usage alone is signal.
 - **Throughput** — median parse % across runs, and parse % specifically at
-  the target key level.
+  the target key level. A 0% parse means WCL has not ranked that log (yet);
+  it is shown as `unranked` and excluded from every parse-based signal.
 - **Consistency** — spread (variance) of parse, deaths, and damage taken
-  across runs. Needs at least 5 runs; below that it's `n/a`.
+  across runs. Needs at least 5 runs; below that it's `n/a`. **Informational
+  only**: its weight in the verdict is 0 by default, because variance punishes
+  players who push keys (a depleted +21 next to a timed +20 is not
+  inconsistency). Raise `axisWeights.<role>.consistency` in `evaluation.json`
+  if you disagree.
 - **Preparation** — potions and healthstones used per run, and item level
   vs. the season's expected curve at the target level.
 - **Experience** — dungeon coverage, share of dungeons at/above target,
@@ -149,7 +157,7 @@ Only EU is wired up (region is hardcoded in `src/config.ts`).
 ### Vet one player
 
 ```bash
-# auto-detect target from their highest run
+# auto-detect target from the level they actually play (median of best runs)
 just l Biwaadrood-Nerzhul
 
 # force a specific target level
@@ -252,7 +260,7 @@ the API keeps working.
 
 | Flag | Meaning |
 |---|---|
-| `--level N` | Target key level. Default: auto (highest run in profile) |
+| `--level N` | Target key level. Default: auto (median of the best run per dungeon) |
 | `--spec <name>` | Filter to one spec (`Augmentation`, `Restoration`, …). Case-insensitive |
 | `--metric dps \| hps` | Override the auto-selected metric |
 | `--json` | Structured output (lookup / mplus only) |

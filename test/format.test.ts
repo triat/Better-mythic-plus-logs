@@ -39,6 +39,13 @@ describe("renderRunSignals", () => {
     expect(line).toContain("dispels 9");
   });
 
+  test("a kit without any dispel renders '(no dispel on spec)' instead of a bare 0", async () => {
+    const f = await loadWclFixture("s1-tank");
+    const s = parseRunSignals(f.report, "Biwaadrood", { keyLevel: 18, affixes: [], encounterID: f.run.encounterID })!;
+    const line = strip(renderRunSignals({ ...s, dispels: { count: 0, available: false } }));
+    expect(line).toContain("dispels 0 (no dispel on spec)");
+  });
+
   test("kicks with a known cooldown but no capacity (e.g. 0-duration run) renders plain, not '(no kick on spec)'", async () => {
     const f = await loadWclFixture("s1-tank");
     const s = parseRunSignals(f.report, "Biwaadrood", { keyLevel: 18, affixes: [], encounterID: f.run.encounterID })!;

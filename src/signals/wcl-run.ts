@@ -1,4 +1,5 @@
 import { avoidableSpellIdsFor } from "./avoidable/index.ts";
+import { hasDispel } from "./dispel-capability.ts";
 import { kickCooldownFor } from "./kick-cooldowns.ts";
 import { peerComparison } from "./peers.ts";
 import type {
@@ -155,7 +156,10 @@ export function parseRunSignals(
   };
 
   // --- dispels ---
-  const dispels = { count: detailCountsByName(report.dispels, players).get(characterName) ?? 0 };
+  const dispels = {
+    count: detailCountsByName(report.dispels, players).get(characterName) ?? 0,
+    available: me ? hasDispel(me.className, me.spec) : true,
+  };
 
   // --- avoidable damage ---
   let avoidableDamage: RunSignals["avoidableDamage"] = null;

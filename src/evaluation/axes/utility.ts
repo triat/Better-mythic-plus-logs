@@ -5,12 +5,12 @@ import type { AxisScore, EvaluationConfig } from "../types.ts";
 
 export function scoreUtility(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
   const u = i.utility;
-  if (!u.hasKick && !u.dispelsCommon && i.role !== "healer") {
+  if (!u.hasKick && !u.hasDispel && i.role !== "healer") {
     return { key: "utility", score: null, confidence: confidenceFor(i.runsUsed, cfg), evidence: [] };
   }
   return scoreAxis("utility", [
     { id: "kicksVsPeers", value: u.hasKick ? u.kicksVsPeers : null, label: (r) => `kicks ${signed(r)} pts vs peers` },
     { id: "kicksAbsolute", value: u.hasKick ? u.kicksAbsolute : null, label: (r) => `${(r * 100).toFixed(0)}% of kick capacity used` },
-    { id: "dispels", value: u.dispels, label: (r) => `${r.toFixed(1)} dispels/run` },
+    { id: "dispels", value: u.hasDispel ? u.dispels : null, label: (r) => `${r.toFixed(1)} dispels/run` },
   ], i.role, cfg, i.runsUsed);
 }

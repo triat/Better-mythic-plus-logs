@@ -16,7 +16,7 @@ export const neutralSignals = (over: Partial<RunSignals> = {}): RunSignals => ({
   deaths: { count: 0, groupTotal: 0, events: [] },
   damageTaken: { total: 0, dtps: 0, peer: null },
   interrupts: { count: 0, kickCooldownS: null, capacity: null, usage: null, peer: null },
-  dispels: { count: 0 },
+  dispels: { count: 0, available: true },
   avoidableDamage: null,
   fightDurationMs: 1_500_000,
   ...over,

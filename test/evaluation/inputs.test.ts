@@ -57,19 +57,25 @@ describe("collectInputs — survival", () => {
 describe("collectInputs — utility", () => {
   test("kick usage vs peers, absolute, dispels, hasKick", () => {
     const p = payloadWith([
-      runWith({ interrupts: { count: 5, kickCooldownS: 15, capacity: 100, usage: 0.3, peer: { median: 0.2, count: 3 } }, dispels: { count: 4 } }),
-      runWith({ interrupts: { count: 1, kickCooldownS: 15, capacity: 100, usage: 0.1, peer: { median: 0.2, count: 3 } }, dispels: { count: 0 } }),
+      runWith({ interrupts: { count: 5, kickCooldownS: 15, capacity: 100, usage: 0.3, peer: { median: 0.2, count: 3 } }, dispels: { count: 4, available: true } }),
+      runWith({ interrupts: { count: 1, kickCooldownS: 15, capacity: 100, usage: 0.1, peer: { median: 0.2, count: 3 } }, dispels: { count: 0, available: true } }),
     ]);
     const i = collectInputs(p, cfg);
     expect(i.utility.hasKick).toBe(true);
     expect(i.utility.kicksVsPeers).toBe(0);          // median of +10, -10
     expect(i.utility.kicksAbsolute).toBeCloseTo(0.2, 9);
     expect(i.utility.dispels).toBe(2);
-    expect(i.utility.dispelsCommon).toBe(true);
+    expect(i.utility.hasDispel).toBe(true);
     const noKick = collectInputs(payloadWith([runWith({})]), cfg);
     expect(noKick.utility.hasKick).toBe(false);
     expect(noKick.utility.kicksVsPeers).toBeNull();
-    expect(noKick.utility.dispelsCommon).toBe(false);
+    expect(noKick.utility.hasDispel).toBe(true); // neutralSignals: dispels available
+  });
+  test("a spec without any dispel gets dispels: null (n/a), not a 0/run penalty", () => {
+    const p = payloadWith([runWith({ dispels: { count: 0, available: false } }), runWith({ dispels: { count: 0, available: false } })]);
+    const i = collectInputs(p, cfg);
+    expect(i.utility.hasDispel).toBe(false);
+    expect(i.utility.dispels).toBeNull();
   });
 });
 
@@ -79,6 +85,22 @@ describe("collectInputs — throughput / consistency / preparation / experience"
     const i = collectInputs(p, cfg);
     expect(i.throughput.medianParse).toBe(50);
     expect(i.throughput.parseAtTarget).toBe(70);
+  });
+  test("0% parses are unranked logs: excluded from parseAtTarget and parseSpread", () => {
+    const p = payloadWith([
+      runWith({}, { keyLevel: 15, parsePercent: 0 }),
+      runWith({}, { keyLevel: 15, parsePercent: 90 }),
+      runWith({}, { keyLevel: 15, parsePercent: 70 }),
+      runWith({}, { keyLevel: 15, parsePercent: 0 }),
+      runWith({}, { keyLevel: 15, parsePercent: 80 }),
+      runWith({}, { keyLevel: 15, parsePercent: 60 }),
+    ]);
+    const i = collectInputs(p, cfg);
+    expect(i.throughput.parseAtTarget).toBe(75);
+    // Only 4 ranked parses < consistencyMinRuns (5) → spread not computable.
+    expect(i.consistency.parseSpread).toBeNull();
+    const allUnranked = collectInputs(payloadWith([runWith({}, { parsePercent: 0 })]), cfg);
+    expect(allUnranked.throughput.parseAtTarget).toBeNull();
   });
   test("consistency spreads are null below cfg.confidence.consistencyMinRuns (5), even with 2 samples", () => {
     const one = collectInputs(payloadWith([runWith({})]), cfg);

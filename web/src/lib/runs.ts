@@ -37,7 +37,7 @@ export function signalParts(s: RunSignals): Part[] {
   } else {
     parts.push({ text: `kicks ${i.count}/${Math.round(i.capacity)}`, cls: "" });
   }
-  parts.push({ text: `dispels ${s.dispels.count}`, cls: "" });
+  parts.push(s.dispels.available ? { text: `dispels ${s.dispels.count}`, cls: "" } : { text: `dispels ${s.dispels.count} (no dispel on spec)`, cls: "faint" });
   if (s.consumables) parts.push({ text: `${s.consumables.potions} pots · ${s.consumables.healthstones} hs`, cls: "" });
   return parts;
 }
@@ -73,8 +73,9 @@ const rowOf = (r: MPlusRun, metric: string, now: number): RunRowModel => {
     parts: s ? signalParts(s) : [],
     amount: fmtAmount(r.amount),
     metric,
-    parse: r.parsePercent.toFixed(1) + "%",
-    parseCls: `tier-${parseTier(r.parsePercent)}`,
+    // 0% = WCL has not ranked this log; never show it as a real percentile.
+    parse: r.parsePercent > 0 ? r.parsePercent.toFixed(1) + "%" : "unranked",
+    parseCls: r.parsePercent > 0 ? `tier-${parseTier(r.parsePercent)}` : "faint",
     spec: r.spec,
     age: fmtAge(r.startTime, now),
     stale: ageDays(r.startTime, now) >= STALE_DAYS,

@@ -1,6 +1,6 @@
 import pc from "picocolors";
 import type { AxisKey, Evaluation } from "./evaluation/types.ts";
-import type { LookupResult, MPlusData, MPlusRun } from "./mplus.ts";
+import { isRanked, type LookupResult, type MPlusData, type MPlusRun } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
 import {
   classColor,
@@ -68,7 +68,7 @@ export const renderRunSignals = (s: RunSignals): string => {
   const parts = [deathsText(s), dtpsText(s)];
   const av = avoidableText(s);
   if (av) parts.push(av);
-  parts.push(kicksText(s), `dispels ${s.dispels.count}`);
+  parts.push(kicksText(s), s.dispels.available ? `dispels ${s.dispels.count}` : dim(`dispels ${s.dispels.count} (no dispel on spec)`));
   return parts.join(`  ${dim("·")}  `);
 };
 
@@ -114,7 +114,8 @@ export const renderHeader = (data: MPlusData): string => {
 
 const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
   const amount = formatDps(r.amount);
-  const parse = percentileColor(r.parsePercent);
+  // 0% = WCL has not ranked this log; never show it as a real percentile.
+  const parse = isRanked(r) ? percentileColor(r.parsePercent) : dim("unranked");
   const level = keyBadge(r);
   const url = dim(wclReportUrl(r.reportCode, r.fightID));
   const ageText = formatAge(r.startTime);
@@ -122,7 +123,7 @@ const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
     ageInDays(r.startTime) >= STALE_DAYS
       ? pc.yellow(ageText)
       : dim(ageText);
-  const mainLine = `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}%  ${dim(r.spec)}  ${ageTag}`;
+  const mainLine = `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}${isRanked(r) ? "%" : ""}  ${dim(r.spec)}  ${ageTag}`;
   const quality = r.signals ? renderRunSignals(r.signals) : "";
   const qualityLine = quality ? `\n${indent}   ${quality}` : "";
   return `${mainLine}${qualityLine}\n${indent}${dim("  → ")}${url}`;

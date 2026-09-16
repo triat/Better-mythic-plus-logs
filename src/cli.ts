@@ -34,7 +34,7 @@ Usage:
   bmpl lookup <Name-Realm> | <name> <realm>  [--level <N>] [--spec X] [--metric dps|hps] [--json]
                                      Vet a player for a +N key: best run at +N-1
                                      + per-dungeon profile. Omit --level to auto-
-                                     detect target from highest key run. Metric
+                                     detect target (median of best runs). Metric
                                      auto-selects (hps for healers, dps else).
   bmpl mplus  <Name-Realm> | <name> <realm>  [--spec X] [--metric dps|hps] [--json]
                                      Full M+ summary for current season.
@@ -389,7 +389,7 @@ async function main(): Promise<void> {
             err(
               "Usage: bmpl lookup <name> <realm> [--level <N>] [--spec X] [--metric dps|hps] [--no-stats] [--json]\n" +
                 "       bmpl lookup <Name-Realm> ...\n" +
-                "       (omit --level to auto-detect target from the character's highest run)",
+                "       (omit --level to auto-detect target from the level they actually play)",
             ),
           );
           process.exit(2);

@@ -33,7 +33,7 @@ export interface RunSignals {
     usage: number | null;         // count / capacity
     peer: PeerComparison | null;  // peers compared on usage
   };
-  dispels: { count: number };
+  dispels: { count: number; available: boolean }; // available=false: the kit has no dispel/purge at all
   avoidableDamage: {
     total: number;
     perMinute: number;

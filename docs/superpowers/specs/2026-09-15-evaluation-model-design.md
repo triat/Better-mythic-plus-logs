@@ -134,10 +134,12 @@ Curves are `[x, score]` control points. All values below are the **initial**
 | `dispels` | median `dispels.count` per run | `[0,40] [3,60] [10,85] [20,100]` | 1 / 3 / 1 |
 
 A spec without a kick (`kickCooldownS === null` on every run) has no kick
-sub-signals. If additionally the median dispels per run is 0 **and** the
-role is not healer, the axis is `null` ("n/a") — a single incidental dispel
-must not flip the axis. Healers always get the dispel
-sub-signal (0 dispels is information for a healer).
+sub-signals. A kit without any dispel or purge (`dispels.available === false`
+on every run — rogue, warrior, death knight; see `src/signals/dispel-capability.ts`)
+has no dispel sub-signal. If neither applies and the role is not healer, the
+axis is `null` ("n/a"). Healers always get the dispel sub-signal (0 dispels is
+information for a healer). *(Amended 2026-09-16: the earlier "median dispels
+is 0" rule penalized kits that cannot dispel.)*
 
 ### Throughput
 
@@ -145,6 +147,10 @@ sub-signal (0 dispels is information for a healer).
 |---|---|---|---|
 | `medianParse` | `perDungeon.medianParse` | `[0,10] [25,35] [50,60] [75,80] [95,100]` | 3 |
 | `parseAtTarget` | median `parsePercent` of displayed runs with `keyLevel ≥ targetLevel − 1` (only if ≥ 1 such run) | same | 2 |
+
+A `parsePercent` of exactly 0 is an **unranked** log (WCL has not ranked the
+fight); it is excluded from `medianParse`, `parseAtTarget` and `parseSpread`,
+and rendered as `unranked`. *(Amended 2026-09-16.)*
 
 ### Consistency
 
@@ -185,7 +191,7 @@ profiles** (fixture: Muleyoxo ilvl 322 at +21, Biwaadrood 280–284 at +18 in S1
 
 ## Global, verdict, config
 
-- Axis weights per role — dps `{survival 3, utility 2, throughput 3, consistency 1.5, preparation 1, experience 2}`; healer `{3, 2.5, 2, 1.5, 1, 2}`; tank `{3, 2, 2, 1.5, 1, 2.5}` (same key order). `null` axes are excluded from the weighted mean; if all axes are `null`, `global: null`.
+- Axis weights per role — dps `{survival 3, utility 2, throughput 3, consistency 0, preparation 1, experience 2}`; healer `{3, 2.5, 2, 0, 1, 2}`; tank `{3, 2, 2, 0, 1, 2.5}` (same key order). *(Amended 2026-09-16: consistency is informational — variance punishes key pushers; it was 1.5.)* The auto-detected target level is the median of the best run per dungeon (half-levels round up), not the single highest key *(amended 2026-09-16, `inferTargetLevel`)*. `null` axes are excluded from the weighted mean; if all axes are `null`, `global: null`.
 - Verdict: `insufficient` if `runsUsed < 3`; else `invite` if `global ≥ 70`, `maybe` if `≥ 45`, else `pass`. `global: null` → `insufficient`.
 - Config shape (`src/evaluation/default-config.json`):
 

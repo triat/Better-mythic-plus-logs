@@ -13,6 +13,11 @@ describe("globalScore / verdictFor", () => {
     expect(globalScore(axes, "dps", cfg)).toBeCloseTo((3 * 100 + 3 * 50) / 6, 6);
     expect(globalScore(axes.map((a) => ({ ...a, score: null })), "dps", cfg)).toBeNull();
   });
+  test("consistency is informational: zero weight in the global for every role", () => {
+    for (const role of ["dps", "healer", "tank"] as const) expect(cfg.axisWeights[role].consistency).toBe(0);
+    const axes = [ax("survival", 80), ax("utility", null), ax("throughput", null), ax("consistency", 10), ax("preparation", null), ax("experience", null)];
+    expect(globalScore(axes, "dps", cfg)).toBe(80);
+  });
   test("thresholds at the boundaries and insufficient", () => {
     expect(verdictFor(70, 3, cfg)).toBe("invite");
     expect(verdictFor(69.99, 3, cfg)).toBe("maybe");

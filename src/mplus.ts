@@ -400,9 +400,29 @@ const median = (nums: number[]): number => {
     : sorted[mid]!;
 };
 
+/** A 0% parse means WCL has not ranked the log (yet); it is not a worst-in-bracket run. */
+export const isRanked = (r: MPlusRun): boolean => r.parsePercent > 0;
+
+// One best run per dungeon (highest key level; tie-break by parse %).
+const bestPerDungeon = (runs: MPlusRun[]): MPlusRun[] => {
+  const best = new Map<number, MPlusRun>();
+  for (const r of runs) {
+    const cur = best.get(r.encounterID);
+    if (!cur || r.keyLevel > cur.keyLevel || (r.keyLevel === cur.keyLevel && r.parsePercent > cur.parsePercent)) {
+      best.set(r.encounterID, r);
+    }
+  }
+  return [...best.values()].sort((a, b) => b.keyLevel - a.keyLevel || b.parsePercent - a.parsePercent);
+};
+
+/**
+ * The level the character actually plays at: the median of their best run per
+ * dungeon (half-levels round up). The single highest key is often a lone
+ * depleted push and would make every other dungeon look "below target".
+ */
 export const inferTargetLevel = (runs: MPlusRun[]): number | null => {
   if (runs.length === 0) return null;
-  return Math.max(...runs.map((r) => r.keyLevel));
+  return Math.round(median(bestPerDungeon(runs).map((r) => r.keyLevel)));
 };
 
 export function analyzeLookup(
@@ -425,21 +445,7 @@ export function analyzeLookup(
     }
   }
 
-  // One best run per dungeon (highest key level; tie-break by parse %).
-  const bestByDungeon = new Map<number, MPlusRun>();
-  for (const r of runs) {
-    const cur = bestByDungeon.get(r.encounterID);
-    if (
-      !cur ||
-      r.keyLevel > cur.keyLevel ||
-      (r.keyLevel === cur.keyLevel && r.parsePercent > cur.parsePercent)
-    ) {
-      bestByDungeon.set(r.encounterID, r);
-    }
-  }
-  const perDungeonRuns = [...bestByDungeon.values()].sort(
-    (a, b) => b.keyLevel - a.keyLevel || b.parsePercent - a.parsePercent,
-  );
+  const perDungeonRuns = bestPerDungeon(runs);
   const dungeonsAtOrAboveTarget = perDungeonRuns.filter(
     (r) => r.keyLevel >= targetLevel,
   ).length;
@@ -456,7 +462,7 @@ export function analyzeLookup(
       dungeonsAtOrAboveTarget,
       medianLevel: median(perDungeonRuns.map((r) => r.keyLevel)),
       medianAmount: median(perDungeonRuns.map((r) => r.amount)),
-      medianParse: median(perDungeonRuns.map((r) => r.parsePercent)),
+      medianParse: median(perDungeonRuns.filter(isRanked).map((r) => r.parsePercent)),
     },
   };
 }

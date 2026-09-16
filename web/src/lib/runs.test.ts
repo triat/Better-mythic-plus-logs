@@ -10,7 +10,7 @@ const sig = (over: Partial<RunSignals> = {}): RunSignals => ({
   deaths: { count: 1, groupTotal: 4, events: [{ atMs: 1, cause: null, source: null, overkill: 0, inWipe: true }] },
   damageTaken: { total: 1, dtps: 9_000, peer: { median: 10_000, count: 3 } },
   interrupts: { count: 0, kickCooldownS: null, capacity: null, usage: null, peer: null },
-  dispels: { count: 9 },
+  dispels: { count: 9, available: true },
   avoidableDamage: { total: 1, perMinute: 362_000, peer: { median: 390_000, count: 4 }, spellCount: 3 },
   fightDurationMs: 1_796_000,
   ...over,
@@ -33,6 +33,10 @@ describe("signalParts", () => {
       { text: "dispels 9", cls: "" },
       { text: "5 pots · 1 hs", cls: "" },
     ]);
+  });
+  test("no dispel on spec", () => {
+    const parts = signalParts(sig({ dispels: { count: 0, available: false } }));
+    expect(parts.find((p) => p.text.startsWith("dispels"))).toEqual({ text: "dispels 0 (no dispel on spec)", cls: "faint" });
   });
   test("dps with kicks and no peers", () => {
     const s = sig({
@@ -64,6 +68,11 @@ describe("runRows", () => {
       url: "https://www.warcraftlogs.com/reports/ABC#fight=3",
     });
     expect(r.parts).toHaveLength(6);
+  });
+  test("a 0% parse renders as unranked", () => {
+    const r = runRows(payload([run({ parsePercent: 0 })]), NOW)[0]!;
+    expect(r.parse).toBe("unranked");
+    expect(r.parseCls).toBe("faint");
   });
   test("depleted, stale, partial and no signals", () => {
     const rows = runRows(payload([

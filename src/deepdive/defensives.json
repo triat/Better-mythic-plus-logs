@@ -1,0 +1,144 @@
+{
+  "version": "mn-2.1",
+  "denylist": [1236616, 31884, 190319, 12472, 1719, 13750, 51271, 375087, 191427, 106951, 191034, 384352, 10060, 32182, 2825, 80353, 264667, 390386, 1236612],
+  "specs": {
+    "DeathKnight:*": [
+      { "id": 48707, "name": "Anti-Magic Shell", "cooldownS": 60, "durationS": 7, "kind": "major" },
+      { "id": 48792, "name": "Icebound Fortitude", "cooldownS": 180, "durationS": 8, "kind": "major" },
+      { "id": 49039, "name": "Lichborne", "cooldownS": 120, "durationS": 10, "kind": "minor" },
+      { "id": 48743, "name": "Death Pact", "cooldownS": 120, "durationS": 0, "kind": "minor" },
+      { "id": 51052, "name": "Anti-Magic Zone", "cooldownS": 120, "durationS": 8, "kind": "minor" }
+    ],
+    "DeathKnight:Blood": [
+      { "id": 55233, "name": "Vampiric Blood", "cooldownS": 90, "durationS": 10, "kind": "major" },
+      { "id": 49028, "name": "Dancing Rune Weapon", "cooldownS": 120, "durationS": 8, "kind": "major" },
+      { "id": 194679, "name": "Rune Tap", "cooldownS": 25, "durationS": 4, "kind": "minor" },
+      { "id": 219809, "name": "Tombstone", "cooldownS": 60, "durationS": 8, "kind": "minor" }
+    ],
+    "DemonHunter:Havoc": [
+      { "id": 198589, "name": "Blur", "cooldownS": 60, "durationS": 10, "kind": "major" },
+      { "id": 196555, "name": "Netherwalk", "cooldownS": 180, "durationS": 6, "kind": "immunity" },
+      { "id": 196718, "name": "Darkness", "cooldownS": 300, "durationS": 8, "kind": "minor" }
+    ],
+    "DemonHunter:Vengeance": [
+      { "id": 203720, "name": "Demon Spikes", "cooldownS": 20, "durationS": 6, "kind": "minor" },
+      { "id": 204021, "name": "Fiery Brand", "cooldownS": 60, "durationS": 10, "kind": "major" },
+      { "id": 187827, "name": "Metamorphosis", "cooldownS": 180, "durationS": 15, "kind": "major" },
+      { "id": 212084, "name": "Fel Devastation", "cooldownS": 40, "durationS": 2, "kind": "minor" }
+    ],
+    "Druid:*": [
+      { "id": 22812, "name": "Barkskin", "cooldownS": 60, "durationS": 12, "kind": "major" },
+      { "id": 108238, "name": "Renewal", "cooldownS": 90, "durationS": 0, "kind": "minor" }
+    ],
+    "Druid:Feral": [
+      { "id": 61336, "name": "Survival Instincts", "cooldownS": 180, "durationS": 6, "kind": "major" }
+    ],
+    "Druid:Guardian": [
+      { "id": 61336, "name": "Survival Instincts", "cooldownS": 180, "durationS": 6, "kind": "major" },
+      { "id": 22842, "name": "Frenzied Regeneration", "cooldownS": 36, "durationS": 3, "kind": "minor" },
+      { "id": 200851, "name": "Rage of the Sleeper", "cooldownS": 90, "durationS": 10, "kind": "major" }
+    ],
+    "Evoker:*": [
+      { "id": 363916, "name": "Obsidian Scales", "cooldownS": 90, "durationS": 12, "kind": "major" },
+      { "id": 374348, "name": "Renewing Blaze", "cooldownS": 90, "durationS": 8, "kind": "major" },
+      { "id": 374227, "name": "Zephyr", "cooldownS": 120, "durationS": 8, "kind": "minor" }
+    ],
+    "Hunter:*": [
+      { "id": 264735, "name": "Survival of the Fittest", "cooldownS": 120, "durationS": 8, "kind": "major" },
+      { "id": 186265, "name": "Aspect of the Turtle", "cooldownS": 180, "durationS": 8, "kind": "immunity" },
+      { "id": 109304, "name": "Exhilaration", "cooldownS": 120, "durationS": 0, "kind": "minor" }
+    ],
+    "Mage:*": [
+      { "id": 45438, "name": "Ice Block", "cooldownS": 240, "durationS": 10, "kind": "immunity" },
+      { "id": 414658, "name": "Ice Cold", "cooldownS": 240, "durationS": 6, "kind": "immunity" },
+      { "id": 342245, "name": "Alter Time", "cooldownS": 60, "durationS": 10, "kind": "minor" },
+      { "id": 55342, "name": "Mirror Image", "cooldownS": 120, "durationS": 40, "kind": "minor" }
+    ],
+    "Mage:Arcane": [
+      { "id": 235450, "name": "Prismatic Barrier", "cooldownS": 25, "durationS": 60, "kind": "major" },
+      { "id": 110959, "name": "Greater Invisibility", "cooldownS": 120, "durationS": 3, "kind": "major" }
+    ],
+    "Mage:Fire": [
+      { "id": 235313, "name": "Blazing Barrier", "cooldownS": 25, "durationS": 60, "kind": "major" }
+    ],
+    "Mage:Frost": [
+      { "id": 11426, "name": "Ice Barrier", "cooldownS": 25, "durationS": 60, "kind": "major" }
+    ],
+    "Monk:*": [
+      { "id": 115203, "name": "Fortifying Brew", "cooldownS": 180, "durationS": 15, "kind": "major" },
+      { "id": 122278, "name": "Dampen Harm", "cooldownS": 120, "durationS": 10, "kind": "major" },
+      { "id": 122783, "name": "Diffuse Magic", "cooldownS": 90, "durationS": 6, "kind": "major" }
+    ],
+    "Monk:Brewmaster": [
+      { "id": 322507, "name": "Celestial Brew", "cooldownS": 60, "durationS": 8, "kind": "major" },
+      { "id": 115176, "name": "Zen Meditation", "cooldownS": 300, "durationS": 8, "kind": "major" },
+      { "id": 119582, "name": "Purifying Brew", "cooldownS": 20, "durationS": 0, "kind": "minor" }
+    ],
+    "Monk:Windwalker": [
+      { "id": 122470, "name": "Touch of Karma", "cooldownS": 90, "durationS": 10, "kind": "major" }
+    ],
+    "Paladin:*": [
+      { "id": 642, "name": "Divine Shield", "cooldownS": 300, "durationS": 8, "kind": "immunity" },
+      { "id": 633, "name": "Lay on Hands", "cooldownS": 600, "durationS": 0, "kind": "major" },
+      { "id": 1022, "name": "Blessing of Protection", "cooldownS": 300, "durationS": 10, "kind": "minor" }
+    ],
+    "Paladin:Holy": [
+      { "id": 498, "name": "Divine Protection", "cooldownS": 60, "durationS": 8, "kind": "major" },
+      { "id": 31821, "name": "Aura Mastery", "cooldownS": 180, "durationS": 8, "kind": "minor" }
+    ],
+    "Paladin:Protection": [
+      { "id": 31850, "name": "Ardent Defender", "cooldownS": 120, "durationS": 8, "kind": "major" },
+      { "id": 86659, "name": "Guardian of Ancient Kings", "cooldownS": 300, "durationS": 8, "kind": "major" },
+      { "id": 387174, "name": "Eye of Tyr", "cooldownS": 60, "durationS": 9, "kind": "minor" }
+    ],
+    "Paladin:Retribution": [
+      { "id": 403876, "name": "Divine Protection", "cooldownS": 60, "durationS": 8, "kind": "major" },
+      { "id": 184662, "name": "Shield of Vengeance", "cooldownS": 90, "durationS": 15, "kind": "major" }
+    ],
+    "Priest:*": [
+      { "id": 19236, "name": "Desperate Prayer", "cooldownS": 90, "durationS": 10, "kind": "major" },
+      { "id": 586, "name": "Fade", "cooldownS": 30, "durationS": 10, "kind": "minor" }
+    ],
+    "Priest:Shadow": [
+      { "id": 47585, "name": "Dispersion", "cooldownS": 120, "durationS": 6, "kind": "major" }
+    ],
+    "Priest:Discipline": [
+      { "id": 33206, "name": "Pain Suppression", "cooldownS": 90, "durationS": 8, "kind": "minor" }
+    ],
+    "Priest:Holy": [
+      { "id": 47788, "name": "Guardian Spirit", "cooldownS": 180, "durationS": 10, "kind": "minor" }
+    ],
+    "Rogue:*": [
+      { "id": 31224, "name": "Cloak of Shadows", "cooldownS": 120, "durationS": 5, "kind": "immunity" },
+      { "id": 5277, "name": "Evasion", "cooldownS": 120, "durationS": 10, "kind": "major" },
+      { "id": 185311, "name": "Crimson Vial", "cooldownS": 30, "durationS": 4, "kind": "minor" },
+      { "id": 1966, "name": "Feint", "cooldownS": 15, "durationS": 6, "kind": "minor" }
+    ],
+    "Shaman:*": [
+      { "id": 108271, "name": "Astral Shift", "cooldownS": 120, "durationS": 12, "kind": "major" },
+      { "id": 108270, "name": "Stone Bulwark Totem", "cooldownS": 180, "durationS": 30, "kind": "major" },
+      { "id": 198103, "name": "Earth Elemental", "cooldownS": 300, "durationS": 60, "kind": "minor" }
+    ],
+    "Warlock:*": [
+      { "id": 104773, "name": "Unending Resolve", "cooldownS": 180, "durationS": 8, "kind": "major" },
+      { "id": 108416, "name": "Dark Pact", "cooldownS": 60, "durationS": 20, "kind": "major" },
+      { "id": 6789, "name": "Mortal Coil", "cooldownS": 45, "durationS": 0, "kind": "minor" }
+    ],
+    "Warrior:*": [
+      { "id": 23920, "name": "Spell Reflection", "cooldownS": 25, "durationS": 5, "kind": "minor" },
+      { "id": 97462, "name": "Rallying Cry", "cooldownS": 180, "durationS": 10, "kind": "minor" },
+      { "id": 383762, "name": "Bitter Immunity", "cooldownS": 180, "durationS": 0, "kind": "minor" }
+    ],
+    "Warrior:Arms": [
+      { "id": 118038, "name": "Die by the Sword", "cooldownS": 120, "durationS": 8, "kind": "major" }
+    ],
+    "Warrior:Fury": [
+      { "id": 184364, "name": "Enraged Regeneration", "cooldownS": 120, "durationS": 8, "kind": "major" }
+    ],
+    "Warrior:Protection": [
+      { "id": 871, "name": "Shield Wall", "cooldownS": 240, "durationS": 8, "kind": "major" },
+      { "id": 12975, "name": "Last Stand", "cooldownS": 180, "durationS": 15, "kind": "major" },
+      { "id": 1160, "name": "Demoralizing Shout", "cooldownS": 45, "durationS": 8, "kind": "minor" }
+    ]
+  }
+}

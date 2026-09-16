@@ -82,3 +82,10 @@ export async function resolveEvalConfigPath(): Promise<string> {
   if (override) return override;
   return path.join(path.dirname(await resolveEnvPath()), "evaluation.json");
 }
+
+/** User override for the defensives table: BMPL_DEFENSIVES, else `defensives.json` next to .env. May not exist. */
+export async function resolveDefensivesPath(): Promise<string> {
+  const override = (process.env.BMPL_DEFENSIVES ?? "").trim();
+  if (override) return override;
+  return path.join(path.dirname(await resolveEnvPath()), "defensives.json");
+}

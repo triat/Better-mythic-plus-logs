@@ -19,7 +19,7 @@
 - Table keys are `Class:Spec` / `Class:*` with WCL's spacing-free class names (`DeathKnight`, `DemonHunter`), exactly like `src/signals/kick-cooldowns.ts`.
 - `kind`: `major` and `immunity` count toward usage; `minor` never drives usage or the verdict. `durationS: 0` = instant, never *active*.
 - Capacity = `max(1, ceil(fightDurationS / cooldownS))`; usage = `min(1, casts / capacity)`; `cdMismatch` = `observedMinIntervalS < 0.9 × cooldownS`.
-- Death windows are inclusive: active if a cast in `[atMs − durationS×1000, atMs]`; available if no cast in `[atMs − cooldownS×1000, atMs]` and not active.
+- Death windows are inclusive: active if a cast in `[atMs − durationS×1000, atMs]`; available if no cast in the half-open window `(atMs − cooldownS×1000, atMs]` and not active (a cast exactly one cooldown before the death is available again).
 - Verdict precedence: immunity available → `immunity available`; else major available and nothing active → `defensive available`; else anything active → `covered`; else `nothing available`.
 - Wipe deaths (`inWipe`) are analyzed but excluded from `avoidableDeaths` / `countedDeaths`.
 - Survival sub-signals `defensiveUsage` (curve `[[0,20],[0.3,55],[0.6,85],[0.9,100]]`, weights 2/2/2) and `avoidableDeaths` (curve `[[0,100],[0.34,60],[0.67,30],[1,10]]`, weights 3/3/3) are `null` unless `analyzedRuns ≥ cfg.confidence.deepdiveMinRuns` (default 2); `avoidableDeaths` also null when Σ countedDeaths = 0.

@@ -117,7 +117,7 @@ than the per-run enrichment `lookup` already does.
 
 ```bash
 bmpl analyze Biwaadrood-Nerzhul                    # list the runs lookup shows, and which are already analyzed
-bmpl analyze Biwaadrood-Nerzhul --all --yes        # analyze every shown run (~3 pts each, once)
+bmpl analyze Biwaadrood-Nerzhul --all --yes        # analyze every shown run (~3 pts each, once; analyzed ones print from the cache)
 bmpl analyze Biwaadrood-Nerzhul --run <code>:<fight>   # analyze one specific run
 bmpl analyze Biwaadrood-Nerzhul --all --yes --json # structured output (--json needs --yes to fetch, since it can't prompt)
 ```
@@ -442,9 +442,9 @@ src/
     table.ts          effective table: shipped + override, patch/add/ignore
     wcl.ts            fetch a run's cast/buff/death events from WCL
     analyze.ts        usage-vs-capacity + per-death defensive audit
-    aggregate.ts      cross-run summary + Survival sub-signals
+    aggregate.ts      cross-run summary of analyses (the Survival sub-signals live in src/evaluation/)
     attach.ts         attaches deepdive/deepdiveSummary to a lookup payload
-    player.ts         per-character analyzed-runs bookkeeping
+    player.ts         resolves the character's actor id / class / spec from the cached run
     run.ts            analyze one run end to end
 scripts/
   introspect.ts                    GraphQL schema explorer (dev-only)

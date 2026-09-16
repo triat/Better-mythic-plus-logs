@@ -136,17 +136,22 @@ query($code: String!, $fightID: Int!, $actorID: Int!, $filter: String!) {
 - `$actorID` comes from the cached run's `summary.data.composition` (match on character name);
   a run whose composition lacks the player → `404` "player not found in cached run". `$filter` = `ability.id in (<all ids of the effective table for that spec>)`;
   if `nextPageTimestamp` is non-null, follow pages (`startTime: nextPageTimestamp`) up to 5.
+  With an empty effective table (no ids) the `castEvents` field is not requested at all
+  (`REPORT_DEEPDIVE_NO_EVENTS_QUERY`): `castEvents: []`, `tableIds: []`.
 - `RawDeepDive = { code, fightID, character, actorID, fightStart, fightEnd, casts, buffs,
   castEvents, tableIds, truncated, fetchedAt, pointsSpent }`. `pointsSpent` = difference of
-  `pointsSpentThisHour` read in the query itself versus the value the previous deep-dive query
-  returned in this process (first query of the process: the estimate 3 is shown), rounded to 0.1.
+  `pointsSpentThisHour` read by the last page versus the value the budget pre-check (`PING_QUERY`,
+  issued right before the fetch) returned, rounded to 0.1 and floored at 0; `null` when the fetch
+  had no such baseline (before the click the estimate 3 is shown).
 - Stored raw in `wcl_deepdive(code, fight, character, query_version, json, fetched_at)`;
   `DEEPDIVE_QUERY_VERSION = 1`. A cached row whose `tableIds` misses ids now in the effective
   table is **stale**: the server re-fetches only when the user clicks *Analyze* again on that
   run (the UI shows "table changed — re-analyze (~3 pts)"); otherwise the cached analysis is
   shown with the ids it has.
 - Budget guard: `/api/deepdive` refuses with `402 { error: "WCL budget low (N pts left)" }` when
-  `rateLimitData.limitPerHour − pointsSpentThisHour < 20`.
+  `rateLimitData.limitPerHour − pointsSpentThisHour < 20` — checked by the PING pre-check before
+  the first page and again before each *subsequent* events page (a page already paid for is
+  never discarded on its own answer).
 
 ## Analysis (`src/deepdive/analyze.ts`, pure)
 
@@ -169,7 +174,7 @@ interface DeathAnalysis {
   inWipe: boolean;                  // from RunSignals (≥ 3 group deaths within ±15 s)
   killingHits: { name: string; amount: number; share: number }[]; // top 3 of deathWindow damage.abilities by total
   killingBlow: string | null;
-  available: string[];              // defensives with no cast in [atMs − cooldownS, atMs] and not active
+  available: string[];              // defensives with no cast in (atMs − cooldownS, atMs] and not active (a cast exactly one cooldown before the death is available again)
   active: string[];                 // a cast in [atMs − durationS, atMs]
   onCooldown: { name: string; readyInS: number }[];
   verdict: "immunity available" | "defensive available" | "covered" | "nothing available";

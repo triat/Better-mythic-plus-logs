@@ -1,4 +1,8 @@
 import { config } from "./config.ts";
+import { deepdiveSummary } from "./deepdive/aggregate.ts";
+import { analyzeCached } from "./deepdive/attach.ts";
+import { getDefensives } from "./deepdive/table.ts";
+import type { DeepdiveSummary, LoadedTables, RunDefensives } from "./deepdive/types.ts";
 import { getEvalConfig } from "./evaluation/config.ts";
 import { evaluate } from "./evaluation/evaluate.ts";
 import type { EvalPayload } from "./evaluation/inputs.ts";
@@ -39,6 +43,8 @@ export type LookupOutcome =
       rioError?: string;
       summary: SignalSummary;
       evaluation: Evaluation;
+      deepdive: RunDefensives[];
+      deepdiveSummary: DeepdiveSummary;
     }
   | { ok: false; status: 404; error: string };
 
@@ -47,6 +53,7 @@ interface Deps {
   gql?: GqlFn;
   fetchFn?: typeof fetch;
   evalConfig?: EvaluationConfig;
+  tables?: LoadedTables;
 }
 
 /** The whole lookup: rankings → analysis → (WCL enrichment ‖ Raider.IO). */
@@ -94,7 +101,13 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     }),
   ]);
 
-  const summary = signalSummary(displayedRuns(result), rioRes.profile);
+  const tables = deps.tables ?? (await getDefensives());
+  const shown = displayedRuns(result);
+  const deepdive = shown
+    .map((r) => analyzeCached(store, tables, r, data.character.name))
+    .filter((d): d is RunDefensives => d !== null);
+
+  const summary = signalSummary(shown, rioRes.profile);
   const payloadForEval = {
     metric: data.metric,
     targetLevel: result.targetLevel,
@@ -102,6 +115,7 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     prevLevelBest: result.prevLevelBest,
     rio: rioRes.profile,
     summary,
+    deepdive,
   };
 
   return {
@@ -112,6 +126,8 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     ...(rioRes.error ? { rioError: rioRes.error } : {}),
     summary,
     evaluation: evaluate(payloadForEval, deps.evalConfig ?? (await getEvalConfig())),
+    deepdive,
+    deepdiveSummary: deepdiveSummary(deepdive),
   };
 }
 
@@ -143,6 +159,8 @@ export function buildLookupPayload(o: Extract<LookupOutcome, { ok: true }>, real
     rio: o.rio,
     rioError: o.rioError ?? null,
     summary: o.summary,
+    deepdive: o.deepdive,
+    deepdiveSummary: o.deepdiveSummary,
     evaluation: o.evaluation,
   };
 }

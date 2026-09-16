@@ -158,7 +158,7 @@ async function cmdLookup(
     closeStore();
     return;
   }
-  console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary, o.evaluation));
+  console.log(renderLookup(o.data, o.result, o.rio, o.rioError, o.summary, o.evaluation, o.deepdive));
   closeStore();
 }
 

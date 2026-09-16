@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { renderEvaluation, renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
+import { renderDeepdiveLine, renderEvaluation, renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
+import type { RunDefensives } from "../src/deepdive/types.ts";
 import type { Evaluation } from "../src/evaluation/types.ts";
 import type { SignalSummary } from "../src/signals/summary.ts";
 import { parseRunSignals } from "../src/signals/wcl-run.ts";
@@ -113,5 +114,24 @@ describe("renderEvaluation", () => {
     expect(out).toContain("INSUFFICIENT DATA (2 runs, 81)");
     const out2 = strip(renderEvaluation(evalFixture({ verdict: "insufficient", runsUsed: 0, global: null })));
     expect(out2).toContain("INSUFFICIENT DATA (0 runs)");
+  });
+});
+
+describe("renderDeepdiveLine", () => {
+  const base: RunDefensives = {
+    reportCode: "R", fightID: 1, character: "X", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
+    defensives: [], deaths: [], majorUsage: 0.41, avoidableDeaths: 1, countedDeaths: 2,
+    unlisted: [{ id: 5, name: "Mystery", casts: 5, uptimeS: 40 }], staleTable: false, truncated: false, fetchedAt: 0, pointsSpent: 3,
+  };
+  test("majors, deaths, unlisted", () => {
+    const line = strip(renderDeepdiveLine(base));
+    expect(line).toContain("defensives: majors 41%");
+    expect(line).toContain("1/2 deaths with a defensive available");
+    expect(line).toContain("unlisted: Mystery (5x)");
+  });
+  test("no table, no deaths", () => {
+    const line = strip(renderDeepdiveLine({ ...base, tableMissing: true, majorUsage: null, countedDeaths: 0, avoidableDeaths: 0, unlisted: [] }));
+    expect(line).toContain("no defensives table for Holy Paladin");
+    expect(line).toContain("no deaths");
   });
 });

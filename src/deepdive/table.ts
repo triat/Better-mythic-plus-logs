@@ -112,3 +112,11 @@ export async function loadDefensives(): Promise<LoadedTables> {
     return { shipped: SHIPPED, override: {}, overridePath, warning: `bmpl: ignoring ${overridePath}: ${e instanceof Error ? e.message : String(e)}` };
   }
 }
+
+let cachedTables: Promise<LoadedTables> | null = null;
+/** Process-wide effective tables; warns once on stderr. Call resetDefensives() after writing the override. */
+export const getDefensives = (): Promise<LoadedTables> => {
+  if (!cachedTables) cachedTables = loadDefensives().then((t) => { if (t.warning) console.error(t.warning); return t; });
+  return cachedTables;
+};
+export const resetDefensives = (): void => { cachedTables = null; };

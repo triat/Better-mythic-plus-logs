@@ -1,4 +1,5 @@
 import pc from "picocolors";
+import type { RunDefensives } from "./deepdive/types.ts";
 import type { AxisKey, Evaluation } from "./evaluation/types.ts";
 import { isRanked, type LookupResult, type MPlusData, type MPlusRun } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
@@ -112,7 +113,16 @@ export const renderHeader = (data: MPlusData): string => {
   return lines.join("\n");
 };
 
-const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
+export const renderDeepdiveLine = (d: RunDefensives): string => {
+  const parts: string[] = [];
+  if (d.tableMissing) parts.push(pc.yellow(`no defensives table for ${d.spec} ${d.className}`));
+  else if (d.majorUsage !== null) parts.push(`majors ${Math.round(d.majorUsage * 100)}%`);
+  parts.push(d.countedDeaths === 0 ? dim("no deaths") : `${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`);
+  if (d.unlisted.length > 0) parts.push(dim(`unlisted: ${d.unlisted.slice(0, 3).map((u) => `${u.name} (${u.casts}x)`).join(", ")}`));
+  return `defensives: ${parts.join(" · ")}`;
+};
+
+const renderRun = (r: MPlusRun, metric: Metric, indent = "    ", deepdive?: RunDefensives): string => {
   const amount = formatDps(r.amount);
   // 0% = WCL has not ranked this log; never show it as a real percentile.
   const parse = isRanked(r) ? percentileColor(r.parsePercent) : dim("unranked");
@@ -126,7 +136,8 @@ const renderRun = (r: MPlusRun, metric: Metric, indent = "    "): string => {
   const mainLine = `${indent}${level} ${r.encounterName.padEnd(24)} ${amount.padStart(6)} ${metricLabel(metric)}  ${parse.padStart(4)}${isRanked(r) ? "%" : ""}  ${dim(r.spec)}  ${ageTag}`;
   const quality = r.signals ? renderRunSignals(r.signals) : "";
   const qualityLine = quality ? `\n${indent}   ${quality}` : "";
-  return `${mainLine}${qualityLine}\n${indent}${dim("  → ")}${url}`;
+  const deepdiveLine = deepdive ? `\n${indent}   ${renderDeepdiveLine(deepdive)}` : "";
+  return `${mainLine}${qualityLine}${deepdiveLine}\n${indent}${dim("  → ")}${url}`;
 };
 
 export const renderSummaryLine = (summary: SignalSummary): string => {
@@ -188,6 +199,7 @@ export const renderLookup = (
   rioError: string | undefined,
   summary: SignalSummary,
   evaluation: Evaluation,
+  deepdive: RunDefensives[] = [],
 ): string => {
   const lines: string[] = [];
   lines.push(renderHeader(data));
@@ -221,7 +233,7 @@ export const renderLookup = (
     lines.push(
       `  ${label}  ${dim(`· ${runsAtLevel} run(s) indexed at +${level}`)}`,
     );
-    lines.push(renderRun(best, data.metric));
+    lines.push(renderRun(best, data.metric, "    ", deepdive.find((d) => d.reportCode === best.reportCode && d.fightID === best.fightID)));
   } else if (result.atOrAboveTarget.length > 0) {
     lines.push(
       dim(
@@ -260,7 +272,7 @@ export const renderLookup = (
         atTargetPart +
         `  ·  ${ageTag}`,
     );
-    for (const r of pd.runs) lines.push(renderRun(r, data.metric));
+    for (const r of pd.runs) lines.push(renderRun(r, data.metric, "    ", deepdive.find((d) => d.reportCode === r.reportCode && d.fightID === r.fightID)));
 
     // Note any missing dungeons so user can see gaps in the profile.
     if (pd.dungeonsCovered < pd.totalDungeonsInSeason) {

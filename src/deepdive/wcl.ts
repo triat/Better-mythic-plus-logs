@@ -32,6 +32,8 @@ export const castFilter = (ids: number[]): string => `ability.id in (${ids.join(
 // Points spent by the previous deep-dive query in this process; the counter WCL returns is
 // cumulative for the hour, so the difference between two consecutive answers is one query's cost.
 let lastSpent: number | null = null;
+/** Test-only: other test files' deep-dive fetches share this process-wide baseline. */
+export const resetPointsBaseline = (): void => { lastSpent = null; };
 
 export interface FetchOpts { code: string; fightID: number; character: string; actorID: number; ids: number[] }
 

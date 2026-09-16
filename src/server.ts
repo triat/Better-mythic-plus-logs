@@ -6,10 +6,16 @@ import {
   isPlausibleNameRealm,
 } from "./clipboard.ts";
 import { hasCredentials } from "./config.ts";
+import { attachDeepdive } from "./deepdive/attach.ts";
+import { runDeepdive } from "./deepdive/run.ts";
+import { applyPatch, getDefensives, resetDefensives, saveOverride, specDefensives, specKey, validateOverride } from "./deepdive/table.ts";
+import type { OverrideEntry } from "./deepdive/types.ts";
+import { getEvalConfig } from "./evaluation/config.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
+import type { LookupPayload } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
-import { closeStore } from "./signals/store.ts";
+import { getStore, closeStore } from "./signals/store.ts";
 import { History } from "./server-history.ts";
 import type { HistoryEntry } from "./server-history.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
@@ -189,6 +195,58 @@ async function handleLookup(req: Request): Promise<Response> {
     key: result.key,
     fromCache: result.fromCache,
   });
+}
+
+/** Re-attach cached analyses (and re-evaluate) on every history entry — after an analysis or a table change. 0 pts. */
+async function refreshHistoryDeepdive(): Promise<void> {
+  const [store, tables, cfg] = await Promise.all([getStore(), getDefensives(), getEvalConfig()]);
+  for (const e of history.list()) history.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
+}
+
+interface DeepdiveBody { reportCode?: string; fightID?: number; character?: string; force?: boolean }
+
+async function handleDeepdive(req: Request): Promise<Response> {
+  let body: DeepdiveBody;
+  try { body = (await req.json()) as DeepdiveBody; } catch { return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400); }
+  if (!body.reportCode || typeof body.fightID !== "number" || !body.character) return jsonResponse({ ok: false, error: "`reportCode`, `fightID` and `character` are required" }, 400);
+  if (!hasCredentials()) return jsonResponse({ ok: false, error: "No credentials configured. Visit /setup first." }, 400);
+  const [store, tables] = await Promise.all([getStore(), getDefensives()]);
+  const r = await runDeepdive({ reportCode: body.reportCode, fightID: body.fightID, character: body.character, force: !!body.force }, { store, tables });
+  if (!r.ok) return jsonResponse({ ok: false, error: r.error }, r.status);
+  await refreshHistoryDeepdive();
+  return jsonResponse({ ok: true, result: r.result, fromCache: r.fromCache, pointsSpent: r.pointsSpent });
+}
+
+async function handleDefensivesGet(url: URL): Promise<Response> {
+  const className = (url.searchParams.get("class") ?? "").trim();
+  const spec = (url.searchParams.get("spec") ?? "").trim();
+  if (!className || !spec) return jsonResponse({ ok: false, error: "`class` and `spec` are required" }, 400);
+  const tables = await getDefensives();
+  const d = specDefensives(tables.shipped, tables.override, className, spec);
+  return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: tables.overridePath, warning: tables.warning ?? null });
+}
+
+interface DefensivesPatchBody { className?: string; spec?: string; patch?: OverrideEntry }
+
+async function handleDefensivesPost(req: Request): Promise<Response> {
+  let body: DefensivesPatchBody;
+  try { body = (await req.json()) as DefensivesPatchBody; } catch { return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400); }
+  if (!body.className || !body.spec || !body.patch) return jsonResponse({ ok: false, error: "`className`, `spec` and `patch` are required" }, 400);
+  const tables = await getDefensives();
+  if (tables.warning) return jsonResponse({ ok: false, error: `${tables.overridePath} is invalid — fix it by hand first: ${tables.warning}` }, 409);
+  try {
+    const key = specKey(body.className, body.spec);
+    const effective = specDefensives(tables.shipped, tables.override, body.className, body.spec);
+    const next = validateOverride(applyPatch(tables.override, key, validateOverride({ [key]: [body.patch] })[key]![0]!, effective));
+    await saveOverride(tables.overridePath, next);
+    resetDefensives();
+    await refreshHistoryDeepdive();
+    const fresh = await getDefensives();
+    const d = specDefensives(fresh.shipped, fresh.override, body.className, body.spec);
+    return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: fresh.overridePath });
+  } catch (e) {
+    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 400);
+  }
 }
 
 async function handleSetup(req: Request): Promise<Response> {
@@ -396,6 +454,9 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       if (req.method === "POST" && path === "/api/lookup") {
         return handleLookup(req);
       }
+      if (req.method === "POST" && path === "/api/deepdive") return handleDeepdive(req);
+      if (req.method === "GET" && path === "/api/defensives") return handleDefensivesGet(url);
+      if (req.method === "POST" && path === "/api/defensives") return handleDefensivesPost(req);
       if (req.method === "GET" && path === "/api/history") {
         // Newest first for the UI.
         const items = history.list().map(historySummary);

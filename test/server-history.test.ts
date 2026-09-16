@@ -62,4 +62,13 @@ describe("History — keyed by effective level", () => {
     h.clear();
     expect(h.size).toBe(0);
   });
+
+  test("updateResult replaces the payload in place and keeps the key", () => {
+    const h = new History(5);
+    const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: { v: 1 } }));
+    h.updateResult(e.key, { v: 2 });
+    expect(h.get(e.key)!.result).toEqual({ v: 2 });
+    h.updateResult("nope", { v: 3 });
+    expect(h.size).toBe(1);
+  });
 });

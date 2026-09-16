@@ -103,6 +103,12 @@ export class History {
     this.autoLevel.clear();
   }
 
+  /** Replace the stored payload of an entry (e.g. after a deep-dive changed its analyses); no-op for unknown keys. */
+  updateResult(key: string, result: unknown): void {
+    const e = this.entries.get(key);
+    if (e) e.result = result;
+  }
+
   private forget(key: string): void {
     const e = this.entries.get(key);
     this.entries.delete(key);

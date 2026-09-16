@@ -1,5 +1,9 @@
-import { describe, expect, test } from "bun:test";
-import { BudgetLowError, MAX_EVENT_PAGES, fetchRawDeepDive } from "../../src/deepdive/wcl.ts";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { BudgetLowError, MAX_EVENT_PAGES, fetchRawDeepDive, resetPointsBaseline } from "../../src/deepdive/wcl.ts";
+
+// The points-spent baseline is process-wide (see wcl.ts); other test files' deep-dive
+// fetches (e.g. test/deepdive/run.test.ts) would otherwise leak into "first query" here.
+beforeEach(() => resetPointsBaseline());
 
 const page = (events: unknown[], next: number | null, spent = 10) => ({
   rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: spent, pointsResetIn: 100 },

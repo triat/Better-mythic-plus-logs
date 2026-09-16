@@ -100,6 +100,57 @@ bmpl evaluate saved.json          # human-readable verdict block
 bmpl evaluate saved.json --json   # structured output
 ```
 
+## Deep-dive: defensive cooldowns
+
+`bmpl analyze` goes one level deeper than the run signals above: it fetches
+the raw cast/buff/event data for one run and measures, per defensive
+cooldown, **usage vs. capacity** (casts vs. how many times the cooldown could
+have come up in the fight) and, for every death, **whether a defensive was
+available and unused** ("immunity available", "defensive available",
+"covered", "nothing available"). It's a separate, opt-in fetch — ~3 WCL
+points per run, cached forever in `bmpl.db` — because it's a heavier query
+than the per-run enrichment `lookup` already does.
+
+```bash
+bmpl analyze Biwaadrood-Nerzhul                    # list the runs lookup shows, and which are already analyzed
+bmpl analyze Biwaadrood-Nerzhul --all --yes        # analyze every shown run (~3 pts each, once)
+bmpl analyze Biwaadrood-Nerzhul --run <code>:<fight>   # analyze one specific run
+bmpl analyze Biwaadrood-Nerzhul --all --json       # structured output
+```
+
+Which spells count as defensives per spec lives in `src/deepdive/defensives.json`
+(shipped) and can be extended or corrected with a `defensives.json` next to
+your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"` or
+`"Class:*"`. Each entry supports three shapes:
+
+```json
+{
+  "Paladin:Holy": [
+    { "id": 498, "cooldownS": 42 },
+    { "id": 6940, "name": "Blessing of Sacrifice", "cooldownS": 120, "durationS": 12, "kind": "major" },
+    { "id": 1044, "ignore": true }
+  ]
+}
+```
+
+- **patch** an existing id (shipped or already in your override) — only the
+  fields you list change, e.g. correcting `cooldownS` for a talent that
+  shortens it.
+- **add** a spell the shipped table doesn't know about — `name`, `cooldownS`,
+  `durationS` and `kind` (`major` / `immunity` / `minor`) are all required.
+- **ignore** an id — drops it from the effective table and from the audit's
+  "not in table" list.
+
+`bmpl defensives <Class> <Spec>` prints the effective table (shipped +
+override, override entries marked); `bmpl defensives --check` validates the
+override file without printing anything else.
+
+Once at least `confidence.deepdiveMinRuns` (2 by default) of a character's
+shown runs have been analyzed, the **Survival** axis in `bmpl lookup` /
+`bmpl evaluate` picks up two more sub-signals: `defensiveUsage` (median major/
+immunity usage across analyzed runs) and `avoidableDeaths` (share of deaths
+where a defensive was available and not used).
+
 ## Requirements
 
 - [Bun](https://bun.sh/) 1.3+ (for running from source / building)

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { renderDeepdiveLine, renderEvaluation, renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
+import { renderDeepdive, renderDeepdiveLine, renderEvaluation, renderRunSignals, renderSummaryLine } from "../src/format-mplus.ts";
 import type { RunDefensives } from "../src/deepdive/types.ts";
 import type { Evaluation } from "../src/evaluation/types.ts";
 import type { SignalSummary } from "../src/signals/summary.ts";
@@ -8,6 +8,12 @@ import { formatDuration } from "../src/util.ts";
 import { loadWclFixture } from "./fixtures.ts";
 
 const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
+
+const base: RunDefensives = {
+  reportCode: "R", fightID: 1, character: "X", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
+  defensives: [], deaths: [], majorUsage: 0.41, avoidableDeaths: 1, countedDeaths: 2,
+  unlisted: [{ id: 5, name: "Mystery", casts: 5, uptimeS: 40 }], staleTable: false, truncated: false, fetchedAt: 0, pointsSpent: 3,
+};
 
 describe("formatDuration", () => {
   test("mm:ss", () => {
@@ -118,11 +124,6 @@ describe("renderEvaluation", () => {
 });
 
 describe("renderDeepdiveLine", () => {
-  const base: RunDefensives = {
-    reportCode: "R", fightID: 1, character: "X", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
-    defensives: [], deaths: [], majorUsage: 0.41, avoidableDeaths: 1, countedDeaths: 2,
-    unlisted: [{ id: 5, name: "Mystery", casts: 5, uptimeS: 40 }], staleTable: false, truncated: false, fetchedAt: 0, pointsSpent: 3,
-  };
   test("majors, deaths, unlisted", () => {
     const line = strip(renderDeepdiveLine(base));
     expect(line).toContain("defensives: majors 41%");
@@ -133,5 +134,33 @@ describe("renderDeepdiveLine", () => {
     const line = strip(renderDeepdiveLine({ ...base, tableMissing: true, majorUsage: null, countedDeaths: 0, avoidableDeaths: 0, unlisted: [] }));
     expect(line).toContain("no defensives table for Holy Paladin");
     expect(line).toContain("no deaths");
+  });
+});
+
+describe("renderDeepdive", () => {
+  test("usage table, deaths with verdicts, audit", () => {
+    const d: RunDefensives = {
+      ...base,
+      defensives: [
+        { id: 498, name: "Divine Protection", cooldownS: 60, durationS: 8, kind: "major", origin: "shipped", casts: 27, capacity: 30, usage: 0.9, observedMinIntervalS: 38, cdMismatch: true },
+        { id: 642, name: "Divine Shield", cooldownS: 300, durationS: 8, kind: "immunity", origin: "override", casts: 5, capacity: 6, usage: 5 / 6, observedMinIntervalS: 310, cdMismatch: false },
+      ],
+      deaths: [
+        { atMs: 1_764_223, inWipe: false, killingHits: [{ name: "Cosmic Crash", amount: 559197, share: 0.55 }, { name: "Unstable Singularity", amount: 458887, share: 0.45 }], killingBlow: "Unstable Singularity", available: ["Divine Shield"], active: [], onCooldown: [{ name: "Divine Protection", readyInS: 12 }], verdict: "immunity available" },
+        { atMs: 100_000, inWipe: true, killingHits: [], killingBlow: null, available: [], active: ["Divine Protection"], onCooldown: [], verdict: "covered" },
+      ],
+    };
+    const out = strip(renderDeepdive(d));
+    expect(out).toContain("Divine Protection");
+    expect(out).toContain("27/30");
+    expect(out).toContain("90%");
+    expect(out).toContain("cd 60s · seen 38s ?"); // cdMismatch marker
+    expect(out).toContain("(override)");
+    expect(out).toContain("29:24");                // 1_764_223 ms
+    expect(out).toContain("Cosmic Crash 55%");
+    expect(out).toContain("immunity available");
+    expect(out).toContain("Divine Protection on cd (12s)");
+    expect(out).toContain("wipe");
+    expect(out).toContain("Not in table: Mystery (5x, 40s up)");
   });
 });

@@ -42,3 +42,27 @@ describe("bmpl evaluate <payload.json>", () => {
     expect(proc.stderr.toString()).toMatch(/not a bmpl lookup --json payload/);
   });
 });
+
+describe("bmpl defensives", () => {
+  const cwd = path.join(import.meta.dir, "..", "..");
+  test("prints the effective table for a spec, with the override marked", async () => {
+    const p = path.join(tmp, "defensives.json");
+    await Bun.write(p, JSON.stringify({ "Paladin:Holy": [{ id: 498, cooldownS: 42 }] }));
+    const proc = Bun.spawnSync(["bun", "src/cli.ts", "defensives", "Paladin", "Holy"], { cwd, env: { ...process.env, BMPL_DEFENSIVES: p } });
+    expect(proc.exitCode).toBe(0);
+    const out = strip(proc.stdout.toString());
+    expect(out).toContain("Paladin:Holy");
+    expect(out).toMatch(/Divine Protection\s+major\s+cd\s+42s.*override/);
+    expect(out).toMatch(/Divine Shield\s+immunity.*shipped/);
+    const check = Bun.spawnSync(["bun", "src/cli.ts", "defensives", "--check"], { cwd, env: { ...process.env, BMPL_DEFENSIVES: p } });
+    expect(check.exitCode).toBe(0);
+    await Bun.write(p, "{ nope");
+    const bad = Bun.spawnSync(["bun", "src/cli.ts", "defensives", "--check"], { cwd, env: { ...process.env, BMPL_DEFENSIVES: p } });
+    expect(bad.exitCode).toBe(1);
+  });
+  test("analyze without credentials or without --run lists usage and exits non-zero on a bad target", () => {
+    const proc = Bun.spawnSync(["bun", "src/cli.ts", "analyze"], { cwd });
+    expect(proc.exitCode).toBe(2);
+    expect(proc.stderr.toString()).toContain("Usage: bmpl analyze");
+  });
+});

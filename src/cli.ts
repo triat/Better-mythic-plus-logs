@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import pc from "picocolors";
 import { gql } from "./wcl/client.ts";
 import {
   CHARACTER_BASIC_QUERY,
@@ -16,14 +17,20 @@ import type {
 } from "./wcl/types.ts";
 import { classColor, classNames, dim, err, heading, ok } from "./format.ts";
 import { config } from "./config.ts";
+import { getDefensives, loadDefensives, specDefensives } from "./deepdive/table.ts";
+import type { RunDefensives } from "./deepdive/types.ts";
+import { runDeepdive } from "./deepdive/run.ts";
+import { estimateDeepdiveCost } from "./deepdive/wcl.ts";
 import { getEvalConfig } from "./evaluation/config.ts";
 import { evaluate } from "./evaluation/evaluate.ts";
 import type { EvalPayload } from "./evaluation/inputs.ts";
 import { fetchMplusData, filterBySpec, uniqueSpecs } from "./mplus.ts";
+import type { MPlusRun } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
-import { renderEvaluation, renderLookup, renderSummary } from "./format-mplus.ts";
+import { renderDeepdive, renderEvaluation, renderLookup, renderSummary } from "./format-mplus.ts";
 import { buildLookupPayload, performLookup } from "./lookup.ts";
-import { closeStore } from "./signals/store.ts";
+import { displayedRuns } from "./signals/enrich.ts";
+import { closeStore, getStore } from "./signals/store.ts";
 import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
 import { runServer } from "./server.ts";
 import { runWatch } from "./watch.ts";
@@ -50,6 +57,13 @@ Usage:
                                      Re-run the evaluation model on a saved lookup
                                      (--json output). Uses evaluation.json next to
                                      .env if present.
+  bmpl analyze <Name-Realm> [--run <code>:<fight>]... [--all] [--force] [--yes] [--level <N>] [--spec X] [--json]
+                                     Deep-dive the defensive cooldowns of shown runs
+                                     (~3 WCL pts per run, cached forever). Without
+                                     --run/--all: lists the runs and their status.
+  bmpl defensives <Class> <Spec> | --check
+                                     Show the effective defensives table for a spec
+                                     (shipped + your defensives.json), or validate the file.
   bmpl char <name> <realm>           Basic character info.
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).
@@ -193,6 +207,59 @@ async function cmdEvaluate(file: string, json: boolean): Promise<void> {
   const ev = evaluate(parsed as EvalPayload, await getEvalConfig());
   if (json) console.log(JSON.stringify(ev, null, 2));
   else console.log(renderEvaluation(ev));
+}
+
+async function cmdAnalyze(
+  name: string, realm: string, targetLevel: number | null, spec: string | null,
+  runKeys: string[], all: boolean, force: boolean, yes: boolean, json: boolean,
+): Promise<void> {
+  const o = await performLookup({ name, realm, level: targetLevel, spec, enrich: true });
+  if (!o.ok) { console.error(json ? o.error : err("✗ " + o.error)); closeStore(); process.exit(1); }
+  const shown = displayedRuns(o.result);
+  const analyzed = new Set(o.deepdive.map((d) => `${d.reportCode}:${d.fightID}`));
+  const key = (r: MPlusRun) => `${r.reportCode}:${r.fightID}`;
+  if (!all && runKeys.length === 0) {
+    console.log(heading(`${o.data.character.name}-${realm}`) + dim("  runs shown by lookup — pass --run <code>:<fight> or --all"));
+    for (const r of shown) console.log(`  ${analyzed.has(key(r)) ? ok("✓") : dim("·")} ${key(r).padEnd(24)} +${r.keyLevel} ${r.encounterName}`);
+    closeStore();
+    return;
+  }
+  const wanted = shown.filter((r) => (all || runKeys.includes(key(r))) && (force || !analyzed.has(key(r))));
+  const unknown = runKeys.filter((k) => !shown.some((r) => key(r) === k));
+  if (unknown.length > 0) { console.error(err(`✗ not among the shown runs: ${unknown.join(", ")}`)); closeStore(); process.exit(2); }
+  if (wanted.length === 0) { console.log(dim("nothing to analyze (already analyzed — use --force to re-fetch)")); }
+  else if (!yes && !json) {
+    const go = confirm(`Analyze ${wanted.length} run${wanted.length === 1 ? "" : "s"} for ~${wanted.length * estimateDeepdiveCost()} WCL pts?`);
+    if (!go) { closeStore(); process.exit(0); }
+  }
+  const [store, tables] = await Promise.all([getStore(), getDefensives()]);
+  const results: RunDefensives[] = [];
+  for (const r of wanted) {
+    const res = await runDeepdive({ reportCode: r.reportCode, fightID: r.fightID, character: o.data.character.name, force }, { store, tables });
+    if (!res.ok) { console.error(err(`✗ ${key(r)}: ${res.error}`)); if (res.status === 402) break; continue; }
+    results.push(res.result);
+    if (!json) {
+      console.log(`\n+${r.keyLevel} ${r.encounterName}  ${dim(res.fromCache ? "cached · 0 pts" : `${res.pointsSpent ?? "~3"} pts`)}`);
+      console.log(renderDeepdive(res.result));
+    }
+  }
+  if (json) console.log(JSON.stringify(results, null, 2));
+  closeStore();
+}
+
+async function cmdDefensives(className: string | undefined, spec: string | undefined, check: boolean): Promise<void> {
+  const t = await loadDefensives();
+  if (check) {
+    if (t.warning) { console.error(err(`✗ ${t.warning}`)); process.exit(1); }
+    console.log(ok(`✓ ${t.overridePath}: ${Object.keys(t.override).length} spec key(s)`));
+    return;
+  }
+  if (!className || !spec) { console.error(err("Usage: bmpl defensives <Class> <Spec> | --check")); process.exit(2); }
+  const d = specDefensives(t.shipped, t.override, className, spec);
+  console.log(heading(`${d.key}`) + dim(`  override: ${t.overridePath}${t.warning ? "  (ignored: invalid)" : ""}`));
+  if (d.tableMissing) console.log(pc.yellow("  no table for this spec — add entries to your defensives.json"));
+  for (const e of d.entries) console.log(`  ${String(e.id).padStart(8)}  ${e.name.padEnd(28)} ${e.kind.padEnd(8)} cd ${String(e.cooldownS).padStart(3)}s  dur ${String(e.durationS).padStart(3)}s  ${e.origin === "override" ? pc.cyan("override") : dim("shipped")}`);
+  if (d.ignored.length > 0) console.log(dim(`  ignored: ${d.ignored.join(", ")}`));
 }
 
 async function cmdMplus(
@@ -339,6 +406,12 @@ function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+function parseFlags(args: string[], flag: string): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < args.length; i++) if (args[i] === flag && args[i + 1] !== undefined) out.push(args[i + 1]!);
+  return out;
+}
+
 function stripFlags(args: string[], flagsWithValues: string[], booleanFlags: string[]): string[] {
   const out: string[] = [];
   for (let i = 0; i < args.length; i++) {
@@ -422,6 +495,23 @@ async function main(): Promise<void> {
           process.exit(2);
         }
         await cmdEvaluate(file, json);
+        break;
+      }
+      case "analyze": {
+        const lvlStr = parseFlag(rest, "--level");
+        const spec = parseFlag(rest, "--spec") ?? null;
+        const runs = parseFlags(rest, "--run");
+        const positional = stripFlags(rest, ["--level", "--spec", "--run"], ["--all", "--force", "--yes", "--json"]);
+        const target = resolveTarget(positional);
+        if (!target) { console.error(err("Usage: bmpl analyze <Name-Realm> [--run <code>:<fight>]... [--all] [--force] [--yes] [--level <N>] [--spec X] [--json]")); process.exit(2); }
+        let lvl: number | null = null;
+        if (lvlStr) { lvl = Number.parseInt(lvlStr, 10); if (!Number.isFinite(lvl) || lvl < 2) { console.error(err(`Invalid --level value: ${lvlStr}`)); process.exit(2); } }
+        await cmdAnalyze(target.name, target.realm, lvl, spec, runs, hasFlag(rest, "--all"), hasFlag(rest, "--force"), hasFlag(rest, "--yes"), hasFlag(rest, "--json"));
+        break;
+      }
+      case "defensives": {
+        const positional = stripFlags(rest, [], ["--check"]);
+        await cmdDefensives(positional[0], positional[1], hasFlag(rest, "--check"));
         break;
       }
       case "mplus": {

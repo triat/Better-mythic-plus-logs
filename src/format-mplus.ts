@@ -122,6 +122,39 @@ export const renderDeepdiveLine = (d: RunDefensives): string => {
   return `defensives: ${parts.join(" · ")}`;
 };
 
+const mmss = (ms: number): string => {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+const verdictColor = (v: RunDefensives["deaths"][number]["verdict"], s: string): string =>
+  v === "covered" || v === "nothing available" ? pc.green(s) : v === "immunity available" ? pc.red(pc.bold(s)) : pc.red(s);
+
+/** Multi-line panel for `bmpl analyze`. */
+export const renderDeepdive = (d: RunDefensives): string => {
+  const lines: string[] = [];
+  lines.push(heading(`Defensives · ${d.spec} ${d.className}`) + (d.tableMissing ? pc.yellow("  (no table for this spec)") : "") + (d.truncated ? pc.yellow("  (events truncated)") : ""));
+  for (const u of d.defensives) {
+    const usage = `${Math.round(u.usage * 100)}%`.padStart(4);
+    const cd = u.cdMismatch ? pc.yellow(`cd ${u.cooldownS}s · seen ${u.observedMinIntervalS}s ?`) : dim(`cd ${u.cooldownS}s${u.observedMinIntervalS !== null ? ` · seen ${u.observedMinIntervalS}s` : ""}`);
+    lines.push(`  ${u.name.padEnd(26)} ${dim(u.kind.padEnd(8))} ${String(u.casts).padStart(3)}/${String(u.capacity).padEnd(3)} ${usage}  ${cd}${u.origin === "override" ? dim(" (override)") : ""}`);
+  }
+  if (d.majorUsage !== null) lines.push(dim(`  majors used ${Math.round(d.majorUsage * 100)}% of possible`));
+  lines.push(d.deaths.length === 0 ? dim("  no deaths") : `  ${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`);
+  for (const x of d.deaths) {
+    const hits = x.killingHits.map((h) => `${h.name} ${Math.round(h.share * 100)}%`).join(" · ");
+    const state = [
+      ...x.active.map((n) => pc.green(`${n} active`)),
+      ...x.available.map((n) => pc.red(`${n} available`)),
+      ...x.onCooldown.map((c) => dim(`${c.name} on cd (${c.readyInS}s)`)),
+    ].join(", ");
+    lines.push(`    ${mmss(x.atMs)}  ${verdictColor(x.verdict, x.verdict)}${x.inWipe ? pc.yellow(" · wipe") : ""}  ${dim(hits)}`);
+    if (state) lines.push(`           ${state}`);
+  }
+  if (d.unlisted.length > 0) lines.push(pc.yellow(`  Not in table: ${d.unlisted.map((u) => `${u.name} (${u.casts}x, ${u.uptimeS}s up)`).join(", ")}`));
+  return lines.join("\n");
+};
+
 const renderRun = (r: MPlusRun, metric: Metric, indent = "    ", deepdive?: RunDefensives): string => {
   const amount = formatDps(r.amount);
   // 0% = WCL has not ranked this log; never show it as a real percentile.

@@ -27,7 +27,7 @@ the existing `/api/*` routes and the `LookupPayload` JSON exactly as they are to
 
 | Topic | Decision | Why |
 |---|---|---|
-| Stack | Vite 6, React 19, TypeScript strict, `web/` has its own `package.json` + `tsconfig.json` | User choice ("A"). Isolates DOM types and front deps from the Bun/CLI tree. |
+| Stack | Vite 8, React 19, TypeScript strict, `web/` has its own `package.json` + `tsconfig.json` | User choice ("A"). Isolates DOM types and front deps from the Bun/CLI tree. |
 | Embedding | Vite emits **fixed file names** (`index.html`, `assets/app.js`, `assets/app.css`); `src/web-assets.ts` imports the three with `with { type: "file" }` and serves them via `Bun.file()`. `bun build --compile` embeds them. | Hashed names would need a generated manifest; a local tool does not need cache busting (served with `Cache-Control: no-cache`). |
 | Routing | SPA. Server returns `index.html` for `GET /` and `GET /setup`; the app decides which screen to show from `/api/status`. No client router: `location.pathname` + `history.pushState` for the two paths. | Two screens; a router is dead weight. |
 | Shared code | The front imports **types only** from `../../src/**` (`import type`). One runtime exception: the new pure module `src/wow/classes.ts` (class id → name, hex color). | Types keep the front honest against `LookupPayload`/`Evaluation`; runtime sharing is limited to a dependency-free table so Vite never pulls Bun/Node code. |
@@ -56,6 +56,10 @@ web/
     lib/radar.ts          pure geometry: axisPoint, polygonPoints, ringPoints (tested)
     lib/verdict.ts        verdict/confidence → label, css class, color (tested)
     lib/history.ts        tab selection rules for compare (max 3, ordering) (tested)
+    lib/axes.ts           axis-row view model (top evidence, confidence) (tested)
+    lib/tiles.ts          signal tile view model (tested)
+    lib/runs.ts           dungeon-run row view model incl. per-run signal parts (tested)
+    lib/compare.ts        compare table rows + bestIndices (tested)
     components/
       Header.tsx          search form (character, level, spec, metric), Look up, Refresh,
                           clipboard-watch toggle + status, Quit
@@ -199,8 +203,8 @@ clipboard watch is on", and a one-line note showing the WCL credentials source (
      in the front.
    - six **AxisRows**: `[confidence dot + label | score or n/a | strongest evidence label + signed delta]`.
      Confidence dot: high = green, medium = yellow, low = red, null axis = hollow. Evidence =
-     the entry of `axis.evidence` with the largest `|delta|`; delta rendered `+4.2` / `−3.1`
-     in mono. Row click expands all evidence entries for that axis (a `<details>`-like toggle).
+     the entry of `axis.evidence` with the largest `|delta|`; delta rendered as a signed integer `+18` / `−6`
+     in mono (as in the mockups). Row click expands all evidence entries for that axis (a `<details>`-like toggle).
    - right: **Radar** with one series in the class color.
 2. **SignalTiles**: same tiles as today's summary strip (`summary.*`), null → `—`. Deltas are
    colored by sign with the same rules as `renderSummaryLine` (DTPS/avoidable lower is better,
@@ -225,8 +229,9 @@ clipboard watch is on", and a one-line note showing the WCL credentials source (
   Rows: Score, the six axes, then the compare rows the current UI already has (target level,
   runs indexed, dungeons at/above target, median level/parse, avg deaths, DTPS Δ, kicks Δ,
   avoidable Δ, ilvl, recent timed, prev season). Per row, the best value cell gets the green
-  highlight (`lib/history.ts` exposes `bestIndex(values, direction)`; `n/a`/null never wins;
-  ties highlight all tied cells).
+  highlight (`lib/compare.ts` exposes `bestIndices(values, mode)`; `n/a`/null never wins;
+  ties highlight all tied cells; a row where every character has the same value highlights
+  nothing).
 - Selection rules (`lib/history.ts`): selecting a 4th tab deselects the oldest selection; a
   closed tab is removed from the selection; "Compare" button enabled only for 2–3.
 
@@ -254,7 +259,7 @@ inline.
 
 ## Radar (`lib/radar.ts` + `Radar.tsx`)
 
-- `viewBox 0 0 300 300`, center `(150,150)`, `R = 110`. Axis order fixed:
+- `viewBox -45 -5 390 310` (labels need side room; inline SVG clips), center `(150,150)`, `R = 110`. Axis order fixed:
   survival, utility, throughput, consistency, preparation, experience; angles
   `-90°, -30°, 30°, 90°, 150°, 210°`.
 - `axisPoint(i, score)` → `(150 + R·score/100·cos θ, 150 + R·score/100·sin θ)`, rounded to 1
@@ -267,9 +272,9 @@ inline.
   `R + 22`, `text-anchor` by quadrant, font 11 px uppercase muted; the label's score is not
   repeated (it lives in AxisRows / the compare table).
 - Tests (`lib/radar.test.ts`): the six angles; `axisPoint(0,100) = (150,40)`;
-  `axisPoint(1,61) = (208.1,116.4)`; a null score maps to `(150,150)`; `polygonPoints` string
+  `axisPoint(1,61) = (208.1,116.5)`; a null score maps to `(150,150)`; `polygonPoints` string
   for the canvas sample `[82,61,88,null,55,74]` equals
-  `150,59.8 208.1,116.4 233.8,198.4 150,150 97.6,180.3 79.5,109.3`.
+  `150,59.8 208.1,116.5 233.8,198.4 150,150 97.6,180.3 79.5,109.3`.
 
 ## Error handling
 
@@ -289,8 +294,9 @@ inline.
   (three tiny files written by the test) and asserts: `GET /` and `GET /setup` return the HTML
   with `no-cache`; `GET /assets/app.js` returns the JS with the JS content type; `GET /nope`
   is 404; with the fixture removed, `GET /` is 503 with the "not built" message. `runServer`
-  gains an optional `assets` override (`{ index, appJs, appCss }` file paths) for this test;
-  the default is the lazily imported `web-assets.ts`.
+  gains an optional `assets` loader override (`() => Promise<{ index, appJs, appCss } | null>`)
+  for this test — the default is the lazily imported `web-assets.ts` — and returns the Bun
+  server so the test can read `server.port` and stop it.
 - Existing tests keep passing; `test/format.test.ts` is unaffected (CLI rendering stays).
 - Manual check before merge: `just web-build && just build && ./bmpl serve` renders the four
   screens from a real lookup; `just web-dev` hot-reloads against `just serve --no-open`.

@@ -14,3 +14,5 @@ bmpl.db-wal
 bmpl.db-shm
 .superpowers-test-tmp/
 evaluation.json
+web/dist/
+web/node_modules/

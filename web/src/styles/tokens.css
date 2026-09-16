@@ -1,0 +1,28 @@
+/* web/src/styles/tokens.css — values lifted from the former COMMON_CSS; do not invent new ones */
+:root {
+  --bg: #0d1117;
+  --card: #161b22;
+  --inset: #0b0f14;
+  --border: #30363d;
+  --border-soft: #21262d;
+  --text: #e6edf3;
+  --text-soft: #c9d1d9;
+  --muted: #8b949e;
+  --faint: #6e7681;
+  --link: #58a6ff;
+  --green: #56d364;
+  --green-bg: #0a2e1a;
+  --green-border: #1f6f3a;
+  --yellow: #e3b341;
+  --yellow-bg: #2e2a0a;
+  --yellow-border: #7a6a1f;
+  --warn: #d29922;
+  --red: #f85149;
+  --red-bg: #2e0a0a;
+  --red-border: #7a1f1f;
+  --orange: #ffa657;
+  --button: #238636;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 6px;
+  --radius-lg: 10px;
+}

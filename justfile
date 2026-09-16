@@ -6,9 +6,22 @@ default:
 install:
     bun install
 
-# typecheck
+# typecheck (CLI + web front)
 check:
     bun run typecheck
+    bun run --cwd web typecheck
+
+# install web front dependencies
+web-install:
+    bun install --cwd web
+
+# web front dev server (Vite on :5173, proxies /api to `just serve --no-open` on :3000)
+web-dev:
+    bun run --cwd web dev
+
+# build the web front into web/dist (embedded by `just build`)
+web-build:
+    bun run --cwd web build
 
 # run unit tests
 test *args:

@@ -61,6 +61,7 @@ Usage:
                                      Deep-dive the defensive cooldowns of shown runs
                                      (~3 WCL pts per run, cached forever). Without
                                      --run/--all: lists the runs and their status.
+                                     --json requires --yes to fetch runs (no prompt).
   bmpl defensives <Class> <Spec> | --check
                                      Show the effective defensives table for a spec
                                      (shipped + your defensives.json), or validate the file.
@@ -213,6 +214,11 @@ async function cmdAnalyze(
   name: string, realm: string, targetLevel: number | null, spec: string | null,
   runKeys: string[], all: boolean, force: boolean, yes: boolean, json: boolean,
 ): Promise<void> {
+  if (json && !yes && (all || runKeys.length > 0)) {
+    console.error(err("✗ --json needs --yes to fetch runs"));
+    closeStore();
+    process.exit(2);
+  }
   const o = await performLookup({ name, realm, level: targetLevel, spec, enrich: true });
   if (!o.ok) { console.error(json ? o.error : err("✗ " + o.error)); closeStore(); process.exit(1); }
   const shown = displayedRuns(o.result);

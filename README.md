@@ -115,7 +115,7 @@ than the per-run enrichment `lookup` already does.
 bmpl analyze Biwaadrood-Nerzhul                    # list the runs lookup shows, and which are already analyzed
 bmpl analyze Biwaadrood-Nerzhul --all --yes        # analyze every shown run (~3 pts each, once)
 bmpl analyze Biwaadrood-Nerzhul --run <code>:<fight>   # analyze one specific run
-bmpl analyze Biwaadrood-Nerzhul --all --json       # structured output
+bmpl analyze Biwaadrood-Nerzhul --all --yes --json # structured output (--json needs --yes to fetch, since it can't prompt)
 ```
 
 Which spells count as defensives per spec lives in `src/deepdive/defensives.json`

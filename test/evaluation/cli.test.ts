@@ -65,4 +65,9 @@ describe("bmpl defensives", () => {
     expect(proc.exitCode).toBe(2);
     expect(proc.stderr.toString()).toContain("Usage: bmpl analyze");
   });
+  test("analyze --all --json without --yes refuses before any lookup (no network)", () => {
+    const proc = Bun.spawnSync(["bun", "src/cli.ts", "analyze", "Foo-Bar", "--all", "--json"], { cwd });
+    expect(proc.exitCode).toBe(2);
+    expect(proc.stderr.toString()).toContain("--json needs --yes");
+  });
 });

@@ -13,8 +13,9 @@ export interface AnalyzeInput {
   denylist: number[];
 }
 
-/** Self-buffs that are consumables or similar, never defensives (audit noise). */
-export const NON_DEFENSIVE_NAME = /potion|flask|phial|food|well fed|rune|vantus|drums|healthstone|augment/i;
+/** Self-buffs that are consumables, forms/stances or mobility — never defensives (audit noise). */
+export const NON_DEFENSIVE_NAME =
+  /potion|flask|phial|food|well fed|\brune\b|vantus|drums|healthstone|augment|\bform\b|\bstance\b|prowl|stealth|shimmer|sprint|\bdash\b|teleport|hover|ghost wolf|spirit walk|wraith walk|death's advance|burning rush|tiger's lust|camouflage|shroud of concealment|mount/i;
 const CD_MISMATCH_RATIO = 0.9;
 
 const round1 = (x: number) => Math.round(x * 10) / 10;

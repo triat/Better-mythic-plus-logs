@@ -149,6 +149,14 @@ your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"` or
 override, override entries marked); `bmpl defensives --check` validates the
 override file without printing anything else.
 
+The shipped table (`src/deepdive/defensives.json`, version `mn-2.2`) was
+audited on 2026-09-16 against the top 2 Voidscar Arena runs of every spec:
+entries nobody cast were dropped, ids corrected, audit noise (beacons, raid
+buffs, trinkets, racials, forms/stances/mobility) added to the denylist.
+`just audit-defensives [--only Class:Spec] [--runs N]` re-runs that check
+(~9 pts per spec) and prints, per spec, the table entries never cast and the
+self-cast buffs not in the table — the input for the next table revision.
+
 Once at least `confidence.deepdiveMinRuns` (2 by default) of a character's
 shown runs have been analyzed, the **Survival** axis in `bmpl lookup` /
 `bmpl evaluate` picks up two more sub-signals: `defensiveUsage` (median major/

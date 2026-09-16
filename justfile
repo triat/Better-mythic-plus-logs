@@ -113,3 +113,7 @@ clean:
 distclean: clean
     rm -rf node_modules
     rm -f bun.lock bun.lockb
+
+# empirical audit of the shipped defensives table against top runs (~350 WCL pts for all specs)
+audit-defensives *flags:
+    bun scripts/audit-defensives.ts {{flags}}

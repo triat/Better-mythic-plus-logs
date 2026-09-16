@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    .mono { font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 12px; white-space: nowrap; }
+    .btn-on { color: #e6edf3; border-color: #8b949e; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 0 8px; line-height: 18px; white-space: nowrap; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .row { display: grid; grid-template-columns: 150px 1fr 80px 70px 100px 70px 140px 24px; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; font-size: 13px; }
+    .ur { display: grid; grid-template-columns: 200px 70px 70px 48px 120px 1fr; gap: 10px; align-items: center; padding: 3px 0; font-size: 13px; }
+    .bar { display: inline-block; height: 6px; width: 120px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .death { display: grid; grid-template-columns: 48px 180px 1fr; gap: 10px; padding: 4px 0; font-size: 13px; align-items: baseline; }
+    .states { grid-column: 2 / -1; font-size: 12px; }
+    .audit { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 13px; }
+    .good { color: #56d364; font-weight: 600; } .warn { color: #d29922; font-weight: 600; } .bad { color: #f85149; font-weight: 700; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1040px; background: #0d1117; padding: 24px; box-sizing: border-box;">
+
+  <!-- Survival axis row with the analyzed badge (excerpt of the hero) -->
+  <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;">
+    <div class="caps" style="margin-bottom: 8px;">Excerpt — Survival axis once ≥ 2 runs are analyzed</div>
+    <div style="display: grid; grid-template-columns: 160px 48px 1fr; gap: 12px; align-items: center; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 8px 12px; font-size: 13px;">
+      <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #56d364; display: inline-block;"></span><span class="caps" style="color: #e6edf3;">Survival</span><span class="chip">3 runs analyzed</span></div>
+      <div class="mono" style="font-size: 18px; font-weight: 700;">76</div>
+      <div class="muted"><span class="good">+6.1</span> majors used 87% of possible (3 runs) <span class="faint">·</span> <span class="bad">−4.8</span> 2/3 deaths with a defensive available <span class="faint">·</span> <span class="good">+3.2</span> 0.3 individual deaths/run <span class="faint">· +2 more</span></div>
+    </div>
+  </div>
+
+  <!-- Best run per dungeon, with Analyze actions and one expanded panel -->
+  <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px 18px;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+      <span style="color: #8b949e; font-size: 18px; transform: rotate(90deg); display: inline-block;">›</span>
+      <span style="font-size: 14px; font-weight: 600;">Best run per dungeon</span>
+      <span class="muted" style="font-size: 12px;">8/8 dungeons · median +20, 86.4% · 8/8 at or above +20</span>
+      <div style="flex: 1;"></div>
+      <span class="btn">Analyze all shown (~15 pts)</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+
+      <div class="row">
+        <div><span class="mono" style="color: #ffa657; font-weight: 700;">+21</span> <span class="good" style="font-size: 12px; font-weight: 400;">✓+1 29:56</span></div>
+        <div>Voidscar Arena <span class="muted" style="font-size: 12px;">· 1 death (in wipe) · avoidable 362k/min (−7%) · dispels 9</span></div>
+        <div class="mono">312k <span class="muted" style="font-size: 11px;">hps</span></div>
+        <div class="mono" style="color: #a35fe0; font-weight: 600;">79.4%</div>
+        <div class="muted">Holy</div>
+        <div class="muted">2d ago</div>
+        <span class="btn btn-on">Analyzed ✓ <span style="transform: rotate(90deg); display: inline-block; font-size: 16px; line-height: 1;">›</span></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+      </div>
+
+      <!-- Expanded panel -->
+      <div style="margin: 0 10px 6px; padding: 10px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-weight: 600; font-size: 13px;">Defensives · Holy Paladin</span>
+          <span class="muted" style="font-size: 12px;">analyzed 2h ago · 3 pts</span>
+          <div style="flex: 1;"></div>
+          <span class="btn">Re-analyze · ~3 pts</span>
+        </div>
+
+        <div class="caps" style="margin: 12px 0 4px;">Usage</div>
+        <div class="ur"><span>Divine Protection</span><span class="faint">major</span><span class="mono">27 / 30</span><span class="mono good">90%</span><span class="bar"><span style="width: 90%;"></span></span><span class="faint">cd 60 s · seen 38 s <span class="chip chip-warn" style="margin-left: 6px;">talent?</span></span></div>
+        <div class="ur"><span>Divine Shield <span class="faint">· override</span></span><span class="faint">immunity</span><span class="mono">5 / 6</span><span class="mono good">83%</span><span class="bar"><span style="width: 83%;"></span></span><span class="faint">cd 300 s · seen 310 s</span></div>
+        <div class="ur"><span>Lay on Hands</span><span class="faint">major</span><span class="mono">2 / 3</span><span class="mono warn">67%</span><span class="bar"><span style="width: 67%;"></span></span><span class="faint">cd 600 s · seen 640 s</span></div>
+        <div class="ur"><span>Blessing of Protection</span><span class="faint">minor</span><span class="mono">3 / 6</span><span class="mono faint">—</span><span class="bar"><span style="width: 0%;"></span></span><span class="faint">cd 300 s</span></div>
+        <div class="muted" style="font-size: 12px; margin-top: 4px;">majors used 80% of possible</div>
+
+        <div class="caps" style="margin: 12px 0 4px;">Deaths · <span class="muted" style="text-transform: none; letter-spacing: 0; font-weight: 400;">1/1 deaths with a defensive available</span></div>
+        <div class="death">
+          <span class="mono">29:24</span>
+          <span class="bad">immunity available</span>
+          <span class="faint">Cosmic Crash 55% · Unstable Singularity 45% · killing blow: Unstable Singularity</span>
+          <span class="states"><span class="bad">Divine Shield available</span><span class="faint"> · </span><span class="faint">Divine Protection on cd · 12 s left</span><span class="faint"> · </span><span class="faint">Lay on Hands on cd · 214 s left</span></span>
+        </div>
+        <div class="death" style="opacity: .6;">
+          <span class="mono">1:40</span>
+          <span class="good">covered <span class="chip" style="margin-left: 6px;">wipe</span></span>
+          <span class="faint">Void Rupture 71% · Shadow Nova 29% · killing blow: Void Rupture</span>
+          <span class="states"><span class="good">Divine Protection active</span><span class="faint"> · </span><span class="faint">Divine Shield on cd · 40 s left</span></span>
+        </div>
+
+        <div class="caps" style="margin: 12px 0 4px;">Audit</div>
+        <div class="audit"><span>Aura Mastery · 2× · 16 s up</span><span class="chip">+ major</span><span class="chip">+ immunity</span><span class="chip">+ minor</span><span class="chip">Ignore</span></div>
+        <div class="audit"><span>Blessing of Freedom · 4× · 20 s up</span><span style="display: inline-flex; gap: 8px; align-items: center; font-size: 12px; color: #8b949e;">cd <span class="mono" style="display: inline-block; width: 48px; height: 24px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; padding: 0 6px; box-sizing: border-box; line-height: 22px;">25</span> s &nbsp;duration <span class="mono" style="display: inline-block; width: 48px; height: 24px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; padding: 0 6px; box-sizing: border-box; line-height: 22px;">6</span> s</span><span class="btn" style="background: #238636; border-color: #238636; color: #fff; font-weight: 600;">Add as minor</span><span class="btn">Cancel</span></div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 12px;"><span style="color: #8b949e; font-size: 16px; transform: rotate(90deg); display: inline-block; line-height: 1;">›</span><span class="muted">Table used: Holy Paladin · 5 entries · 1 from your override</span></div>
+        <div class="audit" style="padding-left: 24px;"><span>Divine Protection <span class="faint">major · cd 60 s · 8 s</span></span><span class="chip">Edit cd</span><span class="chip">Remove for this spec</span></div>
+        <div class="audit" style="padding-left: 24px;"><span>Divine Shield <span class="faint">immunity · cd 300 s · 8 s · override</span></span><span class="chip">Edit cd</span><span class="chip">Remove for this spec</span></div>
+        <div class="audit" style="padding-left: 24px;"><span class="faint">… 3 more</span></div>
+      </div>
+
+      <div class="row">
+        <div><span class="mono" style="color: #ffa657; font-weight: 700;">+21</span> <span class="good" style="font-size: 12px; font-weight: 400;">✓+1 31:12</span></div>
+        <div>Den of Nalorakk <span class="muted" style="font-size: 12px;">· 0 deaths · avoidable 280k/min (−21%) · dispels 12</span></div>
+        <div class="mono">298k <span class="muted" style="font-size: 11px;">hps</span></div>
+        <div class="mono" style="color: #ff8000; font-weight: 600;">96.1%</div>
+        <div class="muted">Holy</div>
+        <div class="muted">2d ago</div>
+        <span class="btn">Analyze · ~3 pts</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+      </div>
+
+      <div class="row">
+        <div><span class="mono" style="color: #ffa657; font-weight: 700;">+20</span> <span class="bad" style="font-size: 12px; font-weight: 400;">✗ depleted 34:40</span></div>
+        <div>Kings' Rest <span class="muted" style="font-size: 12px;">· 2 deaths · avoidable 410k/min (+9%) · dispels 6</span></div>
+        <div class="mono">301k <span class="muted" style="font-size: 11px;">hps</span></div>
+        <div class="mono" style="color: #58a6ff; font-weight: 600;">61.0%</div>
+        <div class="muted">Holy</div>
+        <div class="muted">4d ago</div>
+        <span class="btn btn-on">Analyzed ✓ <span style="display: inline-block; font-size: 16px; line-height: 1;">›</span></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+      </div>
+
+      <div class="row">
+        <div><span class="mono" style="color: #ffa657; font-weight: 700;">+20</span> <span class="good" style="font-size: 12px; font-weight: 400;">✓+2 26:03</span></div>
+        <div>Temple of Sethraliss <span class="muted" style="font-size: 12px;">· 0 deaths · dispels 4</span></div>
+        <div class="mono">289k <span class="muted" style="font-size: 11px;">hps</span></div>
+        <div class="mono faint" style="font-weight: 600;">unranked</div>
+        <div class="muted">Holy</div>
+        <div class="warn" style="font-weight: 400;">16d ago · stale</div>
+        <span class="faint" title="No WCL stats for this run">—</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

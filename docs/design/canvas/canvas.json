@@ -1,0 +1,170 @@
+{
+  "pages": [
+    {
+      "id": "direction-a",
+      "name": "Direction A"
+    },
+    {
+      "id": "iteration-2",
+      "name": "Iteration 2 \u2014 key selector & many tabs"
+    },
+    {
+      "id": "explorations",
+      "name": "Explorations"
+    },
+    {
+      "id": "deep-dive",
+      "name": "Deep-dive \u2014 defensive cooldowns"
+    },
+    {
+      "id": "axis-explainers",
+      "name": "Axis explainers \u2014 what each score measures"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Home.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 720,
+      "title": "Home (empty state)",
+      "page": "direction-a"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 900,
+      "w": 1440,
+      "h": 1180,
+      "title": "Detail \u2014 verdict first",
+      "page": "direction-a"
+    },
+    {
+      "file": "Compare.dc.html",
+      "x": 0,
+      "y": 2240,
+      "w": 1440,
+      "h": 980,
+      "title": "Compare (2 of 3)",
+      "page": "direction-a"
+    },
+    {
+      "file": "Setup.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 760,
+      "title": "Setup (first run)",
+      "page": "direction-a"
+    },
+    {
+      "file": "DirectionB.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Detail \u2014 Direction B (Command deck, not retained)",
+      "page": "explorations"
+    },
+    {
+      "file": "LevelSelector.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 420,
+      "title": "Header: 'Your key' stepper + re-evaluate hint on the hero",
+      "page": "iteration-2"
+    },
+    {
+      "file": "DenseTabsWrap.dc.html",
+      "x": 0,
+      "y": 560,
+      "w": 1440,
+      "h": 380,
+      "title": "14 profiles \u2014 Variant A: compact chips, wrap",
+      "page": "iteration-2"
+    },
+    {
+      "file": "DenseTabsScroll.dc.html",
+      "x": 0,
+      "y": 1080,
+      "w": 1440,
+      "h": 380,
+      "title": "14 profiles \u2014 Variant B: one row, scroll + fade",
+      "page": "iteration-2"
+    },
+    {
+      "file": "DeepDive.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1040,
+      "title": "Run deep-dive: Analyze actions, Defensives panel, Survival badge",
+      "page": "deep-dive"
+    },
+    {
+      "file": "AxisExplainers.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1180,
+      "title": "Three ways to surface 'what is measured' per axis",
+      "page": "axis-explainers"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -170,
+      "w": 520,
+      "page": "direction-a",
+      "text": "bmpl web redesign \u2014 verdict-first, Direction A (retained).\nKeeps the current Primer-dark vocabulary: cards, 6-10px radii, system-ui, green/yellow/red verdict badges.\nAll numbers are sample data shaped like a real lookup (Muleyoxo, Holy Priest, +21). Confidence is per axis (dot next to each label), never global."
+    },
+    {
+      "id": "radar-note",
+      "x": 1560,
+      "y": 900,
+      "w": 380,
+      "page": "direction-a",
+      "text": "Radar: 6 axes on one 0-100 scale, rings at 25/50/75/100. A null axis (Consistency under 5 runs with signals) is a hollow point at the center, labelled n/a \u2014 never drawn as 0."
+    },
+    {
+      "id": "b-note",
+      "x": 0,
+      "y": -140,
+      "w": 420,
+      "page": "explorations",
+      "text": "Direction B \u2014 denser monospace 'command deck'. Shown for contrast during the review; Direction A was chosen. Kept here for reference only."
+    },
+    {
+      "id": "iter2-note",
+      "x": 1560,
+      "y": 0,
+      "w": 420,
+      "page": "iteration-2",
+      "text": "Key selector: a global 'Your key' stepper (\u2212 +18 + \u00b7 auto) in the header, remembered between sessions, applied to every new lookup. If the active tab was evaluated for another level, the hero shows a yellow hint 'Your key is +18 \u2014 re-evaluate for +18' that replaces the tab (cached data, ~0 pts). Level chip removed from the search box; spec chip stays.\n\nMany profiles: compact chips (name \u00b7 +level, class colour), \u00d7 on hover, select circle for compare. Pick A (wrap) or B (scroll)."
+    },
+    {
+      "id": "dd-note",
+      "x": 1560,
+      "y": 0,
+      "w": 440,
+      "page": "deep-dive",
+      "text": "Sub-project 4 \u2014 on-demand deep-dive of a run's personal defensives (~3 WCL pts per run, cached forever).\n\nPer run: Analyze \u00b7 ~3 pts \u2192 Analyzed \u2713 (expands the panel). Section header: Analyze all shown (~N pts).\n\nPanel: Usage (casts / possible, %, bar; 'talent?' when casts are seen closer than the table cooldown) \u00b7 Deaths (time, verdict, top killing hits, what was active / available / on cooldown; wipe deaths dimmed and not counted) \u00b7 Audit (self-buffs not in the table with + major / + immunity / + minor / Ignore; the table used with Edit cd / Remove). Every correction is saved to defensives.json and re-applied at 0 pts.\n\nSurvival axis gets an 'N runs analyzed' chip once deep-dive evidence exists."
+    },
+    {
+      "id": "axis-note",
+      "x": 1560,
+      "y": 0,
+      "w": 420,
+      "page": "axis-explainers",
+      "text": "Today the axis descriptions exist but hide behind a native title tooltip and the row expand \u2014 nobody sees them.\n\nA \u00b7 \u24d8 icon + popover: always visible, one hover away, keeps rows compact. Best when the user knows to look for an icon.\nB \u00b7 callout in the expanded row: explanation and evidence read together; the chevron makes the expand affordance obvious. Nothing new to discover, one click.\nC \u00b7 legend under the radar: the whole model at a glance (colours, weights, one line each), collapsible and remembered. Best for first-time readers; can be combined with A or B.\n\nRecommendation: B + C (rows explain themselves when opened; the legend teaches the model once)."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "axis-explainers"
+  }
+}

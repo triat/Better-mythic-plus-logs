@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    .mono { font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+    .axis { display: grid; grid-template-columns: 132px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .score { font-size: 16px; font-weight: 700; text-align: right; }
+    .ev { font-size: 12px; color: #c9d1d9; }
+    .good { color: #56d364; } .bad { color: #f85149; } .muted { color: #8b949e; } .faint { color: #6e7681; }
+    .info { display: inline-flex; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #6e7681; color: #8b949e; font-size: 9px; font-weight: 700; align-items: center; justify-content: center; line-height: 1; }
+    .info.on { border-color: #58a6ff; color: #58a6ff; background: #0d2544; }
+    .variant { display: flex; flex-direction: column; gap: 10px; width: 640px; }
+    .vtitle { font-size: 14px; font-weight: 700; }
+    .vsub { font-size: 12px; color: #8b949e; margin-top: -6px; }
+    .desc { font-size: 12px; color: #c9d1d9; line-height: 1.45; }
+    .kbd { font-size: 11px; color: #8b949e; border: 1px solid #30363d; border-radius: 4px; padding: 0 5px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1180px; background: #0d1117; padding: 24px; box-sizing: border-box; display: grid; grid-template-columns: 640px 640px; gap: 40px 60px; align-content: start;">
+
+  <!-- Variant A: info icon + popover -->
+  <div class="variant">
+    <div class="vtitle">A · Info icon + popover</div>
+    <div class="vsub">Un ⓘ à côté de chaque label, visible en permanence. Survol ou clic : une carte explicative ancrée au label. Le clic sur la ligne garde son rôle actuel (dérouler les preuves).</div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 6px; position: relative;">
+      <div class="axis">
+        <div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps" style="color: #e6edf3;">Survival</span><span class="info on">i</span></div>
+        <div class="mono score">85</div>
+        <div class="ev"><span class="good">+12</span> 0.6 individual deaths/run <span class="faint">·</span> <span class="good">+11</span> avoidable −56% vs peers <span class="faint">· +3 more</span></div>
+      </div>
+      <!-- popover -->
+      <div style="position: absolute; left: 150px; top: 46px; width: 360px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,.5); z-index: 2;">
+        <div style="position: absolute; left: 16px; top: -6px; width: 10px; height: 10px; background: #161b22; border-left: 1px solid #30363d; border-top: 1px solid #30363d; transform: rotate(45deg);"></div>
+        <div class="caps" style="color: #e6edf3; margin-bottom: 4px;">Survival · <span class="muted" style="text-transform: none; letter-spacing: 0; font-weight: 400;">weight 3 for every role</span></div>
+        <div class="desc">Deaths and damage taken over the shown runs: individual deaths per run (scaled by key level), deaths during wipes, avoidable damage and damage taken per second vs the run's peers, teammate deaths (healers only).</div>
+        <div class="desc" style="margin-top: 6px;"><span class="muted">After 2+ deep-dived runs:</span> major defensive usage and deaths with a defensive available.</div>
+      </div>
+      <div class="axis" style="margin-top: 96px;">
+        <div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps">Utility</span><span class="info">i</span></div>
+        <div class="mono score">85</div>
+        <div class="ev"><span class="good">+35</span> 10.0 dispels/run</div>
+      </div>
+      <div class="axis">
+        <div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps">Throughput</span><span class="info">i</span></div>
+        <div class="mono score">60</div>
+        <div class="ev"><span class="good">+7</span> parse 58% at target level <span class="faint">·</span> <span class="good">+4</span> median parse 46%</div>
+      </div>
+      <div class="axis" style="border-style: dashed;">
+        <div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #6e7681;"></span><span class="caps faint">Consistency</span><span class="info">i</span></div>
+        <div class="mono score faint" style="font-size: 13px;">51</div>
+        <div class="ev faint">informational · <span class="good">+11</span> deaths spread ±0.7</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant B: expanded row shows a "what's measured" callout; collapsed rows hint the affordance -->
+  <div class="variant">
+    <div class="vtitle">B · Callout dans la ligne dépliée</div>
+    <div class="vsub">Chaque ligne affiche un chevron (affordance claire). Dépliée, un bloc « What's measured » avec liseré bleu précède la liste des preuves — l'explication et les chiffres sont lus ensemble.</div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 6px;">
+      <div class="axis" style="border-color: #30363d; grid-template-rows: auto auto;">
+        <div style="display: flex; align-items: center; gap: 6px;"><span style="color: #8b949e; font-size: 16px; line-height: 1; transform: rotate(90deg); display: inline-block;">›</span><span class="dot" style="background: #56d364;"></span><span class="caps" style="color: #e6edf3;">Survival</span></div>
+        <div class="mono score">85</div>
+        <div class="ev muted">high confidence · 9 runs</div>
+        <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
+          <div style="border-left: 2px solid #58a6ff; background: #0d1a2b; border-radius: 0 6px 6px 0; padding: 8px 12px;">
+            <div class="caps" style="color: #58a6ff; margin-bottom: 2px;">What's measured · weight 3</div>
+            <div class="desc">Deaths and damage taken over the shown runs: individual deaths per run (scaled by key level), deaths during wipes, avoidable damage and damage taken per second vs the run's peers, teammate deaths (healers only). After 2+ deep-dived runs: major defensive usage and deaths with a defensive available.</div>
+          </div>
+          <div class="ev" style="display: grid; grid-template-columns: 40px 1fr; row-gap: 3px; column-gap: 8px; padding: 0 4px;">
+            <span class="good mono" style="text-align: right;">+12</span><span>0.6 individual deaths/run</span>
+            <span class="good mono" style="text-align: right;">+11</span><span>avoidable −56% vs peers</span>
+            <span class="good mono" style="text-align: right;">+6</span><span>DTPS −18% vs peers</span>
+            <span class="bad mono" style="text-align: right;">−4</span><span>0.3 deaths in wipes/run</span>
+          </div>
+        </div>
+      </div>
+      <div class="axis">
+        <div style="display: flex; align-items: center; gap: 6px;"><span style="color: #6e7681; font-size: 16px; line-height: 1; display: inline-block;">›</span><span class="dot" style="background: #56d364;"></span><span class="caps">Utility</span></div>
+        <div class="mono score">85</div>
+        <div class="ev"><span class="good">+35</span> 10.0 dispels/run</div>
+      </div>
+      <div class="axis">
+        <div style="display: flex; align-items: center; gap: 6px;"><span style="color: #6e7681; font-size: 16px; line-height: 1; display: inline-block;">›</span><span class="dot" style="background: #56d364;"></span><span class="caps">Throughput</span></div>
+        <div class="mono score">60</div>
+        <div class="ev"><span class="good">+7</span> parse 58% at target level <span class="faint">·</span> <span class="good">+4</span> median parse 46%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant C: legend panel under the radar -->
+  <div class="variant" style="grid-column: 1 / -1; width: 1340px;">
+    <div class="vtitle">C · Légende « How the verdict is built » sous la toile</div>
+    <div class="vsub">Un panneau repliable (ouvert par défaut la première fois, mémorisé) sous le radar : les six axes côte à côte, chacun avec sa couleur de point, son poids par rôle et une phrase. Les labels de la toile prennent une bordure pointillée pour signaler le survol. A ou B peuvent s'ajouter par-dessus.</div>
+    <div class="card" style="display: grid; grid-template-columns: 1fr 440px; gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="axis"><div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps">Survival</span></div><div class="mono score">85</div><div class="ev"><span class="good">+12</span> 0.6 individual deaths/run <span class="faint">· +4 more</span></div></div>
+        <div class="axis"><div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps">Utility</span></div><div class="mono score">85</div><div class="ev"><span class="good">+35</span> 10.0 dispels/run</div></div>
+        <div class="axis"><div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps">Throughput</span></div><div class="mono score">60</div><div class="ev"><span class="good">+7</span> parse 58% at target level</div></div>
+        <div class="axis" style="border-style: dashed;"><div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #6e7681;"></span><span class="caps faint">Consistency</span></div><div class="mono score faint">51</div><div class="ev faint">informational</div></div>
+        <div class="axis"><div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #e3b341;"></span><span class="caps">Preparation</span></div><div class="mono score">84</div><div class="ev"><span class="good">+19</span> 5.7 potions/run</div></div>
+        <div class="axis"><div style="display: flex; align-items: center; gap: 6px;"><span class="dot" style="background: #56d364;"></span><span class="caps">Experience</span></div><div class="mono score">91</div><div class="ev"><span class="good">+13</span> 100% dungeons covered</div></div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+        <svg width="380" height="268" viewBox="-70 -5 440 310">
+          <polygon points="150,40 245.3,95 245.3,205 150,260 54.7,205 54.7,95" fill="none" stroke="#30363d"/>
+          <polygon points="150,67.5 221.4,108.75 221.4,191.25 150,232.5 78.6,191.25 78.6,108.75" fill="none" stroke="#21262d"/>
+          <polygon points="150,95 197.6,122.5 197.6,177.5 150,205 102.4,177.5 102.4,122.5" fill="none" stroke="#21262d"/>
+          <polygon points="150,56.5 231,103 207,183 150,244 80,197 62,113" fill="#f778ba" fill-opacity=".14" stroke="#f778ba" stroke-width="2"/>
+          <text x="150" y="28" text-anchor="middle" font-size="10" font-weight="600" letter-spacing=".6" fill="#8b949e" style="text-decoration: underline dotted #6e7681;">SURVIVAL 85</text>
+          <text x="258" y="92" font-size="10" font-weight="600" letter-spacing=".6" fill="#8b949e" style="text-decoration: underline dotted #6e7681;">UTILITY 85</text>
+          <text x="258" y="215" font-size="10" font-weight="600" letter-spacing=".6" fill="#8b949e" style="text-decoration: underline dotted #6e7681;">THROUGHPUT 60</text>
+          <text x="150" y="282" text-anchor="middle" font-size="10" font-weight="600" letter-spacing=".6" fill="#8b949e" style="text-decoration: underline dotted #6e7681;">CONSISTENCY 51</text>
+          <text x="42" y="215" text-anchor="end" font-size="10" font-weight="600" letter-spacing=".6" fill="#8b949e" style="text-decoration: underline dotted #6e7681;">PREPARATION 84</text>
+          <text x="42" y="92" text-anchor="end" font-size="10" font-weight="600" letter-spacing=".6" fill="#8b949e" style="text-decoration: underline dotted #6e7681;">EXPERIENCE 91</text>
+        </svg>
+        <div class="faint" style="font-size: 11px;">rings = 25 / 50 / 75 / 100 · hollow point = not applicable</div>
+      </div>
+      <!-- legend, full width -->
+      <div style="grid-column: 1 / -1; border-top: 1px solid #21262d; padding-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;"><span style="color: #8b949e; font-size: 16px; line-height: 1; transform: rotate(90deg); display: inline-block;">›</span><span style="font-size: 13px; font-weight: 600;">How the verdict is built</span><span class="muted" style="font-size: 12px;">six axes, 0–100, weighted by role · Consistency is informational</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 18px;">
+          <div><div class="caps" style="color: #e6edf3;"><span class="dot" style="background: #56d364; margin-right: 6px;"></span>Survival <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· weight 3</span></div><div class="desc muted">Deaths per run (key-level scaled), deaths in wipes, avoidable damage and DTPS vs peers, teammate deaths for healers; defensive usage and avoidable deaths once 2+ runs are deep-dived.</div></div>
+          <div><div class="caps" style="color: #e6edf3;"><span class="dot" style="background: #56d364; margin-right: 6px;"></span>Utility <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· weight 2 (healer 2.5)</span></div><div class="desc muted">Kick usage vs peers and vs the spec's kick capacity; dispels per run when the kit can dispel.</div></div>
+          <div><div class="caps" style="color: #e6edf3;"><span class="dot" style="background: #56d364; margin-right: 6px;"></span>Throughput <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· weight 3 dps, 2 healer/tank</span></div><div class="desc muted">Median WCL parse over the shown runs and the parse on runs at the target level (unranked logs ignored).</div></div>
+          <div><div class="caps" style="color: #e6edf3;"><span class="dot" style="background: #6e7681; margin-right: 6px;"></span>Consistency <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· weight 0</span></div><div class="desc muted">Run-to-run spread of parses, deaths and damage vs peers (needs 5 runs). Shown, never counted.</div></div>
+          <div><div class="caps" style="color: #e6edf3;"><span class="dot" style="background: #e3b341; margin-right: 6px;"></span>Preparation <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· weight 1</span></div><div class="desc muted">Potions and healthstones per run, item level vs what the target key expects.</div></div>
+          <div><div class="caps" style="color: #e6edf3;"><span class="dot" style="background: #56d364; margin-right: 6px;"></span>Experience <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· weight 2 (tank 2.5)</span></div><div class="desc muted">Dungeons covered, share at/above target, median key vs target, runs in the last 7 days, previous-season bonus.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

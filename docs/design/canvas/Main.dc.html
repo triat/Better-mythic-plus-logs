@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    a { color: #58a6ff; text-decoration: none; } a:hover { color: #79b8ff; }
+    .mono { font-family: ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1180px; background: #0d1117; display: flex; flex-direction: column;">
+
+  <!-- Header: brand · search · watch · quit -->
+  <div style="display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; background: #0d1117;">
+    <div style="font-weight: 700; font-size: 15px; letter-spacing: .02em; color: #e6edf3;">bmpl</div>
+    <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 640px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <div style="flex: 1; color: #6e7681; font-size: 14px;">Name-Realm or Raider.IO URL</div>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <div style="font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px;">level auto</div>
+        <div style="font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px;">spec any</div>
+      </div>
+    </div>
+    <div style="background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px;">Look up</div>
+    <div style="flex: 1;"></div>
+    <div style="display: flex; align-items: center; gap: 8px; color: #8b949e; font-size: 13px;">
+      <div style="width: 30px; height: 18px; border-radius: 999px; background: #238636; position: relative;"><div style="position: absolute; top: 2px; left: 14px; width: 14px; height: 14px; border-radius: 50%; background: #ffffff;"></div></div>
+      <span>Clipboard watch <span style="color: #56d364;">on</span></span>
+    </div>
+    <div style="border: 1px solid #30363d; color: #8b949e; font-size: 13px; padding: 0 12px; height: 32px; display: flex; align-items: center; border-radius: 6px;">Quit</div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display: flex; align-items: center; gap: 6px; padding: 10px 24px; border-bottom: 1px solid #21262d; background: #0d1117;">
+    <div style="display: flex; align-items: center; gap: 10px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 6px 10px 6px 8px;">
+      <div style="width: 14px; height: 14px; border-radius: 50%; background: #58a6ff; display: flex; align-items: center; justify-content: center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2;"><span style="font-size: 13px; font-weight: 600; color: #ffffff;">Muleyoxo · Priest</span><span style="font-size: 11px; color: #8b949e;">+21 · Holy · Silvermoon</span></div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6e7681" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; background: transparent; border: 1px solid #21262d; border-radius: 8px; padding: 6px 10px 6px 8px;">
+      <div style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d;"></div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2;"><span style="font-size: 13px; font-weight: 600; color: #ff7c0a;">Biwaadrood · Druid</span><span style="font-size: 11px; color: #8b949e;">+18 · Guardian · Nerzhul</span></div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6e7681" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; background: transparent; border: 1px solid #21262d; border-radius: 8px; padding: 6px 10px 6px 8px;">
+      <div style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d;"></div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2;"><span style="font-size: 13px; font-weight: 600; color: #a330c9;">Zerøcool · Demon Hunter</span><span style="font-size: 11px; color: #8b949e;">+20 · Havoc · Hyjal</span></div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6e7681" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="border: 1px solid #30363d; color: #8b949e; font-size: 13px; padding: 0 12px; height: 32px; display: flex; align-items: center; border-radius: 6px;">Compare selected (1/3)</div>
+  </div>
+
+  <!-- Body -->
+  <div style="display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px;">
+
+    <!-- Verdict hero -->
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px;">
+
+      <!-- Left: identity + verdict + axes -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: baseline; gap: 10px;">
+          <div style="font-size: 22px; font-weight: 700; color: #ffffff;">Muleyoxo</div>
+          <div style="font-size: 14px; color: #ffffff;">Holy Priest</div>
+          <div style="font-size: 12px; color: #8b949e;">Silvermoon · EU</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="display: inline-flex; align-items: baseline; gap: 10px; background: #0a2e1a; border: 1px solid #1f6f3a; border-radius: 8px; padding: 8px 14px;">
+            <span style="font-size: 20px; font-weight: 800; letter-spacing: .04em; color: #56d364;">INVITE</span>
+            <span style="font-size: 26px; font-weight: 800; color: #56d364;" class="mono">78</span>
+            <span style="font-size: 12px; color: #8b949e;">for a +21 · 9 runs scored · confidence per axis</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 18px; font-size: 13px; color: #8b949e;">
+          <span><span style="color: #e6edf3; font-weight: 600;">3942</span> HPS score</span>
+          <span><span style="color: #e6edf3; font-weight: 600;">322</span> ilvl</span>
+          <span>region <span style="color: #e6edf3; font-weight: 600;">#412</span></span>
+          <span>server <span style="color: #e6edf3; font-weight: 600;">#7</span></span>
+          <span>prev season <span style="color: #e6edf3; font-weight: 600;">4153</span> <span style="color: #6e7681;">dps</span></span>
+        </div>
+
+        <!-- Axis list with evidence -->
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+          <div style="display: grid; grid-template-columns: 120px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #56d364;"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Survival</span></div>
+            <div class="mono" style="font-size: 16px; font-weight: 700; color: #e6edf3; text-align: right;">82</div>
+            <div style="font-size: 12px; color: #c9d1d9;"><span style="color: #56d364;">+18</span> 0.2 individual deaths/run <span style="color: #6e7681;">·</span> <span style="color: #f85149;">−6</span> avoidable +12% vs peers</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 120px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #e3b341;"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Utility</span></div>
+            <div class="mono" style="font-size: 16px; font-weight: 700; color: #e6edf3; text-align: right;">61</div>
+            <div style="font-size: 12px; color: #c9d1d9;"><span style="color: #56d364;">+11</span> 9.0 dispels/run <span style="color: #6e7681;">·</span> <span style="color: #6e7681;">no kick on spec</span></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 120px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #56d364;"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Throughput</span></div>
+            <div class="mono" style="font-size: 16px; font-weight: 700; color: #e6edf3; text-align: right;">88</div>
+            <div style="font-size: 12px; color: #c9d1d9;"><span style="color: #56d364;">+27</span> median parse 86% <span style="color: #6e7681;">·</span> <span style="color: #56d364;">+11</span> parse 79% at target level</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 120px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px dashed #21262d; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #6e7681;"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681;">Consistency</span></div>
+            <div class="mono" style="font-size: 13px; font-weight: 600; color: #6e7681; text-align: right;">n/a</div>
+            <div style="font-size: 12px; color: #6e7681;">needs ≥ 5 runs with WCL signals (4 so far)</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 120px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #e3b341;"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Preparation</span></div>
+            <div class="mono" style="font-size: 16px; font-weight: 700; color: #e6edf3; text-align: right;">55</div>
+            <div style="font-size: 12px; color: #c9d1d9;"><span style="color: #56d364;">+14</span> 5.0 potions/run <span style="color: #6e7681;">·</span> <span style="color: #f85149;">−9</span> ilvl −4 vs expected</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 120px 44px 1fr; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #56d364;"></span><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Experience</span></div>
+            <div class="mono" style="font-size: 16px; font-weight: 700; color: #e6edf3; text-align: right;">74</div>
+            <div style="font-size: 12px; color: #c9d1d9;"><span style="color: #56d364;">+14</span> 100% dungeons covered <span style="color: #6e7681;">·</span> <span style="color: #56d364;">+10</span> previous season 4153</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: radar -->
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="420" height="360" viewBox="0 0 300 300">
+          <polygon points="150,40 245.3,95 245.3,205 150,260 54.7,205 54.7,95" fill="none" stroke="#30363d" stroke-width="1"></polygon>
+          <polygon points="150,67.5 221.4,108.8 221.4,191.3 150,232.5 78.6,191.3 78.6,108.8" fill="none" stroke="#21262d" stroke-width="1"></polygon>
+          <polygon points="150,95 197.6,122.5 197.6,177.5 150,205 102.4,177.5 102.4,122.5" fill="none" stroke="#21262d" stroke-width="1"></polygon>
+          <polygon points="150,122.5 173.8,136.3 173.8,163.8 150,177.5 126.2,163.8 126.2,136.3" fill="none" stroke="#21262d" stroke-width="1"></polygon>
+          <path d="M150 150 L150 40 M150 150 L245.3 95 M150 150 L245.3 205 M150 150 L150 260 M150 150 L54.7 205 M150 150 L54.7 95" stroke="#21262d" stroke-width="1"></path>
+          <polygon points="150,59.8 208.1,116.4 233.8,198.4 150,150 97.6,180.3 79.5,109.3" fill="#56d364" fill-opacity="0.18" stroke="#56d364" stroke-width="2" stroke-linejoin="round"></polygon>
+          <circle cx="150" cy="59.8" r="3.5" fill="#56d364"></circle>
+          <circle cx="208.1" cy="116.4" r="3.5" fill="#56d364"></circle>
+          <circle cx="233.8" cy="198.4" r="3.5" fill="#56d364"></circle>
+          <circle cx="150" cy="150" r="3.5" fill="#0d1117" stroke="#6e7681" stroke-width="1.5" stroke-dasharray="2 2"></circle>
+          <circle cx="97.6" cy="180.3" r="3.5" fill="#56d364"></circle>
+          <circle cx="79.5" cy="109.3" r="3.5" fill="#56d364"></circle>
+          <text x="150" y="28" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.6" fill="#8b949e">SURVIVAL 82</text>
+          <text x="256" y="92" text-anchor="start" font-size="10" font-weight="600" letter-spacing="0.6" fill="#8b949e">UTILITY 61</text>
+          <text x="256" y="214" text-anchor="start" font-size="10" font-weight="600" letter-spacing="0.6" fill="#8b949e">THROUGHPUT 88</text>
+          <text x="150" y="278" text-anchor="middle" font-size="10" font-weight="600" letter-spacing="0.6" fill="#6e7681">CONSISTENCY n/a</text>
+          <text x="44" y="214" text-anchor="end" font-size="10" font-weight="600" letter-spacing="0.6" fill="#8b949e">PREPARATION 55</text>
+          <text x="44" y="92" text-anchor="end" font-size="10" font-weight="600" letter-spacing="0.6" fill="#8b949e">EXPERIENCE 74</text>
+        </svg>
+        <div style="font-size: 11px; color: #6e7681;">rings = 25 / 50 / 75 / 100 · hollow point = not applicable</div>
+      </div>
+    </div>
+
+    <!-- Signals strip -->
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Timed (shown)</span><span class="mono" style="font-size: 15px; font-weight: 600; color: #56d364;">9/9</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Avg deaths</span><span class="mono" style="font-size: 15px; font-weight: 600; color: #e3b341;">0.7 <span style="font-size: 11px; font-weight: 400; color: #8b949e;">1 in wipes</span></span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Δ DTPS vs peers</span><span class="mono" style="font-size: 15px; font-weight: 600; color: #56d364;">−12%</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Avoidable vs peers</span><span class="mono" style="font-size: 15px; font-weight: 600; color: #e6edf3;">+12%</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Kicks vs peers</span><span class="mono" style="font-size: 15px; font-weight: 400; color: #6e7681;">—</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">RIO recent timed</span><span class="mono" style="font-size: 15px; font-weight: 600; color: #56d364;">9/10</span></div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; min-width: 120px;"><span style="font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e;">Median parse</span><span class="mono" style="font-size: 15px; font-weight: 600; color: #a35fe0;">86.4%</span></div>
+    </div>
+
+    <!-- Runs (collapsible) -->
+    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 20px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+        <span style="font-size: 14px; font-weight: 600; color: #e6edf3;">Best run per dungeon</span>
+        <span style="font-size: 12px; color: #8b949e;">8/8 dungeons · median +20, 86.4% · 8/8 at or above +20</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: grid; grid-template-columns: 150px 1fr 80px 70px 100px 70px 24px; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; font-size: 13px;">
+          <div><span class="mono" style="color: #ffa657; font-weight: 700;">+21</span> <span style="color: #56d364; font-size: 12px;">✓+1 29:56</span></div>
+          <div style="color: #e6edf3;">Voidscar Arena <span style="font-size: 12px; color: #8b949e;">· 1 death (in wipe) · avoidable 362k/min (−7%) · dispels 9</span></div>
+          <div class="mono" style="color: #e6edf3;">312k <span style="color: #8b949e; font-size: 11px;">hps</span></div>
+          <div class="mono" style="color: #a35fe0; font-weight: 600;">79.4%</div>
+          <div style="color: #8b949e;">Holy</div>
+          <div style="color: #8b949e;">2d ago</div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+        </div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 80px 70px 100px 70px 24px; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; font-size: 13px;">
+          <div><span class="mono" style="color: #ffa657; font-weight: 700;">+21</span> <span style="color: #56d364; font-size: 12px;">✓+1 31:12</span></div>
+          <div style="color: #e6edf3;">Den of Nalorakk <span style="font-size: 12px; color: #8b949e;">· 0 deaths · avoidable 280k/min (−21%) · dispels 12</span></div>
+          <div class="mono" style="color: #e6edf3;">298k <span style="color: #8b949e; font-size: 11px;">hps</span></div>
+          <div class="mono" style="color: #ff8000; font-weight: 600;">96.1%</div>
+          <div style="color: #8b949e;">Holy</div>
+          <div style="color: #8b949e;">2d ago</div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+        </div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 80px 70px 100px 70px 24px; gap: 12px; align-items: center; padding: 8px 10px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; font-size: 13px;">
+          <div><span class="mono" style="color: #ffa657; font-weight: 700;">+20</span> <span style="color: #f85149; font-size: 12px;">✗ depleted 34:40</span></div>
+          <div style="color: #e6edf3;">Kings' Rest <span style="font-size: 12px; color: #8b949e;">· 2 deaths · avoidable 410k/min (+9%) · dispels 6</span></div>
+          <div class="mono" style="color: #e6edf3;">301k <span style="color: #8b949e; font-size: 11px;">hps</span></div>
+          <div class="mono" style="color: #58a6ff; font-weight: 600;">61.0%</div>
+          <div style="color: #8b949e;">Holy</div>
+          <div style="color: #8b949e;">4d ago</div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg>
+        </div>
+        <div style="font-size: 12px; color: #6e7681; padding: 4px 10px;">… 5 more runs</div>
+      </div>
+    </div>
+
+    <!-- RIO (collapsed) -->
+    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; gap: 10px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+      <span style="font-size: 14px; font-weight: 600; color: #e6edf3;">Recent runs (Raider.IO)</span>
+      <span style="font-size: 12px; color: #8b949e;">10 runs · 9 timed · last 2d ago</span>
+      <div style="flex: 1;"></div>
+      <a href="#" style="font-size: 12px;">profile ↗</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

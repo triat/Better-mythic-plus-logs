@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
+    .btn { border: 1px solid #30363d; color: #8b949e; font-size: 13px; padding: 0 12px; height: 32px; display: inline-flex; align-items: center; border-radius: 6px; white-space: nowrap; }
+    .primary { background: #238636; color: #fff; font-weight: 600; border-color: #238636; }
+    .chip { font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; flex: none; }
+    .dot.on { background: #58a6ff; border-color: #58a6ff; }
+    .x { color: #6e7681; font-size: 14px; line-height: 1; }
+    .lvl { font-size: 11px; color: #8b949e; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 44px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #8b949e; }
+    .stepper .auto.on { color: #56d364; background: #0a2e1a; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 380px; background: #0d1117; display: flex; flex-direction: column;">
+  <!-- Header -->
+  <div style="display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d;">
+    <div style="font-weight: 700; font-size: 15px; letter-spacing: .02em;">bmpl</div>
+    <div style="display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <div style="flex: 1; color: #6e7681; font-size: 14px;">Name-Realm or Raider.IO URL</div>
+      <span class="chip">spec any</span>
+    </div>
+    <div class="stepper" title="The key you are filling — every lookup is evaluated for this level">
+      <span class="lab">Your key</span>
+      <span class="b" style="color: #3f4854;">−</span><span class="v mono" style="color: #6e7681;">auto</span><span class="b" style="color: #3f4854;">+</span>
+      <span class="auto on">auto</span>
+    </div>
+    <div class="btn primary" style="height: 40px; padding: 0 16px; font-size: 14px;">Look up</div>
+    <div style="flex: 1;"></div>
+    <div style="display: flex; align-items: center; gap: 8px; color: #8b949e; font-size: 13px;">
+      <div style="width: 30px; height: 18px; border-radius: 999px; background: #30363d; position: relative;"><div style="position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;"></div></div>
+      <span>Clipboard watch <b style="color: #8b949e;">off</b></span>
+    </div>
+    <div class="btn">Re-configure</div>
+    <div class="btn">Quit</div>
+  </div>
+  <!-- Tabs: single row, horizontal scroll with fade edges, toolbar fixed right -->
+  <div style="display: flex; align-items: center; gap: 12px; padding: 10px 24px; border-bottom: 1px solid #21262d;">
+    <div style="position: relative; flex: 1; overflow: hidden;">
+      <div style="display: flex; gap: 6px; white-space: nowrap;"><div class="tab"><div class="dot on" style="display:flex;align-items:center;justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div><span style="font-weight: 600; color: #ffffff;">Muleyoxo</span><span class="lvl mono">+21</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #0070dd;">Biwaasham</span><span class="lvl mono">+18</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #a330c9;">Zerøcool</span><span class="lvl mono">+20</span><span class="x">×</span></div><div class="tab active"><div class="dot on" style="display:flex;align-items:center;justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg></div><span style="font-weight: 600; color: #0070dd;">Stoveteacher</span><span class="lvl mono">+20</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #fff468;">Casualaddict</span><span class="lvl mono">+21</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #ff7c0a;">Thornbark</span><span class="lvl mono">+18</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #f48cba;">Lumielle</span><span class="lvl mono">+19</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #c41e3a;">Grimtusk</span><span class="lvl mono">+18</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #8788ee;">Nyxara</span><span class="lvl mono">+18</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #3fc7eb;">Kaelith</span><span class="lvl mono">+17</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #aad372;">Ravenoak</span><span class="lvl mono">+18</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #ffffff;">Sœurnoire</span><span class="lvl mono">+20</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #c69b6d;">Brannok</span><span class="lvl mono">+18</span><span class="x">×</span></div><div class="tab"><div class="dot" style="display:flex;align-items:center;justify-content:center;"></div><span style="font-weight: 600; color: #33937f;">Elowen</span><span class="lvl mono">+19</span><span class="x">×</span></div></div>
+      <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 64px; background: linear-gradient(to right, rgba(13,17,23,0), #0d1117);"></div>
+    </div>
+    <span style="font-size: 12px; color: #8b949e; white-space: nowrap;">14 · 2 selected</span>
+    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 12px; color: #8b949e;">fetched just now · cached</span><div class="btn">↻ Refresh</div><div class="btn primary" style="font-size: 13px;">Compare (2/3)</div><div class="btn">Clear 14</div></div>
+  </div>
+  <div style="padding: 20px 24px; font-size: 12px; color: #6e7681;">Variant B — one row, scroll with the mouse wheel or drag; the active tab scrolls into view; right edge fades to hint at more. Toolbar always visible at the right.</div>
+</div>
+</x-dc>
+</body>
+</html>

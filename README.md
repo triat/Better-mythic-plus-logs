@@ -463,6 +463,10 @@ scripts/
   import-postmortem-avoidable.ts   regenerate signals/avoidable/*.json from postmortem
 test/
   *.test.ts, signals/*.test.ts, fixtures/   bun:test suite + fixture data
+docs/
+  agents/         developer / AI-agent guide (architecture, front, testing, workflow) — entry point: AGENTS.md at the root
+  superpowers/    design specs and implementation plans, one per sub-project
+  design/canvas/  source artboards of the Claude Design canvas used for UI mockups
 web/
   src/
     lib/          pure, tested view models (format, verdict, radar, history,

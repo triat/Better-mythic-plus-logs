@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    a { color: #58a6ff; text-decoration: none; } a:hover { color: #79b8ff; }
+    code { background: #0d1117; padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 13px; border: 1px solid #21262d; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 760px; background: #0d1117; display: flex; align-items: flex-start; justify-content: center; padding-top: 72px;">
+  <div style="width: 620px; display: flex; flex-direction: column; gap: 16px;">
+    <div style="font-size: 22px; font-weight: 700; color: #ffffff;">bmpl · setup</div>
+    <div style="font-size: 14px; color: #8b949e;">Paste your Warcraft Logs API credentials. They are saved locally to <code>.env</code> and only used to talk to the WCL API.</div>
+    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;">
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #c9d1d9;">
+        <div style="display: flex; gap: 10px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #21262d; color: #8b949e; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">1</span><span>Log in at <a href="#">warcraftlogs.com</a></span></div>
+        <div style="display: flex; gap: 10px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #21262d; color: #8b949e; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">2</span><span>Open <a href="#">Clients</a> → <strong>Create Client</strong></span></div>
+        <div style="display: flex; gap: 10px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #21262d; color: #8b949e; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">3</span><span>Any name. Redirect URL <code>http://localhost</code>. Leave <em>Public Client</em> unchecked.</span></div>
+        <div style="display: flex; gap: 10px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #21262d; color: #8b949e; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">4</span><span>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> below</span></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 12px; color: #8b949e;">Client ID</span>
+        <div style="height: 40px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 0 12px; display: flex; align-items: center; color: #e6edf3; font-size: 14px;">8f2c…</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 12px; color: #8b949e;">Client Secret</span>
+        <div style="height: 40px; background: #0d1117; border: 1px solid #58a6ff; border-radius: 6px; padding: 0 12px; display: flex; align-items: center; color: #e6edf3; font-size: 14px; letter-spacing: .2em;">••••••••••••••••</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 18px; height: 40px; display: flex; align-items: center; border-radius: 6px;">Save and continue</div>
+        <span style="font-size: 12px; color: #8b949e;">We will check the credentials against the API before saving.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

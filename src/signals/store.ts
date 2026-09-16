@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { resolveDbPath } from "../setup.ts";
 import type { RawRunReport } from "./types.ts";
+import type { RawDeepDive } from "../deepdive/types.ts";
 
 // Bump when REPORT_RUN_SUMMARY_QUERY gains/loses fields, or when the
 // avoidable-damage spell list changes materially: older raw rows are then
@@ -8,11 +9,16 @@ import type { RawRunReport } from "./types.ts";
 // migrated) and re-fetched. Rows cached under an older QUERY_VERSION keep the
 // `avoidable` spell-list snapshot they were fetched with until re-fetched.
 export const QUERY_VERSION = 2;
+// Bump when REPORT_DEEPDIVE_QUERY changes shape (not when the defensives
+// table changes: analysis is recomputed from raw rows).
+export const DEEPDIVE_QUERY_VERSION = 1;
 export const RIO_TTL_MS = 60 * 60 * 1000;
 
 export interface Store {
   getWclRun(code: string, fightID: number): RawRunReport | null;
   putWclRun(code: string, fightID: number, report: RawRunReport): void;
+  getDeepDive(code: string, fightID: number, character: string): RawDeepDive | null;
+  putDeepDive(code: string, fightID: number, character: string, raw: RawDeepDive): void;
   getRio(
     region: string,
     realmSlug: string,
@@ -33,6 +39,15 @@ CREATE TABLE IF NOT EXISTS wcl_run_raw (
   fetched_at    INTEGER NOT NULL,
   json          TEXT    NOT NULL,
   PRIMARY KEY (report_code, fight_id)
+);
+CREATE TABLE IF NOT EXISTS wcl_deepdive (
+  report_code   TEXT    NOT NULL,
+  fight_id      INTEGER NOT NULL,
+  character     TEXT    NOT NULL,
+  query_version INTEGER NOT NULL,
+  fetched_at    INTEGER NOT NULL,
+  json          TEXT    NOT NULL,
+  PRIMARY KEY (report_code, fight_id, character)
 );
 CREATE TABLE IF NOT EXISTS rio_profile (
   region     TEXT    NOT NULL,
@@ -61,6 +76,12 @@ export function openStore(path: string): Store {
   const putRun = db.query(
     "INSERT OR REPLACE INTO wcl_run_raw (report_code, fight_id, query_version, fetched_at, json) VALUES (?, ?, ?, ?, ?)",
   );
+  const getDd = db.query<{ json: string }, [string, number, string, number]>(
+    "SELECT json FROM wcl_deepdive WHERE report_code = ? AND fight_id = ? AND character = ? AND query_version = ?",
+  );
+  const putDd = db.query(
+    "INSERT OR REPLACE INTO wcl_deepdive (report_code, fight_id, character, query_version, fetched_at, json) VALUES (?, ?, ?, ?, ?, ?)",
+  );
   const getRioQ = db.query<{ json: string; fetched_at: number }, [string, string, string]>(
     "SELECT json, fetched_at FROM rio_profile WHERE region = ? AND realm = ? AND name = ?",
   );
@@ -76,6 +97,13 @@ export function openStore(path: string): Store {
     },
     putWclRun(code, fightID, report) {
       putRun.run(code, fightID, QUERY_VERSION, Date.now(), JSON.stringify(report));
+    },
+    getDeepDive(code, fightID, character) {
+      const row = getDd.get(code, fightID, character, DEEPDIVE_QUERY_VERSION);
+      return row ? (JSON.parse(row.json) as RawDeepDive) : null;
+    },
+    putDeepDive(code, fightID, character, raw) {
+      putDd.run(code, fightID, character, DEEPDIVE_QUERY_VERSION, Date.now(), JSON.stringify(raw));
     },
     getRio(region, realmSlug, name, opts = {}) {
       const row = getRioQ.get(...rioKey(region, realmSlug, name));

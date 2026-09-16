@@ -97,13 +97,30 @@ export interface RawFight {
   endTime?: number;
 }
 
+export interface RawDeathEvent {
+  timestamp?: number;
+  type?: string;
+  ability?: { name?: string; guid?: number };
+  amount?: number;
+  mitigated?: number;
+  unmitigatedAmount?: number;
+  absorbed?: number;
+  overkill?: number;
+  sourceID?: number;
+}
+
 export interface RawTableEntry {
   name: string;
+  guid?: number;      // Casts / Buffs-like tables: the spell id
   total?: number;
   timestamp?: number;
   overkill?: number;
+  // Deaths table only.
+  deathWindow?: number;
+  killingBlow?: { name?: string; guid?: number } | null;
+  events?: RawDeathEvent[];
   damage?: {
-    abilities?: Array<{ name: string; total?: number }>;
+    abilities?: Array<{ name: string; guid?: number; total?: number; totalReduced?: number }>;
     sources?: Array<{ name: string; total?: number }>;
   };
   // Interrupts/Dispels tables: one entry per spell, with per-player details.
@@ -117,6 +134,7 @@ export interface RawTable {
     entries?: RawTableEntry[];
     composition?: Array<{
       name: string;
+      id?: number;
       type?: string; // class name, e.g. "Druid"
       specs?: Array<{ spec?: string; role?: string }>;
     }>;

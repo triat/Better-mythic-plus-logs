@@ -91,3 +91,17 @@ describe("security headers", () => {
     for (const k of Object.keys(SECURITY_HEADERS)) expect(res.headers.get(k)).toBeNull();
   });
 });
+
+describe("/api/health", () => {
+  test("answers in both modes with version, uptime and db", async () => {
+    for (const u of [h("/api/health"), l("/api/health")]) {
+      const res = await fetch(u);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.ok).toBe(true);
+      expect(body.version).toMatch(/^\d+\.\d+\.\d+/);
+      expect(typeof body.uptimeS).toBe("number");
+      expect(body.db).toBe("ok");
+    }
+  });
+});

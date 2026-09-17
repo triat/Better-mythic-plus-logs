@@ -25,7 +25,7 @@ beforeAll(async () => {
     appCss: join(dir, "assets", "app.css"),
     whConfigJs: join(dir, "wh-config.js"),
   });
-  hosted = await runServer({ port: 0, open: true, hosted: true, assets });
+  hosted = await runServer({ port: 0, open: false, hosted: true, assets });
   local = await runServer({ port: 0, open: false, hosted: false, assets });
 });
 afterAll(() => {
@@ -53,6 +53,12 @@ describe("hosted mode routes", () => {
     const bad = await fetch(h("/api/lookup"), { method: "POST", body: "not json" });
     expect(bad.status).toBe(400);
   });
+  test("hosted /api/defensives never leaks the server's override path", async () => {
+    const res = await fetch(h("/api/defensives?class=Shaman&spec=Elemental"));
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.overridePath).toBeNull();
+  });
   test("/api/status has no envPath in hosted mode, and has one locally", async () => {
     const hs = await (await fetch(h("/api/status"))).json();
     expect(hs.ok).toBe(true);
@@ -68,6 +74,21 @@ describe("hosted mode routes", () => {
   });
 });
 
+describe("malformed history keys never escape as an unhandled throw", () => {
+  test("GET /api/history/% answers 400 with the security headers, not a 500 debug page", async () => {
+    const res = await fetch(h("/api/history/%"));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "Invalid history key" });
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) expect(res.headers.get(k)).toBe(v);
+  });
+  test("DELETE /api/history/%E0%A4%A answers 400 the same way", async () => {
+    const res = await fetch(h("/api/history/%E0%A4%A"), { method: "DELETE" });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "Invalid history key" });
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) expect(res.headers.get(k)).toBe(v);
+  });
+});
+
 describe("security headers", () => {
   test("every hosted response carries them (static, api, 404, SSE)", async () => {
     const responses = [
@@ -79,6 +100,10 @@ describe("security headers", () => {
     for (const res of responses) {
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) expect(res.headers.get(k)).toBe(v);
     }
+    const [pageRes, , notFoundRes] = responses;
+    expect(pageRes!.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    expect(notFoundRes!.headers.get("content-type")).toMatch(/^text\/plain/);
+    expect(await notFoundRes!.text()).toBe("Not found");
     const ctrl = new AbortController();
     const sse = await fetch(h("/api/events"), { signal: ctrl.signal });
     expect(sse.headers.get("content-type")).toBe("text/event-stream");
@@ -91,6 +116,7 @@ describe("security headers", () => {
     expect(csp).toContain("script-src 'self' https://wow.zamimg.com");
     expect(csp).toContain("connect-src 'self' https://nether.wowhead.com");
     expect(csp).toContain("style-src 'self' 'unsafe-inline' https://wow.zamimg.com");
+    expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp.match(/script-src[^;]*/)?.[0]).not.toContain("unsafe-inline");
   });

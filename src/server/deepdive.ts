@@ -29,23 +29,28 @@ export async function handleDeepdive(req: Request): Promise<Response> {
   return jsonResponse({ ok: true, result: r.result, fromCache: r.fromCache, pointsSpent: r.pointsSpent });
 }
 
-export async function handleDefensivesGet(url: URL): Promise<Response> {
+export async function handleDefensivesGet(url: URL, hosted = false): Promise<Response> {
   const className = (url.searchParams.get("class") ?? "").trim();
   const spec = (url.searchParams.get("spec") ?? "").trim();
   if (!className || !spec) return jsonResponse({ ok: false, error: "`class` and `spec` are required" }, 400);
   const tables = await getDefensives();
   const d = specDefensives(tables.shipped, tables.override, className, spec);
-  return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: tables.overridePath, warning: tables.warning ?? null });
+  return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: hosted ? null : tables.overridePath, warning: tables.warning ?? null });
 }
 
 interface DefensivesPatchBody { className?: string; spec?: string; patch?: OverrideEntry }
 
-export async function handleDefensivesPost(req: Request): Promise<Response> {
+export async function handleDefensivesPost(req: Request, hosted = false): Promise<Response> {
   const body = await readJson<DefensivesPatchBody>(req);
   if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
   if (!body.className || !body.spec || !body.patch) return jsonResponse({ ok: false, error: "`className`, `spec` and `patch` are required" }, 400);
   const tables = await getDefensives();
-  if (tables.warning) return jsonResponse({ ok: false, error: `${tables.overridePath} is invalid — fix it by hand first: ${tables.warning}` }, 409);
+  if (tables.warning) {
+    const message = hosted
+      ? "the server's defensives override is invalid — an admin must fix it"
+      : `${tables.overridePath} is invalid — fix it by hand first: ${tables.warning}`;
+    return jsonResponse({ ok: false, error: message }, 409);
+  }
   try {
     const key = specKey(body.className, body.spec);
     const effective = specDefensives(tables.shipped, tables.override, body.className, body.spec);
@@ -55,7 +60,7 @@ export async function handleDefensivesPost(req: Request): Promise<Response> {
     await refreshHistoryDeepdive();
     const fresh = await getDefensives();
     const d = specDefensives(fresh.shipped, fresh.override, body.className, body.spec);
-    return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: fresh.overridePath });
+    return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: hosted ? null : fresh.overridePath });
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 400);
   }

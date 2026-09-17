@@ -5,6 +5,7 @@ import { dispatch } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
+import { jsonResponse } from "./server/http.ts";
 import { withSecurityHeaders } from "./server/security.ts";
 import { closeStore } from "./signals/store.ts";
 import { resolveEnvPath } from "./setup.ts";
@@ -55,19 +56,36 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const routes: Route[] = [...sharedRoutes({ hosted, envPath: envPathHint }), ...(hosted ? [] : localRoutes())];
 
   const respond = async (req: Request, url: URL): Promise<Response> => {
-    if (req.method === "GET") {
-      const staticRes = await serveStatic(url.pathname);
-      if (staticRes) return staticRes;
+    try {
+      if (req.method === "GET") {
+        const staticRes = await serveStatic(url.pathname);
+        if (staticRes) return staticRes;
+      }
+      return (
+        (await dispatch(routes, req, url)) ??
+        new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } })
+      );
+    } catch (e) {
+      console.error(e);
+      return jsonResponse({ ok: false, error: "Internal error" }, 500);
     }
-    return (await dispatch(routes, req, url)) ?? new Response("Not found", { status: 404 });
   };
 
   const server = Bun.serve({
     port: opts.port,
     idleTimeout: 0, // long-lived SSE streams and slow enrichment lookups
+    development: !hosted,
     async fetch(req) {
       const url = new URL(req.url);
       const res = await respond(req, url);
+      return hosted ? withSecurityHeaders(res) : res;
+    },
+    // Belt-and-suspenders: `respond` already catches everything reachable through `dispatch` and
+    // `serveStatic`, but nothing outside it (e.g. a throw from Bun's own request parsing) should
+    // ever reach Bun's default HTML debug page, especially in hosted mode.
+    error(e) {
+      console.error(e);
+      const res = jsonResponse({ ok: false, error: "Internal error" }, 500);
       return hosted ? withSecurityHeaders(res) : res;
     },
   });

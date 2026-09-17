@@ -4,7 +4,7 @@ import { parseNameRealm, parseRaiderIOUrl } from "../util.ts";
 export const jsonResponse = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 
 /** Parses a JSON body; null when the body is not valid JSON (callers answer 400). */

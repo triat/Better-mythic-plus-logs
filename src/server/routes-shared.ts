@@ -13,7 +13,14 @@ import { watcherStatus } from "./watcher.ts";
 
 export interface SharedContext { hosted: boolean; envPath: string }
 
-const historyKey = (url: URL) => decodeURIComponent(url.pathname.slice("/api/history/".length));
+/** null when the trailing segment is not valid percent-encoding (decodeURIComponent throws). */
+export const historyKey = (url: URL): string | null => {
+  try {
+    return decodeURIComponent(url.pathname.slice("/api/history/".length));
+  } catch {
+    return null;
+  }
+};
 
 async function handleHealth(): Promise<Response> {
   const base = { version: pkg.version as string, uptimeS: Math.round(process.uptime()) };
@@ -29,17 +36,22 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
     route("POST", "/api/lookup", (req) => handleLookup(req)),
     route("POST", "/api/deepdive", (req) => handleDeepdive(req)),
-    route("GET", "/api/defensives", (_req, url) => handleDefensivesGet(url)),
-    route("POST", "/api/defensives", (req) => handleDefensivesPost(req)),
+    route("GET", "/api/defensives", (_req, url) => handleDefensivesGet(url, ctx.hosted)),
+    route("POST", "/api/defensives", (req) => handleDefensivesPost(req, ctx.hosted)),
     route("GET", "/api/history", () => jsonResponse({ ok: true, items: history.list().map(historySummary) })),
     route("DELETE", "/api/history", () => { history.clear(); return jsonResponse({ ok: true }); }),
     prefixRoute("GET", "/api/history/", (_req, url) => {
       const key = historyKey(url);
+      if (key === null) return jsonResponse({ ok: false, error: "Invalid history key" }, 400);
       const entry = history.get(key);
       if (!entry) return jsonResponse({ ok: false, error: "Not in history" }, 404);
       return jsonResponse({ ok: true, result: entry.result, key, fromCache: true });
     }),
-    prefixRoute("DELETE", "/api/history/", (_req, url) => jsonResponse({ ok: history.remove(historyKey(url)) })),
+    prefixRoute("DELETE", "/api/history/", (_req, url) => {
+      const key = historyKey(url);
+      if (key === null) return jsonResponse({ ok: false, error: "Invalid history key" }, 400);
+      return jsonResponse({ ok: history.remove(key) });
+    }),
     // In hosted mode the watcher never runs; the initial status is simply "inactive".
     route("GET", "/api/events", () => eventsResponse({ event: "status", data: watcherStatus() })),
     route("GET", "/api/health", () => handleHealth()),

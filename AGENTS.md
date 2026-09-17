@@ -54,8 +54,10 @@ src/lookup.ts         rankings → analysis → enrich (WCL ‖ Raider.IO) → p
 src/wcl/              OAuth2 + gql() + queries     src/signals/          per-run signals, peers, RIO, SQLite store
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
+src/hosted/           hosted-mode config (mode + env validation)
+src/server/           route table, shared/local routes, handlers, SSE, security headers
 web/src/lib/          pure tested view models      web/src/components/   thin React components
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is designed and filed as GitHub issues #1–#11; start from #2 when the user asks.
+Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2 (hosted mode skeleton) is shipped, next is #3 (Discord login).

@@ -60,11 +60,13 @@ Defensive-cooldown analysis of one run for one character, on demand (`bmpl analy
 
 ## CLI — `src/cli.ts`
 
-Commands: `ping, char, lookup, mplus, evaluate, analyze, defensives, serve, watch, zones, raw-rankings, raw-encounter, help`. Rendering in `format-mplus.ts` (picocolors). Anything that spends points must confirm unless `--yes`; `--json` never bypasses the confirmation. `if (import.meta.main) main()` keeps the module importable by tests.
+Commands: `ping, char, lookup, mplus, evaluate, analyze, defensives, serve, watch, zones, raw-rankings, raw-encounter, help`. Rendering in `format-mplus.ts` (picocolors). Anything that spends points must confirm unless `--yes`; `--json` never bypasses the confirmation. `if (import.meta.main) main()` keeps the module importable by tests. `serve --hosted` (or `BMPL_MODE=hosted`) goes through `planServe()`: pure argument/env resolution, `resolveMode()` then `validateHostedEnv()` (`src/hosted/config.ts`) — on a missing or invalid `BMPL_*` variable the command prints the list and exits 2 without starting the server.
 
 ## Config and files next to `.env`
 
 `resolveEnvPath()` looks in cwd then next to the executable. Beside that `.env`: `bmpl.db`, `evaluation.json`, `defensives.json`. Env overrides: `BMPL_DB_PATH`, `BMPL_EVAL_CONFIG`, `BMPL_DEFENSIVES`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET`. All are user data: git-ignored or, at the repo root, simply never staged.
+
+Hosted mode (`bmpl serve --hosted`) additionally requires `BMPL_BASE_URL`, `BMPL_SESSION_SECRET`, `BMPL_DISCORD_CLIENT_ID`, `BMPL_DISCORD_CLIENT_SECRET`, `BMPL_ADMIN_DISCORD_IDS`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` — see `.env.hosted.example` and the README's "Hosted mode" section.
 
 ## Invariants worth re-reading before a change
 

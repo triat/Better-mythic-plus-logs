@@ -415,6 +415,10 @@ frame-ancestors none, …) and exposes `GET /api/health`
 (`{ ok, version, uptimeS, db }`) for the proxy's health check. Login, quotas
 and the admin page come with the following issues.
 
+Do not expose a hosted instance to the internet before issues #3–#5 land:
+there is no login yet, every visitor shares one history, can spend the shared
+WCL budget and can edit the server's `defensives.json`.
+
 Required environment (copy `.env.hosted.example`):
 
 | Variable | Meaning |

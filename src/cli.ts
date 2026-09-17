@@ -33,6 +33,7 @@ import { displayedRuns } from "./signals/enrich.ts";
 import { closeStore, getStore } from "./signals/store.ts";
 import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
 import { runServer } from "./server.ts";
+import { resolveMode, validateHostedEnv } from "./hosted/config.ts";
 import { runWatch } from "./watch.ts";
 
 const USAGE = `bmpl — Better Mythic+ Logs (Warcraft Logs analyzer)
@@ -49,10 +50,13 @@ Usage:
                                      Poll the clipboard; runs lookup whenever a
                                      Name-Realm string is copied. Omit --level
                                      to auto-detect per character. Ctrl+C to quit.
-  bmpl serve  [--port <N>] [--no-open]
-                                     Start the local web UI at http://localhost:<port>
+  bmpl serve  [--port <N>] [--no-open] [--hosted]
+                                     Start the web UI at http://localhost:<port>
                                      (default 3000) and auto-open your browser.
                                      First run shows a setup page for creds.
+                                     --hosted (or BMPL_MODE=hosted): multi-user
+                                     deployment behind a reverse proxy — needs the
+                                     BMPL_* variables from .env.hosted.example.
   bmpl evaluate <payload.json> [--json]
                                      Re-run the evaluation model on a saved lookup
                                      (--json output). Uses evaluation.json next to
@@ -422,6 +426,29 @@ function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+/** Pure `serve` argument/env resolution — the command prints `error` and exits 2 on failure. */
+export function planServe(args: string[], env: Record<string, string | undefined>):
+  | { ok: true; port: number; open: boolean; hosted: boolean }
+  | { ok: false; error: string } {
+  const portStr = parseFlag(args, "--port");
+  const port = portStr ? Number.parseInt(portStr, 10) : 3000;
+  if (!Number.isFinite(port) || port < 1 || port > 65535) return { ok: false, error: `Invalid --port value: ${portStr}` };
+  const mode = resolveMode(hasFlag(args, "--hosted"), env);
+  if (!mode.ok) return { ok: false, error: mode.error };
+  if (mode.mode === "hosted") {
+    const v = validateHostedEnv(env);
+    if (!v.ok) {
+      const parts = [
+        v.missing.length ? `missing: ${v.missing.join(", ")}` : "",
+        v.invalid.length ? `invalid: ${v.invalid.join("; ")}` : "",
+      ].filter(Boolean);
+      return { ok: false, error: `Hosted mode needs a complete environment — ${parts.join(" — ")}. See .env.hosted.example.` };
+    }
+    return { ok: true, port, open: false, hosted: true };
+  }
+  return { ok: true, port, open: !hasFlag(args, "--no-open"), hosted: false };
+}
+
 function parseFlags(args: string[], flag: string): string[] {
   const out: string[] = [];
   for (let i = 0; i < args.length; i++) if (args[i] === flag && args[i + 1] !== undefined) out.push(args[i + 1]!);
@@ -549,14 +576,12 @@ async function main(): Promise<void> {
         break;
       }
       case "serve": {
-        const portStr = parseFlag(rest, "--port");
-        const port = portStr ? Number.parseInt(portStr, 10) : 3000;
-        if (!Number.isFinite(port) || port < 1 || port > 65535) {
-          console.error(err(`Invalid --port value: ${portStr}`));
+        const plan = planServe(rest, process.env);
+        if (!plan.ok) {
+          console.error(err(plan.error));
           process.exit(2);
         }
-        const open = !hasFlag(rest, "--no-open");
-        await runServer({ port, open });
+        await runServer({ port: plan.port, open: plan.open, hosted: plan.hosted });
         // Bun.serve keeps the process alive; do not return.
         return;
       }

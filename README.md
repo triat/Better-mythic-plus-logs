@@ -246,6 +246,7 @@ or `Name Realm` as two args.
 just serve                    # starts http://localhost:3000 and opens your browser
 just serve --port 4000        # custom port
 just serve --no-open          # don't auto-launch browser
+just serve --hosted           # multi-user mode, see "Hosted mode"
 ```
 
 On first run, the browser lands on a setup page that walks you through creating
@@ -403,6 +404,29 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
   their own client.
 - Prefer sharing the source (this repo) over shipping a binary; a compiled
   `.exe` is opaque to the recipient.
+
+## Hosted mode (multi-user, work in progress)
+
+`bmpl serve --hosted` (or `BMPL_MODE=hosted`) runs one instance for several
+people behind a reverse proxy. It is being built in issues #1–#11; today it
+only disables the local-only routes (`/api/setup`, `/api/quit`, clipboard
+watch), never opens a browser, adds security headers (CSP, nosniff,
+frame-ancestors none, …) and exposes `GET /api/health`
+(`{ ok, version, uptimeS, db }`) for the proxy's health check. Login, quotas
+and the admin page come with the following issues.
+
+Required environment (copy `.env.hosted.example`):
+
+| Variable | Meaning |
+|---|---|
+| `BMPL_BASE_URL` | Public origin, no path (`https://bmpl.example.com`) |
+| `BMPL_SESSION_SECRET` | ≥ 32 random bytes (`openssl rand -base64 48`) |
+| `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET` | Discord OAuth application |
+| `BMPL_ADMIN_DISCORD_IDS` | Comma-separated Discord user ids of the admins |
+| `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` | The shared Warcraft Logs client |
+
+Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and
+the list of what to fix. Local mode (`bmpl serve`) is unchanged.
 
 ## API cost
 

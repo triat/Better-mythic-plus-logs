@@ -21,6 +21,7 @@ just check                          # tsc for src/ AND web/ — must pass before
 just test [pattern]                 # bun test from the repo root (runs web/src/**/*.test.ts too)
 just build                          # web/dist (Vite) then ./bmpl (bun --compile)
 just serve [--no-open]              # bmpl serve: web UI on :3000
+just serve --hosted                 # hosted mode (needs .env.hosted.example variables)
 just web-dev                        # Vite on :5173, proxies /api to :3000 (run `just serve --no-open` too)
 just l Name-Realm [--level N]       # bmpl lookup, the core flow
 bun src/cli.ts analyze Name-Realm   # deep-dive (spends WCL points — read architecture.md first)

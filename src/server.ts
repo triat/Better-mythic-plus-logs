@@ -5,6 +5,7 @@ import { dispatch } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
+import { withSecurityHeaders } from "./server/security.ts";
 import { closeStore } from "./signals/store.ts";
 import { resolveEnvPath } from "./setup.ts";
 import { createStaticHandler, defaultAssetLoader } from "./web-static.ts";
@@ -53,17 +54,21 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader);
   const routes: Route[] = [...sharedRoutes({ hosted, envPath: envPathHint }), ...(hosted ? [] : localRoutes())];
 
+  const respond = async (req: Request, url: URL): Promise<Response> => {
+    if (req.method === "GET") {
+      const staticRes = await serveStatic(url.pathname);
+      if (staticRes) return staticRes;
+    }
+    return (await dispatch(routes, req, url)) ?? new Response("Not found", { status: 404 });
+  };
+
   const server = Bun.serve({
     port: opts.port,
     idleTimeout: 0, // long-lived SSE streams and slow enrichment lookups
     async fetch(req) {
       const url = new URL(req.url);
-      if (req.method === "GET") {
-        const staticRes = await serveStatic(url.pathname);
-        if (staticRes) return staticRes;
-      }
-      const routed = dispatch(routes, req, url);
-      return routed ?? new Response("Not found", { status: 404 });
+      const res = await respond(req, url);
+      return hosted ? withSecurityHeaders(res) : res;
     },
   });
 

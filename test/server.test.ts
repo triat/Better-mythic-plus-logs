@@ -49,6 +49,7 @@ describe("static routes", () => {
     const st = await fetch(url("/api/status"));
     expect(st.status).toBe(200);
     expect((await st.json()).ok).toBe(true);
+    expect((await fetch(url("/api/status"))).headers.get("content-security-policy")).toBeNull();
   });
 });
 

@@ -37,6 +37,9 @@ export function resolveMode(flagHosted: boolean, env: Env): { ok: true; mode: Mo
   return { ok: false, error: `Unknown BMPL_MODE "${raw}" — expected "local" or "hosted"` };
 }
 
+/** Discord snowflake ids are 17-20 digit numbers. */
+const DISCORD_ID = /^\d{17,20}$/;
+
 /** Origin only: http(s), no path/query/hash. Returns the normalised origin or null. */
 const parseOrigin = (raw: string): string | null => {
   let u: URL;
@@ -57,7 +60,13 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
   if (secret !== "" && Buffer.byteLength(secret, "utf8") < MIN_SESSION_SECRET_BYTES) invalid.push(`BMPL_SESSION_SECRET: at least ${MIN_SESSION_SECRET_BYTES} bytes (got ${Buffer.byteLength(secret, "utf8")})`);
 
   const adminDiscordIds = read(env, "BMPL_ADMIN_DISCORD_IDS").split(",").map((s) => s.trim()).filter(Boolean);
-  if (!missing.includes("BMPL_ADMIN_DISCORD_IDS") && adminDiscordIds.length === 0) invalid.push("BMPL_ADMIN_DISCORD_IDS: at least one Discord user id, comma-separated");
+  if (!missing.includes("BMPL_ADMIN_DISCORD_IDS")) {
+    if (adminDiscordIds.length === 0) invalid.push("BMPL_ADMIN_DISCORD_IDS: at least one Discord user id, comma-separated");
+    for (const id of adminDiscordIds) if (!DISCORD_ID.test(id)) invalid.push(`BMPL_ADMIN_DISCORD_IDS: not a Discord id: ${id}`);
+  }
+
+  const discordClientId = read(env, "BMPL_DISCORD_CLIENT_ID");
+  if (!missing.includes("BMPL_DISCORD_CLIENT_ID") && !DISCORD_ID.test(discordClientId)) invalid.push("BMPL_DISCORD_CLIENT_ID: not a Discord application id");
 
   if (missing.length > 0 || invalid.length > 0) return { ok: false, missing, invalid };
   return {
@@ -65,7 +74,7 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
     config: {
       baseUrl: baseUrl!,
       sessionSecret: secret,
-      discordClientId: read(env, "BMPL_DISCORD_CLIENT_ID"),
+      discordClientId,
       discordClientSecret: read(env, "BMPL_DISCORD_CLIENT_SECRET"),
       adminDiscordIds,
     },

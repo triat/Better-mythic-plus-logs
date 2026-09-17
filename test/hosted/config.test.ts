@@ -4,9 +4,9 @@ import { HOSTED_ENV_VARS, resolveMode, validateHostedEnv } from "../../src/hoste
 const FULL: Record<string, string> = {
   BMPL_BASE_URL: "https://bmpl.example.com",
   BMPL_SESSION_SECRET: "0123456789abcdef0123456789abcdef", // 32 bytes
-  BMPL_DISCORD_CLIENT_ID: "123",
+  BMPL_DISCORD_CLIENT_ID: "123456789012345678",
   BMPL_DISCORD_CLIENT_SECRET: "abc",
-  BMPL_ADMIN_DISCORD_IDS: "111, 222",
+  BMPL_ADMIN_DISCORD_IDS: "111111111111111111, 222222222222222222",
   WCL_CLIENT_ID: "wcl-id",
   WCL_CLIENT_SECRET: "wcl-secret",
 };
@@ -44,7 +44,7 @@ describe("validateHostedEnv", () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.config.baseUrl).toBe("https://bmpl.example.com");
-      expect(r.config.adminDiscordIds).toEqual(["111", "222"]);
+      expect(r.config.adminDiscordIds).toEqual(["111111111111111111", "222222222222222222"]);
       expect(r.config.sessionSecret).toBe(FULL.BMPL_SESSION_SECRET);
     }
   });
@@ -82,5 +82,14 @@ describe("validateHostedEnv", () => {
     // 16 two-byte characters = 32 bytes.
     expect(validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "éééééééééééééééé" }).ok).toBe(true);
     expect(validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "ééééééééééééééé" }).ok).toBe(false);
+  });
+  test("Discord ids must be 17-20 digit snowflakes", () => {
+    const r = validateHostedEnv({ ...FULL, BMPL_DISCORD_CLIENT_ID: "123", BMPL_ADMIN_DISCORD_IDS: "111, not-an-id" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.invalid).toContain("BMPL_DISCORD_CLIENT_ID: not a Discord application id");
+      expect(r.invalid).toContain("BMPL_ADMIN_DISCORD_IDS: not a Discord id: 111");
+      expect(r.invalid).toContain("BMPL_ADMIN_DISCORD_IDS: not a Discord id: not-an-id");
+    }
   });
 });

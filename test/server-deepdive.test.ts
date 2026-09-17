@@ -15,11 +15,21 @@ beforeAll(async () => {
   writeFileSync(join(dir, "index.html"), "<!doctype html><title>t</title><div id=root></div>");
   writeFileSync(join(dir, "assets", "app.js"), "");
   writeFileSync(join(dir, "assets", "app.css"), "");
+  writeFileSync(join(dir, "wh-config.js"), "const whTooltips = {};");
   closeStore();
   process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
   process.env.BMPL_DEFENSIVES = join(dir, "defensives.json");
   resetDefensives();
-  server = await runServer({ port: 0, open: false, assets: async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets", "app.js"), appCss: join(dir, "assets", "app.css") }) });
+  server = await runServer({
+    port: 0,
+    open: false,
+    assets: async () => ({
+      index: join(dir, "index.html"),
+      appJs: join(dir, "assets", "app.js"),
+      appCss: join(dir, "assets", "app.css"),
+      whConfigJs: join(dir, "wh-config.js"),
+    }),
+  });
 });
 afterAll(() => {
   server.stop(true);

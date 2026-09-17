@@ -16,3 +16,4 @@ bmpl.db-shm
 evaluation.json
 web/dist/
 web/node_modules/
+.superpowers/

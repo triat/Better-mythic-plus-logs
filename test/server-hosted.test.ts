@@ -88,7 +88,9 @@ describe("security headers", () => {
   test("CSP allows only self plus the Wowhead hosts for scripts and has no unsafe-inline for scripts", () => {
     const csp = SECURITY_HEADERS["Content-Security-Policy"]!;
     expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("script-src 'self' https://wow.zamimg.com https://nether.wowhead.com");
+    expect(csp).toContain("script-src 'self' https://wow.zamimg.com");
+    expect(csp).toContain("connect-src 'self' https://nether.wowhead.com");
+    expect(csp).toContain("style-src 'self' 'unsafe-inline' https://wow.zamimg.com");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp.match(/script-src[^;]*/)?.[0]).not.toContain("unsafe-inline");
   });

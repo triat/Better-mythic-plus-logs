@@ -1,13 +1,15 @@
 // Response headers for hosted mode. HSTS is set by the reverse proxy (Caddy), not here.
-// Script hosts: Wowhead tooltips (web/index.html) load tooltips.js from wow.zamimg.com and
-// fetch tooltip data as JSONP from nether.wowhead.com; icons come from wow.zamimg.com.
-// Discord avatars (issue #3) come from cdn.discordapp.com.
+// Wowhead tooltips (web/index.html): tooltips.js itself is loaded from wow.zamimg.com;
+// it fetches tooltip data with fetch/XHR from nether.wowhead.com (connect-src, not
+// script-src — it's data, not JSONP) and injects a <link rel=stylesheet> pointing at
+// wow.zamimg.com/css/universal.css (style-src-elem); spell icons also come from
+// wow.zamimg.com (img-src). Discord avatars (issue #3) come from cdn.discordapp.com.
 export const CSP = [
   "default-src 'self'",
-  "script-src 'self' https://wow.zamimg.com https://nether.wowhead.com",
-  "style-src 'self' 'unsafe-inline'", // React style props + Wowhead-injected tooltip styles
+  "script-src 'self' https://wow.zamimg.com",
+  "style-src 'self' 'unsafe-inline' https://wow.zamimg.com", // React style props + Wowhead's injected stylesheet
   "img-src 'self' data: https://wow.zamimg.com https://cdn.discordapp.com",
-  "connect-src 'self'",
+  "connect-src 'self' https://nether.wowhead.com",
   "font-src 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",

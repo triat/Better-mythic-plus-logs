@@ -4,6 +4,8 @@ import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from ".
 import { unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { STORAGE_KEY, parseStoredKey, reevalHint } from "./lib/keyLevel.ts";
+import { LOCAL_STATUS, initialScreen, uiControls } from "./lib/hostedMode.ts";
+import type { StatusInfo } from "./lib/hostedMode.ts";
 import { useSse } from "./useSse.ts";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
@@ -17,23 +19,22 @@ import { Toast } from "./components/Toast.tsx";
 
 type Screen =
   | { kind: "loading" }
-  | { kind: "setup"; envPath: string; hasCredentials: boolean }
-  | { kind: "main"; envPath: string };
+  | { kind: "setup"; status: StatusInfo }
+  | { kind: "main"; status: StatusInfo };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
   useEffect(() => {
     api.status().then((s) => {
-      if (!s.ok) { setScreen({ kind: "main", envPath: "" }); return; }
-      const wantSetup = !s.hasCredentials || location.pathname === "/setup";
-      setScreen(wantSetup ? { kind: "setup", envPath: s.envPath, hasCredentials: s.hasCredentials } : { kind: "main", envPath: s.envPath });
+      const status: StatusInfo = s.ok ? { hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null } : LOCAL_STATUS;
+      setScreen({ kind: initialScreen(status, location.pathname), status });
     });
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
   if (screen.kind === "setup") {
-    return <Setup envPath={screen.envPath} hasCredentials={screen.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", envPath: screen.envPath }); }} />;
+    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true } }); }} />;
   }
-  return <Main envPath={screen.envPath} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", envPath: screen.envPath, hasCredentials: true }); }} />;
+  return <Main status={screen.status} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />;
 }
 
 const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
@@ -50,7 +51,8 @@ const writeStoredKey = (v: number | null): void => {
   try { v === null ? localStorage.removeItem(STORAGE_KEY) : localStorage.setItem(STORAGE_KEY, String(v)); } catch { /* private mode etc. */ }
 };
 
-function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
+function Main({ status, onSetup }: { status: StatusInfo; onSetup: () => void }) {
+  const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   // "Your key": the level every lookup is evaluated for (null = auto). Remembered per browser.
   const [yourKey, setYourKey] = useState<number | null>(readStoredKey);
@@ -263,7 +265,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
         form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
-        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty}
+        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty} controls={controls}
       />
       <Tabs
         items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
@@ -272,7 +274,7 @@ function Main({ envPath, onSetup }: { envPath: string; onSetup: () => void }) {
         onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache}
       />
       <main className={"content" + (empty ? " content-home" : "")}>
-        {empty && <Home envPath={envPath} />}
+        {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
         {!empty && !showCompare && activePayload && (
           <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
         )}

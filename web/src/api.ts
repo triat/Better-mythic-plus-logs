@@ -34,7 +34,7 @@ const post = (body?: unknown): RequestInit => ({
 const historyPath = (key: string) => `/api/history/${encodeURIComponent(key)}`;
 
 export const api = {
-  status: () => call<{ hasCredentials: boolean; envPath: string }>("/api/status"),
+  status: () => call<{ hosted: boolean; hasCredentials: boolean; envPath?: string }>("/api/status"),
   setup: (clientId: string, clientSecret: string) =>
     call<{ envPath: string }>("/api/setup", post({ clientId, clientSecret })),
   lookup: (req: LookupRequest) =>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { KeyStepper } from "./KeyStepper.tsx";
+import type { UiControls } from "../lib/hostedMode.ts";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -21,6 +22,7 @@ interface Props {
   onQuit: () => void;
   /** Big centered variant for the empty state. */
   hero?: boolean;
+  controls: UiControls;
 }
 
 export function Header(p: Props) {
@@ -71,15 +73,17 @@ export function Header(p: Props) {
         <div className="brand">bmpl</div>
         {!p.hero && search}
         <div className="grow" />
-        <label className={"watch" + (p.watchActive ? " on" : "")} title="Look up whatever Name-Realm you copy to the clipboard">
-          <input type="checkbox" checked={p.watchActive} onChange={(e) => p.onWatchToggle(e.target.checked)} />
-          <span className="switch" />
-          <span>Clipboard watch <b>{p.watchActive ? "on" : "off"}</b></span>
-          {p.watchLabel && <span className="muted">· {p.watchLabel}</span>}
-        </label>
+        {p.controls.watch && (
+          <label className={"watch" + (p.watchActive ? " on" : "")} title="Look up whatever Name-Realm you copy to the clipboard">
+            <input type="checkbox" checked={p.watchActive} onChange={(e) => p.onWatchToggle(e.target.checked)} />
+            <span className="switch" />
+            <span>Clipboard watch <b>{p.watchActive ? "on" : "off"}</b></span>
+            {p.watchLabel && <span className="muted">· {p.watchLabel}</span>}
+          </label>
+        )}
         {!p.sseConnected && <span className="muted" title="Reconnecting…">live updates disconnected</span>}
-        <button className="btn" onClick={p.onSetup}>Re-configure</button>
-        <button className="btn" onClick={p.onQuit}>Quit</button>
+        {p.controls.setup && <button className="btn" onClick={p.onSetup}>Re-configure</button>}
+        {p.controls.quit && <button className="btn" onClick={p.onQuit}>Quit</button>}
       </div>
       {p.hero && <div className="hero-search">{search}</div>}
       {options}

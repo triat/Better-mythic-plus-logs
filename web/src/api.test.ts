@@ -10,9 +10,9 @@ afterEach(() => { globalThis.fetch = realFetch; });
 
 describe("api", () => {
   test("ok response is passed through", async () => {
-    mock(() => Response.json({ ok: true, hasCredentials: true, envPath: "/x/.env" }));
+    mock(() => Response.json({ ok: true, hosted: false, hasCredentials: true, envPath: "/x/.env" }));
     const r = await api.status();
-    expect(r).toEqual({ ok: true, hasCredentials: true, envPath: "/x/.env" });
+    expect(r).toEqual({ ok: true, hosted: false, hasCredentials: true, envPath: "/x/.env" });
   });
 
   test("HTTP error with JSON error body", async () => {

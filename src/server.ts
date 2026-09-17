@@ -1,25 +1,14 @@
 import type { Server } from "bun";
 import pc from "picocolors";
-import {
-  type ClipboardBackend,
-  detectClipboardReader,
-  isPlausibleNameRealm,
-} from "./clipboard.ts";
 import { hasCredentials } from "./config.ts";
-import { attachDeepdive } from "./deepdive/attach.ts";
-import { runDeepdive } from "./deepdive/run.ts";
-import { applyPatch, getDefensives, resetDefensives, saveOverride, specDefensives, specKey, validateOverride } from "./deepdive/table.ts";
-import type { OverrideEntry } from "./deepdive/types.ts";
-import { getEvalConfig } from "./evaluation/config.ts";
 import { dim, err, heading, ok } from "./format.ts";
-import { buildLookupPayload, performLookup } from "./lookup.ts";
-import type { LookupPayload } from "./lookup.ts";
-import type { Metric } from "./roles.ts";
-import { getStore, closeStore } from "./signals/store.ts";
-import { History } from "./server-history.ts";
-import type { HistoryEntry } from "./server-history.ts";
+import { jsonResponse, parseMetric } from "./server/http.ts";
+import { eventsResponse } from "./server/sse.ts";
+import { handleDefensivesGet, handleDefensivesPost, handleDeepdive } from "./server/deepdive.ts";
+import { handleLookup, history, historySummary } from "./server/lookup.ts";
+import { startWatcher, stopWatcher, watcherStatus } from "./server/watcher.ts";
+import { closeStore } from "./signals/store.ts";
 import { resolveEnvPath, writeCredentials } from "./setup.ts";
-import { parseNameRealm, parseRaiderIOUrl } from "./util.ts";
 import { resetAuthCache } from "./wcl/auth.ts";
 import { createStaticHandler, defaultAssetLoader } from "./web-static.ts";
 import type { AssetLoader } from "./web-static.ts";
@@ -31,222 +20,9 @@ export interface ServeOptions {
   assets?: AssetLoader;
 }
 
-interface LookupRequest {
-  character?: string;
-  level?: number | string | null;
-  spec?: string | null;
-  metric?: string | null;
-  refresh?: boolean;
-}
-
-const history = new History(20);
-
-const historySummary = (entry: HistoryEntry) => ({
-  key: entry.key,
-  label: entry.label,
-  charClass: entry.charClass,
-  spec: entry.spec,
-  targetLevel: entry.targetLevel,
-  targetAutoDetected: entry.targetAutoDetected,
-  fetchedAt: entry.fetchedAt,
-  request: entry.request,
-});
-
 interface SetupRequest {
   clientId?: string;
   clientSecret?: string;
-}
-
-const jsonResponse = (data: unknown, status = 200): Response =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-
-const parseMetric = (raw: string | null | undefined): Metric | undefined => {
-  if (!raw) return undefined;
-  const v = raw.trim().toLowerCase();
-  return v === "dps" || v === "hps" ? v : undefined;
-};
-
-function parseCharacterInput(
-  raw: string,
-): { name: string; realm: string } | null {
-  const s = raw.trim();
-  if (!s) return null;
-  const rio = parseRaiderIOUrl(s);
-  if (rio) return { name: rio.name, realm: rio.realm };
-  const fromDash = parseNameRealm(s);
-  if (fromDash) return fromDash;
-  const bits = s.split(/\s+/);
-  return bits.length >= 2
-    ? { name: bits[0]!, realm: bits.slice(1).join(" ") }
-    : null;
-}
-
-export interface LookupError {
-  ok: false;
-  error: string;
-  status: number;
-}
-
-export interface LookupSuccess {
-  ok: true;
-  key: string;
-  result: unknown;
-  fromCache: boolean;
-}
-
-export async function runLookupWithCache(opts: {
-  character: string;
-  level: number | null;
-  spec: string | null;
-  metric: Metric | null;
-  refresh: boolean;
-}): Promise<LookupSuccess | LookupError> {
-  if (!hasCredentials()) {
-    return { ok: false, error: "No credentials configured. Visit /setup first.", status: 400 };
-  }
-  const target = parseCharacterInput(opts.character);
-  if (!target) {
-    return {
-      ok: false,
-      error: "Could not parse character. Use `Name-Realm` or `Name Realm`.",
-      status: 400,
-    };
-  }
-
-  const requestCharacter = `${target.name}-${target.realm}`;
-  const request = { character: requestCharacter, level: opts.level, spec: opts.spec, metric: opts.metric };
-
-  if (!opts.refresh) {
-    const hit = history.cached(request);
-    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true };
-  }
-
-  try {
-    const o = await performLookup({
-      name: target.name,
-      realm: target.realm,
-      level: opts.level,
-      spec: opts.spec,
-      metric: opts.metric ?? undefined,
-      enrich: true,
-      refresh: opts.refresh,
-    });
-    if (!o.ok) return { ok: false, status: o.status, error: o.error };
-    const payload = buildLookupPayload(o, target.realm);
-
-    // Keyed by the *effective* level: an auto-detected +21 and an explicit +21 are one tab.
-    const entry = history.record(request, {
-      result: payload,
-      label: requestCharacter,
-      charClass: o.data.character.classID,
-      spec: o.data.character.spec,
-      targetLevel: o.result.targetLevel,
-      targetAutoDetected: o.result.targetAutoDetected,
-    });
-
-    return { ok: true, key: entry.key, result: payload, fromCache: false };
-  } catch (e) {
-    return {
-      ok: false,
-      status: 500,
-      error: e instanceof Error ? e.message : String(e),
-    };
-  }
-}
-
-async function handleLookup(req: Request): Promise<Response> {
-  let body: LookupRequest;
-  try {
-    body = (await req.json()) as LookupRequest;
-  } catch {
-    return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  }
-  const raw = (body.character ?? "").trim();
-  if (!raw) {
-    return jsonResponse({ ok: false, error: "`character` is required" }, 400);
-  }
-  let levelOverride: number | null = null;
-  if (body.level !== undefined && body.level !== null && body.level !== "") {
-    const n = Number.parseInt(String(body.level), 10);
-    if (!Number.isFinite(n) || n < 2) {
-      return jsonResponse(
-        { ok: false, error: `Invalid level: ${body.level}` },
-        400,
-      );
-    }
-    levelOverride = n;
-  }
-  const result = await runLookupWithCache({
-    character: raw,
-    level: levelOverride,
-    spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
-    metric: parseMetric(body.metric ?? null) ?? null,
-    refresh: !!body.refresh,
-  });
-  if (!result.ok) {
-    return jsonResponse({ ok: false, error: result.error }, result.status);
-  }
-  return jsonResponse({
-    ok: true,
-    result: result.result,
-    key: result.key,
-    fromCache: result.fromCache,
-  });
-}
-
-/** Re-attach cached analyses (and re-evaluate) on every history entry — after an analysis or a table change. 0 pts. */
-async function refreshHistoryDeepdive(): Promise<void> {
-  const [store, tables, cfg] = await Promise.all([getStore(), getDefensives(), getEvalConfig()]);
-  for (const e of history.list()) history.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
-}
-
-interface DeepdiveBody { reportCode?: string; fightID?: number; character?: string; force?: boolean }
-
-async function handleDeepdive(req: Request): Promise<Response> {
-  let body: DeepdiveBody;
-  try { body = (await req.json()) as DeepdiveBody; } catch { return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400); }
-  if (!body.reportCode || typeof body.fightID !== "number" || !body.character) return jsonResponse({ ok: false, error: "`reportCode`, `fightID` and `character` are required" }, 400);
-  if (!hasCredentials()) return jsonResponse({ ok: false, error: "No credentials configured. Visit /setup first." }, 400);
-  const [store, tables] = await Promise.all([getStore(), getDefensives()]);
-  const r = await runDeepdive({ reportCode: body.reportCode, fightID: body.fightID, character: body.character, force: !!body.force }, { store, tables });
-  if (!r.ok) return jsonResponse({ ok: false, error: r.error }, r.status);
-  await refreshHistoryDeepdive();
-  return jsonResponse({ ok: true, result: r.result, fromCache: r.fromCache, pointsSpent: r.pointsSpent });
-}
-
-async function handleDefensivesGet(url: URL): Promise<Response> {
-  const className = (url.searchParams.get("class") ?? "").trim();
-  const spec = (url.searchParams.get("spec") ?? "").trim();
-  if (!className || !spec) return jsonResponse({ ok: false, error: "`class` and `spec` are required" }, 400);
-  const tables = await getDefensives();
-  const d = specDefensives(tables.shipped, tables.override, className, spec);
-  return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: tables.overridePath, warning: tables.warning ?? null });
-}
-
-interface DefensivesPatchBody { className?: string; spec?: string; patch?: OverrideEntry }
-
-async function handleDefensivesPost(req: Request): Promise<Response> {
-  let body: DefensivesPatchBody;
-  try { body = (await req.json()) as DefensivesPatchBody; } catch { return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400); }
-  if (!body.className || !body.spec || !body.patch) return jsonResponse({ ok: false, error: "`className`, `spec` and `patch` are required" }, 400);
-  const tables = await getDefensives();
-  if (tables.warning) return jsonResponse({ ok: false, error: `${tables.overridePath} is invalid — fix it by hand first: ${tables.warning}` }, 409);
-  try {
-    const key = specKey(body.className, body.spec);
-    const effective = specDefensives(tables.shipped, tables.override, body.className, body.spec);
-    const next = validateOverride(applyPatch(tables.override, key, validateOverride({ [key]: [body.patch] })[key]![0]!, effective));
-    await saveOverride(tables.overridePath, next);
-    resetDefensives();
-    await refreshHistoryDeepdive();
-    const fresh = await getDefensives();
-    const d = specDefensives(fresh.shipped, fresh.override, body.className, body.spec);
-    return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: fresh.overridePath });
-  } catch (e) {
-    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 400);
-  }
 }
 
 async function handleSetup(req: Request): Promise<Response> {
@@ -272,131 +48,6 @@ async function handleSetup(req: Request): Promise<Response> {
       500,
     );
   }
-}
-
-// --- SSE fan-out ------------------------------------------------------------
-
-const sseClients = new Set<ReadableStreamDefaultController<Uint8Array>>();
-const sseEncoder = new TextEncoder();
-
-const broadcast = (event: string, data: unknown): void => {
-  const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  const bytes = sseEncoder.encode(msg);
-  for (const c of sseClients) {
-    try {
-      c.enqueue(bytes);
-    } catch {
-      /* client closed */
-    }
-  }
-};
-
-// Periodic heartbeat so SSE connections are never fully idle, even without
-// a watcher event. A `:` line is an SSE comment — the browser ignores it
-// but it keeps the socket live through any reverse proxies.
-const HEARTBEAT_BYTES = sseEncoder.encode(`: ping\n\n`);
-// unref: this module is imported by cli.ts for every command (not just `serve`),
-// so this timer must not keep the process alive when no server is running.
-setInterval(() => {
-  for (const c of sseClients) {
-    try {
-      c.enqueue(HEARTBEAT_BYTES);
-    } catch {
-      /* client closed */
-    }
-  }
-}, 20_000).unref();
-
-// --- Clipboard watcher state machine ---------------------------------------
-
-interface WatcherState {
-  active: boolean;
-  opts: {
-    level: number | null;
-    spec: string | null;
-    metric: Metric | null;
-  };
-  intervalId: ReturnType<typeof setInterval> | null;
-  backend: ClipboardBackend | null;
-  lastSeen: string;
-}
-
-const watcher: WatcherState = {
-  active: false,
-  opts: { level: null, spec: null, metric: null },
-  intervalId: null,
-  backend: null,
-  lastSeen: "",
-};
-
-async function watcherTick(): Promise<void> {
-  if (!watcher.backend) return;
-  let value = "";
-  try {
-    value = (await watcher.backend.read()).trim();
-  } catch (e) {
-    broadcast("error", {
-      message: "clipboard read failed: " + (e instanceof Error ? e.message : String(e)),
-    });
-    return;
-  }
-  if (value === watcher.lastSeen) return;
-  watcher.lastSeen = value;
-  const parsed = isPlausibleNameRealm(value);
-  if (!parsed) return;
-  broadcast("searching", { character: value });
-  const result = await runLookupWithCache({
-    character: value,
-    level: watcher.opts.level,
-    spec: watcher.opts.spec,
-    metric: watcher.opts.metric,
-    refresh: false,
-  });
-  if (result.ok) {
-    broadcast("result", { key: result.key, fromCache: result.fromCache });
-  } else {
-    broadcast("error", { message: result.error, character: value });
-  }
-}
-
-async function startWatcher(opts: WatcherState["opts"]): Promise<void> {
-  // Always update options — allows reconfiguring without a restart.
-  watcher.opts = opts;
-  if (watcher.active) {
-    broadcast("status", { active: true, opts });
-    return;
-  }
-  try {
-    watcher.backend = await detectClipboardReader();
-  } catch (e) {
-    throw new Error(
-      "Clipboard unavailable on this platform: " +
-        (e instanceof Error ? e.message : String(e)),
-    );
-  }
-  // Seed lastSeen so we don't instantly re-fire on whatever was in the clipboard.
-  try {
-    watcher.lastSeen = (await watcher.backend.read()).trim();
-  } catch {
-    watcher.lastSeen = "";
-  }
-  watcher.active = true;
-  watcher.intervalId = setInterval(watcherTick, 750);
-  broadcast("status", {
-    active: true,
-    opts,
-    backend: watcher.backend.label,
-  });
-}
-
-function stopWatcher(): void {
-  if (!watcher.active) return;
-  if (watcher.intervalId) {
-    clearInterval(watcher.intervalId);
-    watcher.intervalId = null;
-  }
-  watcher.active = false;
-  broadcast("status", { active: false });
 }
 
 const openBrowser = (url: string): void => {
@@ -478,32 +129,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
         return jsonResponse({ ok: removed });
       }
       if (req.method === "GET" && path === "/api/events") {
-        let selfController: ReadableStreamDefaultController<Uint8Array>;
-        const stream = new ReadableStream<Uint8Array>({
-          start(controller) {
-            selfController = controller;
-            sseClients.add(controller);
-            controller.enqueue(
-              sseEncoder.encode(
-                `event: status\ndata: ${JSON.stringify({
-                  active: watcher.active,
-                  opts: watcher.opts,
-                  backend: watcher.backend?.label ?? null,
-                })}\n\n`,
-              ),
-            );
-          },
-          cancel() {
-            sseClients.delete(selfController);
-          },
-        });
-        return new Response(stream, {
-          headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache, no-transform",
-            Connection: "keep-alive",
-          },
-        });
+        return eventsResponse({ event: "status", data: watcherStatus() });
       }
       if (req.method === "POST" && path === "/api/watch/start") {
         let body: {
@@ -541,12 +167,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
         return jsonResponse({ ok: true, active: false });
       }
       if (req.method === "GET" && path === "/api/watch/status") {
-        return jsonResponse({
-          ok: true,
-          active: watcher.active,
-          opts: watcher.opts,
-          backend: watcher.backend?.label ?? null,
-        });
+        return jsonResponse({ ok: true, ...watcherStatus() });
       }
       if (req.method === "POST" && path === "/api/quit") {
         stopWatcher();

@@ -26,6 +26,7 @@ interface Props {
   controls: UiControls;
   me: MeUser | null;
   onSignOut: () => void;
+  quotaLabel: string | null;
 }
 
 export function Header(p: Props) {
@@ -89,6 +90,7 @@ export function Header(p: Props) {
         {p.controls.quit && <button className="btn" onClick={p.onQuit}>Quit</button>}
         {p.controls.signOut && (
           <>
+            {p.quotaLabel && <span className="muted mono" title="Your share of the shared Warcraft Logs budget">{p.quotaLabel}</span>}
             {p.me && <span className="muted" title={p.me.discordId}>{p.me.globalName ?? p.me.username}</span>}
             <button className="btn" onClick={p.onSignOut}>Sign out</button>
           </>

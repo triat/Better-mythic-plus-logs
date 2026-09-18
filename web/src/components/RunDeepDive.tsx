@@ -8,13 +8,14 @@ interface Props {
   /** payload.deepdiveSummary.tableWarning: the override file was ignored. */
   tableWarning?: string | null;
   busy: boolean;
+  canAfford: boolean;
   onReanalyze: () => void;
   onPatch: (patch: OverrideEntry) => Promise<void>;
 }
 
 const KINDS: DefensiveKind[] = ["major", "immunity", "minor"];
 
-export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Props) {
+export function RunDeepDive({ d, tableWarning, busy, canAfford, onReanalyze, onPatch }: Props) {
   const m = panelModel(d, Date.now(), tableWarning);
   useWowheadRefresh(d);
   const [tableOpen, setTableOpen] = useState(false);
@@ -46,7 +47,13 @@ export function RunDeepDive({ d, tableWarning, busy, onReanalyze, onPatch }: Pro
         <span className="dd-title">{m.title}</span>
         <span className="muted">{m.meta}</span>
         <div className="grow" />
-        <button type="button" className="btn btn-sm" disabled={busy} onClick={onReanalyze}>Re-analyze · {costText(1)}</button>
+        <button
+          type="button" className="btn btn-sm" disabled={busy || !canAfford}
+          title={canAfford ? undefined : "Hourly quota reached"}
+          onClick={onReanalyze}
+        >
+          Re-analyze · {costText(1)}
+        </button>
       </div>
       {m.notice && <div className="dd-notice tone-warn">{m.notice}</div>}
 

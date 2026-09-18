@@ -14,6 +14,8 @@ export interface DeepdiveActions {
   analyze: (run: { reportCode: string; fightID: number }, force?: boolean) => Promise<void>;
   analyzeAll: () => Promise<void>;
   patch: (className: string, spec: string, patch: OverrideEntry) => Promise<void>;
+  /** Whether analysing `runs` more runs fits in the hourly quota (always true locally). */
+  canAfford: (runs: number) => boolean;
 }
 
 export interface DetailProps { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; deepdive: DeepdiveActions }

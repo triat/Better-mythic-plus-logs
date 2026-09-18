@@ -24,7 +24,16 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
           <span className="muted">{runsHeadline(payload)}</span>
         </button>
         <div className="grow" />
-        {pending > 0 && <button type="button" className="btn btn-sm" disabled={deepdive.analyzing !== null} onClick={() => void deepdive.analyzeAll()}>{deepdive.progress ?? `Analyze all shown (${costText(pending)})`}</button>}
+        {pending > 0 && (
+          <button
+            type="button" className="btn btn-sm"
+            disabled={deepdive.analyzing !== null || !deepdive.canAfford(pending)}
+            title={deepdive.canAfford(pending) ? undefined : "Hourly quota reached"}
+            onClick={() => void deepdive.analyzeAll()}
+          >
+            {deepdive.progress ?? `Analyze all shown (${costText(pending)})`}
+          </button>
+        )}
       </div>
       {open && (
         <div className="runs">
@@ -75,7 +84,12 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
         <div className={r.stale ? "tone-warn" : "muted"} title={r.stale ? `older than ${STALE_DAYS} days` : undefined}>{r.age}{r.stale ? " · stale" : ""}</div>
         {!run.signals && <span className="faint" title="No WCL stats for this run">—</span>}
         {run.signals && !a && (
-          <button type="button" className="btn btn-sm" disabled={anyBusy} onClick={() => void deepdive.analyze(run)}>
+          <button
+            type="button" className="btn btn-sm"
+            disabled={anyBusy || !deepdive.canAfford(1)}
+            title={deepdive.canAfford(1) ? undefined : "Hourly quota reached"}
+            onClick={() => void deepdive.analyze(run)}
+          >
             {busy ? <span className="spinner" /> : null} Analyze · {costText(1)}
           </button>
         )}
@@ -87,7 +101,10 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
         <a href={r.url} target="_blank" rel="noopener" title="Open log">↗</a>
       </div>
       {expanded && a && (
-        <RunDeepDive d={a} tableWarning={payload.deepdiveSummary.tableWarning} busy={anyBusy} onReanalyze={() => void deepdive.analyze(run, true)} onPatch={(patch) => deepdive.patch(a.className, a.spec, patch)} />
+        <RunDeepDive
+          d={a} tableWarning={payload.deepdiveSummary.tableWarning} busy={anyBusy} canAfford={deepdive.canAfford(1)}
+          onReanalyze={() => void deepdive.analyze(run, true)} onPatch={(patch) => deepdive.patch(a.className, a.spec, patch)}
+        />
       )}
     </>
   );

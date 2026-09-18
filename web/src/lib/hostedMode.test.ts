@@ -29,7 +29,7 @@ describe("initialScreen", () => {
 });
 
 describe("bootScreen", () => {
-  const me = { kind: "ok" as const, user: { id: 1, discordId: "1", username: "t", globalName: null, avatarUrl: "", role: "member" as const } };
+  const me = { kind: "ok" as const, user: { id: 1, discordId: "1", username: "t", globalName: null, avatarUrl: "", role: "member" as const }, quota: null };
   test("hosted: signed in → main, otherwise signin (never setup)", () => {
     expect(bootScreen(hosted, me, "/")).toBe("main");
     expect(bootScreen(hosted, { kind: "unauthorized" }, "/")).toBe("signin");

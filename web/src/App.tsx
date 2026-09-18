@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
-import type { MeUser } from "./api.ts";
+import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from "./types.ts";
-import { unanalyzedRuns } from "./lib/deepdive.ts";
+import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
+import { canAfford, quotaLabel } from "./lib/quota.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
@@ -26,7 +27,7 @@ type Screen =
   | { kind: "loading" }
   | { kind: "setup"; status: StatusInfo }
   | { kind: "signin"; status: StatusInfo }
-  | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null };
+  | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null; quota: QuotaInfo | null };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
@@ -38,18 +39,18 @@ export function App() {
       const kind = bootScreen(status, me, location.pathname);
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
-        setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings });
+        setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings, quota: me?.kind === "ok" ? me.quota : null });
       } else setScreen({ kind, status });
     })();
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
   if (screen.kind === "signin") return <SignIn deniedDiscordId={deniedDiscordId(location.search)} loginFailed={loginFailed(location.search)} />;
   if (screen.kind === "setup") {
-    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null }); }} />;
+    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null }); }} />;
   }
   return (
     <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
-      <Main status={screen.status} me={screen.me} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+      <Main status={screen.status} me={screen.me} initialQuota={screen.quota} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
     </SettingsProvider>
   );
 }
@@ -61,9 +62,10 @@ const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
   metric: f.metric || null,
 });
 
-function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; onSetup: () => void }) {
+function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; onSetup: () => void }) {
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
+  const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
   const { settings, update: updateSettings } = useSettings();
   const yourKey = settings.yourKey;
@@ -151,6 +153,7 @@ function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; 
     const r = await api.lookup({ ...req, refresh });
     setBusy(null);
     if (!r.ok) { setToast(r.error); return; }
+    if (r.quota) setQuota(r.quota);
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
     setActiveKey(r.key);
@@ -244,6 +247,7 @@ function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; 
     setAnalyzing(key);
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
     if (!r.ok) { setAnalyzing(null); setToast(r.error); return false; }
+    if (r.quota) setQuota(r.quota);
     // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
     setAnalyzing(null);
@@ -267,7 +271,10 @@ function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; 
     await reloadActive();
   }, [reloadActive]);
 
-  const deepdiveActions: DeepdiveActions = { analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives };
+  const deepdiveActions: DeepdiveActions = {
+    analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives,
+    canAfford: (runs) => canAfford(quota, runs * POINTS_PER_RUN),
+  };
 
   if (stopped) return <main className="stopped"><h2>bmpl stopped</h2><p className="muted">You can close this tab.</p></main>;
 
@@ -283,7 +290,7 @@ function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; 
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty} controls={controls}
-        me={me} onSignOut={onSignOut}
+        me={me} onSignOut={onSignOut} quotaLabel={quotaLabel(quota)}
       />
       <Tabs
         items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}

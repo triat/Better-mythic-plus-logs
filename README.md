@@ -441,10 +441,13 @@ history in memory, settings in the browser.
 Every point spent is measured from the `rateLimitData` WCL returns and charged
 to the member whose request spent it. Each member may spend
 `BMPL_POINTS_PER_USER_HOUR` points per calendar hour (default 300; admins are
-exempt); a lookup or an analysis that would exceed it is refused before any
-fetch with `429 { error: "quota", message, used, limit, resetInS }`. Cached
-data — a tab in your history, a run already in the cache, an analysis already
-done — never counts. Whatever the quotas say, the client is never driven below
+exempt); a lookup or an analysis that would exceed it is refused with
+`429 { error: "quota", message, used, limit, resetInS }` before the step that
+would exceed it: a refusal before the rankings query or before an analysis
+spends nothing; a lookup refused before its run enrichment has already paid
+the rankings query (about 10 pts), which is why the first check blocks as soon
+as fewer than 10 pts are left. Cached data — a tab in your history, a run
+already in the cache, an analysis already done — never counts. Whatever the quotas say, the client is never driven below
 100 points left (`429 { error: "budget", … }`), so cached lookups keep working
 for everyone. The header shows "N pts left this hour"; `GET /api/me` and every
 lookup/analysis response carry `quota`, and admins can read

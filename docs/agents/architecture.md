@@ -86,5 +86,5 @@ Hosted mode (`bmpl serve --hosted`) additionally requires `BMPL_BASE_URL`, `BMPL
 - Season-specific content is a versioned data file, not code.
 - `Class:Spec` keys, WCL spelling, everywhere.
 - Hosted payloads are stored raw and get today's analyses attached on read (0 pts); nothing iterates other users' rows after an analysis.
-- A quota refusal happens before any WCL call and spends nothing; cached data never consults the gate.
+- A quota refusal happens before the WCL step it guards and that step spends nothing; the lookup's enrichment gate sits after the rankings query, so a lookup refused there has already paid ~10 pts. Cached data never consults the gate.
 - The CLI and local mode never install the observer: no accounting, no quota.

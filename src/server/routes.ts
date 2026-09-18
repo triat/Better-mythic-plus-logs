@@ -5,7 +5,7 @@ import type { RequestContext } from "../hosted/auth.ts";
 
 export type RouteAuth = "public" | "user" | "admin";
 export type Handler = (req: Request, url: URL, ctx: RequestContext) => Response | Promise<Response>;
-export interface Route { method: "GET" | "POST" | "DELETE"; match: (path: string) => boolean; handle: Handler; auth: RouteAuth }
+export interface Route { method: "GET" | "POST" | "DELETE" | "PUT"; match: (path: string) => boolean; handle: Handler; auth: RouteAuth }
 
 export const route = (method: Route["method"], path: string, handle: Handler, auth: RouteAuth = "user"): Route =>
   ({ method, match: (p) => p === path, handle, auth });

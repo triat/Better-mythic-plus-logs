@@ -9,6 +9,7 @@ import { findRoute } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { adminRoutes } from "./server/routes-admin.ts";
 import { authRoutes } from "./server/routes-auth.ts";
+import { userRoutes } from "./server/routes-user.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
 import { localHistory } from "./server/local-history.ts";
@@ -74,7 +75,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   }
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint }),
-    ...(runtime ? [...authRoutes(runtime), ...adminRoutes(runtime)] : localRoutes()),
+    ...(runtime ? [...authRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime)] : localRoutes()),
   ];
 
   const respond = async (req: Request, url: URL, peerIp: string | null): Promise<Response> => {

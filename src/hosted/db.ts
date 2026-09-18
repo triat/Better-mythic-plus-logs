@@ -11,6 +11,8 @@ export interface UserRow { id: number; discordId: string; username: string; glob
 export interface SessionRow { id: string; userId: number; createdAt: number; expiresAt: number; ip: string | null; userAgent: string | null }
 export interface InviteRow { discordId: string; invitedBy: string; createdAt: number; note: string | null }
 export interface DiscordIdentity { discordId: string; username: string; globalName: string | null; avatarHash: string | null }
+export interface UserSettings { yourKey: number | null; legendOpen: boolean }
+export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true };
 
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** A session is only re-stamped when it has consumed at least this much of its TTL (avoids a write per request). */
@@ -37,6 +39,11 @@ export interface HostedDb {
     remove(discordId: string): boolean;
     has(discordId: string): boolean;
     list(): InviteRow[];
+  };
+  settings: {
+    get(userId: number): UserSettings;
+    /** Merges `patch` over the stored (or default) row and returns the result. */
+    update(userId: number, patch: Partial<UserSettings>, now: number): UserSettings;
   };
   history: UserHistoryRepo;
 }
@@ -74,6 +81,13 @@ export function openHosted(db: Database): HostedDb {
   const inviteAll = db.query<InviteRaw, []>("SELECT * FROM invites ORDER BY created_at");
   const inviteUpsert = db.query("INSERT INTO invites (discord_id, invited_by, created_at, note) VALUES (?, ?, ?, ?) ON CONFLICT(discord_id) DO UPDATE SET invited_by = excluded.invited_by, note = excluded.note");
   const inviteDelete = db.query("DELETE FROM invites WHERE discord_id = ?");
+
+  const settingsGet = db.query<{ your_key: number | null; legend_open: number }, [number]>("SELECT your_key, legend_open FROM user_settings WHERE user_id = ?");
+  const settingsUpsert = db.query("INSERT INTO user_settings (user_id, your_key, legend_open, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET your_key = excluded.your_key, legend_open = excluded.legend_open, updated_at = excluded.updated_at");
+  const settings = (userId: number): UserSettings => {
+    const r = settingsGet.get(userId);
+    return r ? { yourKey: r.your_key, legendOpen: r.legend_open === 1 } : { ...DEFAULT_USER_SETTINGS };
+  };
 
   const changes = (): number => Number(db.query<{ n: number }, []>("SELECT changes() AS n").get()!.n);
 
@@ -122,6 +136,14 @@ export function openHosted(db: Database): HostedDb {
       remove(discordId) { inviteDelete.run(discordId); return changes() === 1; },
       has: (discordId) => inviteGet.get(discordId) !== null,
       list: () => inviteAll.all().map(invite),
+    },
+    settings: {
+      get: settings,
+      update(userId, patch, now) {
+        const next = { ...settings(userId), ...patch };
+        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, now);
+        return next;
+      },
     },
     history: openUserHistory(db),
   };

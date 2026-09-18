@@ -114,3 +114,35 @@ describe("per-user history (hosted)", () => {
     expect((await (await fetch(l("/api/history"))).json()).items).toEqual([]);
   });
 });
+
+describe("/api/settings (hosted)", () => {
+  const put = (who: { cookie: string }, body: unknown) => fetch(h("/api/settings"), as(who, { method: "PUT", body: typeof body === "string" ? body : JSON.stringify(body) }));
+
+  test("401 without a session; defaults for a fresh user", async () => {
+    expect((await fetch(h("/api/settings"))).status).toBe(401);
+    expect((await fetch(h("/api/settings"), { method: "PUT", body: "{}" })).status).toBe(401);
+    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true } });
+  });
+
+  test("PUT merges partial patches per user", async () => {
+    expect(await (await put(a, { yourKey: 22 })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: true } });
+    expect(await (await put(a, { legendOpen: false })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false } });
+    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false } });
+    expect(await (await fetch(h("/api/settings"), as(b))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true } });
+    expect(await (await put(a, { yourKey: null })).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: false } });
+  });
+
+  test("PUT validates its body", async () => {
+    for (const body of ["not json", {}, { yourKey: 1 }, { yourKey: 41 }, { yourKey: "18" }, { yourKey: 18.5 }, { legendOpen: "yes" }, { other: 1 }]) {
+      const res = await put(a, body);
+      expect(res.status).toBe(400);
+      expect((await res.json()).ok).toBe(false);
+    }
+    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: false } });
+  });
+
+  test("local mode does not register the settings routes", async () => {
+    expect((await fetch(l("/api/settings"))).status).toBe(404);
+    expect((await fetch(l("/api/settings"), { method: "PUT", body: "{}" })).status).toBe(404);
+  });
+});

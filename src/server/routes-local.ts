@@ -4,20 +4,17 @@
 import { closeStore } from "../signals/store.ts";
 import { writeCredentials } from "../setup.ts";
 import { resetAuthCache } from "../wcl/auth.ts";
-import { jsonResponse, parseMetric, readJson } from "./http.ts";
+import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
+import { SETUP_BODY, WATCH_BODY, parseBody } from "./validate.ts";
 import { startWatcher, stopWatcher, watcherStatus } from "./watcher.ts";
 
-interface SetupRequest { clientId?: string; clientSecret?: string }
-interface WatchStartBody { level?: number | string | null; spec?: string | null; metric?: string | null }
-
 async function handleSetup(req: Request): Promise<Response> {
-  const body = await readJson<SetupRequest>(req);
-  if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  if (!body.clientId || !body.clientSecret) return jsonResponse({ ok: false, error: "Both clientId and clientSecret are required." }, 400);
+  const b = await parseBody(req, SETUP_BODY);
+  if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
   try {
-    const envPath = await writeCredentials(body.clientId, body.clientSecret);
+    const envPath = await writeCredentials(b.value.clientId, b.value.clientSecret);
     resetAuthCache();
     return jsonResponse({ ok: true, envPath });
   } catch (e) {
@@ -26,13 +23,9 @@ async function handleSetup(req: Request): Promise<Response> {
 }
 
 async function handleWatchStart(req: Request): Promise<Response> {
-  const body = (await readJson<WatchStartBody>(req)) ?? {};
-  let level: number | null = null;
-  if (body.level !== undefined && body.level !== null && body.level !== "") {
-    const n = Number.parseInt(String(body.level), 10);
-    if (Number.isFinite(n) && n >= 2) level = n;
-  }
-  const opts = { level, spec: body.spec && body.spec.trim() ? body.spec.trim() : null, metric: parseMetric(body.metric ?? null) ?? null };
+  const b = await parseBody(req, WATCH_BODY, {});
+  if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+  const opts = { level: b.value.level ?? null, spec: b.value.spec || null, metric: b.value.metric ?? null };
   try {
     await startWatcher(opts);
     return jsonResponse({ ok: true, active: true, opts });

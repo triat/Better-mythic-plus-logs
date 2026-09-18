@@ -39,9 +39,9 @@ export interface HistoryItem {
 
 export interface LookupRequest {
   character: string;
-  level?: number | string | null;
+  level?: number | null;
   spec?: string | null;
-  metric?: string | null;
+  metric?: "dps" | "hps" | null;
   refresh?: boolean;
 }
 

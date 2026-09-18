@@ -9,8 +9,9 @@ import { propose, proposalSummary, tablesFor } from "../hosted/defensives.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { LookupPayload } from "../lookup.ts";
 import { getStore } from "../signals/store.ts";
-import { jsonResponse, readJson } from "./http.ts";
+import { jsonResponse } from "./http.ts";
 import { localHistory } from "./local-history.ts";
+import { DEEPDIVE_BODY, DEFENSIVES_BODY, parseBody } from "./validate.ts";
 
 /** The tables a request analyses with: the member's own layer (shared ⊕ their pending proposals) when hosted, the file otherwise. */
 export async function tablesOf(ctx: RequestContext, runtime: HostedRuntime | null): Promise<LoadedTables> {
@@ -29,12 +30,10 @@ export async function refreshLocalHistory(): Promise<void> {
   for (const e of localHistory.list()) localHistory.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
 }
 
-interface DeepdiveBody { reportCode?: string; fightID?: number; character?: string; force?: boolean }
-
 export async function handleDeepdive(req: Request, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
-  const body = await readJson<DeepdiveBody>(req);
-  if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  if (!body.reportCode || typeof body.fightID !== "number" || !body.character) return jsonResponse({ ok: false, error: "`reportCode`, `fightID` and `character` are required" }, 400);
+  const b = await parseBody(req, DEEPDIVE_BODY);
+  if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+  const body = b.value;
   if (!hasCredentials()) return jsonResponse({ ok: false, error: "No credentials configured. Visit /setup first." }, 400);
   const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
   const [store, tables] = await Promise.all([getStore(), tablesOf(ctx, runtime)]);
@@ -61,12 +60,10 @@ export async function handleDefensivesGet(url: URL, ctx: RequestContext, runtime
   return jsonResponse({ ok: true, ...base, proposals });
 }
 
-interface DefensivesPatchBody { className?: string; spec?: string; patch?: OverrideEntry }
-
 export async function handleDefensivesPost(req: Request, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
-  const body = await readJson<DefensivesPatchBody>(req);
-  if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  if (typeof body.className !== "string" || typeof body.spec !== "string" || !body.className || !body.spec || !body.patch) return jsonResponse({ ok: false, error: "`className`, `spec` and `patch` are required" }, 400);
+  const b = await parseBody(req, DEFENSIVES_BODY);
+  if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+  const body = b.value;
   if (runtime && ctx.user) {
     // Hosted: a correction is a proposal — it applies to its author now and to everyone once an admin approves it.
     const r = propose(runtime.db.defensives, { id: ctx.user.id, role: ctx.user.role }, body.className, body.spec, body.patch, ctx.now);

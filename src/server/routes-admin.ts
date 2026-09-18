@@ -14,9 +14,10 @@ import { resetInS } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import { resolveEnvPath } from "../setup.ts";
 import { getStore } from "../signals/store.ts";
-import { jsonResponse, readJson } from "./http.ts";
+import { jsonResponse } from "./http.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
+import { INVITE_BODY, NOTE_BODY, ROLE_BODY, parseBody } from "./validate.ts";
 
 interface AdminUserExtra { pointsHour: number; points24h: number; sessions: number; configAdmin: boolean }
 
@@ -46,11 +47,10 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       }),
     }), "admin"),
     route("POST", "/api/admin/invites", async (req, _url, ctx) => {
-      const body = await readJson<{ discordId?: unknown; note?: unknown }>(req);
-      const discordId = typeof body?.discordId === "string" ? body.discordId.trim() : "";
-      if (!DISCORD_ID.test(discordId)) return jsonResponse({ ok: false, error: "`discordId` must be a 17–20 digit Discord user id" }, 400);
-      const note = typeof body?.note === "string" && body.note.trim() ? body.note.trim().slice(0, 200) : null;
-      return jsonResponse({ ok: true, invite: rt.db.invites.add(discordId, `admin:${ctx.user!.id}`, note, Date.now()) });
+      const b = await parseBody(req, INVITE_BODY);
+      if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+      const { discordId, note } = b.value;
+      return jsonResponse({ ok: true, invite: rt.db.invites.add(discordId, `admin:${ctx.user!.id}`, note || null, Date.now()) });
     }, "admin"),
     prefixRoute("DELETE", "/api/admin/invites/", (_req, url) => {
       const id = tail(url, "/api/admin/invites/");
@@ -95,8 +95,9 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
     prefixRoute("POST", "/api/admin/proposals/", async (req, url, ctx) => {
       const m = /^(\d+)\/(approve|reject)$/.exec(tail(url, "/api/admin/proposals/"));
       if (!m) return jsonResponse({ ok: false, error: "Expected /api/admin/proposals/:id/approve or /reject" }, 400);
-      const body = await readJson<{ note?: unknown }>(req);
-      const note = typeof body?.note === "string" && body.note.trim() ? body.note.trim().slice(0, 500) : null;
+      const b = await parseBody(req, NOTE_BODY, {});
+      if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+      const note = b.value.note || null;
       const p = decide(rt.db.defensives, Number.parseInt(m[1]!, 10), { id: ctx.user!.id }, m[2] === "approve" ? "approved" : "rejected", note, ctx.now);
       if (!p) return jsonResponse({ ok: false, error: "No pending proposal with that id" }, 404);
       return jsonResponse({ ok: true, proposal: { ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy } });
@@ -122,9 +123,9 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const m = /^(\d+)\/role$/.exec(tail(url, "/api/admin/users/"));
       if (!m) return jsonResponse({ ok: false, error: "Invalid user id" }, 400);
       const id = Number.parseInt(m[1]!, 10);
-      const body = await readJson<{ role?: unknown }>(req);
-      const role = body?.role;
-      if (role !== "member" && role !== "admin") return jsonResponse({ ok: false, error: "`role` must be member or admin" }, 400);
+      const b = await parseBody(req, ROLE_BODY);
+      if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+      const { role } = b.value;
       if (id === ctx.user!.id) return jsonResponse({ ok: false, error: "You cannot change your own role" }, 400);
       const target = rt.db.users.byId(id);
       if (!target) return jsonResponse({ ok: false, error: "Unknown user" }, 404);

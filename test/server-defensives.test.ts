@@ -109,15 +109,16 @@ describe("hosted defensives: proposals", () => {
     expect(r.status).toBe(400);
   });
 
-  test("a rejection note over 500 chars is truncated to 500 in storage", async () => {
+  test("a note over 500 chars is refused, not silently truncated", async () => {
     const proposed = await (await post(bob, "/api/defensives", { className: "Paladin", spec: "Holy", patch: { id: 642, cooldownS: 61 } })).json();
     const id = proposed.proposal.id;
     const long = "x".repeat(600);
     const rej = await post(admin, `/api/admin/proposals/${id}/reject`, { note: long });
-    expect(rej.status).toBe(200);
-    const rejected = await (await get(admin, "/api/admin/proposals?status=rejected")).json();
-    const stored = rejected.proposals.find((p: { id: number }) => p.id === id);
-    expect(stored.note.length).toBe(500);
+    expect(rej.status).toBe(400);
+    expect((await rej.json())).toEqual({ ok: false, error: "`note` must be at most 500 characters" });
+    // The proposal is untouched: still pending.
+    const pending = await (await get(admin, "/api/admin/proposals?status=pending")).json();
+    expect(pending.proposals.map((p: { id: number }) => p.id)).toContain(id);
   });
 
   test("a whitespace-only note stores as null on approve and reject", async () => {

@@ -9,15 +9,8 @@ import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
 import type { HistoryListItem, HistoryStore } from "../server-history.ts";
 import { tablesOf, withCachedAnalyses } from "./deepdive.ts";
-import { jsonResponse, parseCharacterInput, parseMetric, readJson } from "./http.ts";
-
-interface LookupRequest {
-  character?: string;
-  level?: number | string | null;
-  spec?: string | null;
-  metric?: string | null;
-  refresh?: boolean;
-}
+import { jsonResponse, parseCharacterInput } from "./http.ts";
+import { LOOKUP_BODY, WOW_NAME, WOW_REALM, parseBody } from "./validate.ts";
 
 export const historySummary = (entry: HistoryListItem) => ({
   key: entry.key,
@@ -57,7 +50,7 @@ export async function runLookupWithCache(opts: {
     return { ok: false, error: "No credentials configured. Visit /setup first.", status: 400 };
   }
   const target = parseCharacterInput(opts.character);
-  if (!target) {
+  if (!target || !WOW_NAME.test(target.name) || !WOW_REALM.test(target.realm)) {
     return {
       ok: false,
       error: "Could not parse character. Use `Name-Realm` or `Name Realm`.",
@@ -131,30 +124,16 @@ export async function runLookupWithCache(opts: {
 }
 
 export async function handleLookup(req: Request, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
-  const body = await readJson<LookupRequest>(req);
-  if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  const raw = (body.character ?? "").trim();
-  if (!raw) {
-    return jsonResponse({ ok: false, error: "`character` is required" }, 400);
-  }
-  let levelOverride: number | null = null;
-  if (body.level !== undefined && body.level !== null && body.level !== "") {
-    const n = Number.parseInt(String(body.level), 10);
-    if (!Number.isFinite(n) || n < 2) {
-      return jsonResponse(
-        { ok: false, error: `Invalid level: ${body.level}` },
-        400,
-      );
-    }
-    levelOverride = n;
-  }
+  const b = await parseBody(req, LOOKUP_BODY);
+  if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+  const body = b.value;
   const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
   const tables = await tablesOf(ctx, runtime);
   const result = await runLookupWithCache({
-    character: raw,
-    level: levelOverride,
-    spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
-    metric: parseMetric(body.metric ?? null) ?? null,
+    character: body.character,
+    level: body.level ?? null,
+    spec: body.spec || null,
+    metric: body.metric ?? null,
     refresh: !!body.refresh,
   }, historyOf(ctx), { reserve: runtime && user ? runtime.quota.for(user) : undefined, tables });
   if (!result.ok) return jsonResponse(result.quota ? { ok: false, ...result.quota } : { ok: false, error: result.error }, result.status);

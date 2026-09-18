@@ -34,11 +34,11 @@ describe("api", () => {
   test("lookup posts JSON and encodes history keys", async () => {
     const seen: { url: string; init?: RequestInit }[] = [];
     mock((url, init) => { seen.push({ url, init }); return Response.json({ ok: true }); });
-    await api.lookup({ character: "A-B", level: "20", refresh: true });
+    await api.lookup({ character: "A-B", level: 20, refresh: true });
     await api.removeHistory("k/1");
     expect(seen[0]!.url).toBe("/api/lookup");
     expect(seen[0]!.init?.method).toBe("POST");
-    expect(JSON.parse(String(seen[0]!.init?.body))).toEqual({ character: "A-B", level: "20", refresh: true });
+    expect(JSON.parse(String(seen[0]!.init?.body))).toEqual({ character: "A-B", level: 20, refresh: true });
     expect(seen[1]!.url).toBe("/api/history/k%2F1");
     expect(seen[1]!.init?.method).toBe("DELETE");
   });

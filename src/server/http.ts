@@ -7,11 +7,6 @@ export const jsonResponse = (data: unknown, status = 200): Response =>
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 
-/** Parses a JSON body; null when the body is not valid JSON (callers answer 400). */
-export async function readJson<T>(req: Request): Promise<T | null> {
-  try { return (await req.json()) as T; } catch { return null; }
-}
-
 export const parseMetric = (raw: string | null | undefined): Metric | undefined => {
   if (!raw) return undefined;
   const v = raw.trim().toLowerCase();

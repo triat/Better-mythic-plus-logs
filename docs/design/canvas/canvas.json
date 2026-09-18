@@ -151,6 +151,42 @@
       "h": 980,
       "title": "Deep-dive panel, hosted member view — A chips · B text suffix · C status dot + proposals footer",
       "page": "hosted"
+    },
+    {
+      "file": "AdminTabs.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Admin page — A · tabs (Overview · Proposals · Users · Invites · Instance), Proposals tab open",
+      "page": "hosted"
+    },
+    {
+      "file": "AdminOnePage.dc.html",
+      "x": 3120,
+      "y": 1020,
+      "w": 1440,
+      "h": 1900,
+      "title": "Admin page — B · one page, every section stacked, anchor sub-nav",
+      "page": "hosted"
+    },
+    {
+      "file": "AdminDashboard.dc.html",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 1500,
+      "title": "Admin page — C · dashboard, budget + queue left, users + invites right",
+      "page": "hosted"
+    },
+    {
+      "file": "AdminDetails.dc.html",
+      "x": 4680,
+      "y": 1620,
+      "w": 1440,
+      "h": 1000,
+      "title": "Admin page — shared details: member 403, proposal card anatomy, empty queue, after a decision, confirmations",
+      "page": "hosted"
     }
   ],
   "annotations": [
@@ -209,6 +245,14 @@
       "w": 560,
       "page": "hosted",
       "text": "Issue #7 — hosted mode front. Local mode stays pixel-identical; everything here only renders when /api/status says hosted.\n\nPick one letter per artboard (A/B/C — 'B + C' combos welcome):\n· Sign-in screen (401) and the notice treatment for ?denied=1 (1/2/3).\n· Header: Re-configure / Quit / clipboard watch are gone; user menu with avatar, name, quota, Admin (admins only), Sign out. Quota label refreshes after each lookup / analyze and from 429 bodies.\n· Deep-dive panel: 'Propose …' wording for members, pending / shared / rejected marks.\n\nAll colours are tokens.css values (yellow = pending, link blue = shared, red = rejected/quota). Sample user Muleyoxo, admin, 212 of 300 pts left."
+    },
+    {
+      "id": "admin-brief",
+      "x": 3120,
+      "y": -190,
+      "w": 560,
+      "page": "hosted",
+      "text": "Issue #8 — admin page at /admin (the menu's Admin item). Same sections in A / B / C, pick the layout:\n· A tabs — one concern per tab, counts in the tab labels.\n· B one page — everything visible, anchor sub-nav; longest.\n· C dashboard — two columns, compact rows (24 h totals and Discord ids hidden), instance strip below.\n\nShared details on the 4th artboard: member 403 screen, proposal card (current → proposed diff, author, note to the author, Approve / Reject), empty queue, post-decision line, the two confirmations (role change, revoke sessions).\n\nNot in this issue: the WCL error list (needs the audit log, #9) — the budget gauge ships without it; 'last backup' reads the file #10's deploy writes."
     }
   ],
   "launch": {

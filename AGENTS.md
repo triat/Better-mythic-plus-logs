@@ -60,4 +60,4 @@ web/src/lib/          pure tested view models      web/src/components/   thin Re
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#7 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front) are shipped, next is #8 (admin page).
+Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#8 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front, admin page) are shipped, next is #9 (hardening).

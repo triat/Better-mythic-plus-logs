@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1500px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="top">
+    <div class="brand">bmpl</div>
+    <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><div style="flex: 1; font-size: 14px;">Name-Realm or Raider.IO URL</div><span class="chip">spec any</span></div>
+    <div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div>
+    <div class="lookup">Look up</div>
+    <div style="flex: 1;"></div>
+    <div class="btn"><span class="avatar">M</span>Muleyoxo <span class="faint" style="font-size: 12px;">▾</span></div>
+  </div>
+  <div style="display: flex; align-items: baseline; gap: 12px; padding: 14px 24px 0;">
+    <a href="#" class="muted" style="font-size: 13px;">← back to lookups</a>
+    <span style="font-size: 18px; font-weight: 700;">Admin</span>
+    <span class="muted" style="font-size: 12px;">Admin · invites, users, proposals, budget, instance</span>
+  </div>
+  <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; padding: 20px 24px;">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card" style="display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: start;">
+    <div class="gauge">
+      <div class="caps">Shared WCL budget · this hour</div>
+      <div class="big">1 412 <span class="muted" style="font-size: 14px; font-weight: 400; font-family: inherit;">/ 3 600 pts</span></div>
+      <span class="bar"><span style="width: 39%;"></span></span>
+      <div class="muted" style="font-size: 12px;">resets in 38 min · floor 100 pts · last rateLimitData 2 min ago</div>
+    </div>
+    <div>
+      <div class="caps" style="margin-bottom: 6px;">Top consumers · this hour</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+        <div style="display: flex; gap: 10px; align-items: center;"><span class="avatar">T</span><span style="width: 120px;">tom</span><span class="bar" style="width: 160px;"><span style="width: 84%; background: #e3b341;"></span></span><span class="mono">252 / 300</span></div>
+        <div style="display: flex; gap: 10px; align-items: center;"><span class="avatar">M</span><span style="width: 120px;">Muleyoxo <span class="chip chip-admin" style="margin-left: 4px;">admin</span></span><span class="bar" style="width: 160px;"><span style="width: 60%;"></span></span><span class="mono">181 <span class="faint">· no limit</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center;"><span class="avatar">B</span><span style="width: 120px;">bob</span><span class="bar" style="width: 160px;"><span style="width: 12%;"></span></span><span class="mono">37 / 300</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="section-title">Proposal queue</span>
+      <span class="muted" style="font-size: 12px;">members' defensives corrections · approve applies to everyone, reject drops it for the author (note is shown to them)</span>
+      <div style="flex: 1;"></div>
+      <span class="chip chip-on">Pending · 3</span><span class="chip">Decided · 12</span>
+    </div>
+    <div class="inset" style="padding: 10px 12px; display: grid; grid-template-columns: 1fr 300px auto; gap: 16px; align-items: center;">
+      <div>
+        <div style="font-size: 13px;"><span class="dot dot-pending"></span><a href="#" class="soft" style="border-bottom: 1px dotted #6e7681; color: inherit;">Blessing of Freedom</a> <span class="faint">· Paladin:Holy · id 1044</span></div>
+        <div class="muted" style="font-size: 12px;">by <span class="soft">tom</span> · 2 h ago</div>
+      </div>
+      <div class="diff"><span class="k">kind</span><span class="old">— (not in table)</span><span class="new">minor</span><span class="k">cooldown</span><span class="old">—</span><span class="new">25 s</span><span class="k">duration</span><span class="old">—</span><span class="new">6 s</span></div>
+      <div style="display: inline-flex; gap: 6px; align-items: center;">
+        <span class="note-input" style="width: 160px;">Note to the author (optional)</span>
+        <span class="btn btn-sm btn-primary">Approve</span><span class="btn btn-sm btn-danger">Reject</span>
+      </div>
+    </div>
+    <div class="inset" style="padding: 10px 12px; display: grid; grid-template-columns: 1fr 300px auto; gap: 16px; align-items: center;">
+      <div>
+        <div style="font-size: 13px;"><span class="dot dot-pending"></span><a href="#" class="soft" style="border-bottom: 1px dotted #6e7681; color: inherit;">Divine Shield</a> <span class="faint">· Paladin:Holy · id 642</span></div>
+        <div class="muted" style="font-size: 12px;">by <span class="soft">bob</span> · yesterday</div>
+      </div>
+      <div class="diff"><span class="k">cooldown</span><span class="old">300 s</span><span class="new">240 s</span></div>
+      <div style="display: inline-flex; gap: 6px; align-items: center;">
+        <span class="note-input" style="width: 160px;">Note to the author (optional)</span>
+        <span class="btn btn-sm btn-primary">Approve</span><span class="btn btn-sm btn-danger">Reject</span>
+      </div>
+    </div>
+    <div class="inset" style="padding: 10px 12px; display: grid; grid-template-columns: 1fr 300px auto; gap: 16px; align-items: center;">
+      <div>
+        <div style="font-size: 13px;"><span class="dot dot-pending"></span><a href="#" class="soft" style="border-bottom: 1px dotted #6e7681; color: inherit;">Aura Mastery</a> <span class="faint">· Paladin:Holy · id 31821</span></div>
+        <div class="muted" style="font-size: 12px;">by <span class="soft">tom</span> · 3 d ago</div>
+      </div>
+      <div class="diff"><span class="k">ignore</span><span class="old">listed (minor, cd 180 s)</span><span class="new">ignored for this spec</span></div>
+      <div style="display: inline-flex; gap: 6px; align-items: center;">
+        <span class="note-input" style="width: 160px;">Note to the author (optional)</span>
+        <span class="btn btn-sm btn-primary">Approve</span><span class="btn btn-sm btn-danger">Reject</span>
+      </div>
+    </div>
+  </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card" style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px;">
+    <div style="display: flex; align-items: center; gap: 10px;"><span class="section-title">Users</span><span class="muted" style="font-size: 12px;">3</span></div>
+    <div class="row caps" style="grid-template-columns: 24px 1fr 110px 90px 70px auto; padding: 2px 10px;"><span></span><span>name</span><span>role</span><span>last seen</span><span>pts · h</span><span></span></div>
+    <div class="inset row" style="grid-template-columns: 24px 1fr 110px 90px 70px auto;"><span class="avatar">M</span><span>Muleyoxo <span class="faint">@muleyoxo</span></span><span><span class="chip chip-admin">admin</span> <span class="faint" style="font-size: 11px;">env</span></span><span class="muted">just now</span><span class="mono">181</span><span class="btn btn-sm">Revoke</span></div>
+    <div class="inset row" style="grid-template-columns: 24px 1fr 110px 90px 70px auto;"><span class="avatar">T</span><span>tom <span class="faint">@tom</span></span><span><span class="chip">member ▾</span></span><span class="muted">2 h ago</span><span class="mono" style="color: #e3b341;">252</span><span class="btn btn-sm">Revoke</span></div>
+    <div class="inset row" style="grid-template-columns: 24px 1fr 110px 90px 70px auto;"><span class="avatar">B</span><span>bob <span class="faint">@bobthepally</span></span><span><span class="chip">member ▾</span></span><span class="muted">3 d ago</span><span class="mono">37</span><span class="btn btn-sm">Revoke</span></div>
+    <div class="faint" style="font-size: 12px;">24 h totals and Discord ids: hover a row, or open the Users detail (not shown).</div>
+  </div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px;">
+    <div style="display: flex; align-items: center; gap: 10px;"><span class="section-title">Invites</span><span class="muted" style="font-size: 12px;">4</span></div>
+    <div style="display: flex; gap: 8px; align-items: center; margin: 4px 0 6px;">
+      <span class="note-input mono" style="width: 190px; height: 32px; font-size: 13px;">Discord id</span>
+      <span class="note-input" style="width: 200px; height: 32px; font-size: 13px;">Note</span>
+      <span class="btn btn-primary">Invite</span>
+    </div>
+    <div class="inset row" style="grid-template-columns: 170px 1fr 150px auto;"><span class="mono">22222222222222222</span><span class="muted">guild mate · healer</span><span><span class="chip chip-ok">signed in as tom</span></span><span class="btn btn-sm">Remove</span></div>
+    <div class="inset row" style="grid-template-columns: 170px 1fr 150px auto;"><span class="mono">33333333333333333</span><span class="muted">bob (pug regular)</span><span><span class="chip chip-ok">signed in as bob</span></span><span class="btn btn-sm">Remove</span></div>
+    <div class="inset row" style="grid-template-columns: 170px 1fr 150px auto;"><span class="mono">44444444444444444</span><span class="muted">new raid lead</span><span><span class="chip">not signed in yet</span></span><span class="btn btn-sm">Remove</span></div>
+    <div class="inset row" style="grid-template-columns: 170px 1fr 150px auto;"><span class="mono">55555555555555555</span><span class="faint">—</span><span><span class="chip">not signed in yet</span></span><span class="btn btn-sm">Remove</span></div>
+  </div>
+    </div>
+  </div>
+  <div style="padding: 0 24px 20px;">
+  <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <div>
+      <div class="section-title" style="margin-bottom: 8px;">Instance</div>
+      <div class="kv">
+        <span class="k">version</span><span class="mono">0.7.0</span>
+        <span class="k">uptime</span><span>3 d 4 h</span>
+        <span class="k">database</span><span class="mono">bmpl.db · 41.2 MB</span>
+        <span class="k">last backup</span><span>12 min ago <span class="faint">· /opt/bmpl/last-backup</span></span>
+        <span class="k">WCL client</span><span>rateLimitData 2 min ago · 3 600 pts/h</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-title" style="margin-bottom: 8px;">Effective environment <span class="faint" style="font-weight: 400; font-size: 12px;">secrets masked</span></div>
+      <div class="kv mono" style="font-size: 12px;">
+        <span class="k">BMPL_BASE_URL</span><span>https://bmpl.example.com</span>
+        <span class="k">BMPL_DISCORD_CLIENT_ID</span><span>123456789012345678</span>
+        <span class="k">BMPL_DISCORD_CLIENT_SECRET</span><span class="faint">•••••••• (set)</span>
+        <span class="k">BMPL_SESSION_SECRET</span><span class="faint">•••••••• (48 bytes)</span>
+        <span class="k">BMPL_ADMIN_DISCORD_IDS</span><span>11111111111111111</span>
+        <span class="k">BMPL_POINTS_PER_USER_HOUR</span><span>300</span>
+        <span class="k">WCL_CLIENT_ID</span><span>a3f1…9c2e</span>
+        <span class="k">WCL_CLIENT_SECRET</span><span class="faint">•••••••• (set)</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="label" style="padding: 0 24px 8px;">C · DASHBOARD — budget + queue left, users + invites right (compact rows), instance strip below</div>
+
+</div>
+</x-dc>
+</body>
+</html>

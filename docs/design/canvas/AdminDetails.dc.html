@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1000px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="content content-wide" style="gap: 22px;">
+    <div class="caps">Shared details — the same in A / B / C</div>
+    <div>
+      <div class="label" style="margin-bottom: 8px;">MEMBER OPENS /admin → 403 SCREEN (server answers 403 on every /api/admin/* anyway)</div>
+      <div style="background: #0d1117; border: 1px solid #21262d; border-radius: 6px; height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+        <div style="font-size: 22px; font-weight: 700;">Admins only</div>
+        <div class="muted">This page is for the people who run this instance. Your account (<span class="mono">@tom</span>) is a member.</div>
+        <a href="#" class="btn" style="margin-top: 6px;">← back to lookups</a>
+      </div>
+    </div>
+    <div>
+      <div class="label" style="margin-bottom: 8px;">PROPOSAL CARD — anatomy: what changes (current → proposed), who, when; note goes to the author; approve = shared for everyone, reject = dropped for the author</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="inset" style="padding: 10px 12px; display: grid; grid-template-columns: 1fr 340px auto; gap: 16px; align-items: center;">
+      <div>
+        <div style="font-size: 13px;"><span class="dot dot-pending"></span><a href="#" class="soft" style="border-bottom: 1px dotted #6e7681; color: inherit;">Blessing of Freedom</a> <span class="faint">· Paladin:Holy · id 1044</span></div>
+        <div class="muted" style="font-size: 12px;">by <span class="soft">tom</span> · 2 h ago</div>
+      </div>
+      <div class="diff"><span class="k">kind</span><span class="old">— (not in table)</span><span class="new">minor</span><span class="k">cooldown</span><span class="old">—</span><span class="new">25 s</span><span class="k">duration</span><span class="old">—</span><span class="new">6 s</span></div>
+      <div style="display: inline-flex; gap: 6px; align-items: center;">
+        <span class="note-input">Note to the author (optional)</span>
+        <span class="btn btn-sm btn-primary">Approve</span><span class="btn btn-sm btn-danger">Reject</span>
+      </div>
+    </div>
+    <div class="inset" style="padding: 10px 12px; display: grid; grid-template-columns: 1fr 340px auto; gap: 16px; align-items: center;">
+      <div>
+        <div style="font-size: 13px;"><span class="dot dot-pending"></span><a href="#" class="soft" style="border-bottom: 1px dotted #6e7681; color: inherit;">Divine Shield</a> <span class="faint">· Paladin:Holy · id 642</span></div>
+        <div class="muted" style="font-size: 12px;">by <span class="soft">bob</span> · yesterday</div>
+      </div>
+      <div class="diff"><span class="k">cooldown</span><span class="old">300 s</span><span class="new">240 s</span></div>
+      <div style="display: inline-flex; gap: 6px; align-items: center;">
+        <span class="note-input">It is 5 min in the tooltip|</span>
+        <span class="btn btn-sm btn-primary">Approve</span><span class="btn btn-sm btn-danger">Reject</span>
+      </div>
+    </div>
+        <div class="faint" style="font-size: 12px;">Spell names link to Wowhead (tooltip on hover). A proposal on an entry that changed since (shared table moved) shows "current" as it is now, not as the author saw it.</div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div>
+        <div class="label" style="margin-bottom: 8px;">EMPTY QUEUE</div>
+        <div class="card" style="display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; align-items: center; gap: 10px;"><span class="section-title">Proposal queue</span><div style="flex: 1;"></div><span class="chip chip-on">Pending · 0</span><span class="chip">Decided · 12</span></div><div class="faint" style="font-size: 13px;">Nothing to review. Members' corrections land here.</div></div>
+      </div>
+      <div>
+        <div class="label" style="margin-bottom: 8px;">AFTER A DECISION — the card collapses to one line for a few seconds (undo not offered: the author already sees the note)</div>
+        <div class="card" style="display: flex; flex-direction: column; gap: 8px;"><div class="inset" style="padding: 8px 12px; font-size: 13px; display: flex; gap: 10px; align-items: center;"><span class="dot dot-approved"></span><span>Divine Shield · cd 240 s</span><span class="chip chip-ok">approved</span><span class="faint">shared for everyone · tom will see your note</span></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="label" style="margin-bottom: 8px;">USER ACTIONS — role toggle asks once; "Revoke sessions" signs the user out everywhere (they can sign in again unless the invite is removed)</div>
+      <div class="card" style="display: flex; gap: 12px; align-items: center; font-size: 13px;">
+        <span class="inset" style="padding: 8px 12px;">Make <b>tom</b> an admin? They get the Admin page, no quota, and can approve proposals. <span class="btn btn-sm btn-primary" style="margin-left: 8px;">Make admin</span> <span class="btn btn-sm">Cancel</span></span>
+        <span class="inset" style="padding: 8px 12px;">Revoke <b>bob</b>'s sessions? 2 sessions end now. <span class="btn btn-sm btn-danger" style="margin-left: 8px;">Revoke</span> <span class="btn btn-sm">Cancel</span></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -424,13 +424,16 @@ and add the redirect `https://<your host>/auth/discord/callback`. Access is
 invite-only: the Discord ids in `BMPL_ADMIN_DISCORD_IDS` are admins and can
 always sign in; everyone else needs an invite — `bmpl invite <discord-id>
 [--note "guild mate"]` on the server (`bmpl invite --list`, `--remove <id>`),
-or the admin page once issue #8 lands. The sign-in page is a single **Sign in
+or the admin page (`/admin`, admins only): invites with a note, who signed in,
+remove. The sign-in page is a single **Sign in
 with Discord** button; a user who is not invited comes back to it with an
 *Invitation required* notice showing their Discord id (with a Copy button) so
 they can send it to you. Sessions last 30
 days (sliding) in an `HttpOnly` cookie; **Sign out** ends one. Removing an
 id from `BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change
-the role on the admin page (issue #8) or via `POST /api/admin/users/:id/role`.
+the role on the admin page (Users → make admin / make member) or via
+`POST /api/admin/users/:id/role`; **Revoke sessions** signs a user out
+everywhere (`POST /api/admin/users/:id/sessions/revoke`).
 
 **Per-account state.** Each member has their own lookup history (20 tabs, kept
 in `bmpl.db` across restarts), their own "your key" and legend preference
@@ -461,7 +464,9 @@ exceeds what is left; a 429 shows the server's message as a toast and refreshes 
 (from `error: "quota"` bodies — the member's own; a `budget` refusal only shows the toast).
 `GET /api/me` and every lookup/analysis response carry `quota`, and admins can read
 `GET /api/admin/usage` (this hour per member, the client's last
-`rateLimitData`, the last 24 hourly totals). Estimates before spending:
+`rateLimitData`, the last 24 hourly totals) — the admin page shows it as a
+gauge (this hour vs the client's limit, reset countdown, top consumers, the
+last 24 h per hour). Estimates before spending:
 rankings ≈ 10 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attribution
 is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
@@ -472,14 +477,22 @@ yellow dot before the entry, a blue one for the approved layer, and a "Your
 proposals" footer with each decision and the admin's note; the actions read
 "Propose + major / Propose ignore / Propose cd / Propose removal" for members
 (admins keep the local wording, their correction is approved on the spot))
-and to everyone once an admin approves them (`GET /api/admin/proposals`,
-`POST /api/admin/proposals/:id/approve|reject { note }`); a rejected one is
+and to everyone once an admin approves them (the admin page's proposal queue
+shows what changes — current → proposed — with the author; `GET
+/api/admin/proposals` returns the same rows with `current`, `POST
+/api/admin/proposals/:id/approve|reject { note }` decides); a rejected one is
 dropped for you too, with the admin's note visible in `GET /api/defensives`
 → `proposals`. An admin's own correction is approved on the spot. The
 server's `defensives.json` is not used in hosted mode; the approved layer
 lives in
 `bmpl.db` (`bmpl defensives <Class> <Spec> --shared` and `just
-audit-defensives --shared` read it). The admin page comes with issue #8.
+audit-defensives --shared` read it).
+
+**Instance info.** `GET /api/admin/instance` (and the page's Instance
+section) reports the version, uptime, database size, the last backup (mtime
+of a `last-backup` file next to `.env`, written by the deploy — issue #10)
+and the effective environment with secrets masked. The WCL error list of the
+issue waits for the audit log (issue #9).
 
 Required environment (copy `.env.hosted.example`):
 

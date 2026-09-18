@@ -20,15 +20,15 @@ interface Props {
 
 const KINDS: DefensiveKind[] = ["major", "immunity", "minor"];
 
-/** Dot (shared / pending) before the spell name, or the " · override" suffix after it. */
-function NameCell({ id, name, origin }: { id: number; name: string; origin: EntryOrigin }) {
+/** Dot (shared / pending) before the spell name, or the " · override" suffix after it (set `suffix={false}` when the caller renders it itself). */
+function NameCell({ id, name, origin, suffix = true }: { id: number; name: string; origin: EntryOrigin; suffix?: boolean }) {
   const dot = originDot(origin);
-  const suffix = originSuffix(origin);
+  const suffixText = suffix ? originSuffix(origin) : null;
   return (
     <span>
       {dot && <span className={"dot " + dot} title={originLabel(origin) ?? undefined} />}
       <SpellLink id={id} name={name} />
-      {suffix && <span className="faint"> · {suffix}</span>}
+      {suffixText && <span className="faint"> · {suffixText}</span>}
     </span>
   );
 }
@@ -141,7 +141,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mo
       </button>
       {tableOpen && d.defensives.map((u) => (
         <div key={u.id} className="dd-audit">
-          <span><NameCell id={u.id} name={u.name} origin={u.origin} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s</span></span>
+          <span><NameCell id={u.id} name={u.name} origin={u.origin} suffix={false} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s{originSuffix(u.origin) ? ` · ${originSuffix(u.origin)}` : ""}</span></span>
           {editing?.id === u.id ? (
             <span className="dd-form">
               <label>cd <input className="mono" value={editing.cd} onChange={(e) => setEditing({ id: u.id, cd: e.target.value })} size={4} /> s</label>

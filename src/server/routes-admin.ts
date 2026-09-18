@@ -2,6 +2,8 @@
 import { DISCORD_ID } from "../hosted/config.ts";
 import { HOUR_MS, hourStart } from "../hosted/db.ts";
 import type { UserRow } from "../hosted/db.ts";
+import { decide, proposalSummary } from "../hosted/defensives.ts";
+import type { ProposalStatus } from "../hosted/defensives.ts";
 import { avatarUrl } from "../hosted/discord.ts";
 import { resetInS } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
@@ -51,6 +53,22 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
         }),
         hours: rt.db.usage.totals(at - 24 * HOUR_MS),
       });
+    }, "admin"),
+    // Moderation of members' defensives corrections (issue #6); the admin page (#8) is the client.
+    route("GET", "/api/admin/proposals", (_req, url) => {
+      const status = (url.searchParams.get("status") ?? "pending") as ProposalStatus;
+      if (!["pending", "approved", "rejected"].includes(status)) return jsonResponse({ ok: false, error: "`status` must be pending, approved or rejected" }, 400);
+      const proposals = rt.db.defensives.listProposals(status).map((p) => ({ ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy, username: p.username }));
+      return jsonResponse({ ok: true, proposals });
+    }, "admin"),
+    prefixRoute("POST", "/api/admin/proposals/", async (req, url, ctx) => {
+      const m = /^(\d+)\/(approve|reject)$/.exec(tail(url, "/api/admin/proposals/"));
+      if (!m) return jsonResponse({ ok: false, error: "Expected /api/admin/proposals/:id/approve or /reject" }, 400);
+      const body = await readJson<{ note?: unknown }>(req);
+      const note = typeof body?.note === "string" && body.note.trim() ? body.note.trim().slice(0, 500) : null;
+      const p = decide(rt.db.defensives, Number.parseInt(m[1]!, 10), { id: ctx.user!.id }, m[2] === "approve" ? "approved" : "rejected", note, ctx.now);
+      if (!p) return jsonResponse({ ok: false, error: "No pending proposal with that id" }, 404);
+      return jsonResponse({ ok: true, proposal: { ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy } });
     }, "admin"),
     route("GET", "/api/admin/users", () => jsonResponse({ ok: true, users: rt.db.users.list().map(adminUser) }), "admin"),
     prefixRoute("POST", "/api/admin/users/", async (req, url, ctx) => {

@@ -1,4 +1,5 @@
 import { hasCredentials } from "../config.ts";
+import type { LoadedTables } from "../deepdive/types.ts";
 import type { RequestContext } from "../hosted/auth.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { QuotaRefusal, Reserve } from "../hosted/quota.ts";
@@ -7,7 +8,7 @@ import type { LookupOutcome, LookupPayload } from "../lookup.ts";
 import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
 import type { HistoryListItem, HistoryStore } from "../server-history.ts";
-import { withCachedAnalyses } from "./deepdive.ts";
+import { tablesOf, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse, parseCharacterInput, parseMetric, readJson } from "./http.ts";
 
 interface LookupRequest {
@@ -37,7 +38,7 @@ export const historyOf = (ctx: RequestContext): HistoryStore => {
 
 export interface LookupError { ok: false; error: string; status: number; quota?: QuotaRefusal }
 export interface LookupSuccess { ok: true; key: string; result: unknown; fromCache: boolean; /** Shared another caller's in-flight fetch of the same request. */ joined: boolean }
-export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup }
+export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup; tables?: LoadedTables }
 
 // Identical lookups that overlap share one WCL fetch (keyed like the history, "auto" level included).
 // A refresh never joins an existing flight, and it registers its own flight only when none is in
@@ -85,7 +86,7 @@ export async function runLookupWithCache(opts: {
         metric: opts.metric ?? undefined,
         enrich: true,
         refresh: opts.refresh,
-      }, { reserve: deps.reserve });
+      }, { reserve: deps.reserve, tables: deps.tables });
       if (!inflight.has(flightKey)) inflight.set(flightKey, flight);
       const started = flight;
       void started.catch(() => {}).finally(() => { if (inflight.get(flightKey) === started) inflight.delete(flightKey); });
@@ -104,7 +105,7 @@ export async function runLookupWithCache(opts: {
         metric: opts.metric ?? undefined,
         enrich: true,
         refresh: opts.refresh,
-      }, { reserve: deps.reserve });
+      }, { reserve: deps.reserve, tables: deps.tables });
     }
     if (!o.ok) return { ok: false, status: o.status, error: o.error, ...(o.quota ? { quota: o.quota } : {}) };
     const payload = buildLookupPayload(o, target.realm);
@@ -148,16 +149,17 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
     levelOverride = n;
   }
   const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
+  const tables = await tablesOf(ctx, runtime);
   const result = await runLookupWithCache({
     character: raw,
     level: levelOverride,
     spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
     metric: parseMetric(body.metric ?? null) ?? null,
     refresh: !!body.refresh,
-  }, historyOf(ctx), { reserve: runtime && user ? runtime.quota.for(user) : undefined });
+  }, historyOf(ctx), { reserve: runtime && user ? runtime.quota.for(user) : undefined, tables });
   if (!result.ok) return jsonResponse(result.quota ? { ok: false, ...result.quota } : { ok: false, error: result.error }, result.status);
-  // Hosted payloads are stored raw: attach today's cached analyses on the way out (0 pts).
-  const payload = result.fromCache && ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload) : result.result;
+  // Hosted: always attach on read against the member's own tables (a joiner never sees the starter's pending layer).
+  const payload = ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
   const accounting = runtime && user ? { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user) } : {};
   return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache, ...accounting });
 }

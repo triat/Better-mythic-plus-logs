@@ -4,7 +4,7 @@ import pkg from "../../package.json";
 import { hasCredentials } from "../config.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { LookupPayload } from "../lookup.ts";
-import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, withCachedAnalyses } from "./deepdive.ts";
+import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, tablesOf, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse } from "./http.ts";
 import { handleLookup, historyOf, historySummary } from "./lookup.ts";
 import { prefixRoute, route } from "./routes.ts";
@@ -38,8 +38,8 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
     route("POST", "/api/lookup", (req, _url, rc) => handleLookup(req, rc, ctx.runtime)),
     route("POST", "/api/deepdive", (req, _url, rc) => handleDeepdive(req, rc, ctx.runtime)),
-    route("GET", "/api/defensives", (_req, url) => handleDefensivesGet(url, ctx.hosted)),
-    route("POST", "/api/defensives", (req) => handleDefensivesPost(req, ctx.hosted)),
+    route("GET", "/api/defensives", (_req, url, rc) => handleDefensivesGet(url, rc, ctx.runtime)),
+    route("POST", "/api/defensives", (req, _url, rc) => handleDefensivesPost(req, rc, ctx.runtime)),
     route("GET", "/api/history", (_req, _url, rc) => jsonResponse({ ok: true, items: historyOf(rc).list().map(historySummary) })),
     route("DELETE", "/api/history", (_req, _url, rc) => { historyOf(rc).clear(); return jsonResponse({ ok: true }); }),
     prefixRoute("GET", "/api/history/", async (_req, url, rc) => {
@@ -48,7 +48,7 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
       const entry = historyOf(rc).get(key);
       if (!entry) return jsonResponse({ ok: false, error: "Not in history" }, 404);
       // Hosted payloads are stored raw: attach today's cached analyses on the way out (0 pts).
-      const result = rc.hosted ? await withCachedAnalyses(entry.result as LookupPayload) : entry.result;
+      const result = rc.hosted ? await withCachedAnalyses(entry.result as LookupPayload, await tablesOf(rc, ctx.runtime)) : entry.result;
       return jsonResponse({ ok: true, result, key, fromCache: true });
     }),
     prefixRoute("DELETE", "/api/history/", (_req, url, rc) => {

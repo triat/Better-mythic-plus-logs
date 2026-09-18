@@ -148,7 +148,8 @@ your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"` or
 `bmpl defensives <Class> <Spec>` prints the effective table (shipped +
 override, override entries marked); `bmpl defensives --check` validates the
 override file without printing anything else. `--shared` reads the hosted
-instance's approved layer from `bmpl.db` instead of the file.
+instance's approved layer from `bmpl.db` instead of the file (on a local-mode
+database this creates the empty hosted tables the first time).
 
 Every spell name in the panel links to Wowhead and shows the spell's tooltip
 on hover (Wowhead's `tooltips.js`, loaded from `wow.zamimg.com` — the only

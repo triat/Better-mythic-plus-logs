@@ -66,7 +66,7 @@ interface DefensivesPatchBody { className?: string; spec?: string; patch?: Overr
 export async function handleDefensivesPost(req: Request, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
   const body = await readJson<DefensivesPatchBody>(req);
   if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
-  if (!body.className || !body.spec || !body.patch) return jsonResponse({ ok: false, error: "`className`, `spec` and `patch` are required" }, 400);
+  if (typeof body.className !== "string" || typeof body.spec !== "string" || !body.className || !body.spec || !body.patch) return jsonResponse({ ok: false, error: "`className`, `spec` and `patch` are required" }, 400);
   if (runtime && ctx.user) {
     // Hosted: a correction is a proposal — it applies to its author now and to everyone once an admin approves it.
     const r = propose(runtime.db.defensives, { id: ctx.user.id, role: ctx.user.role }, body.className, body.spec, body.patch, ctx.now);

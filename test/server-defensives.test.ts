@@ -103,4 +103,32 @@ describe("hosted defensives: proposals", () => {
     expect(r.proposal.status).toBe("approved");
     expect(await dp(tom)).toMatchObject({ cooldownS: 50, origin: "shared" });
   });
+
+  test("a non-string className is 400, not 500", async () => {
+    const r = await post(tom, "/api/defensives", { className: 5, spec: "Holy", patch: { id: 642, cooldownS: 61 } });
+    expect(r.status).toBe(400);
+  });
+
+  test("a rejection note over 500 chars is truncated to 500 in storage", async () => {
+    const proposed = await (await post(bob, "/api/defensives", { className: "Paladin", spec: "Holy", patch: { id: 642, cooldownS: 61 } })).json();
+    const id = proposed.proposal.id;
+    const long = "x".repeat(600);
+    const rej = await post(admin, `/api/admin/proposals/${id}/reject`, { note: long });
+    expect(rej.status).toBe(200);
+    const rejected = await (await get(admin, "/api/admin/proposals?status=rejected")).json();
+    const stored = rejected.proposals.find((p: { id: number }) => p.id === id);
+    expect(stored.note.length).toBe(500);
+  });
+
+  test("a whitespace-only note stores as null on approve and reject", async () => {
+    const proposed1 = await (await post(bob, "/api/defensives", { className: "Paladin", spec: "Holy", patch: { id: 642, cooldownS: 62 } })).json();
+    const approved = await post(admin, `/api/admin/proposals/${proposed1.proposal.id}/approve`, { note: "   " });
+    expect(approved.status).toBe(200);
+    expect((await approved.json()).proposal.note).toBeNull();
+
+    const proposed2 = await (await post(bob, "/api/defensives", { className: "Paladin", spec: "Holy", patch: { id: 642, cooldownS: 63 } })).json();
+    const rejected = await post(admin, `/api/admin/proposals/${proposed2.proposal.id}/reject`, { note: "   " });
+    expect(rejected.status).toBe(200);
+    expect((await rejected.json()).proposal.note).toBeNull();
+  });
 });

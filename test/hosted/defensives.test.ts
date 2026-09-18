@@ -151,4 +151,18 @@ describe("propose / decide lifecycle", () => {
     expect(() => decide(repo, r.proposal.id, boss, "approved", null, 2000)).toThrow("boom");
     expect(repo.proposalById(r.proposal.id)).toMatchObject({ status: "pending" });
   });
+
+  test("a member's pending patch after a shared ignore starts over", () => {
+    const { repo, tom, boss } = setup();
+    const ignored = propose(repo, boss, HOLY.className, HOLY.spec, { id: DP, ignore: true }, 1000);
+    expect(ignored.ok && ignored.proposal.status === "approved").toBe(true);
+    const r = propose(repo, tom, HOLY.className, HOLY.spec, { id: DP, name: "Divine Protection", cooldownS: 45, durationS: 8, kind: "major" }, 2000);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const forTom = specDefensives(SHIPPED, tablesFor(repo, tom.id).override, HOLY.className, HOLY.spec);
+    expect(forTom.entries.find((e) => e.id === DP)).toMatchObject({ cooldownS: 45, origin: "pending" });
+    const forNobody = specDefensives(SHIPPED, tablesFor(repo, null).override, HOLY.className, HOLY.spec);
+    expect(forNobody.entries.find((e) => e.id === DP)).toBeUndefined();
+    expect(forNobody.ignored).toEqual([DP]);
+  });
 });

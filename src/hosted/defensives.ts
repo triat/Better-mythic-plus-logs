@@ -98,9 +98,10 @@ export type ProposeOutcome = { ok: true; proposal: ProposalRow; tables: LoadedTa
 
 /** Validates and records a correction: pending for a member (merged into an existing pending row for the same spell), approved on the spot for an admin. */
 export function propose(repo: DefensivesRepo, user: { id: number; role: Role }, className: string, spec: string, patch: unknown, now: number): ProposeOutcome {
-  const key = specKey(className, spec);
+  let key: string;
   let validated: OverrideEntry;
   try {
+    key = specKey(className, spec);
     validated = validateOverride({ [key]: [patch] })[key]![0]!;
     const mine = tablesFor(repo, user.id);
     applyPatch(mine.override, key, validated, specDefensives(mine.shipped, mine.override, className, spec)); // completeness check only
@@ -116,15 +117,15 @@ export function propose(repo: DefensivesRepo, user: { id: number; role: Role }, 
     });
     return { ok: true, proposal, tables: tablesFor(repo, user.id) };
   }
-  const existing = repo.pendingOf(user.id).find((p) => p.key === key && p.spellId === validated.id);
-  let proposal: ProposalRow;
-  if (existing) {
-    const merged = mergeEntry([existing.patch], validated).find((e) => e.id === validated.id)!;
-    repo.updatePatch(existing.id, merged);
-    proposal = repo.proposalById(existing.id)!;
-  } else {
-    proposal = repo.insertProposal({ key, spellId: validated.id, patch: validated, proposedBy: user.id, createdAt: now, status: "pending", decidedBy: null, decidedAt: null, note: null });
-  }
+  const proposal = repo.transaction(() => {
+    const existing = repo.pendingOf(user.id).find((p) => p.key === key && p.spellId === validated.id);
+    if (existing) {
+      const merged = mergeEntry([existing.patch], validated).find((e) => e.id === validated.id)!;
+      repo.updatePatch(existing.id, merged);
+      return repo.proposalById(existing.id)!;
+    }
+    return repo.insertProposal({ key, spellId: validated.id, patch: validated, proposedBy: user.id, createdAt: now, status: "pending", decidedBy: null, decidedAt: null, note: null });
+  });
   return { ok: true, proposal, tables: tablesFor(repo, user.id) };
 }
 

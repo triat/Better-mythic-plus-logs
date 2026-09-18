@@ -309,3 +309,12 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .kv .kv-key { color: var(--muted); }
 .forbidden { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: calc(100vh - 65px); text-align: center; }
 .forbidden h1 { font-size: 22px; font-weight: 700; margin: 0; }
+
+/* --- hosted: admin audit log (Audit.tsx, issue #9; canvas A) --- */
+.admin-row-audit { grid-template-columns: 74px 130px 150px 220px 1fr; }
+.admin-row-audit > span:last-child { white-space: normal; }
+.dot-login { background: var(--green); }
+.dot-admin { background: var(--link); }
+.dot-quota { background: var(--yellow); }
+.dot-sec { background: var(--orange); }
+.dot-error { background: var(--red); }

@@ -1,9 +1,11 @@
 import type {
+  AdminAudit,
   AdminInstance,
   AdminInvite,
   AdminProposal,
   AdminUsage,
   AdminUser,
+  AuditKind,
   DefensivesPatch,
   DefensivesPatchResult,
   DefensivesResponse,
@@ -88,6 +90,8 @@ export const api = {
     decide: (id: number, decision: "approve" | "reject", note: string | null) => call<{ proposal: AdminProposal }>(`/api/admin/proposals/${id}/${decision}`, post({ note })),
     usage: () => call<AdminUsage>("/api/admin/usage"),
     instance: () => call<AdminInstance>("/api/admin/instance"),
+    audit: (o: { kind: AuditKind | "all"; before?: number | null; limit?: number }) =>
+      call<AdminAudit>(`/api/admin/audit?kind=${o.kind}${o.before ? `&before=${o.before}` : ""}&limit=${o.limit ?? 50}`),
   },
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>

@@ -3,12 +3,14 @@ import type { DefensiveSpell, EffectiveEntry, OverrideEntry } from "@shared/deep
 import type { ProposalSummary } from "@shared/hosted/defensives.ts";
 import type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 import type { EnvRow } from "@shared/hosted/instance.ts";
+import type { AuditKind, AuditRow } from "@shared/hosted/audit.ts";
 
 export type { LookupPayload } from "@shared/lookup.ts";
 export type { ProposalSummary } from "@shared/hosted/defensives.ts";
 export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 export type { DefensiveSpell } from "@shared/deepdive/types.ts";
 export type { EnvRow } from "@shared/hosted/instance.ts";
+export type { AuditAction, AuditKind, AuditRow } from "@shared/hosted/audit.ts";
 export type { AxisKey, AxisScore, Confidence, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
@@ -101,3 +103,5 @@ export interface AdminUsage {
 }
 /** GET /api/admin/instance body. */
 export interface AdminInstance { version: string; uptimeS: number; dbPath: string; dbBytes: number; lastBackupAt: number | null; env: EnvRow[] }
+/** GET /api/admin/audit body: one page of rows (newest first), the per-kind totals, WCL/server errors in the last 24 h. */
+export interface AdminAudit { rows: AuditRow[]; counts: Record<AuditKind | "all", number>; errors24h: number; nextBefore: number | null }

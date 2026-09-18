@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser } from "../types.ts";
-import { decidedLine, diffRows, fmtBytes, fmtPts, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
+import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditRow } from "../types.ts";
+import { AUDIT_CHIPS, AUDIT_KIND_OF, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtPts, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
 
 const NOW = 1_800_000_000_000;
 const H = 3600_000;
@@ -102,5 +102,33 @@ describe("users, invites, instance", () => {
     expect(fmtBytes(20_480)).toBe("20.0 KB");
     expect(fmtUptime(59)).toBe("less than a minute");
     expect(fmtUptime(3600 * 5 + 60 * 7)).toBe("5 h 7 min");
+  });
+});
+
+describe("audit rows", () => {
+  const NOW = new Date(2026, 8, 18, 14, 30).getTime(); // local time
+  const row = (over: Partial<AuditRow>): AuditRow => ({ id: 1, at: NOW - 28 * 60_000, userId: 2, username: "tom", action: "wcl_error", target: "lookup Biwaadrood-Nerzhul", detail: { kind: "http", status: 502, message: "WCL HTTP 502" }, ip: "1.2.3.4", ...over });
+  test("time: today HH:MM, yesterday, older via fmtAge", () => {
+    expect(auditRow(row({}), NOW).time).toBe("14:02");
+    expect(auditRow(row({ at: NOW - 24 * 3600_000 }), NOW).time).toBe("yesterday 14:30");
+    expect(auditRow(row({ at: NOW - 5 * 24 * 3600_000 }), NOW).time).toBe("5d ago");
+  });
+  test("who, dot, action, target, detail per action", () => {
+    expect(auditRow(row({}), NOW)).toMatchObject({ who: "tom", whoFaint: false, dot: "dot-error", action: "wcl_error", target: "lookup Biwaadrood-Nerzhul", detail: "WCL HTTP 502" });
+    expect(auditRow(row({ userId: null, username: null, action: "login_denied", target: "discord 5", detail: { reason: "not invited" } }), NOW)).toMatchObject({ who: "—", whoFaint: true, dot: "dot-login", detail: "not invited" });
+    expect(auditDetail("quota_refused", { error: "quota", used: 287, limit: 300, resetInS: 1300 })).toBe("quota · 287/300 pts used, resets in 22 min");
+    expect(auditDetail("rate_limited", { limit: 10, windowS: 60, retryAfterS: 41 })).toBe("10 per 60 s · retry in 41 s");
+    expect(auditDetail("origin_rejected", { origin: "https://evil.example", fetchSite: "cross-site", why: "origin" })).toBe("Origin https://evil.example · Sec-Fetch-Site cross-site");
+    expect(auditDetail("invite_add", { note: "alt of tom" })).toBe("note: “alt of tom”");
+    expect(auditDetail("invite_add", { note: null })).toBe("");
+    expect(auditDetail("proposal_approve", { proposalId: 7, patch: { id: 642, cooldownS: 240 }, note: "Matches the tooltip." })).toBe("cd 240 s · note: “Matches the tooltip.”");
+    expect(auditDetail("sessions_revoke", { userId: 2, sessionsEnded: 2 })).toBe("2 session(s) ended");
+    expect(auditDetail("role_change", { userId: 2, role: "admin" })).toBe("");
+    expect(auditDetail("logout", null)).toBe("");
+  });
+  test("every action has a kind and chips cover every kind", () => {
+    const kinds = new Set(Object.values(AUDIT_KIND_OF));
+    for (const c of AUDIT_CHIPS) if (c.kind !== "all") expect(kinds.has(c.kind)).toBe(true);
+    expect(auditShowing(10, 1280)).toBe("showing 10 of 1 280 · newest first");
   });
 });

@@ -1,5 +1,5 @@
-// Admin page view models (issue #8): budget gauge, proposal queue, users, invites, instance. Pure; tested.
-import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, OverrideEntry } from "../types.ts";
+// Admin page view models (issue #8): budget gauge, proposal queue, users, invites, instance; audit log rows (issue #9). Pure; tested.
+import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditAction, AuditKind, AuditRow, OverrideEntry } from "../types.ts";
 import { patchText } from "./deepdive.ts";
 import { fmtAge } from "./format.ts";
 import { initialsOf } from "./session.ts";
@@ -141,3 +141,94 @@ export function instanceModel(i: AdminInstance, now = Date.now()): InstanceModel
     backup: i.lastBackupAt === null ? "never (no last-backup file yet)" : fmtShortAge(i.lastBackupAt, now), env: i.env,
   };
 }
+
+// --- audit log (issue #9) ---
+
+/** Same map as `ACTION_KIND` in src/hosted/audit.ts, duplicated because web/ imports types only from src/ (`Record` keeps it exhaustive). */
+export const AUDIT_KIND_OF: Record<AuditAction, AuditKind> = {
+  login: "login",
+  login_denied: "login",
+  logout: "login",
+  invite_add: "admin",
+  invite_remove: "admin",
+  role_change: "admin",
+  sessions_revoke: "admin",
+  proposal_approve: "admin",
+  proposal_reject: "admin",
+  quota_refused: "quota",
+  rate_limited: "security",
+  origin_rejected: "security",
+  wcl_error: "error",
+  server_error: "error",
+};
+
+export const AUDIT_CHIPS: ReadonlyArray<{ kind: AuditKind | "all"; label: string }> = [
+  { kind: "all", label: "All" }, { kind: "login", label: "Logins" }, { kind: "admin", label: "Admin" },
+  { kind: "quota", label: "Quota" }, { kind: "security", label: "Security" }, { kind: "error", label: "Errors" },
+];
+
+const AUDIT_DOT: Record<AuditKind, AuditRowModel["dot"]> = { login: "dot-login", admin: "dot-admin", quota: "dot-quota", security: "dot-sec", error: "dot-error" };
+
+export interface AuditRowModel {
+  id: number; time: string; who: string; whoFaint: boolean; dot: "dot-login" | "dot-admin" | "dot-quota" | "dot-sec" | "dot-error";
+  action: string; target: string; detail: string;
+}
+
+const pad2 = (n: number): string => n.toString().padStart(2, "0");
+const sameDay = (a: Date, b: Date): boolean => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+/** Local time: "14:02" today, "yesterday 14:30", else `fmtAge` ("5d ago"). */
+function auditTime(at: number, now: number): string {
+  const d = new Date(at), n = new Date(now);
+  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  if (sameDay(d, n)) return hm;
+  const yesterday = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
+  if (sameDay(d, yesterday)) return `yesterday ${hm}`;
+  return fmtAge(at, now);
+}
+
+const str = (v: unknown): string => (typeof v === "string" ? v : v === null || v === undefined ? "" : String(v));
+const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+const noteText = (note: unknown): string => (typeof note === "string" && note ? `note: “${note}”` : "");
+
+/** The detail column, one shape per action (see the `detail` objects recorded in src/server/*.ts); "" when there is nothing to say. */
+export function auditDetail(action: AuditAction, detail: Record<string, unknown> | null): string {
+  if (!detail) return "";
+  switch (action) {
+    case "wcl_error":
+    case "server_error":
+      return str(detail.message);
+    case "quota_refused":
+      return `${detail.error === "budget" ? "instance budget" : "quota"} · ${num(detail.used)}/${num(detail.limit)} pts used, resets in ${minutes(num(detail.resetInS))} min`;
+    case "rate_limited":
+      return `${num(detail.limit)} per ${num(detail.windowS)} s · retry in ${num(detail.retryAfterS)} s`;
+    case "origin_rejected":
+      return `Origin ${str(detail.origin) || "—"}${detail.fetchSite ? ` · Sec-Fetch-Site ${str(detail.fetchSite)}` : ""}`;
+    case "login":
+      return str(detail.userAgent);
+    case "login_denied":
+      return str(detail.reason);
+    case "invite_add":
+      return noteText(detail.note);
+    case "invite_remove":
+    case "sessions_revoke":
+      return `${num(detail.sessionsEnded)} session(s) ended`;
+    case "proposal_approve":
+    case "proposal_reject": {
+      const note = noteText(detail.note);
+      const patch = detail.patch && typeof detail.patch === "object" ? patchText(detail.patch as OverrideEntry) : "";
+      return `${patch}${note ? ` · ${note}` : ""}`;
+    }
+    case "role_change":
+    case "logout":
+      return "";
+  }
+}
+
+export function auditRow(r: AuditRow, now = Date.now()): AuditRowModel {
+  return {
+    id: r.id, time: auditTime(r.at, now), who: r.username ?? "—", whoFaint: r.username === null, dot: AUDIT_DOT[AUDIT_KIND_OF[r.action]],
+    action: r.action, target: r.target ?? "", detail: auditDetail(r.action, r.detail),
+  };
+}
+
+export const auditShowing = (shown: number, total: number): string => `showing ${shown} of ${fmtPts(total)} · newest first`;

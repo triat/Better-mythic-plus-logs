@@ -424,7 +424,9 @@ always sign in; everyone else needs an invite — `bmpl invite <discord-id>
 [--note "guild mate"]` on the server (`bmpl invite --list`, `--remove <id>`),
 or the admin page once issue #8 lands. A user who is not invited sees their
 Discord id on the sign-in page so they can send it to you. Sessions last 30
-days (sliding) in an `HttpOnly` cookie; **Sign out** ends one.
+days (sliding) in an `HttpOnly` cookie; **Sign out** ends one. Removing an
+id from `BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change
+the role on the admin page (issue #8) or via `POST /api/admin/users/:id/role`.
 
 Quotas and the admin page come with the following issues.
 

@@ -29,3 +29,8 @@ export function deniedDiscordId(search: string): string | null {
   const v = new URLSearchParams(search).get("denied");
   return v && /^\d{17,20}$/.test(v) ? v : null;
 }
+
+/** Discord (or bmpl) failed the login round-trip: the callback sent `?login=failed`. */
+export function loginFailed(search: string): boolean {
+  return new URLSearchParams(search).get("login") === "failed";
+}

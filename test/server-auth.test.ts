@@ -149,13 +149,23 @@ describe("GET /auth/discord/callback", () => {
     expect((await login({ state: "forged" })).cb.status).toBe(400);
     expect((await fetch(u("/auth/discord/callback"), noRedirect)).status).toBe(400);
   });
-  test("Discord failures answer 502 without a session", async () => {
+  test("Discord failures redirect to /?login=failed without a session (top-level navigation, not a bare 502)", async () => {
     const bad = await login({ code: "wrong-code" });
-    expect(bad.cb.status).toBe(502);
+    expect(bad.cb.status).toBe(302);
+    expect(bad.cb.headers.get("location")).toBe("/?login=failed");
     expect(cookieOf(bad.cb, "bmpl_session")).toBeNull();
     tokenStatus = 500;
-    expect((await login()).cb.status).toBe(502);
+    const second = await login();
+    expect(second.cb.status).toBe(302);
+    expect(second.cb.headers.get("location")).toBe("/?login=failed");
     tokenStatus = 200;
+  });
+  test("a user-cancelled login (Discord's `error` param) redirects to / and never touches the pending state", async () => {
+    const res = await fetch(u("/auth/discord/callback?error=access_denied"), noRedirect);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("/");
+    expect(cookieOf(res, "bmpl_session")).toBeNull();
+    expect(res.headers.getSetCookie().find((c) => c.startsWith("bmpl_oauth=") && c.includes("Max-Age=0"))).toBeDefined();
   });
 });
 

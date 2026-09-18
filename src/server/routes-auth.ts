@@ -40,17 +40,23 @@ export function authRoutes(rt: HostedRuntime): Route[] {
     }, "public"),
 
     route("GET", "/auth/discord/callback", async (req, url, ctx) => {
+      const clearOauth = clearCookie(OAUTH_COOKIE, { path: "/auth", secure: rt.secure });
+
+      // The user cancelled at Discord (or Discord sent some other `error`): back to the
+      // sign-in page, no need to touch the pending state (it just expires on its own TTL).
+      if (url.searchParams.get("error")) return redirect("/", [clearOauth]);
+
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
       const nonce = parseCookies(req.headers.get("cookie")).get(OAUTH_COOKIE);
       if (!code || !state || !nonce || !rt.states.consume(state, nonce, Date.now())) return invalidState();
-      const clearOauth = clearCookie(OAUTH_COOKIE, { path: "/auth", secure: rt.secure });
 
+      // This is a top-level navigation (the browser followed Discord's redirect here), so a
+      // Discord-side failure sends the user back to the sign-in page instead of a bare JSON
+      // 502 the browser would render as a blank page.
       const discordFailure = (error: string): Response => {
         console.error(`discord login: ${error}`);
-        const res = jsonResponse({ ok: false, error: "Discord login failed" }, 502);
-        res.headers.append("Set-Cookie", clearOauth);
-        return res;
+        return redirect("/?login=failed", [clearOauth]);
       };
 
       const token = await exchangeCode(rt.config, code, rt.fetchFn);

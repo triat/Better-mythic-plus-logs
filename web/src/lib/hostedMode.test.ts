@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { LOCAL_STATUS, bootScreen, deniedDiscordId, initialScreen, uiControls } from "./hostedMode.ts";
+import { LOCAL_STATUS, bootScreen, deniedDiscordId, initialScreen, loginFailed, uiControls } from "./hostedMode.ts";
 
 const local = { hosted: false, hasCredentials: true, envPath: "/x/.env" };
 const hosted = { hosted: true, hasCredentials: true, envPath: null };
@@ -55,4 +55,13 @@ describe("deniedDiscordId", () => {
 test("uiControls: signOut only in hosted mode", () => {
   expect(uiControls(local).signOut).toBe(false);
   expect(uiControls(hosted).signOut).toBe(true);
+});
+
+describe("loginFailed", () => {
+  test("true only for ?login=failed", () => {
+    expect(loginFailed("?login=failed")).toBe(true);
+    expect(loginFailed("?login=failed&denied=123456789012345678")).toBe(true);
+    expect(loginFailed("?login=other")).toBe(false);
+    expect(loginFailed("")).toBe(false);
+  });
 });

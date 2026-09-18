@@ -7,7 +7,7 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   sessionSecret: "0123456789abcdef0123456789abcdef",
   discordClientId: "123456789012345678",
   discordClientSecret: "test-client-secret",
-  adminDiscordIds: ["111111111111111111"],
+  adminDiscordIds: ["111111111111111111", "444444444444444444"],
 };
 
 /** Inserts a user + session straight into the DB and returns the Cookie header to send. */

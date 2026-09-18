@@ -1,11 +1,12 @@
-interface Props { deniedDiscordId: string | null }
+interface Props { deniedDiscordId: string | null; loginFailed: boolean }
 
 /** Hosted-mode gate. Functional placeholder: the designed version is issue #7. */
-export function SignIn({ deniedDiscordId }: Props) {
+export function SignIn({ deniedDiscordId, loginFailed }: Props) {
   return (
     <main className="home" style={{ paddingTop: 80 }}>
       <h1>bmpl</h1>
       <p className="muted">Vet a Mythic+ applicant from their Warcraft Logs and Raider.IO history.</p>
+      {loginFailed && <p className="muted">Sign-in failed — please try again.</p>}
       <p><a className="btn btn-primary btn-lg" href="/auth/discord">Sign in with Discord</a></p>
       {deniedDiscordId && (
         <div className="card" style={{ display: "inline-block", marginTop: 24, textAlign: "left" }}>

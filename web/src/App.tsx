@@ -5,7 +5,7 @@ import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from ".
 import { unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { STORAGE_KEY, parseStoredKey, reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, bootScreen, deniedDiscordId, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import { useSse } from "./useSse.ts";
 import { Compare } from "./components/Compare.tsx";
@@ -38,7 +38,7 @@ export function App() {
     })();
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
-  if (screen.kind === "signin") return <SignIn deniedDiscordId={deniedDiscordId(location.search)} />;
+  if (screen.kind === "signin") return <SignIn deniedDiscordId={deniedDiscordId(location.search)} loginFailed={loginFailed(location.search)} />;
   if (screen.kind === "setup") {
     return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null }); }} />;
   }

@@ -72,6 +72,13 @@ describe("users", () => {
     expect((await fetch(u(`/api/admin/users/${member.user.id}/role`), json("POST", { role: "god" }, admin.cookie))).status).toBe(400);
     expect((await fetch(u("/api/admin/users/abc/role"), json("POST", { role: "admin" }, admin.cookie))).status).toBe(400);
   });
+  test("a config admin's role cannot be changed through the API", async () => {
+    const configAdmin = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "444444444444444444", role: "admin", username: "root2" });
+    const res = await fetch(u(`/api/admin/users/${configAdmin.user.id}/role`), json("POST", { role: "member" }, admin.cookie));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ ok: false, error: "role is set by BMPL_ADMIN_DISCORD_IDS" });
+    expect(db.users.byId(configAdmin.user.id)!.role).toBe("admin");
+  });
 });
 
 describe("removing an invite", () => {

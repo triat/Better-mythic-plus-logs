@@ -41,6 +41,9 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const role = body?.role;
       if (role !== "member" && role !== "admin") return jsonResponse({ ok: false, error: "`role` must be member or admin" }, 400);
       if (id === ctx.user!.id) return jsonResponse({ ok: false, error: "You cannot change your own role" }, 400);
+      const target = rt.db.users.byId(id);
+      if (!target) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
+      if (rt.config.adminDiscordIds.includes(target.discordId)) return jsonResponse({ ok: false, error: "role is set by BMPL_ADMIN_DISCORD_IDS" }, 400);
       if (!rt.db.users.setRole(id, role)) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
       return jsonResponse({ ok: true, user: adminUser(rt.db.users.byId(id)!) });
     }, "admin"),

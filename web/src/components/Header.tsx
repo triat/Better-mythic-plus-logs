@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { KeyStepper } from "./KeyStepper.tsx";
 import type { UiControls } from "../lib/hostedMode.ts";
+import type { MeUser } from "../api.ts";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -23,6 +24,8 @@ interface Props {
   /** Big centered variant for the empty state. */
   hero?: boolean;
   controls: UiControls;
+  me: MeUser | null;
+  onSignOut: () => void;
 }
 
 export function Header(p: Props) {
@@ -84,6 +87,12 @@ export function Header(p: Props) {
         {!p.sseConnected && <span className="muted" title="Reconnecting…">live updates disconnected</span>}
         {p.controls.setup && <button className="btn" onClick={p.onSetup}>Re-configure</button>}
         {p.controls.quit && <button className="btn" onClick={p.onQuit}>Quit</button>}
+        {p.controls.signOut && (
+          <>
+            {p.me && <span className="muted" title={p.me.discordId}>{p.me.globalName ?? p.me.username}</span>}
+            <button className="btn" onClick={p.onSignOut}>Sign out</button>
+          </>
+        )}
       </div>
       {p.hero && <div className="hero-search">{search}</div>}
       {options}

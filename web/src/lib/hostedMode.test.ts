@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { LOCAL_STATUS, initialScreen, uiControls } from "./hostedMode.ts";
+import { LOCAL_STATUS, bootScreen, deniedDiscordId, initialScreen, uiControls } from "./hostedMode.ts";
 
 const local = { hosted: false, hasCredentials: true, envPath: "/x/.env" };
 const hosted = { hosted: true, hasCredentials: true, envPath: null };
 
 describe("uiControls", () => {
   test("local mode shows every control", () => {
-    expect(uiControls(local)).toEqual({ setup: true, quit: true, watch: true, envPath: true });
+    expect(uiControls(local)).toEqual({ setup: true, quit: true, watch: true, envPath: true, signOut: false });
   });
   test("hosted mode hides setup, quit, clipboard watch and the env path", () => {
-    expect(uiControls(hosted)).toEqual({ setup: false, quit: false, watch: false, envPath: false });
+    expect(uiControls(hosted)).toEqual({ setup: false, quit: false, watch: false, envPath: false, signOut: true });
   });
 });
 
@@ -26,4 +26,33 @@ describe("initialScreen", () => {
   test("fallback status is local with everything on", () => {
     expect(LOCAL_STATUS).toEqual({ hosted: false, hasCredentials: true, envPath: null });
   });
+});
+
+describe("bootScreen", () => {
+  const me = { kind: "ok" as const, user: { id: 1, discordId: "1", username: "t", globalName: null, avatarUrl: "", role: "member" as const } };
+  test("hosted: signed in → main, otherwise signin (never setup)", () => {
+    expect(bootScreen(hosted, me, "/")).toBe("main");
+    expect(bootScreen(hosted, { kind: "unauthorized" }, "/")).toBe("signin");
+    expect(bootScreen(hosted, { kind: "error", error: "x" }, "/")).toBe("signin");
+    expect(bootScreen(hosted, null, "/setup")).toBe("signin");
+  });
+  test("local: ignores me and follows initialScreen", () => {
+    expect(bootScreen(local, null, "/setup")).toBe("setup");
+    expect(bootScreen({ ...local, hasCredentials: false }, me, "/")).toBe("setup");
+    expect(bootScreen(local, null, "/")).toBe("main");
+  });
+});
+
+describe("deniedDiscordId", () => {
+  test("parses a valid id only", () => {
+    expect(deniedDiscordId("?denied=123456789012345678")).toBe("123456789012345678");
+    expect(deniedDiscordId("?denied=abc")).toBeNull();
+    expect(deniedDiscordId("")).toBeNull();
+    expect(deniedDiscordId("?x=1")).toBeNull();
+  });
+});
+
+test("uiControls: signOut only in hosted mode", () => {
+  expect(uiControls(local).signOut).toBe(false);
+  expect(uiControls(hosted).signOut).toBe(true);
 });

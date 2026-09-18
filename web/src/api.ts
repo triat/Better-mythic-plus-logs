@@ -12,6 +12,16 @@ import type {
 
 export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string };
 
+export interface MeUser {
+  id: number;
+  discordId: string;
+  username: string;
+  globalName: string | null;
+  avatarUrl: string;
+  role: "member" | "admin";
+}
+export type MeResult = { kind: "ok"; user: MeUser } | { kind: "unauthorized" } | { kind: "error"; error: string };
+
 async function call<T>(path: string, init?: RequestInit): Promise<ApiResult<T>> {
   let res: Response;
   try {
@@ -51,4 +61,17 @@ export const api = {
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesResponse>("/api/defensives", post(body)),
+  me: async (): Promise<MeResult> => {
+    let res: Response;
+    try {
+      res = await fetch("/api/me");
+    } catch {
+      return { kind: "error", error: "Network error" };
+    }
+    if (res.status === 401) return { kind: "unauthorized" };
+    const data = (await res.json().catch(() => null)) as { ok?: boolean; user?: MeUser; error?: string } | null;
+    if (!res.ok || !data?.ok || !data.user) return { kind: "error", error: data?.error ?? `HTTP ${res.status}` };
+    return { kind: "ok", user: data.user };
+  },
+  logout: () => call<Record<never, never>>("/auth/logout", post()),
 };

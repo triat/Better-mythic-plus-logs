@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
+import type { MeUser } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from "./types.ts";
 import { unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { STORAGE_KEY, parseStoredKey, reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, initialScreen, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, bootScreen, deniedDiscordId, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import { useSse } from "./useSse.ts";
 import { Compare } from "./components/Compare.tsx";
@@ -14,27 +15,34 @@ import { EMPTY_FORM, Header } from "./components/Header.tsx";
 import type { LookupForm } from "./components/Header.tsx";
 import { Home } from "./components/Home.tsx";
 import { Setup } from "./components/Setup.tsx";
+import { SignIn } from "./components/SignIn.tsx";
 import { Tabs } from "./components/Tabs.tsx";
 import { Toast } from "./components/Toast.tsx";
 
 type Screen =
   | { kind: "loading" }
   | { kind: "setup"; status: StatusInfo }
-  | { kind: "main"; status: StatusInfo };
+  | { kind: "signin"; status: StatusInfo }
+  | { kind: "main"; status: StatusInfo; me: MeUser | null };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
   useEffect(() => {
-    api.status().then((s) => {
+    (async () => {
+      const s = await api.status();
       const status: StatusInfo = s.ok ? { hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null } : LOCAL_STATUS;
-      setScreen({ kind: initialScreen(status, location.pathname), status });
-    });
+      const me = status.hosted ? await api.me() : null;
+      const kind = bootScreen(status, me, location.pathname);
+      if (kind === "main") setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null });
+      else setScreen({ kind, status });
+    })();
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
+  if (screen.kind === "signin") return <SignIn deniedDiscordId={deniedDiscordId(location.search)} />;
   if (screen.kind === "setup") {
-    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true } }); }} />;
+    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null }); }} />;
   }
-  return <Main status={screen.status} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />;
+  return <Main status={screen.status} me={screen.me} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />;
 }
 
 const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
@@ -51,7 +59,7 @@ const writeStoredKey = (v: number | null): void => {
   try { v === null ? localStorage.removeItem(STORAGE_KEY) : localStorage.setItem(STORAGE_KEY, String(v)); } catch { /* private mode etc. */ }
 };
 
-function Main({ status, onSetup }: { status: StatusInfo; onSetup: () => void }) {
+function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; onSetup: () => void }) {
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   // "Your key": the level every lookup is evaluated for (null = auto). Remembered per browser.
@@ -206,6 +214,12 @@ function Main({ status, onSetup }: { status: StatusInfo; onSetup: () => void }) 
     setStopped(true);
   };
 
+  const onSignOut = async () => {
+    const r = await api.logout();
+    if (!r.ok) { setToast(r.error); return; }
+    location.assign("/");
+  };
+
   const activeTab = tabs.find((t) => t.key === activeKey) ?? null;
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
 
@@ -266,6 +280,7 @@ function Main({ status, onSetup }: { status: StatusInfo; onSetup: () => void }) 
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty} controls={controls}
+        me={me} onSignOut={onSignOut}
       />
       <Tabs
         items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}

@@ -4,9 +4,12 @@ import type { MeUser } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from "./types.ts";
 import { unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
-import { STORAGE_KEY, parseStoredKey, reevalHint } from "./lib/keyLevel.ts";
+import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
+import { parseServerSettings } from "./lib/settings.ts";
+import type { Settings } from "./lib/settings.ts";
+import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
@@ -23,7 +26,7 @@ type Screen =
   | { kind: "loading" }
   | { kind: "setup"; status: StatusInfo }
   | { kind: "signin"; status: StatusInfo }
-  | { kind: "main"; status: StatusInfo; me: MeUser | null };
+  | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
@@ -33,16 +36,22 @@ export function App() {
       const status: StatusInfo = s.ok ? { hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null } : LOCAL_STATUS;
       const me = status.hosted ? await api.me() : null;
       const kind = bootScreen(status, me, location.pathname);
-      if (kind === "main") setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null });
-      else setScreen({ kind, status });
+      if (kind === "main") {
+        const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
+        setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings });
+      } else setScreen({ kind, status });
     })();
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
   if (screen.kind === "signin") return <SignIn deniedDiscordId={deniedDiscordId(location.search)} loginFailed={loginFailed(location.search)} />;
   if (screen.kind === "setup") {
-    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null }); }} />;
+    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null }); }} />;
   }
-  return <Main status={screen.status} me={screen.me} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />;
+  return (
+    <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
+      <Main status={screen.status} me={screen.me} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+    </SettingsProvider>
+  );
 }
 
 const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
@@ -52,19 +61,13 @@ const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
   metric: f.metric || null,
 });
 
-const readStoredKey = (): number | null => {
-  try { return parseStoredKey(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
-};
-const writeStoredKey = (v: number | null): void => {
-  try { v === null ? localStorage.removeItem(STORAGE_KEY) : localStorage.setItem(STORAGE_KEY, String(v)); } catch { /* private mode etc. */ }
-};
-
 function Main({ status, me, onSetup }: { status: StatusInfo; me: MeUser | null; onSetup: () => void }) {
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
-  // "Your key": the level every lookup is evaluated for (null = auto). Remembered per browser.
-  const [yourKey, setYourKey] = useState<number | null>(readStoredKey);
-  const onKeyChange = (v: number | null) => { setYourKey(v); writeStoredKey(v); };
+  // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
+  const { settings, update: updateSettings } = useSettings();
+  const yourKey = settings.yourKey;
+  const onKeyChange = (v: number | null) => updateSettings({ yourKey: v });
   const [tabs, setTabs] = useState<HistoryItem[]>([]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);

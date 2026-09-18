@@ -9,6 +9,7 @@ import type {
   WatchOpts,
   WatchStatus,
 } from "./types.ts";
+import type { Settings } from "./lib/settings.ts";
 
 export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -61,6 +62,9 @@ export const api = {
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesResponse>("/api/defensives", post(body)),
+  settings: () => call<{ settings: Settings }>("/api/settings"),
+  putSettings: (patch: Partial<Settings>) =>
+    call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),
   me: async (): Promise<MeResult> => {
     let res: Response;
     try {

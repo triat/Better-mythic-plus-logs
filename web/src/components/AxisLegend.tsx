@@ -1,15 +1,12 @@
-import { useState } from "react";
 import type { AxisRowModel } from "../lib/axes.ts";
 import { confidenceColor } from "../lib/verdict.ts";
+import { useSettings } from "../settings.tsx";
 
-const STORAGE_KEY = "bmpl.legendOpen";
-const readOpen = (): boolean => { try { return localStorage.getItem(STORAGE_KEY) !== "0"; } catch { return true; } };
-const writeOpen = (v: boolean): void => { try { localStorage.setItem(STORAGE_KEY, v ? "1" : "0"); } catch { /* private mode */ } };
-
-/** "How the verdict is built": one line per axis with its weight; open by default, remembered per browser. */
+/** "How the verdict is built": one line per axis with its weight; open by default, remembered per browser (local) or per account (hosted). */
 export function AxisLegend({ rows }: { rows: AxisRowModel[] }) {
-  const [open, setOpen] = useState(readOpen);
-  const toggle = () => { setOpen((o) => { writeOpen(!o); return !o; }); };
+  const { settings, update } = useSettings();
+  const open = settings.legendOpen;
+  const toggle = () => update({ legendOpen: !open });
   return (
     <div className="legend">
       <button type="button" className="section-head" onClick={toggle} aria-expanded={open}>

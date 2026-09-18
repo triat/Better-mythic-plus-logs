@@ -1,0 +1,49 @@
+import { describe, expect, test } from "bun:test";
+import { DEFAULT_SETTINGS, LEGEND_STORAGE_KEY, parseServerSettings, readLocalSettings, writeLocalSettings } from "./settings.ts";
+import { STORAGE_KEY } from "./keyLevel.ts";
+
+const fakeStore = (init: Record<string, string> = {}) => {
+  const m = new Map(Object.entries(init));
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v); }, removeItem: (k: string) => { m.delete(k); }, dump: () => Object.fromEntries(m) };
+};
+
+describe("readLocalSettings", () => {
+  test("defaults without storage or with empty storage", () => {
+    expect(readLocalSettings(null)).toEqual(DEFAULT_SETTINGS);
+    expect(readLocalSettings(fakeStore())).toEqual({ yourKey: null, legendOpen: true });
+  });
+  test("reads the legacy keys: bmpl.yourKey (validated) and bmpl.legendOpen ('0' = closed)", () => {
+    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "18", [LEGEND_STORAGE_KEY]: "0" }))).toEqual({ yourKey: 18, legendOpen: false });
+    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "99", [LEGEND_STORAGE_KEY]: "1" }))).toEqual({ yourKey: null, legendOpen: true });
+  });
+  test("a throwing storage (private mode) yields the defaults", () => {
+    const boom = { getItem: () => { throw new Error("denied"); }, setItem: () => {}, removeItem: () => {} };
+    expect(readLocalSettings(boom)).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe("writeLocalSettings", () => {
+  test("writes only the patched keys; null removes the key", () => {
+    const s = fakeStore({ [STORAGE_KEY]: "18" });
+    writeLocalSettings(s, { legendOpen: false });
+    expect(s.dump()).toEqual({ [STORAGE_KEY]: "18", [LEGEND_STORAGE_KEY]: "0" });
+    writeLocalSettings(s, { yourKey: null });
+    expect(s.dump()).toEqual({ [LEGEND_STORAGE_KEY]: "0" });
+    writeLocalSettings(s, { yourKey: 21, legendOpen: true });
+    expect(s.dump()).toEqual({ [STORAGE_KEY]: "21", [LEGEND_STORAGE_KEY]: "1" });
+  });
+  test("no storage or a throwing storage is a no-op", () => {
+    writeLocalSettings(null, { yourKey: 1 });
+    writeLocalSettings({ getItem: () => null, setItem: () => { throw new Error("denied"); }, removeItem: () => {} }, { legendOpen: true });
+  });
+});
+
+describe("parseServerSettings", () => {
+  test("accepts the server shape and clamps garbage to the defaults", () => {
+    expect(parseServerSettings({ yourKey: 18, legendOpen: false })).toEqual({ yourKey: 18, legendOpen: false });
+    expect(parseServerSettings({ yourKey: null, legendOpen: true })).toEqual({ yourKey: null, legendOpen: true });
+    expect(parseServerSettings({ yourKey: 99 })).toEqual({ yourKey: null, legendOpen: true });
+    expect(parseServerSettings(null)).toEqual(DEFAULT_SETTINGS);
+    expect(parseServerSettings("nope")).toEqual(DEFAULT_SETTINGS);
+  });
+});

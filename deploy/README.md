@@ -9,15 +9,17 @@ Templates and scripts for running bmpl in hosted mode on a bare VPS (Debian/Ubun
 | `bmpl.service` | `/etc/systemd/system/bmpl.service` | Runs `/opt/bmpl/bmpl serve --hosted --port 3000 --host 127.0.0.1` as user `bmpl`, hardened, `Restart=always` |
 | `litestream.yml` | `/etc/litestream.yml` | Continuous replication config for `/opt/bmpl/bmpl.db` to an S3-compatible bucket |
 | `litestream.service` | `/etc/systemd/system/litestream.service` | Runs `litestream replicate -config /etc/litestream.yml` |
-| `backup-check.sh` | `/opt/bmpl/backup-check.sh` | Verifies the newest litestream snapshot is fresh; touches `/opt/bmpl/last-backup` |
-| `bmpl-backup-check.service` | `/etc/systemd/system/bmpl-backup-check.service` | Oneshot wrapper around `backup-check.sh` |
+| `backup-check.sh` | `/usr/local/sbin/bmpl-backup-check` | Verifies the newest litestream snapshot is fresh; touches `/opt/bmpl/last-backup` (runs as user `bmpl`, root-owned script) |
+| `bmpl-backup-check.service` | `/etc/systemd/system/bmpl-backup-check.service` | Oneshot wrapper around `bmpl-backup-check`, runs as `User=bmpl` |
 | `bmpl-backup-check.timer` | `/etc/systemd/system/bmpl-backup-check.timer` | Runs the backup check hourly |
 
 Also expected on the VPS but not shipped from here: the `bmpl` binary at `/opt/bmpl/bmpl` and the env file at `/opt/bmpl/.env` (mode 600, owner `bmpl`) — see `just deploy` and `.env.hosted.example` at the repo root.
 
+Copy both this `deploy/` directory and `.env.hosted.example` to the VPS before running `bootstrap.sh` (or copy the whole repo).
+
 ## Order of operations
 
-1. `sudo ./bootstrap.sh bmpl.example.com` on the fresh VPS — installs packages, the `bmpl` user, the firewall rules, and the systemd units (disabled where they still need config).
+1. `sudo bash bootstrap.sh bmpl.example.com` on the fresh VPS (the exec bit on `bootstrap.sh` is set by the next task; `bash bootstrap.sh` works either way) — installs packages, the `bmpl` user, the firewall rules, and the systemd units (disabled where they still need config).
 2. Fill `/opt/bmpl/.env` on the VPS (copied from `.env.hosted.example` by bootstrap if absent) with real secrets.
 3. `just deploy` from your machine — builds and ships the `bmpl` binary to `/opt/bmpl/bmpl`, then starts/restarts `bmpl.service`.
 4. Fill `/etc/litestream.yml` with the real bucket, endpoint and keys, then `sudo systemctl restart litestream`.

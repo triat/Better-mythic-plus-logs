@@ -4,4 +4,6 @@ After=litestream.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/bmpl/backup-check.sh
+User=bmpl
+Group=bmpl
+ExecStart=/usr/local/sbin/bmpl-backup-check

@@ -2,8 +2,11 @@
 Description=litestream — bmpl.db replication
 After=network-online.target bmpl.service
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
+User=bmpl
+Group=bmpl
 ExecStart=/usr/bin/litestream replicate -config /etc/litestream.yml
 Restart=always
 RestartSec=5

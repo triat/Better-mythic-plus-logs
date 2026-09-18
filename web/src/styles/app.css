@@ -234,3 +234,13 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .legend-weight { text-transform: none; letter-spacing: 0; font-weight: 400; }
 .radar-label { text-decoration: underline dotted var(--faint); text-underline-offset: 3px; }
 @media (max-width: 900px) { .legend-grid { grid-template-columns: 1fr; } }
+
+/* --- hosted: sign-in gate (SignIn.tsx) --- */
+.signin { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: calc(100vh - 65px); padding: 0 24px 40px; text-align: center; }
+.signin h1 { font-size: 26px; font-weight: 700; margin: 0; }
+.signin p { margin: 0; }
+.btn-discord { height: 48px; padding: 0 22px; gap: 8px; font-size: 15px; font-weight: 600; background: var(--discord); border-color: var(--discord); color: #fff; margin-top: 6px; }
+.btn-discord:hover { color: #fff; border-color: var(--discord); filter: brightness(1.1); }
+.signin-note { font-size: 12px; color: var(--faint); margin-top: 16px; }
+.signin-denied { width: 520px; max-width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; font-size: 13px; color: var(--text-soft); }
+.signin-id { display: flex; align-items: center; gap: 10px; margin-top: 2px; font-size: 15px; color: var(--text); }

@@ -4,20 +4,27 @@ import { runDeepdive } from "../deepdive/run.ts";
 import { applyPatch, getDefensives, resetDefensives, saveOverride, specDefensives, specKey, validateOverride } from "../deepdive/table.ts";
 import type { OverrideEntry } from "../deepdive/types.ts";
 import { getEvalConfig } from "../evaluation/config.ts";
+import type { RequestContext } from "../hosted/auth.ts";
 import type { LookupPayload } from "../lookup.ts";
 import { getStore } from "../signals/store.ts";
 import { jsonResponse, readJson } from "./http.ts";
-import { history } from "./lookup.ts";
+import { localHistory } from "./local-history.ts";
 
-/** Re-attach cached analyses (and re-evaluate) on every history entry — after an analysis or a table change. 0 pts. */
-export async function refreshHistoryDeepdive(): Promise<void> {
+/** The payload with today's cached analyses attached and a re-run evaluation. 0 pts. Hosted reads go through this. */
+export async function withCachedAnalyses(payload: LookupPayload): Promise<LookupPayload> {
   const [store, tables, cfg] = await Promise.all([getStore(), getDefensives(), getEvalConfig()]);
-  for (const e of history.list()) history.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
+  return attachDeepdive(payload, store, tables, cfg);
+}
+
+/** Local mode: re-attach on every entry of the process-wide history after an analysis or a table change. 0 pts. */
+export async function refreshLocalHistory(): Promise<void> {
+  const [store, tables, cfg] = await Promise.all([getStore(), getDefensives(), getEvalConfig()]);
+  for (const e of localHistory.list()) localHistory.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
 }
 
 interface DeepdiveBody { reportCode?: string; fightID?: number; character?: string; force?: boolean }
 
-export async function handleDeepdive(req: Request): Promise<Response> {
+export async function handleDeepdive(req: Request, ctx: RequestContext): Promise<Response> {
   const body = await readJson<DeepdiveBody>(req);
   if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
   if (!body.reportCode || typeof body.fightID !== "number" || !body.character) return jsonResponse({ ok: false, error: "`reportCode`, `fightID` and `character` are required" }, 400);
@@ -25,7 +32,7 @@ export async function handleDeepdive(req: Request): Promise<Response> {
   const [store, tables] = await Promise.all([getStore(), getDefensives()]);
   const r = await runDeepdive({ reportCode: body.reportCode, fightID: body.fightID, character: body.character, force: !!body.force }, { store, tables });
   if (!r.ok) return jsonResponse({ ok: false, error: r.error }, r.status);
-  await refreshHistoryDeepdive();
+  if (!ctx.hosted) await refreshLocalHistory();
   return jsonResponse({ ok: true, result: r.result, fromCache: r.fromCache, pointsSpent: r.pointsSpent });
 }
 
@@ -57,7 +64,7 @@ export async function handleDefensivesPost(req: Request, hosted = false): Promis
     const next = validateOverride(applyPatch(tables.override, key, validateOverride({ [key]: [body.patch] })[key]![0]!, effective));
     await saveOverride(tables.overridePath, next);
     resetDefensives();
-    await refreshHistoryDeepdive();
+    if (!hosted) await refreshLocalHistory();
     const fresh = await getDefensives();
     const d = specDefensives(fresh.shipped, fresh.override, body.className, body.spec);
     return jsonResponse({ ok: true, key: d.key, entries: d.entries, ignored: d.ignored, tableMissing: d.tableMissing, overridePath: hosted ? null : fresh.overridePath });

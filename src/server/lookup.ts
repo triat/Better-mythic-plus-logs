@@ -1,8 +1,10 @@
 import { hasCredentials } from "../config.ts";
+import type { RequestContext } from "../hosted/auth.ts";
 import { buildLookupPayload, performLookup } from "../lookup.ts";
+import type { LookupPayload } from "../lookup.ts";
 import type { Metric } from "../roles.ts";
-import { History } from "../server-history.ts";
-import type { HistoryEntry } from "../server-history.ts";
+import type { HistoryListItem, HistoryStore } from "../server-history.ts";
+import { withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse, parseCharacterInput, parseMetric, readJson } from "./http.ts";
 
 interface LookupRequest {
@@ -13,9 +15,7 @@ interface LookupRequest {
   refresh?: boolean;
 }
 
-export const history = new History(20);
-
-export const historySummary = (entry: HistoryEntry) => ({
+export const historySummary = (entry: HistoryListItem) => ({
   key: entry.key,
   label: entry.label,
   charClass: entry.charClass,
@@ -25,6 +25,12 @@ export const historySummary = (entry: HistoryEntry) => ({
   fetchedAt: entry.fetchedAt,
   request: entry.request,
 });
+
+/** The history a gated handler may use; anonymous hosted requests never reach a handler (authGate), so this is a bug guard. */
+export const historyOf = (ctx: RequestContext): HistoryStore => {
+  if (!ctx.history) throw new Error("no history for an anonymous request");
+  return ctx.history;
+};
 
 export interface LookupError {
   ok: false;
@@ -45,7 +51,7 @@ export async function runLookupWithCache(opts: {
   spec: string | null;
   metric: Metric | null;
   refresh: boolean;
-}): Promise<LookupSuccess | LookupError> {
+}, history: HistoryStore): Promise<LookupSuccess | LookupError> {
   if (!hasCredentials()) {
     return { ok: false, error: "No credentials configured. Visit /setup first.", status: 400 };
   }
@@ -99,7 +105,7 @@ export async function runLookupWithCache(opts: {
   }
 }
 
-export async function handleLookup(req: Request): Promise<Response> {
+export async function handleLookup(req: Request, ctx: RequestContext): Promise<Response> {
   const body = await readJson<LookupRequest>(req);
   if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
   const raw = (body.character ?? "").trim();
@@ -123,14 +129,11 @@ export async function handleLookup(req: Request): Promise<Response> {
     spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
     metric: parseMetric(body.metric ?? null) ?? null,
     refresh: !!body.refresh,
-  });
+  }, historyOf(ctx));
   if (!result.ok) {
     return jsonResponse({ ok: false, error: result.error }, result.status);
   }
-  return jsonResponse({
-    ok: true,
-    result: result.result,
-    key: result.key,
-    fromCache: result.fromCache,
-  });
+  // Hosted payloads are stored raw: attach today's cached analyses on the way out (0 pts).
+  const payload = result.fromCache && ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload) : result.result;
+  return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache });
 }

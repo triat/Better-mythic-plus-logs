@@ -11,6 +11,7 @@ import { adminRoutes } from "./server/routes-admin.ts";
 import { authRoutes } from "./server/routes-auth.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
+import { localHistory } from "./server/local-history.ts";
 import { jsonResponse } from "./server/http.ts";
 import { withSecurityHeaders } from "./server/security.ts";
 import { closeStore, getStore } from "./signals/store.ts";
@@ -85,7 +86,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       const r = findRoute(routes, req, url);
       if (!r) return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
       const ip = clientIp(req, hosted, peerIp);
-      const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip);
+      const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, localHistory);
       return authGate(r, ctx) ?? (await r.handle(req, url, ctx));
     } catch (e) {
       console.error(e);

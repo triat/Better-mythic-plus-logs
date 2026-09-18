@@ -5,11 +5,23 @@ import { SESSION_COOKIE, parseCookies, verifySessionCookie } from "./cookie.ts";
 import type { HostedDb, Role } from "./db.ts";
 import { jsonResponse } from "../server/http.ts";
 import type { RouteAuth } from "../server/routes.ts";
+import type { HistoryStore } from "../server-history.ts";
 
 export interface SessionUser { id: number; discordId: string; username: string; globalName: string | null; avatarHash: string | null; role: Role }
-export interface RequestContext { hosted: boolean; user: SessionUser | null; sessionId: string | null; ip: string }
 
-export const LOCAL_CONTEXT = (ip: string): RequestContext => ({ hosted: false, user: null, sessionId: null, ip });
+export interface RequestContext {
+  hosted: boolean;
+  user: SessionUser | null;
+  sessionId: string | null;
+  ip: string;
+  /** Epoch ms when the request was resolved — handlers stamp writes with it instead of calling Date.now(). */
+  now: number;
+  /** The caller's lookup history: the process-wide one locally, the user's own when hosted, null for an anonymous hosted request. */
+  history: HistoryStore | null;
+}
+
+export const LOCAL_CONTEXT = (ip: string, history: HistoryStore, now = Date.now()): RequestContext =>
+  ({ hosted: false, user: null, sessionId: null, ip, now, history });
 
 /** Behind Caddy the socket peer is the proxy; the first X-Forwarded-For entry is the client. */
 export function clientIp(req: Request, hosted: boolean, fallback: string | null): string {
@@ -24,7 +36,7 @@ export function clientIp(req: Request, hosted: boolean, fallback: string | null)
 }
 
 export function resolveRequest(req: Request, deps: { db: HostedDb; secret: string; now: number; ip: string }): RequestContext {
-  const anonymous: RequestContext = { hosted: true, user: null, sessionId: null, ip: deps.ip };
+  const anonymous: RequestContext = { hosted: true, user: null, sessionId: null, ip: deps.ip, now: deps.now, history: null };
   const id = verifySessionCookie(parseCookies(req.headers.get("cookie")).get(SESSION_COOKIE), deps.secret);
   if (!id) return anonymous;
   const s = deps.db.sessions.get(id, deps.now);
@@ -36,6 +48,8 @@ export function resolveRequest(req: Request, deps: { db: HostedDb; secret: strin
     user: { id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName, avatarHash: u.avatarHash, role: u.role },
     sessionId: s.id,
     ip: deps.ip,
+    now: deps.now,
+    history: deps.db.history.forUser(u.id),
   };
 }
 

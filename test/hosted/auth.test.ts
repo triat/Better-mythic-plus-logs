@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { LOCAL_CONTEXT, authGate, clientIp, resolveRequest } from "../../src/hosted/auth.ts";
 import { signSessionId } from "../../src/hosted/cookie.ts";
 import { openHosted } from "../../src/hosted/db.ts";
+import { History } from "../../src/server-history.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./helpers.ts";
 
 const SECRET = TEST_HOSTED_CONFIG.sessionSecret;
@@ -26,9 +27,12 @@ describe("resolveRequest", () => {
     expect(ok.sessionId).toBe(sessionId);
     expect(ok.hosted).toBe(true);
     expect(ok.ip).toBe("1.1.1.1");
+    expect(ok.now).toBe(2000);
+    expect(ok.history?.size).toBe(0);
     const tampered = resolveRequest(req(cookie.slice(0, -2) + "zz"), { db, secret: SECRET, now: 2000, ip: "" });
     expect(tampered.user).toBeNull();
     expect(resolveRequest(req(), { db, secret: SECRET, now: 2000, ip: "" }).user).toBeNull();
+    expect(resolveRequest(req(), { db, secret: SECRET, now: 2000, ip: "" }).history).toBeNull();
     const unknown = `bmpl_session=${signSessionId("not-a-session", SECRET)}`;
     expect(resolveRequest(req(unknown), { db, secret: SECRET, now: 2000, ip: "" }).user).toBeNull();
     db.sessions.delete(sessionId);
@@ -37,7 +41,7 @@ describe("resolveRequest", () => {
 });
 
 describe("authGate", () => {
-  const anon = { hosted: true, user: null, sessionId: null, ip: "" };
+  const anon = { hosted: true, user: null, sessionId: null, ip: "", now: 0, history: null };
   const member = { ...anon, user: { id: 1, discordId: "1", username: "m", globalName: null, avatarHash: null, role: "member" as const }, sessionId: "s" };
   const admin = { ...member, user: { ...member.user, role: "admin" as const } };
   test("public passes everyone; user needs a session; admin needs the role", async () => {
@@ -52,6 +56,6 @@ describe("authGate", () => {
     expect(authGate({ auth: "admin" }, admin)).toBeNull();
   });
   test("local context is never gated", () => {
-    expect(authGate({ auth: "admin" }, LOCAL_CONTEXT("127.0.0.1"))).toBeNull();
+    expect(authGate({ auth: "admin" }, LOCAL_CONTEXT("127.0.0.1", new History(1)))).toBeNull();
   });
 });

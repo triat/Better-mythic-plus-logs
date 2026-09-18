@@ -2,9 +2,10 @@
 // Routes that exist in both modes. Local-only routes live in routes-local.ts.
 import pkg from "../../package.json";
 import { hasCredentials } from "../config.ts";
-import { handleDeepdive, handleDefensivesGet, handleDefensivesPost } from "./deepdive.ts";
+import type { LookupPayload } from "../lookup.ts";
+import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse } from "./http.ts";
-import { handleLookup, history, historySummary } from "./lookup.ts";
+import { handleLookup, historyOf, historySummary } from "./lookup.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 import { eventsResponse } from "./sse.ts";
@@ -34,23 +35,25 @@ async function handleHealth(): Promise<Response> {
 
 export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
-    route("POST", "/api/lookup", (req) => handleLookup(req)),
-    route("POST", "/api/deepdive", (req) => handleDeepdive(req)),
+    route("POST", "/api/lookup", (req, _url, ctx) => handleLookup(req, ctx)),
+    route("POST", "/api/deepdive", (req, _url, ctx) => handleDeepdive(req, ctx)),
     route("GET", "/api/defensives", (_req, url) => handleDefensivesGet(url, ctx.hosted)),
     route("POST", "/api/defensives", (req) => handleDefensivesPost(req, ctx.hosted)),
-    route("GET", "/api/history", () => jsonResponse({ ok: true, items: history.list().map(historySummary) })),
-    route("DELETE", "/api/history", () => { history.clear(); return jsonResponse({ ok: true }); }),
-    prefixRoute("GET", "/api/history/", (_req, url) => {
+    route("GET", "/api/history", (_req, _url, rc) => jsonResponse({ ok: true, items: historyOf(rc).list().map(historySummary) })),
+    route("DELETE", "/api/history", (_req, _url, rc) => { historyOf(rc).clear(); return jsonResponse({ ok: true }); }),
+    prefixRoute("GET", "/api/history/", async (_req, url, rc) => {
       const key = historyKey(url);
       if (key === null) return jsonResponse({ ok: false, error: "Invalid history key" }, 400);
-      const entry = history.get(key);
+      const entry = historyOf(rc).get(key);
       if (!entry) return jsonResponse({ ok: false, error: "Not in history" }, 404);
-      return jsonResponse({ ok: true, result: entry.result, key, fromCache: true });
+      // Hosted payloads are stored raw: attach today's cached analyses on the way out (0 pts).
+      const result = rc.hosted ? await withCachedAnalyses(entry.result as LookupPayload) : entry.result;
+      return jsonResponse({ ok: true, result, key, fromCache: true });
     }),
-    prefixRoute("DELETE", "/api/history/", (_req, url) => {
+    prefixRoute("DELETE", "/api/history/", (_req, url, rc) => {
       const key = historyKey(url);
       if (key === null) return jsonResponse({ ok: false, error: "Invalid history key" }, 400);
-      return jsonResponse({ ok: history.remove(key) });
+      return jsonResponse({ ok: historyOf(rc).remove(key) });
     }),
     // In hosted mode the watcher never runs; the initial status is simply "inactive".
     route("GET", "/api/events", () => eventsResponse({ event: "status", data: watcherStatus() })),

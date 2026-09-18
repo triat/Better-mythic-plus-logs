@@ -23,13 +23,22 @@ export interface RequestContext {
 export const LOCAL_CONTEXT = (ip: string, history: HistoryStore, now = Date.now()): RequestContext =>
   ({ hosted: false, user: null, sessionId: null, ip, now, history });
 
-/** Behind Caddy the socket peer is the proxy; the first X-Forwarded-For entry is the client. */
+/** Longest client IP kept (an IPv6 literal with a zone fits); anything longer is a forged header, cut so it cannot bloat a key or an audit row. */
+const CLIENT_IP_MAX = 64;
+
+/**
+ * Behind Caddy the socket peer is the proxy; the client is the LAST non-empty X-Forwarded-For entry,
+ * the one the nearest (trusted) proxy appended — a client-supplied header only ever prepends
+ * entries in front of it. The proxy must set the header (issue #10's Caddy config does; keep
+ * `trusted_proxies` empty or bind bmpl to localhost so it cannot be forged end to end).
+ */
 export function clientIp(req: Request, hosted: boolean, fallback: string | null): string {
   if (hosted) {
     const xff = req.headers.get("x-forwarded-for");
     if (xff) {
-      const first = xff.split(",")[0]!.trim();
-      if (first) return first;
+      const entries = xff.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+      const last = entries[entries.length - 1];
+      if (last) return last.slice(0, CLIENT_IP_MAX);
     }
   }
   return fallback ?? "";

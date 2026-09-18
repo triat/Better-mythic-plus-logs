@@ -73,6 +73,19 @@ describe("origin check", () => {
     expect(r.rows[1]).toMatchObject({ action: "origin_rejected", userId: null, target: "PUT /api/settings", detail: { origin: "", fetchSite: "cross-site", why: "fetch-site" } });
     expect(r.rows[2]).toMatchObject({ action: "origin_rejected", userId: null, target: "PUT /api/settings", detail: { origin: "https://evil.example", why: "origin" } });
   });
+  test("the 403 is unconditional but the audit row is throttled: 7 cross-site POSTs from one IP → 7 × 403, 5 origin_rejected rows", async () => {
+    const ip = "203.0.113.7"; // its own key: the earlier refusals of this file came from the socket peer
+    const rowsFor = async () => ((await audit("kind=security&limit=200")).rows as { action: string; ip: string }[]).filter((r) => r.action === "origin_rejected" && r.ip === ip);
+    expect(await rowsFor()).toHaveLength(0);
+    for (let i = 0; i < 7; i++) {
+      const r = await fetch(u("/auth/logout"), { method: "POST", headers: { Origin: "https://evil.example", "X-Forwarded-For": `1.2.3.4, ${ip}` } });
+      expect(r.status).toBe(403);
+      expect(await r.json()).toEqual({ ok: false, error: "Cross-site request refused" });
+    }
+    const rows = await rowsFor();
+    expect(rows).toHaveLength(5); // DEFAULT_RATE_LIMITS.security: 5 rows per IP per minute
+    expect(rows[0]!.ip).toBe(ip); // the last X-Forwarded-For entry, not the client-prepended one
+  });
   test("GET is never origin-checked", async () => {
     expect((await fetch(u("/api/me"), { headers: { cookie: member.cookie, Origin: "https://evil.example" } })).status).toBe(200);
     expect((await fetch(u("/api/me"), { headers: { cookie: member.cookie, "Sec-Fetch-Site": "cross-site" } })).status).toBe(200);
@@ -93,6 +106,10 @@ describe("rate limits", () => {
     const a = await audit("kind=security&limit=1");
     expect(a.rows[0]).toMatchObject({ action: "rate_limited", userId: null, target: "GET /auth/discord", detail: { limit: 3, windowS: 60, retryAfterS: retryAfter } });
     expect(a.rows[0].ip).toMatch(/127\.0\.0\.1$/); // the socket peer (dual-stack: ::ffff:127.0.0.1); no X-Forwarded-For here
+    // Only the first refusal of the burst is audited: 5 more 429s, still exactly one rate_limited row for this target.
+    for (let i = 0; i < 5; i++) expect((await fetch(u("/auth/discord"), { redirect: "manual" })).status).toBe(429);
+    const rows = ((await audit("kind=security&limit=200")).rows as { action: string; target: string }[]).filter((r) => r.action === "rate_limited" && r.target === "GET /auth/discord");
+    expect(rows).toHaveLength(1);
   });
   test("/api/lookup per user: invalid bodies count, the 3rd is 429, another user is unaffected", async () => {
     const bad = () => fetch(u("/api/lookup"), json("POST", { nope: 1 }, member.cookie));

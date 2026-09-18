@@ -29,6 +29,7 @@ describe("combinators", () => {
     expect(s.parse({ a: 1, b: undefined, c: 2 }, "")).toEqual({ ok: true, value: { a: 1, c: 2 } });
     expect(s.parse({ c: 1 }, "")).toEqual({ ok: false, error: "`a` is required" });
     expect(s.parse({ a: 1, c: 1, zzz: 1 }, "")).toEqual({ ok: false, error: "Unexpected field `zzz`" });
+    expect(s.parse({ a: 1, c: 1, toString: 1 }, "")).toEqual({ ok: false, error: "Unexpected field `toString`" }); // own fields only, never the prototype's
     expect(s.parse([], "")).toEqual({ ok: false, error: "Body must be a JSON object" });
     expect(obj({ n: obj({ k: int() }) }).parse({ n: { k: "1" } }, "")).toEqual({ ok: false, error: "`n.k` must be an integer" });
   });

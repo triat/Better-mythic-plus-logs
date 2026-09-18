@@ -55,6 +55,18 @@ describe("AuditLog", () => {
     expect(calls).toHaveLength(1);
   });
 
+  test("record bounds target (300) and ip (64), whether explicit or from the scope", async () => {
+    const log = new AuditLog(db.audit);
+    log.record("origin_rejected", { target: "POST /" + "x".repeat(500), ip: "9".repeat(100), at: 10_000 });
+    await log.scope({ userId: null, ip: "1".repeat(100), target: "t".repeat(400) }, async () => { log.record("rate_limited", { at: 11_000 }); });
+    const [scoped, explicit] = db.audit.list({ actions: ["origin_rejected", "rate_limited"], before: null, limit: 2 });
+    expect(explicit!.target).toHaveLength(300);
+    expect(explicit!.target!.endsWith("…")).toBe(true);
+    expect(explicit!.ip).toHaveLength(64);
+    expect(scoped!.target).toHaveLength(300);
+    expect(scoped!.ip).toHaveLength(64);
+  });
+
   test("list filters by actions and pages by id; counts per kind; purge", () => {
     const log = new AuditLog(db.audit);
     log.record("login", { userId: user.id, at: 1_000 });

@@ -21,8 +21,8 @@ export interface HostedRuntime {
   meter: PointsMeter;
   quota: QuotaGate;
   audit: AuditLog;
-  /** In-app rate limits (issue #9): `/auth/*` per IP, `POST /api/lookup` and `POST /api/deepdive` per user. */
-  limits: { auth: RateLimiter; lookup: RateLimiter; deepdive: RateLimiter };
+  /** In-app rate limits (issue #9): `/auth/*` per IP, `POST /api/lookup` and `POST /api/deepdive` per user; `security` throttles the `origin_rejected` audit rows per IP. */
+  limits: { auth: RateLimiter; lookup: RateLimiter; deepdive: RateLimiter; security: RateLimiter };
 }
 
 const PURGE_INTERVAL_MS = 60 * 60 * 1000;
@@ -44,7 +44,12 @@ export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn:
     meter,
     quota: new QuotaGate({ usage: hostedDb.usage, meter, limit: config.pointsPerUserHour }),
     audit,
-    limits: { auth: new RateLimiter(rateLimits.auth), lookup: new RateLimiter(rateLimits.lookup), deepdive: new RateLimiter(rateLimits.deepdive) },
+    limits: {
+      auth: new RateLimiter(rateLimits.auth),
+      lookup: new RateLimiter(rateLimits.lookup),
+      deepdive: new RateLimiter(rateLimits.deepdive),
+      security: new RateLimiter(rateLimits.security),
+    },
   };
   // Every WCL response of this process now feeds the meter, every WCL failure the audit log (the CLI
   // and local mode never install either).

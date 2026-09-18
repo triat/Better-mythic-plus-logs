@@ -422,7 +422,10 @@ browser, adds security headers (CSP, nosniff, frame-ancestors none, …) and exp
 
 **Hardening** (issue #9): state-changing requests must come from `BMPL_BASE_URL`
 (Origin / Sec-Fetch-Site), `/auth/*` is limited to 10 requests per minute per IP,
-lookups to 30 and analyses to 60 per minute per member (429 with `Retry-After`),
+lookups to 30 and analyses to 60 per minute per member (429 with `Retry-After`) —
+the app reads the client IP from the last `X-Forwarded-For` entry, so the reverse
+proxy must set that header (Caddy does; keep `trusted_proxies` empty or bind bmpl
+to localhost so it cannot be forged — issue #10 ships that config),
 every JSON body is validated against an explicit shape (unknown fields are
 refused), server errors never carry messages or paths, and the audit log
 (`GET /api/admin/audit?kind=&before=&limit=`, the admin page's Audit section) keeps

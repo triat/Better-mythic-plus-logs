@@ -2,7 +2,8 @@
 // section reads it through GET /api/admin/audit. A request-scoped recorder (AsyncLocalStorage, like
 // the PointsMeter) lets any code that runs inside a request record a row without threading the
 // user/ip/target through; `record` never throws, since a logging failure must not fail the request.
-// Rows never carry secrets, cookies or full WCL bodies: callers clip every free-text string.
+// Rows never carry secrets, cookies or full WCL bodies: callers clip every free-text string in
+// `detail`; `record` itself bounds `target` (300) and `ip` (64), which come straight from the request.
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { HostedDb } from "./db.ts";
 
@@ -85,17 +86,19 @@ export class AuditLog {
     return this.als.getStore();
   }
 
-  /** Inserts one row; a failure is reported once on stderr and otherwise swallowed. */
+  /** Inserts one row (`target` clipped to 300 chars, `ip` to 64); a failure is reported once on stderr and otherwise swallowed. */
   record(action: AuditAction, e: AuditEntry = {}): void {
     const s = this.als.getStore();
     try {
+      const target = e.target !== undefined ? e.target : s?.target ?? null;
+      const ip = e.ip !== undefined ? e.ip : s?.ip ?? null;
       this.repo.add({
         at: e.at ?? Date.now(),
         userId: e.userId !== undefined ? e.userId : s?.userId ?? null,
         action,
-        target: e.target !== undefined ? e.target : s?.target ?? null,
+        target: target === null ? null : clip(target, 300),
         detail: e.detail ? JSON.stringify(e.detail) : null,
-        ip: e.ip !== undefined ? e.ip : s?.ip ?? null,
+        ip: ip === null ? null : clip(ip, 64),
       });
     } catch (err) {
       console.error(`audit: could not record ${action}: ${err instanceof Error ? err.message : String(err)}`);

@@ -1,4 +1,3 @@
-import type { Metric } from "../roles.ts";
 import { parseNameRealm, parseRaiderIOUrl } from "../util.ts";
 
 export const jsonResponse = (data: unknown, status = 200): Response =>
@@ -6,12 +5,6 @@ export const jsonResponse = (data: unknown, status = 200): Response =>
     status,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
-
-export const parseMetric = (raw: string | null | undefined): Metric | undefined => {
-  if (!raw) return undefined;
-  const v = raw.trim().toLowerCase();
-  return v === "dps" || v === "hps" ? v : undefined;
-};
 
 export function parseCharacterInput(
   raw: string,

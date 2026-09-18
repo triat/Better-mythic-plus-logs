@@ -113,11 +113,15 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       const ip = clientIp(req, hosted, peerIp);
       const target = `${req.method} ${url.pathname}`;
       // Hosted: a state-changing request from another origin is refused before the auth gate, so a
-      // foreign page cannot even learn whether the cookie it carries is valid.
+      // foreign page cannot even learn whether the cookie it carries is valid. The 403 is
+      // unconditional; the audit row is throttled per IP (`limits.security`) so a flood of
+      // cross-site requests cannot fill the audit table.
       if (runtime && req.method !== "GET" && req.method !== "HEAD") {
         const why = checkOrigin(req.headers, runtime.config.baseUrl);
         if (why) {
-          runtime.audit.record("origin_rejected", { userId: null, ip, target, detail: { origin: clip(req.headers.get("origin") ?? "", 200), fetchSite: req.headers.get("sec-fetch-site"), why } });
+          if (runtime.limits.security.hit(`ip:${ip}`, Date.now()).ok) {
+            runtime.audit.record("origin_rejected", { userId: null, ip, target, detail: { origin: clip(req.headers.get("origin") ?? "", 200), fetchSite: req.headers.get("sec-fetch-site"), why } });
+          }
           return jsonResponse({ ok: false, error: "Cross-site request refused" }, 403);
         }
       }
@@ -126,13 +130,16 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       if (gate) return gate;
       if (!runtime) return await r.handle(req, url, ctx);
       // Hosted: in-app rate limits, after the gate (a per-user key needs the user) and before the
-      // handler (an invalid body still counts). The 429 is answered here, so it is never a quota row.
+      // handler (an invalid body still counts). The 429 is answered here, so it is never a quota
+      // row; only the first refusal of a burst is audited (`first`), the rest are 429 only.
       const rl = rateLimitFor(runtime, req, url, ctx.user?.id ?? null, ip);
       if (rl) {
         const verdict = rl.limiter.hit(rl.key, Date.now());
         if (!verdict.ok) {
           const { retryAfterS } = verdict;
-          runtime.audit.record("rate_limited", { userId: ctx.user?.id ?? null, ip, target, detail: { limit: rl.limiter.rule.limit, windowS: Math.round(rl.limiter.rule.windowMs / 1000), retryAfterS } });
+          if (verdict.first) {
+            runtime.audit.record("rate_limited", { userId: ctx.user?.id ?? null, ip, target, detail: { limit: rl.limiter.rule.limit, windowS: Math.round(rl.limiter.rule.windowMs / 1000), retryAfterS } });
+          }
           const res = jsonResponse({ ok: false, error: `Too many requests — try again in ${retryAfterS} s` }, 429);
           res.headers.set("Retry-After", String(retryAfterS));
           return res;

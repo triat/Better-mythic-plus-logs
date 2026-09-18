@@ -17,7 +17,7 @@ const EMPTY: AdminData = { usage: null, users: [], invites: [], pending: [], dec
 export function AdminPage({ me }: { me: MeUser }) {
   const [data, setData] = useState<AdminData>(EMPTY);
   const [toast, setToast] = useState<string | null>(null);
-  const [auditKind, setAuditKind] = useState<AuditKind | "all">(() => (location.hash === "#audit-errors" ? "error" : "all"));
+  const [auditKind, setAuditKind] = useState<AuditKind | "all">("all");
   const closeToast = useCallback(() => setToast(null), []);
   const reload = useCallback(async () => {
     const [usage, users, invites, pending, approved, rejected, instance, audit] = await Promise.all([

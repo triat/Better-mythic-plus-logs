@@ -11,10 +11,19 @@ const req = (cookie?: string, extra: Record<string, string> = {}) =>
   new Request("http://x/api/history", { headers: { ...(cookie ? { cookie } : {}), ...extra } });
 
 describe("clientIp", () => {
-  test("hosted trusts the first X-Forwarded-For entry, local uses the fallback", () => {
-    expect(clientIp(req(undefined, { "x-forwarded-for": " 9.9.9.9 , 10.0.0.1" }), true, "127.0.0.1")).toBe("9.9.9.9");
+  test("hosted trusts the LAST X-Forwarded-For entry (the nearest proxy's), local uses the fallback", () => {
+    expect(clientIp(req(undefined, { "x-forwarded-for": " 9.9.9.9 , 10.0.0.1" }), true, "127.0.0.1")).toBe("10.0.0.1");
     expect(clientIp(req(undefined, { "x-forwarded-for": "9.9.9.9" }), false, "127.0.0.1")).toBe("127.0.0.1");
     expect(clientIp(req(), true, null)).toBe("");
+  });
+  test("last entry: a client-prepended list still resolves to the proxy's entry; single entry as is; empty → fallback; bounded to 64 chars", () => {
+    expect(clientIp(req(undefined, { "x-forwarded-for": "1.1.1.1, 2.2.2.2" }), true, "127.0.0.1")).toBe("2.2.2.2");
+    expect(clientIp(req(undefined, { "x-forwarded-for": "1.1.1.1" }), true, "127.0.0.1")).toBe("1.1.1.1");
+    expect(clientIp(req(undefined, { "x-forwarded-for": "1.1.1.1, 2.2.2.2, " }), true, "127.0.0.1")).toBe("2.2.2.2"); // trailing empty entry ignored
+    expect(clientIp(req(undefined, { "x-forwarded-for": "" }), true, "127.0.0.1")).toBe("127.0.0.1");
+    expect(clientIp(req(undefined, { "x-forwarded-for": " , " }), true, "127.0.0.1")).toBe("127.0.0.1");
+    expect(clientIp(req(undefined, { "x-forwarded-for": "" }), true, null)).toBe("");
+    expect(clientIp(req(undefined, { "x-forwarded-for": "x".repeat(200) }), true, null)).toBe("x".repeat(64));
   });
 });
 

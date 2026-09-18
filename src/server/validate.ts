@@ -50,7 +50,7 @@ type ObjShape<F> = { [K in Exclude<keyof F, OptionalKeys<F>>]: Infer<F[K]> } & {
 export const obj = <F extends Record<string, Schema<unknown>>>(fields: F): Schema<ObjShape<F>> => ({
   parse(v, path) {
     if (!isObj(v)) return fail(path ? `${label(path)} must be an object` : "Body must be a JSON object");
-    for (const k of Object.keys(v)) if (!(k in fields)) return fail(`Unexpected field \`${path ? `${path}.` : ""}${k}\``);
+    for (const k of Object.keys(v)) if (!Object.hasOwn(fields, k)) return fail(`Unexpected field \`${path ? `${path}.` : ""}${k}\``);
     const out: Record<string, unknown> = {};
     for (const k of Object.keys(fields)) {
       const schema = fields[k] as Schema<unknown> & { optional?: true };

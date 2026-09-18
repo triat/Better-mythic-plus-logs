@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { KeyStepper } from "./KeyStepper.tsx";
 import type { UiControls } from "../lib/hostedMode.ts";
-import type { MeUser } from "../api.ts";
+import type { MenuModel } from "../lib/session.ts";
+import { UserMenu } from "./UserMenu.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -24,9 +25,10 @@ interface Props {
   /** Big centered variant for the empty state. */
   hero?: boolean;
   controls: UiControls;
-  me: MeUser | null;
+  menu: MenuModel | null;
+  pendingProposals: number | null;
+  onMenuOpen: () => void;
   onSignOut: () => void;
-  quotaLabel: string | null;
 }
 
 export function Header(p: Props) {
@@ -88,11 +90,10 @@ export function Header(p: Props) {
         {!p.sseConnected && <span className="muted" title="Reconnecting…">live updates disconnected</span>}
         {p.controls.setup && <button className="btn" onClick={p.onSetup}>Re-configure</button>}
         {p.controls.quit && <button className="btn" onClick={p.onQuit}>Quit</button>}
-        {p.controls.signOut && (
+        {p.controls.signOut && p.menu && (
           <>
-            {p.quotaLabel && <span className="muted mono" title="Your share of the shared Warcraft Logs budget">{p.quotaLabel}</span>}
-            {p.me && <span className="muted" title={p.me.discordId}>{p.me.globalName ?? p.me.username}</span>}
-            <button className="btn" onClick={p.onSignOut}>Sign out</button>
+            {p.menu.exhausted && <span className="mono quota-exhausted" title="Your share of the shared Warcraft Logs budget">{p.menu.exhausted}</span>}
+            <UserMenu m={p.menu} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
           </>
         )}
       </div>

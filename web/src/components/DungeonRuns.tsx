@@ -28,7 +28,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
           <button
             type="button" className="btn btn-sm"
             disabled={deepdive.analyzing !== null || !deepdive.canAfford(pending)}
-            title={deepdive.canAfford(pending) ? undefined : "Hourly quota reached"}
+            title={deepdive.canAfford(pending) ? undefined : deepdive.quotaTooltip}
             onClick={() => void deepdive.analyzeAll()}
           >
             {deepdive.progress ?? `Analyze all shown (${costText(pending)})`}
@@ -87,7 +87,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
           <button
             type="button" className="btn btn-sm"
             disabled={anyBusy || !deepdive.canAfford(1)}
-            title={deepdive.canAfford(1) ? undefined : "Hourly quota reached"}
+            title={deepdive.canAfford(1) ? undefined : deepdive.quotaTooltip}
             onClick={() => void deepdive.analyze(run)}
           >
             {busy ? <span className="spinner" /> : null} Analyze · {costText(1)}
@@ -103,6 +103,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
       {expanded && a && (
         <RunDeepDive
           d={a} tableWarning={payload.deepdiveSummary.tableWarning} busy={anyBusy} canAfford={deepdive.canAfford(1)}
+          quotaTooltip={deepdive.quotaTooltip}
           onReanalyze={() => void deepdive.analyze(run, true)} onPatch={(patch) => deepdive.patch(a.className, a.spec, patch)}
         />
       )}

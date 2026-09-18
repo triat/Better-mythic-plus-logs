@@ -34,8 +34,8 @@ afterAll(() => {
 const url = (p: string) => `http://localhost:${server.port}${p}`;
 
 describe("static routes", () => {
-  test("/ and /setup serve index.html with no-cache", async () => {
-    for (const p of ["/", "/setup"]) {
+  test("/, /setup and /admin serve index.html with no-cache", async () => {
+    for (const p of ["/", "/setup", "/admin"]) {
       const res = await fetch(url(p));
       expect(res.status).toBe(200);
       expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");

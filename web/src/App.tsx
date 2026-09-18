@@ -4,7 +4,8 @@ import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
-import { canAfford, quotaLabel } from "./lib/quota.ts";
+import { canAfford, quotaTooltip } from "./lib/quota.ts";
+import { menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
@@ -66,6 +67,14 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
+  const menu = me ? menuModel(me, quota) : null;
+  // Admins see "N pending proposals" next to the Admin item; counted when the menu opens (0 WCL pts, SQLite only).
+  const [pendingProposals, setPendingProposals] = useState<number | null>(null);
+  const onMenuOpen = useCallback(async () => {
+    if (me?.role !== "admin") return;
+    const r = await api.adminProposals();
+    if (r.ok) setPendingProposals(r.proposals.length);
+  }, [me]);
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
   const { settings, update: updateSettings } = useSettings();
   const yourKey = settings.yourKey;
@@ -152,7 +161,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
     setCompareOpen(false);
     const r = await api.lookup({ ...req, refresh });
     setBusy(null);
-    if (!r.ok) { setToast(r.error); return; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(r.error); return; }
     if (r.quota) setQuota(r.quota);
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
@@ -246,7 +255,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
     const key = `${run.reportCode}:${run.fightID}`;
     setAnalyzing(key);
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
-    if (!r.ok) { setAnalyzing(null); setToast(r.error); return false; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(r.error); return false; }
     if (r.quota) setQuota(r.quota);
     // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
@@ -274,6 +283,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
   const deepdiveActions: DeepdiveActions = {
     analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives,
     canAfford: (runs) => canAfford(quota, runs * POINTS_PER_RUN),
+    quotaTooltip: quotaTooltip(quota),
   };
 
   if (stopped) return <main className="stopped"><h2>bmpl stopped</h2><p className="muted">You can close this tab.</p></main>;
@@ -290,7 +300,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty} controls={controls}
-        me={me} onSignOut={onSignOut} quotaLabel={quotaLabel(quota)}
+        menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
       />
       <Tabs
         items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}

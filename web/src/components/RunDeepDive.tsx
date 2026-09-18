@@ -9,13 +9,14 @@ interface Props {
   tableWarning?: string | null;
   busy: boolean;
   canAfford: boolean;
+  quotaTooltip: string;
   onReanalyze: () => void;
   onPatch: (patch: OverrideEntry) => Promise<void>;
 }
 
 const KINDS: DefensiveKind[] = ["major", "immunity", "minor"];
 
-export function RunDeepDive({ d, tableWarning, busy, canAfford, onReanalyze, onPatch }: Props) {
+export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, onReanalyze, onPatch }: Props) {
   const m = panelModel(d, Date.now(), tableWarning);
   useWowheadRefresh(d);
   const [tableOpen, setTableOpen] = useState(false);
@@ -49,7 +50,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, onReanalyze, onP
         <div className="grow" />
         <button
           type="button" className="btn btn-sm" disabled={busy || !canAfford}
-          title={canAfford ? undefined : "Hourly quota reached"}
+          title={canAfford ? undefined : quotaTooltip}
           onClick={onReanalyze}
         >
           Re-analyze · {costText(1)}

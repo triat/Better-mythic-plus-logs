@@ -16,6 +16,8 @@ export interface DeepdiveActions {
   patch: (className: string, spec: string, patch: OverrideEntry) => Promise<void>;
   /** Whether analysing `runs` more runs fits in the hourly quota (always true locally). */
   canAfford: (runs: number) => boolean;
+  /** Tooltip of a disabled Analyze button: "Hourly quota reached · resets in N min". */
+  quotaTooltip: string;
 }
 
 export interface DetailProps { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; deepdive: DeepdiveActions }

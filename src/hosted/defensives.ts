@@ -38,6 +38,8 @@ export interface DefensivesRepo {
   updatePatch(id: number, patch: OverrideEntry): void;
   /** Records a decision on a pending proposal; false when it was not pending. */
   markDecided(id: number, status: Exclude<ProposalStatus, "pending">, decidedBy: number, note: string | null, now: number): boolean;
+  /** Runs `fn` inside a SQLite transaction; a thrown error rolls back every write `fn` made. */
+  transaction<T>(fn: () => T): T;
 }
 
 interface SharedRaw { key: string; entry: string }
@@ -81,6 +83,7 @@ export function openDefensives(db: Database): DefensivesRepo {
     },
     updatePatch(id, patch) { setPatch.run(JSON.stringify(stripOrigin(patch)), id); },
     markDecided(id, status, decidedBy, note, now) { decideStmt.run(status, decidedBy, now, note, id); return changes() === 1; },
+    transaction: (fn) => db.transaction(fn)(),
   };
 }
 
@@ -105,10 +108,12 @@ export function propose(repo: DefensivesRepo, user: { id: number; role: Role }, 
     return { ok: false, status: 400, error: e instanceof Error ? e.message : String(e) };
   }
   if (user.role === "admin") {
-    const shared = repo.shared();
-    const entry = mergeEntry(shared[key] ?? [], validated).find((e) => e.id === validated.id)!;
-    repo.upsertShared(key, entry, user.id, now);
-    const proposal = repo.insertProposal({ key, spellId: validated.id, patch: validated, proposedBy: user.id, createdAt: now, status: "approved", decidedBy: user.id, decidedAt: now, note: null });
+    const proposal = repo.transaction(() => {
+      const shared = repo.shared();
+      const entry = mergeEntry(shared[key] ?? [], validated).find((e) => e.id === validated.id)!;
+      repo.upsertShared(key, entry, user.id, now);
+      return repo.insertProposal({ key, spellId: validated.id, patch: validated, proposedBy: user.id, createdAt: now, status: "approved", decidedBy: user.id, decidedAt: now, note: null });
+    });
     return { ok: true, proposal, tables: tablesFor(repo, user.id) };
   }
   const existing = repo.pendingOf(user.id).find((p) => p.key === key && p.spellId === validated.id);
@@ -127,11 +132,17 @@ export function propose(repo: DefensivesRepo, user: { id: number; role: Role }, 
 export function decide(repo: DefensivesRepo, id: number, admin: { id: number }, status: "approved" | "rejected", note: string | null, now: number): ProposalRow | null {
   const p = repo.proposalById(id);
   if (!p || p.status !== "pending") return null;
-  if (status === "approved") {
-    const shared = repo.shared();
-    const entry = mergeEntry(shared[p.key] ?? [], p.patch).find((e) => e.id === p.spellId)!;
-    repo.upsertShared(p.key, entry, admin.id, now);
-  }
-  if (!repo.markDecided(id, status, admin.id, note, now)) return null;
+  // markDecided runs first: a row that turns out not to be pending any more never touches
+  // defensives_shared, and a throw from upsertShared rolls back the decision too.
+  const decided = repo.transaction(() => {
+    if (!repo.markDecided(id, status, admin.id, note, now)) return false;
+    if (status === "approved") {
+      const shared = repo.shared();
+      const entry = mergeEntry(shared[p.key] ?? [], p.patch).find((e) => e.id === p.spellId)!;
+      repo.upsertShared(p.key, entry, admin.id, now);
+    }
+    return true;
+  });
+  if (!decided) return null;
   return repo.proposalById(id);
 }

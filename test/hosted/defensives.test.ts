@@ -132,4 +132,23 @@ describe("propose / decide lifecycle", () => {
     db.run("DELETE FROM users WHERE id = ?", [tom.id]);
     expect(repo.listProposals("approved")).toEqual([]);
   });
+
+  test("deciding an already-decided proposal refuses and leaves defensives_shared unchanged", () => {
+    const { repo, tom, boss } = setup();
+    const r = propose(repo, tom, HOLY.className, HOLY.spec, { id: DP, cooldownS: 45 }, 1000);
+    if (!r.ok) throw new Error(r.error);
+    decide(repo, r.proposal.id, boss, "approved", null, 2000);
+    const before = repo.shared();
+    expect(decide(repo, r.proposal.id, boss, "rejected", "too late", 3000)).toBeNull();
+    expect(repo.shared()).toEqual(before);
+  });
+
+  test("if upsertShared throws inside the transaction, the decision is not recorded either", () => {
+    const { repo, tom, boss } = setup();
+    const r = propose(repo, tom, HOLY.className, HOLY.spec, { id: DP, cooldownS: 45 }, 1000);
+    if (!r.ok) throw new Error(r.error);
+    repo.upsertShared = () => { throw new Error("boom"); };
+    expect(() => decide(repo, r.proposal.id, boss, "approved", null, 2000)).toThrow("boom");
+    expect(repo.proposalById(r.proposal.id)).toMatchObject({ status: "pending" });
+  });
 });

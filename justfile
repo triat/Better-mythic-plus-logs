@@ -11,6 +11,10 @@ check:
     bun run typecheck
     bun run --cwd web typecheck
 
+# known-vulnerability check of both lockfiles (bun audit); run before a release
+check-deps:
+    bun audit && cd web && bun audit
+
 # install web front dependencies
 web-install:
     bun install --cwd web

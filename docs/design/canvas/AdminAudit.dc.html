@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .row-audit { grid-template-columns: 74px 130px 150px 220px 1fr; }
+    .row-audit > span:last-child { white-space: normal; }
+    .dot-error { background: #f85149; } .dot-admin { background: #58a6ff; } .dot-login { background: #56d364; } .dot-quota { background: #e3b341; } .dot-sec { background: #ffa657; }
+    .kind { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .day { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; padding: 8px 0 2px; }
+    .tl { display: grid; grid-template-columns: 56px 12px 1fr; gap: 0 10px; align-items: baseline; font-size: 13px; padding: 3px 0; }
+    .tl .t { color: #6e7681; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 2080px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="content content-wide" style="gap: 26px;">
+    <div>
+    <div class="label" style="margin-bottom: 8px;">SUB-NAV — a sixth anchor, the WCL error count as a red chip (all three variants)</div>
+  <div style="display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid #21262d; font-size: 13px;"><a href="#">Budget</a><a href="#">Proposals <span class="chip chip-warn" style="margin-left: 4px;">3</span></a><a href="#">Users</a><a href="#">Invites</a><a href="#">Instance</a><a href="#" style="color: #e6edf3;">Audit <span class="chip" style="margin-left: 4px; color: #f85149;">9 errors</span></a></div>
+    </div>
+    <div>
+    <div class="label" style="margin-bottom: 8px;">A · AUDIT TABLE — one section at the bottom of the admin page; WCL errors are rows like any other, the red chip filters them</div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 6px;">
+    <div style="display: flex; align-items: center; gap: 10px;"><span class="section-title">Audit log</span><span class="muted" style="font-size: 12px;">logins, admin actions, quota refusals, security rejections, WCL errors · kept 90 days</span><div style="flex: 1;"></div><span class="chip chip-on">All · 128</span><span class="chip">Logins · 41</span><span class="chip">Admin · 19</span><span class="chip">Quota · 12</span><span class="chip">Security · 7</span><span class="chip" style="color: #f85149;">WCL errors · 9</span></div>
+    <div class="row row-audit caps" style="padding: 2px 10px;"><span>time</span><span>who</span><span>action</span><span>target</span><span>detail</span></div>
+    <div class="inset row row-audit"><span class="mono faint">14:02</span><span>tom</span><span><span class="dot dot-error"></span><span class="mono" style="font-size: 12px;">wcl_error</span></span><span class="soft">lookup Biwaadrood-Nerzhul</span><span class="faint">WCL HTTP 502 — Bad Gateway (rankings)</span></div>
+    <div class="inset row row-audit"><span class="mono faint">13:58</span><span>bob</span><span><span class="dot dot-quota"></span><span class="mono" style="font-size: 12px;">quota_refused</span></span><span class="soft">deepdive ab12CD:7</span><span class="faint">estimate 62 pts, 287/300 used, resets in 22 min</span></div>
+    <div class="inset row row-audit"><span class="mono faint">13:41</span><span>Muleyoxo</span><span><span class="dot dot-admin"></span><span class="mono" style="font-size: 12px;">proposal_approve</span></span><span class="soft">Divine Shield · Paladin:Holy</span><span class="faint">cd 300 → 240 s · note: “Matches the 11.2 tooltip.”</span></div>
+    <div class="inset row row-audit"><span class="mono faint">13:40</span><span>Muleyoxo</span><span><span class="dot dot-admin"></span><span class="mono" style="font-size: 12px;">invite_add</span></span><span class="soft">444444444444444444</span><span class="faint">note: “alt of tom”</span></div>
+    <div class="inset row row-audit"><span class="mono faint">12:15</span><span><span class="faint">—</span></span><span><span class="dot dot-sec"></span><span class="mono" style="font-size: 12px;">rate_limited</span></span><span class="soft">/auth/discord · 203.0.113.9</span><span class="faint">11 requests in 60 s (limit 10)</span></div>
+    <div class="inset row row-audit"><span class="mono faint">12:14</span><span><span class="faint">—</span></span><span><span class="dot dot-sec"></span><span class="mono" style="font-size: 12px;">origin_rejected</span></span><span class="soft">POST /api/lookup · 203.0.113.9</span><span class="faint">Origin https://evil.example</span></div>
+    <div class="inset row row-audit"><span class="mono faint">11:03</span><span>bob</span><span><span class="dot dot-login"></span><span class="mono" style="font-size: 12px;">login</span></span><span class="soft">discord 333333333333333333</span><span class="faint">Firefox · 198.51.100.4</span></div>
+    <div class="inset row row-audit"><span class="mono faint">10:47</span><span>tom</span><span><span class="dot dot-error"></span><span class="mono" style="font-size: 12px;">wcl_error</span></span><span class="soft">deepdive ab12CD:7</span><span class="faint">WCL GraphQL error: Report ab12CD is private (at reportData.report)</span></div>
+    <div class="inset row row-audit"><span class="mono faint">09:30</span><span>Muleyoxo</span><span><span class="dot dot-admin"></span><span class="mono" style="font-size: 12px;">role_change</span></span><span class="soft">bob → admin</span><span></span></div>
+    <div class="inset row row-audit"><span class="mono faint">09:02</span><span><span class="faint">—</span></span><span><span class="dot dot-login"></span><span class="mono" style="font-size: 12px;">login_denied</span></span><span class="soft">discord 555555555555555555</span><span class="faint">not invited</span></div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 4px;"><span class="btn btn-sm">Load 50 more</span><span class="faint" style="font-size: 12px;">showing 10 of 128 · newest first</span></div>
+  </div>
+    </div>
+    <div>
+    <div class="label" style="margin-bottom: 8px;">B · ERRORS NEXT TO THE GAUGE — the budget card gets a fourth column with the last WCL errors (the issue's wording); the audit table below has no WCL rows</div>
+  <div class="card" style="display: grid; grid-template-columns: 260px 1fr 1fr 1.2fr; gap: 24px; align-items: start;">
+    <div class="gauge">
+      <div class="caps">Shared WCL budget · this hour</div>
+      <div class="big">1 412 <span class="muted" style="font-size: 14px; font-weight: 400; font-family: inherit;">/ 3 600 pts</span></div>
+      <span class="bar"><span style="width: 39%;"></span></span>
+      <div class="muted" style="font-size: 12px;">resets in 38 min · floor 100 pts · last rateLimitData 2 min ago</div>
+    </div>
+    <div>
+      <div class="caps" style="margin-bottom: 6px;">Top consumers · this hour</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+        <div style="display: flex; gap: 10px; align-items: center;"><span class="avatar">T</span><span style="width: 90px;">tom</span><span class="bar" style="width: 120px;"><span style="width: 84%; background: #e3b341;"></span></span><span class="mono" style="white-space: nowrap;">252 / 300</span></div>
+        <div style="display: flex; gap: 10px; align-items: center;"><span class="avatar">M</span><span style="width: 90px;">Muleyoxo</span><span class="bar" style="width: 120px;"><span style="width: 60%;"></span></span><span class="mono" style="white-space: nowrap;">181 <span class="faint">· no limit</span></span></div>
+        <div style="display: flex; gap: 10px; align-items: center;"><span class="avatar">B</span><span style="width: 90px;">bob</span><span class="bar" style="width: 120px;"><span style="width: 12%;"></span></span><span class="mono" style="white-space: nowrap;">37 / 300</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="caps" style="margin-bottom: 6px;">Last 24 h · pts per hour</div>
+      <div style="display: flex; align-items: flex-end; gap: 3px; height: 64px;"><span style="width: 9px; height: 8%; background: #30363d;"></span><span style="width: 9px; height: 5%; background: #30363d;"></span><span style="width: 9px; height: 2%; background: #30363d;"></span><span style="width: 9px; height: 0%; background: #30363d;"></span><span style="width: 9px; height: 0%; background: #30363d;"></span><span style="width: 9px; height: 3%; background: #30363d;"></span><span style="width: 9px; height: 14%; background: #30363d;"></span><span style="width: 9px; height: 31%; background: #30363d;"></span><span style="width: 9px; height: 47%; background: #30363d;"></span><span style="width: 9px; height: 22%; background: #30363d;"></span><span style="width: 9px; height: 18%; background: #30363d;"></span><span style="width: 9px; height: 60%; background: #30363d;"></span><span style="width: 9px; height: 88%; background: #30363d;"></span><span style="width: 9px; height: 53%; background: #30363d;"></span><span style="width: 9px; height: 26%; background: #30363d;"></span><span style="width: 9px; height: 12%; background: #30363d;"></span><span style="width: 9px; height: 9%; background: #30363d;"></span><span style="width: 9px; height: 40%; background: #30363d;"></span><span style="width: 9px; height: 71%; background: #30363d;"></span><span style="width: 9px; height: 34%; background: #30363d;"></span><span style="width: 9px; height: 19%; background: #30363d;"></span><span style="width: 9px; height: 45%; background: #30363d;"></span><span style="width: 9px; height: 62%; background: #30363d;"></span><span style="width: 9px; height: 39%; background: #56d364;"></span></div>
+      <div class="faint" style="font-size: 11px; margin-top: 4px;">peak 3 170 pts at 20:00</div>
+    </div>
+    <div>
+      <div class="caps" style="margin-bottom: 6px;">Last WCL errors <span class="faint" style="text-transform: none; letter-spacing: 0; font-weight: 400;">· 9 in 24 h</span></div>
+      <div style="display: flex; flex-direction: column; gap: 3px; font-size: 12px;">
+        <div><span class="dot dot-error"></span><span class="mono faint">14:02</span> <span class="soft">tom</span> <span class="faint">· lookup Biwaadrood-Nerzhul ·</span> WCL HTTP 502 — Bad Gateway</div>
+        <div><span class="dot dot-error"></span><span class="mono faint">10:47</span> <span class="soft">tom</span> <span class="faint">· deepdive ab12CD:7 ·</span> Report ab12CD is private</div>
+        <div><span class="dot dot-error"></span><span class="mono faint">yesterday 22:10</span> <span class="soft">bob</span> <span class="faint">· lookup Xy-Hyjal ·</span> WCL HTTP 429 — rate limit (client)</div>
+        <div><span class="dot dot-error"></span><span class="mono faint">yesterday 21:58</span> <span class="soft">bob</span> <span class="faint">· lookup Xy-Hyjal ·</span> WCL HTTP 429 — rate limit (client)</div>
+        <div class="faint">5 more in the audit log ↓</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 6px;">
+    <div style="display: flex; align-items: center; gap: 10px;"><span class="section-title">Audit log</span><span class="muted" style="font-size: 12px;">logins, admin actions, quota refusals, security rejections · kept 90 days</span><div style="flex: 1;"></div><span class="chip chip-on">All · 119</span><span class="chip">Logins · 41</span><span class="chip">Admin · 19</span><span class="chip">Quota · 12</span><span class="chip">Security · 7</span></div>
+    <div class="row row-audit caps" style="padding: 2px 10px;"><span>time</span><span>who</span><span>action</span><span>target</span><span>detail</span></div>
+    <div class="inset row row-audit"><span class="mono faint">13:58</span><span>bob</span><span><span class="dot dot-quota"></span><span class="mono" style="font-size: 12px;">quota_refused</span></span><span class="soft">deepdive ab12CD:7</span><span class="faint">estimate 62 pts, 287/300 used, resets in 22 min</span></div>
+    <div class="inset row row-audit"><span class="mono faint">13:41</span><span>Muleyoxo</span><span><span class="dot dot-admin"></span><span class="mono" style="font-size: 12px;">proposal_approve</span></span><span class="soft">Divine Shield · Paladin:Holy</span><span class="faint">cd 300 → 240 s · note: “Matches the 11.2 tooltip.”</span></div>
+    <div class="inset row row-audit"><span class="mono faint">13:40</span><span>Muleyoxo</span><span><span class="dot dot-admin"></span><span class="mono" style="font-size: 12px;">invite_add</span></span><span class="soft">444444444444444444</span><span class="faint">note: “alt of tom”</span></div>
+    <div class="inset row row-audit"><span class="mono faint">12:15</span><span><span class="faint">—</span></span><span><span class="dot dot-sec"></span><span class="mono" style="font-size: 12px;">rate_limited</span></span><span class="soft">/auth/discord · 203.0.113.9</span><span class="faint">11 requests in 60 s (limit 10)</span></div>
+    <div class="inset row row-audit"><span class="mono faint">12:14</span><span><span class="faint">—</span></span><span><span class="dot dot-sec"></span><span class="mono" style="font-size: 12px;">origin_rejected</span></span><span class="soft">POST /api/lookup · 203.0.113.9</span><span class="faint">Origin https://evil.example</span></div>
+    <div class="inset row row-audit"><span class="mono faint">11:03</span><span>bob</span><span><span class="dot dot-login"></span><span class="mono" style="font-size: 12px;">login</span></span><span class="soft">discord 333333333333333333</span><span class="faint">Firefox · 198.51.100.4</span></div>
+    <div class="inset row row-audit"><span class="mono faint">09:30</span><span>Muleyoxo</span><span><span class="dot dot-admin"></span><span class="mono" style="font-size: 12px;">role_change</span></span><span class="soft">bob → admin</span><span></span></div>
+    <div class="inset row row-audit"><span class="mono faint">09:02</span><span><span class="faint">—</span></span><span><span class="dot dot-login"></span><span class="mono" style="font-size: 12px;">login_denied</span></span><span class="soft">discord 555555555555555555</span><span class="faint">not invited</span></div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 4px;"><span class="btn btn-sm">Load 50 more</span><span class="faint" style="font-size: 12px;">showing 8 of 119 · newest first</span></div>
+  </div>
+    </div>
+    <div>
+    <div class="label" style="margin-bottom: 8px;">C · ACTIVITY TIMELINE — sentences grouped by day, same filters; denser, reads like a feed</div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 2px;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;"><span class="section-title">Activity</span><span class="muted" style="font-size: 12px;">everything the audit log knows, newest first · kept 90 days</span><div style="flex: 1;"></div><span class="chip chip-on">All · 128</span><span class="chip">Logins · 41</span><span class="chip">Admin · 19</span><span class="chip">Quota · 12</span><span class="chip">Security · 7</span><span class="chip" style="color: #f85149;">WCL errors · 9</span></div>
+    <div class="day">TODAY</div>
+    <div class="tl"><span class="t">14:02</span><span><span class="dot dot-error" style="margin: 0;"></span></span><span><span class="soft">tom</span>’s lookup of <span class="soft">Biwaadrood-Nerzhul</span> failed at WCL <span class="faint">— HTTP 502 Bad Gateway (rankings)</span></span></div>
+    <div class="tl"><span class="t">13:58</span><span><span class="dot dot-quota" style="margin: 0;"></span></span><span><span class="soft">bob</span> was refused a deep-dive of <span class="mono">ab12CD:7</span> <span class="faint">— estimate 62 pts, 287/300 used, resets in 22 min</span></span></div>
+    <div class="tl"><span class="t">13:41</span><span><span class="dot dot-admin" style="margin: 0;"></span></span><span><span class="soft">Muleyoxo</span> approved <span class="soft">Divine Shield</span> · Paladin:Holy <span class="faint">— cd 300 → 240 s · “Matches the 11.2 tooltip.”</span></span></div>
+    <div class="tl"><span class="t">13:40</span><span><span class="dot dot-admin" style="margin: 0;"></span></span><span><span class="soft">Muleyoxo</span> invited <span class="mono">444444444444444444</span> <span class="faint">— “alt of tom”</span></span></div>
+    <div class="tl"><span class="t">12:15</span><span><span class="dot dot-sec" style="margin: 0;"></span></span><span><span class="mono">203.0.113.9</span> was rate limited on <span class="mono">/auth/discord</span> <span class="faint">— 11 requests in 60 s (limit 10)</span></span></div>
+    <div class="tl"><span class="t">12:14</span><span><span class="dot dot-sec" style="margin: 0;"></span></span><span><span class="mono">203.0.113.9</span> sent <span class="mono">POST /api/lookup</span> from <span class="mono">https://evil.example</span> <span class="faint">— origin rejected</span></span></div>
+    <div class="tl"><span class="t">11:03</span><span><span class="dot dot-login" style="margin: 0;"></span></span><span><span class="soft">bob</span> signed in <span class="faint">— Firefox · 198.51.100.4</span></span></div>
+    <div class="tl"><span class="t">10:47</span><span><span class="dot dot-error" style="margin: 0;"></span></span><span><span class="soft">tom</span>’s deep-dive of <span class="mono">ab12CD:7</span> failed at WCL <span class="faint">— Report ab12CD is private</span></span></div>
+    <div class="tl"><span class="t">09:30</span><span><span class="dot dot-admin" style="margin: 0;"></span></span><span><span class="soft">Muleyoxo</span> made <span class="soft">bob</span> an admin</span></div>
+    <div class="tl"><span class="t">09:02</span><span><span class="dot dot-login" style="margin: 0;"></span></span><span><span class="mono">555555555555555555</span> was denied at sign-in <span class="faint">— not invited</span></span></div>
+    <div class="day">YESTERDAY</div>
+    <div class="tl"><span class="t">22:10</span><span><span class="dot dot-error" style="margin: 0;"></span></span><span><span class="soft">bob</span>’s lookup of <span class="soft">Xy-Hyjal</span> failed at WCL <span class="faint">— HTTP 429 rate limit (client)</span></span></div>
+    <div class="tl"><span class="t">21:58</span><span><span class="dot dot-error" style="margin: 0;"></span></span><span><span class="soft">bob</span>’s lookup of <span class="soft">Xy-Hyjal</span> failed at WCL <span class="faint">— HTTP 429 rate limit (client)</span></span></div>
+    <div class="tl"><span class="t">18:20</span><span><span class="dot dot-login" style="margin: 0;"></span></span><span><span class="soft">tom</span> signed in <span class="faint">— Chrome · 198.51.100.7</span></span></div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 8px;"><span class="btn btn-sm">Older</span><span class="faint" style="font-size: 12px;">13 of 128</span></div>
+  </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

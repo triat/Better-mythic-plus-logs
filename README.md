@@ -171,7 +171,7 @@ where a defensive was available and not used).
 
 ## Requirements
 
-- [Bun](https://bun.sh/) 1.3+ (for running from source / building)
+- [Bun](https://bun.sh/) ≥ 1.3 (pinned in `.tool-versions` for asdf/mise users)
 - A Warcraft Logs v2 API client — free, see below
 - `just` (optional but recommended) — https://github.com/casey/just
 - For building from source: the web front builds with Vite (`just web-install`
@@ -406,15 +406,28 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
   their own client.
 - Prefer sharing the source (this repo) over shipping a binary; a compiled
   `.exe` is opaque to the recipient.
+- Hosted mode: see the hardening paragraph of *Hosted mode* — the app
+  rate-limits and origin-checks on its own; the reverse proxy adds TLS, HSTS
+  and a coarse per-IP layer (issue #10).
 
 ## Hosted mode (multi-user, work in progress)
 
 `bmpl serve --hosted` (or `BMPL_MODE=hosted`) runs one instance for several
-people behind a reverse proxy. It is being built in issues #1–#11; today it
-only disables the local-only routes (`/api/setup`, `/api/quit`, clipboard
-watch), never opens a browser, adds security headers (CSP, nosniff,
-frame-ancestors none, …) and exposes `GET /api/health`
-(`{ ok, version, uptimeS, db }`) for the proxy's health check.
+people behind a reverse proxy: Discord login and an invite allow-list, per-account
+lookup history and settings, a shared WCL budget with per-member hourly quotas, a
+shared/proposed defensives table, and an admin page (`/admin`). It disables the
+local-only routes (`/api/setup`, `/api/quit`, clipboard watch), never opens a
+browser, adds security headers (CSP, nosniff, frame-ancestors none, …) and exposes
+`GET /api/health` (`{ ok, version, uptimeS, db }`) for the proxy's health check.
+
+**Hardening** (issue #9): state-changing requests must come from `BMPL_BASE_URL`
+(Origin / Sec-Fetch-Site), `/auth/*` is limited to 10 requests per minute per IP,
+lookups to 30 and analyses to 60 per minute per member (429 with `Retry-After`),
+every JSON body is validated against an explicit shape (unknown fields are
+refused), server errors never carry messages or paths, and the audit log
+(`GET /api/admin/audit?kind=&before=&limit=`, the admin page's Audit section) keeps
+90 days of logins, admin actions, quota refusals, security rejections and
+WCL/server errors.
 
 **Login.** Hosted mode signs people in with Discord (scope `identify` only —
 no e-mail, no server list). Create an application at
@@ -491,15 +504,15 @@ audit-defensives --shared` read it).
 **Instance info.** `GET /api/admin/instance` (and the page's Instance
 section) reports the version, uptime, database size, the last backup (mtime
 of a `last-backup` file next to `.env`, written by the deploy — issue #10)
-and the effective environment with secrets masked. The WCL error list of the
-issue waits for the audit log (issue #9).
+and the effective environment with secrets masked. WCL errors are in the audit
+log (Errors chip).
 
 Required environment (copy `.env.hosted.example`):
 
 | Variable | Meaning |
 |---|---|
 | `BMPL_BASE_URL` | Public origin, no path (`https://bmpl.example.com`) |
-| `BMPL_SESSION_SECRET` | ≥ 32 random bytes (`openssl rand -base64 48`) |
+| `BMPL_SESSION_SECRET` | ≥ 32 random bytes (`openssl rand -base64 48`); placeholders and low-variety strings are refused |
 | `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET` | Discord OAuth application |
 | `BMPL_ADMIN_DISCORD_IDS` | Comma-separated Discord user ids of the admins |
 | `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` | The shared Warcraft Logs client |

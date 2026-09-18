@@ -187,6 +187,15 @@
       "h": 1000,
       "title": "Admin page — shared details: member 403, proposal card anatomy, empty queue, after a decision, confirmations",
       "page": "hosted"
+    },
+    {
+      "file": "AdminAudit.dc.html",
+      "x": 6240,
+      "y": 0,
+      "w": 1440,
+      "h": 2080,
+      "title": "Admin page — audit log / WCL errors (issue #9): A table · B errors next to the gauge · C activity timeline",
+      "page": "hosted"
     }
   ],
   "annotations": [
@@ -253,6 +262,14 @@
       "w": 560,
       "page": "hosted",
       "text": "Issue #8 — admin page at /admin (the menu's Admin item). Same sections in A / B / C, pick the layout:\n· A tabs — one concern per tab, counts in the tab labels.\n· B one page — everything visible, anchor sub-nav; longest.\n· C dashboard — two columns, compact rows (24 h totals and Discord ids hidden), instance strip below.\n\nShared details on the 4th artboard: member 403 screen, proposal card (current → proposed diff, author, note to the author, Approve / Reject), empty queue, post-decision line, the two confirmations (role change, revoke sessions).\n\nNot in this issue: the WCL error list (needs the audit log, #9) — the budget gauge ships without it; 'last backup' reads the file #10's deploy writes."
+    },
+    {
+      "id": "audit-brief",
+      "x": 6240,
+      "y": -190,
+      "w": 560,
+      "page": "hosted",
+      "text": "Issue #9 — hardening. The only visible change: the audit log on the admin page (logins, admin actions, quota refusals, security rejections, WCL errors). Same data in A / B / C, pick the treatment:\n· A audit table — one section at the bottom, WCL errors are rows, the red chip filters them.\n· B errors next to the gauge — the budget card gets a 'Last WCL errors' column (the issue's wording), the table below has everything else.\n· C activity timeline — sentences grouped by day, same filters.\n\nAll three: a sixth 'Audit' anchor in the sub-nav with the 24 h error count. Rate limits and Origin rejections show as the usual error toast — no new UI."
     }
   ],
   "launch": {

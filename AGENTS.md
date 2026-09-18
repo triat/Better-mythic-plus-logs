@@ -26,6 +26,7 @@ just web-dev                        # Vite on :5173, proxies /api to :3000 (run 
 just l Name-Realm [--level N]       # bmpl lookup, the core flow
 bun src/cli.ts analyze Name-Realm   # deep-dive (spends WCL points — read architecture.md first)
 just audit-defensives [--only Class:Spec]   # ~9 WCL pts per spec per run
+just check-deps                             # bun audit on both lockfiles — run before a release
 ```
 
 `just dev <cmd>` runs the CLI in watch mode. `bmpl help` lists every command; `src/cli.ts` is the dispatcher.
@@ -60,4 +61,4 @@ web/src/lib/          pure tested view models      web/src/components/   thin Re
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#8 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front, admin page) are shipped, next is #9 (hardening).
+Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#9 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front, admin page, hardening) are shipped, next is #10 (deploy).

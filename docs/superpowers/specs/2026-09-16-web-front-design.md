@@ -1,6 +1,6 @@
 # Web front (Vite + React) — design
 
-**Status:** approved direction (canvas "Direction A"), spec under review; hosted-mode screens (sign-in, user menu, proposal wording) implemented 2026-09-18 — issue #7, canvas page "Hosted"; admin page implemented 2026-09-18 — issue #8, canvas artboards Admin*
+**Status:** approved direction (canvas "Direction A"), spec under review; hosted-mode screens (sign-in, user menu, proposal wording) implemented 2026-09-18 — issue #7, canvas page "Hosted"; admin page implemented 2026-09-18 — issue #8, canvas artboards Admin*; audit section 2026-09-18 — issue #9, canvas AdminAudit (A)
 **Sub-project:** 3 of the bmpl roadmap (signals → evaluation → **front** → run deep-dive)
 **Design canvas:** https://claude.ai/artifact/3yUjZKgaQyHKebzyqcio5s — page *Direction A* is the reference;
 page *Explorations* holds the discarded monospace sketch.

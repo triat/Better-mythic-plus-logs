@@ -1,7 +1,10 @@
-// Repositories over the hosted tables. Everything takes `now` explicitly so tests control time.
+// Repositories over the hosted tables. Everything takes `now` explicitly so tests control time; the
+// per-user history lives in history.ts.
 import type { Database } from "bun:sqlite";
 import { randomBytes } from "node:crypto";
 import { applyHostedSchema } from "./schema.ts";
+import { openUserHistory } from "./history.ts";
+import type { UserHistoryRepo } from "./history.ts";
 
 export type Role = "member" | "admin";
 export interface UserRow { id: number; discordId: string; username: string; globalName: string | null; avatarHash: string | null; role: Role; createdAt: number; lastSeenAt: number }
@@ -35,6 +38,7 @@ export interface HostedDb {
     has(discordId: string): boolean;
     list(): InviteRow[];
   };
+  history: UserHistoryRepo;
 }
 
 export const newSessionId = (): string => randomBytes(32).toString("base64url");
@@ -119,5 +123,6 @@ export function openHosted(db: Database): HostedDb {
       has: (discordId) => inviteGet.get(discordId) !== null,
       list: () => inviteAll.all().map(invite),
     },
+    history: openUserHistory(db),
   };
 }

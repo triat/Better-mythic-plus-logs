@@ -1,5 +1,5 @@
-// Hosted-mode tables (users, sessions, invites). Additive only: every statement is
-// CREATE ... IF NOT EXISTS so it can run on every start next to the cache tables.
+// Hosted-mode tables (users, sessions, invites, per-user history and settings). Additive only:
+// every statement is CREATE ... IF NOT EXISTS so it can run on every start next to the cache tables.
 import type { Database } from "bun:sqlite";
 
 export const HOSTED_SCHEMA = `
@@ -28,6 +28,34 @@ CREATE TABLE IF NOT EXISTS invites (
   invited_by TEXT    NOT NULL,
   created_at INTEGER NOT NULL,
   note       TEXT
+);
+CREATE TABLE IF NOT EXISTS user_history (
+  user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  key          TEXT    NOT NULL,
+  request      TEXT    NOT NULL,
+  payload      TEXT    NOT NULL,
+  label        TEXT    NOT NULL,
+  char_class   INTEGER NOT NULL,
+  spec         TEXT,
+  target_level INTEGER NOT NULL,
+  target_auto  INTEGER NOT NULL,
+  fetched_at   INTEGER NOT NULL,
+  seq          INTEGER NOT NULL,
+  PRIMARY KEY (user_id, key)
+);
+CREATE INDEX IF NOT EXISTS user_history_key ON user_history(key, fetched_at);
+CREATE TABLE IF NOT EXISTS user_history_auto (
+  user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  alias_key TEXT    NOT NULL,
+  level     INTEGER NOT NULL,
+  set_at    INTEGER NOT NULL,
+  PRIMARY KEY (user_id, alias_key)
+);
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id     INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  your_key    INTEGER,
+  legend_open INTEGER NOT NULL DEFAULT 1,
+  updated_at  INTEGER NOT NULL
 );
 `;
 

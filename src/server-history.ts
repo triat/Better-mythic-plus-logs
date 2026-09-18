@@ -32,13 +32,35 @@ export const cacheKey = (r: HistoryRequest): string =>
     r.metric ?? "",
   ]);
 
+/** A history entry without its payload — what the tab strip needs. */
+export type HistoryListItem = Omit<HistoryEntry, "result">;
+
+/**
+ * One caller's lookup history. Local mode: `History` below (in memory, one per process).
+ * Hosted mode: `src/hosted/history.ts` (SQLite, one per user).
+ */
+export interface HistoryStore {
+  readonly size: number;
+  /** Cache hit (moved to the newest position) or null. */
+  cached(r: HistoryRequest): HistoryEntry | null;
+  /** Store a fresh result; returns the entry (its key uses the effective level). */
+  record(r: HistoryRequest, rec: HistoryRecord): HistoryEntry;
+  get(key: string): HistoryEntry | undefined;
+  /** Newest first, without payloads. */
+  list(): HistoryListItem[];
+  remove(key: string): boolean;
+  clear(): void;
+  /** Replace the stored payload of an entry (e.g. after a deep-dive changed its analyses); no-op for unknown keys. */
+  updateResult(key: string, result: unknown): void;
+}
+
 /**
  * Lookup history, newest last in insertion order. Entries are keyed by the
  * *effective* target level, so an auto-detected +21 and an explicit +21 are
  * the same tab. An auto request remembers the level it resolved to
  * (`autoLevel`) so the next auto request for the same character is a cache hit.
  */
-export class History {
+export class History implements HistoryStore {
   private readonly entries = new Map<string, HistoryEntry>();
   private readonly autoLevel = new Map<string, number>(); // auto-alias key → effective level
 

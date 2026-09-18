@@ -9,13 +9,29 @@ import { setRateLimitObserver, setWclErrorObserver } from "../wcl/client.ts";
 import { PointsMeter } from "../wcl/meter.ts";
 import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
 import { QuotaGate } from "./quota.ts";
+import { DEFAULT_RATE_LIMITS, RateLimiter } from "./ratelimit.ts";
+import type { RateLimits } from "./ratelimit.ts";
 
-export interface HostedRuntime { config: HostedConfig; db: HostedDb; states: OAuthStates; fetchFn: typeof fetch; secure: boolean; meter: PointsMeter; quota: QuotaGate; audit: AuditLog }
+export interface HostedRuntime {
+  config: HostedConfig;
+  db: HostedDb;
+  states: OAuthStates;
+  fetchFn: typeof fetch;
+  secure: boolean;
+  meter: PointsMeter;
+  quota: QuotaGate;
+  audit: AuditLog;
+  /** In-app rate limits (issue #9): `/auth/*` per IP, `POST /api/lookup` and `POST /api/deepdive` per user. */
+  limits: { auth: RateLimiter; lookup: RateLimiter; deepdive: RateLimiter };
+}
 
 const PURGE_INTERVAL_MS = 60 * 60 * 1000;
 
-/** Builds the runtime and starts the hourly purge of expired sessions and audit rows older than the retention (unref'd: never keeps the process alive). */
-export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn: typeof fetch): HostedRuntime {
+/**
+ * Builds the runtime and starts the hourly purge of expired sessions, audit rows older than the
+ * retention and idle rate-limit keys (unref'd: never keeps the process alive).
+ */
+export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn: typeof fetch, rateLimits: RateLimits = DEFAULT_RATE_LIMITS): HostedRuntime {
   const hostedDb = openHosted(db);
   const meter = new PointsMeter({ usage: hostedDb.usage });
   const audit = new AuditLog(hostedDb.audit);
@@ -28,6 +44,7 @@ export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn:
     meter,
     quota: new QuotaGate({ usage: hostedDb.usage, meter, limit: config.pointsPerUserHour }),
     audit,
+    limits: { auth: new RateLimiter(rateLimits.auth), lookup: new RateLimiter(rateLimits.lookup), deepdive: new RateLimiter(rateLimits.deepdive) },
   };
   // Every WCL response of this process now feeds the meter, every WCL failure the audit log (the CLI
   // and local mode never install either).
@@ -37,6 +54,7 @@ export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn:
     const now = Date.now();
     runtime.db.sessions.purgeExpired(now);
     runtime.db.audit.purgeBefore(now - AUDIT_RETENTION_MS);
+    for (const l of Object.values(runtime.limits)) l.sweep(now);
   };
   purge();
   setInterval(purge, PURGE_INTERVAL_MS).unref();

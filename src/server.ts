@@ -5,6 +5,9 @@ import { LOCAL_CONTEXT, authGate, clientIp, resolveRequest } from "./hosted/auth
 import { clip } from "./hosted/audit.ts";
 import type { AuditScope } from "./hosted/audit.ts";
 import type { HostedConfig } from "./hosted/config.ts";
+import { checkOrigin } from "./hosted/origin.ts";
+import { DEFAULT_RATE_LIMITS } from "./hosted/ratelimit.ts";
+import type { RateLimiter, RateLimits } from "./hosted/ratelimit.ts";
 import { createHostedRuntime } from "./hosted/runtime.ts";
 import type { HostedRuntime } from "./hosted/runtime.ts";
 import { findRoute } from "./server/routes.ts";
@@ -33,6 +36,8 @@ export interface ServeOptions {
   fetchFn?: typeof fetch;
   /** Test hook: where the built front lives. Default: embedded web/dist. */
   assets?: AssetLoader;
+  /** Test hook (hosted): rate-limit rules merged over `DEFAULT_RATE_LIMITS`. */
+  rateLimits?: Partial<RateLimits>;
 }
 
 const openBrowser = (url: string): void => {
@@ -57,6 +62,16 @@ const openBrowser = (url: string): void => {
   }
 };
 
+/** Which limiter and key a hosted request is counted against, or null when the route is not rate-limited. */
+function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: number | null, ip: string): { limiter: RateLimiter; key: string } | null {
+  if (url.pathname.startsWith("/auth/")) return { limiter: runtime.limits.auth, key: `ip:${ip}` };
+  if (req.method !== "POST") return null;
+  // Both routes are `auth: "user"`: the gate has already turned an anonymous request into a 401.
+  if (url.pathname === "/api/lookup") return { limiter: runtime.limits.lookup, key: `user:${userId ?? "anonymous"}` };
+  if (url.pathname === "/api/deepdive") return { limiter: runtime.limits.deepdive, key: `user:${userId ?? "anonymous"}` };
+  return null;
+}
+
 /** Test hook: the runtime of the last hosted `runServer` in this process (null before / in local mode). */
 let current: HostedRuntime | null = null;
 export const getHostedRuntime = (): HostedRuntime | null => current;
@@ -77,7 +92,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   if (hosted) {
     const store = await getStore();
     if (store._db.filename === ":memory:") throw new Error("hosted mode needs a persistent bmpl.db (check BMPL_DB_PATH)");
-    runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch);
+    runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch, { ...DEFAULT_RATE_LIMITS, ...opts.rateLimits });
     current = runtime;
   }
   const routes: Route[] = [
@@ -96,13 +111,36 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       const r = findRoute(routes, req, url);
       if (!r) return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
       const ip = clientIp(req, hosted, peerIp);
+      const target = `${req.method} ${url.pathname}`;
+      // Hosted: a state-changing request from another origin is refused before the auth gate, so a
+      // foreign page cannot even learn whether the cookie it carries is valid.
+      if (runtime && req.method !== "GET" && req.method !== "HEAD") {
+        const why = checkOrigin(req.headers, runtime.config.baseUrl);
+        if (why) {
+          runtime.audit.record("origin_rejected", { userId: null, ip, target, detail: { origin: clip(req.headers.get("origin") ?? "", 200), fetchSite: req.headers.get("sec-fetch-site"), why } });
+          return jsonResponse({ ok: false, error: "Cross-site request refused" }, 403);
+        }
+      }
       const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, localHistory);
       const gate = authGate(r, ctx);
       if (gate) return gate;
       if (!runtime) return await r.handle(req, url, ctx);
+      // Hosted: in-app rate limits, after the gate (a per-user key needs the user) and before the
+      // handler (an invalid body still counts). The 429 is answered here, so it is never a quota row.
+      const rl = rateLimitFor(runtime, req, url, ctx.user?.id ?? null, ip);
+      if (rl) {
+        const verdict = rl.limiter.hit(rl.key, Date.now());
+        if (!verdict.ok) {
+          const { retryAfterS } = verdict;
+          runtime.audit.record("rate_limited", { userId: ctx.user?.id ?? null, ip, target, detail: { limit: rl.limiter.rule.limit, windowS: Math.round(rl.limiter.rule.windowMs / 1000), retryAfterS } });
+          const res = jsonResponse({ ok: false, error: `Too many requests — try again in ${retryAfterS} s` }, 429);
+          res.headers.set("Retry-After", String(retryAfterS));
+          return res;
+        }
+      }
       // Hosted: every WCL point spent while this handler runs is charged to the session user, and
       // every audit row recorded inside it carries the user, ip and target of this request.
-      scope = { userId: ctx.user?.id ?? null, ip, target: `${req.method} ${url.pathname}` };
+      scope = { userId: ctx.user?.id ?? null, ip, target };
       const rt = runtime;
       return await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))));
     } catch (e) {

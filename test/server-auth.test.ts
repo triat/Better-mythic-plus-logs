@@ -43,6 +43,8 @@ beforeAll(async () => {
   process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
   server = await runServer({
     port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, fetchFn: fakeFetch,
+    // This file drives the login flow many times from one IP; the /auth/* limit itself is covered by test/server-hardening.test.ts.
+    rateLimits: { auth: { limit: 1_000, windowMs: 60_000 } },
     assets: async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js") }),
   });
   db = openHosted((await getStore())._db);

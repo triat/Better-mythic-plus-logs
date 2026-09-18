@@ -114,11 +114,11 @@ deploy-logs:
 
 # unit states, health, last backup marker
 deploy-status:
-    ssh {{deploy_host}} 'systemctl --no-pager status bmpl caddy litestream bmpl-backup-check.timer | grep -E "●|Active:"; curl -fsS http://127.0.0.1:3000/api/health; echo; stat -c "last-backup: %y" {{deploy_dir}}/last-backup 2>/dev/null || echo "last-backup: never"'
+    ssh {{deploy_host}} 'systemctl is-active bmpl caddy litestream bmpl-backup-check.timer; curl -fsS http://127.0.0.1:3000/api/health; echo; stat -c "last-backup: %y" {{deploy_dir}}/last-backup 2>/dev/null || echo "last-backup: never"'
 
 # restore the latest replica into a scratch dir on the VPS and check it opens (the runbook's test)
 deploy-restore-test:
-    ssh {{deploy_host}} 'd=$(mktemp -d) && litestream restore -config /etc/litestream.yml -o "$d/bmpl.db" {{deploy_dir}}/bmpl.db && sqlite3 "$d/bmpl.db" "PRAGMA integrity_check; SELECT COUNT(*) AS users FROM users;" && rm -rf "$d"'
+    ssh {{deploy_host}} 'd=$(mktemp -d) && trap '"'"'rm -rf "$d"'"'"' EXIT && litestream restore -config /etc/litestream.yml -o "$d/bmpl.db" {{deploy_dir}}/bmpl.db && sqlite3 "$d/bmpl.db" "PRAGMA integrity_check; SELECT COUNT(*) AS users FROM users;"'
 
 # introspect a GraphQL type (defaults to Character)
 introspect type="Character":

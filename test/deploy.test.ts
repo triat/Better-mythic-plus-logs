@@ -48,6 +48,7 @@ describe("deploy/ files agree on the VPS layout", () => {
     expect(b).toContain("systemctl enable --now caddy");
     expect(b).toContain("sqlite3");
     expect(b).toContain("systemctl reload caddy");
+    expect(b).toContain("chown caddy:caddy /var/log/caddy/bmpl.log");
     expect(b).toContain('grep -qs "/opt/bmpl/bmpl.db" /etc/litestream.yml');
     expect(b).toContain("install -m 755 \"$HERE/backup-check.sh\" /usr/local/sbin/bmpl-backup-check");
   });

@@ -551,8 +551,13 @@ it; a Discord application (see *Login* above); a Warcraft Logs API client
 (see *Getting Warcraft Logs API credentials*). On your machine: this repo,
 Bun, `just`, and an SSH key that opens `root@<vps>`.
 
-**2. Bootstrap** (once). Key-only SSH first: `PasswordAuthentication no` in
-`/etc/ssh/sshd_config`, then `systemctl restart ssh`. Then, from the repo root:
+**2. Bootstrap** (once). Key-only SSH first: on Ubuntu 24.04 cloud images
+`/etc/ssh/sshd_config.d/50-cloud-init.conf` sets `PasswordAuthentication yes`
+and overrides the main file, so put `PasswordAuthentication no` in a drop-in
+that sorts after it, `/etc/ssh/sshd_config.d/zz-bmpl.conf` (or delete the
+cloud-init drop-in), then `systemctl restart ssh`. Verify with `sshd -T |
+grep -i passwordauthentication` and keep the current session open until a
+fresh key-based login works. Then, from the repo root:
 
 ```bash
 ssh root@<vps> 'mkdir -p /root/bmpl-deploy'
@@ -576,9 +581,10 @@ mentioning `/opt/bmpl/bmpl.db` is there; seeds `/opt/bmpl/.env` from
 starts Caddy, and enables `bmpl`, `litestream` and the timer without starting
 them — they start once configured and deployed. If sshd listens on a port
 other than 22, change the `ufw allow 22/tcp` line before running the script,
-or you lock yourself out. Caddy obtains the Let's Encrypt certificate on the
-first request to the domain, so 80 and 443 must be reachable from the
-internet.
+or you lock yourself out. ACME starts as soon as the config loads — during
+bootstrap's `reload` — and retries in the background on failure, so the DNS
+`A` record must already point at the VPS before you run `bootstrap.sh`;
+watch `journalctl -u caddy` to see the certificate obtained.
 
 **3. Configure.** `ssh root@<vps> 'nano /opt/bmpl/.env'` and fill every
 variable of the table above: `BMPL_BASE_URL=https://bmpl.<domain>`,
@@ -664,7 +670,8 @@ new key reads the replica.
 (`CREATE … IF NOT EXISTS`), there is no migration step, and cached WCL data is
 kept. Downgrade: check out the previous commit and `just deploy` again. If the
 `deploy/` files changed, copy them again and re-run `bootstrap.sh` (it keeps
-your `.env` and `litestream.yml`).
+your `.env` and `litestream.yml`), then `systemctl restart bmpl litestream`
+if the units changed.
 
 **9. Uninstall.** On the VPS as root:
 
@@ -672,8 +679,10 @@ your `.env` and `litestream.yml`).
 systemctl disable --now bmpl litestream bmpl-backup-check.timer
 rm /etc/systemd/system/{bmpl,litestream,bmpl-backup-check}.service /etc/systemd/system/bmpl-backup-check.timer
 rm /usr/local/sbin/bmpl-backup-check /etc/litestream.yml
+apt-get remove litestream
 systemctl daemon-reload
 userdel bmpl && rm -rf /opt/bmpl
+rm -f /var/log/caddy/bmpl.log*
 ```
 
 Then remove the site block from `/etc/caddy/Caddyfile` (`systemctl reload

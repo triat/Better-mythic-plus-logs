@@ -19,10 +19,11 @@ Copy both this `deploy/` directory and `.env.hosted.example` to the VPS before r
 
 ## Order of operations
 
-1. `sudo bash bootstrap.sh bmpl.example.com` on the fresh VPS (the exec bit on `bootstrap.sh` is set by the next task; `bash bootstrap.sh` works either way) — installs packages, the `bmpl` user, the firewall rules, and the systemd units (disabled where they still need config).
+1. `sudo bash bootstrap.sh bmpl.example.com` on the fresh VPS (both scripts ship with the exec bit set; `bash bootstrap.sh` also works if it was lost in transfer) — installs packages, the `bmpl` user, the firewall rules, and the systemd units (enabled, not started).
 2. Fill `/opt/bmpl/.env` on the VPS (copied from `.env.hosted.example` by bootstrap if absent) with real secrets.
-3. `just deploy` from your machine — builds and ships the `bmpl` binary to `/opt/bmpl/bmpl`, then starts/restarts `bmpl.service`.
-4. Fill `/etc/litestream.yml` with the real bucket, endpoint and keys, then `sudo systemctl restart litestream`.
-5. Verify: `systemctl status bmpl caddy litestream bmpl-backup-check.timer`, hit `https://bmpl.example.com/api/health`, and after the first hour check `/opt/bmpl/last-backup` exists.
+3. Fill `/etc/litestream.yml` with the real bucket, endpoint and keys.
+4. `just deploy` from your machine — builds and ships the `bmpl` binary to `/opt/bmpl/bmpl`, then starts/restarts `bmpl.service`.
+5. First deploy only: `sudo systemctl start litestream bmpl-backup-check.timer`.
+6. Verify: `systemctl status bmpl caddy litestream bmpl-backup-check.timer`, hit `https://bmpl.example.com/api/health`, and after the first hour check `/opt/bmpl/last-backup` exists.
 
 See `README.md` § "Deploying on a VPS" for the full runbook.

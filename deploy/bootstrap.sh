@@ -2,6 +2,8 @@
 # First-time VPS setup for bmpl hosted mode. Safe to re-run. Usage: sudo ./bootstrap.sh bmpl.example.com
 set -euo pipefail
 DOMAIN="${1:?usage: bootstrap.sh <domain>}"
+export DEBIAN_FRONTEND=noninteractive
+# The 0.3.x line; only the amd64 asset is fetched below (no arm64 VPS support here).
 LITESTREAM_VERSION="${LITESTREAM_VERSION:-0.3.13}"
 
 # 1. Packages: Caddy (official repo), ufw, curl, sqlite3, gnupg.
@@ -10,12 +12,15 @@ apt-get install -y curl ufw debian-keyring debian-archive-keyring apt-transport-
 if ! command -v caddy >/dev/null; then
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor --batch --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list
+  chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  chmod o+r /etc/apt/sources.list.d/caddy-stable.list
   apt-get update -y && apt-get install -y caddy
 fi
 if ! command -v litestream >/dev/null; then
   deb=$(mktemp)
   curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-v${LITESTREAM_VERSION}-linux-amd64.deb" -o "$deb"
   dpkg -i "$deb"
+  rm -f "$deb"
 fi
 
 # 2. Firewall: SSH, HTTP (ACME), HTTPS only. The app port 3000 stays on loopback.
@@ -34,6 +39,9 @@ install -d -o bmpl -g bmpl -m 750 /opt/bmpl
 HERE="$(cd "$(dirname "$0")" && pwd)"
 sed "s/bmpl\.example\.com/${DOMAIN}/" "$HERE/Caddyfile" > /etc/caddy/Caddyfile
 caddy validate --config /etc/caddy/Caddyfile
+# Caddy >= 2.8 opens the access log during validation, creating it root:root 0600;
+# hand it back to caddy or the reload/restart below fails under set -e.
+if [ -e /var/log/caddy/bmpl.log ]; then chown caddy:caddy /var/log/caddy/bmpl.log; fi
 install -m 644 "$HERE/bmpl.service" /etc/systemd/system/bmpl.service
 install -m 644 "$HERE/litestream.service" /etc/systemd/system/litestream.service
 install -m 644 "$HERE/bmpl-backup-check.service" /etc/systemd/system/bmpl-backup-check.service

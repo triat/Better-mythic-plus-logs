@@ -8,6 +8,7 @@ import type { HostedDb } from "./hosted/db.ts";
 import { OAuthStates } from "./hosted/oauth-state.ts";
 import { findRoute } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
+import { authRoutes } from "./server/routes-auth.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
 import { jsonResponse } from "./server/http.ts";
@@ -75,7 +76,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     runtime = { config, db: openHosted((await getStore())._db), states: new OAuthStates(), fetchFn: opts.fetchFn ?? fetch, secure: config.baseUrl.startsWith("https:") };
     setInterval(() => runtime!.db.sessions.purgeExpired(Date.now()), SESSION_PURGE_INTERVAL_MS).unref();
   }
-  const routes: Route[] = [...sharedRoutes({ hosted, envPath: envPathHint }), ...(hosted ? [] : localRoutes())];
+  const routes: Route[] = [...sharedRoutes({ hosted, envPath: envPathHint }), ...(runtime ? authRoutes(runtime) : localRoutes())];
 
   const respond = async (req: Request, url: URL, peerIp: string | null): Promise<Response> => {
     try {

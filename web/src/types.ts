@@ -13,6 +13,7 @@ export type {
   DeathAnalysis,
   DefensiveUse,
   EffectiveEntry,
+  EntryOrigin,
   OverrideEntry,
   DeepdiveSummary,
   DefensiveKind,

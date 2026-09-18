@@ -1,5 +1,6 @@
 import type { LookupPayload, OverrideEntry } from "../types.ts";
 import type { ReevalHint } from "../lib/keyLevel.ts";
+import type { ProposalMode } from "../lib/hostedMode.ts";
 import { DungeonRuns } from "./DungeonRuns.tsx";
 import { RioSection } from "./RioSection.tsx";
 import { SignalTiles } from "./SignalTiles.tsx";
@@ -18,6 +19,8 @@ export interface DeepdiveActions {
   canAfford: (runs: number) => boolean;
   /** Tooltip of a disabled Analyze button: "Hourly quota reached · resets in N min". */
   quotaTooltip: string;
+  /** Local file edits, member proposals, or admin corrections — decides the panel's wording and footer. */
+  mode: ProposalMode;
 }
 
 export interface DetailProps { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; deepdive: DeepdiveActions }

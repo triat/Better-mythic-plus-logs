@@ -1,6 +1,9 @@
-import { useState } from "react";
-import type { DefensiveKind, OverrideEntry, RunDefensives } from "../types.ts";
-import { costText, originLabel, panelModel } from "../lib/deepdive.ts";
+import { useEffect, useState } from "react";
+import type { ProposalSummary } from "@shared/hosted/defensives.ts";
+import type { DefensiveKind, EntryOrigin, OverrideEntry, RunDefensives } from "../types.ts";
+import type { ProposalMode } from "../lib/hostedMode.ts";
+import { api } from "../api.ts";
+import { actionLabels, costText, originDot, originLabel, originSuffix, panelModel, proposalLines } from "../lib/deepdive.ts";
 import { SpellLink, useWowheadRefresh } from "./SpellLink.tsx";
 
 interface Props {
@@ -10,16 +13,41 @@ interface Props {
   busy: boolean;
   canAfford: boolean;
   quotaTooltip: string;
+  mode: ProposalMode;
   onReanalyze: () => void;
   onPatch: (patch: OverrideEntry) => Promise<void>;
 }
 
 const KINDS: DefensiveKind[] = ["major", "immunity", "minor"];
 
-export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, onReanalyze, onPatch }: Props) {
+/** Dot (shared / pending) before the spell name, or the " · override" suffix after it. */
+function NameCell({ id, name, origin }: { id: number; name: string; origin: EntryOrigin }) {
+  const dot = originDot(origin);
+  const suffix = originSuffix(origin);
+  return (
+    <span>
+      {dot && <span className={"dot " + dot} title={originLabel(origin) ?? undefined} />}
+      <SpellLink id={id} name={name} />
+      {suffix && <span className="faint"> · {suffix}</span>}
+    </span>
+  );
+}
+
+export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mode, onReanalyze, onPatch }: Props) {
   const m = panelModel(d, Date.now(), tableWarning);
   useWowheadRefresh(d);
   const [tableOpen, setTableOpen] = useState(false);
+  const labels = actionLabels(mode);
+  // The member's own proposals for this spec (hosted only; 0 WCL pts — SQLite). Re-read whenever the analysis object changes
+  // (App.reloadActive after a patch hands a fresh `d`).
+  const [proposals, setProposals] = useState<ProposalSummary[] | null>(null);
+  useEffect(() => {
+    if (mode !== "propose") return;
+    let alive = true;
+    void api.defensives(d.className, d.spec).then((r) => { if (alive && r.ok) setProposals(r.proposals ?? []); });
+    return () => { alive = false; };
+  }, [mode, d]);
+  const lines = mode === "propose" && proposals ? proposalLines(proposals, d.defensives) : [];
   // Inline "add" form: which unlisted id, as which kind.
   const [adding, setAdding] = useState<{ id: number; name: string; kind: DefensiveKind } | null>(null);
   const [cd, setCd] = useState("60");
@@ -64,7 +92,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, on
           <div className="dd-usage">
             {m.usage.map((u) => (
               <div key={u.id} className="dd-row">
-                <span><SpellLink id={u.id} name={u.name} />{originLabel(u.origin) && <span className="faint"> · {originLabel(u.origin)}</span>}</span>
+                <NameCell id={u.id} name={u.name} origin={u.origin} />
                 <span className="faint">{u.kind}</span>
                 <span className="mono">{u.counts}</span>
                 <span className={"mono " + u.cls}>{u.pctText}</span>
@@ -96,38 +124,49 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, on
             <span className="dd-form">
               <label>cd <input className="mono" value={cd} onChange={(e) => setCd(e.target.value)} size={4} /> s</label>
               <label>duration <input className="mono" value={dur} onChange={(e) => setDur(e.target.value)} size={4} /> s</label>
-              <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => void submitAdd()}>Add as {adding.kind}</button>
+              <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => void submitAdd()}>{labels.addSubmit(adding.kind)}</button>
               <button type="button" className="btn btn-sm" onClick={() => setAdding(null)}>Cancel</button>
             </span>
           ) : (
             <span className="dd-actions">
-              {KINDS.map((k) => <button key={k} type="button" className="chip" disabled={busy} onClick={() => setAdding({ id: u.id, name: u.name, kind: k })}>+ {k}</button>)}
-              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, ignore: true })}>Ignore</button>
+              {KINDS.map((k) => <button key={k} type="button" className="chip" disabled={busy} onClick={() => setAdding({ id: u.id, name: u.name, kind: k })}>{labels.add(k)}</button>)}
+              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, ignore: true })}>{labels.ignore}</button>
             </span>
           )}
         </div>
       ))}
       <button type="button" className="section-head dd-table-head" onClick={() => setTableOpen((o) => !o)} aria-expanded={tableOpen}>
         <span className={"chev" + (tableOpen ? " open" : "")}>›</span>
-        <span className="muted">{m.tableUsed}</span>
+        <span className="muted">{m.tableParts.map((p, i) => <span key={i}>{i > 0 && " · "}{p.dot && <span className={"dot " + p.dot} />}{p.text}</span>)}</span>
       </button>
       {tableOpen && d.defensives.map((u) => (
         <div key={u.id} className="dd-audit">
-          <span><SpellLink id={u.id} name={u.name} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s{originLabel(u.origin) ? ` · ${originLabel(u.origin)}` : ""}</span></span>
+          <span><NameCell id={u.id} name={u.name} origin={u.origin} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s</span></span>
           {editing?.id === u.id ? (
             <span className="dd-form">
               <label>cd <input className="mono" value={editing.cd} onChange={(e) => setEditing({ id: u.id, cd: e.target.value })} size={4} /> s</label>
-              <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => void submitEdit()}>Save</button>
+              <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => void submitEdit()}>{labels.save}</button>
               <button type="button" className="btn btn-sm" onClick={() => setEditing(null)}>Cancel</button>
             </span>
           ) : (
             <span className="dd-actions">
-              <button type="button" className="chip" disabled={busy} onClick={() => setEditing({ id: u.id, cd: String(u.cooldownS) })}>Edit cd</button>
-              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, ignore: true })}>Remove for this spec</button>
+              <button type="button" className="chip" disabled={busy} onClick={() => setEditing({ id: u.id, cd: String(u.cooldownS) })}>{labels.editCd}</button>
+              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, ignore: true })}>{labels.remove}</button>
             </span>
           )}
         </div>
       ))}
+      {lines.length > 0 && (
+        <>
+          <div className="label-caps dd-section">Your proposals · {m.specClass}</div>
+          {lines.map((l) => (
+            <div key={l.id} className="dd-audit" style={{ fontSize: 12 }}>
+              <span><span className={"dot " + l.dot} />{l.what}</span>
+              <span className="faint">{l.when}</span>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

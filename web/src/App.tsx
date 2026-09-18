@@ -7,7 +7,7 @@ import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaTooltip } from "./lib/quota.ts";
 import { menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, proposalMode, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import { parseServerSettings } from "./lib/settings.ts";
 import type { Settings } from "./lib/settings.ts";
@@ -284,6 +284,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
     analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives,
     canAfford: (runs) => canAfford(quota, runs * POINTS_PER_RUN),
     quotaTooltip: quotaTooltip(quota),
+    mode: proposalMode(status, me),
   };
 
   if (stopped) return <main className="stopped"><h2>bmpl stopped</h2><p className="muted">You can close this tab.</p></main>;

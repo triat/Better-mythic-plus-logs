@@ -103,7 +103,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
       {expanded && a && (
         <RunDeepDive
           d={a} tableWarning={payload.deepdiveSummary.tableWarning} busy={anyBusy} canAfford={deepdive.canAfford(1)}
-          quotaTooltip={deepdive.quotaTooltip}
+          quotaTooltip={deepdive.quotaTooltip} mode={deepdive.mode}
           onReanalyze={() => void deepdive.analyze(run, true)} onPatch={(patch) => deepdive.patch(a.className, a.spec, patch)}
         />
       )}

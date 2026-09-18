@@ -41,3 +41,10 @@ export function proposalMode(status: StatusInfo, me: MeUser | null): ProposalMod
   if (!status.hosted) return "local";
   return me?.role === "admin" ? "admin" : "propose";
 }
+
+/** Who may see /admin: hosted admins; members get the "Admins only" screen; local mode has no admin at all. */
+export type AdminAccess = "ok" | "member" | "local";
+export function adminAccess(status: StatusInfo, me: MeUser | null): AdminAccess {
+  if (!status.hosted) return "local";
+  return me?.role === "admin" ? "ok" : "member";
+}

@@ -1,9 +1,14 @@
 // Types only. Anything runtime from src/ is forbidden here (see spec).
-import type { EffectiveEntry, OverrideEntry } from "@shared/deepdive/types.ts";
+import type { DefensiveSpell, EffectiveEntry, OverrideEntry } from "@shared/deepdive/types.ts";
 import type { ProposalSummary } from "@shared/hosted/defensives.ts";
+import type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
+import type { EnvRow } from "@shared/hosted/instance.ts";
 
 export type { LookupPayload } from "@shared/lookup.ts";
 export type { ProposalSummary } from "@shared/hosted/defensives.ts";
+export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
+export type { DefensiveSpell } from "@shared/deepdive/types.ts";
+export type { EnvRow } from "@shared/hosted/instance.ts";
 export type { AxisKey, AxisScore, Confidence, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
@@ -78,3 +83,21 @@ export interface DefensivesPatch {
 export interface DefensivesPatchResult extends DefensivesResponse {
   proposal?: ProposalSummary;
 }
+
+/** GET /api/admin/users row. */
+export interface AdminUser {
+  id: number; discordId: string; username: string; globalName: string | null; avatarUrl: string; role: "member" | "admin";
+  createdAt: number; lastSeenAt: number; pointsHour: number; points24h: number; sessions: number; configAdmin: boolean;
+}
+/** GET /api/admin/invites row. */
+export interface AdminInvite { discordId: string; invitedBy: string; createdAt: number; note: string | null; user: { id: number; username: string } | null }
+/** GET /api/admin/proposals row: the member's proposal plus the entry it would change. */
+export interface AdminProposal extends ProposalSummary { key: string; proposedBy: number; username: string | null; current: DefensiveSpell | null; ignored: boolean }
+/** GET /api/admin/usage body. */
+export interface AdminUsage {
+  hourStart: number; resetInS: number; limitPerUser: number; instance: RateLimitSnapshot | null;
+  users: Array<{ userId: number; discordId: string | null; username: string | null; role: "member" | "admin" | null; points: number }>;
+  hours: Array<{ hourStart: number; points: number }>;
+}
+/** GET /api/admin/instance body. */
+export interface AdminInstance { version: string; uptimeS: number; dbPath: string; dbBytes: number; lastBackupAt: number | null; env: EnvRow[] }

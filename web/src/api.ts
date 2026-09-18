@@ -1,4 +1,9 @@
 import type {
+  AdminInstance,
+  AdminInvite,
+  AdminProposal,
+  AdminUsage,
+  AdminUser,
   DefensivesPatch,
   DefensivesPatchResult,
   DefensivesResponse,
@@ -73,6 +78,18 @@ export const api = {
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesPatchResult>("/api/defensives", post(body)),
   adminProposals: () => call<{ proposals: Array<{ id: number }> }>("/api/admin/proposals"),
+  admin: {
+    users: () => call<{ users: AdminUser[] }>("/api/admin/users"),
+    setRole: (id: number, role: "member" | "admin") => call<{ user: AdminUser }>(`/api/admin/users/${id}/role`, post({ role })),
+    revokeSessions: (id: number) => call<{ sessionsEnded: number }>(`/api/admin/users/${id}/sessions/revoke`, post()),
+    invites: () => call<{ invites: AdminInvite[] }>("/api/admin/invites"),
+    addInvite: (discordId: string, note: string | null) => call<{ invite: Omit<AdminInvite, "user"> }>("/api/admin/invites", post({ discordId, note })),
+    removeInvite: (discordId: string) => call<{ sessionsEnded: number }>(`/api/admin/invites/${encodeURIComponent(discordId)}`, { method: "DELETE" }),
+    proposals: (status: "pending" | "approved" | "rejected") => call<{ proposals: AdminProposal[] }>(`/api/admin/proposals?status=${status}`),
+    decide: (id: number, decision: "approve" | "reject", note: string | null) => call<{ proposal: AdminProposal }>(`/api/admin/proposals/${id}/${decision}`, post({ note })),
+    usage: () => call<AdminUsage>("/api/admin/usage"),
+    instance: () => call<AdminInstance>("/api/admin/instance"),
+  },
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
     call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),

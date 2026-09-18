@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { LOCAL_STATUS, bootScreen, deniedDiscordId, initialScreen, loginFailed, proposalMode, uiControls } from "./hostedMode.ts";
+import { LOCAL_STATUS, adminAccess, bootScreen, deniedDiscordId, initialScreen, loginFailed, proposalMode, uiControls } from "./hostedMode.ts";
 
 const local = { hosted: false, hasCredentials: true, envPath: "/x/.env" };
 const hosted = { hosted: true, hasCredentials: true, envPath: null };
@@ -74,5 +74,15 @@ describe("proposalMode", () => {
     expect(proposalMode(hosted, user)).toBe("propose");
     expect(proposalMode(hosted, { ...user, role: "admin" })).toBe("admin");
     expect(proposalMode(hosted, null)).toBe("propose");
+  });
+});
+
+describe("adminAccess", () => {
+  const user = { id: 1, discordId: "1", username: "t", globalName: null, avatarUrl: "", role: "member" as const };
+  test("local → local, hosted member → member, hosted admin → ok", () => {
+    expect(adminAccess(local, null)).toBe("local");
+    expect(adminAccess(hosted, user)).toBe("member");
+    expect(adminAccess(hosted, null)).toBe("member");
+    expect(adminAccess(hosted, { ...user, role: "admin" })).toBe("ok");
   });
 });

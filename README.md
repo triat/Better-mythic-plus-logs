@@ -428,11 +428,20 @@ days (sliding) in an `HttpOnly` cookie; **Sign out** ends one. Removing an
 id from `BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change
 the role on the admin page (issue #8) or via `POST /api/admin/users/:id/role`.
 
+**Per-account state.** Each member has their own lookup history (20 tabs, kept
+in `bmpl.db` across restarts), their own "your key" and legend preference
+(`GET/PUT /api/settings`), and their own live-event stream. Two members looking
+up the same character within 6 hours share one WCL fetch: the second lookup
+reuses the first member's result (shown as cached; **Refresh** fetches again).
+Deep-dive analyses are attached when a tab is opened, so an analysis run by one
+member shows up for everyone who has that run in a tab. Local mode is unchanged:
+history in memory, settings in the browser.
+
 Quotas and the admin page come with the following issues.
 
-Do not expose a hosted instance to the internet before issues #4–#5 land:
-everyone who signs in shares one lookup history, spends the shared WCL budget
-and can edit the server's `defensives.json`.
+Do not expose a hosted instance to the internet before issue #5 lands:
+everyone who signs in spends the shared WCL budget and can edit the server's
+`defensives.json`.
 
 Required environment (copy `.env.hosted.example`):
 

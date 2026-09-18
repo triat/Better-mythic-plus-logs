@@ -2,6 +2,8 @@ import type { Server } from "bun";
 import { hasCredentials } from "./config.ts";
 import { dim, heading, ok } from "./format.ts";
 import { LOCAL_CONTEXT, authGate, clientIp, resolveRequest } from "./hosted/auth.ts";
+import { clip } from "./hosted/audit.ts";
+import type { AuditScope } from "./hosted/audit.ts";
 import type { HostedConfig } from "./hosted/config.ts";
 import { createHostedRuntime } from "./hosted/runtime.ts";
 import type { HostedRuntime } from "./hosted/runtime.ts";
@@ -55,6 +57,10 @@ const openBrowser = (url: string): void => {
   }
 };
 
+/** Test hook: the runtime of the last hosted `runServer` in this process (null before / in local mode). */
+let current: HostedRuntime | null = null;
+export const getHostedRuntime = (): HostedRuntime | null => current;
+
 // Installed bun-types (1.3.12) requires an explicit WebSocketData type argument on
 // `Server` (it had none when this task was verified on Bun 1.3.4); `undefined` matches
 // `Bun.serve`'s default here since we don't use the websocket upgrade API.
@@ -72,6 +78,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     const store = await getStore();
     if (store._db.filename === ":memory:") throw new Error("hosted mode needs a persistent bmpl.db (check BMPL_DB_PATH)");
     runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch);
+    current = runtime;
   }
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint, runtime }),
@@ -79,6 +86,8 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   ];
 
   const respond = async (req: Request, url: URL, peerIp: string | null): Promise<Response> => {
+    // Hosted: what the audit row of an uncaught throw is attributed to (known once the request is resolved).
+    let scope: AuditScope | null = null;
     try {
       if (req.method === "GET") {
         const staticRes = await serveStatic(url.pathname);
@@ -90,10 +99,16 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, localHistory);
       const gate = authGate(r, ctx);
       if (gate) return gate;
-      // Hosted: every WCL point spent while this handler runs is charged to the session user.
-      return runtime ? await runtime.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))) : await r.handle(req, url, ctx);
+      if (!runtime) return await r.handle(req, url, ctx);
+      // Hosted: every WCL point spent while this handler runs is charged to the session user, and
+      // every audit row recorded inside it carries the user, ip and target of this request.
+      scope = { userId: ctx.user?.id ?? null, ip, target: `${req.method} ${url.pathname}` };
+      const rt = runtime;
+      return await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))));
     } catch (e) {
       console.error(e);
+      // The message stays in the log (clipped) and in stderr; the client only ever sees "Internal error".
+      runtime?.audit.record("server_error", { ...(scope ?? { userId: null, ip: clientIp(req, hosted, peerIp), target: `${req.method} ${url.pathname}` }), detail: { message: clip(String(e instanceof Error ? e.message : e)) } });
       return jsonResponse({ ok: false, error: "Internal error" }, 500);
     }
   };

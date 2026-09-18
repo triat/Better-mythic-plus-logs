@@ -1,7 +1,13 @@
+import { Database } from "bun:sqlite";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { AuditLog } from "../src/hosted/audit.ts";
+import { openHosted } from "../src/hosted/db.ts";
+import type { HostedRuntime } from "../src/hosted/runtime.ts";
 import type { LookupOutcome } from "../src/lookup.ts";
 import { History } from "../src/server-history.ts";
+import { failureBody } from "../src/server/deepdive.ts";
 import { runLookupWithCache } from "../src/server/lookup.ts";
+import { WclError } from "../src/wcl/client.ts";
 import { payloadWith } from "./evaluation/helpers.ts";
 
 const saved = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
@@ -87,5 +93,32 @@ describe("runLookupWithCache — in-flight dedupe", () => {
     expect(calls).toBe(2); // the joiner retried on its own
     expect(rj.ok && rj.joined && !rj.fromCache).toBe(true);
     expect(b.size).toBe(1); // the joiner's own success is recorded in its own history
+  });
+});
+
+describe("failures", () => {
+  test("a WclError thrown by the lookup is a 502 carrying the public message; any other throw is a 500 without it", async () => {
+    const wcl = await runLookupWithCache(opts(), new History(5), { performLookup: async () => { throw new WclError("http", 503, "HTTP 503: <html>maintenance</html>"); } });
+    expect(wcl).toEqual({ ok: false, status: 502, error: "WCL HTTP 503: <html>maintenance</html>", wcl: "HTTP 503: <html>maintenance</html>" });
+    const other = await runLookupWithCache(opts(), new History(5), { performLookup: async () => { throw new Error("ENOENT: /srv/bmpl/bmpl.db"); } });
+    expect(other).toEqual({ ok: false, status: 500, error: "ENOENT: /srv/bmpl/bmpl.db" });
+  });
+  test("failureBody: local mode keeps every message; hosted mode sanitises 5xx, passes WCL through, records quota refusals and server errors", () => {
+    const quota = { error: "quota" as const, message: "Hourly quota reached (300/300) — resets in 120 s", used: 300, limit: 300, resetInS: 120 };
+    expect(failureBody({ status: 500, error: "ENOENT: /srv/bmpl/bmpl.db" }, null)).toEqual({ ok: false, error: "ENOENT: /srv/bmpl/bmpl.db" });
+    expect(failureBody({ status: 429, error: quota.message, quota }, null)).toEqual({ ok: false, ...quota });
+
+    const db = openHosted(new Database(":memory:"));
+    const runtime = { audit: new AuditLog(db.audit) } as unknown as HostedRuntime;
+    expect(failureBody({ status: 500, error: "ENOENT: /srv/bmpl/bmpl.db" }, runtime)).toEqual({ ok: false, error: "Internal error" });
+    expect(failureBody({ status: 502, error: "WCL GraphQL error: private", wcl: "GraphQL error: private" }, runtime)).toEqual({ ok: false, error: "WCL: GraphQL error: private" });
+    expect(failureBody({ status: 404, error: "not in the cache" }, runtime)).toEqual({ ok: false, error: "not in the cache" });
+    expect(failureBody({ status: 429, error: quota.message, quota }, runtime)).toEqual({ ok: false, ...quota });
+    const rows = db.audit.list({ actions: null, before: null, limit: 10 });
+    // The WCL failure is the observer's job (gql) and a 404 is nobody's: only the 500 and the refusal leave rows here.
+    expect(rows.map((r) => [r.action, r.detail])).toEqual([
+      ["quota_refused", { used: 300, limit: 300, resetInS: 120, error: "quota" }],
+      ["server_error", { message: "ENOENT: /srv/bmpl/bmpl.db" }],
+    ]);
   });
 });

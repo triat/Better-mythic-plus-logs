@@ -1,5 +1,6 @@
 // src/server/routes-auth.ts
 // Discord login, logout and /api/me. Only registered in hosted mode.
+import { clip } from "../hosted/audit.ts";
 import type { HostedConfig } from "../hosted/config.ts";
 import { OAUTH_COOKIE, OAUTH_COOKIE_MAX_AGE_S, SESSION_COOKIE, SESSION_COOKIE_MAX_AGE_S, clearCookie, parseCookies, serializeCookie, signSessionId } from "../hosted/cookie.ts";
 import type { HostedDb, Role } from "../hosted/db.ts";
@@ -65,7 +66,10 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       if (!me.ok) return discordFailure(me.error);
 
       const verdict = admission(rt, me.identity.discordId);
-      if (!verdict.admitted) return redirect(`/?denied=${encodeURIComponent(me.identity.discordId)}`, [clearOauth]);
+      if (!verdict.admitted) {
+        rt.audit.record("login_denied", { userId: null, target: `discord ${me.identity.discordId}`, detail: { reason: "not invited" } });
+        return redirect(`/?denied=${encodeURIComponent(me.identity.discordId)}`, [clearOauth]);
+      }
 
       // Re-login rotates the session: an old cookie replayed after a fresh login must not
       // keep working.
@@ -74,11 +78,13 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       const now = Date.now();
       const user = rt.db.users.upsertFromDiscord(me.identity, verdict.role, now);
       const session = rt.db.sessions.create(user.id, { ip: ctx.ip || null, userAgent: req.headers.get("user-agent"), now });
+      rt.audit.record("login", { userId: user.id, target: `discord ${me.identity.discordId}`, detail: { userAgent: clip(req.headers.get("user-agent") ?? "", 120) } });
       return redirect("/", [serializeCookie(SESSION_COOKIE, signSessionId(session.id, rt.config.sessionSecret), sessionCookieOpts), clearOauth]);
     }, "public"),
 
     route("POST", "/auth/logout", (_req, _url, ctx) => {
       if (ctx.sessionId) rt.db.sessions.delete(ctx.sessionId);
+      if (ctx.user) rt.audit.record("logout");
       const res = jsonResponse({ ok: true });
       res.headers.append("Set-Cookie", clearCookie(SESSION_COOKIE, { path: "/", secure: rt.secure }));
       return res;

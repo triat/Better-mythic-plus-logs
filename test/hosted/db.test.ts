@@ -92,6 +92,34 @@ describe("invites", () => {
   });
 });
 
+describe("audit", () => {
+  test("add/list/counts/purgeBefore round trip with two users; username join survives a deleted user as null", () => {
+    const raw = new Database(":memory:");
+    const hdb = openHosted(raw);
+    const tom = hdb.users.upsertFromDiscord(ID, null, 0);
+    const bob = hdb.users.upsertFromDiscord({ ...ID, discordId: "222222222222222222", username: "bob" }, "admin", 0);
+    const a = hdb.audit.add({ at: 1_000, userId: tom.id, action: "login", target: "discord 1", detail: JSON.stringify({ userAgent: "ua" }), ip: "1.1.1.1" });
+    const b = hdb.audit.add({ at: 2_000, userId: bob.id, action: "invite_add", target: "333", detail: null, ip: null });
+    const c = hdb.audit.add({ at: 3_000, userId: null, action: "origin_rejected", target: "POST /api/lookup", detail: "not json", ip: "2.2.2.2" });
+    expect([a, b, c]).toEqual([1, 2, 3]);
+    const rows = hdb.audit.list({ actions: null, before: null, limit: 10 });
+    expect(rows.map((r) => [r.id, r.action, r.username])).toEqual([[3, "origin_rejected", null], [2, "invite_add", "bob"], [1, "login", "tom"]]);
+    expect(rows[2]).toEqual({ id: 1, at: 1_000, userId: tom.id, username: "tom", action: "login", target: "discord 1", detail: { userAgent: "ua" }, ip: "1.1.1.1" });
+    expect(rows[0]!.detail).toBeNull(); // unparsable detail → null, never a throw
+    expect(hdb.audit.list({ actions: ["login", "invite_add"], before: 3, limit: 1 }).map((r) => r.id)).toEqual([2]);
+    expect(hdb.audit.list({ actions: ["login", "invite_add"], before: 2, limit: 5 }).map((r) => r.id)).toEqual([1]);
+    expect(hdb.audit.counts(null)).toEqual({ all: 3, login: 1, admin: 1, quota: 0, security: 1, error: 0 });
+    expect(hdb.audit.counts(2_000)).toEqual({ all: 2, login: 0, admin: 1, quota: 0, security: 1, error: 0 });
+    raw.run("DELETE FROM users WHERE id = ?", [tom.id]);
+    const after = hdb.audit.list({ actions: ["login"], before: null, limit: 1 })[0]!;
+    expect(after.userId).toBeNull();
+    expect(after.username).toBeNull();
+    expect(hdb.audit.purgeBefore(2_000)).toBe(1);
+    expect(hdb.audit.purgeBefore(10_000)).toBe(2);
+    expect(hdb.audit.counts(null).all).toBe(0);
+  });
+});
+
 test("openHosted is idempotent on the same database", () => {
   const raw = new Database(":memory:");
   openHosted(raw);

@@ -3,6 +3,8 @@ import { statSync } from "node:fs";
 import { dirname } from "node:path";
 import pkg from "../../package.json";
 import { SHIPPED, specDefensives } from "../deepdive/table.ts";
+import { AUDIT_KINDS, actionsOf, clip } from "../hosted/audit.ts";
+import type { AuditKind } from "../hosted/audit.ts";
 import { DISCORD_ID } from "../hosted/config.ts";
 import { HOUR_MS, hourStart } from "../hosted/db.ts";
 import type { UserRow } from "../hosted/db.ts";
@@ -29,6 +31,15 @@ const adminUser = (u: UserRow, extra: AdminUserExtra) => ({
 
 const tail = (url: URL, prefix: string): string => url.pathname.slice(prefix.length);
 
+export const AUDIT_DEFAULT_LIMIT = 50;
+export const AUDIT_MAX_LIMIT = 200;
+
+/** A positive integer query parameter (`null` when absent, `undefined` when present but not one). */
+const positiveInt = (raw: string | null): number | null | undefined => {
+  if (raw === null) return null;
+  return /^\d+$/.test(raw) && Number(raw) > 0 && Number.isSafeInteger(Number(raw)) ? Number(raw) : undefined;
+};
+
 export function adminRoutes(rt: HostedRuntime): Route[] {
   // A single user's row of extras (role change, revoke): the users list route computes these in bulk instead.
   const userExtra = (u: UserRow, at: number): AdminUserExtra => ({
@@ -50,7 +61,9 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const b = await parseBody(req, INVITE_BODY);
       if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
       const { discordId, note } = b.value;
-      return jsonResponse({ ok: true, invite: rt.db.invites.add(discordId, `admin:${ctx.user!.id}`, note || null, Date.now()) });
+      const invite = rt.db.invites.add(discordId, `admin:${ctx.user!.id}`, note || null, Date.now());
+      rt.audit.record("invite_add", { target: discordId, detail: { note: invite.note } });
+      return jsonResponse({ ok: true, invite });
     }, "admin"),
     prefixRoute("DELETE", "/api/admin/invites/", (_req, url) => {
       const id = tail(url, "/api/admin/invites/");
@@ -58,7 +71,26 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const user = rt.db.users.byDiscordId(id);
       const removed = rt.db.invites.remove(id);
       const sessionsEnded = user && !rt.config.adminDiscordIds.includes(id) ? rt.db.sessions.deleteForUser(user.id) : 0;
+      if (removed) rt.audit.record("invite_remove", { target: id, detail: { sessionsEnded } });
       return jsonResponse({ ok: removed, sessionsEnded });
+    }, "admin"),
+    // The audit section of the admin page (issue #9): newest first, one kind at a time, keyset-paged by id.
+    route("GET", "/api/admin/audit", (_req, url, ctx) => {
+      const kind = url.searchParams.get("kind") ?? "all";
+      if (kind !== "all" && !AUDIT_KINDS.includes(kind as AuditKind)) return jsonResponse({ ok: false, error: "`kind` must be all, login, admin, quota, security or error" }, 400);
+      const before = positiveInt(url.searchParams.get("before"));
+      if (before === undefined) return jsonResponse({ ok: false, error: "`before` must be a positive integer" }, 400);
+      const rawLimit = positiveInt(url.searchParams.get("limit"));
+      if (rawLimit === undefined || (rawLimit !== null && rawLimit > AUDIT_MAX_LIMIT)) return jsonResponse({ ok: false, error: `\`limit\` must be an integer between 1 and ${AUDIT_MAX_LIMIT}` }, 400);
+      const limit = rawLimit ?? AUDIT_DEFAULT_LIMIT;
+      const rows = rt.db.audit.list({ actions: kind === "all" ? null : actionsOf(kind as AuditKind), before, limit });
+      return jsonResponse({
+        ok: true,
+        rows,
+        counts: rt.db.audit.counts(null),
+        errors24h: rt.db.audit.counts(ctx.now - 24 * HOUR_MS).error,
+        nextBefore: rows.length === limit ? rows[rows.length - 1]!.id : null,
+      });
     }, "admin"),
     // Budget gauge for the admin page (issue #8): this hour per member, the shared client's last
     // rateLimitData, and the last 24 hourly totals.
@@ -100,6 +132,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const note = b.value.note || null;
       const p = decide(rt.db.defensives, Number.parseInt(m[1]!, 10), { id: ctx.user!.id }, m[2] === "approve" ? "approved" : "rejected", note, ctx.now);
       if (!p) return jsonResponse({ ok: false, error: "No pending proposal with that id" }, 404);
+      rt.audit.record(m[2] === "approve" ? "proposal_approve" : "proposal_reject", { target: `${p.patch.name ?? "spell " + p.spellId} · ${p.key}`, detail: { proposalId: p.id, patch: p.patch, note: note && clip(note) } });
       return jsonResponse({ ok: true, proposal: { ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy } });
     }, "admin"),
     route("GET", "/api/admin/users", (_req, _url, ctx) => {
@@ -117,8 +150,11 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       if (revoke) {
         const id = Number.parseInt(revoke[1]!, 10);
         if (id === ctx.user!.id) return jsonResponse({ ok: false, error: "Sign out instead" }, 400);
-        if (!rt.db.users.byId(id)) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
-        return jsonResponse({ ok: true, sessionsEnded: rt.db.sessions.deleteForUser(id) });
+        const target = rt.db.users.byId(id);
+        if (!target) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
+        const sessionsEnded = rt.db.sessions.deleteForUser(id);
+        rt.audit.record("sessions_revoke", { target: target.username, detail: { userId: id, sessionsEnded } });
+        return jsonResponse({ ok: true, sessionsEnded });
       }
       const m = /^(\d+)\/role$/.exec(tail(url, "/api/admin/users/"));
       if (!m) return jsonResponse({ ok: false, error: "Invalid user id" }, 400);
@@ -131,6 +167,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       if (!target) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
       if (rt.config.adminDiscordIds.includes(target.discordId)) return jsonResponse({ ok: false, error: "role is set by BMPL_ADMIN_DISCORD_IDS" }, 400);
       if (!rt.db.users.setRole(id, role)) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
+      rt.audit.record("role_change", { target: `${target.username} → ${role}`, detail: { userId: id, role } });
       return jsonResponse({ ok: true, user: adminUser(rt.db.users.byId(id)!, userExtra(rt.db.users.byId(id)!, ctx.now)) });
     }, "admin"),
     route("GET", "/api/admin/instance", async () => {

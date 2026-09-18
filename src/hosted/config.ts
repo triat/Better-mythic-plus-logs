@@ -52,6 +52,13 @@ const parseOrigin = (raw: string): string | null => {
   return u.origin;
 };
 
+/** Why a session secret is unfit even when long enough, or null when it passes. */
+export const weakSecret = (s: string): string | null => {
+  if (new Set(s).size < 8) return "fewer than 8 distinct characters";
+  if (/changeme|secret|password|example/i.test(s)) return "looks like a placeholder";
+  return null;
+};
+
 export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } | { ok: false; missing: string[]; invalid: string[] } {
   const missing = HOSTED_ENV_VARS.filter((k) => read(env, k) === "");
   const invalid: string[] = [];
@@ -61,6 +68,7 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
 
   const secret = read(env, "BMPL_SESSION_SECRET");
   if (secret !== "" && Buffer.byteLength(secret, "utf8") < MIN_SESSION_SECRET_BYTES) invalid.push(`BMPL_SESSION_SECRET: at least ${MIN_SESSION_SECRET_BYTES} bytes (got ${Buffer.byteLength(secret, "utf8")})`);
+  else if (secret !== "" && weakSecret(secret)) invalid.push(`BMPL_SESSION_SECRET: ${weakSecret(secret)} — generate one with \`openssl rand -base64 48\``);
 
   const adminDiscordIds = read(env, "BMPL_ADMIN_DISCORD_IDS").split(",").map((s) => s.trim()).filter(Boolean);
   if (!missing.includes("BMPL_ADMIN_DISCORD_IDS")) {

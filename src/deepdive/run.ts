@@ -1,7 +1,7 @@
 import type { QuotaRefusal, Reserve } from "../hosted/quota.ts";
 import type { GqlFn } from "../signals/enrich.ts";
 import type { Store } from "../signals/store.ts";
-import { gql as realGql } from "../wcl/client.ts";
+import { WclError, gql as realGql } from "../wcl/client.ts";
 import { ESTIMATE_DEEPDIVE } from "../wcl/meter.ts";
 import { PING_QUERY } from "../wcl/queries.ts";
 import type { RateLimitData } from "../wcl/types.ts";
@@ -15,7 +15,7 @@ export interface DeepdiveRequest { reportCode: string; fightID: number; characte
 export interface RunDeps { store: Store; tables: LoadedTables; gql?: GqlFn; /** Hosted quota gate; absent locally. */ reserve?: Reserve }
 export type DeepdiveOutcome =
   | { ok: true; result: RunDefensives; fromCache: boolean; pointsSpent: number | null }
-  | { ok: false; status: 402 | 404 | 429 | 502; error: string; quota?: QuotaRefusal };
+  | { ok: false; status: 402 | 404 | 429 | 502; error: string; quota?: QuotaRefusal; /** The WCL error's public message when the failure came from WCL (safe to show in hosted mode). */ wcl?: string };
 
 /**
  * Analyze one run for one character: cached raw row → 0 pts; otherwise a budget pre-check
@@ -48,6 +48,7 @@ export async function runDeepdive(req: DeepdiveRequest, deps: RunDeps): Promise<
     return { ok: true, result, fromCache: false, pointsSpent: raw.pointsSpent };
   } catch (e) {
     if (e instanceof BudgetLowError) return { ok: false, status: 402, error: e.message };
+    if (e instanceof WclError) return { ok: false, status: 502, error: e.message, wcl: e.publicMessage };
     return { ok: false, status: 502, error: e instanceof Error ? e.message : String(e) };
   }
 }

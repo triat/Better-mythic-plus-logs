@@ -7,6 +7,8 @@ import { openUserHistory } from "./history.ts";
 import type { UserHistoryRepo } from "./history.ts";
 import { openDefensives } from "./defensives.ts";
 import type { DefensivesRepo } from "./defensives.ts";
+import { AUDIT_KINDS, actionsOf } from "./audit.ts";
+import type { AuditAction, AuditKind, AuditRow } from "./audit.ts";
 
 export type Role = "member" | "admin";
 export interface UserRow { id: number; discordId: string; username: string; globalName: string | null; avatarHash: string | null; role: Role; createdAt: number; lastSeenAt: number }
@@ -65,6 +67,16 @@ export interface HostedDb {
   };
   history: UserHistoryRepo;
   defensives: DefensivesRepo;
+  audit: {
+    /** Inserts one row (`detail` already serialised) and returns its id. */
+    add(row: { at: number; userId: number | null; action: AuditAction; target: string | null; detail: string | null; ip: string | null }): number;
+    /** Newest first (`id DESC`), joined with users for `username`; `actions: null` = every action, `before` = rows with a smaller id only. */
+    list(o: { actions: AuditAction[] | null; before: number | null; limit: number }): AuditRow[];
+    /** Row counts per kind (plus `all`) since `sinceAt` (null = ever). */
+    counts(sinceAt: number | null): Record<AuditKind | "all", number>;
+    /** Deletes rows older than `at`; returns how many. */
+    purgeBefore(at: number): number;
+  };
 }
 
 export const newSessionId = (): string => randomBytes(32).toString("base64url");
@@ -72,10 +84,21 @@ export const newSessionId = (): string => randomBytes(32).toString("base64url");
 interface UserRaw { id: number; discord_id: string; username: string; global_name: string | null; avatar_hash: string | null; role: Role; created_at: number; last_seen_at: number }
 interface SessionRaw { id: string; user_id: number; created_at: number; expires_at: number; ip: string | null; user_agent: string | null }
 interface InviteRaw { discord_id: string; invited_by: string; created_at: number; note: string | null }
+interface AuditRaw { id: number; at: number; user_id: number | null; username: string | null; action: AuditAction; target: string | null; detail: string | null; ip: string | null }
 
 const user = (r: UserRaw): UserRow => ({ id: r.id, discordId: r.discord_id, username: r.username, globalName: r.global_name, avatarHash: r.avatar_hash, role: r.role, createdAt: r.created_at, lastSeenAt: r.last_seen_at });
 const session = (r: SessionRaw): SessionRow => ({ id: r.id, userId: r.user_id, createdAt: r.created_at, expiresAt: r.expires_at, ip: r.ip, userAgent: r.user_agent });
 const invite = (r: InviteRaw): InviteRow => ({ discordId: r.discord_id, invitedBy: r.invited_by, createdAt: r.created_at, note: r.note });
+const parseDetail = (raw: string | null): Record<string, unknown> | null => {
+  if (raw === null) return null;
+  try {
+    const v: unknown = JSON.parse(raw);
+    return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+};
+const auditRow = (r: AuditRaw): AuditRow => ({ id: r.id, at: r.at, userId: r.user_id, username: r.username, action: r.action, target: r.target, detail: parseDetail(r.detail), ip: r.ip });
 
 export function openHosted(db: Database): HostedDb {
   db.exec("PRAGMA foreign_keys = ON");
@@ -114,6 +137,11 @@ export function openHosted(db: Database): HostedDb {
   const usageByUser = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, points FROM usage_hourly WHERE hour_start = ? ORDER BY points DESC, user_id");
   const usageByUserSince = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY user_id ORDER BY points DESC, user_id");
   const usageTotals = db.query<{ hour_start: number; points: number }, [number]>("SELECT hour_start, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY hour_start ORDER BY hour_start");
+
+  const auditInsert = db.query<{ id: number }, [number, number | null, string, string | null, string | null, string | null]>("INSERT INTO audit_log (at, user_id, action, target, detail, ip) VALUES (?, ?, ?, ?, ?, ?) RETURNING id");
+  const AUDIT_SELECT = "SELECT a.id, a.at, a.user_id, u.username, a.action, a.target, a.detail, a.ip FROM audit_log a LEFT JOIN users u ON u.id = a.user_id";
+  const auditCounts = db.query<{ action: AuditAction; n: number }, [number]>("SELECT action, COUNT(*) AS n FROM audit_log WHERE at >= ? GROUP BY action");
+  const auditPurge = db.query("DELETE FROM audit_log WHERE at < ?");
 
   const changes = (): number => Number(db.query<{ n: number }, []>("SELECT changes() AS n").get()!.n);
 
@@ -181,5 +209,30 @@ export function openHosted(db: Database): HostedDb {
     },
     history: openUserHistory(db),
     defensives: openDefensives(db),
+    audit: {
+      add: (r) => auditInsert.get(r.at, r.userId, r.action, r.target, r.detail, r.ip)!.id,
+      list(o) {
+        if (o.actions !== null && o.actions.length === 0) return [];
+        // Built per call: the IN list needs one placeholder per action.
+        const where: string[] = [];
+        const params: Array<string | number> = [];
+        if (o.actions !== null) { where.push(`a.action IN (${o.actions.map(() => "?").join(", ")})`); params.push(...o.actions); }
+        if (o.before !== null) { where.push("a.id < ?"); params.push(o.before); }
+        params.push(o.limit);
+        const sql = `${AUDIT_SELECT}${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY a.id DESC LIMIT ?`;
+        return db.query<AuditRaw, Array<string | number>>(sql).all(...params).map(auditRow);
+      },
+      counts(sinceAt) {
+        const byAction = new Map(auditCounts.all(sinceAt ?? 0).map((r) => [r.action, Number(r.n)]));
+        const out = { all: 0 } as Record<AuditKind | "all", number>;
+        for (const kind of AUDIT_KINDS) {
+          const n = actionsOf(kind).reduce((sum, a) => sum + (byAction.get(a) ?? 0), 0);
+          out[kind] = n;
+          out.all += n;
+        }
+        return out;
+      },
+      purgeBefore(at) { auditPurge.run(at); return changes(); },
+    },
   };
 }

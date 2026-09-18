@@ -1,4 +1,4 @@
-// Hosted-mode tables (users, sessions, invites, per-user history and settings). Additive only:
+// Hosted-mode tables (users, sessions, invites, per-user history and settings, audit log). Additive only:
 // every statement is CREATE ... IF NOT EXISTS so it can run on every start next to the cache tables.
 import type { Database } from "bun:sqlite";
 
@@ -87,6 +87,17 @@ CREATE TABLE IF NOT EXISTS defensives_proposals (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS defensives_proposals_pending ON defensives_proposals(proposed_by, key, spell_id) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS defensives_proposals_status ON defensives_proposals(status, created_at);
+CREATE TABLE IF NOT EXISTS audit_log (
+  id      INTEGER PRIMARY KEY,
+  at      INTEGER NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  action  TEXT    NOT NULL,
+  target  TEXT,
+  detail  TEXT,
+  ip      TEXT
+);
+CREATE INDEX IF NOT EXISTS audit_log_at ON audit_log(at);
+CREATE INDEX IF NOT EXISTS audit_log_action_at ON audit_log(action, at);
 `;
 
 export function applyHostedSchema(db: Database): void {

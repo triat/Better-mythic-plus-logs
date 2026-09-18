@@ -17,6 +17,28 @@ export const observeRateLimit = (data: unknown): void => {
   if (rl && typeof rl.pointsSpentThisHour === "number") observer(rl);
 };
 
+/** A failed WCL call. `publicMessage` (≤ ~220 chars, body clipped) is safe to show a hosted member; `message` is it with a `WCL ` prefix. */
+export class WclError extends Error {
+  constructor(readonly kind: "http" | "graphql" | "nodata", readonly status: number | null, readonly publicMessage: string) {
+    super(`WCL ${publicMessage}`);
+    this.name = "WclError";
+  }
+}
+
+/** Longest slice of an HTTP body or GraphQL message kept in an error. */
+const ERROR_TEXT_MAX = 200;
+const clipText = (s: string): string => (s.length > ERROR_TEXT_MAX ? s.slice(0, ERROR_TEXT_MAX - 1) + "…" : s);
+
+let errorObserver: ((e: WclError) => void) | null = null;
+
+/** Hosted mode installs its audit hook here; local mode and the CLI never observe. */
+export const setWclErrorObserver = (fn: ((e: WclError) => void) | null): void => { errorObserver = fn; };
+
+/** Hands a WCL failure to the installed observer (called by `gql` right before it throws). */
+export const notifyWclError = (e: WclError): void => { errorObserver?.(e); };
+
+const fail = (e: WclError): never => { notifyWclError(e); throw e; };
+
 interface GqlResponse<T> {
   data?: T;
   errors?: Array<{ message: string; path?: ReadonlyArray<string | number> }>;
@@ -37,7 +59,7 @@ export async function gql<T>(
   });
 
   if (!res.ok) {
-    throw new Error(`WCL HTTP ${res.status}: ${await res.text()}`);
+    return fail(new WclError("http", res.status, `HTTP ${res.status}: ${clipText(await res.text())}`));
   }
 
   const json = (await res.json()) as GqlResponse<T>;
@@ -46,10 +68,10 @@ export async function gql<T>(
     const msg = json.errors
       .map((e) => `${e.message}${e.path ? ` (at ${e.path.join(".")})` : ""}`)
       .join("; ");
-    throw new Error(`WCL GraphQL error: ${msg}`);
+    return fail(new WclError("graphql", null, `GraphQL error: ${clipText(msg)}`));
   }
   if (!json.data) {
-    throw new Error("WCL GraphQL: no data returned");
+    return fail(new WclError("nodata", null, "GraphQL: no data returned"));
   }
   observeRateLimit(json.data);
   return json.data;

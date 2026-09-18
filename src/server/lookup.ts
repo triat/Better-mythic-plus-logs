@@ -8,6 +8,8 @@ import type { LookupOutcome, LookupPayload } from "../lookup.ts";
 import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
 import type { HistoryListItem, HistoryStore } from "../server-history.ts";
+import { WclError } from "../wcl/client.ts";
+import { failureBody } from "./deepdive.ts";
 import { tablesOf, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse, parseCharacterInput } from "./http.ts";
 import { LOOKUP_BODY, WOW_NAME, WOW_REALM, parseBody } from "./validate.ts";
@@ -29,7 +31,7 @@ export const historyOf = (ctx: RequestContext): HistoryStore => {
   return ctx.history;
 };
 
-export interface LookupError { ok: false; error: string; status: number; quota?: QuotaRefusal }
+export interface LookupError { ok: false; error: string; status: number; quota?: QuotaRefusal; /** The WCL error's public message when the failure came from WCL (safe to show in hosted mode). */ wcl?: string }
 export interface LookupSuccess { ok: true; key: string; result: unknown; fromCache: boolean; /** Shared another caller's in-flight fetch of the same request. */ joined: boolean }
 export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup; tables?: LoadedTables }
 
@@ -115,6 +117,7 @@ export async function runLookupWithCache(opts: {
 
     return { ok: true, key: entry.key, result: payload, fromCache: false, joined };
   } catch (e) {
+    if (e instanceof WclError) return { ok: false, status: 502, error: e.message, wcl: e.publicMessage };
     return {
       ok: false,
       status: 500,
@@ -128,6 +131,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
   const body = b.value;
   const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
+  runtime?.audit.setTarget(`lookup ${body.character}`);
   const tables = await tablesOf(ctx, runtime);
   const result = await runLookupWithCache({
     character: body.character,
@@ -136,7 +140,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
     metric: body.metric ?? null,
     refresh: !!body.refresh,
   }, historyOf(ctx), { reserve: runtime && user ? runtime.quota.for(user) : undefined, tables });
-  if (!result.ok) return jsonResponse(result.quota ? { ok: false, ...result.quota } : { ok: false, error: result.error }, result.status);
+  if (!result.ok) return jsonResponse(failureBody(result, runtime), result.status);
   // Hosted: always attach on read against the member's own tables (a joiner never sees the starter's pending layer).
   const payload = ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
   const accounting = runtime && user ? { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user) } : {};

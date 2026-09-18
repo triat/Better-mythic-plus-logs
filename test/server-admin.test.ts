@@ -6,7 +6,8 @@ import { SHIPPED } from "../src/deepdive/table.ts";
 import { hourStart, openHosted } from "../src/hosted/db.ts";
 import type { HostedDb } from "../src/hosted/db.ts";
 import { propose } from "../src/hosted/defensives.ts";
-import { runServer } from "../src/server.ts";
+import { getHostedRuntime, runServer } from "../src/server.ts";
+import { WclError, notifyWclError } from "../src/wcl/client.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
 
@@ -181,5 +182,75 @@ describe("GET /api/admin/instance", () => {
     expect(r.env.map((e: { key: string }) => e.key)).toEqual(["BMPL_BASE_URL", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET", "BMPL_SESSION_SECRET", "BMPL_ADMIN_DISCORD_IDS", "BMPL_POINTS_PER_USER_HOUR", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET"]);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.sessionSecret);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.discordClientSecret);
+  });
+});
+
+describe("audit log", () => {
+  test("admin actions are logged and listed newest first with counts; members get 403", async () => {
+    await fetch(u("/api/admin/invites"), json("POST", { discordId: "888888888888888888", note: "audit" }, admin.cookie));
+    await fetch(u("/api/admin/invites/888888888888888888"), { method: "DELETE", headers: { cookie: admin.cookie } });
+    expect((await fetch(u("/api/admin/audit"), { headers: { cookie: member.cookie } })).status).toBe(403);
+    const r = await (await fetch(u("/api/admin/audit?kind=admin&limit=2"), { headers: { cookie: admin.cookie } })).json();
+    expect(r.ok).toBe(true);
+    expect(r.rows.map((x: { action: string }) => x.action)).toEqual(["invite_remove", "invite_add"]);
+    expect(r.rows[1]).toMatchObject({ userId: admin.user.id, username: "boss", target: "888888888888888888", detail: { note: "audit" } });
+    expect(r.rows[1].ip).toMatch(/127\.0\.0\.1$/);
+    expect(typeof r.rows[1].at).toBe("number");
+    expect(r.rows[0]).toMatchObject({ action: "invite_remove", target: "888888888888888888", detail: { sessionsEnded: 0 } });
+    expect(r.counts.admin).toBeGreaterThanOrEqual(2);
+    expect(r.counts.all).toBeGreaterThanOrEqual(r.counts.admin);
+    expect(typeof r.errors24h).toBe("number");
+    expect(r.nextBefore).toBe(r.rows[1].id);
+    expect((await fetch(u("/api/admin/audit?kind=nope"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+    expect((await fetch(u("/api/admin/audit?limit=0"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+    expect((await fetch(u("/api/admin/audit?limit=201"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+    expect((await fetch(u("/api/admin/audit?before=x"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+    expect((await fetch(u("/api/admin/audit?before=-1"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+  });
+  test("every admin mutation leaves a row: role change, revoke, proposal approve/reject", async () => {
+    const now = Date.now();
+    const p = propose(db.defensives, { id: member.user.id, role: "member" }, "Paladin", "Holy", { id: 642, cooldownS: 240 }, now);
+    if (!p.ok) throw new Error(p.error);
+    const q = propose(db.defensives, { id: member.user.id, role: "member" }, "Paladin", "Holy", { id: 31821, cooldownS: 100 }, now);
+    if (!q.ok) throw new Error(q.error);
+    await fetch(u(`/api/admin/proposals/${p.proposal.id}/approve`), json("POST", { note: "yes" }, admin.cookie));
+    await fetch(u(`/api/admin/proposals/${q.proposal.id}/reject`), json("POST", { note: "no" }, admin.cookie));
+    await fetch(u(`/api/admin/users/${member.user.id}/role`), json("POST", { role: "admin" }, admin.cookie));
+    await fetch(u(`/api/admin/users/${member.user.id}/role`), json("POST", { role: "member" }, admin.cookie));
+    await fetch(u(`/api/admin/users/${member.user.id}/sessions/revoke`), json("POST", undefined, admin.cookie));
+    const r = await (await fetch(u("/api/admin/audit?kind=admin&limit=5"), { headers: { cookie: admin.cookie } })).json();
+    expect(r.rows.map((x: { action: string }) => x.action)).toEqual(["sessions_revoke", "role_change", "role_change", "proposal_reject", "proposal_approve"]);
+    expect(r.rows[0]).toMatchObject({ target: "tom", detail: { userId: member.user.id, sessionsEnded: 1 } });
+    expect(r.rows[1]).toMatchObject({ target: "tom → member", detail: { userId: member.user.id, role: "member" } });
+    expect(r.rows[3]).toMatchObject({ target: "spell 31821 · Paladin:Holy", detail: { proposalId: q.proposal.id, patch: { id: 31821, cooldownS: 100 }, note: "no" } });
+    expect(r.rows[4]).toMatchObject({ target: "spell 642 · Paladin:Holy", detail: { proposalId: p.proposal.id, note: "yes" } });
+    for (const row of r.rows) expect(row.userId).toBe(admin.user.id);
+    member = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "123456789012345678", role: "member", username: "tom" });
+  });
+  test("pagination: before + limit walk the log", async () => {
+    const first = await (await fetch(u("/api/admin/audit?limit=1"), { headers: { cookie: admin.cookie } })).json();
+    expect(first.rows).toHaveLength(1);
+    expect(first.nextBefore).toBe(first.rows[0].id);
+    const second = await (await fetch(u(`/api/admin/audit?limit=1&before=${first.nextBefore}`), { headers: { cookie: admin.cookie } })).json();
+    expect(second.rows).toHaveLength(1);
+    expect(second.rows[0].id).toBeLessThan(first.rows[0].id);
+    const rest = await (await fetch(u("/api/admin/audit?limit=200"), { headers: { cookie: admin.cookie } })).json();
+    expect(rest.nextBefore).toBeNull();
+    expect(rest.rows.map((x: { id: number }) => x.id).slice(0, 2)).toEqual([first.rows[0].id, second.rows[0].id]);
+  });
+  test("a WCL error thrown inside a request lands in the log with the request's user and target", async () => {
+    // Never reaches WCL: the observer path is triggered directly through the runtime hook the server exposes for tests.
+    const rt = getHostedRuntime()!;
+    await rt.audit.scope({ userId: member.user.id, ip: "1.2.3.4", target: "lookup X-Y" }, async () => notifyWclError(new WclError("graphql", null, "Report ab12CD is private")));
+    const r = await (await fetch(u("/api/admin/audit?kind=error"), { headers: { cookie: admin.cookie } })).json();
+    expect(r.rows[0]).toMatchObject({ action: "wcl_error", userId: member.user.id, username: "tom", ip: "1.2.3.4", target: "lookup X-Y", detail: { kind: "graphql", status: null, message: "Report ab12CD is private" } });
+    expect(r.errors24h).toBeGreaterThanOrEqual(1);
+    expect(r.counts.error).toBeGreaterThanOrEqual(1);
+  });
+  test("logout is logged with the session user", async () => {
+    const third = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "555555555555555555", role: "member", username: "leaver" });
+    await fetch(u("/auth/logout"), json("POST", undefined, third.cookie));
+    const r = await (await fetch(u("/api/admin/audit?kind=login&limit=1"), { headers: { cookie: admin.cookie } })).json();
+    expect(r.rows[0]).toMatchObject({ action: "logout", userId: third.user.id, username: "leaver", target: "POST /auth/logout" });
   });
 });

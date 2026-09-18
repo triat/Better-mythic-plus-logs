@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { HOSTED_ENV_VARS, resolveMode, validateHostedEnv } from "../../src/hosted/config.ts";
+import { HOSTED_ENV_VARS, resolveMode, validateHostedEnv, weakSecret } from "../../src/hosted/config.ts";
 
 const FULL: Record<string, string> = {
   BMPL_BASE_URL: "https://bmpl.example.com",
@@ -80,9 +80,27 @@ describe("validateHostedEnv", () => {
     expect(validateHostedEnv({ ...FULL, BMPL_BASE_URL: "not a url" }).ok).toBe(false);
   });
   test("secret length is measured in bytes", () => {
-    // 16 two-byte characters = 32 bytes.
-    expect(validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "éééééééééééééééé" }).ok).toBe(true);
-    expect(validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "ééééééééééééééé" }).ok).toBe(false);
+    // 16 two-byte characters = 32 bytes (long enough — it then fails the distinct-characters check instead).
+    const long = validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "éééééééééééééééé" });
+    expect(!long.ok && long.invalid.some((s) => s.includes("at least 32 bytes"))).toBe(false);
+    const short = validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "ééééééééééééééé" });
+    expect(!short.ok && short.invalid.some((s) => s.includes("at least 32 bytes"))).toBe(true);
+  });
+  test("weak secrets are refused: too few distinct characters or a placeholder", () => {
+    expect(weakSecret("0123456789abcdef0123456789abcdef")).toBeNull();
+    expect(weakSecret("a".repeat(40))).toBe("fewer than 8 distinct characters");
+    expect(weakSecret("changeme-changeme-changeme-changeme-1234")).toBe("looks like a placeholder");
+    expect(weakSecret("My-Super-SECRET-value-0123456789")).toBe("looks like a placeholder");
+    const flat = validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "a".repeat(40) });
+    expect(flat.ok).toBe(false);
+    if (!flat.ok) expect(flat.invalid).toEqual(["BMPL_SESSION_SECRET: fewer than 8 distinct characters — generate one with `openssl rand -base64 48`"]);
+    const placeholder = validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "changeme-changeme-changeme-changeme-1234" });
+    expect(placeholder.ok).toBe(false);
+    if (!placeholder.ok) expect(placeholder.invalid).toEqual(["BMPL_SESSION_SECRET: looks like a placeholder — generate one with `openssl rand -base64 48`"]);
+    // A secret that is too short gets the length message only.
+    const short = validateHostedEnv({ ...FULL, BMPL_SESSION_SECRET: "aaaa" });
+    if (!short.ok) expect(short.invalid.filter((s) => s.startsWith("BMPL_SESSION_SECRET"))).toHaveLength(1);
+    expect(validateHostedEnv(FULL).ok).toBe(true);
   });
   test("Discord ids must be 17-20 digit snowflakes", () => {
     const r = validateHostedEnv({ ...FULL, BMPL_DISCORD_CLIENT_ID: "123", BMPL_ADMIN_DISCORD_IDS: "111, not-an-id" });

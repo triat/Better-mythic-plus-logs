@@ -4,8 +4,10 @@ import { runDeepdive } from "../deepdive/run.ts";
 import { applyPatch, getDefensives, resetDefensives, saveOverride, specDefensives, specKey, validateOverride } from "../deepdive/table.ts";
 import type { LoadedTables, OverrideEntry } from "../deepdive/types.ts";
 import { getEvalConfig } from "../evaluation/config.ts";
+import { clip } from "../hosted/audit.ts";
 import type { RequestContext } from "../hosted/auth.ts";
 import { propose, proposalSummary, tablesFor } from "../hosted/defensives.ts";
+import type { QuotaRefusal } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { LookupPayload } from "../lookup.ts";
 import { getStore } from "../signals/store.ts";
@@ -30,15 +32,32 @@ export async function refreshLocalHistory(): Promise<void> {
   for (const e of localHistory.list()) localHistory.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
 }
 
+/**
+ * The `{ ok: false, … }` body of a failed lookup / deep-dive. Hosted mode records the refusal or the
+ * failure in the audit log and never echoes an unknown 5xx message to the member: a WCL failure passes
+ * through as `WCL: <public message>` (the observer already logged it), anything else 5xx becomes
+ * "Internal error". Local mode keeps the message as is.
+ */
+export function failureBody(r: { status: number; error: string; quota?: QuotaRefusal; wcl?: string }, runtime: HostedRuntime | null): Record<string, unknown> {
+  if (runtime) {
+    if (r.quota) runtime.audit.record("quota_refused", { detail: { used: r.quota.used, limit: r.quota.limit, resetInS: r.quota.resetInS, error: r.quota.error } });
+    else if (r.status >= 500 && !r.wcl) runtime.audit.record("server_error", { detail: { message: clip(r.error) } });
+  }
+  if (r.quota) return { ok: false, ...r.quota };
+  const error = !runtime ? r.error : r.wcl ? `WCL: ${r.wcl}` : r.status >= 500 ? "Internal error" : r.error;
+  return { ok: false, error };
+}
+
 export async function handleDeepdive(req: Request, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
   const b = await parseBody(req, DEEPDIVE_BODY);
   if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
   const body = b.value;
   if (!hasCredentials()) return jsonResponse({ ok: false, error: "No credentials configured. Visit /setup first." }, 400);
   const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
+  runtime?.audit.setTarget(`deepdive ${body.reportCode}:${body.fightID}`);
   const [store, tables] = await Promise.all([getStore(), tablesOf(ctx, runtime)]);
   const r = await runDeepdive({ reportCode: body.reportCode, fightID: body.fightID, character: body.character, force: !!body.force }, { store, tables, reserve: runtime && user ? runtime.quota.for(user) : undefined });
-  if (!r.ok) return jsonResponse(r.quota ? { ok: false, ...r.quota } : { ok: false, error: r.error }, r.status);
+  if (!r.ok) return jsonResponse(failureBody(r, runtime), r.status);
   if (!ctx.hosted) await refreshLocalHistory();
   // Hosted: the measured charge of this request replaces the PING-delta estimate.
   const accounting = runtime && user ? { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user) } : { pointsSpent: r.pointsSpent };

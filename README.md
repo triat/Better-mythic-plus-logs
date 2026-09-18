@@ -176,6 +176,8 @@ where a defensive was available and not used).
 - `just` (optional but recommended) — https://github.com/casey/just
 - For building from source: the web front builds with Vite (`just web-install`
   once, then `just build`). Node is not required — Bun runs Vite.
+- For a VPS: `just build-linux` cross-compiles the hosted binary
+  (`dist/bmpl-linux`) from any OS — see *Deploying on a VPS*.
 
 `bmpl` caches WCL run enrichment and Raider.IO responses in a local SQLite
 file, `bmpl.db`, created next to your `.env`. It's git-ignored; override the
@@ -249,6 +251,7 @@ just serve                    # starts http://localhost:3000 and opens your brow
 just serve --port 4000        # custom port
 just serve --no-open          # don't auto-launch browser
 just serve --hosted           # multi-user mode, see "Hosted mode"
+just serve --hosted --host 127.0.0.1   # bind address (hosted default; BMPL_HOST env)
 ```
 
 On first run, the browser lands on a setup page that walks you through creating
@@ -406,11 +409,12 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
   their own client.
 - Prefer sharing the source (this repo) over shipping a binary; a compiled
   `.exe` is opaque to the recipient.
-- Hosted mode: see the hardening paragraph of *Hosted mode* — the app
-  rate-limits and origin-checks on its own; the reverse proxy adds TLS, HSTS
-  and a coarse per-IP layer (issue #10).
+- Hosted mode: the app rate-limits and origin-checks on its own (hardening
+  paragraph of *Hosted mode*) and binds `127.0.0.1`; only the reverse proxy
+  owns 80/443 and adds TLS, HSTS and compression. Firewall, the `bmpl` system
+  user, the hardened unit and the backups are in *Deploying on a VPS*.
 
-## Hosted mode (multi-user, work in progress)
+## Hosted mode (multi-user)
 
 `bmpl serve --hosted` (or `BMPL_MODE=hosted`) runs one instance for several
 people behind a reverse proxy: Discord login and an invite allow-list, per-account
@@ -424,8 +428,9 @@ browser, adds security headers (CSP, nosniff, frame-ancestors none, …) and exp
 (Origin / Sec-Fetch-Site), `/auth/*` is limited to 10 requests per minute per IP,
 lookups to 30 and analyses to 60 per minute per member (429 with `Retry-After`) —
 the app reads the client IP from the last `X-Forwarded-For` entry, so the reverse
-proxy must set that header (Caddy does; keep `trusted_proxies` empty or bind bmpl
-to localhost so it cannot be forged — issue #10 ships that config),
+proxy must set that header (Caddy does; the shipped `deploy/Caddyfile` sets no
+`trusted_proxies` and bmpl binds `127.0.0.1`, so it cannot be forged — see
+*Deploying on a VPS*),
 every JSON body is validated against an explicit shape (unknown fields are
 refused), server errors never carry messages or paths, and the audit log
 (`GET /api/admin/audit?kind=&before=&limit=`, the admin page's Audit section) keeps
@@ -506,8 +511,9 @@ audit-defensives --shared` read it).
 
 **Instance info.** `GET /api/admin/instance` (and the page's Instance
 section) reports the version, uptime, database size, the last backup (mtime
-of a `last-backup` file next to `.env`, written by the deploy — issue #10)
-and the effective environment with secrets masked. WCL errors are in the audit
+of a `last-backup` file next to `.env`, touched by the hourly backup check of
+the VPS deployment — see *Deploying on a VPS*) and the effective environment
+with secrets masked. WCL errors are in the audit
 log (Errors chip).
 
 Required environment (copy `.env.hosted.example`):
@@ -525,6 +531,153 @@ calendar hour (default 300; admins are exempt).
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and
 the list of what to fix. Local mode (`bmpl serve`) is unchanged.
+
+### Deploying on a VPS
+
+One Linux VPS runs one instance: `bmpl serve --hosted` binds `127.0.0.1:3000`
+(`--host` / `BMPL_HOST` override it; local mode keeps Bun's default), Caddy
+owns 80/443 and proxies to it with automatic HTTPS, litestream replicates
+`bmpl.db` to a bucket. The server-side files live in `deploy/` (`deploy/README.md`
+maps each one to its path on the VPS); the client side is the `justfile`
+(`build-linux`, `deploy`, `deploy-status`, `deploy-logs`, `deploy-restore-test`).
+Every `deploy-*` recipe is run from your machine, by you, never by an automated
+agent.
+
+**1. What you need.** A Debian/Ubuntu VPS with a public IPv4 and root SSH; a
+DNS `A` record `bmpl.<domain>` pointing at it, live before bootstrap (Caddy
+needs it to obtain the certificate); an S3-compatible bucket (Backblaze B2,
+Hetzner Object Storage, …) with an application key that can read and write
+it; a Discord application (see *Login* above); a Warcraft Logs API client
+(see *Getting Warcraft Logs API credentials*). On your machine: this repo,
+Bun, `just`, and an SSH key that opens `root@<vps>`.
+
+**2. Bootstrap** (once). Key-only SSH first: `PasswordAuthentication no` in
+`/etc/ssh/sshd_config`, then `systemctl restart ssh`. Then, from the repo root:
+
+```bash
+ssh root@<vps> 'mkdir -p /root/bmpl-deploy'
+scp -r deploy .env.hosted.example root@<vps>:/root/bmpl-deploy/
+ssh root@<vps> 'cd /root/bmpl-deploy/deploy && bash bootstrap.sh bmpl.<domain>'
+```
+
+`bootstrap.sh` is idempotent (re-run it after a `git pull` that touched
+`deploy/`). It installs `curl`, `ufw`, `sqlite3`, `gnupg`, Caddy (its official
+apt repository) and litestream (the `.deb` of `LITESTREAM_VERSION`, 0.3.13 by
+default); sets ufw to deny incoming and allows `22/tcp`, `80/tcp`, `443/tcp`
+only (port 3000 never leaves loopback); creates the `bmpl` system user (no
+shell, home `/opt/bmpl`, mode 750); writes `/etc/caddy/Caddyfile` with your
+domain and runs `caddy validate`; installs `bmpl.service`,
+`litestream.service`, `bmpl-backup-check.service` and
+`bmpl-backup-check.timer` into `/etc/systemd/system/` and the check script,
+root-owned, at `/usr/local/sbin/bmpl-backup-check`; installs the
+`/etc/litestream.yml` template (owner `bmpl`, mode 600) unless a file already
+mentioning `/opt/bmpl/bmpl.db` is there; seeds `/opt/bmpl/.env` from
+`.env.hosted.example` (never overwrites an existing `.env`); enables and
+starts Caddy, and enables `bmpl`, `litestream` and the timer without starting
+them — they start once configured and deployed. If sshd listens on a port
+other than 22, change the `ufw allow 22/tcp` line before running the script,
+or you lock yourself out. Caddy obtains the Let's Encrypt certificate on the
+first request to the domain, so 80 and 443 must be reachable from the
+internet.
+
+**3. Configure.** `ssh root@<vps> 'nano /opt/bmpl/.env'` and fill every
+variable of the table above: `BMPL_BASE_URL=https://bmpl.<domain>`,
+`BMPL_SESSION_SECRET` from `openssl rand -base64 48`, the Discord client id
+and secret with `https://bmpl.<domain>/auth/discord/callback` registered as
+the redirect URL in the Discord application, your own Discord id in
+`BMPL_ADMIN_DISCORD_IDS`, the WCL client id and secret. Then
+`ssh root@<vps> 'nano /etc/litestream.yml'`: `bucket`, `endpoint` (B2:
+`https://s3.<region>.backblazeb2.com`; Hetzner:
+`https://<region>.your-objectstorage.com`), `access-key-id`,
+`secret-access-key`; keep `path: /opt/bmpl/bmpl.db`, `retention: 720h` (30
+days of snapshots) and `snapshot-interval: 1h`.
+
+**4. Deploy.** From your machine, with `BMPL_DEPLOY_HOST` exported in your
+shell (`just` does not read `.env`):
+
+```bash
+BMPL_DEPLOY_HOST=root@<vps> just deploy
+ssh root@<vps> 'systemctl start litestream bmpl-backup-check.timer'   # first deploy only: the database now exists
+BMPL_DEPLOY_HOST=root@<vps> just deploy-status  # unit states, /api/health, last-backup marker
+BMPL_DEPLOY_HOST=root@<vps> just deploy-logs    # journalctl -u bmpl -f
+```
+
+`just deploy` runs `build-linux` (Vite build of the web front, then
+`bun build --compile --target=bun-linux-x64` → `dist/bmpl-linux`; it
+cross-compiles from any OS), copies the binary to `/opt/bmpl/bmpl.new`,
+installs it as `/opt/bmpl/bmpl` (owner `bmpl`, mode 755), runs
+`systemctl restart bmpl` and polls `http://127.0.0.1:3000/api/health` for
+up to 30 s; when the app does not answer it prints the last 30 journal lines
+and exits 1 (the previous binary is already replaced — deploy the last good
+commit to roll back). The first admin is the Discord id you put in
+`BMPL_ADMIN_DISCORD_IDS`: open `https://bmpl.<domain>`, **Sign in with
+Discord**, open `/admin` and invite the others by Discord id (they read theirs
+on the *Invitation required* notice).
+
+**5. Monitor.** Point UptimeRobot (or any HTTP pinger) at
+`https://bmpl.<domain>/api/health`: 200 with
+`{"ok":true,"version":…,"uptimeS":…,"db":"ok"}`, 503 with `"db":"error"`
+when the database is unreachable (Caddy itself checks the same URL every
+30 s and answers a 5xx of its own while bmpl is down). The admin page's Instance section
+shows the version, uptime, database size and *last backup*. Errors:
+`journalctl -u bmpl` (or `just deploy-logs`), the Caddy access log at
+`/var/log/caddy/bmpl.log`, and the audit log (`/admin` → Audit) for logins,
+quota refusals, security rejections and WCL/server errors. If a guild behind
+one NAT hits the `/auth/*` limit (10 per minute per IP), the numbers are
+`DEFAULT_RATE_LIMITS` in `src/hosted/ratelimit.ts`.
+
+**6. Backups and restore.** litestream replicates the WAL continuously and
+takes a snapshot every hour; `bmpl-backup-check.timer` runs
+`/usr/local/sbin/bmpl-backup-check` hourly as user `bmpl`, which lists the
+snapshots, fails if the newest is older than 90 minutes (`MAX_AGE_MIN`), and
+otherwise touches `/opt/bmpl/last-backup` — the file whose mtime the admin
+page shows as *last backup*. "never (no last-backup file yet)" means the
+timer has not passed yet or the check fails: `journalctl -u bmpl-backup-check`
+says which. Restore, on the VPS as root:
+
+```bash
+systemctl stop bmpl litestream
+mv /opt/bmpl/bmpl.db /opt/bmpl/bmpl.db.bak
+mv /opt/bmpl/bmpl.db-wal /opt/bmpl/bmpl.db-wal.bak 2>/dev/null; mv /opt/bmpl/bmpl.db-shm /opt/bmpl/bmpl.db-shm.bak 2>/dev/null
+litestream restore -config /etc/litestream.yml -o /opt/bmpl/bmpl.db /opt/bmpl/bmpl.db
+chown bmpl:bmpl /opt/bmpl/bmpl.db
+systemctl start litestream bmpl
+```
+
+Test the restore without touching production: `BMPL_DEPLOY_HOST=root@<vps>
+just deploy-restore-test` restores the latest replica into a temporary
+directory on the VPS, runs `PRAGMA integrity_check` and counts the `users`
+rows, then deletes the directory. Do it once after the first day of
+replication and note the date; repeat after changing the bucket or its key.
+
+**7. Rotate a secret.** `BMPL_SESSION_SECRET`: new value in `/opt/bmpl/.env`,
+`systemctl restart bmpl` — session cookies are signed with it, so every
+cookie stops verifying and everyone signs in again. Discord client secret:
+regenerate it in the Discord application, edit `.env`, restart `bmpl`. WCL
+client secret: same, from https://www.warcraftlogs.com/api/clients. Bucket
+key: new key in `/etc/litestream.yml`,
+`systemctl restart litestream`, then `just deploy-restore-test` to prove the
+new key reads the replica.
+
+**8. Upgrade.** `git pull` on your machine, then
+`BMPL_DEPLOY_HOST=root@<vps> just deploy`. The schema is additive
+(`CREATE … IF NOT EXISTS`), there is no migration step, and cached WCL data is
+kept. Downgrade: check out the previous commit and `just deploy` again. If the
+`deploy/` files changed, copy them again and re-run `bootstrap.sh` (it keeps
+your `.env` and `litestream.yml`).
+
+**9. Uninstall.** On the VPS as root:
+
+```bash
+systemctl disable --now bmpl litestream bmpl-backup-check.timer
+rm /etc/systemd/system/{bmpl,litestream,bmpl-backup-check}.service /etc/systemd/system/bmpl-backup-check.timer
+rm /usr/local/sbin/bmpl-backup-check /etc/litestream.yml
+systemctl daemon-reload
+userdel bmpl && rm -rf /opt/bmpl
+```
+
+Then remove the site block from `/etc/caddy/Caddyfile` (`systemctl reload
+caddy`, or `apt-get remove caddy`), and delete the bucket.
 
 ## API cost
 
@@ -583,6 +736,10 @@ src/
 scripts/
   introspect.ts                    GraphQL schema explorer (dev-only)
   import-postmortem-avoidable.ts   regenerate signals/avoidable/*.json from postmortem
+deploy/
+  Caddyfile, bmpl.service, litestream.yml, litestream.service,
+  backup-check.sh, bmpl-backup-check.{service,timer}, bootstrap.sh
+                                   VPS files (see "Deploying on a VPS"); README.md maps each to its path
 test/
   *.test.ts, signals/*.test.ts, fixtures/   bun:test suite + fixture data
 docs/

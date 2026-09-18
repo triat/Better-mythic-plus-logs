@@ -2,6 +2,7 @@
 // Routes that exist in both modes. Local-only routes live in routes-local.ts.
 import pkg from "../../package.json";
 import { hasCredentials } from "../config.ts";
+import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { LookupPayload } from "../lookup.ts";
 import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse } from "./http.ts";
@@ -12,7 +13,7 @@ import { eventsResponse } from "./sse.ts";
 import { getStore } from "../signals/store.ts";
 import { watcherStatus } from "./watcher.ts";
 
-export interface SharedContext { hosted: boolean; envPath: string }
+export interface SharedContext { hosted: boolean; envPath: string; runtime: HostedRuntime | null }
 
 /** null when the trailing segment is not valid percent-encoding (decodeURIComponent throws). */
 export const historyKey = (url: URL): string | null => {
@@ -35,7 +36,7 @@ async function handleHealth(): Promise<Response> {
 
 export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
-    route("POST", "/api/lookup", (req, _url, ctx) => handleLookup(req, ctx)),
+    route("POST", "/api/lookup", (req, _url, rc) => handleLookup(req, rc, ctx.runtime)),
     route("POST", "/api/deepdive", (req, _url, ctx) => handleDeepdive(req, ctx)),
     route("GET", "/api/defensives", (_req, url) => handleDefensivesGet(url, ctx.hosted)),
     route("POST", "/api/defensives", (req) => handleDefensivesPost(req, ctx.hosted)),

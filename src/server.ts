@@ -74,7 +74,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch);
   }
   const routes: Route[] = [
-    ...sharedRoutes({ hosted, envPath: envPathHint }),
+    ...sharedRoutes({ hosted, envPath: envPathHint, runtime }),
     ...(runtime ? [...authRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime)] : localRoutes()),
   ];
 
@@ -88,7 +88,10 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       if (!r) return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
       const ip = clientIp(req, hosted, peerIp);
       const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, localHistory);
-      return authGate(r, ctx) ?? (await r.handle(req, url, ctx));
+      const gate = authGate(r, ctx);
+      if (gate) return gate;
+      // Hosted: every WCL point spent while this handler runs is charged to the session user.
+      return runtime ? await runtime.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))) : await r.handle(req, url, ctx);
     } catch (e) {
       console.error(e);
       return jsonResponse({ ok: false, error: "Internal error" }, 500);

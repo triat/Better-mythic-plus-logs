@@ -23,6 +23,8 @@ import { type Store, getStore } from "./signals/store.ts";
 import { type SignalSummary, signalSummary } from "./signals/summary.ts";
 import type { RioProfile } from "./signals/types.ts";
 import { realmToSlug } from "./util.ts";
+import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "./wcl/meter.ts";
+import type { QuotaRefusal, Reserve } from "./hosted/quota.ts";
 
 export interface LookupOptions {
   name: string;
@@ -46,7 +48,7 @@ export type LookupOutcome =
       deepdive: RunDefensives[];
       deepdiveSummary: DeepdiveSummary;
     }
-  | { ok: false; status: 404; error: string };
+  | { ok: false; status: 404 | 429; error: string; quota?: QuotaRefusal };
 
 interface Deps {
   store?: Store;
@@ -54,12 +56,18 @@ interface Deps {
   fetchFn?: typeof fetch;
   evalConfig?: EvaluationConfig;
   tables?: LoadedTables;
+  /** Test hook: replaces the rankings fetch (`fetchMplusData`). */
+  fetchMplus?: typeof fetchMplusData;
+  /** Hosted quota gate: consulted with an estimate before each WCL step; absent locally. */
+  reserve?: Reserve;
 }
 
 /** The whole lookup: rankings → analysis → (WCL enrichment ‖ Raider.IO). */
 export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promise<LookupOutcome> {
   const store = deps.store ?? (await getStore());
-  let data = await fetchMplusData(opts.name, opts.realm, {
+  const refusedRankings = deps.reserve?.(ESTIMATE_RANKINGS);
+  if (refusedRankings) return { ok: false, status: 429, error: refusedRankings.message, quota: refusedRankings };
+  let data = await (deps.fetchMplus ?? fetchMplusData)(opts.name, opts.realm, {
     metric: opts.metric,
     specFilter: opts.spec,
   });
@@ -90,10 +98,17 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     };
   }
   const result = analyzeLookup(data.runs, effective, data.seasonDungeons, opts.level === null);
+  const shown = displayedRuns(result);
+
+  if (opts.enrich && deps.reserve) {
+    const uncached = new Set(shown.filter((r) => !store.getWclRun(r.reportCode, r.fightID)).map((r) => `${r.reportCode}:${r.fightID}`)).size;
+    const refusedRuns = uncached > 0 ? deps.reserve(uncached * ESTIMATE_RUN) : null;
+    if (refusedRuns) return { ok: false, status: 429, error: refusedRuns.message, quota: refusedRuns };
+  }
 
   const [, rioRes] = await Promise.all([
     opts.enrich
-      ? enrichRuns(displayedRuns(result), data.character.name, store, { gql: deps.gql })
+      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql })
       : Promise.resolve(),
     fetchRioProfile(config.region, opts.realm, data.character.name, store, {
       refresh: opts.refresh,
@@ -102,7 +117,6 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
   ]);
 
   const tables = deps.tables ?? (await getDefensives());
-  const shown = displayedRuns(result);
   const deepdive = shown
     .map((r) => analyzeCached(store, tables, r, data.character.name))
     .filter((d): d is RunDefensives => d !== null);

@@ -1,8 +1,11 @@
 import { hasCredentials } from "../config.ts";
 import type { RequestContext } from "../hosted/auth.ts";
+import type { HostedRuntime } from "../hosted/runtime.ts";
+import type { QuotaRefusal, Reserve } from "../hosted/quota.ts";
 import { buildLookupPayload, performLookup } from "../lookup.ts";
-import type { LookupPayload } from "../lookup.ts";
+import type { LookupOutcome, LookupPayload } from "../lookup.ts";
 import type { Metric } from "../roles.ts";
+import { cacheKey } from "../server-history.ts";
 import type { HistoryListItem, HistoryStore } from "../server-history.ts";
 import { withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse, parseCharacterInput, parseMetric, readJson } from "./http.ts";
@@ -32,18 +35,12 @@ export const historyOf = (ctx: RequestContext): HistoryStore => {
   return ctx.history;
 };
 
-export interface LookupError {
-  ok: false;
-  error: string;
-  status: number;
-}
+export interface LookupError { ok: false; error: string; status: number; quota?: QuotaRefusal }
+export interface LookupSuccess { ok: true; key: string; result: unknown; fromCache: boolean; /** Shared another caller's in-flight fetch of the same request. */ joined: boolean }
+export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup }
 
-export interface LookupSuccess {
-  ok: true;
-  key: string;
-  result: unknown;
-  fromCache: boolean;
-}
+// Identical lookups that overlap share one WCL fetch (keyed like the history, "auto" level included).
+const inflight = new Map<string, Promise<LookupOutcome>>();
 
 export async function runLookupWithCache(opts: {
   character: string;
@@ -51,7 +48,7 @@ export async function runLookupWithCache(opts: {
   spec: string | null;
   metric: Metric | null;
   refresh: boolean;
-}, history: HistoryStore): Promise<LookupSuccess | LookupError> {
+}, history: HistoryStore, deps: LookupDeps = {}): Promise<LookupSuccess | LookupError> {
   if (!hasCredentials()) {
     return { ok: false, error: "No credentials configured. Visit /setup first.", status: 400 };
   }
@@ -69,20 +66,29 @@ export async function runLookupWithCache(opts: {
 
   if (!opts.refresh) {
     const hit = history.cached(request);
-    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true };
+    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true, joined: false };
   }
 
   try {
-    const o = await performLookup({
-      name: target.name,
-      realm: target.realm,
-      level: opts.level,
-      spec: opts.spec,
-      metric: opts.metric ?? undefined,
-      enrich: true,
-      refresh: opts.refresh,
-    });
-    if (!o.ok) return { ok: false, status: o.status, error: o.error };
+    const flightKey = cacheKey(request);
+    let flight = opts.refresh ? undefined : inflight.get(flightKey);
+    const joined = flight !== undefined;
+    if (!flight) {
+      flight = (deps.performLookup ?? performLookup)({
+        name: target.name,
+        realm: target.realm,
+        level: opts.level,
+        spec: opts.spec,
+        metric: opts.metric ?? undefined,
+        enrich: true,
+        refresh: opts.refresh,
+      }, { reserve: deps.reserve });
+      inflight.set(flightKey, flight);
+      const started = flight;
+      void started.catch(() => {}).finally(() => { if (inflight.get(flightKey) === started) inflight.delete(flightKey); });
+    }
+    const o = await flight;
+    if (!o.ok) return { ok: false, status: o.status, error: o.error, ...(o.quota ? { quota: o.quota } : {}) };
     const payload = buildLookupPayload(o, target.realm);
 
     // Keyed by the *effective* level: an auto-detected +21 and an explicit +21 are one tab.
@@ -95,7 +101,7 @@ export async function runLookupWithCache(opts: {
       targetAutoDetected: o.result.targetAutoDetected,
     });
 
-    return { ok: true, key: entry.key, result: payload, fromCache: false };
+    return { ok: true, key: entry.key, result: payload, fromCache: false, joined };
   } catch (e) {
     return {
       ok: false,
@@ -105,7 +111,7 @@ export async function runLookupWithCache(opts: {
   }
 }
 
-export async function handleLookup(req: Request, ctx: RequestContext): Promise<Response> {
+export async function handleLookup(req: Request, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
   const body = await readJson<LookupRequest>(req);
   if (!body) return jsonResponse({ ok: false, error: "Invalid JSON body" }, 400);
   const raw = (body.character ?? "").trim();
@@ -123,17 +129,17 @@ export async function handleLookup(req: Request, ctx: RequestContext): Promise<R
     }
     levelOverride = n;
   }
+  const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
   const result = await runLookupWithCache({
     character: raw,
     level: levelOverride,
     spec: body.spec && body.spec.trim() ? body.spec.trim() : null,
     metric: parseMetric(body.metric ?? null) ?? null,
     refresh: !!body.refresh,
-  }, historyOf(ctx));
-  if (!result.ok) {
-    return jsonResponse({ ok: false, error: result.error }, result.status);
-  }
+  }, historyOf(ctx), { reserve: runtime && user ? runtime.quota.for(user) : undefined });
+  if (!result.ok) return jsonResponse(result.quota ? { ok: false, ...result.quota } : { ok: false, error: result.error }, result.status);
   // Hosted payloads are stored raw: attach today's cached analyses on the way out (0 pts).
   const payload = result.fromCache && ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload) : result.result;
-  return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache });
+  const accounting = runtime && user ? { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user) } : {};
+  return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache, ...accounting });
 }

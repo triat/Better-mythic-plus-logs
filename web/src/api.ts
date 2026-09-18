@@ -77,7 +77,6 @@ export const api = {
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesPatchResult>("/api/defensives", post(body)),
-  adminProposals: () => call<{ proposals: Array<{ id: number }> }>("/api/admin/proposals"),
   admin: {
     users: () => call<{ users: AdminUser[] }>("/api/admin/users"),
     setRole: (id: number, role: "member" | "admin") => call<{ user: AdminUser }>(`/api/admin/users/${id}/role`, post({ role })),

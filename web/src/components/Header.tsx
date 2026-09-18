@@ -24,6 +24,8 @@ interface Props {
   onQuit: () => void;
   /** Big centered variant for the empty state. */
   hero?: boolean;
+  /** False on /admin: a lookup would have nowhere to land there. Default true. */
+  search?: boolean;
   controls: UiControls;
   menu: MenuModel | null;
   pendingProposals: number | null;
@@ -33,6 +35,7 @@ interface Props {
 
 export function Header(p: Props) {
   const [open, setOpen] = useState(false);
+  const showSearch = p.search ?? true;
   const submit = (e: FormEvent) => { e.preventDefault(); if (p.form.character.trim()) p.onLookup(); };
   const set = (patch: Partial<LookupForm>) => p.onChange({ ...p.form, ...patch });
   const chips = (
@@ -77,7 +80,7 @@ export function Header(p: Props) {
     <header className={"top" + (p.hero ? " top-hero" : "")}>
       <div className="top-row">
         <div className="brand">bmpl</div>
-        {!p.hero && search}
+        {showSearch && !p.hero && search}
         <div className="grow" />
         {p.controls.watch && (
           <label className={"watch" + (p.watchActive ? " on" : "")} title="Look up whatever Name-Realm you copy to the clipboard">
@@ -97,7 +100,7 @@ export function Header(p: Props) {
           </>
         )}
       </div>
-      {p.hero && <div className="hero-search">{search}</div>}
+      {showSearch && p.hero && <div className="hero-search">{search}</div>}
       {options}
       {p.busy && <div className="busy muted"><span className="spinner" /> {p.busy}</div>}
     </header>

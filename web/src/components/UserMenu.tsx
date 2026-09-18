@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MenuModel } from "../lib/session.ts";
 import { pendingText } from "../lib/session.ts";
+import { Avatar } from "./Avatar.tsx";
 
 interface Props { m: MenuModel; pendingProposals: number | null; onOpen: () => void; onSignOut: () => void }
 
@@ -22,12 +23,12 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
   return (
     <div className="user-menu" ref={ref}>
       <button type="button" className={"btn" + (open ? " active" : "")} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} title={m.handle}>
-        <Avatar m={m} size={24} />{m.name} <span className="faint" style={{ fontSize: 12 }}>{open ? "▴" : "▾"}</span>
+        <Avatar src={m.avatarUrl} initials={m.initials} size={24} />{m.name} <span className="faint" style={{ fontSize: 12 }}>{open ? "▴" : "▾"}</span>
       </button>
       {open && (
         <div className="menu card" role="menu">
           <div className="menu-head">
-            <Avatar m={m} size={32} />
+            <Avatar src={m.avatarUrl} initials={m.initials} size={32} />
             <div className="menu-id"><span className="menu-name">{m.name}</span><span className="faint">{m.handle}</span></div>
           </div>
           <div className="menu-quota" title="Your share of the shared Warcraft Logs budget">
@@ -44,10 +45,4 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
       )}
     </div>
   );
-}
-
-function Avatar({ m, size }: { m: MenuModel; size: number }) {
-  const [broken, setBroken] = useState(false);
-  if (broken) return <span className="avatar" style={{ width: size, height: size, fontSize: size > 24 ? 13 : 11 }}>{m.initials}</span>;
-  return <img className="avatar" src={m.avatarUrl} width={size} height={size} style={{ width: size, height: size }} alt="" onError={() => setBroken(true)} />;
 }

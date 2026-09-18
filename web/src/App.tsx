@@ -7,12 +7,14 @@ import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaTooltip } from "./lib/quota.ts";
 import { menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, bootScreen, deniedDiscordId, loginFailed, proposalMode, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, adminAccess, bootScreen, deniedDiscordId, loginFailed, proposalMode, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import { parseServerSettings } from "./lib/settings.ts";
 import type { Settings } from "./lib/settings.ts";
 import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
+import { AdminPage } from "./components/admin/AdminPage.tsx";
+import { Forbidden } from "./components/admin/Forbidden.tsx";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
@@ -72,7 +74,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
   const [pendingProposals, setPendingProposals] = useState<number | null>(null);
   const onMenuOpen = useCallback(async () => {
     if (me?.role !== "admin") return;
-    const r = await api.adminProposals();
+    const r = await api.admin.proposals("pending");
     if (r.ok) setPendingProposals(r.proposals.length);
   }, [me]);
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
@@ -293,6 +295,9 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
   // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
   // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
   const showCompare = compareOpen && selected.length >= 2;
+  // /admin is a full navigation from the user menu (no router): same header, the admin sections instead of the tabs.
+  const isAdminPath = location.pathname === "/admin";
+  const access = adminAccess(status, me);
 
   return (
     <>
@@ -300,25 +305,31 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
         form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
-        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty} controls={controls}
+        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && !isAdminPath} search={!isAdminPath} controls={controls}
         menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
       />
-      <Tabs
-        items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
-        onSelectTab={(k) => void showTab(k)} onToggle={(k) => setSelected((s) => toggleSelection(s, k))}
-        onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
-        onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache}
-      />
-      <main className={"content" + (empty ? " content-home" : "")}>
-        {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
-        {!empty && !showCompare && activePayload && (
-          <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
-        )}
-        {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
-        {showCompare && (
-          <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => void showTab(k)} />
-        )}
-      </main>
+      {isAdminPath ? (
+        access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
+      ) : (
+        <>
+          <Tabs
+            items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
+            onSelectTab={(k) => void showTab(k)} onToggle={(k) => setSelected((s) => toggleSelection(s, k))}
+            onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
+            onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache}
+          />
+          <main className={"content" + (empty ? " content-home" : "")}>
+            {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
+            {!empty && !showCompare && activePayload && (
+              <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
+            )}
+            {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
+            {showCompare && (
+              <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => void showTab(k)} />
+            )}
+          </main>
+        </>
+      )}
       <Toast message={toast} onClose={closeToast} />
     </>
   );

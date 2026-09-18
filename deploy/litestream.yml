@@ -1,0 +1,13 @@
+# Continuous replication of the SQLite database (WAL mode) to an S3-compatible bucket.
+# Backblaze B2: endpoint https://s3.<region>.backblazeb2.com ; Hetzner: https://<region>.your-objectstorage.com
+dbs:
+  - path: /opt/bmpl/bmpl.db
+    replicas:
+      - type: s3
+        bucket: <bucket>
+        path: bmpl
+        endpoint: <https://s3.endpoint.example>
+        access-key-id: <access-key>
+        secret-access-key: <secret-key>
+        retention: 720h
+        snapshot-interval: 1h

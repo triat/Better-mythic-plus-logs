@@ -1,0 +1,7 @@
+[Unit]
+Description=bmpl backup freshness check (writes /opt/bmpl/last-backup)
+After=litestream.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/bmpl/backup-check.sh

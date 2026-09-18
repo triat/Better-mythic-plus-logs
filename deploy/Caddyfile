@@ -1,0 +1,17 @@
+# bmpl — reverse proxy with automatic HTTPS (Let's Encrypt). Replace the host name.
+# Caddy sets X-Forwarded-For to the client address and strips any incoming copy
+# by default (no upstream proxy is configured as trusted) — bmpl reads the last entry.
+bmpl.example.com {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	reverse_proxy 127.0.0.1:3000 {
+		health_uri /api/health
+		health_interval 30s
+	}
+	log {
+		output file /var/log/caddy/bmpl.log
+	}
+}

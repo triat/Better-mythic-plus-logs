@@ -1,0 +1,28 @@
+[Unit]
+Description=bmpl (Better Mythic+ Logs) hosted mode
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bmpl
+Group=bmpl
+WorkingDirectory=/opt/bmpl
+EnvironmentFile=/opt/bmpl/.env
+ExecStart=/opt/bmpl/bmpl serve --hosted --port 3000 --host 127.0.0.1
+Restart=always
+RestartSec=2
+# Hardening: the process may write only its own directory (db, wal, shm).
+ProtectSystem=strict
+ReadWritePaths=/opt/bmpl
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

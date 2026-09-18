@@ -1,0 +1,12 @@
+[Unit]
+Description=litestream — bmpl.db replication
+After=network-online.target bmpl.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/litestream replicate -config /etc/litestream.yml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -14,5 +14,7 @@ describe("planInvite", () => {
     expect(planInvite([]).ok).toBe(false);
     expect(planInvite(["42"]).ok).toBe(false);
     expect(planInvite(["--remove", "x"]).ok).toBe(false);
+    expect(planInvite(["123456789012345678", "--note"]).ok).toBe(false);
+    expect(planInvite(["123456789012345678", "--list"]).ok).toBe(false);
   });
 });

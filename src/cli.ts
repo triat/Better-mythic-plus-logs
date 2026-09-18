@@ -481,16 +481,25 @@ export function planInvite(args: string[]):
   | { ok: true; action: "list" }
   | { ok: true; action: "remove"; discordId: string }
   | { ok: false; error: string } {
-  if (hasFlag(args, "--list")) return { ok: true, action: "list" };
   const usage = "Usage: bmpl invite <discord-id> [--note \"…\"] | --list | --remove <discord-id>";
+  const idHint = `${usage}\nDiscord ids are 17–20 digit numbers (Discord → Settings → Advanced → Developer Mode, then right-click a user → Copy User ID).`;
+  if (hasFlag(args, "--list")) {
+    if (stripFlags(args, [], ["--list"]).length > 0) return { ok: false, error: usage };
+    return { ok: true, action: "list" };
+  }
   const remove = parseFlag(args, "--remove");
   if (args.includes("--remove")) {
-    if (!remove || !DISCORD_ID.test(remove)) return { ok: false, error: `${usage}\nDiscord ids are 17–20 digit numbers (Discord → Settings → Advanced → Developer Mode, then right-click a user → Copy User ID).` };
+    if (!remove || !DISCORD_ID.test(remove)) return { ok: false, error: idHint };
     return { ok: true, action: "remove", discordId: remove };
+  }
+  const noteIdx = args.indexOf("--note");
+  if (noteIdx !== -1) {
+    const noteVal = args[noteIdx + 1];
+    if (noteVal === undefined || noteVal.startsWith("--")) return { ok: false, error: usage };
   }
   const positional = stripFlags(args, ["--note"], []);
   const discordId = positional[0];
-  if (!discordId || !DISCORD_ID.test(discordId)) return { ok: false, error: `${usage}\nDiscord ids are 17–20 digit numbers (Discord → Settings → Advanced → Developer Mode, then right-click a user → Copy User ID).` };
+  if (!discordId || !DISCORD_ID.test(discordId)) return { ok: false, error: idHint };
   return { ok: true, action: "add", discordId, note: parseFlag(args, "--note") ?? null };
 }
 

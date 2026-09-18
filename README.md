@@ -428,9 +428,9 @@ days (sliding) in an `HttpOnly` cookie; **Sign out** ends one.
 
 Quotas and the admin page come with the following issues.
 
-Do not expose a hosted instance to the internet before issues #3–#5 land:
-there is no login yet, every visitor shares one history, can spend the shared
-WCL budget and can edit the server's `defensives.json`.
+Do not expose a hosted instance to the internet before issues #4–#5 land:
+everyone who signs in shares one lookup history, spends the shared WCL budget
+and can edit the server's `defensives.json`.
 
 Required environment (copy `.env.hosted.example`):
 

@@ -38,7 +38,7 @@ export function resolveMode(flagHosted: boolean, env: Env): { ok: true; mode: Mo
 }
 
 /** Discord snowflake ids are 17-20 digit numbers. */
-const DISCORD_ID = /^\d{17,20}$/;
+export const DISCORD_ID = /^\d{17,20}$/;
 
 /** Origin only: http(s), no path/query/hash. Returns the normalised origin or null. */
 const parseOrigin = (raw: string): string | null => {

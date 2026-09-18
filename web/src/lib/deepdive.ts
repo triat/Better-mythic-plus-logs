@@ -1,5 +1,7 @@
 import type { EntryOrigin } from "@shared/deepdive/types.ts";
-import type { DeathAnalysis, DefensiveUse, LookupPayload, MPlusRun, RunDefensives } from "../types.ts";
+import type { ProposalSummary } from "@shared/hosted/defensives.ts";
+import type { DeathAnalysis, DefensiveKind, DefensiveUse, LookupPayload, MPlusRun, OverrideEntry, RunDefensives } from "../types.ts";
+import type { ProposalMode } from "./hostedMode.ts";
 import { fmtAge } from "./format.ts";
 
 export const POINTS_PER_RUN = 3;
@@ -27,6 +29,7 @@ export interface PanelModel {
   usage: UsageRow[]; majorsText: string | null;
   deathsHeadline: string; deaths: DeathLine[];
   unlisted: { id: number; name: string; text: string }[]; tableUsed: string;
+  specClass: string; tableParts: TablePart[];
 }
 
 const mmss = (ms: number): string => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
@@ -80,6 +83,63 @@ export function tableUsedText(defensives: Array<{ origin: EntryOrigin }>, specCl
   return parts.join(" · ");
 }
 
+export interface ActionLabels { add: (kind: DefensiveKind) => string; ignore: string; editCd: string; remove: string; addSubmit: (kind: DefensiveKind) => string; save: string }
+/** Members propose; local mode and admins edit the table directly (an admin's correction is approved on the spot). */
+export function actionLabels(mode: ProposalMode): ActionLabels {
+  const p = mode === "propose";
+  return {
+    add: (kind) => (p ? `Propose + ${kind}` : `+ ${kind}`),
+    ignore: p ? "Propose ignore" : "Ignore",
+    editCd: p ? "Propose cd" : "Edit cd",
+    remove: p ? "Propose removal" : "Remove for this spec",
+    addSubmit: (kind) => (p ? `Propose as ${kind}` : `Add as ${kind}`),
+    save: p ? "Propose" : "Save",
+  };
+}
+
+export type OriginDot = "dot-shared" | "dot-pending";
+/** Colour dot before an entry name: blue for the shared layer, yellow while pending; null for shipped and local override entries. */
+export const originDot = (origin: EntryOrigin): OriginDot | null => (origin === "shared" ? "dot-shared" : origin === "pending" ? "dot-pending" : null);
+/** Text suffix (" · override") for the origins that have no dot. */
+export const originSuffix = (origin: EntryOrigin): string | null => (originDot(origin) ? null : originLabel(origin));
+
+export interface TablePart { text: string; dot: OriginDot | null }
+/** `tableUsedText` split into parts so the hosted counts carry their dot. Joined with " · " it equals `tableUsedText`. */
+export function tableUsedParts(defensives: Array<{ origin: EntryOrigin }>, specClass: string): TablePart[] {
+  const count = (o: EntryOrigin) => defensives.filter((u) => u.origin === o).length;
+  const parts: TablePart[] = [{ text: `Table used: ${specClass} · ${defensives.length} entries`, dot: null }];
+  const override = count("override"), shared = count("shared"), pending = count("pending");
+  if (override > 0) parts.push({ text: `${override} from your override`, dot: null });
+  if (shared > 0) parts.push({ text: `${shared} shared`, dot: "dot-shared" });
+  if (pending > 0) parts.push({ text: `${pending} pending review`, dot: "dot-pending" });
+  return parts;
+}
+
+/** What a proposal changes, as the "Your proposals" footer says it. */
+export function patchText(p: OverrideEntry): string {
+  if (p.ignore) return "ignore";
+  const parts: string[] = [];
+  if (p.kind) parts.push(`+ ${p.kind}`);
+  if (p.cooldownS !== undefined) parts.push(`cd ${p.cooldownS} s`);
+  if (p.durationS !== undefined && p.kind) parts.push(`${p.durationS} s`);
+  return parts.length > 0 ? parts.join(", ") : "no change";
+}
+
+export interface ProposalLine { id: number; dot: "dot-pending" | "dot-rejected" | "dot-approved"; what: string; when: string }
+/** The member's own proposals for this spec, newest first as the server returns them; the spell name comes from the patch, else the run's table. */
+export function proposalLines(proposals: ProposalSummary[], names: Array<{ id: number; name: string }>, now = Date.now()): ProposalLine[] {
+  return proposals.map((p) => {
+    const name = p.patch.name ?? names.find((n) => n.id === p.spellId)?.name ?? `spell ${p.spellId}`;
+    const what = `${name} · ${patchText(p.patch)}`;
+    if (p.status === "pending") return { id: p.id, dot: "dot-pending" as const, what, when: `pending · ${fmtAge(p.createdAt, now)}` };
+    const note = p.note ? ` — "${p.note}"` : "";
+    const age = fmtAge(p.decidedAt ?? p.createdAt, now);
+    return p.status === "rejected"
+      ? { id: p.id, dot: "dot-rejected" as const, what, when: `rejected ${age}${note}` }
+      : { id: p.id, dot: "dot-approved" as const, what, when: `approved ${age}${note}` };
+  });
+}
+
 export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: string | null): PanelModel {
   const specClass = `${d.spec} ${d.className}`;
   // Precedence: an ignored override file (the run was analyzed against the shipped table) beats every per-run notice.
@@ -99,6 +159,8 @@ export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: st
     deaths: d.deaths.map((x) => deathLine(x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
     unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: ` · ${u.casts}× · ${u.uptimeS} s up` })),
     tableUsed: tableUsedText(d.defensives, specClass),
+    specClass,
+    tableParts: tableUsedParts(d.defensives, specClass),
   };
 }
 

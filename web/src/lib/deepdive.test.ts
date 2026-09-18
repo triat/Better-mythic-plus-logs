@@ -1,7 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import type { EntryOrigin } from "@shared/deepdive/types.ts";
+import type { ProposalSummary } from "@shared/hosted/defensives.ts";
 import type { LookupPayload, RunDefensives } from "../types.ts";
-import { analysisFor, costText, defensivesCell, originLabel, panelModel, tableUsedText, tableWarningText, unanalyzedRuns } from "./deepdive.ts";
+import {
+  actionLabels,
+  analysisFor,
+  costText,
+  defensivesCell,
+  originDot,
+  originLabel,
+  originSuffix,
+  panelModel,
+  patchText,
+  proposalLines,
+  tableUsedParts,
+  tableUsedText,
+  tableWarningText,
+  unanalyzedRuns,
+} from "./deepdive.ts";
 
 const dd = (over: Partial<RunDefensives> = {}): RunDefensives => ({
   reportCode: "ABC", fightID: 3, character: "Muleyoxo", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
@@ -109,5 +125,60 @@ describe("originLabel / tableUsedText", () => {
     expect(tableUsedText([o("shipped"), o("override")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries · 1 from your override");
     expect(tableUsedText([o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 3 entries · 1 shared · 1 pending review");
     expect(tableUsedText([o("shared")], "Holy Paladin")).toBe("Table used: Holy Paladin · 1 entries · 1 shared");
+  });
+});
+
+describe("hosted panel: labels, dots, proposals", () => {
+  test("actionLabels: members propose, local and admin edit", () => {
+    const p = actionLabels("propose");
+    expect([p.add("major"), p.ignore, p.editCd, p.remove, p.addSubmit("minor"), p.save]).toEqual(["Propose + major", "Propose ignore", "Propose cd", "Propose removal", "Propose as minor", "Propose"]);
+    for (const mode of ["local", "admin"] as const) {
+      const l = actionLabels(mode);
+      expect([l.add("major"), l.ignore, l.editCd, l.remove, l.addSubmit("minor"), l.save]).toEqual(["+ major", "Ignore", "Edit cd", "Remove for this spec", "Add as minor", "Save"]);
+    }
+  });
+  test("originDot marks shared and pending; originSuffix keeps the text only for a local override", () => {
+    expect(originDot("shared")).toBe("dot-shared");
+    expect(originDot("pending")).toBe("dot-pending");
+    expect(originDot("override")).toBeNull();
+    expect(originDot("shipped")).toBeNull();
+    expect(originSuffix("override")).toBe("override");
+    expect(originSuffix("shared")).toBeNull();
+    expect(originSuffix("pending")).toBeNull();
+    expect(originSuffix("shipped")).toBeNull();
+  });
+  test("tableUsedParts splits the line so shared / pending counts get their dot", () => {
+    const o = (origin: EntryOrigin) => ({ origin });
+    expect(tableUsedParts([o("shipped"), o("override")], "Holy Paladin")).toEqual([{ text: "Table used: Holy Paladin · 2 entries", dot: null }, { text: "1 from your override", dot: null }]);
+    expect(tableUsedParts([o("shared"), o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toEqual([
+      { text: "Table used: Holy Paladin · 4 entries", dot: null }, { text: "2 shared", dot: "dot-shared" }, { text: "1 pending review", dot: "dot-pending" },
+    ]);
+    expect(tableUsedParts([o("shipped"), o("override")], "Holy Paladin").map((p) => p.text).join(" · ")).toBe(tableUsedText([o("shipped"), o("override")], "Holy Paladin"));
+  });
+  test("patchText describes a patch", () => {
+    expect(patchText({ id: 1, ignore: true })).toBe("ignore");
+    expect(patchText({ id: 1, cooldownS: 300 })).toBe("cd 300 s");
+    expect(patchText({ id: 1, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 })).toBe("+ minor, cd 25 s, 6 s");
+    expect(patchText({ id: 1 })).toBe("no change");
+  });
+  test("proposalLines: name from the patch or the table, status with age and note", () => {
+    const now = 1_000_000 + 2 * 3600_000;
+    const proposals: ProposalSummary[] = [
+      { id: 3, spellId: 642, status: "pending", patch: { id: 642, cooldownS: 300 }, note: null, createdAt: 1_000_000, decidedAt: null },
+      { id: 2, spellId: 1044, status: "rejected", patch: { id: 1044, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 }, note: "It is a freedom, not a defensive.", createdAt: 1_000_000 - 3 * 86400_000, decidedAt: 1_000_000 - 2 * 86400_000 },
+      { id: 1, spellId: 498, status: "approved", patch: { id: 498, cooldownS: 60 }, note: null, createdAt: 1_000_000 - 6 * 86400_000, decidedAt: 1_000_000 - 5 * 86400_000 },
+      { id: 4, spellId: 9999, status: "pending", patch: { id: 9999, ignore: true }, note: null, createdAt: now, decidedAt: null },
+    ];
+    expect(proposalLines(proposals, dd().defensives, now)).toEqual([
+      { id: 3, dot: "dot-pending", what: "Divine Shield · cd 300 s", when: "pending · 2h ago" },
+      { id: 2, dot: "dot-rejected", what: "Blessing of Freedom · + minor, cd 25 s, 6 s", when: "rejected 2d ago — \"It is a freedom, not a defensive.\"" },
+      { id: 1, dot: "dot-approved", what: "Divine Protection · cd 60 s", when: "approved 5d ago" },
+      { id: 4, dot: "dot-pending", what: "spell 9999 · ignore", when: "pending · just now" },
+    ]);
+  });
+  test("panelModel exposes specClass and tableParts", () => {
+    const m = panelModel(dd(), 1_000_000);
+    expect(m.specClass).toBe("Holy Paladin");
+    expect(m.tableParts).toEqual([{ text: "Table used: Holy Paladin · 3 entries", dot: null }, { text: "1 from your override", dot: null }]);
   });
 });

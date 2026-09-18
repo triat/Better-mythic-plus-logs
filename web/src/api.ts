@@ -11,8 +11,9 @@ import type {
   WatchStatus,
 } from "./types.ts";
 import type { Settings } from "./lib/settings.ts";
+import { quotaFromFailure } from "./lib/quota.ts";
 
-export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string };
+export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; quota?: QuotaInfo };
 
 export interface MeUser {
   id: number;
@@ -38,7 +39,10 @@ async function call<T>(path: string, init?: RequestInit): Promise<ApiResult<T>> 
   }
   const data = (await res.json().catch(() => null)) as ({ ok?: boolean; error?: string; message?: string } & T) | null;
   if (!data || typeof data !== "object") return { ok: false, error: `HTTP ${res.status}` };
-  if (!res.ok || data.ok === false) return { ok: false, error: data.message ?? data.error ?? `HTTP ${res.status}` };
+  if (!res.ok || data.ok === false) {
+    const quota = quotaFromFailure(data);
+    return { ok: false, error: data.message ?? data.error ?? `HTTP ${res.status}`, ...(quota ? { quota } : {}) };
+  }
   return { ...data, ok: true } as ApiResult<T>;
 }
 
@@ -68,6 +72,7 @@ export const api = {
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesPatchResult>("/api/defensives", post(body)),
+  adminProposals: () => call<{ proposals: Array<{ id: number }> }>("/api/admin/proposals"),
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
     call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),

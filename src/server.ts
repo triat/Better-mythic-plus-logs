@@ -3,9 +3,8 @@ import { hasCredentials } from "./config.ts";
 import { dim, heading, ok } from "./format.ts";
 import { LOCAL_CONTEXT, authGate, clientIp, resolveRequest } from "./hosted/auth.ts";
 import type { HostedConfig } from "./hosted/config.ts";
-import { openHosted } from "./hosted/db.ts";
-import type { HostedDb } from "./hosted/db.ts";
-import { OAuthStates } from "./hosted/oauth-state.ts";
+import { createHostedRuntime } from "./hosted/runtime.ts";
+import type { HostedRuntime } from "./hosted/runtime.ts";
 import { findRoute } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { adminRoutes } from "./server/routes-admin.ts";
@@ -31,11 +30,6 @@ export interface ServeOptions {
   /** Test hook: where the built front lives. Default: embedded web/dist. */
   assets?: AssetLoader;
 }
-
-/** Everything hosted-only routes need, built once per server. */
-export interface HostedRuntime { config: HostedConfig; db: HostedDb; states: OAuthStates; fetchFn: typeof fetch; secure: boolean }
-
-const SESSION_PURGE_INTERVAL_MS = 60 * 60 * 1000;
 
 const openBrowser = (url: string): void => {
   const isWSL =
@@ -73,9 +67,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
 
   let runtime: HostedRuntime | null = null;
   if (hosted) {
-    const config = opts.hostedConfig!;
-    runtime = { config, db: openHosted((await getStore())._db), states: new OAuthStates(), fetchFn: opts.fetchFn ?? fetch, secure: config.baseUrl.startsWith("https:") };
-    setInterval(() => runtime!.db.sessions.purgeExpired(Date.now()), SESSION_PURGE_INTERVAL_MS).unref();
+    runtime = createHostedRuntime(opts.hostedConfig!, (await getStore())._db, opts.fetchFn ?? fetch);
   }
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint }),

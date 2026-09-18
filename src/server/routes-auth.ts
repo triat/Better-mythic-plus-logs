@@ -6,7 +6,7 @@ import type { HostedDb, Role } from "../hosted/db.ts";
 import { authorizeUrl, avatarUrl, exchangeCode, fetchDiscordUser } from "../hosted/discord.ts";
 import { newNonce } from "../hosted/oauth-state.ts";
 import type { SessionUser } from "../hosted/auth.ts";
-import type { HostedRuntime } from "../server.ts";
+import type { HostedRuntime } from "../hosted/runtime.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";

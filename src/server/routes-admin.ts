@@ -2,7 +2,7 @@
 import { DISCORD_ID } from "../hosted/config.ts";
 import { avatarUrl } from "../hosted/discord.ts";
 import type { UserRow } from "../hosted/db.ts";
-import type { HostedRuntime } from "../server.ts";
+import type { HostedRuntime } from "../hosted/runtime.ts";
 import { jsonResponse, readJson } from "./http.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";

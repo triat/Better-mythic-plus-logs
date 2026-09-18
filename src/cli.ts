@@ -36,6 +36,7 @@ import { runServer } from "./server.ts";
 import { DISCORD_ID, resolveMode, validateHostedEnv } from "./hosted/config.ts";
 import type { HostedConfig } from "./hosted/config.ts";
 import { openHosted } from "./hosted/db.ts";
+import { tablesFor } from "./hosted/defensives.ts";
 import { runWatch } from "./watch.ts";
 
 const USAGE = `bmpl — Better Mythic+ Logs (Warcraft Logs analyzer)
@@ -68,9 +69,10 @@ Usage:
                                      (~3 WCL pts per run, cached forever). Without
                                      --run/--all: lists the runs and their status.
                                      --json requires --yes to fetch runs (no prompt).
-  bmpl defensives <Class> <Spec> | --check
+  bmpl defensives <Class> <Spec> [--shared] | --check [--shared]
                                      Show the effective defensives table for a spec
                                      (shipped + your defensives.json), or validate the file.
+                                     --shared: the hosted layer in bmpl.db instead.
   bmpl invite <discord-id> [--note "…"] | --list | --remove <discord-id>
                                      Hosted mode: allow a Discord user to sign in
                                      (writes the invites table in bmpl.db).
@@ -272,19 +274,23 @@ async function cmdAnalyze(
   closeStore();
 }
 
-async function cmdDefensives(className: string | undefined, spec: string | undefined, check: boolean): Promise<void> {
-  const t = await loadDefensives();
+async function cmdDefensives(className: string | undefined, spec: string | undefined, check: boolean, shared: boolean): Promise<void> {
+  // --shared: the hosted layer in bmpl.db (approved corrections, no member's pending ones); default: the file next to .env.
+  const t = shared ? tablesFor(openHosted((await getStore())._db).defensives, null) : await loadDefensives();
+  const layer = shared ? "shared (bmpl.db)" : `override: ${t.overridePath}${t.warning ? "  (ignored: invalid)" : ""}`;
   if (check) {
     if (t.warning) { console.error(err(`✗ ${t.warning}`)); process.exit(1); }
-    console.log(ok(`✓ ${t.overridePath ?? "(no file)"}: ${Object.keys(t.override).length} spec key(s)`));
+    console.log(ok(`✓ ${shared ? "shared layer" : t.overridePath}: ${Object.keys(t.override).length} spec key(s)`));
+    if (shared) closeStore();
     return;
   }
-  if (!className || !spec) { console.error(err("Usage: bmpl defensives <Class> <Spec> | --check")); process.exit(2); }
+  if (!className || !spec) { console.error(err("Usage: bmpl defensives <Class> <Spec> [--shared] | --check [--shared]")); process.exit(2); }
   const d = specDefensives(t.shipped, t.override, className, spec);
-  console.log(heading(`${d.key}`) + dim(`  override: ${t.overridePath ?? "none"}${t.warning ? "  (ignored: invalid)" : ""}`));
+  console.log(heading(`${d.key}`) + dim(`  ${layer}`));
   if (d.tableMissing) console.log(pc.yellow("  no table for this spec — add entries to your defensives.json"));
-  for (const e of d.entries) console.log(`  ${String(e.id).padStart(8)}  ${e.name.padEnd(28)} ${e.kind.padEnd(8)} cd ${String(e.cooldownS).padStart(3)}s  dur ${String(e.durationS).padStart(3)}s  ${e.origin === "override" ? pc.cyan("override") : dim("shipped")}`);
+  for (const e of d.entries) console.log(`  ${String(e.id).padStart(8)}  ${e.name.padEnd(28)} ${e.kind.padEnd(8)} cd ${String(e.cooldownS).padStart(3)}s  dur ${String(e.durationS).padStart(3)}s  ${e.origin === "shipped" ? dim("shipped") : pc.cyan(e.origin)}`);
   if (d.ignored.length > 0) console.log(dim(`  ignored: ${d.ignored.join(", ")}`));
+  if (shared) closeStore();
 }
 
 async function cmdMplus(
@@ -609,8 +615,8 @@ async function main(): Promise<void> {
         break;
       }
       case "defensives": {
-        const positional = stripFlags(rest, [], ["--check"]);
-        await cmdDefensives(positional[0], positional[1], hasFlag(rest, "--check"));
+        const positional = stripFlags(rest, [], ["--check", "--shared"]);
+        await cmdDefensives(positional[0], positional[1], hasFlag(rest, "--check"), hasFlag(rest, "--shared"));
         break;
       }
       case "mplus": {

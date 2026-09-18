@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import type { EntryOrigin } from "@shared/deepdive/types.ts";
 import type { LookupPayload, RunDefensives } from "../types.ts";
-import { analysisFor, costText, defensivesCell, panelModel, tableWarningText, unanalyzedRuns } from "./deepdive.ts";
+import { analysisFor, costText, defensivesCell, originLabel, panelModel, tableUsedText, tableWarningText, unanalyzedRuns } from "./deepdive.ts";
 
 const dd = (over: Partial<RunDefensives> = {}): RunDefensives => ({
   reportCode: "ABC", fightID: 3, character: "Muleyoxo", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
@@ -92,5 +93,21 @@ describe("defensivesCell", () => {
     const noDeaths = payload([dd({ countedDeaths: 0, avoidableDeaths: 0 })]);
     noDeaths.deepdiveSummary = { tableWarning: null, analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
     expect(defensivesCell(noDeaths)).toEqual({ text: "50% · no deaths", value: 0.5 });
+  });
+});
+
+describe("originLabel / tableUsedText", () => {
+  test("labels every non-shipped origin", () => {
+    expect(originLabel("shipped")).toBeNull();
+    expect(originLabel("override")).toBe("override");
+    expect(originLabel("shared")).toBe("shared");
+    expect(originLabel("pending")).toBe("pending review");
+  });
+  test("the table line counts the local override or the hosted layers", () => {
+    const o = (origin: EntryOrigin) => ({ origin });
+    expect(tableUsedText([o("shipped"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries");
+    expect(tableUsedText([o("shipped"), o("override")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries · 1 from your override");
+    expect(tableUsedText([o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 3 entries · 1 shared · 1 pending review");
+    expect(tableUsedText([o("shared")], "Holy Paladin")).toBe("Table used: Holy Paladin · 1 entries · 1 shared");
   });
 });

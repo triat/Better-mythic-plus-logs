@@ -1,3 +1,4 @@
+import type { EntryOrigin } from "@shared/deepdive/types.ts";
 import type { DeathAnalysis, DefensiveUse, LookupPayload, MPlusRun, RunDefensives } from "../types.ts";
 import { fmtAge } from "./format.ts";
 
@@ -58,9 +59,29 @@ const deathLine = (x: DeathAnalysis, idOf: (name: string) => number | null): Dea
 export const tableWarningText = (warning: string | null | undefined): string | null =>
   warning ? `Your defensives.json is ignored: ${warning}` : null;
 
+/** Suffix shown next to an entry that is not from the shipped table; null for shipped. */
+export function originLabel(origin: EntryOrigin): string | null {
+  switch (origin) {
+    case "override": return "override";
+    case "shared": return "shared";
+    case "pending": return "pending review";
+    default: return null;
+  }
+}
+
+/** "Table used: …" line: the local override count, or the hosted shared/pending counts. */
+export function tableUsedText(defensives: Array<{ origin: EntryOrigin }>, specClass: string): string {
+  const count = (o: EntryOrigin) => defensives.filter((u) => u.origin === o).length;
+  const parts = [`Table used: ${specClass} · ${defensives.length} entries`];
+  const override = count("override"), shared = count("shared"), pending = count("pending");
+  if (override > 0) parts.push(`${override} from your override`);
+  if (shared > 0) parts.push(`${shared} shared`);
+  if (pending > 0) parts.push(`${pending} pending review`);
+  return parts.join(" · ");
+}
+
 export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: string | null): PanelModel {
   const specClass = `${d.spec} ${d.className}`;
-  const overrides = d.defensives.filter((u) => u.origin === "override").length;
   // Precedence: an ignored override file (the run was analyzed against the shipped table) beats every per-run notice.
   let notice: string | null = null;
   const warning = tableWarningText(tableWarning);
@@ -77,7 +98,7 @@ export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: st
     deathsHeadline: d.deaths.length === 0 ? "No deaths" : `${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`,
     deaths: d.deaths.map((x) => deathLine(x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
     unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: ` · ${u.casts}× · ${u.uptimeS} s up` })),
-    tableUsed: `Table used: ${specClass} · ${d.defensives.length} entries · ${overrides} from your override`,
+    tableUsed: tableUsedText(d.defensives, specClass),
   };
 }
 

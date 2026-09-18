@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DefensiveKind, OverrideEntry, RunDefensives } from "../types.ts";
-import { costText, panelModel } from "../lib/deepdive.ts";
+import { costText, originLabel, panelModel } from "../lib/deepdive.ts";
 import { SpellLink, useWowheadRefresh } from "./SpellLink.tsx";
 
 interface Props {
@@ -63,7 +63,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, onReanalyze, onP
           <div className="dd-usage">
             {m.usage.map((u) => (
               <div key={u.id} className="dd-row">
-                <span><SpellLink id={u.id} name={u.name} />{u.origin === "override" && <span className="faint"> · override</span>}</span>
+                <span><SpellLink id={u.id} name={u.name} />{originLabel(u.origin) && <span className="faint"> · {originLabel(u.origin)}</span>}</span>
                 <span className="faint">{u.kind}</span>
                 <span className="mono">{u.counts}</span>
                 <span className={"mono " + u.cls}>{u.pctText}</span>
@@ -112,7 +112,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, onReanalyze, onP
       </button>
       {tableOpen && d.defensives.map((u) => (
         <div key={u.id} className="dd-audit">
-          <span><SpellLink id={u.id} name={u.name} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s{u.origin === "override" ? " · override" : ""}</span></span>
+          <span><SpellLink id={u.id} name={u.name} /> <span className="faint">{u.kind} · cd {u.cooldownS} s · {u.durationS} s{originLabel(u.origin) ? ` · ${originLabel(u.origin)}` : ""}</span></span>
           {editing?.id === u.id ? (
             <span className="dd-form">
               <label>cd <input className="mono" value={editing.cd} onChange={(e) => setEditing({ id: u.id, cd: e.target.value })} size={4} /> s</label>

@@ -1,5 +1,6 @@
 // Types only. Anything runtime from src/ is forbidden here (see spec).
 import type { EffectiveEntry, OverrideEntry } from "@shared/deepdive/types.ts";
+import type { ProposalSummary } from "@shared/hosted/defensives.ts";
 
 export type { LookupPayload } from "@shared/lookup.ts";
 export type { AxisKey, AxisScore, Confidence, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
@@ -61,12 +62,17 @@ export interface DefensivesResponse {
   entries: EffectiveEntry[];
   ignored: number[];
   tableMissing: boolean;
-  overridePath: string;
+  overridePath: string | null;
   warning?: string | null;
+  proposals?: ProposalSummary[];
 }
 
 export interface DefensivesPatch {
   className: string;
   spec: string;
   patch: OverrideEntry;
+}
+
+export interface DefensivesPatchResult extends DefensivesResponse {
+  proposal?: ProposalSummary;
 }

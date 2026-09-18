@@ -5,13 +5,16 @@
 // Casts + Buffs tables of the ranked player, and report per spec:
 //   - table entries never cast by anyone sampled  → probably removed / not in the tree
 //   - self-cast buffs not in the table and not denylisted → candidates
-// Usage: bun scripts/audit-defensives.ts [--encounter 12923] [--runs 2] [--only Shaman:Elemental,...] [--out scratch/audit.json]
+// Usage: bun scripts/audit-defensives.ts [--encounter 12923] [--runs 2] [--only Shaman:Elemental,...] [--out scratch/audit.json] [--shared]
 // Cost: ~1 pt per rankings call + 2 pts per sampled run (measured and printed).
 import { SHIPPED, specDefensives } from "../src/deepdive/table.ts";
 import { NON_DEFENSIVE_NAME } from "../src/deepdive/analyze.ts";
 import { gql } from "../src/wcl/client.ts";
 import { PING_QUERY } from "../src/wcl/queries.ts";
 import type { RateLimitData } from "../src/wcl/types.ts";
+import { getStore } from "../src/signals/store.ts";
+import { openHosted } from "../src/hosted/db.ts";
+import { tablesFor } from "../src/hosted/defensives.ts";
 
 const KICK_SPECS = [
   "DeathKnight:Blood", "DeathKnight:Frost", "DeathKnight:Unholy",
@@ -35,6 +38,7 @@ const encounterID = Number(arg("--encounter", "12923")); // Voidscar Arena (S2)
 const runsPerSpec = Number(arg("--runs", "2"));
 const only = arg("--only", "").split(",").map((s) => s.trim()).filter(Boolean);
 const out = arg("--out", "");
+const shared = process.argv.includes("--shared");
 
 const RANKINGS_QUERY = /* GraphQL */ `
   query TopRuns($encounterID: Int!, $className: String!, $specName: String!, $metric: CharacterRankingMetricType!) {
@@ -59,6 +63,8 @@ const spent = async () => (await gql<RateLimitData>(PING_QUERY)).rateLimitData.p
 
 interface SpecReport { key: string; sampled: number; neverCast: Array<{ id: number; name: string }>; candidates: Array<{ id: number; name: string; casts: number; runs: number; uptimeS: number }>; seen: Record<number, { name: string; casts: number; runs: number }>; }
 
+const override = shared ? tablesFor(openHosted((await getStore())._db).defensives, null).override : {};
+
 const results: SpecReport[] = [];
 const start = await spent();
 for (const key of KICK_SPECS) {
@@ -74,7 +80,7 @@ for (const key of KICK_SPECS) {
     continue;
   }
   const top = (ranking?.rankings ?? []).filter((x) => x.report).slice(0, runsPerSpec);
-  const table = specDefensives(SHIPPED, {}, className, specName);
+  const table = specDefensives(SHIPPED, override, className, specName);
   const seen: SpecReport["seen"] = {};
   const cand = new Map<number, { name: string; casts: number; runs: number; uptimeS: number }>();
   let sampled = 0;

@@ -1,5 +1,6 @@
 import type {
   DefensivesPatch,
+  DefensivesPatchResult,
   DefensivesResponse,
   DeepdiveRequest,
   HistoryItem,
@@ -66,7 +67,7 @@ export const api = {
     call<{ result: RunDefensives; fromCache: boolean; pointsSpent: number | null; quota?: QuotaInfo }>("/api/deepdive", post(req)),
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
-  patchDefensives: (body: DefensivesPatch) => call<DefensivesResponse>("/api/defensives", post(body)),
+  patchDefensives: (body: DefensivesPatch) => call<DefensivesPatchResult>("/api/defensives", post(body)),
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
     call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),

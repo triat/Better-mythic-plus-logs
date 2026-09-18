@@ -73,15 +73,8 @@ export function originLabel(origin: EntryOrigin): string | null {
 }
 
 /** "Table used: …" line: the local override count, or the hosted shared/pending counts. */
-export function tableUsedText(defensives: Array<{ origin: EntryOrigin }>, specClass: string): string {
-  const count = (o: EntryOrigin) => defensives.filter((u) => u.origin === o).length;
-  const parts = [`Table used: ${specClass} · ${defensives.length} entries`];
-  const override = count("override"), shared = count("shared"), pending = count("pending");
-  if (override > 0) parts.push(`${override} from your override`);
-  if (shared > 0) parts.push(`${shared} shared`);
-  if (pending > 0) parts.push(`${pending} pending review`);
-  return parts.join(" · ");
-}
+export const tableUsedText = (defensives: Array<{ origin: EntryOrigin }>, specClass: string): string =>
+  tableUsedParts(defensives, specClass).map((p) => p.text).join(" · ");
 
 export interface ActionLabels { add: (kind: DefensiveKind) => string; ignore: string; editCd: string; remove: string; addSubmit: (kind: DefensiveKind) => string; save: string }
 /** Members propose; local mode and admins edit the table directly (an admin's correction is approved on the spot). */

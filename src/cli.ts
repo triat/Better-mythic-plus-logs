@@ -53,13 +53,16 @@ Usage:
                                      Poll the clipboard; runs lookup whenever a
                                      Name-Realm string is copied. Omit --level
                                      to auto-detect per character. Ctrl+C to quit.
-  bmpl serve  [--port <N>] [--no-open] [--hosted]
+  bmpl serve  [--port <N>] [--host <addr>] [--no-open] [--hosted]
                                      Start the web UI at http://localhost:<port>
                                      (default 3000) and auto-open your browser.
                                      First run shows a setup page for creds.
                                      --hosted (or BMPL_MODE=hosted): multi-user
                                      deployment behind a reverse proxy — needs the
                                      BMPL_* variables from .env.hosted.example.
+                                     --host: bind address (hosted default
+                                     127.0.0.1 — the reverse proxy talks to it;
+                                     BMPL_HOST env)
   bmpl evaluate <payload.json> [--json]
                                      Re-run the evaluation model on a saved lookup
                                      (--json output). Uses evaluation.json next to
@@ -439,12 +442,16 @@ function hasFlag(args: string[], flag: string): boolean {
 
 /** Pure `serve` argument/env resolution — the command prints `error` and exits 2 on failure. */
 export function planServe(args: string[], env: Record<string, string | undefined>):
-  | { ok: true; port: number; open: false; hosted: true; hostedConfig: HostedConfig }
-  | { ok: true; port: number; open: boolean; hosted: false }
+  | { ok: true; port: number; open: false; hosted: true; hostedConfig: HostedConfig; host: string }
+  | { ok: true; port: number; open: boolean; hosted: false; host: string | null }
   | { ok: false; error: string } {
   const portStr = parseFlag(args, "--port");
   const port = portStr ? Number.parseInt(portStr, 10) : 3000;
   if (!Number.isFinite(port) || port < 1 || port > 65535) return { ok: false, error: `Invalid --port value: ${portStr}` };
+  const hostFlag = parseFlag(args, "--host");
+  if (hostFlag === "") return { ok: false, error: "Invalid --host value" };
+  const envHost = env.BMPL_HOST?.trim();
+  const hostOverride = hostFlag ?? (envHost ? envHost : undefined);
   const mode = resolveMode(hasFlag(args, "--hosted"), env);
   if (!mode.ok) return { ok: false, error: mode.error };
   if (mode.mode === "hosted") {
@@ -456,9 +463,9 @@ export function planServe(args: string[], env: Record<string, string | undefined
       ].filter(Boolean);
       return { ok: false, error: `Hosted mode needs a complete environment — ${parts.join(" — ")}. See .env.hosted.example.` };
     }
-    return { ok: true, port, open: false, hosted: true, hostedConfig: v.config };
+    return { ok: true, port, open: false, hosted: true, hostedConfig: v.config, host: hostOverride ?? "127.0.0.1" };
   }
-  return { ok: true, port, open: !hasFlag(args, "--no-open"), hosted: false };
+  return { ok: true, port, open: !hasFlag(args, "--no-open"), hosted: false, host: hostOverride ?? null };
 }
 
 function parseFlags(args: string[], flag: string): string[] {
@@ -643,7 +650,7 @@ async function main(): Promise<void> {
           console.error(err(plan.error));
           process.exit(2);
         }
-        await runServer({ port: plan.port, open: plan.open, hosted: plan.hosted, hostedConfig: plan.hosted ? plan.hostedConfig : undefined });
+        await runServer({ port: plan.port, open: plan.open, hosted: plan.hosted, hostedConfig: plan.hosted ? plan.hostedConfig : undefined, host: plan.host });
         // Bun.serve keeps the process alive; do not return.
         return;
       }

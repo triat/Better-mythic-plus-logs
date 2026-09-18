@@ -15,6 +15,13 @@ let local: Awaited<ReturnType<typeof runServer>>;
 let db: HostedDb;
 let cookie: string;
 
+const assets = async () => ({
+  index: join(dir, "index.html"),
+  appJs: join(dir, "assets", "app.js"),
+  appCss: join(dir, "assets", "app.css"),
+  whConfigJs: join(dir, "wh-config.js"),
+});
+
 beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), "bmpl-hosted-"));
   mkdirSync(join(dir, "assets"));
@@ -24,12 +31,6 @@ beforeAll(async () => {
   writeFileSync(join(dir, "wh-config.js"), "const whTooltips = {};");
   closeStore();
   process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
-  const assets = async () => ({
-    index: join(dir, "index.html"),
-    appJs: join(dir, "assets", "app.js"),
-    appCss: join(dir, "assets", "app.css"),
-    whConfigJs: join(dir, "wh-config.js"),
-  });
   hosted = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, assets });
   local = await runServer({ port: 0, open: false, hosted: false, assets });
   db = openHosted((await getStore())._db);
@@ -168,5 +169,12 @@ describe("hosted auth gate", () => {
   });
   test("runServer refuses hosted mode without a config", async () => {
     await expect(runServer({ port: 0, open: false, hosted: true })).rejects.toThrow("hostedConfig");
+  });
+  test("runServer binds the host it is given (hosted deploy binds loopback)", async () => {
+    const s = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, host: "127.0.0.1", assets });
+    try {
+      expect(s.hostname).toBe("127.0.0.1");
+      expect((await fetch(`http://127.0.0.1:${s.port}/api/health`)).status).toBe(200);
+    } finally { s.stop(true); }
   });
 });

@@ -28,6 +28,8 @@ import type { AssetLoader } from "./web-static.ts";
 export interface ServeOptions {
   port: number;
   open: boolean;
+  /** Bind address for `Bun.serve`. `null`/omitted: Bun's default. Hosted deploys default to loopback (127.0.0.1). */
+  host?: string | null;
   /** Multi-user deployment: local-only routes are not registered, security headers on, login required. Default false. */
   hosted?: boolean;
   /** Required when hosted: the validated BMPL_* environment. */
@@ -160,6 +162,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
 
   const server = Bun.serve({
     port: opts.port,
+    hostname: opts.host ?? undefined,
     idleTimeout: 0, // long-lived SSE streams and slow enrichment lookups
     development: !hosted,
     async fetch(req, srv) {
@@ -177,10 +180,16 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     },
   });
 
-  const url = `http://localhost:${server.port}`;
+  const bindHost = opts.host ?? null;
+  const displayHost = bindHost === null || bindHost === "0.0.0.0" || bindHost === "::" ? "localhost" : bindHost;
+  const url = `http://${displayHost}:${server.port}`;
   console.log(`${heading("bmpl serve")}  ${ok(url)}${hosted ? dim("  (hosted mode)") : ""}`);
-  if (hosted) console.log(dim(`  credentials: ${hasCredentials() ? "loaded" : "NOT SET"}  ·  local routes disabled`));
-  else console.log(dim(`  env path: ${envPathHint}  ·  credentials: ${hasCredentials() ? "loaded" : "not set (setup page will open)"}`));
+  if (hosted) {
+    console.log(dim(`  credentials: ${hasCredentials() ? "loaded" : "NOT SET"}  ·  local routes disabled`));
+    if (bindHost) console.log(dim(`  bound to ${bindHost} — put a reverse proxy in front`));
+  } else {
+    console.log(dim(`  env path: ${envPathHint}  ·  credentials: ${hasCredentials() ? "loaded" : "not set (setup page will open)"}`));
+  }
   console.log(dim("  Ctrl+C to stop."));
   if (opts.open && !hosted) setTimeout(() => openBrowser(url), 80);
   return server;

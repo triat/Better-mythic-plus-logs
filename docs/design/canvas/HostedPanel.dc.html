@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 12px; white-space: nowrap; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-pending { color: #e3b341; border-color: #7a6a1f; background: #2e2a0a; }
+    .chip-shared { color: #58a6ff; border-color: #30363d; }
+    .chip-rejected { color: #f85149; border-color: #7a1f1f; background: #2e0a0a; }
+    .panel { margin: 0; padding: 10px 12px; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; font-size: 13px; }
+    .ur { display: grid; grid-template-columns: 200px 70px 70px 48px 120px 1fr; gap: 10px; align-items: center; padding: 3px 0; font-size: 13px; }
+    .bar { display: inline-block; height: 6px; width: 120px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .audit { display: flex; align-items: center; gap: 10px; padding: 3px 0; font-size: 13px; flex-wrap: wrap; }
+    .good { color: #56d364; font-weight: 600; } .warn { color: #d29922; font-weight: 600; } .bad { color: #f85149; font-weight: 700; }
+    .col { display: flex; flex-direction: column; gap: 8px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 980px; background: #0d1117; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px;">
+  <div class="caps">Deep-dive panel, hosted mode, member view — Audit + table excerpt. Three ways to mark shared / pending / rejected entries. Actions read "Propose …" for members; admins keep "+ major / Ignore / Edit cd" (their correction is approved on the spot).</div>
+
+  <!-- ===== A · Chips ===== -->
+  <div class="col">
+    <div class="label">A · CHIPS — status is a pill after the name (pending yellow, shared blue text, rejected red), note on its own faint line</div>
+    <div class="panel">
+      <div class="caps" style="margin: 2px 0 4px;">Usage</div>
+      <div class="ur"><span>Divine Protection <span class="chip chip-shared" style="margin-left: 4px;">shared</span></span><span class="faint">major</span><span class="mono">27 / 30</span><span class="mono good">90%</span><span class="bar"><span style="width: 90%;"></span></span><span class="faint">cd 60 s · seen 58 s</span></div>
+      <div class="ur"><span>Divine Shield <span class="chip chip-pending" style="margin-left: 4px;">pending review</span></span><span class="faint">immunity</span><span class="mono">5 / 6</span><span class="mono good">83%</span><span class="bar"><span style="width: 83%;"></span></span><span class="faint">cd 300 s · seen 310 s</span></div>
+      <div class="ur"><span>Lay on Hands</span><span class="faint">major</span><span class="mono">2 / 3</span><span class="mono warn">67%</span><span class="bar"><span style="width: 67%;"></span></span><span class="faint">cd 600 s · seen 640 s</span></div>
+
+      <div class="caps" style="margin: 12px 0 4px;">Audit</div>
+      <div class="audit"><span>Aura Mastery · 2× · 16 s up</span><span class="chip">Propose + major</span><span class="chip">Propose + immunity</span><span class="chip">Propose + minor</span><span class="chip">Propose ignore</span></div>
+      <div class="audit"><span>Blessing of Freedom · 4× · 20 s up <span class="chip chip-rejected" style="margin-left: 4px;">rejected</span></span><span class="chip">Propose + major</span><span class="chip">Propose + immunity</span><span class="chip">Propose + minor</span><span class="chip">Propose ignore</span></div>
+      <div class="faint" style="font-size: 12px; padding-left: 16px;">Your "+ minor, cd 25 s" was rejected 2 days ago — "It is a freedom, not a defensive."</div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 12px;"><span style="color: #8b949e; font-size: 16px; transform: rotate(90deg); display: inline-block; line-height: 1;">›</span><span class="muted">Table used: Holy Paladin · 5 entries · 2 shared · 1 pending review</span></div>
+      <div class="audit" style="padding-left: 24px;"><span>Divine Protection <span class="faint">major · cd 60 s · 8 s</span> <span class="chip chip-shared">shared</span></span><span class="chip">Propose cd</span><span class="chip">Propose removal</span></div>
+      <div class="audit" style="padding-left: 24px;"><span>Divine Shield <span class="faint">immunity · cd 300 s · 8 s</span> <span class="chip chip-pending">pending review</span></span><span class="chip">Propose cd</span><span class="chip">Propose removal</span><span class="faint" style="font-size: 12px;">· your cd 300 s replaces 240 s until an admin decides</span></div>
+      <div class="audit" style="padding-left: 24px;"><span class="faint">… 3 more</span></div>
+    </div>
+  </div>
+
+  <!-- ===== B · Text suffix ===== -->
+  <div class="col">
+    <div class="label">B · TEXT SUFFIX — the current "· override" vocabulary, extended: · shared / · pending review / · rejected, coloured only by tone</div>
+    <div class="panel">
+      <div class="caps" style="margin: 2px 0 4px;">Usage</div>
+      <div class="ur"><span>Divine Protection <span class="faint">· shared</span></span><span class="faint">major</span><span class="mono">27 / 30</span><span class="mono good">90%</span><span class="bar"><span style="width: 90%;"></span></span><span class="faint">cd 60 s · seen 58 s</span></div>
+      <div class="ur"><span>Divine Shield <span style="color: #e3b341;">· pending review</span></span><span class="faint">immunity</span><span class="mono">5 / 6</span><span class="mono good">83%</span><span class="bar"><span style="width: 83%;"></span></span><span class="faint">cd 300 s · seen 310 s</span></div>
+      <div class="ur"><span>Lay on Hands</span><span class="faint">major</span><span class="mono">2 / 3</span><span class="mono warn">67%</span><span class="bar"><span style="width: 67%;"></span></span><span class="faint">cd 600 s · seen 640 s</span></div>
+
+      <div class="caps" style="margin: 12px 0 4px;">Audit</div>
+      <div class="audit"><span>Aura Mastery · 2× · 16 s up</span><span class="chip">Propose + major</span><span class="chip">Propose + immunity</span><span class="chip">Propose + minor</span><span class="chip">Propose ignore</span></div>
+      <div class="audit"><span>Blessing of Freedom · 4× · 20 s up <span style="color: #f85149;">· rejected</span> <span class="faint">— "It is a freedom, not a defensive."</span></span><span class="chip">Propose + major</span><span class="chip">Propose + immunity</span><span class="chip">Propose + minor</span><span class="chip">Propose ignore</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 12px;"><span style="color: #8b949e; font-size: 16px; transform: rotate(90deg); display: inline-block; line-height: 1;">›</span><span class="muted">Table used: Holy Paladin · 5 entries · 2 shared · 1 pending review</span></div>
+      <div class="audit" style="padding-left: 24px;"><span>Divine Protection <span class="faint">major · cd 60 s · 8 s · shared</span></span><span class="chip">Propose cd</span><span class="chip">Propose removal</span></div>
+      <div class="audit" style="padding-left: 24px;"><span>Divine Shield <span class="faint">immunity · cd 300 s · 8 s</span> <span style="color: #e3b341;">· pending review</span></span><span class="chip">Propose cd</span><span class="chip">Propose removal</span></div>
+      <div class="audit" style="padding-left: 24px;"><span class="faint">… 3 more</span></div>
+    </div>
+  </div>
+
+  <!-- ===== C · Status column ===== -->
+  <div class="col">
+    <div class="label">C · STATUS DOT + "PROPOSALS" FOOTER — a coloured dot before the name (blue shared, yellow pending), decisions listed once under the table</div>
+    <div class="panel">
+      <div class="caps" style="margin: 2px 0 4px;">Usage</div>
+      <div class="ur"><span><span class="dot" style="background: #58a6ff;"></span>Divine Protection</span><span class="faint">major</span><span class="mono">27 / 30</span><span class="mono good">90%</span><span class="bar"><span style="width: 90%;"></span></span><span class="faint">cd 60 s · seen 58 s</span></div>
+      <div class="ur"><span><span class="dot" style="background: #e3b341;"></span>Divine Shield</span><span class="faint">immunity</span><span class="mono">5 / 6</span><span class="mono good">83%</span><span class="bar"><span style="width: 83%;"></span></span><span class="faint">cd 300 s · seen 310 s</span></div>
+      <div class="ur"><span><span class="dot" style="background: transparent;"></span>Lay on Hands</span><span class="faint">major</span><span class="mono">2 / 3</span><span class="mono warn">67%</span><span class="bar"><span style="width: 67%;"></span></span><span class="faint">cd 600 s · seen 640 s</span></div>
+
+      <div class="caps" style="margin: 12px 0 4px;">Audit</div>
+      <div class="audit"><span>Aura Mastery · 2× · 16 s up</span><span class="chip">Propose + major</span><span class="chip">Propose + immunity</span><span class="chip">Propose + minor</span><span class="chip">Propose ignore</span></div>
+      <div class="audit"><span>Blessing of Freedom · 4× · 20 s up</span><span class="chip">Propose + major</span><span class="chip">Propose + immunity</span><span class="chip">Propose + minor</span><span class="chip">Propose ignore</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 12px;"><span style="color: #8b949e; font-size: 16px; transform: rotate(90deg); display: inline-block; line-height: 1;">›</span><span class="muted">Table used: Holy Paladin · 5 entries · <span style="color: #58a6ff;">● 2 shared</span> · <span style="color: #e3b341;">● 1 pending review</span></span></div>
+      <div class="audit" style="padding-left: 24px;"><span><span class="dot" style="background: #58a6ff;"></span>Divine Protection <span class="faint">major · cd 60 s · 8 s</span></span><span class="chip">Propose cd</span><span class="chip">Propose removal</span></div>
+      <div class="audit" style="padding-left: 24px;"><span><span class="dot" style="background: #e3b341;"></span>Divine Shield <span class="faint">immunity · cd 300 s · 8 s</span></span><span class="chip">Propose cd</span><span class="chip">Propose removal</span></div>
+      <div class="audit" style="padding-left: 24px;"><span class="faint">… 3 more</span></div>
+      <div class="caps" style="margin: 12px 0 4px;">Your proposals · Holy Paladin</div>
+      <div class="audit" style="font-size: 12px;"><span class="dot" style="background: #e3b341;"></span><span>Divine Shield · cd 300 s</span><span class="faint">pending since 2 h</span></div>
+      <div class="audit" style="font-size: 12px;"><span class="dot" style="background: #f85149;"></span><span>Blessing of Freedom · + minor, cd 25 s</span><span class="faint">rejected 2 d ago — "It is a freedom, not a defensive."</span></div>
+      <div class="audit" style="font-size: 12px;"><span class="dot" style="background: #56d364;"></span><span>Divine Protection · cd 60 s</span><span class="faint">approved 5 d ago</span></div>
+    </div>
+  </div>
+
+  <div class="faint" style="font-size: 12px;">Pending shows immediately in your own table (origin "pending"); once approved it becomes "shared" for everyone; rejected disappears from your table, only the note stays. Admin view: no "Propose", chips read "+ major / Ignore / Edit cd / Remove for this spec" as in local mode, and the result is "shared" at once.</div>
+</div>
+</x-dc>
+</body>
+</html>

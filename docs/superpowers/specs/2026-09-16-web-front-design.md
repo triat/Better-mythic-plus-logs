@@ -1,6 +1,6 @@
 # Web front (Vite + React) — design
 
-**Status:** approved direction (canvas "Direction A"), spec under review
+**Status:** approved direction (canvas "Direction A"), spec under review; hosted-mode screens (sign-in, user menu, proposal wording) implemented 2026-09-18 — issue #7, canvas page "Hosted"
 **Sub-project:** 3 of the bmpl roadmap (signals → evaluation → **front** → run deep-dive)
 **Design canvas:** https://claude.ai/artifact/3yUjZKgaQyHKebzyqcio5s — page *Direction A* is the reference;
 page *Explorations* holds the discarded monospace sketch.
@@ -29,7 +29,7 @@ the existing `/api/*` routes and the `LookupPayload` JSON exactly as they are to
 |---|---|---|
 | Stack | Vite 8, React 19, TypeScript strict, `web/` has its own `package.json` + `tsconfig.json` | User choice ("A"). Isolates DOM types and front deps from the Bun/CLI tree. |
 | Embedding | Vite emits **fixed file names** (`index.html`, `assets/app.js`, `assets/app.css`); `src/web-assets.ts` imports the three with `with { type: "file" }` and serves them via `Bun.file()`. `bun build --compile` embeds them. | Hashed names would need a generated manifest; a local tool does not need cache busting (served with `Cache-Control: no-cache`). |
-| Routing | SPA. Server returns `index.html` for `GET /` and `GET /setup`; the app decides which screen to show from `/api/status`. No client router: `location.pathname` + `history.pushState` for the two paths. | Two screens; a router is dead weight. |
+| Routing | SPA. Server returns `index.html` for `GET /`, `GET /setup` and `GET /admin`; the app decides which screen to show from `/api/status`. No client router: `location.pathname` + `history.pushState` for the paths. | Two screens; a router is dead weight. |
 | Shared code | The front imports **types only** from `../../src/**` (`import type`). One runtime exception: the new pure module `src/wow/classes.ts` (class id → name, hex color). | Types keep the front honest against `LookupPayload`/`Evaluation`; runtime sharing is limited to a dependency-free table so Vite never pulls Bun/Node code. |
 | Visual vocabulary | Direction A: current Primer-dark tokens, cards, 6–10 px radii, `system-ui`, existing verdict badge colors. | User choice ("on garde le vocabulaire actuel"). |
 | Language | UI strings in English. | User choice. |

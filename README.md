@@ -424,8 +424,10 @@ and add the redirect `https://<your host>/auth/discord/callback`. Access is
 invite-only: the Discord ids in `BMPL_ADMIN_DISCORD_IDS` are admins and can
 always sign in; everyone else needs an invite — `bmpl invite <discord-id>
 [--note "guild mate"]` on the server (`bmpl invite --list`, `--remove <id>`),
-or the admin page once issue #8 lands. A user who is not invited sees their
-Discord id on the sign-in page so they can send it to you. Sessions last 30
+or the admin page once issue #8 lands. The sign-in page is a single **Sign in
+with Discord** button; a user who is not invited comes back to it with an
+*Invitation required* notice showing their Discord id (with a Copy button) so
+they can send it to you. Sessions last 30
 days (sliding) in an `HttpOnly` cookie; **Sign out** ends one. Removing an
 id from `BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change
 the role on the admin page (issue #8) or via `POST /api/admin/users/:id/role`.
@@ -452,8 +454,11 @@ as fewer than 10 pts are left. Cached data — a tab in your history, a run
 already in the cache, an analysis already done — never counts. Whatever the quotas say, the client is
 not knowingly driven below 100 points left (the floor is checked against the last `rateLimitData`
 seen and the estimates, so it is best effort) (`429 { error: "budget", … }`), so cached lookups keep
-working for everyone. The header shows "N pts left this hour"; `GET /api/me` and every
-lookup/analysis response carry `quota`, and admins can read
+working for everyone. The user menu (avatar · name, top right) shows "N of L pts left this hour"
+with a bar and the reset time; the header itself only turns red ("quota reached · resets in N min")
+once nothing is left. Analyze buttons are disabled with that reset time as tooltip when the estimate
+exceeds what is left; a 429 shows the server's message as a toast and refreshes the numbers.
+`GET /api/me` and every lookup/analysis response carry `quota`, and admins can read
 `GET /api/admin/usage` (this hour per member, the client's last
 `rateLimitData`, the last 24 hourly totals). Estimates before spending:
 rankings ≈ 10 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attribution
@@ -461,12 +466,17 @@ is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
 
 **Shared defensives table.** Corrections made from the panel are proposals:
-they apply to you immediately (marked "pending review") and to everyone once
-an admin approves them (`GET /api/admin/proposals`, `POST
-/api/admin/proposals/:id/approve|reject { note }`); a rejected one is dropped
-for you too, with the admin's note visible in `GET /api/defensives` →
-`proposals`. An admin's own correction is approved on the spot. The server's
-`defensives.json` is not used in hosted mode; the approved layer lives in
+they apply to you immediately (marked "pending review" — in the panel a
+yellow dot before the entry, a blue one for the approved layer, and a "Your
+proposals" footer with each decision and the admin's note; the actions read
+"Propose + major / Propose ignore / Propose cd / Propose removal" for members
+(admins keep the local wording, their correction is approved on the spot))
+and to everyone once an admin approves them (`GET /api/admin/proposals`,
+`POST /api/admin/proposals/:id/approve|reject { note }`); a rejected one is
+dropped for you too, with the admin's note visible in `GET /api/defensives`
+→ `proposals`. An admin's own correction is approved on the spot. The
+server's `defensives.json` is not used in hosted mode; the approved layer
+lives in
 `bmpl.db` (`bmpl defensives <Class> <Spec> --shared` and `just
 audit-defensives --shared` read it). The admin page comes with issue #8.
 

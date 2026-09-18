@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 6px; background: #238636; border: 1px solid #238636; color: #fff; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .screen { width: 1440px; height: 560px; background: #0d1117; display: flex; flex-direction: column; }
+    .variant { position: absolute; left: 24px; top: 72px; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+  </style>
+</helmet>
+<div style="width: 1440px; background: #0d1117; display: flex; flex-direction: column; gap: 80px;">
+
+  <!-- A · Hero: same composition as the local empty state (Home), the button where the search box was -->
+  <div class="screen" style="position: relative;">
+    <div class="top"><div class="brand">bmpl</div></div>
+    <div class="variant">A · HERO</div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding-bottom: 40px;">
+      <div style="font-size: 26px; font-weight: 700; color: #ffffff;">Who applied to your key?</div>
+      <div style="font-size: 14px; color: #8b949e;">Vet a Mythic+ applicant from their Warcraft Logs and Raider.IO history.</div>
+      <div class="btn-primary" style="height: 48px; padding: 0 22px; font-size: 15px; margin-top: 6px;">
+        <svg width="20" height="16" viewBox="0 0 127 96" fill="#ffffff"><path d="M107.7 8.1A105.2 105.2 0 0 0 81.5 0c-1.1 2-2.4 4.7-3.3 6.8a97.7 97.7 0 0 0-29.1 0C48.2 4.7 46.9 2 45.7 0a105 105 0 0 0-26.2 8.1C2.9 33.2-1.6 57.6.6 81.7a106 106 0 0 0 32.2 16.2c2.6-3.5 4.9-7.3 6.9-11.2a68.6 68.6 0 0 1-10.9-5.2c.9-.7 1.8-1.4 2.7-2.1a75.6 75.6 0 0 0 64.6 0c.9.7 1.8 1.4 2.7 2.1-3.5 2.1-7.1 3.8-10.9 5.2 2 3.9 4.3 7.7 6.9 11.2a105.8 105.8 0 0 0 32.2-16.2c2.6-27.9-4.5-52.1-18.9-73.6zM42.5 66.9c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5.1 12.9-11.5 12.9zm42.5 0c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5 12.9-11.5 12.9z"/></svg>
+        Sign in with Discord
+      </div>
+      <div style="margin-top: 16px; font-size: 12px; color: #6e7681;">Invite-only. Only your Discord id and name are stored — no message or server access.</div>
+    </div>
+  </div>
+
+  <!-- B · Card gate: a Setup-style centered card, the pitch inside -->
+  <div class="screen" style="position: relative; align-items: center; justify-content: flex-start;">
+    <div class="top" style="align-self: stretch;"><div class="brand">bmpl</div></div>
+    <div class="variant">B · CARD GATE</div>
+    <div class="card" style="width: 520px; margin-top: 88px; padding: 28px 32px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="font-size: 22px; font-weight: 700; color: #ffffff;">Sign in</div>
+      <div style="font-size: 14px; color: #c9d1d9;">bmpl vets a Mythic+ applicant from their Warcraft Logs and Raider.IO history: verdict, six axes, run deep-dives.</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #8b949e;">
+        <div style="display: flex; gap: 10px; align-items: center;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #56d364; display: inline-block;"></span>This instance is invite-only — the admin adds your Discord id.</div>
+        <div style="display: flex; gap: 10px; align-items: center;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #56d364; display: inline-block;"></span>Lookups share one Warcraft Logs budget; each member gets an hourly slice.</div>
+        <div style="display: flex; gap: 10px; align-items: center;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #56d364; display: inline-block;"></span>Your history and settings follow your account, not the browser.</div>
+      </div>
+      <div class="btn-primary" style="align-self: flex-start; margin-top: 4px;">
+        <svg width="18" height="14" viewBox="0 0 127 96" fill="#ffffff"><path d="M107.7 8.1A105.2 105.2 0 0 0 81.5 0c-1.1 2-2.4 4.7-3.3 6.8a97.7 97.7 0 0 0-29.1 0C48.2 4.7 46.9 2 45.7 0a105 105 0 0 0-26.2 8.1C2.9 33.2-1.6 57.6.6 81.7a106 106 0 0 0 32.2 16.2c2.6-3.5 4.9-7.3 6.9-11.2a68.6 68.6 0 0 1-10.9-5.2c.9-.7 1.8-1.4 2.7-2.1a75.6 75.6 0 0 0 64.6 0c.9.7 1.8 1.4 2.7 2.1-3.5 2.1-7.1 3.8-10.9 5.2 2 3.9 4.3 7.7 6.9 11.2a105.8 105.8 0 0 0 32.2-16.2c2.6-27.9-4.5-52.1-18.9-73.6zM42.5 66.9c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5.1 12.9-11.5 12.9zm42.5 0c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5 12.9-11.5 12.9z"/></svg>
+        Sign in with Discord
+      </div>
+      <div style="font-size: 12px; color: #6e7681;">Only your Discord id and display name are stored.</div>
+    </div>
+  </div>
+
+  <!-- C · Split: brand block left, action card right -->
+  <div class="screen" style="position: relative;">
+    <div class="top"><div class="brand">bmpl</div></div>
+    <div class="variant">C · SPLIT</div>
+    <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 0 160px 40px;">
+      <div style="display: flex; flex-direction: column; gap: 14px; max-width: 460px;">
+        <div style="font-size: 32px; font-weight: 700; color: #ffffff; line-height: 1.2;">Vet the applicant,<br>not the vibe.</div>
+        <div style="font-size: 14px; color: #8b949e;">One verdict from Warcraft Logs and Raider.IO: survival, utility, throughput, consistency, preparation, experience — with the evidence behind each score.</div>
+        <div style="display: flex; gap: 8px; margin-top: 4px;"><span class="chip">verdict</span><span class="chip">6 axes</span><span class="chip">run deep-dive</span><span class="chip">shared defensives table</span></div>
+      </div>
+      <div class="card" style="justify-self: end; width: 400px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px;">
+        <div class="caps">Members only</div>
+        <div style="font-size: 14px; color: #c9d1d9;">Sign in with the Discord account the admin invited.</div>
+        <div class="btn-primary" style="justify-content: center;">
+          <svg width="18" height="14" viewBox="0 0 127 96" fill="#ffffff"><path d="M107.7 8.1A105.2 105.2 0 0 0 81.5 0c-1.1 2-2.4 4.7-3.3 6.8a97.7 97.7 0 0 0-29.1 0C48.2 4.7 46.9 2 45.7 0a105 105 0 0 0-26.2 8.1C2.9 33.2-1.6 57.6.6 81.7a106 106 0 0 0 32.2 16.2c2.6-3.5 4.9-7.3 6.9-11.2a68.6 68.6 0 0 1-10.9-5.2c.9-.7 1.8-1.4 2.7-2.1a75.6 75.6 0 0 0 64.6 0c.9.7 1.8 1.4 2.7 2.1-3.5 2.1-7.1 3.8-10.9 5.2 2 3.9 4.3 7.7 6.9 11.2a105.8 105.8 0 0 0 32.2-16.2c2.6-27.9-4.5-52.1-18.9-73.6zM42.5 66.9c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5.1 12.9-11.5 12.9zm42.5 0c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5 12.9-11.5 12.9z"/></svg>
+          Sign in with Discord
+        </div>
+        <div style="font-size: 12px; color: #6e7681;">Not invited yet? Sign in once — you will get your Discord id to send to the admin.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

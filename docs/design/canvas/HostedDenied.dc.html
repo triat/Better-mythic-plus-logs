@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 6px; background: #238636; border: 1px solid #238636; color: #fff; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .col { display: flex; flex-direction: column; gap: 10px; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 620px; background: #0d1117; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px;">
+  <div class="caps">States of the sign-in screen — the notice slots under the button in A, inside the card in B / C. Same three treatments to pick from.</div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start;">
+
+    <!-- 1 · Yellow callout (the re-evaluate hint vocabulary) -->
+    <div class="col">
+      <div class="label">1 · YELLOW CALLOUT — ?denied=1</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start;">
+        <div class="btn-primary">Sign in with Discord</div>
+        <div style="display: flex; flex-direction: column; gap: 6px; border: 1px dashed #7a6a1f; background: #2e2a0a; border-radius: 8px; padding: 10px 14px; color: #e3b341; font-size: 12px; width: 100%; box-sizing: border-box;">
+          <div style="font-weight: 600;">You are not on the invite list yet.</div>
+          <div style="color: #e3b341; opacity: .85;">Send this Discord id to the person who runs this instance, then sign in again.</div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+            <span class="mono" style="font-size: 15px; color: #e6edf3; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 3px 10px;">228151562337599488</span>
+            <span class="chip" style="color: #e3b341; border-color: #7a6a1f;">Copy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 · Inset block, neutral -->
+    <div class="col">
+      <div class="label">2 · NEUTRAL INSET — ?denied=1</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start;">
+        <div class="btn-primary">Sign in with Discord</div>
+        <div style="background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+          <div class="caps">Invitation required</div>
+          <div style="font-size: 13px; color: #c9d1d9;">Your Discord account signed in fine, but it is not invited. Send your id to the admin:</div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 2px;">
+            <span class="mono" style="font-size: 15px; color: #e6edf3;">228151562337599488</span>
+            <span class="chip">Copy</span>
+          </div>
+          <div class="faint" style="font-size: 12px;">Then sign in again — no need to reload.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 · Inline line, minimal -->
+    <div class="col">
+      <div class="label">3 · ONE LINE — ?denied=1</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start;">
+        <div class="btn-primary">Sign in with Discord</div>
+        <div style="font-size: 13px; color: #d29922; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-weight: 600;">Not invited.</span>
+          <span class="muted">Your Discord id is</span>
+          <span class="mono" style="color: #e6edf3; background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 1px 8px;">228151562337599488</span>
+          <span class="chip">Copy</span>
+          <span class="muted">— send it to the admin, then sign in again.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start;">
+    <div class="col">
+      <div class="label">?login=failed (any variant)</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start;">
+        <div class="btn-primary">Sign in with Discord</div>
+        <div style="font-size: 13px; color: #f85149;">✗ Sign-in failed — Discord did not complete the login. Try again.</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Signing in… (button pressed, redirect in flight)</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 14px; align-items: flex-start;">
+        <div class="btn-primary" style="opacity: .5;"><span style="display: inline-block; width: 12px; height: 12px; border: 2px solid #30363d; border-top-color: #ffffff; border-radius: 50%;"></span> Redirecting to Discord…</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Button colour</div>
+      <div class="card" style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start;">
+        <div style="font-size: 13px; color: #c9d1d9;">Kept <span class="mono">btn-primary</span> green: Discord blurple (#5865F2) is not in tokens.css. Say so if you want a <span class="mono">--discord</span> token instead.</div>
+        <div style="display: flex; gap: 10px;"><div class="btn-primary">Sign in with Discord</div><div class="btn-primary" style="background: #5865F2; border-color: #5865F2;">Sign in with Discord</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

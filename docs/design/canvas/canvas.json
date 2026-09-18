@@ -6,7 +6,7 @@
     },
     {
       "id": "iteration-2",
-      "name": "Iteration 2 \u2014 key selector & many tabs"
+      "name": "Iteration 2 — key selector & many tabs"
     },
     {
       "id": "explorations",
@@ -14,11 +14,15 @@
     },
     {
       "id": "deep-dive",
-      "name": "Deep-dive \u2014 defensive cooldowns"
+      "name": "Deep-dive — defensive cooldowns"
     },
     {
       "id": "axis-explainers",
-      "name": "Axis explainers \u2014 what each score measures"
+      "name": "Axis explainers — what each score measures"
+    },
+    {
+      "id": "hosted",
+      "name": "Hosted — sign-in, user menu, proposals"
     }
   ],
   "artboards": [
@@ -37,7 +41,7 @@
       "y": 900,
       "w": 1440,
       "h": 1180,
-      "title": "Detail \u2014 verdict first",
+      "title": "Detail — verdict first",
       "page": "direction-a"
     },
     {
@@ -64,7 +68,7 @@
       "y": 0,
       "w": 1440,
       "h": 900,
-      "title": "Detail \u2014 Direction B (Command deck, not retained)",
+      "title": "Detail — Direction B (Command deck, not retained)",
       "page": "explorations"
     },
     {
@@ -82,7 +86,7 @@
       "y": 560,
       "w": 1440,
       "h": 380,
-      "title": "14 profiles \u2014 Variant A: compact chips, wrap",
+      "title": "14 profiles — Variant A: compact chips, wrap",
       "page": "iteration-2"
     },
     {
@@ -91,7 +95,7 @@
       "y": 1080,
       "w": 1440,
       "h": 380,
-      "title": "14 profiles \u2014 Variant B: one row, scroll + fade",
+      "title": "14 profiles — Variant B: one row, scroll + fade",
       "page": "iteration-2"
     },
     {
@@ -111,6 +115,42 @@
       "h": 1180,
       "title": "Three ways to surface 'what is measured' per axis",
       "page": "axis-explainers"
+    },
+    {
+      "file": "HostedSignIn.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1840,
+      "title": "Sign-in screen — A hero · B card gate · C split",
+      "page": "hosted"
+    },
+    {
+      "file": "HostedDenied.dc.html",
+      "x": 0,
+      "y": 1960,
+      "w": 1440,
+      "h": 620,
+      "title": "Sign-in states — ?denied=1 (three notice treatments), ?login=failed, redirecting, button colour",
+      "page": "hosted"
+    },
+    {
+      "file": "HostedHeader.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1580,
+      "title": "Header, hosted — A text trigger · B quota pill + avatar · C all inline (closed / open / quota reached + toast)",
+      "page": "hosted"
+    },
+    {
+      "file": "HostedPanel.dc.html",
+      "x": 1560,
+      "y": 1700,
+      "w": 1440,
+      "h": 980,
+      "title": "Deep-dive panel, hosted member view — A chips · B text suffix · C status dot + proposals footer",
+      "page": "hosted"
     }
   ],
   "annotations": [
@@ -120,7 +160,7 @@
       "y": -170,
       "w": 520,
       "page": "direction-a",
-      "text": "bmpl web redesign \u2014 verdict-first, Direction A (retained).\nKeeps the current Primer-dark vocabulary: cards, 6-10px radii, system-ui, green/yellow/red verdict badges.\nAll numbers are sample data shaped like a real lookup (Muleyoxo, Holy Priest, +21). Confidence is per axis (dot next to each label), never global."
+      "text": "bmpl web redesign — verdict-first, Direction A (retained).\nKeeps the current Primer-dark vocabulary: cards, 6-10px radii, system-ui, green/yellow/red verdict badges.\nAll numbers are sample data shaped like a real lookup (Muleyoxo, Holy Priest, +21). Confidence is per axis (dot next to each label), never global."
     },
     {
       "id": "radar-note",
@@ -128,7 +168,7 @@
       "y": 900,
       "w": 380,
       "page": "direction-a",
-      "text": "Radar: 6 axes on one 0-100 scale, rings at 25/50/75/100. A null axis (Consistency under 5 runs with signals) is a hollow point at the center, labelled n/a \u2014 never drawn as 0."
+      "text": "Radar: 6 axes on one 0-100 scale, rings at 25/50/75/100. A null axis (Consistency under 5 runs with signals) is a hollow point at the center, labelled n/a — never drawn as 0."
     },
     {
       "id": "b-note",
@@ -136,7 +176,7 @@
       "y": -140,
       "w": 420,
       "page": "explorations",
-      "text": "Direction B \u2014 denser monospace 'command deck'. Shown for contrast during the review; Direction A was chosen. Kept here for reference only."
+      "text": "Direction B — denser monospace 'command deck'. Shown for contrast during the review; Direction A was chosen. Kept here for reference only."
     },
     {
       "id": "iter2-note",
@@ -144,7 +184,7 @@
       "y": 0,
       "w": 420,
       "page": "iteration-2",
-      "text": "Key selector: a global 'Your key' stepper (\u2212 +18 + \u00b7 auto) in the header, remembered between sessions, applied to every new lookup. If the active tab was evaluated for another level, the hero shows a yellow hint 'Your key is +18 \u2014 re-evaluate for +18' that replaces the tab (cached data, ~0 pts). Level chip removed from the search box; spec chip stays.\n\nMany profiles: compact chips (name \u00b7 +level, class colour), \u00d7 on hover, select circle for compare. Pick A (wrap) or B (scroll)."
+      "text": "Key selector: a global 'Your key' stepper (− +18 + · auto) in the header, remembered between sessions, applied to every new lookup. If the active tab was evaluated for another level, the hero shows a yellow hint 'Your key is +18 — re-evaluate for +18' that replaces the tab (cached data, ~0 pts). Level chip removed from the search box; spec chip stays.\n\nMany profiles: compact chips (name · +level, class colour), × on hover, select circle for compare. Pick A (wrap) or B (scroll)."
     },
     {
       "id": "dd-note",
@@ -152,7 +192,7 @@
       "y": 0,
       "w": 440,
       "page": "deep-dive",
-      "text": "Sub-project 4 \u2014 on-demand deep-dive of a run's personal defensives (~3 WCL pts per run, cached forever).\n\nPer run: Analyze \u00b7 ~3 pts \u2192 Analyzed \u2713 (expands the panel). Section header: Analyze all shown (~N pts).\n\nPanel: Usage (casts / possible, %, bar; 'talent?' when casts are seen closer than the table cooldown) \u00b7 Deaths (time, verdict, top killing hits, what was active / available / on cooldown; wipe deaths dimmed and not counted) \u00b7 Audit (self-buffs not in the table with + major / + immunity / + minor / Ignore; the table used with Edit cd / Remove). Every correction is saved to defensives.json and re-applied at 0 pts.\n\nSurvival axis gets an 'N runs analyzed' chip once deep-dive evidence exists."
+      "text": "Sub-project 4 — on-demand deep-dive of a run's personal defensives (~3 WCL pts per run, cached forever).\n\nPer run: Analyze · ~3 pts → Analyzed ✓ (expands the panel). Section header: Analyze all shown (~N pts).\n\nPanel: Usage (casts / possible, %, bar; 'talent?' when casts are seen closer than the table cooldown) · Deaths (time, verdict, top killing hits, what was active / available / on cooldown; wipe deaths dimmed and not counted) · Audit (self-buffs not in the table with + major / + immunity / + minor / Ignore; the table used with Edit cd / Remove). Every correction is saved to defensives.json and re-applied at 0 pts.\n\nSurvival axis gets an 'N runs analyzed' chip once deep-dive evidence exists."
     },
     {
       "id": "axis-note",
@@ -160,7 +200,15 @@
       "y": 0,
       "w": 420,
       "page": "axis-explainers",
-      "text": "Today the axis descriptions exist but hide behind a native title tooltip and the row expand \u2014 nobody sees them.\n\nA \u00b7 \u24d8 icon + popover: always visible, one hover away, keeps rows compact. Best when the user knows to look for an icon.\nB \u00b7 callout in the expanded row: explanation and evidence read together; the chevron makes the expand affordance obvious. Nothing new to discover, one click.\nC \u00b7 legend under the radar: the whole model at a glance (colours, weights, one line each), collapsible and remembered. Best for first-time readers; can be combined with A or B.\n\nRecommendation: B + C (rows explain themselves when opened; the legend teaches the model once)."
+      "text": "Today the axis descriptions exist but hide behind a native title tooltip and the row expand — nobody sees them.\n\nA · ⓘ icon + popover: always visible, one hover away, keeps rows compact. Best when the user knows to look for an icon.\nB · callout in the expanded row: explanation and evidence read together; the chevron makes the expand affordance obvious. Nothing new to discover, one click.\nC · legend under the radar: the whole model at a glance (colours, weights, one line each), collapsible and remembered. Best for first-time readers; can be combined with A or B.\n\nRecommendation: B + C (rows explain themselves when opened; the legend teaches the model once)."
+    },
+    {
+      "id": "hosted-brief",
+      "x": 0,
+      "y": -190,
+      "w": 560,
+      "page": "hosted",
+      "text": "Issue #7 — hosted mode front. Local mode stays pixel-identical; everything here only renders when /api/status says hosted.\n\nPick one letter per artboard (A/B/C — 'B + C' combos welcome):\n· Sign-in screen (401) and the notice treatment for ?denied=1 (1/2/3).\n· Header: Re-configure / Quit / clipboard watch are gone; user menu with avatar, name, quota, Admin (admins only), Sign out. Quota label refreshes after each lookup / analyze and from 429 bodies.\n· Deep-dive panel: 'Propose …' wording for members, pending / shared / rejected marks.\n\nAll colours are tokens.css values (yellow = pending, link blue = shared, red = rejected/quota). Sample user Muleyoxo, admin, 212 of 300 pts left."
     }
   ],
   "launch": {

@@ -276,12 +276,12 @@ async function cmdDefensives(className: string | undefined, spec: string | undef
   const t = await loadDefensives();
   if (check) {
     if (t.warning) { console.error(err(`✗ ${t.warning}`)); process.exit(1); }
-    console.log(ok(`✓ ${t.overridePath}: ${Object.keys(t.override).length} spec key(s)`));
+    console.log(ok(`✓ ${t.overridePath ?? "(no file)"}: ${Object.keys(t.override).length} spec key(s)`));
     return;
   }
   if (!className || !spec) { console.error(err("Usage: bmpl defensives <Class> <Spec> | --check")); process.exit(2); }
   const d = specDefensives(t.shipped, t.override, className, spec);
-  console.log(heading(`${d.key}`) + dim(`  override: ${t.overridePath}${t.warning ? "  (ignored: invalid)" : ""}`));
+  console.log(heading(`${d.key}`) + dim(`  override: ${t.overridePath ?? "none"}${t.warning ? "  (ignored: invalid)" : ""}`));
   if (d.tableMissing) console.log(pc.yellow("  no table for this spec — add entries to your defensives.json"));
   for (const e of d.entries) console.log(`  ${String(e.id).padStart(8)}  ${e.name.padEnd(28)} ${e.kind.padEnd(8)} cd ${String(e.cooldownS).padStart(3)}s  dur ${String(e.durationS).padStart(3)}s  ${e.origin === "override" ? pc.cyan("override") : dim("shipped")}`);
   if (d.ignored.length > 0) console.log(dim(`  ignored: ${d.ignored.join(", ")}`));

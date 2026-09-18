@@ -12,7 +12,7 @@ import { parseRunSignals } from "../../src/signals/wcl-run.ts";
 import { loadDeepdiveFixture } from "../fixtures.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
-const tables: LoadedTables = { shipped: SHIPPED, override: {}, overridePath: "/dev/null" };
+const tables: LoadedTables = { shipped: SHIPPED, override: {}, source: "file", overridePath: "/dev/null" };
 
 async function payloadFor(names: Array<"s2-healer" | "s2-rogue">) {
   const store = openStore(":memory:");

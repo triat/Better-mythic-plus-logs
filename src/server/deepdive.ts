@@ -62,6 +62,7 @@ export async function handleDefensivesPost(req: Request, hosted = false): Promis
       : `${tables.overridePath} is invalid — fix it by hand first: ${tables.warning}`;
     return jsonResponse({ ok: false, error: message }, 409);
   }
+  if (tables.source !== "file" || tables.overridePath === null) return jsonResponse({ ok: false, error: "no override file in this mode" }, 400);
   try {
     const key = specKey(body.className, body.spec);
     const effective = specDefensives(tables.shipped, tables.override, body.className, body.spec);

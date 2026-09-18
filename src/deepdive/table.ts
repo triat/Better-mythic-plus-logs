@@ -1,6 +1,6 @@
 import shippedJson from "./defensives.json" with { type: "json" };
 import { resolveDefensivesPath } from "../setup.ts";
-import type { DefensiveKind, DefensiveSpell, EffectiveEntry, LoadedTables, Override, OverrideEntry, ShippedTable, SpecDefensives } from "./types.ts";
+import type { DefensiveKind, DefensiveSpell, EffectiveEntry, EntryOrigin, LoadedTables, Override, OverrideEntry, ShippedTable, SpecDefensives } from "./types.ts";
 
 export const SHIPPED = shippedJson as ShippedTable;
 
@@ -66,14 +66,40 @@ export function specDefensives(shipped: ShippedTable, override: Override, classN
       if (e.ignore) { byId.delete(e.id); if (!ignored.includes(e.id)) ignored.push(e.id); continue; }
       const cur = byId.get(e.id);
       if (cur) {
-        byId.set(e.id, { ...cur, ...(e.name !== undefined ? { name: e.name } : {}), ...(e.cooldownS !== undefined ? { cooldownS: e.cooldownS } : {}), ...(e.durationS !== undefined ? { durationS: e.durationS } : {}), ...(e.kind !== undefined ? { kind: e.kind } : {}), origin: "override" });
+        byId.set(e.id, { ...cur, ...(e.name !== undefined ? { name: e.name } : {}), ...(e.cooldownS !== undefined ? { cooldownS: e.cooldownS } : {}), ...(e.durationS !== undefined ? { durationS: e.durationS } : {}), ...(e.kind !== undefined ? { kind: e.kind } : {}), origin: e.origin ?? "override" });
       } else if (complete(e)) {
-        byId.set(e.id, { id: e.id, name: e.name, cooldownS: e.cooldownS, durationS: e.durationS, kind: e.kind, origin: "override" });
+        byId.set(e.id, { id: e.id, name: e.name, cooldownS: e.cooldownS, durationS: e.durationS, kind: e.kind, origin: e.origin ?? "override" });
       }
       // An incomplete entry for an unknown id is ignored here; applyPatch/validate refuse to write one.
     }
   }
   return { key, entries: [...byId.values()], ignored, tableMissing: !present };
+}
+
+/** Pure list merge: `ignore` replaces any earlier patch for the id; otherwise the patch's fields merge over the previous patch (a patch after an ignore starts over). A patch's `origin` is kept on the result. */
+export function mergeEntry(list: OverrideEntry[], patch: OverrideEntry): OverrideEntry[] {
+  const out = [...list];
+  const idx = out.findIndex((e) => e.id === patch.id);
+  let next: OverrideEntry;
+  if (patch.ignore) next = { id: patch.id, ignore: true, ...(patch.origin ? { origin: patch.origin } : {}) };
+  else {
+    const prev = idx >= 0 && !out[idx]!.ignore ? out[idx]! : { id: patch.id };
+    const { ignore: _i, ...fields } = patch;
+    next = { ...prev, ...fields };
+  }
+  if (idx >= 0) out[idx] = next; else out.push(next);
+  return out;
+}
+
+/** Every entry of `override` tagged with `origin` (a loader helper; pure). */
+export const tagOrigin = (override: Override, origin: Exclude<EntryOrigin, "shipped">): Override =>
+  Object.fromEntries(Object.entries(override).map(([k, list]) => [k, list.map((e) => ({ ...e, origin }))]));
+
+/** `base` with each `{ key, patch }` merged in and tagged `origin` (pure). Incomplete unknown ids are kept and ignored by specDefensives. */
+export function layerPatches(base: Override, patches: Array<{ key: string; patch: OverrideEntry }>, origin: Exclude<EntryOrigin, "shipped">): Override {
+  const out: Override = { ...base };
+  for (const { key, patch } of patches) out[key] = mergeEntry(out[key] ?? [], { ...patch, origin });
+  return out;
 }
 
 /**
@@ -82,18 +108,12 @@ export function specDefensives(shipped: ShippedTable, override: Override, classN
  */
 export function applyPatch(override: Override, key: string, patch: OverrideEntry, effective: SpecDefensives): Override {
   if (!KEY_RE.test(key)) fail(`key "${key}" must look like "Class:Spec" or "Class:*"`);
-  const known = effective.entries.some((e) => e.id === patch.id) || effective.ignored.includes(patch.id);
-  const list = [...(override[key] ?? [])];
-  const idx = list.findIndex((e) => e.id === patch.id);
-  let next: OverrideEntry;
-  if (patch.ignore) next = { id: patch.id, ignore: true };
-  else {
-    const prev = idx >= 0 && !list[idx]!.ignore ? list[idx]! : { id: patch.id };
-    const { ignore: _i, ...fields } = patch;
-    next = { ...prev, ...fields };
+  const list = mergeEntry(override[key] ?? [], patch);
+  if (!patch.ignore) {
+    const known = effective.entries.some((e) => e.id === patch.id) || effective.ignored.includes(patch.id);
+    const next = list.find((e) => e.id === patch.id)!;
     if (!known && !complete(next)) fail(`id ${patch.id} is not in the table for ${key}: name, cooldownS, durationS and kind are required to add it`);
   }
-  if (idx >= 0) list[idx] = next; else list.push(next);
   return { ...override, [key]: list };
 }
 
@@ -105,11 +125,11 @@ export async function saveOverride(path: string, override: Override): Promise<vo
 export async function loadDefensives(): Promise<LoadedTables> {
   const overridePath = await resolveDefensivesPath();
   const file = Bun.file(overridePath);
-  if (!(await file.exists())) return { shipped: SHIPPED, override: {}, overridePath };
+  if (!(await file.exists())) return { shipped: SHIPPED, override: {}, source: "file", overridePath };
   try {
-    return { shipped: SHIPPED, override: validateOverride(JSON.parse(await file.text())), overridePath };
+    return { shipped: SHIPPED, override: validateOverride(JSON.parse(await file.text())), source: "file", overridePath };
   } catch (e) {
-    return { shipped: SHIPPED, override: {}, overridePath, warning: `bmpl: ignoring ${overridePath}: ${e instanceof Error ? e.message : String(e)}` };
+    return { shipped: SHIPPED, override: {}, source: "file", overridePath, warning: `bmpl: ignoring ${overridePath}: ${e instanceof Error ? e.message : String(e)}` };
   }
 }
 

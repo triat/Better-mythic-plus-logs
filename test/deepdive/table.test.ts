@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SHIPPED, applyPatch, loadDefensives, saveOverride, specDefensives, specKey, validateOverride } from "../../src/deepdive/table.ts";
+import { SHIPPED, applyPatch, layerPatches, loadDefensives, mergeEntry, saveOverride, specDefensives, specKey, tagOrigin, validateOverride } from "../../src/deepdive/table.ts";
 import type { Override } from "../../src/deepdive/types.ts";
 
 describe("shipped table", () => {
@@ -116,5 +116,51 @@ describe("loadDefensives / saveOverride", () => {
       delete process.env.BMPL_DEFENSIVES;
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("mergeEntry / layerPatches / origins", () => {
+  test("mergeEntry merges fields over a previous patch, ignore replaces, origin is kept from the patch", () => {
+    const a = mergeEntry([], { id: 498, cooldownS: 45 });
+    expect(a).toEqual([{ id: 498, cooldownS: 45 }]);
+    const b = mergeEntry(a, { id: 498, durationS: 9, origin: "pending" });
+    expect(b).toEqual([{ id: 498, cooldownS: 45, durationS: 9, origin: "pending" }]);
+    const c = mergeEntry(b, { id: 498, ignore: true, origin: "shared" });
+    expect(c).toEqual([{ id: 498, ignore: true, origin: "shared" }]);
+    const d = mergeEntry(c, { id: 498, cooldownS: 50 });
+    expect(d).toEqual([{ id: 498, cooldownS: 50 }]); // a patch after ignore starts over
+    expect(mergeEntry(d, { id: 1, name: "X" })).toEqual([{ id: 498, cooldownS: 50 }, { id: 1, name: "X" }]);
+  });
+
+  test("specDefensives reports the entry's origin, defaulting to override", () => {
+    const override: Override = { "Paladin:Holy": [{ id: 498, cooldownS: 45, origin: "shared" }, { id: 31821, cooldownS: 170, origin: "pending" }, { id: 642, cooldownS: 250 }] };
+    const d = specDefensives(SHIPPED, override, "Paladin", "Holy");
+    const origin = (id: number) => d.entries.find((e) => e.id === id)?.origin;
+    expect([origin(498), origin(31821), origin(642)]).toEqual(["shared", "pending", "override"]);
+    expect(d.entries.find((e) => e.id === 498)?.cooldownS).toBe(45);
+  });
+
+  test("layerPatches applies key/patch pairs tagged with the layer; tagOrigin tags every entry", () => {
+    const shared = tagOrigin({ "Paladin:Holy": [{ id: 498, cooldownS: 45 }] }, "shared");
+    expect(shared).toEqual({ "Paladin:Holy": [{ id: 498, cooldownS: 45, origin: "shared" }] });
+    const mine = layerPatches(shared, [
+      { key: "Paladin:Holy", patch: { id: 498, durationS: 9 } },
+      { key: "Paladin:*", patch: { id: 642, ignore: true } },
+    ], "pending");
+    expect(mine).toEqual({
+      "Paladin:Holy": [{ id: 498, cooldownS: 45, durationS: 9, origin: "pending" }],
+      "Paladin:*": [{ id: 642, ignore: true, origin: "pending" }],
+    });
+    expect(shared["Paladin:Holy"]).toEqual([{ id: 498, cooldownS: 45, origin: "shared" }]); // pure
+  });
+
+  test("validateOverride strips origin from file entries", () => {
+    expect(validateOverride({ "Paladin:Holy": [{ id: 498, cooldownS: 45, origin: "shared" }] })).toEqual({ "Paladin:Holy": [{ id: 498, cooldownS: 45 }] });
+  });
+
+  test("applyPatch still refuses an incomplete unknown id and keeps its merge semantics", () => {
+    const eff = specDefensives(SHIPPED, {}, "Paladin", "Holy");
+    expect(() => applyPatch({}, "Paladin:Holy", { id: 999999, cooldownS: 30 }, eff)).toThrow(/999999/);
+    expect(applyPatch({}, "Paladin:Holy", { id: 498, cooldownS: 45 }, eff)).toEqual({ "Paladin:Holy": [{ id: 498, cooldownS: 45 }] });
   });
 });

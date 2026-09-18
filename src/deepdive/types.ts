@@ -2,6 +2,9 @@ import type { RawTable } from "../signals/types.ts";
 
 export type DefensiveKind = "major" | "immunity" | "minor";
 
+/** Where an effective entry comes from: the shipped table, the local override file, the hosted shared layer or the caller's own pending proposal. */
+export type EntryOrigin = "shipped" | "override" | "shared" | "pending";
+
 export interface DefensiveSpell {
   id: number;
   name: string;
@@ -19,6 +22,8 @@ export interface OverrideEntry {
   kind?: DefensiveKind;
   /** Drop this id from the effective table and from the audit's unlisted list. */
   ignore?: boolean;
+  /** Set by the hosted loaders (never read from the file): the layer this entry came from. */
+  origin?: Exclude<EntryOrigin, "shipped">;
 }
 export type Override = Record<string, OverrideEntry[]>;
 
@@ -30,7 +35,7 @@ export interface ShippedTable {
 }
 
 export interface EffectiveEntry extends DefensiveSpell {
-  origin: "shipped" | "override";
+  origin: EntryOrigin;
 }
 
 export interface SpecDefensives {
@@ -43,7 +48,9 @@ export interface SpecDefensives {
 export interface LoadedTables {
   shipped: ShippedTable;
   override: Override;
-  overridePath: string;
+  /** "file": the local defensives.json next to .env; "shared": the hosted DB layer (+ the caller's pending proposals). */
+  source: "file" | "shared";
+  overridePath: string | null; // a path iff source === "file"
   warning?: string;          // override unreadable/invalid → shipped only
 }
 
@@ -70,7 +77,7 @@ export interface DefensiveUse extends DefensiveSpell {
   usage: number;
   observedMinIntervalS: number | null;
   cdMismatch: boolean;
-  origin: "shipped" | "override";
+  origin: EntryOrigin;
 }
 
 export type DeathVerdict = "immunity available" | "defensive available" | "covered" | "nothing available";

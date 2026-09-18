@@ -14,7 +14,7 @@ afterAll(() => {
   if (saved.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = saved.secret;
 });
 
-const tables: LoadedTables = { shipped: SHIPPED, override: {}, overridePath: "/dev/null" };
+const tables: LoadedTables = { shipped: SHIPPED, override: {}, source: "file", overridePath: "/dev/null" };
 const ping = (spent: number) => ({ rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: spent, pointsResetIn: 10 } });
 
 describe("runDeepdive", () => {

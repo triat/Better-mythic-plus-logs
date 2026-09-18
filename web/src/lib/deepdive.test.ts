@@ -1,7 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { EntryOrigin } from "@shared/deepdive/types.ts";
-import type { ProposalSummary } from "@shared/hosted/defensives.ts";
-import type { LookupPayload, RunDefensives } from "../types.ts";
+import type { EntryOrigin, LookupPayload, ProposalSummary, RunDefensives } from "../types.ts";
 import {
   actionLabels,
   analysisFor,
@@ -80,7 +78,7 @@ describe("panelModel", () => {
     expect(m.deaths[1]!.cls).toBe("tone-good");
     expect(m.deaths[1]!.states).toEqual([{ id: 498, name: "Divine Protection", text: "active", cls: "tone-good" }]);
     expect(m.unlisted).toEqual([{ id: 31821, name: "Aura Mastery", text: " · 2× · 16 s up" }]);
-    expect(m.tableUsed).toBe("Table used: Holy Paladin · 3 entries · 1 from your override");
+    expect(m.tableParts.map((p) => p.text).join(" · ")).toBe("Table used: Holy Paladin · 3 entries · 1 from your override");
     expect(m.notice).toBeNull();
   });
   test("verdict tones and notices", () => {
@@ -167,13 +165,15 @@ describe("hosted panel: labels, dots, proposals", () => {
       { id: 3, spellId: 642, status: "pending", patch: { id: 642, cooldownS: 300 }, note: null, createdAt: 1_000_000, decidedAt: null },
       { id: 2, spellId: 1044, status: "rejected", patch: { id: 1044, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 }, note: "It is a freedom, not a defensive.", createdAt: 1_000_000 - 3 * 86400_000, decidedAt: 1_000_000 - 2 * 86400_000 },
       { id: 1, spellId: 498, status: "approved", patch: { id: 498, cooldownS: 60 }, note: null, createdAt: 1_000_000 - 6 * 86400_000, decidedAt: 1_000_000 - 5 * 86400_000 },
-      { id: 4, spellId: 9999, status: "pending", patch: { id: 9999, ignore: true }, note: null, createdAt: now, decidedAt: null },
+      { id: 4, spellId: 9999, status: "pending", patch: { id: 9999, name: "Aura Mastery", ignore: true }, note: null, createdAt: now, decidedAt: null },
+      { id: 5, spellId: 8888, status: "pending", patch: { id: 8888, ignore: true }, note: null, createdAt: now, decidedAt: null },
     ];
     expect(proposalLines(proposals, dd().defensives, now)).toEqual([
       { id: 3, dot: "dot-pending", what: "Divine Shield · cd 300 s", when: "pending · 2h ago" },
       { id: 2, dot: "dot-rejected", what: "Blessing of Freedom · + minor, cd 25 s, 6 s", when: "rejected 2d ago — \"It is a freedom, not a defensive.\"" },
       { id: 1, dot: "dot-approved", what: "Divine Protection · cd 60 s", when: "approved 5d ago" },
-      { id: 4, dot: "dot-pending", what: "spell 9999 · ignore", when: "pending · just now" },
+      { id: 4, dot: "dot-pending", what: "Aura Mastery · ignore", when: "pending · just now" },
+      { id: 5, dot: "dot-pending", what: "spell 8888 · ignore", when: "pending · just now" },
     ]);
   });
   test("panelModel exposes specClass and tableParts", () => {

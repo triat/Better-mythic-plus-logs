@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ProposalSummary } from "@shared/hosted/defensives.ts";
-import type { DefensiveKind, EntryOrigin, OverrideEntry, RunDefensives } from "../types.ts";
+import type { DefensiveKind, EntryOrigin, OverrideEntry, ProposalSummary, RunDefensives } from "../types.ts";
 import type { ProposalMode } from "../lib/hostedMode.ts";
 import { api } from "../api.ts";
 import { actionLabels, costText, originDot, originLabel, originSuffix, panelModel, proposalLines } from "../lib/deepdive.ts";
@@ -130,7 +129,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mo
           ) : (
             <span className="dd-actions">
               {KINDS.map((k) => <button key={k} type="button" className="chip" disabled={busy} onClick={() => setAdding({ id: u.id, name: u.name, kind: k })}>{labels.add(k)}</button>)}
-              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, ignore: true })}>{labels.ignore}</button>
+              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, name: u.name, ignore: true })}>{labels.ignore}</button>
             </span>
           )}
         </div>
@@ -151,7 +150,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mo
           ) : (
             <span className="dd-actions">
               <button type="button" className="chip" disabled={busy} onClick={() => setEditing({ id: u.id, cd: String(u.cooldownS) })}>{labels.editCd}</button>
-              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, ignore: true })}>{labels.remove}</button>
+              <button type="button" className="chip" disabled={busy} onClick={() => void onPatch({ id: u.id, name: u.name, ignore: true })}>{labels.remove}</button>
             </span>
           )}
         </div>

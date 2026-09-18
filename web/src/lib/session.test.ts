@@ -44,6 +44,7 @@ describe("initialsOf / pendingText", () => {
   test("first letter upper-cased, '?' for an empty name", () => {
     expect(initialsOf("muleyoxo")).toBe("M");
     expect(initialsOf("  ")).toBe("?");
+    expect(initialsOf("😀tom")).toBe("😀");
   });
   test("pending proposals count, singular/plural, null for none", () => {
     expect(pendingText(0)).toBeNull();

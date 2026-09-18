@@ -9,7 +9,7 @@ export function pointsLeft(q: QuotaInfo | null): number | null {
 export function quotaLabel(q: QuotaInfo | null): string | null {
   const left = pointsLeft(q);
   if (left === null) return null;
-  if (left < 1) return `quota reached · resets in ${Math.ceil(q!.resetInS / 60)} min`;
+  if (left < 1) return `quota reached · resets in ${Math.max(1, Math.ceil(q!.resetInS / 60))} min`;
   return `${Math.floor(left)} pts left this hour`;
 }
 

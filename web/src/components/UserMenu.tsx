@@ -16,7 +16,8 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- onOpen is read once per opening
+    // onOpen is read once per opening
+  }, [open]);
   const pending = pendingProposals === null ? null : pendingText(pendingProposals);
   return (
     <div className="user-menu" ref={ref}>
@@ -48,5 +49,5 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
 function Avatar({ m, size }: { m: MenuModel; size: number }) {
   const [broken, setBroken] = useState(false);
   if (broken) return <span className="avatar" style={{ width: size, height: size, fontSize: size > 24 ? 13 : 11 }}>{m.initials}</span>;
-  return <img className="avatar" src={m.avatarUrl} width={size} height={size} alt="" onError={() => setBroken(true)} />;
+  return <img className="avatar" src={m.avatarUrl} width={size} height={size} style={{ width: size, height: size }} alt="" onError={() => setBroken(true)} />;
 }

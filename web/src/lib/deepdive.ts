@@ -1,6 +1,14 @@
-import type { EntryOrigin } from "@shared/deepdive/types.ts";
-import type { ProposalSummary } from "@shared/hosted/defensives.ts";
-import type { DeathAnalysis, DefensiveKind, DefensiveUse, LookupPayload, MPlusRun, OverrideEntry, RunDefensives } from "../types.ts";
+import type {
+  DeathAnalysis,
+  DefensiveKind,
+  DefensiveUse,
+  EntryOrigin,
+  LookupPayload,
+  MPlusRun,
+  OverrideEntry,
+  ProposalSummary,
+  RunDefensives,
+} from "../types.ts";
 import type { ProposalMode } from "./hostedMode.ts";
 import { fmtAge } from "./format.ts";
 
@@ -28,7 +36,7 @@ export interface PanelModel {
   title: string; meta: string; notice: string | null;
   usage: UsageRow[]; majorsText: string | null;
   deathsHeadline: string; deaths: DeathLine[];
-  unlisted: { id: number; name: string; text: string }[]; tableUsed: string;
+  unlisted: { id: number; name: string; text: string }[];
   specClass: string; tableParts: TablePart[];
 }
 
@@ -151,7 +159,6 @@ export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: st
     deathsHeadline: d.deaths.length === 0 ? "No deaths" : `${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`,
     deaths: d.deaths.map((x) => deathLine(x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
     unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: ` · ${u.casts}× · ${u.uptimeS} s up` })),
-    tableUsed: tableUsedText(d.defensives, specClass),
     specClass,
     tableParts: tableUsedParts(d.defensives, specClass),
   };

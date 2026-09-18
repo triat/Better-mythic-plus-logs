@@ -3,6 +3,7 @@ import type { EffectiveEntry, OverrideEntry } from "@shared/deepdive/types.ts";
 import type { ProposalSummary } from "@shared/hosted/defensives.ts";
 
 export type { LookupPayload } from "@shared/lookup.ts";
+export type { ProposalSummary } from "@shared/hosted/defensives.ts";
 export type { AxisKey, AxisScore, Confidence, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";

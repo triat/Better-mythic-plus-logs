@@ -29,7 +29,10 @@ export function quotaLine(q: QuotaInfo | null, isAdmin: boolean): QuotaLine {
   };
 }
 
-export const initialsOf = (name: string): string => name.trim().slice(0, 1).toUpperCase() || "?";
+export const initialsOf = (name: string): string => {
+  const first = Array.from(name.trim())[0];
+  return first ? first.toUpperCase() : "?";
+};
 
 /** "N pending proposal(s)" for the Admin menu item; null when there is nothing to review. */
 export const pendingText = (n: number): string | null => (n > 0 ? `${n} pending proposal${n === 1 ? "" : "s"}` : null);

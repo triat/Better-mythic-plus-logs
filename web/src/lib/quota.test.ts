@@ -11,6 +11,7 @@ describe("quota view model", () => {
   test("quotaLabel rounds down and says when it resets once exhausted", () => {
     expect(quotaLabel({ used: 120.4, limit: 300, resetInS: 900 })).toBe("179 pts left this hour");
     expect(quotaLabel({ used: 300, limit: 300, resetInS: 90 })).toBe("quota reached · resets in 2 min");
+    expect(quotaLabel({ used: 300, limit: 300, resetInS: 5 })).toBe("quota reached · resets in 1 min");
     expect(quotaLabel({ used: 1, limit: null, resetInS: 900 })).toBeNull();
     expect(quotaLabel(null)).toBeNull();
   });

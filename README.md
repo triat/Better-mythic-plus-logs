@@ -457,7 +457,8 @@ seen and the estimates, so it is best effort) (`429 { error: "budget", … }`), 
 working for everyone. The user menu (avatar · name, top right) shows "N of L pts left this hour"
 with a bar and the reset time; the header itself only turns red ("quota reached · resets in N min")
 once nothing is left. Analyze buttons are disabled with that reset time as tooltip when the estimate
-exceeds what is left; a 429 shows the server's message as a toast and refreshes the numbers.
+exceeds what is left; a 429 shows the server's message as a toast and refreshes the numbers
+(from `error: "quota"` bodies — the member's own; a `budget` refusal only shows the toast).
 `GET /api/me` and every lookup/analysis response carry `quota`, and admins can read
 `GET /api/admin/usage` (this hour per member, the client's last
 `rateLimitData`, the last 24 hourly totals). Estimates before spending:

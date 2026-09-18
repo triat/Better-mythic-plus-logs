@@ -1,6 +1,6 @@
 # Testing
 
-`bun test` from the repo root runs everything: `test/**/*.test.ts` (backend) and `web/src/**/*.test.ts` (front view models). ~397 tests, a few seconds, no network, no `web/dist` needed. `just check` (tsc for both projects) is the other gate. Both must be green before a commit.
+`bun test` from the repo root runs everything: `test/**/*.test.ts` (backend) and `web/src/**/*.test.ts` (front view models). ~431 tests, a few seconds, no network, no `web/dist` needed. `just check` (tsc for both projects) is the other gate. Both must be green before a commit.
 
 ## Conventions
 
@@ -8,9 +8,11 @@
 - **No network, ever.** Inject fakes through the `deps` objects (`performLookup(opts, { store, gql, fetchFn, evalConfig, tables })`, `enrichRuns(runs, name, store, { gql })`, `fetchRioProfile(region, realm, name, store, { fetchFn, sleep })`). A test that would hit WCL or Raider.IO is a bug.
 - **SQLite**: `openStore(":memory:")` per test (`openStoreOrMemory` is the CLI's fallback, not a test helper); the `Store._db` handle exists for asserting rows.
 - **Server tests** (`test/server*.test.ts`) start `runServer({ port: 0, … })` on an ephemeral port with a temp dir / in-memory store and fake `gql`; they must pass with `web/dist` missing (static routes answer 503 — `test/server.test.ts` covers it). Hosted per-user state has its own files: `test/server-user-state.test.ts` (hosted server with two users, dummy WCL credentials, never fetches), `test/server-sse.test.ts`, `test/hosted/history.test.ts`, `test/hosted/settings.test.ts`, and the front side in `web/src/lib/settings.test.ts`.
+- **WCL budget and quotas**: `test/wcl/meter.test.ts` (`PointsMeter` attribution, window/reset logic), `test/hosted/quota.test.ts` (`QuotaGate.reserve`/`status`, the quota and budget refusals, admin exemption), `test/lookup.test.ts` (`performLookup` end-to-end with `fetchMplus`/`gql` fakes and dummy WCL credentials — the pattern for any future lookup test), `test/server-lookup.test.ts` (in-flight dedupe, refresh never joining a flight, the 429 shapes), and `web/src/lib/quota.test.ts` (`pointsLeft`/`quotaLabel`/`canAfford`).
 - **Front tests never import React or the DOM**: they test `web/src/lib/*` view models with plain objects. Component logic that needs a test belongs in a view model.
 - **Rules live in tests.** Spec-mandated numbers (curves, windows, precedence, costs) are asserted literally — when a spec rule changes, change the spec, the test and the code in the same commit.
 - Builders over fixtures for unit tests: `test/evaluation/helpers.ts` (`neutralSignals`, `deaths`, …) builds minimal `RunSignals`/`EvalPayload`; prefer extending those helpers to adding JSON.
+- **`bun test` does not type-check and auto-loads the repo's `.env`.** A test that could fall through to a real WCL call must set dummy `WCL_CLIENT_ID`/`WCL_CLIENT_SECRET` for its duration (see `test/lookup.test.ts`, `test/server-lookup.test.ts`, `test/server-user-state.test.ts`) — a RED step must never rely on a type error to keep a network path closed.
 
 ## Fixtures (`test/fixtures/`)
 

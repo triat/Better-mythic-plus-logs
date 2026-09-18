@@ -51,13 +51,13 @@ Bun ≥ 1.3 (runtime, test runner, bundler, SQLite via `bun:sqlite`), TypeScript
 ```
 src/cli.ts            command dispatch            src/server.ts         Bun.serve: /api/* + embedded web/dist
 src/lookup.ts         rankings → analysis → enrich (WCL ‖ Raider.IO) → payload
-src/wcl/              OAuth2 + gql() + queries     src/signals/          per-run signals, peers, RIO, SQLite store
+src/wcl/              OAuth2 + gql() + queries + meter     src/signals/          per-run signals, peers, RIO, SQLite store
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
-src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, cookie/state/Discord helpers, auth gate
+src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, quota gate, cookie/state/Discord helpers, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 web/src/lib/          pure tested view models      web/src/components/   thin React components
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#4 (hosted skeleton, Discord login, per-user state) are shipped, next is #5 (WCL budget / rate limits).
+Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#5 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas) are shipped, next is #6 (shared defensives table).

@@ -437,11 +437,26 @@ Deep-dive analyses are attached when a tab is opened, so an analysis run by one
 member shows up for everyone who has that run in a tab. Local mode is unchanged:
 history in memory, settings in the browser.
 
-Quotas and the admin page come with the following issues.
+**WCL budget.** The instance shares one Warcraft Logs API client (3600 pts/h).
+Every point spent is measured from the `rateLimitData` WCL returns and charged
+to the member whose request spent it. Each member may spend
+`BMPL_POINTS_PER_USER_HOUR` points per calendar hour (default 300; admins are
+exempt); a lookup or an analysis that would exceed it is refused before any
+fetch with `429 { error: "quota", message, used, limit, resetInS }`. Cached
+data — a tab in your history, a run already in the cache, an analysis already
+done — never counts. Whatever the quotas say, the client is never driven below
+100 points left (`429 { error: "budget", … }`), so cached lookups keep working
+for everyone. The header shows "N pts left this hour"; `GET /api/me` and every
+lookup/analysis response carry `quota`, and admins can read
+`GET /api/admin/usage` (this hour per member, the client's last
+`rateLimitData`, the last 24 hourly totals). Estimates before spending:
+rankings ≈ 10 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attribution
+is exact when requests do not overlap and approximate when they do; the hour's
+total is always exact.
 
-Do not expose a hosted instance to the internet before issue #5 lands:
-everyone who signs in spends the shared WCL budget and can edit the server's
-`defensives.json`.
+The admin page comes with issue #8. Anyone who signs in can still edit the
+server's `defensives.json` (`POST /api/defensives`) — harden that before
+opening the instance beyond a trusted circle, tracked in issue #9.
 
 Required environment (copy `.env.hosted.example`):
 
@@ -452,6 +467,9 @@ Required environment (copy `.env.hosted.example`):
 | `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET` | Discord OAuth application |
 | `BMPL_ADMIN_DISCORD_IDS` | Comma-separated Discord user ids of the admins |
 | `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` | The shared Warcraft Logs client |
+
+Optional: `BMPL_POINTS_PER_USER_HOUR` — WCL points each member may spend per
+calendar hour (default 300; admins are exempt).
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and
 the list of what to fix. Local mode (`bmpl serve`) is unchanged.

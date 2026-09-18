@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openHosted } from "../src/hosted/db.ts";
+import { hourStart, openHosted } from "../src/hosted/db.ts";
 import type { HostedDb } from "../src/hosted/db.ts";
 import { runServer } from "../src/server.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
@@ -89,5 +89,29 @@ describe("removing an invite", () => {
     const del = await fetch(u("/api/admin/invites/333333333333333333"), { method: "DELETE", headers: { cookie: admin.cookie } });
     expect(await del.json()).toEqual({ ok: true, sessionsEnded: 1 });
     expect((await fetch(u("/api/me"), { headers: { cookie: third.cookie } })).status).toBe(401);
+  });
+});
+
+describe("GET /api/admin/usage", () => {
+  test("members are refused; admins get the gauge data", async () => {
+    expect((await fetch(u("/api/admin/usage"), { headers: { cookie: member.cookie } })).status).toBe(403);
+    db.usage.add(member.user.id, Date.now(), 12.5);
+    const res = await fetch(u("/api/admin/usage"), { headers: { cookie: admin.cookie } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.limitPerUser).toBe(300);
+    expect(body.hourStart).toBe(hourStart(Date.now()));
+    expect(body.resetInS).toBeGreaterThan(0);
+    expect(body.instance).toBeNull(); // no WCL call has been observed in this process
+    expect(body.users).toEqual([{ userId: member.user.id, discordId: member.user.discordId, username: member.user.username, role: "member", points: 12.5 }]);
+    expect(body.hours).toEqual([{ hourStart: hourStart(Date.now()), points: 12.5 }]);
+  });
+});
+
+describe("/api/me quota", () => {
+  test("/api/me for an admin has limit null", async () => {
+    const me = await (await fetch(u("/api/me"), { headers: { cookie: admin.cookie } })).json();
+    expect(me.quota.limit).toBeNull();
   });
 });

@@ -85,7 +85,7 @@ export function authRoutes(rt: HostedRuntime): Route[] {
     }, "public"),
 
     route("GET", "/api/me", (_req, _url, ctx) => {
-      const res = jsonResponse({ ok: true, user: meUser(ctx.user!) });
+      const res = jsonResponse({ ok: true, user: meUser(ctx.user!), quota: rt.quota.status({ id: ctx.user!.id, role: ctx.user!.role }) });
       // Slide the cookie's Max-Age along with the server-side expiry (sessions.get already
       // extends expires_at); otherwise the browser drops the cookie 30 days after login
       // even though the session itself is still valid.

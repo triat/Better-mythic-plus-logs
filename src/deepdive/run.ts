@@ -1,6 +1,8 @@
+import type { QuotaRefusal, Reserve } from "../hosted/quota.ts";
 import type { GqlFn } from "../signals/enrich.ts";
 import type { Store } from "../signals/store.ts";
 import { gql as realGql } from "../wcl/client.ts";
+import { ESTIMATE_DEEPDIVE } from "../wcl/meter.ts";
 import { PING_QUERY } from "../wcl/queries.ts";
 import type { RateLimitData } from "../wcl/types.ts";
 import { analyzeCached } from "./attach.ts";
@@ -10,10 +12,10 @@ import type { LoadedTables, RunDefensives } from "./types.ts";
 import { BudgetLowError, MIN_BUDGET_POINTS, fetchRawDeepDive } from "./wcl.ts";
 
 export interface DeepdiveRequest { reportCode: string; fightID: number; character: string; force?: boolean }
-export interface RunDeps { store: Store; tables: LoadedTables; gql?: GqlFn }
+export interface RunDeps { store: Store; tables: LoadedTables; gql?: GqlFn; /** Hosted quota gate; absent locally. */ reserve?: Reserve }
 export type DeepdiveOutcome =
   | { ok: true; result: RunDefensives; fromCache: boolean; pointsSpent: number | null }
-  | { ok: false; status: 402 | 404 | 502; error: string };
+  | { ok: false; status: 402 | 404 | 429 | 502; error: string; quota?: QuotaRefusal };
 
 /**
  * Analyze one run for one character: cached raw row → 0 pts; otherwise a budget pre-check
@@ -33,6 +35,8 @@ export async function runDeepdive(req: DeepdiveRequest, deps: RunDeps): Promise<
     const result = analyzeCached(deps.store, deps.tables, req, req.character);
     if (result) return { ok: true, result, fromCache: true, pointsSpent: null };
   }
+  const refused = deps.reserve?.(ESTIMATE_DEEPDIVE);
+  if (refused) return { ok: false, status: 429, error: refused.message, quota: refused };
   try {
     const ping = await gql<RateLimitData>(PING_QUERY);
     const left = ping.rateLimitData.limitPerHour - ping.rateLimitData.pointsSpentThisHour;

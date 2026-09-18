@@ -92,7 +92,9 @@ describe("GET /auth/discord/callback", () => {
     const cookie = session.split(";")[0]!;
     const me = await fetch(u("/api/me"), { headers: { cookie } });
     expect(me.status).toBe(200);
-    expect(await me.json()).toEqual({ ok: true, user: { id: expect.any(Number), discordId: "123456789012345678", username: "tom", globalName: "Tom", avatarUrl: "https://cdn.discordapp.com/avatars/123456789012345678/abc.png?size=64", role: "member" } });
+    const meBody = await me.json();
+    expect(meBody).toEqual({ ok: true, user: { id: expect.any(Number), discordId: "123456789012345678", username: "tom", globalName: "Tom", avatarUrl: "https://cdn.discordapp.com/avatars/123456789012345678/abc.png?size=64", role: "member" }, quota: { used: 0, limit: 300, resetInS: meBody.quota.resetInS } });
+    expect(meBody.quota.resetInS).toBeGreaterThan(0);
     expect(db.users.byDiscordId("123456789012345678")?.role).toBe("member");
     // /api/me re-issues the session cookie so its Max-Age slides with the server-side expiry.
     const reissued = me.headers.getSetCookie().find((c) => c.startsWith("bmpl_session="))!;

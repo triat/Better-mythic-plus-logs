@@ -1,7 +1,9 @@
 // Invite and user management. Every route is auth: "admin"; the admin page (issue #8) is the client.
 import { DISCORD_ID } from "../hosted/config.ts";
-import { avatarUrl } from "../hosted/discord.ts";
+import { HOUR_MS, hourStart } from "../hosted/db.ts";
 import type { UserRow } from "../hosted/db.ts";
+import { avatarUrl } from "../hosted/discord.ts";
+import { resetInS } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import { jsonResponse, readJson } from "./http.ts";
 import { prefixRoute, route } from "./routes.ts";
@@ -31,6 +33,24 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const removed = rt.db.invites.remove(id);
       const sessionsEnded = user && !rt.config.adminDiscordIds.includes(id) ? rt.db.sessions.deleteForUser(user.id) : 0;
       return jsonResponse({ ok: removed, sessionsEnded });
+    }, "admin"),
+    // Budget gauge for the admin page (issue #8): this hour per member, the shared client's last
+    // rateLimitData, and the last 24 hourly totals.
+    route("GET", "/api/admin/usage", (_req, _url, ctx) => {
+      const at = ctx.now;
+      const users = new Map(rt.db.users.list().map((u) => [u.id, u]));
+      return jsonResponse({
+        ok: true,
+        hourStart: hourStart(at),
+        resetInS: resetInS(at),
+        limitPerUser: rt.config.pointsPerUserHour,
+        instance: rt.meter.snapshot(),
+        users: rt.db.usage.byUser(at).map((r) => {
+          const u = users.get(r.userId);
+          return { userId: r.userId, discordId: u?.discordId ?? null, username: u?.username ?? null, role: u?.role ?? null, points: r.points };
+        }),
+        hours: rt.db.usage.totals(at - 24 * HOUR_MS),
+      });
     }, "admin"),
     route("GET", "/api/admin/users", () => jsonResponse({ ok: true, users: rt.db.users.list().map(adminUser) }), "admin"),
     prefixRoute("POST", "/api/admin/users/", async (req, url, ctx) => {

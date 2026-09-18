@@ -146,3 +146,11 @@ describe("/api/settings (hosted)", () => {
     expect((await fetch(l("/api/settings"), { method: "PUT", body: "{}" })).status).toBe(404);
   });
 });
+
+describe("/api/me quota (hosted)", () => {
+  test("/api/me carries the quota: members have a limit, admins do not", async () => {
+    const me = await (await fetch(h("/api/me"), as(a))).json();
+    expect(me.quota).toEqual({ used: 0, limit: 300, resetInS: me.quota.resetInS });
+    expect(me.quota.resetInS).toBeGreaterThan(0);
+  });
+});

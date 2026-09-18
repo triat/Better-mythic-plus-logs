@@ -59,4 +59,22 @@ describe("runDeepdive", () => {
     expect(store.getDeepDive(f.run.reportCode, f.run.fightID, f.character)).toBeNull();
     store.close();
   });
+  test("the quota gate is consulted after the cache check and before the PING; a refusal spends nothing", async () => {
+    const store = openStore(":memory:");
+    const f = await loadDeepdiveFixture("s2-healer");
+    store.putWclRun(f.run.reportCode, f.run.fightID, f.report);
+    const req = { reportCode: f.run.reportCode as string, fightID: f.run.fightID as number, character: f.character as string };
+    let calls = 0;
+    const gql = async <T,>() => { calls++; return ping(0) as T; };
+    const refusal = { error: "quota" as const, message: "Hourly quota reached (300/300 pts) — resets in 5 min", used: 300, limit: 300, resetInS: 300 };
+    const estimates: number[] = [];
+    const r = await runDeepdive(req, { store, tables, gql, reserve: (e) => { estimates.push(e); return refusal; } });
+    expect(r).toEqual({ ok: false, status: 429, error: refusal.message, quota: refusal });
+    expect(estimates).toEqual([3]);
+    expect(calls).toBe(0);
+    store.putDeepDive(req.reportCode, req.fightID, req.character, f.deepdive);
+    const cached = await runDeepdive(req, { store, tables, gql, reserve: () => { throw new Error("must not be consulted for a cached analysis"); } });
+    expect(cached.ok && cached.fromCache).toBe(true);
+    store.close();
+  });
 });

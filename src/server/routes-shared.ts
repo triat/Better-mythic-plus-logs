@@ -37,7 +37,7 @@ async function handleHealth(): Promise<Response> {
 export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
     route("POST", "/api/lookup", (req, _url, rc) => handleLookup(req, rc, ctx.runtime)),
-    route("POST", "/api/deepdive", (req, _url, ctx) => handleDeepdive(req, ctx)),
+    route("POST", "/api/deepdive", (req, _url, rc) => handleDeepdive(req, rc, ctx.runtime)),
     route("GET", "/api/defensives", (_req, url) => handleDefensivesGet(url, ctx.hosted)),
     route("POST", "/api/defensives", (req) => handleDefensivesPost(req, ctx.hosted)),
     route("GET", "/api/history", (_req, _url, rc) => jsonResponse({ ok: true, items: historyOf(rc).list().map(historySummary) })),

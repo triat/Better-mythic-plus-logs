@@ -54,10 +54,10 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
     }),
     // In hosted mode the watcher never runs; the initial status is simply "inactive".
     route("GET", "/api/events", () => eventsResponse({ event: "status", data: watcherStatus() })),
-    route("GET", "/api/health", () => handleHealth()),
+    route("GET", "/api/health", () => handleHealth(), "public"),
     route("GET", "/api/status", () =>
       ctx.hosted
         ? jsonResponse({ ok: true, hosted: true, hasCredentials: hasCredentials() })
-        : jsonResponse({ ok: true, hosted: false, hasCredentials: hasCredentials(), envPath: ctx.envPath })),
+        : jsonResponse({ ok: true, hosted: false, hasCredentials: hasCredentials(), envPath: ctx.envPath }), "public"),
   ];
 }

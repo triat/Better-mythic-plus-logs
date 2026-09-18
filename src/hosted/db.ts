@@ -48,6 +48,7 @@ const session = (r: SessionRaw): SessionRow => ({ id: r.id, userId: r.user_id, c
 const invite = (r: InviteRaw): InviteRow => ({ discordId: r.discord_id, invitedBy: r.invited_by, createdAt: r.created_at, note: r.note });
 
 export function openHosted(db: Database): HostedDb {
+  db.exec("PRAGMA foreign_keys = ON");
   applyHostedSchema(db);
 
   const userById = db.query<UserRaw, [number]>("SELECT * FROM users WHERE id = ?");

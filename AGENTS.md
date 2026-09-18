@@ -54,10 +54,10 @@ src/lookup.ts         rankings → analysis → enrich (WCL ‖ Raider.IO) → p
 src/wcl/              OAuth2 + gql() + queries + meter     src/signals/          per-run signals, peers, RIO, SQLite store
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
-src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, quota gate, cookie/state/Discord helpers, auth gate
+src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, cookie/state/Discord helpers, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 web/src/lib/          pure tested view models      web/src/components/   thin React components
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#5 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas) are shipped, next is #6 (shared defensives table).
+Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#6 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table) are shipped, next is #7 (hosted front design pass).

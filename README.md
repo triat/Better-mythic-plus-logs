@@ -147,7 +147,8 @@ your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"` or
 
 `bmpl defensives <Class> <Spec>` prints the effective table (shipped +
 override, override entries marked); `bmpl defensives --check` validates the
-override file without printing anything else.
+override file without printing anything else. `--shared` reads the hosted
+instance's approved layer from `bmpl.db` instead of the file.
 
 Every spell name in the panel links to Wowhead and shows the spell's tooltip
 on hover (Wowhead's `tooltips.js`, loaded from `wow.zamimg.com` — the only
@@ -458,9 +459,15 @@ rankings ≈ 10 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attrib
 is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
 
-The admin page comes with issue #8. Anyone who signs in can still edit the
-server's `defensives.json` (`POST /api/defensives`) — harden that before
-opening the instance beyond a trusted circle, tracked in issue #9.
+**Shared defensives table.** Corrections made from the panel are proposals:
+they apply to you immediately (marked "pending review") and to everyone once
+an admin approves them (`GET /api/admin/proposals`, `POST
+/api/admin/proposals/:id/approve|reject { note }`); a rejected one is dropped
+for you too, with the admin's note visible in `GET /api/defensives` →
+`proposals`. An admin's own correction is approved on the spot. The server's
+`defensives.json` is not used in hosted mode; the approved layer lives in
+`bmpl.db` (`bmpl defensives <Class> <Spec> --shared` and `just
+audit-defensives --shared` read it). The admin page comes with issue #8.
 
 Required environment (copy `.env.hosted.example`):
 

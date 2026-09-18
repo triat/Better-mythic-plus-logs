@@ -1,3 +1,6 @@
+/** Selected by every query so the hosted meter can account for each call (src/wcl/meter.ts). */
+export const RATE_LIMIT = "rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn }";
+
 export const PING_QUERY = /* GraphQL */ `
   query Ping {
     rateLimitData {
@@ -10,6 +13,7 @@ export const PING_QUERY = /* GraphQL */ `
 
 export const ZONES_QUERY = /* GraphQL */ `
   query Zones {
+    ${RATE_LIMIT}
     worldData {
       zones {
         id
@@ -40,6 +44,7 @@ export const CHARACTER_ZONE_RANKINGS_QUERY = /* GraphQL */ `
     $byBracket: Boolean
     $metric: CharacterPageRankingMetricType
   ) {
+    ${RATE_LIMIT}
     characterData {
       character(
         name: $name
@@ -68,6 +73,7 @@ export const CHARACTER_METRIC_PROBE_QUERY = /* GraphQL */ `
     $zoneID: Int!
     $partition: Int
   ) {
+    ${RATE_LIMIT}
     characterData {
       character(
         name: $name
@@ -98,6 +104,7 @@ const RUN_SUMMARY_FIELDS = /* GraphQL */ `
 
 export const REPORT_RUN_SUMMARY_QUERY = /* GraphQL */ `
   query ReportRunSummary($code: String!, $fightID: Int!) {
+    ${RATE_LIMIT}
     reportData {
       report(code: $code) {
 ${RUN_SUMMARY_FIELDS}
@@ -111,6 +118,7 @@ ${RUN_SUMMARY_FIELDS}
 // a null filterExpression would return *all* damage taken.
 export const REPORT_RUN_SUMMARY_WITH_AVOIDABLE_QUERY = /* GraphQL */ `
   query ReportRunSummaryWithAvoidable($code: String!, $fightID: Int!, $avoidFilter: String!) {
+    ${RATE_LIMIT}
     reportData {
       report(code: $code) {
 ${RUN_SUMMARY_FIELDS}
@@ -130,6 +138,7 @@ export const CHARACTER_ENCOUNTER_RANKINGS_QUERY = /* GraphQL */ `
     $byBracket: Boolean
     $metric: CharacterRankingMetricType
   ) {
+    ${RATE_LIMIT}
     characterData {
       character(
         name: $name
@@ -156,6 +165,7 @@ export const CHARACTER_BASIC_QUERY = /* GraphQL */ `
     $serverSlug: String!
     $serverRegion: String!
   ) {
+    ${RATE_LIMIT}
     characterData {
       character(
         name: $name

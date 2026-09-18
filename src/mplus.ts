@@ -3,7 +3,7 @@ import { type Metric, isHealerSpec, metricForSpec } from "./roles.ts";
 import type { RunSignals } from "./signals/types.ts";
 import { realmToSlug } from "./util.ts";
 import { gql } from "./wcl/client.ts";
-import { CHARACTER_METRIC_PROBE_QUERY, ZONES_QUERY } from "./wcl/queries.ts";
+import { CHARACTER_METRIC_PROBE_QUERY, RATE_LIMIT, ZONES_QUERY } from "./wcl/queries.ts";
 import type { ZonesData } from "./wcl/types.ts";
 
 export interface MPlusRun {
@@ -151,6 +151,7 @@ function buildMultiEncounterQuery(encounterIDs: number[]): string {
       $partition: Int
       $metric: CharacterRankingMetricType!
     ) {
+      ${RATE_LIMIT}
       characterData {
         character(
           name: $name

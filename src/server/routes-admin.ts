@@ -1,26 +1,50 @@
 // Invite and user management. Every route is auth: "admin"; the admin page (issue #8) is the client.
+import { statSync } from "node:fs";
+import { dirname } from "node:path";
+import pkg from "../../package.json";
+import { SHIPPED, specDefensives } from "../deepdive/table.ts";
 import { DISCORD_ID } from "../hosted/config.ts";
 import { HOUR_MS, hourStart } from "../hosted/db.ts";
 import type { UserRow } from "../hosted/db.ts";
-import { decide, proposalSummary } from "../hosted/defensives.ts";
+import { decide, proposalSummary, tablesFor } from "../hosted/defensives.ts";
 import type { ProposalStatus } from "../hosted/defensives.ts";
 import { avatarUrl } from "../hosted/discord.ts";
+import { describeConfig, lastBackupAt } from "../hosted/instance.ts";
 import { resetInS } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
+import { resolveEnvPath } from "../setup.ts";
+import { getStore } from "../signals/store.ts";
 import { jsonResponse, readJson } from "./http.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 
-const adminUser = (u: UserRow) => ({
+interface AdminUserExtra { pointsHour: number; points24h: number; sessions: number; configAdmin: boolean }
+
+const adminUser = (u: UserRow, extra: AdminUserExtra) => ({
   id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName,
   avatarUrl: avatarUrl(u.discordId, u.avatarHash), role: u.role, createdAt: u.createdAt, lastSeenAt: u.lastSeenAt,
+  ...extra,
 });
 
 const tail = (url: URL, prefix: string): string => url.pathname.slice(prefix.length);
 
 export function adminRoutes(rt: HostedRuntime): Route[] {
+  // A single user's row of extras (role change, revoke): the users list route computes these in bulk instead.
+  const userExtra = (u: UserRow, at: number): AdminUserExtra => ({
+    pointsHour: rt.db.usage.byUser(at).find((r) => r.userId === u.id)?.points ?? 0,
+    points24h: rt.db.usage.byUserSince(at - 24 * HOUR_MS).find((r) => r.userId === u.id)?.points ?? 0,
+    sessions: rt.db.sessions.countForUser(u.id, at),
+    configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
+  });
+
   return [
-    route("GET", "/api/admin/invites", () => jsonResponse({ ok: true, invites: rt.db.invites.list() }), "admin"),
+    route("GET", "/api/admin/invites", () => jsonResponse({
+      ok: true,
+      invites: rt.db.invites.list().map((i) => {
+        const u = rt.db.users.byDiscordId(i.discordId);
+        return { ...i, user: u ? { id: u.id, username: u.username } : null };
+      }),
+    }), "admin"),
     route("POST", "/api/admin/invites", async (req, _url, ctx) => {
       const body = await readJson<{ discordId?: unknown; note?: unknown }>(req);
       const discordId = typeof body?.discordId === "string" ? body.discordId.trim() : "";
@@ -58,7 +82,14 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
     route("GET", "/api/admin/proposals", (_req, url) => {
       const status = (url.searchParams.get("status") ?? "pending") as ProposalStatus;
       if (!["pending", "approved", "rejected"].includes(status)) return jsonResponse({ ok: false, error: "`status` must be pending, approved or rejected" }, 400);
-      const proposals = rt.db.defensives.listProposals(status).map((p) => ({ ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy, username: p.username }));
+      const shared = tablesFor(rt.db.defensives, null).override;
+      const proposals = rt.db.defensives.listProposals(status).map((p) => {
+        const [className, spec] = p.key.split(":") as [string, string];
+        const d = specDefensives(SHIPPED, shared, className, spec);
+        const e = d.entries.find((x) => x.id === p.spellId);
+        const current = e ? { id: e.id, name: e.name, cooldownS: e.cooldownS, durationS: e.durationS, kind: e.kind } : null;
+        return { ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy, username: p.username, current, ignored: d.ignored.includes(p.spellId) };
+      });
       return jsonResponse({ ok: true, proposals });
     }, "admin"),
     prefixRoute("POST", "/api/admin/proposals/", async (req, url, ctx) => {
@@ -70,8 +101,24 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       if (!p) return jsonResponse({ ok: false, error: "No pending proposal with that id" }, 404);
       return jsonResponse({ ok: true, proposal: { ...proposalSummary(p), key: p.key, proposedBy: p.proposedBy } });
     }, "admin"),
-    route("GET", "/api/admin/users", () => jsonResponse({ ok: true, users: rt.db.users.list().map(adminUser) }), "admin"),
+    route("GET", "/api/admin/users", (_req, _url, ctx) => {
+      const at = ctx.now;
+      const hour = new Map(rt.db.usage.byUser(at).map((r) => [r.userId, r.points]));
+      const day = new Map(rt.db.usage.byUserSince(at - 24 * HOUR_MS).map((r) => [r.userId, r.points]));
+      const users = rt.db.users.list().map((u) => adminUser(u, {
+        pointsHour: hour.get(u.id) ?? 0, points24h: day.get(u.id) ?? 0,
+        sessions: rt.db.sessions.countForUser(u.id, at), configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
+      }));
+      return jsonResponse({ ok: true, users });
+    }, "admin"),
     prefixRoute("POST", "/api/admin/users/", async (req, url, ctx) => {
+      const revoke = /^(\d+)\/sessions\/revoke$/.exec(tail(url, "/api/admin/users/"));
+      if (revoke) {
+        const id = Number.parseInt(revoke[1]!, 10);
+        if (id === ctx.user!.id) return jsonResponse({ ok: false, error: "Sign out instead" }, 400);
+        if (!rt.db.users.byId(id)) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
+        return jsonResponse({ ok: true, sessionsEnded: rt.db.sessions.deleteForUser(id) });
+      }
       const m = /^(\d+)\/role$/.exec(tail(url, "/api/admin/users/"));
       if (!m) return jsonResponse({ ok: false, error: "Invalid user id" }, 400);
       const id = Number.parseInt(m[1]!, 10);
@@ -83,7 +130,14 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       if (!target) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
       if (rt.config.adminDiscordIds.includes(target.discordId)) return jsonResponse({ ok: false, error: "role is set by BMPL_ADMIN_DISCORD_IDS" }, 400);
       if (!rt.db.users.setRole(id, role)) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
-      return jsonResponse({ ok: true, user: adminUser(rt.db.users.byId(id)!) });
+      return jsonResponse({ ok: true, user: adminUser(rt.db.users.byId(id)!, userExtra(rt.db.users.byId(id)!, ctx.now)) });
+    }, "admin"),
+    route("GET", "/api/admin/instance", async () => {
+      const dbPath = (await getStore())._db.filename;
+      let dbBytes = 0;
+      try { dbBytes = statSync(dbPath).size; } catch { /* :memory: or unreadable */ }
+      const env = describeConfig(rt.config, { clientId: process.env.WCL_CLIENT_ID ?? null, hasSecret: !!process.env.WCL_CLIENT_SECRET });
+      return jsonResponse({ ok: true, version: pkg.version as string, uptimeS: Math.round(process.uptime()), dbPath, dbBytes, lastBackupAt: lastBackupAt(dirname(await resolveEnvPath())), env });
     }, "admin"),
   ];
 }

@@ -39,6 +39,7 @@ export interface HostedDb {
     delete(id: string): boolean;
     deleteForUser(userId: number): number;
     purgeExpired(now: number): number;
+    countForUser(userId: number, now: number): number;
   };
   invites: {
     add(discordId: string, invitedBy: string, note: string | null, now: number): InviteRow;
@@ -57,6 +58,8 @@ export interface HostedDb {
     used(userId: number, at: number): number;
     /** Every user's points in the bucket of `at`, largest first. */
     byUser(at: number): Array<{ userId: number; points: number }>;
+    /** Every user's points from the bucket of `sinceAt` on, largest first. */
+    byUserSince(sinceAt: number): Array<{ userId: number; points: number }>;
     /** Per-bucket totals from the bucket of `sinceAt` on, ascending. */
     totals(sinceAt: number): Array<{ hourStart: number; points: number }>;
   };
@@ -92,6 +95,7 @@ export function openHosted(db: Database): HostedDb {
   const sessionDelete = db.query("DELETE FROM sessions WHERE id = ?");
   const sessionDeleteUser = db.query("DELETE FROM sessions WHERE user_id = ?");
   const sessionPurge = db.query("DELETE FROM sessions WHERE expires_at <= ?");
+  const sessionCount = db.query<{ n: number }, [number, number]>("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND expires_at > ?");
 
   const inviteGet = db.query<InviteRaw, [string]>("SELECT * FROM invites WHERE discord_id = ?");
   const inviteAll = db.query<InviteRaw, []>("SELECT * FROM invites ORDER BY created_at");
@@ -108,6 +112,7 @@ export function openHosted(db: Database): HostedDb {
   const usageAdd = db.query("INSERT INTO usage_hourly (user_id, hour_start, points) VALUES (?, ?, ?) ON CONFLICT(user_id, hour_start) DO UPDATE SET points = points + excluded.points");
   const usageUsed = db.query<{ points: number } | null, [number, number]>("SELECT points FROM usage_hourly WHERE user_id = ? AND hour_start = ?");
   const usageByUser = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, points FROM usage_hourly WHERE hour_start = ? ORDER BY points DESC, user_id");
+  const usageByUserSince = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY user_id ORDER BY points DESC, user_id");
   const usageTotals = db.query<{ hour_start: number; points: number }, [number]>("SELECT hour_start, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY hour_start ORDER BY hour_start");
 
   const changes = (): number => Number(db.query<{ n: number }, []>("SELECT changes() AS n").get()!.n);
@@ -148,6 +153,7 @@ export function openHosted(db: Database): HostedDb {
       delete(id) { sessionDelete.run(id); return changes() === 1; },
       deleteForUser(userId) { sessionDeleteUser.run(userId); return changes(); },
       purgeExpired(now) { sessionPurge.run(now); return changes(); },
+      countForUser: (userId, now) => sessionCount.get(userId, now)!.n,
     },
     invites: {
       add(discordId, invitedBy, note, now) {
@@ -170,6 +176,7 @@ export function openHosted(db: Database): HostedDb {
       add(userId, at, points) { usageAdd.run(userId, hourStart(at), points); },
       used: (userId, at) => usageUsed.get(userId, hourStart(at))?.points ?? 0,
       byUser: (at) => usageByUser.all(hourStart(at)).map((r) => ({ userId: r.user_id, points: r.points })),
+      byUserSince: (sinceAt) => usageByUserSince.all(hourStart(sinceAt)).map((r) => ({ userId: r.user_id, points: r.points })),
       totals: (sinceAt) => usageTotals.all(hourStart(sinceAt)).map((r) => ({ hourStart: r.hour_start, points: r.points })),
     },
     history: openUserHistory(db),

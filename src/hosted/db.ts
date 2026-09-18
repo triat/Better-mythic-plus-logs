@@ -14,6 +14,10 @@ export interface DiscordIdentity { discordId: string; username: string; globalNa
 export interface UserSettings { yourKey: number | null; legendOpen: boolean }
 export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true };
 
+/** WCL usage buckets are calendar hours (epoch ms). */
+export const HOUR_MS = 3_600_000;
+export const hourStart = (at: number): number => Math.floor(at / HOUR_MS) * HOUR_MS;
+
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** A session is only re-stamped when it has consumed at least this much of its TTL (avoids a write per request). */
 export const SESSION_REFRESH_MS = 60 * 60 * 1000;
@@ -44,6 +48,15 @@ export interface HostedDb {
     get(userId: number): UserSettings;
     /** Merges `patch` over the stored (or default) row and returns the result. */
     update(userId: number, patch: Partial<UserSettings>, now: number): UserSettings;
+  };
+  usage: {
+    /** Adds `points` to the user's bucket of `at`. */
+    add(userId: number, at: number, points: number): void;
+    used(userId: number, at: number): number;
+    /** Every user's points in the bucket of `at`, largest first. */
+    byUser(at: number): Array<{ userId: number; points: number }>;
+    /** Per-bucket totals from the bucket of `sinceAt` on, ascending. */
+    totals(sinceAt: number): Array<{ hourStart: number; points: number }>;
   };
   history: UserHistoryRepo;
 }
@@ -88,6 +101,11 @@ export function openHosted(db: Database): HostedDb {
     const r = settingsGet.get(userId);
     return r ? { yourKey: r.your_key, legendOpen: r.legend_open === 1 } : { ...DEFAULT_USER_SETTINGS };
   };
+
+  const usageAdd = db.query("INSERT INTO usage_hourly (user_id, hour_start, points) VALUES (?, ?, ?) ON CONFLICT(user_id, hour_start) DO UPDATE SET points = points + excluded.points");
+  const usageUsed = db.query<{ points: number } | null, [number, number]>("SELECT points FROM usage_hourly WHERE user_id = ? AND hour_start = ?");
+  const usageByUser = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, points FROM usage_hourly WHERE hour_start = ? ORDER BY points DESC, user_id");
+  const usageTotals = db.query<{ hour_start: number; points: number }, [number]>("SELECT hour_start, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY hour_start ORDER BY hour_start");
 
   const changes = (): number => Number(db.query<{ n: number }, []>("SELECT changes() AS n").get()!.n);
 
@@ -144,6 +162,12 @@ export function openHosted(db: Database): HostedDb {
         settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, now);
         return next;
       },
+    },
+    usage: {
+      add(userId, at, points) { usageAdd.run(userId, hourStart(at), points); },
+      used: (userId, at) => usageUsed.get(userId, hourStart(at))?.points ?? 0,
+      byUser: (at) => usageByUser.all(hourStart(at)).map((r) => ({ userId: r.user_id, points: r.points })),
+      totals: (sinceAt) => usageTotals.all(hourStart(sinceAt)).map((r) => ({ hourStart: r.hour_start, points: r.points })),
     },
     history: openUserHistory(db),
   };

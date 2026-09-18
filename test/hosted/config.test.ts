@@ -46,6 +46,7 @@ describe("validateHostedEnv", () => {
       expect(r.config.baseUrl).toBe("https://bmpl.example.com");
       expect(r.config.adminDiscordIds).toEqual(["111111111111111111", "222222222222222222"]);
       expect(r.config.sessionSecret).toBe(FULL.BMPL_SESSION_SECRET);
+      expect(r.config.pointsPerUserHour).toBe(300);
     }
   });
   test("missing and blank variables are reported in declaration order", () => {
@@ -90,6 +91,15 @@ describe("validateHostedEnv", () => {
       expect(r.invalid).toContain("BMPL_DISCORD_CLIENT_ID: not a Discord application id");
       expect(r.invalid).toContain("BMPL_ADMIN_DISCORD_IDS: not a Discord id: 111");
       expect(r.invalid).toContain("BMPL_ADMIN_DISCORD_IDS: not a Discord id: not-an-id");
+    }
+  });
+  test("BMPL_POINTS_PER_USER_HOUR overrides the default and must be a positive integer", () => {
+    const ok = validateHostedEnv({ ...FULL, BMPL_POINTS_PER_USER_HOUR: "500" });
+    expect(ok.ok && ok.config.pointsPerUserHour).toBe(500);
+    for (const bad of ["0", "-1", "12.5", "lots"]) {
+      const r = validateHostedEnv({ ...FULL, BMPL_POINTS_PER_USER_HOUR: bad });
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.invalid).toEqual([`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${bad}")`]);
     }
   });
 });

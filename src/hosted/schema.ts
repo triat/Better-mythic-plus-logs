@@ -58,6 +58,13 @@ CREATE TABLE IF NOT EXISTS user_settings (
   legend_open INTEGER NOT NULL DEFAULT 1,
   updated_at  INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS usage_hourly (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  hour_start INTEGER NOT NULL,
+  points     REAL    NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, hour_start)
+);
+CREATE INDEX IF NOT EXISTS usage_hourly_hour ON usage_hourly(hour_start);
 `;
 
 export function applyHostedSchema(db: Database): void {

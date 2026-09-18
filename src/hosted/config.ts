@@ -20,9 +20,12 @@ export interface HostedConfig {
   discordClientId: string;
   discordClientSecret: string;
   adminDiscordIds: string[];
+  /** Per-member WCL points per calendar hour (admins are exempt). */
+  pointsPerUserHour: number;
 }
 
 export const MIN_SESSION_SECRET_BYTES = 32;
+export const DEFAULT_POINTS_PER_USER_HOUR = 300;
 
 type Env = Record<string, string | undefined>;
 
@@ -68,6 +71,10 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
   const discordClientId = read(env, "BMPL_DISCORD_CLIENT_ID");
   if (!missing.includes("BMPL_DISCORD_CLIENT_ID") && !DISCORD_ID.test(discordClientId)) invalid.push("BMPL_DISCORD_CLIENT_ID: not a Discord application id");
 
+  const rawPoints = read(env, "BMPL_POINTS_PER_USER_HOUR");
+  const pointsPerUserHour = rawPoints === "" ? DEFAULT_POINTS_PER_USER_HOUR : Number(rawPoints);
+  if (!(Number.isInteger(pointsPerUserHour) && pointsPerUserHour > 0)) invalid.push(`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${rawPoints}")`);
+
   if (missing.length > 0 || invalid.length > 0) return { ok: false, missing, invalid };
   return {
     ok: true,
@@ -77,6 +84,7 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
       discordClientId,
       discordClientSecret: read(env, "BMPL_DISCORD_CLIENT_SECRET"),
       adminDiscordIds,
+      pointsPerUserHour,
     },
   };
 }

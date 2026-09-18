@@ -8,6 +8,7 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   discordClientId: "123456789012345678",
   discordClientSecret: "test-client-secret",
   adminDiscordIds: ["111111111111111111", "444444444444444444"],
+  pointsPerUserHour: 300,
 };
 
 /** Inserts a user + session straight into the DB and returns the Cookie header to send. */

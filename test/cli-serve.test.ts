@@ -21,10 +21,10 @@ describe("planServe", () => {
     expect(planServe(["--port", "abc"], {}).ok).toBe(false);
   });
   test("--hosted with a full env: hosted, never opens the browser", () => {
-    expect(planServe(["--hosted"], FULL)).toEqual({ ok: true, port: 3000, open: false, hosted: true, hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"] } });
+    expect(planServe(["--hosted"], FULL)).toEqual({ ok: true, port: 3000, open: false, hosted: true, hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"], pointsPerUserHour: 300 } });
   });
   test("BMPL_MODE=hosted is equivalent; a bad BMPL_MODE is an error", () => {
-    expect(planServe([], { ...FULL, BMPL_MODE: "hosted" })).toEqual({ ok: true, port: 3000, open: false, hosted: true, hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"] } });
+    expect(planServe([], { ...FULL, BMPL_MODE: "hosted" })).toEqual({ ok: true, port: 3000, open: false, hosted: true, hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"], pointsPerUserHour: 300 } });
     const r = planServe([], { BMPL_MODE: "nope" });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain("BMPL_MODE");

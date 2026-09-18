@@ -65,6 +65,28 @@ CREATE TABLE IF NOT EXISTS usage_hourly (
   PRIMARY KEY (user_id, hour_start)
 );
 CREATE INDEX IF NOT EXISTS usage_hourly_hour ON usage_hourly(hour_start);
+CREATE TABLE IF NOT EXISTS defensives_shared (
+  key         TEXT    NOT NULL,
+  id          INTEGER NOT NULL,
+  entry       TEXT    NOT NULL,
+  approved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  approved_at INTEGER NOT NULL,
+  PRIMARY KEY (key, id)
+);
+CREATE TABLE IF NOT EXISTS defensives_proposals (
+  id          INTEGER PRIMARY KEY,
+  key         TEXT    NOT NULL,
+  spell_id    INTEGER NOT NULL,
+  patch       TEXT    NOT NULL,
+  proposed_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at  INTEGER NOT NULL,
+  status      TEXT    NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')),
+  decided_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  decided_at  INTEGER,
+  note        TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS defensives_proposals_pending ON defensives_proposals(proposed_by, key, spell_id) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS defensives_proposals_status ON defensives_proposals(status, created_at);
 `;
 
 export function applyHostedSchema(db: Database): void {

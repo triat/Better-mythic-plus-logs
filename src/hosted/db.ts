@@ -5,6 +5,8 @@ import { randomBytes } from "node:crypto";
 import { applyHostedSchema } from "./schema.ts";
 import { openUserHistory } from "./history.ts";
 import type { UserHistoryRepo } from "./history.ts";
+import { openDefensives } from "./defensives.ts";
+import type { DefensivesRepo } from "./defensives.ts";
 
 export type Role = "member" | "admin";
 export interface UserRow { id: number; discordId: string; username: string; globalName: string | null; avatarHash: string | null; role: Role; createdAt: number; lastSeenAt: number }
@@ -59,6 +61,7 @@ export interface HostedDb {
     totals(sinceAt: number): Array<{ hourStart: number; points: number }>;
   };
   history: UserHistoryRepo;
+  defensives: DefensivesRepo;
 }
 
 export const newSessionId = (): string => randomBytes(32).toString("base64url");
@@ -170,5 +173,6 @@ export function openHosted(db: Database): HostedDb {
       totals: (sinceAt) => usageTotals.all(hourStart(sinceAt)).map((r) => ({ hourStart: r.hour_start, points: r.points })),
     },
     history: openUserHistory(db),
+    defensives: openDefensives(db),
   };
 }

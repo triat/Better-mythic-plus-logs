@@ -119,7 +119,9 @@ export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER): UserH
             return entry(own);
           }
           const other = shared(r);
-          return other ? record(r, asRecord(other), other.fetchedAt) : null;
+          // The copy reflects the caller's own request, not the other user's: an explicit request
+          // copying an auto-resolved row must not inherit that row's "auto" badge.
+          return other ? record(r, { ...asRecord(other), targetAutoDetected: r.level === null }, other.fetchedAt) : null;
         },
         record: (r, rec) => record(r, rec, now()),
         get(key) {

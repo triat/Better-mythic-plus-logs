@@ -126,6 +126,15 @@ describe("SQLite history — per user", () => {
     expect(b.list().length).toBe(1);
   });
 
+  test("a shared copy reports whether the caller's own request was auto, not the other user's", () => {
+    let t = 10_000;
+    const { a, b } = setup(20, () => t);
+    a.record(req("A-X", null), entry({ label: "A-X", targetLevel: 20, targetAutoDetected: true }));
+    t += 1;
+    expect(b.cached(req("A-X", 20))?.targetAutoDetected).toBe(false);
+    expect(b.get(cacheKey(req("A-X", 20)))?.targetAutoDetected).toBe(false);
+  });
+
   test("an auto request follows the newest alias any user set within the window", () => {
     let t = 10_000;
     const { a, b } = setup(20, () => t);

@@ -14,7 +14,7 @@ export interface RequestContext {
   user: SessionUser | null;
   sessionId: string | null;
   ip: string;
-  /** Epoch ms when the request was resolved — handlers stamp writes with it instead of calling Date.now(). */
+  /** Epoch ms when the request was resolved, used to stamp session/settings writes; the history store stamps its own writes at write time instead (a lookup takes seconds, so that is more accurate). */
   now: number;
   /** The caller's lookup history: the process-wide one locally, the user's own when hosted, null for an anonymous hosted request. */
   history: HistoryStore | null;

@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS user_history_auto (
   set_at    INTEGER NOT NULL,
   PRIMARY KEY (user_id, alias_key)
 );
+CREATE INDEX IF NOT EXISTS user_history_auto_key ON user_history_auto(alias_key, set_at);
 CREATE TABLE IF NOT EXISTS user_settings (
   user_id     INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   your_key    INTEGER,

@@ -1,9 +1,18 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { runDeepdive } from "../../src/deepdive/run.ts";
 import { SHIPPED } from "../../src/deepdive/table.ts";
 import type { LoadedTables } from "../../src/deepdive/types.ts";
 import { openStore } from "../../src/signals/store.ts";
 import { loadDeepdiveFixture } from "../fixtures.ts";
+
+// Dummy creds: if a future regression drops the fake `gql` and lets `runDeepdive` fall through to
+// the real one, it fails at OAuth instead of spending real WCL points.
+const saved = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+beforeAll(() => { process.env.WCL_CLIENT_ID = "bmpl-test"; process.env.WCL_CLIENT_SECRET = "bmpl-test"; });
+afterAll(() => {
+  if (saved.id === undefined) delete process.env.WCL_CLIENT_ID; else process.env.WCL_CLIENT_ID = saved.id;
+  if (saved.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = saved.secret;
+});
 
 const tables: LoadedTables = { shipped: SHIPPED, override: {}, overridePath: "/dev/null" };
 const ping = (spent: number) => ({ rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: spent, pointsResetIn: 10 } });

@@ -3,6 +3,14 @@
 // window to the request that is running (AsyncLocalStorage) and to that request's user.
 // Attribution is exact when calls do not overlap and approximate under concurrency (a delta lands
 // on whichever request observed it); the hour's total is always exact.
+//
+// `windowEnd` is only an estimate (WCL reports `pointsResetIn` as an integer number of seconds,
+// possibly 0), so a response is only treated as the start of a new hour when the counter itself
+// dropped at/after that estimate — a same-window response landing a few hundred ms late must not be
+// charged as if the whole counter were new spend. Anything else with a counter at or above the
+// baseline is an in-window delta, and `windowEnd` is refreshed from that response. A computed delta
+// above `MAX_CHARGE_PER_OBSERVATION` is treated as a clock-boundary artefact rather than a real
+// spend and charges nothing (see `observe()`).
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { GqlFn } from "../signals/enrich.ts";
 import type { RateLimit } from "./client.ts";
@@ -11,6 +19,9 @@ import type { RateLimit } from "./client.ts";
 export const ESTIMATE_RANKINGS = 10;
 export const ESTIMATE_RUN = 10;
 export const ESTIMATE_DEEPDIVE = 3;
+
+/** A single observation charging more than this is treated as a clock-boundary artefact, not a real spend. */
+export const MAX_CHARGE_PER_OBSERVATION = 100;
 
 export interface RequestCharge { userId: number | null; spent: number }
 export interface RateLimitSnapshot extends RateLimit { observedAt: number; windowEnd: number }
@@ -42,16 +53,30 @@ export class PointsMeter {
     const at = this.now();
     const prev = this.last;
     const next: RateLimitSnapshot = { ...rl, observedAt: at, windowEnd: at + rl.pointsResetIn * 1000 };
-    let delta = 0;
-    if (prev && at >= prev.windowEnd) {
-      delta = rl.pointsSpentThisHour; // a new WCL window: everything on the counter is new spend
-    } else if (prev) {
+    if (!prev) { this.last = next; return; } // first observation: prime only, charge nobody
+    let delta: number;
+    if (at >= prev.windowEnd && rl.pointsSpentThisHour < prev.pointsSpentThisHour) {
+      // The estimated window has elapsed AND the counter dropped: a genuine new hour started.
+      delta = rl.pointsSpentThisHour;
+    } else if (rl.pointsSpentThisHour < prev.pointsSpentThisHour) {
+      // A late response with a lower counter, still inside the window (the estimate hasn't
+      // elapsed): charge nothing and keep the higher baseline, or the next response would double-charge.
+      this.last = { ...prev, observedAt: at };
+      return;
+    } else {
+      // In-window: the counter is at or above the baseline, whatever the clock says. Charge only the
+      // delta, and refresh windowEnd from this response (the previous estimate may have been wrong).
       delta = Math.max(0, rl.pointsSpentThisHour - prev.pointsSpentThisHour);
-      // A late response with a lower counter must not lower the baseline (the next one would double-charge).
-      if (rl.pointsSpentThisHour < prev.pointsSpentThisHour) { this.last = { ...prev, observedAt: at }; return; }
+    }
+    delta = tenths(delta);
+    if (delta > MAX_CHARGE_PER_OBSERVATION) {
+      // A real new window that already spent this much before its very first observation is far
+      // rarer than a clock-boundary artefact; re-prime the baseline to this observation and charge
+      // nothing (this only ever undercharges, never overcharges).
+      this.last = next;
+      return;
     }
     this.last = next;
-    delta = tenths(delta);
     if (delta <= 0) return;
     const c = this.als.getStore();
     if (!c) return;

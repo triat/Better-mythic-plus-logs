@@ -66,4 +66,26 @@ describe("runLookupWithCache — in-flight dedupe", () => {
     expect(r2).toEqual({ ok: false, status: 429, error: refusal.message, quota: refusal });
     expect(r1.ok && r3.ok && r3.joined && r3.key === r1.key).toBe(true);
   });
+
+  test("a joiner never inherits the starter's 429 (it carries the starter's quota): it retries its own lookup", async () => {
+    let calls = 0;
+    let releaseStarter: (o: LookupOutcome) => void = () => {};
+    const refusal = { error: "quota" as const, message: "Hourly quota reached (300/300 pts) — resets in 5 min", used: 300, limit: 300, resetInS: 300 };
+    const performLookup = (async () => {
+      calls++;
+      if (calls === 1) return new Promise<LookupOutcome>((r) => { releaseStarter = r; });
+      return outcome(); // the joiner's own retry, run directly (not through the in-flight map)
+    }) as unknown as typeof import("../src/lookup.ts").performLookup;
+    const a = new History(5); const b = new History(5);
+    const starter = runLookupWithCache(opts(), a, { performLookup });
+    const joiner = runLookupWithCache(opts(), b, { performLookup });
+    await Promise.resolve();
+    expect(calls).toBe(1); // the joiner shared the starter's flight, no second call yet
+    releaseStarter({ ok: false, status: 429, error: refusal.message, quota: refusal });
+    const [rs, rj] = await Promise.all([starter, joiner]);
+    expect(rs).toEqual({ ok: false, status: 429, error: refusal.message, quota: refusal }); // starter still gets its own 429
+    expect(calls).toBe(2); // the joiner retried on its own
+    expect(rj.ok && rj.joined && !rj.fromCache).toBe(true);
+    expect(b.size).toBe(1); // the joiner's own success is recorded in its own history
+  });
 });

@@ -96,7 +96,7 @@ describe("validateHostedEnv", () => {
   test("BMPL_POINTS_PER_USER_HOUR overrides the default and must be a positive integer", () => {
     const ok = validateHostedEnv({ ...FULL, BMPL_POINTS_PER_USER_HOUR: "500" });
     expect(ok.ok && ok.config.pointsPerUserHour).toBe(500);
-    for (const bad of ["0", "-1", "12.5", "lots"]) {
+    for (const bad of ["0", "-1", "12.5", "lots", "1e3", "0x10"]) {
       const r = validateHostedEnv({ ...FULL, BMPL_POINTS_PER_USER_HOUR: bad });
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.invalid).toEqual([`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${bad}")`]);

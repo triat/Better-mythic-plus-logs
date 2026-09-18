@@ -90,7 +90,22 @@ export async function runLookupWithCache(opts: {
       const started = flight;
       void started.catch(() => {}).finally(() => { if (inflight.get(flightKey) === started) inflight.delete(flightKey); });
     }
-    const o = await flight;
+    let o = await flight;
+    if (!o.ok && joined && o.status === 429) {
+      // The joiner shared the starter's flight and inherited its 429, but that refusal carries the
+      // *starter's* quota numbers, not the joiner's own. Run the joiner's own lookup once, directly —
+      // not through the in-flight map: the joiner's continuation runs before the shared flight's
+      // `.finally` cleanup, so re-joining here would just hit the same, already-settled flight again.
+      o = await (deps.performLookup ?? performLookup)({
+        name: target.name,
+        realm: target.realm,
+        level: opts.level,
+        spec: opts.spec,
+        metric: opts.metric ?? undefined,
+        enrich: true,
+        refresh: opts.refresh,
+      }, { reserve: deps.reserve });
+    }
     if (!o.ok) return { ok: false, status: o.status, error: o.error, ...(o.quota ? { quota: o.quota } : {}) };
     const payload = buildLookupPayload(o, target.realm);
 

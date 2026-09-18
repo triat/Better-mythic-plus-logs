@@ -73,7 +73,10 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
 
   const rawPoints = read(env, "BMPL_POINTS_PER_USER_HOUR");
   const pointsPerUserHour = rawPoints === "" ? DEFAULT_POINTS_PER_USER_HOUR : Number(rawPoints);
-  if (!(Number.isInteger(pointsPerUserHour) && pointsPerUserHour > 0)) invalid.push(`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${rawPoints}")`);
+  // /^\d+$/ rejects forms Number() accepts but that are not plainly a positive integer (e.g. "1e3", "0x10").
+  if (!(rawPoints === "" || /^\d+$/.test(rawPoints)) || !(Number.isInteger(pointsPerUserHour) && pointsPerUserHour > 0)) {
+    invalid.push(`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${rawPoints}")`);
+  }
 
   if (missing.length > 0 || invalid.length > 0) return { ok: false, missing, invalid };
   return {

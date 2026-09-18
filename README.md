@@ -447,9 +447,10 @@ would exceed it: a refusal before the rankings query or before an analysis
 spends nothing; a lookup refused before its run enrichment has already paid
 the rankings query (about 10 pts), which is why the first check blocks as soon
 as fewer than 10 pts are left. Cached data — a tab in your history, a run
-already in the cache, an analysis already done — never counts. Whatever the quotas say, the client is never driven below
-100 points left (`429 { error: "budget", … }`), so cached lookups keep working
-for everyone. The header shows "N pts left this hour"; `GET /api/me` and every
+already in the cache, an analysis already done — never counts. Whatever the quotas say, the client is
+not knowingly driven below 100 points left (the floor is checked against the last `rateLimitData`
+seen and the estimates, so it is best effort) (`429 { error: "budget", … }`), so cached lookups keep
+working for everyone. The header shows "N pts left this hour"; `GET /api/me` and every
 lookup/analysis response carry `quota`, and admins can read
 `GET /api/admin/usage` (this hour per member, the client's last
 `rateLimitData`, the last 24 hourly totals). Estimates before spending:

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ESTIMATE_DEEPDIVE, ESTIMATE_RANKINGS, ESTIMATE_RUN, PointsMeter } from "../../src/wcl/meter.ts";
+import { ESTIMATE_DEEPDIVE, ESTIMATE_RANKINGS, ESTIMATE_RUN, MAX_CHARGE_PER_OBSERVATION, PointsMeter } from "../../src/wcl/meter.ts";
 import type { UsageSink } from "../../src/wcl/meter.ts";
 
 const rl = (spent: number, resetIn = 1800) => ({ limitPerHour: 3600, pointsSpentThisHour: spent, pointsResetIn: resetIn });
@@ -79,6 +79,34 @@ describe("PointsMeter", () => {
     await meter.run(1, async () => { meter.observe(rl(8, 3599)); });
     expect(adds).toEqual([[1, now(), 8]]);
     expect(meter.snapshot()).toEqual({ ...rl(8, 3599), observedAt: now(), windowEnd: now() + 3_599_000 });
+  });
+
+  test("pointsResetIn = 0 does not turn a same-window, higher-counter response into a new window", async () => {
+    const { meter, adds, tick, now } = setup();
+    meter.observe(rl(3000, 0)); // windowEnd = observedAt: the worst case for the clock-boundary estimate
+    tick(300);
+    await meter.run(42, async () => { meter.observe(rl(3010, 60)); });
+    expect(adds).toEqual([[42, now(), 10]]); // only the delta, not the whole counter
+  });
+
+  test("a lower counter arriving after windowEnd, close to the baseline, is capped as a likely clock artefact", async () => {
+    const { meter, adds, tick } = setup();
+    meter.observe(rl(3000, 60));
+    tick(61_000); // past the estimated windowEnd
+    await meter.run(1, async () => { meter.observe(rl(2990, 3599)); }); // a late in-window response
+    expect(adds).toEqual([]);
+    expect(meter.snapshot()?.pointsSpentThisHour).toBe(2990); // re-primed to this observation
+  });
+
+  test("a delta above the cap charges nothing and re-primes the baseline for the next observation", async () => {
+    const { meter, adds, now } = setup();
+    meter.observe(rl(0));
+    await meter.run(1, async () => {
+      meter.observe(rl(250)); // 250 > MAX_CHARGE_PER_OBSERVATION: likely artefact, re-prime
+      meter.observe(rl(255)); // now a normal in-window delta off the re-primed baseline
+    });
+    expect(adds).toEqual([[1, now(), 5]]);
+    expect(MAX_CHARGE_PER_OBSERVATION).toBe(100);
   });
 
   test("charges are rounded to a tenth of a point", async () => {

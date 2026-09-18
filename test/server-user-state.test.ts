@@ -154,3 +154,36 @@ describe("/api/me quota (hosted)", () => {
     expect(me.quota.resetInS).toBeGreaterThan(0);
   });
 });
+
+// `HostedDb.usage` has no delete API, so `db.usage.add` below permanently raises `a`'s usage for this
+// hour; these tests must stay last in the file (nothing after them may assume `a` is under quota).
+describe("quota on the hosted routes", () => {
+  test("a cached lookup carries pointsSpent 0 and the caller's quota", async () => {
+    const res = await fetch(h("/api/lookup"), as(a, { method: "POST", body: JSON.stringify({ character: "Muleyoxo-Silvermoon", level: 21 }) }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.pointsSpent).toBe(0);
+    expect(typeof body.quota.used).toBe("number");
+    expect(body.quota.limit).toBe(300);
+    expect(body.quota.resetInS).toBeGreaterThan(0);
+  });
+
+  test("a reserve refusal answers 429 with the caller's quota before any WCL fetch", async () => {
+    db.usage.add(a.user.id, Date.now(), 300);
+    const res = await fetch(h("/api/lookup"), as(a, { method: "POST", body: JSON.stringify({ character: "Nobodyhere-Silvermoon", level: 15 }) }));
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body).toEqual({ ok: false, error: "quota", message: body.message, used: 300, limit: 300, resetInS: body.resetInS });
+    expect(body.message).toContain("Hourly quota reached");
+    expect(typeof body.resetInS).toBe("number");
+  });
+
+  test("a deep-dive on an uncached run 404s before the quota gate is even consulted (still at 300/300)", async () => {
+    // Using `b`'s character here would reach WCL (a cache miss) — the point of this test is that the
+    // cache check in runDeepdive precedes the reserve, so `a`, already over quota, still gets a plain
+    // 404 rather than a 429.
+    const res = await fetch(h("/api/deepdive"), as(a, { method: "POST", body: JSON.stringify({ reportCode: "NOPE", fightID: 1, character: "X" }) }));
+    expect(res.status).toBe(404);
+  });
+});

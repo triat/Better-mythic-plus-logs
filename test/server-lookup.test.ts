@@ -55,9 +55,15 @@ describe("runLookupWithCache — in-flight dedupe", () => {
     const first = runLookupWithCache(opts(), h, { performLookup });
     const second = runLookupWithCache(opts(true), h, { performLookup });
     expect(calls).toBe(2);
+    // A third, non-refresh caller for the same key must join the original (first) flight, not the
+    // refresh's: a refresh never displaces another caller's in-flight (non-refresh) fetch.
+    const third = runLookupWithCache(opts(), h, { performLookup });
+    expect(calls).toBe(2); // no third performLookup call: third joined first, not second
     const refusal = { error: "quota" as const, message: "Hourly quota reached (300/300 pts) — resets in 5 min", used: 300, limit: 300, resetInS: 300 };
-    for (const release of releases) release({ ok: false, status: 429, error: refusal.message, quota: refusal });
-    const [, r] = await Promise.all([first, second]);
-    expect(r).toEqual({ ok: false, status: 429, error: refusal.message, quota: refusal });
+    releases[0]!(outcome());
+    releases[1]!({ ok: false, status: 429, error: refusal.message, quota: refusal });
+    const [r1, r2, r3] = await Promise.all([first, second, third]);
+    expect(r2).toEqual({ ok: false, status: 429, error: refusal.message, quota: refusal });
+    expect(r1.ok && r3.ok && r3.joined && r3.key === r1.key).toBe(true);
   });
 });

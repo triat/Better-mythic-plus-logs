@@ -40,6 +40,9 @@ export interface LookupSuccess { ok: true; key: string; result: unknown; fromCac
 export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup }
 
 // Identical lookups that overlap share one WCL fetch (keyed like the history, "auto" level included).
+// A refresh never joins an existing flight, and it registers its own flight only when none is in
+// progress for that key — it must never displace another caller's in-flight (non-refresh) fetch,
+// or a third, later caller could join the wrong one mid-air.
 const inflight = new Map<string, Promise<LookupOutcome>>();
 
 export async function runLookupWithCache(opts: {
@@ -83,7 +86,7 @@ export async function runLookupWithCache(opts: {
         enrich: true,
         refresh: opts.refresh,
       }, { reserve: deps.reserve });
-      inflight.set(flightKey, flight);
+      if (!inflight.has(flightKey)) inflight.set(flightKey, flight);
       const started = flight;
       void started.catch(() => {}).finally(() => { if (inflight.get(flightKey) === started) inflight.delete(flightKey); });
     }

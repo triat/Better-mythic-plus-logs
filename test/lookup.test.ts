@@ -1,10 +1,19 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { performLookup } from "../src/lookup.ts";
 import type { MPlusData, MPlusRun } from "../src/mplus.ts";
 import { openStore } from "../src/signals/store.ts";
 import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../src/wcl/meter.ts";
 import type { QuotaRefusal } from "../src/hosted/quota.ts";
 import { loadWclFixture } from "./fixtures.ts";
+
+// Dummy creds: if a future regression lets the real fetchMplusData/gql run instead of the fakes below,
+// it fails at OAuth instead of spending real WCL points.
+const saved = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+beforeAll(() => { process.env.WCL_CLIENT_ID = "bmpl-test"; process.env.WCL_CLIENT_SECRET = "bmpl-test"; });
+afterAll(() => {
+  if (saved.id === undefined) delete process.env.WCL_CLIENT_ID; else process.env.WCL_CLIENT_ID = saved.id;
+  if (saved.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = saved.secret;
+});
 
 const REFUSED: QuotaRefusal = { error: "quota", message: "Hourly quota reached (300/300 pts) — resets in 5 min", used: 300, limit: 300, resetInS: 300 };
 

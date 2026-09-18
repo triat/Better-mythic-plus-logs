@@ -1,3 +1,7 @@
+# deploy target — SSH destination and remote install dir for `just deploy` and friends
+deploy_host := env_var_or_default("BMPL_DEPLOY_HOST", "")
+deploy_dir := "/opt/bmpl"
+
 # list recipes
 default:
     @just --list
@@ -92,6 +96,29 @@ build-windows: web-build
 # build on Windows (PowerShell) — adds --windows-hide-console so double-click has no console flash
 build-windows-native: web-build
     bun build src/cli.ts --compile --windows-hide-console --windows-title="bmpl" --outfile bmpl.exe
+
+# cross-compile the hosted binary for the VPS (web front embedded) → dist/bmpl-linux
+build-linux: web-build
+    mkdir -p dist
+    bun build src/cli.ts --compile --target=bun-linux-x64 --outfile dist/bmpl-linux
+
+# ship dist/bmpl-linux to the VPS, restart the unit, wait for /api/health (BMPL_DEPLOY_HOST=user@host)
+deploy: build-linux
+    @test -n "{{deploy_host}}" || { echo "set BMPL_DEPLOY_HOST=user@host"; exit 2; }
+    scp dist/bmpl-linux {{deploy_host}}:{{deploy_dir}}/bmpl.new
+    ssh {{deploy_host}} 'install -o bmpl -g bmpl -m 755 {{deploy_dir}}/bmpl.new {{deploy_dir}}/bmpl && rm {{deploy_dir}}/bmpl.new && systemctl restart bmpl && for i in $(seq 1 30); do curl -fsS http://127.0.0.1:3000/api/health >/dev/null 2>&1 && { echo "bmpl is up"; exit 0; }; sleep 1; done; echo "bmpl did not answer /api/health in 30 s" >&2; journalctl -u bmpl -n 30 --no-pager; exit 1'
+
+# follow the app log on the VPS
+deploy-logs:
+    ssh {{deploy_host}} 'journalctl -u bmpl -f'
+
+# unit states, health, last backup marker
+deploy-status:
+    ssh {{deploy_host}} 'systemctl --no-pager status bmpl caddy litestream bmpl-backup-check.timer | grep -E "●|Active:"; curl -fsS http://127.0.0.1:3000/api/health; echo; stat -c "last-backup: %y" {{deploy_dir}}/last-backup 2>/dev/null || echo "last-backup: never"'
+
+# restore the latest replica into a scratch dir on the VPS and check it opens (the runbook's test)
+deploy-restore-test:
+    ssh {{deploy_host}} 'd=$(mktemp -d) && litestream restore -config /etc/litestream.yml -o "$d/bmpl.db" {{deploy_dir}}/bmpl.db && sqlite3 "$d/bmpl.db" "PRAGMA integrity_check; SELECT COUNT(*) AS users FROM users;" && rm -rf "$d"'
 
 # introspect a GraphQL type (defaults to Character)
 introspect type="Character":

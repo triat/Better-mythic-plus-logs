@@ -17,7 +17,6 @@ export function authorizeUrl(cfg: { discordClientId: string; baseUrl: string }, 
   u.searchParams.set("scope", "identify");
   u.searchParams.set("redirect_uri", redirectUri(cfg.baseUrl));
   u.searchParams.set("state", state);
-  u.searchParams.set("prompt", "none"); // returning users are not re-asked to authorize
   return u.toString();
 }
 
@@ -72,6 +71,7 @@ export async function fetchDiscordUser(
 /** Discord CDN avatar; users without a custom avatar get one of the six default embeds. */
 export function avatarUrl(discordId: string, avatarHash: string | null): string {
   if (avatarHash) return `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=64`;
+  if (!/^\d+$/.test(discordId)) return "https://cdn.discordapp.com/embed/avatars/0.png";
   const index = (BigInt(discordId) >> 22n) % 6n;
   return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
 }

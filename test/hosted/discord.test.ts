@@ -15,7 +15,7 @@ describe("authorizeUrl", () => {
     expect(u.searchParams.get("scope")).toBe("identify");
     expect(u.searchParams.get("redirect_uri")).toBe("https://bmpl.example.com/auth/discord/callback");
     expect(u.searchParams.get("state")).toBe("st4te");
-    expect(u.searchParams.get("prompt")).toBe("none");
+    expect(u.searchParams.has("prompt")).toBe(false);
     expect(redirectUri(CFG.baseUrl)).toBe("https://bmpl.example.com/auth/discord/callback");
   });
 });
@@ -66,5 +66,6 @@ describe("avatarUrl", () => {
   test("hash → cdn avatar, no hash → default embed avatar by (id >> 22) % 6", () => {
     expect(avatarUrl("123456789012345678", "abc")).toBe("https://cdn.discordapp.com/avatars/123456789012345678/abc.png?size=64");
     expect(avatarUrl("123456789012345678", null)).toBe(`https://cdn.discordapp.com/embed/avatars/${(123456789012345678n >> 22n) % 6n}.png`);
+    expect(avatarUrl("not-a-snowflake", null)).toBe("https://cdn.discordapp.com/embed/avatars/0.png");
   });
 });

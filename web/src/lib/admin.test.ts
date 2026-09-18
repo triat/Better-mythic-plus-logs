@@ -56,6 +56,9 @@ describe("proposal cards", () => {
     expect(diffRows(proposal({ patch: { id: 642, ignore: true } }))).toEqual([{ field: "ignore", from: "listed (immunity, cd 300 s)", to: "ignored for this spec" }]);
     expect(diffRows(proposal({ patch: { id: 642, ignore: true }, current: null, ignored: true }))).toEqual([{ field: "ignore", from: "already ignored", to: "ignored for this spec" }]);
     expect(diffRows(proposal({ patch: { id: 642, cooldownS: 300 } }))).toEqual([{ field: "cooldown", from: "300 s", to: "300 s (no change)" }]);
+    expect(diffRows(proposal({ patch: { id: 642, name: "Divine Shield (renamed)", cooldownS: 240 } }))).toEqual([
+      { field: "name", from: "Divine Shield", to: "Divine Shield (renamed)" }, { field: "cooldown", from: "300 s", to: "240 s" },
+    ]);
   });
   test("card: name from current or patch, key, author, age", () => {
     const c = proposalCard(proposal(), NOW);

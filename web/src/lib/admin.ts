@@ -73,7 +73,7 @@ export function hourBars(u: AdminUsage | null, now = Date.now()): HourBar[] {
 
 export interface DiffRow { field: string; from: string; to: string }
 const secs = (n: number | undefined): string => (n === undefined ? "—" : `${n} s`);
-/** What a proposal changes, field by field, current → proposed (the canvas "diff" column). */
+/** What a proposal changes, field by field, current → proposed (the canvas "diff" column): name, kind, cooldown, duration. */
 export function diffRows(p: AdminProposal): DiffRow[] {
   const patch: OverrideEntry = p.patch;
   const cur = p.current;
@@ -83,6 +83,9 @@ export function diffRows(p: AdminProposal): DiffRow[] {
   }
   const rows: DiffRow[] = [];
   const same = (to: string) => `${to} (no change)`;
+  if (cur !== null && patch.name !== undefined && patch.name !== cur.name) {
+    rows.push({ field: "name", from: cur.name, to: patch.name });
+  }
   if (patch.kind !== undefined) {
     rows.push({ field: "kind", from: cur ? cur.kind : "— (not in table)", to: cur?.kind === patch.kind ? same(patch.kind) : patch.kind });
   }

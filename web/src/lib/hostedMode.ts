@@ -1,4 +1,4 @@
-import type { MeResult } from "../api.ts";
+import type { MeResult, MeUser } from "../api.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
 export interface StatusInfo { hosted: boolean; hasCredentials: boolean; envPath: string | null }
@@ -33,4 +33,11 @@ export function deniedDiscordId(search: string): string | null {
 /** Discord (or bmpl) failed the login round-trip: the callback sent `?login=failed`. */
 export function loginFailed(search: string): boolean {
   return new URLSearchParams(search).get("login") === "failed";
+}
+
+/** Wording of the panel's table corrections: local file edits, member proposals, or admin corrections (approved on the spot). */
+export type ProposalMode = "local" | "propose" | "admin";
+export function proposalMode(status: StatusInfo, me: MeUser | null): ProposalMode {
+  if (!status.hosted) return "local";
+  return me?.role === "admin" ? "admin" : "propose";
 }

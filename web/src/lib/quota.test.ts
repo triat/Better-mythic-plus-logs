@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { canAfford, pointsLeft, quotaLabel } from "./quota.ts";
+import { canAfford, pointsLeft, quotaFromFailure, quotaLabel, quotaTooltip } from "./quota.ts";
 
 describe("quota view model", () => {
   test("pointsLeft: limit minus used, never negative; null without a limit or a quota", () => {
@@ -19,5 +19,20 @@ describe("quota view model", () => {
     expect(canAfford({ used: 297, limit: 300, resetInS: 1 }, 3)).toBe(true);
     expect(canAfford({ used: 5000, limit: null, resetInS: 1 }, 30)).toBe(true);
     expect(canAfford(null, 30)).toBe(true);
+  });
+});
+
+describe("quotaTooltip / quotaFromFailure", () => {
+  test("tooltip of a disabled Analyze button says when the quota resets", () => {
+    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 2280 })).toBe("Hourly quota reached · resets in 38 min");
+    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 5 })).toBe("Hourly quota reached · resets in 1 min");
+    expect(quotaTooltip(null)).toBe("Hourly quota reached");
+  });
+  test("only an `error: \"quota\"` body carries the member's numbers", () => {
+    expect(quotaFromFailure({ ok: false, error: "quota", message: "x", used: 300, limit: 300, resetInS: 120 })).toEqual({ used: 300, limit: 300, resetInS: 120 });
+    expect(quotaFromFailure({ ok: false, error: "budget", message: "x", used: 3500, limit: 3600, resetInS: 120 })).toBeNull();
+    expect(quotaFromFailure({ ok: false, error: "quota", message: "x" })).toBeNull();
+    expect(quotaFromFailure(null)).toBeNull();
+    expect(quotaFromFailure("nope")).toBeNull();
   });
 });

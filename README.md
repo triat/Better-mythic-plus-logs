@@ -412,8 +412,21 @@ people behind a reverse proxy. It is being built in issues #1–#11; today it
 only disables the local-only routes (`/api/setup`, `/api/quit`, clipboard
 watch), never opens a browser, adds security headers (CSP, nosniff,
 frame-ancestors none, …) and exposes `GET /api/health`
-(`{ ok, version, uptimeS, db }`) for the proxy's health check. Login, quotas
-and the admin page come with the following issues.
+(`{ ok, version, uptimeS, db }`) for the proxy's health check.
+
+**Login.** Hosted mode signs people in with Discord (scope `identify` only —
+no e-mail, no server list). Create an application at
+https://discord.com/developers/applications → OAuth2: copy the *Client ID*
+and *Client Secret* into `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET`
+and add the redirect `https://<your host>/auth/discord/callback`. Access is
+invite-only: the Discord ids in `BMPL_ADMIN_DISCORD_IDS` are admins and can
+always sign in; everyone else needs an invite — `bmpl invite <discord-id>
+[--note "guild mate"]` on the server (`bmpl invite --list`, `--remove <id>`),
+or the admin page once issue #8 lands. A user who is not invited sees their
+Discord id on the sign-in page so they can send it to you. Sessions last 30
+days (sliding) in an `HttpOnly` cookie; **Sign out** ends one.
+
+Quotas and the admin page come with the following issues.
 
 Do not expose a hosted instance to the internet before issues #3–#5 land:
 there is no login yet, every visitor shares one history, can spend the shared

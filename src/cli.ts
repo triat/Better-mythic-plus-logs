@@ -33,7 +33,9 @@ import { displayedRuns } from "./signals/enrich.ts";
 import { closeStore, getStore } from "./signals/store.ts";
 import { parseNameRealm, parseRaiderIOUrl, realmToSlug } from "./util.ts";
 import { runServer } from "./server.ts";
-import { resolveMode, validateHostedEnv } from "./hosted/config.ts";
+import { DISCORD_ID, resolveMode, validateHostedEnv } from "./hosted/config.ts";
+import type { HostedConfig } from "./hosted/config.ts";
+import { openHosted } from "./hosted/db.ts";
 import { runWatch } from "./watch.ts";
 
 const USAGE = `bmpl — Better Mythic+ Logs (Warcraft Logs analyzer)
@@ -69,6 +71,9 @@ Usage:
   bmpl defensives <Class> <Spec> | --check
                                      Show the effective defensives table for a spec
                                      (shipped + your defensives.json), or validate the file.
+  bmpl invite <discord-id> [--note "…"] | --list | --remove <discord-id>
+                                     Hosted mode: allow a Discord user to sign in
+                                     (writes the invites table in bmpl.db).
   bmpl char <name> <realm>           Basic character info.
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).
@@ -428,7 +433,8 @@ function hasFlag(args: string[], flag: string): boolean {
 
 /** Pure `serve` argument/env resolution — the command prints `error` and exits 2 on failure. */
 export function planServe(args: string[], env: Record<string, string | undefined>):
-  | { ok: true; port: number; open: boolean; hosted: boolean }
+  | { ok: true; port: number; open: false; hosted: true; hostedConfig: HostedConfig }
+  | { ok: true; port: number; open: boolean; hosted: false }
   | { ok: false; error: string } {
   const portStr = parseFlag(args, "--port");
   const port = portStr ? Number.parseInt(portStr, 10) : 3000;
@@ -444,7 +450,7 @@ export function planServe(args: string[], env: Record<string, string | undefined
       ].filter(Boolean);
       return { ok: false, error: `Hosted mode needs a complete environment — ${parts.join(" — ")}. See .env.hosted.example.` };
     }
-    return { ok: true, port, open: false, hosted: true };
+    return { ok: true, port, open: false, hosted: true, hostedConfig: v.config };
   }
   return { ok: true, port, open: !hasFlag(args, "--no-open"), hosted: false };
 }
@@ -467,6 +473,40 @@ function stripFlags(args: string[], flagsWithValues: string[], booleanFlags: str
     out.push(a);
   }
   return out;
+}
+
+/** Pure `invite` argument parsing. */
+export function planInvite(args: string[]):
+  | { ok: true; action: "add"; discordId: string; note: string | null }
+  | { ok: true; action: "list" }
+  | { ok: true; action: "remove"; discordId: string }
+  | { ok: false; error: string } {
+  if (hasFlag(args, "--list")) return { ok: true, action: "list" };
+  const usage = "Usage: bmpl invite <discord-id> [--note \"…\"] | --list | --remove <discord-id>";
+  const remove = parseFlag(args, "--remove");
+  if (args.includes("--remove")) {
+    if (!remove || !DISCORD_ID.test(remove)) return { ok: false, error: `${usage}\nDiscord ids are 17–20 digit numbers (Discord → Settings → Advanced → Developer Mode, then right-click a user → Copy User ID).` };
+    return { ok: true, action: "remove", discordId: remove };
+  }
+  const positional = stripFlags(args, ["--note"], []);
+  const discordId = positional[0];
+  if (!discordId || !DISCORD_ID.test(discordId)) return { ok: false, error: `${usage}\nDiscord ids are 17–20 digit numbers (Discord → Settings → Advanced → Developer Mode, then right-click a user → Copy User ID).` };
+  return { ok: true, action: "add", discordId, note: parseFlag(args, "--note") ?? null };
+}
+
+async function cmdInvite(args: string[]): Promise<void> {
+  const plan = planInvite(args);
+  if (!plan.ok) { console.error(err(plan.error)); process.exit(2); }
+  const db = openHosted((await getStore())._db);
+  if (plan.action === "list") {
+    const rows = db.invites.list();
+    if (rows.length === 0) { console.log(dim("no invites")); return; }
+    for (const r of rows) console.log(`${r.discordId}  ${dim(new Date(r.createdAt).toISOString().slice(0, 10))}  ${dim(r.invitedBy)}${r.note ? "  " + r.note : ""}`);
+    return;
+  }
+  if (plan.action === "remove") { console.log(db.invites.remove(plan.discordId) ? ok(`removed ${plan.discordId}`) : err(`${plan.discordId} was not invited`)); return; }
+  const row = db.invites.add(plan.discordId, "cli", plan.note, Date.now());
+  console.log(ok(`invited ${row.discordId}${row.note ? ` (${row.note})` : ""}`));
 }
 
 async function main(): Promise<void> {
@@ -581,9 +621,14 @@ async function main(): Promise<void> {
           console.error(err(plan.error));
           process.exit(2);
         }
-        await runServer({ port: plan.port, open: plan.open, hosted: plan.hosted });
+        await runServer({ port: plan.port, open: plan.open, hosted: plan.hosted, hostedConfig: plan.hosted ? plan.hostedConfig : undefined });
         // Bun.serve keeps the process alive; do not return.
         return;
+      }
+      case "invite": {
+        await cmdInvite(rest);
+        closeStore();
+        break;
       }
       case "watch": {
         const lvlStr = parseFlag(rest, "--level");

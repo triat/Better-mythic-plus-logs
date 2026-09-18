@@ -94,6 +94,28 @@ describe("GET /auth/discord/callback", () => {
     expect(me.status).toBe(200);
     expect(await me.json()).toEqual({ ok: true, user: { id: expect.any(Number), discordId: "123456789012345678", username: "tom", globalName: "Tom", avatarUrl: "https://cdn.discordapp.com/avatars/123456789012345678/abc.png?size=64", role: "member" } });
     expect(db.users.byDiscordId("123456789012345678")?.role).toBe("member");
+    // /api/me re-issues the session cookie so its Max-Age slides with the server-side expiry.
+    const reissued = me.headers.getSetCookie().find((c) => c.startsWith("bmpl_session="))!;
+    expect(reissued).toBeDefined();
+    expect(reissued).toContain("Max-Age=2592000");
+  });
+  test("a second login rotates the session: an old cookie sent to the callback stops working", async () => {
+    const first = await login();
+    const firstCookie = cookieOf(first.cb, "bmpl_session")!;
+    expect((await fetch(u("/api/me"), { headers: { cookie: firstCookie } })).status).toBe(200);
+
+    const start2 = await fetch(u("/auth/discord"), noRedirect);
+    const state2 = new URL(start2.headers.get("location")!).searchParams.get("state")!;
+    const oauth2 = cookieOf(start2, "bmpl_oauth")!;
+    const cb2 = await fetch(u(`/auth/discord/callback?code=good-code&state=${encodeURIComponent(state2)}`), {
+      ...noRedirect,
+      headers: { cookie: `${oauth2}; ${firstCookie}` }, // simulates the browser sending its still-valid session cookie along
+    });
+    expect(cb2.status).toBe(302);
+    const secondCookie = cookieOf(cb2, "bmpl_session")!;
+
+    expect((await fetch(u("/api/me"), { headers: { cookie: firstCookie } })).status).toBe(401);
+    expect((await fetch(u("/api/me"), { headers: { cookie: secondCookie } })).status).toBe(200);
   });
   test("a config admin is admitted without an invite and gets role admin", async () => {
     who = { id: "111111111111111111", username: "boss", global_name: null, avatar: null };

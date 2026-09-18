@@ -68,9 +68,11 @@ export async function fetchDiscordUser(
   }
 }
 
-/** Discord CDN avatar; users without a custom avatar get one of the six default embeds. */
+const AVATAR_HASH = /^[a-z0-9_]+$/i;
+
+/** Discord CDN avatar; users without a custom avatar (or with an unexpected hash shape) get one of the six default embeds. */
 export function avatarUrl(discordId: string, avatarHash: string | null): string {
-  if (avatarHash) return `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=64`;
+  if (avatarHash && AVATAR_HASH.test(avatarHash)) return `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=64`;
   if (!/^\d+$/.test(discordId)) return "https://cdn.discordapp.com/embed/avatars/0.png";
   const index = (BigInt(discordId) >> 22n) % 6n;
   return `https://cdn.discordapp.com/embed/avatars/${index}.png`;

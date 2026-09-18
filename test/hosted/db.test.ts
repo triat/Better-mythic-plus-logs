@@ -67,6 +67,14 @@ describe("sessions", () => {
     expect(db.sessions.get(b.id, SESSION_TTL_MS + 1)).not.toBeNull();
     expect(db.sessions.deleteForUser(u.id)).toBe(1);
   });
+  test("deleting a user cascades to delete their sessions", () => {
+    const raw = new Database(":memory:");
+    const hdb = openHosted(raw);
+    const u = hdb.users.upsertFromDiscord(ID, null, 0);
+    const s = hdb.sessions.create(u.id, { ip: null, userAgent: null, now: 1000 });
+    raw.run("DELETE FROM users WHERE id = ?", [u.id]);
+    expect(hdb.sessions.get(s.id, 2000)).toBeNull();
+  });
 });
 
 describe("invites", () => {

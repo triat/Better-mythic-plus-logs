@@ -49,8 +49,8 @@ describe("invites", () => {
     expect(list.invites.map((i: { discordId: string }) => i.discordId)).toEqual(["222222222222222222"]);
     expect((await fetch(u("/api/admin/invites"), json("POST", { discordId: "abc" }, admin.cookie))).status).toBe(400);
     expect((await fetch(u("/api/admin/invites"), json("POST", {}, admin.cookie))).status).toBe(400);
-    expect(await (await fetch(u("/api/admin/invites/222222222222222222"), { method: "DELETE", headers: { cookie: admin.cookie } })).json()).toEqual({ ok: true });
-    expect(await (await fetch(u("/api/admin/invites/222222222222222222"), { method: "DELETE", headers: { cookie: admin.cookie } })).json()).toEqual({ ok: false });
+    expect(await (await fetch(u("/api/admin/invites/222222222222222222"), { method: "DELETE", headers: { cookie: admin.cookie } })).json()).toEqual({ ok: true, sessionsEnded: 0 });
+    expect(await (await fetch(u("/api/admin/invites/222222222222222222"), { method: "DELETE", headers: { cookie: admin.cookie } })).json()).toEqual({ ok: false, sessionsEnded: 0 });
   });
 });
 
@@ -71,5 +71,16 @@ describe("users", () => {
     expect((await fetch(u("/api/admin/users/9999/role"), json("POST", { role: "admin" }, admin.cookie))).status).toBe(404);
     expect((await fetch(u(`/api/admin/users/${member.user.id}/role`), json("POST", { role: "god" }, admin.cookie))).status).toBe(400);
     expect((await fetch(u("/api/admin/users/abc/role"), json("POST", { role: "admin" }, admin.cookie))).status).toBe(400);
+  });
+});
+
+describe("removing an invite", () => {
+  test("ends the invited user's sessions", async () => {
+    await fetch(u("/api/admin/invites"), json("POST", { discordId: "333333333333333333" }, admin.cookie));
+    const third = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "333333333333333333", role: "member", username: "third" });
+    expect((await fetch(u("/api/me"), { headers: { cookie: third.cookie } })).status).toBe(200);
+    const del = await fetch(u("/api/admin/invites/333333333333333333"), { method: "DELETE", headers: { cookie: admin.cookie } });
+    expect(await del.json()).toEqual({ ok: true, sessionsEnded: 1 });
+    expect((await fetch(u("/api/me"), { headers: { cookie: third.cookie } })).status).toBe(401);
   });
 });

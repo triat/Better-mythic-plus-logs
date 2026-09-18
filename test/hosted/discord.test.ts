@@ -68,4 +68,7 @@ describe("avatarUrl", () => {
     expect(avatarUrl("123456789012345678", null)).toBe(`https://cdn.discordapp.com/embed/avatars/${(123456789012345678n >> 22n) % 6n}.png`);
     expect(avatarUrl("not-a-snowflake", null)).toBe("https://cdn.discordapp.com/embed/avatars/0.png");
   });
+  test("a hash that isn't [a-z0-9_] falls back to the default embed avatar", () => {
+    expect(avatarUrl("123456789012345678", "../../etc/passwd")).toBe(`https://cdn.discordapp.com/embed/avatars/${(123456789012345678n >> 22n) % 6n}.png`);
+  });
 });

@@ -61,6 +61,10 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       const verdict = admission(rt, me.identity.discordId);
       if (!verdict.admitted) return redirect(`/?denied=${encodeURIComponent(me.identity.discordId)}`, [clearOauth]);
 
+      // Re-login rotates the session: an old cookie replayed after a fresh login must not
+      // keep working.
+      if (ctx.sessionId) rt.db.sessions.delete(ctx.sessionId);
+
       const now = Date.now();
       const user = rt.db.users.upsertFromDiscord(me.identity, verdict.role, now);
       const session = rt.db.sessions.create(user.id, { ip: ctx.ip || null, userAgent: req.headers.get("user-agent"), now });
@@ -74,6 +78,13 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       return res;
     }, "public"),
 
-    route("GET", "/api/me", (_req, _url, ctx) => jsonResponse({ ok: true, user: meUser(ctx.user!) })),
+    route("GET", "/api/me", (_req, _url, ctx) => {
+      const res = jsonResponse({ ok: true, user: meUser(ctx.user!) });
+      // Slide the cookie's Max-Age along with the server-side expiry (sessions.get already
+      // extends expires_at); otherwise the browser drops the cookie 30 days after login
+      // even though the session itself is still valid.
+      res.headers.append("Set-Cookie", serializeCookie(SESSION_COOKIE, signSessionId(ctx.sessionId!, rt.config.sessionSecret), sessionCookieOpts));
+      return res;
+    }),
   ];
 }

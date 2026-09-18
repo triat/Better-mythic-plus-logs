@@ -67,7 +67,9 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
 
   let runtime: HostedRuntime | null = null;
   if (hosted) {
-    runtime = createHostedRuntime(opts.hostedConfig!, (await getStore())._db, opts.fetchFn ?? fetch);
+    const store = await getStore();
+    if (store._db.filename === ":memory:") throw new Error("hosted mode needs a persistent bmpl.db (check BMPL_DB_PATH)");
+    runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch);
   }
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint }),

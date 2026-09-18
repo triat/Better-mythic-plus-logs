@@ -27,7 +27,10 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
     prefixRoute("DELETE", "/api/admin/invites/", (_req, url) => {
       const id = tail(url, "/api/admin/invites/");
       if (!DISCORD_ID.test(id)) return jsonResponse({ ok: false, error: "Invalid Discord id" }, 400);
-      return jsonResponse({ ok: rt.db.invites.remove(id) });
+      const user = rt.db.users.byDiscordId(id);
+      const removed = rt.db.invites.remove(id);
+      const sessionsEnded = user && !rt.config.adminDiscordIds.includes(id) ? rt.db.sessions.deleteForUser(user.id) : 0;
+      return jsonResponse({ ok: removed, sessionsEnded });
     }, "admin"),
     route("GET", "/api/admin/users", () => jsonResponse({ ok: true, users: rt.db.users.list().map(adminUser) }), "admin"),
     prefixRoute("POST", "/api/admin/users/", async (req, url, ctx) => {

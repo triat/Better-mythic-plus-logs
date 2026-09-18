@@ -513,7 +513,14 @@ async function cmdInvite(args: string[]): Promise<void> {
     for (const r of rows) console.log(`${r.discordId}  ${dim(new Date(r.createdAt).toISOString().slice(0, 10))}  ${dim(r.invitedBy)}${r.note ? "  " + r.note : ""}`);
     return;
   }
-  if (plan.action === "remove") { console.log(db.invites.remove(plan.discordId) ? ok(`removed ${plan.discordId}`) : err(`${plan.discordId} was not invited`)); return; }
+  if (plan.action === "remove") {
+    const user = db.users.byDiscordId(plan.discordId);
+    const removed = db.invites.remove(plan.discordId);
+    if (!removed) { console.log(err(`${plan.discordId} was not invited`)); return; }
+    const sessionsEnded = user ? db.sessions.deleteForUser(user.id) : 0;
+    console.log(ok(`removed ${plan.discordId} (ended ${sessionsEnded} sessions)`));
+    return;
+  }
   const row = db.invites.add(plan.discordId, "cli", plan.note, Date.now());
   console.log(ok(`invited ${row.discordId}${row.note ? ` (${row.note})` : ""}`));
 }

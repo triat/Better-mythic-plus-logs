@@ -1,12 +1,26 @@
 import type { MeResult, MeUser } from "../api.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
-export interface StatusInfo { hosted: boolean; hasCredentials: boolean; envPath: string | null }
+export interface StatusInfo {
+  hosted: boolean;
+  hasCredentials: boolean;
+  envPath: string | null;
+  /** Hosted flags (issue #11): open signup, Discord guild gate, own WCL clients enabled, who runs the instance. */
+  openSignup: boolean;
+  guildRequired: boolean;
+  wclClients: boolean;
+  operator: string;
+}
 export interface UiControls { setup: boolean; quit: boolean; watch: boolean; envPath: boolean; signOut: boolean }
 export type BootScreen = "setup" | "main" | "signin";
+/** No router: the pathname picks the page rendered inside `Main` (or, for /privacy, before the sign-in wall). */
+export type Page = "main" | "admin" | "settings" | "privacy";
 
 /** Used when /api/status itself fails: behave like today's local UI. */
-export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null };
+export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "" };
+
+export const pageOf = (pathname: string): Page =>
+  pathname === "/admin" ? "admin" : pathname === "/settings" ? "settings" : pathname === "/privacy" ? "privacy" : "main";
 
 export function uiControls(status: StatusInfo): UiControls {
   const local = !status.hosted;
@@ -25,9 +39,21 @@ export function bootScreen(status: StatusInfo, me: MeResult | null, pathname: st
   return initialScreen(status, pathname);
 }
 
-export function deniedDiscordId(search: string): string | null {
+/** The sign-in callback's `?denied=<discordId>|banned|guild|rate` (canvas "Phase2Details", sign-in variants). */
+export type DeniedNotice = { kind: "invite"; discordId: string } | { kind: "guild" } | { kind: "banned" } | { kind: "rate" } | null;
+export function deniedNotice(search: string): DeniedNotice {
   const v = new URLSearchParams(search).get("denied");
-  return v && /^\d{17,20}$/.test(v) ? v : null;
+  if (!v) return null;
+  if (/^\d{17,20}$/.test(v)) return { kind: "invite", discordId: v };
+  if (v === "guild" || v === "banned" || v === "rate") return { kind: v };
+  return null;
+}
+
+/** The faint line under the Discord button: who may sign in and what sign-in reads, per instance mode. */
+export function signInNote(status: StatusInfo): string {
+  if (status.guildRequired) return "Members of the guild's Discord only. Sign-in reads your server list once to check membership and keeps nothing from it.";
+  if (status.openSignup) return "Anyone with a Discord account can sign in. Only your Discord id and name are stored — no message or server access.";
+  return "Invite-only. Only your Discord id and name are stored — no message or server access.";
 }
 
 /** Discord (or bmpl) failed the login round-trip: the callback sent `?login=failed`. */
@@ -47,4 +73,11 @@ export type AdminAccess = "ok" | "member" | "local";
 export function adminAccess(status: StatusInfo, me: MeUser | null): AdminAccess {
   if (!status.hosted) return "local";
   return me?.role === "admin" ? "ok" : "member";
+}
+
+/** Who may see /settings: any signed-in hosted user; anonymous hosted visitors get the sign-in wall; local mode has no account. */
+export type AccountAccess = "ok" | "signin" | "local";
+export function accountAccess(status: StatusInfo, me: MeUser | null): AccountAccess {
+  if (!status.hosted) return "local";
+  return me ? "ok" : "signin";
 }

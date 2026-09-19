@@ -63,6 +63,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <Users
           users={data.users} selfId={me.id} limitPerUser={data.usage?.limitPerUser ?? 300}
           onRole={(id, role) => act(api.admin.setRole(id, role))} onRevoke={(id) => act(api.admin.revokeSessions(id))}
+          onBan={(id) => act(api.admin.ban(id))} onUnban={(id) => act(api.admin.unban(id))}
         />
         <Invites invites={data.invites} users={data.users} onAdd={(id, note) => act(api.admin.addInvite(id, note))} onRemove={(id) => act(api.admin.removeInvite(id))} />
         <Instance instance={data.instance} usage={data.usage} />

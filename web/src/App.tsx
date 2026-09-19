@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
-import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry } from "./types.ts";
+import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClientView } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaTooltip } from "./lib/quota.ts";
 import { menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, adminAccess, bootScreen, deniedDiscordId, loginFailed, proposalMode, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import { parseServerSettings } from "./lib/settings.ts";
 import type { Settings } from "./lib/settings.ts";
 import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
+import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
+import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
 import { Forbidden } from "./components/admin/Forbidden.tsx";
 import { Compare } from "./components/Compare.tsx";
@@ -30,30 +32,40 @@ type Screen =
   | { kind: "loading" }
   | { kind: "setup"; status: StatusInfo }
   | { kind: "signin"; status: StatusInfo }
-  | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null; quota: QuotaInfo | null };
+  | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null; quota: QuotaInfo | null; ownClient: OwnClientView | null };
+
+// No router: /admin, /settings and /privacy are full navigations resolved once from the pathname.
+const page = pageOf(location.pathname);
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
   useEffect(() => {
     (async () => {
       const s = await api.status();
-      const status: StatusInfo = s.ok ? { hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null } : LOCAL_STATUS;
+      const status: StatusInfo = s.ok
+        ? {
+            hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null,
+            openSignup: s.openSignup ?? false, guildRequired: s.guildRequired ?? false, wclClients: s.wclClients ?? false, operator: s.operator ?? "",
+          }
+        : LOCAL_STATUS;
       const me = status.hosted ? await api.me() : null;
       const kind = bootScreen(status, me, location.pathname);
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
-        setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings, quota: me?.kind === "ok" ? me.quota : null });
+        setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings, quota: me?.kind === "ok" ? me.quota : null, ownClient: me?.kind === "ok" ? me.ownClient : null });
       } else setScreen({ kind, status });
     })();
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
-  if (screen.kind === "signin") return <SignIn deniedDiscordId={deniedDiscordId(location.search)} loginFailed={loginFailed(location.search)} />;
+  // The privacy page is readable before signing in (it is linked from the sign-in note).
+  if (screen.kind === "signin" && page === "privacy") return <PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} />;
+  if (screen.kind === "signin") return <SignIn notice={deniedNotice(location.search)} loginFailed={loginFailed(location.search)} note={signInNote(screen.status)} />;
   if (screen.kind === "setup") {
-    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null }); }} />;
+    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null, ownClient: null }); }} />;
   }
   return (
     <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
-      <Main status={screen.status} me={screen.me} initialQuota={screen.quota} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+      <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
     </SettingsProvider>
   );
 }
@@ -65,11 +77,13 @@ const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
   metric: f.metric || null,
 });
 
-function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; onSetup: () => void }) {
+function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; initialOwnClient: OwnClientView | null; onSetup: () => void }) {
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
-  const menu = me ? menuModel(me, quota) : null;
+  // The member's own WCL client (issue #11): its counter replaces the quota line; lookups and deep-dives carry the latest view.
+  const [ownClient, setOwnClient] = useState<OwnClientView | null>(initialOwnClient);
+  const menu = me ? menuModel(me, quota, ownClient) : null;
   // Admins see "N pending proposals" next to the Admin item; counted when the menu opens (0 WCL pts, SQLite only).
   const [pendingProposals, setPendingProposals] = useState<number | null>(null);
   const onMenuOpen = useCallback(async () => {
@@ -165,6 +179,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
     setBusy(null);
     if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(r.error); return; }
     if (r.quota) setQuota(r.quota);
+    if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
     setActiveKey(r.key);
@@ -259,6 +274,7 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
     if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(r.error); return false; }
     if (r.quota) setQuota(r.quota);
+    if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
     setAnalyzing(null);
@@ -284,7 +300,8 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
 
   const deepdiveActions: DeepdiveActions = {
     analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives,
-    canAfford: (runs) => canAfford(quota, runs * POINTS_PER_RUN),
+    // An own client never blocks an analysis: the shared quota is not what it spends from.
+    canAfford: (runs) => ownClient !== null || canAfford(quota, runs * POINTS_PER_RUN),
     quotaTooltip: quotaTooltip(quota),
     mode: proposalMode(status, me),
   };
@@ -295,9 +312,10 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
   // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
   // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
   const showCompare = compareOpen && selected.length >= 2;
-  // /admin is a full navigation from the user menu (no router): same header, the admin sections instead of the tabs.
-  const isAdminPath = location.pathname === "/admin";
+  // /admin and /settings are full navigations from the user menu (no router): same header (no search), their sections instead of the tabs.
+  const isMainPage = page === "main";
   const access = adminAccess(status, me);
+  const account = accountAccess(status, me);
 
   return (
     <>
@@ -305,12 +323,23 @@ function Main({ status, me, initialQuota, onSetup }: { status: StatusInfo; me: M
         form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
-        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && !isAdminPath} search={!isAdminPath} controls={controls}
+        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && isMainPage} search={isMainPage} controls={controls}
         menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
       />
-      {isAdminPath ? (
+      {page === "admin" && (
         access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
-      ) : (
+      )}
+      {page === "settings" && (
+        account === "ok" && me
+          ? <SettingsPage me={me} status={status} quota={quota} ownClient={ownClient} onOwnClientChange={setOwnClient} onDeleted={() => location.assign("/")} />
+          : <Forbidden reason="local" handle={null} title="Hosted mode only" text="Settings exist in hosted mode only." />
+      )}
+      {page === "privacy" && (
+        status.hosted
+          ? <PrivacyPage operator={status.operator} guildRequired={status.guildRequired} />
+          : <Forbidden reason="local" handle={null} title="Hosted mode only" text="The privacy page exists in hosted mode only." />
+      )}
+      {isMainPage && (
         <>
           <Tabs
             items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}

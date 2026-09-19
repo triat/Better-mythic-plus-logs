@@ -13,6 +13,7 @@ import type {
   HistoryItem,
   LookupPayload,
   LookupRequest,
+  OwnClientView,
   RunDefensives,
   WatchOpts,
   WatchStatus,
@@ -33,7 +34,7 @@ export interface MeUser {
 /** The member's share of the shared Warcraft Logs budget (hosted mode only). */
 export interface QuotaInfo { used: number; limit: number | null; resetInS: number }
 export type MeResult =
-  | { kind: "ok"; user: MeUser; quota: QuotaInfo | null }
+  | { kind: "ok"; user: MeUser; quota: QuotaInfo | null; ownClient: OwnClientView | null }
   | { kind: "unauthorized" }
   | { kind: "error"; error: string };
 
@@ -62,11 +63,12 @@ const post = (body?: unknown): RequestInit => ({
 const historyPath = (key: string) => `/api/history/${encodeURIComponent(key)}`;
 
 export const api = {
-  status: () => call<{ hosted: boolean; hasCredentials: boolean; envPath?: string }>("/api/status"),
+  status: () =>
+    call<{ hosted: boolean; hasCredentials: boolean; envPath?: string; openSignup?: boolean; guildRequired?: boolean; wclClients?: boolean; operator?: string }>("/api/status"),
   setup: (clientId: string, clientSecret: string) =>
     call<{ envPath: string }>("/api/setup", post({ clientId, clientSecret })),
   lookup: (req: LookupRequest) =>
-    call<{ result: LookupPayload; key: string; fromCache: boolean; pointsSpent?: number; quota?: QuotaInfo }>("/api/lookup", post(req)),
+    call<{ result: LookupPayload; key: string; fromCache: boolean; pointsSpent?: number; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/lookup", post(req)),
   history: () => call<{ items: HistoryItem[] }>("/api/history"),
   historyEntry: (key: string) => call<{ result: LookupPayload; key: string }>(historyPath(key)),
   removeHistory: (key: string) => call<Record<never, never>>(historyPath(key), { method: "DELETE" }),
@@ -75,7 +77,7 @@ export const api = {
   watchStop: () => call<{ active: false }>("/api/watch/stop", post()),
   quit: () => call<Record<never, never>>("/api/quit", post()),
   deepdive: (req: DeepdiveRequest) =>
-    call<{ result: RunDefensives; fromCache: boolean; pointsSpent: number | null; quota?: QuotaInfo }>("/api/deepdive", post(req)),
+    call<{ result: RunDefensives; fromCache: boolean; pointsSpent: number | null; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/deepdive", post(req)),
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesPatchResult>("/api/defensives", post(body)),
@@ -83,6 +85,8 @@ export const api = {
     users: () => call<{ users: AdminUser[] }>("/api/admin/users"),
     setRole: (id: number, role: "member" | "admin") => call<{ user: AdminUser }>(`/api/admin/users/${id}/role`, post({ role })),
     revokeSessions: (id: number) => call<{ sessionsEnded: number }>(`/api/admin/users/${id}/sessions/revoke`, post()),
+    ban: (id: number) => call<{ user: AdminUser }>(`/api/admin/users/${id}/ban`, post()),
+    unban: (id: number) => call<{ user: AdminUser }>(`/api/admin/users/${id}/unban`, post()),
     invites: () => call<{ invites: AdminInvite[] }>("/api/admin/invites"),
     addInvite: (discordId: string, note: string | null) => call<{ invite: Omit<AdminInvite, "user"> }>("/api/admin/invites", post({ discordId, note })),
     removeInvite: (discordId: string) => call<{ sessionsEnded: number }>(`/api/admin/invites/${encodeURIComponent(discordId)}`, { method: "DELETE" }),
@@ -92,6 +96,15 @@ export const api = {
     instance: () => call<AdminInstance>("/api/admin/instance"),
     audit: (o: { kind: AuditKind | "all"; before?: number | null; limit?: number }) =>
       call<AdminAudit>(`/api/admin/audit?kind=${o.kind}${o.before ? `&before=${o.before}` : ""}&limit=${o.limit ?? 50}`),
+  },
+  /** The member's own Warcraft Logs client and account (issue #11): the secret is write-only, the id comes back abbreviated. */
+  account: {
+    wclClient: () => call<{ enabled: boolean; client: OwnClientView | null }>("/api/me/wcl-client"),
+    saveWclClient: (clientId: string, clientSecret: string) =>
+      call<{ client: OwnClientView }>("/api/me/wcl-client", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId, clientSecret }) }),
+    verifyWclClient: () => call<{ client: OwnClientView }>("/api/me/wcl-client/verify", post()),
+    removeWclClient: () => call<Record<never, never>>("/api/me/wcl-client", { method: "DELETE" }),
+    deleteAccount: () => call<Record<never, never>>("/api/me", { method: "DELETE" }),
   },
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
@@ -104,9 +117,9 @@ export const api = {
       return { kind: "error", error: "Network error" };
     }
     if (res.status === 401) return { kind: "unauthorized" };
-    const data = (await res.json().catch(() => null)) as { ok?: boolean; user?: MeUser; quota?: QuotaInfo; error?: string } | null;
+    const data = (await res.json().catch(() => null)) as { ok?: boolean; user?: MeUser; quota?: QuotaInfo; ownClient?: OwnClientView | null; error?: string } | null;
     if (!res.ok || !data?.ok || !data.user) return { kind: "error", error: data?.error ?? `HTTP ${res.status}` };
-    return { kind: "ok", user: data.user, quota: data.quota ?? null };
+    return { kind: "ok", user: data.user, quota: data.quota ?? null, ownClient: data.ownClient ?? null };
   },
   logout: () => call<Record<never, never>>("/auth/logout", post()),
 };

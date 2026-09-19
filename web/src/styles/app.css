@@ -318,3 +318,24 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .dot-quota { background: var(--yellow); }
 .dot-sec { background: var(--orange); }
 .dot-error { background: var(--red); }
+
+/* --- hosted: settings page (components/account/*, issue #11; canvas "Phase2SettingsA" + "Phase2Details") --- */
+.settings-card { display: flex; flex-direction: column; gap: 6px; }
+.settings-head { display: flex; align-items: center; gap: 10px; }
+.settings-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.settings-text { font-size: 13px; color: var(--text-soft); line-height: 1.55; margin: 4px 0 0; }
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; margin-top: 10px; }
+.settings-submit { display: inline-flex; gap: 8px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field .lab { font-size: 12px; color: var(--muted); }
+.dot-none { background: var(--faint); }
+.row-banned { opacity: .55; }
+.menu-foot { padding: 6px 10px 4px; font-size: 12px; }
+
+/* --- hosted: privacy page (PrivacyPage.tsx) --- */
+.privacy { max-width: 720px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.5; }
+.privacy h1 { font-size: 22px; margin: 0; }
+.privacy h2 { font-size: 14px; font-weight: 600; margin: 8px 0 0; }
+.privacy p { margin: 0; }
+.privacy ul { margin: 0; padding-left: 18px; }
+.privacy li { margin: 4px 0; }

@@ -113,16 +113,23 @@ export function decidedLine(p: AdminProposal, now = Date.now()): DecidedLine {
 export interface UserRowModel {
   id: number; name: string; handle: string; initials: string; avatarUrl: string; role: "member" | "admin"; roleNote: "env" | null; toggle: "make admin" | "make member" | null;
   lastSeen: string; pointsHour: string; pointsHourTone: "" | "tone-warn" | "tone-bad"; points24h: string; discordId: string; sessions: number; canRevoke: boolean;
+  /** Issue #11: a banned row is dimmed and shows the red "banned" chip; `ban` is the button to offer (null on yourself and config admins). */
+  banned: boolean; ban: "ban" | "unban" | null;
+  /** "pts · hour" cell: a member with their own WCL client spends nothing from the shared budget. */
+  pointsCell: string;
 }
-/** `selfId` is the signed-in admin: no toggle, no revoke on yourself; env admins have no toggle either. */
+/** `selfId` is the signed-in admin: no toggle, no revoke, no ban on yourself; env admins have no toggle and cannot be banned either. */
 export function userRow(u: AdminUser, now = Date.now(), selfId: number, limitPerUser = 300): UserRowModel {
   const name = u.globalName ?? u.username;
   const self = u.id === selfId;
+  const banned = u.bannedAt !== null;
+  const pointsHour = fmtPts(u.pointsHour);
   return {
     id: u.id, name, handle: `@${u.username}`, initials: initialsOf(name), avatarUrl: u.avatarUrl, role: u.role, roleNote: u.configAdmin ? "env" : null,
     toggle: self || u.configAdmin ? null : u.role === "admin" ? "make member" : "make admin",
-    lastSeen: fmtAge(u.lastSeenAt, now), pointsHour: fmtPts(u.pointsHour), pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
+    lastSeen: fmtAge(u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
     points24h: fmtPts(u.points24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self,
+    banned, ban: self || u.configAdmin ? null : banned ? "unban" : "ban", pointsCell: u.ownClient ? "own client" : pointsHour,
   };
 }
 

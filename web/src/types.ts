@@ -11,6 +11,7 @@ export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 export type { DefensiveSpell } from "@shared/deepdive/types.ts";
 export type { EnvRow } from "@shared/hosted/instance.ts";
 export type { AuditAction, AuditKind, AuditRow } from "@shared/hosted/audit.ts";
+export type { OwnClientView, OwnClientSnapshot } from "@shared/hosted/wcl-clients.ts";
 export type { AxisKey, AxisScore, Confidence, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
@@ -90,6 +91,7 @@ export interface DefensivesPatchResult extends DefensivesResponse {
 export interface AdminUser {
   id: number; discordId: string; username: string; globalName: string | null; avatarUrl: string; role: "member" | "admin";
   createdAt: number; lastSeenAt: number; pointsHour: number; points24h: number; sessions: number; configAdmin: boolean;
+  bannedAt: number | null; ownClient: boolean;
 }
 /** GET /api/admin/invites row. */
 export interface AdminInvite { discordId: string; invitedBy: string; createdAt: number; note: string | null; user: { id: number; username: string } | null }

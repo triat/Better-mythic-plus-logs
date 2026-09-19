@@ -1,6 +1,14 @@
 import { useState } from "react";
+import type { DeniedNotice } from "../lib/hostedMode.ts";
 
-interface Props { deniedDiscordId: string | null; loginFailed: boolean }
+interface Props { notice: DeniedNotice; loginFailed: boolean; note: string }
+
+/** The three refusals that carry no id (canvas "Phase2Details", sign-in variants): title + explanation in the same inset as the invite notice. */
+const REFUSALS = {
+  guild: { title: "Members of the guild's Discord only", text: "Your account is not in that server. Join it, then sign in again." },
+  banned: { title: "Account banned", text: "This account cannot sign in here. Contact the admin on Discord." },
+  rate: { title: "Too many new accounts", text: "Too many sign-ups from your network in the last hour — try again later." },
+} as const;
 
 const DiscordMark = () => (
   <svg width="20" height="16" viewBox="0 0 127 96" fill="currentColor" aria-hidden="true">
@@ -8,9 +16,11 @@ const DiscordMark = () => (
   </svg>
 );
 
-/** Hosted-mode gate (GET /api/me → 401). Design: canvas page "Hosted", sign-in A + denied notice 2. */
-export function SignIn({ deniedDiscordId, loginFailed }: Props) {
+/** Hosted-mode gate (GET /api/me → 401). Design: canvas page "Hosted", sign-in A + denied notice 2; "Phase2Details" for the mode note and the other refusals. */
+export function SignIn({ notice, loginFailed, note }: Props) {
   const [copied, setCopied] = useState(false);
+  const deniedDiscordId = notice?.kind === "invite" ? notice.discordId : null;
+  const refusal = notice && notice.kind !== "invite" ? REFUSALS[notice.kind] : null;
   const copy = async () => {
     if (!deniedDiscordId) return;
     try { await navigator.clipboard.writeText(deniedDiscordId); setCopied(true); } catch { /* no clipboard access: the id is plain text, selectable */ }
@@ -34,7 +44,13 @@ export function SignIn({ deniedDiscordId, loginFailed }: Props) {
             <div className="faint" style={{ fontSize: 12 }}>Then sign in again — no need to reload.</div>
           </div>
         )}
-        <p className="signin-note">Invite-only. Only your Discord id and name are stored — no message or server access.</p>
+        {refusal && (
+          <div className="inset signin-denied">
+            <div className="label-caps">{refusal.title}</div>
+            <div>{refusal.text}</div>
+          </div>
+        )}
+        <p className="signin-note">{note} <a href="/privacy" className="faint">Privacy</a></p>
       </main>
     </>
   );

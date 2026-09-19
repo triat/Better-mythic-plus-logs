@@ -540,8 +540,8 @@ correction lives in a separate table keyed by the *deciding* admin, so it
 stays in the shared table regardless of what happens to the account that
 proposed it; if the deleted account had itself approved or decided other
 members' proposals as an admin, those rows keep the correction but lose the
-admin's name. The audit log keeps its own rows (without the author) for their
-normal 90 days.
+admin's name. The audit log keeps the member's Discord id, the username they
+had at deletion and their IP for up to 90 days, unlinked from any account.
 
 **Shared defensives table.** Corrections made from the panel are proposals:
 they apply to you immediately (marked "pending review" — in the panel a

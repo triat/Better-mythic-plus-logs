@@ -57,8 +57,10 @@ export function App() {
     })();
   }, []);
   if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
-  // The privacy page is readable before signing in (it is linked from the sign-in note).
-  if (screen.kind === "signin" && page === "privacy") return <PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} />;
+  // The privacy page is one bare page (brand header, no search) for everyone: readable before
+  // signing in (it is linked from the sign-in note) and rendered outside `Main` when signed in, so
+  // it never gets the app header on top of its own.
+  if (screen.status.hosted && page === "privacy") return <PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} />;
   if (screen.kind === "signin") return <SignIn notice={deniedNotice(location.search)} loginFailed={loginFailed(location.search)} note={signInNote(screen.status)} />;
   if (screen.kind === "setup") {
     return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null, ownClient: null }); }} />;
@@ -335,9 +337,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           : <Forbidden reason="local" handle={null} title="Hosted mode only" text="Settings exist in hosted mode only." />
       )}
       {page === "privacy" && (
-        status.hosted
-          ? <PrivacyPage operator={status.operator} guildRequired={status.guildRequired} />
-          : <Forbidden reason="local" handle={null} title="Hosted mode only" text="The privacy page exists in hosted mode only." />
+        // Hosted visitors never reach here (App renders the bare page before Main).
+        <Forbidden reason="local" handle={null} title="Hosted mode only" text="The privacy page exists in hosted mode only." />
       )}
       {isMainPage && (
         <>

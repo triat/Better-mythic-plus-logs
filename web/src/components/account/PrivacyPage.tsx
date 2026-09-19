@@ -28,7 +28,8 @@ export function PrivacyPage({ operator, guildRequired }: Props) {
         <h2>Deleting your account</h2>
         <p>
           Settings → <b>Delete my account</b> removes every row above and signs you out. Corrections you proposed that an admin approved stay in the shared table, without your name.
-          The audit log keeps its rows (without your name) until they expire. Backups of the database are kept 30 days.
+          The audit log keeps your Discord id, the username you had at deletion and your IP for up to 90 days, unlinked from any account.
+          Backups of the database are kept 30 days.
         </p>
         <p className="faint" style={{ fontSize: 12 }}>Questions: the admin of this instance on Discord.</p>
       </main>

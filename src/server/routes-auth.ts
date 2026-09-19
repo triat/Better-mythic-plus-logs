@@ -127,6 +127,7 @@ export function authRoutes(rt: HostedRuntime): Route[] {
     route("DELETE", "/api/me", (_req, _url, ctx) => {
       const u = ctx.user!;
       rt.audit.record("account_delete", { userId: null, target: `discord ${u.discordId}`, detail: { username: u.username } });
+      rt.wclClients.forget(u.id);
       rt.db.users.delete(u.id);
       const res = jsonResponse({ ok: true });
       res.headers.append("Set-Cookie", clearCookie(SESSION_COOKIE, { path: "/", secure: rt.secure }));

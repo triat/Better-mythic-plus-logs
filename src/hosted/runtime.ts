@@ -11,6 +11,8 @@ import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
 import { QuotaGate } from "./quota.ts";
 import { DEFAULT_RATE_LIMITS, RateLimiter } from "./ratelimit.ts";
 import type { RateLimits } from "./ratelimit.ts";
+import { UserWclClients, verifyWithPing } from "./wcl-clients.ts";
+import type { Verify } from "./wcl-clients.ts";
 
 export interface HostedRuntime {
   config: HostedConfig;
@@ -23,6 +25,8 @@ export interface HostedRuntime {
   audit: AuditLog;
   /** In-app rate limits (issue #9): `/auth/*` per IP, `POST /api/lookup` and `POST /api/deepdive` per user; `security` throttles the `origin_rejected` audit rows per IP; `signup` throttles new accounts under open signup, per IP. */
   limits: { auth: RateLimiter; lookup: RateLimiter; deepdive: RateLimiter; security: RateLimiter; signup: RateLimiter };
+  /** A member's own WCL client (issue #11 Task 2): encrypted secret storage, verification, own-client rate-limit snapshot. */
+  wclClients: UserWclClients;
 }
 
 const PURGE_INTERVAL_MS = 60 * 60 * 1000;
@@ -31,7 +35,13 @@ const PURGE_INTERVAL_MS = 60 * 60 * 1000;
  * Builds the runtime and starts the hourly purge of expired sessions, audit rows older than the
  * retention and idle rate-limit keys (unref'd: never keeps the process alive).
  */
-export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn: typeof fetch, rateLimits: RateLimits = DEFAULT_RATE_LIMITS): HostedRuntime {
+export function createHostedRuntime(
+  config: HostedConfig,
+  db: Database,
+  fetchFn: typeof fetch,
+  rateLimits: RateLimits = DEFAULT_RATE_LIMITS,
+  hooks: { verifyWclClient?: Verify } = {},
+): HostedRuntime {
   const hostedDb = openHosted(db);
   const meter = new PointsMeter({ usage: hostedDb.usage });
   const audit = new AuditLog(hostedDb.audit);
@@ -51,6 +61,7 @@ export function createHostedRuntime(config: HostedConfig, db: Database, fetchFn:
       security: new RateLimiter(rateLimits.security),
       signup: new RateLimiter(rateLimits.signup),
     },
+    wclClients: new UserWclClients({ repo: hostedDb.wclClients, key: config.encryptionKey, verify: hooks.verifyWclClient ?? verifyWithPing }),
   };
   // Every WCL response of this process now feeds the meter, every WCL failure the audit log (the CLI
   // and local mode never install either).

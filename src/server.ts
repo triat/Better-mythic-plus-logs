@@ -10,6 +10,7 @@ import { DEFAULT_RATE_LIMITS } from "./hosted/ratelimit.ts";
 import type { RateLimiter, RateLimits } from "./hosted/ratelimit.ts";
 import { createHostedRuntime } from "./hosted/runtime.ts";
 import type { HostedRuntime } from "./hosted/runtime.ts";
+import type { Verify } from "./hosted/wcl-clients.ts";
 import { findRoute } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { adminRoutes } from "./server/routes-admin.ts";
@@ -40,6 +41,8 @@ export interface ServeOptions {
   assets?: AssetLoader;
   /** Test hook (hosted): rate-limit rules merged over `DEFAULT_RATE_LIMITS`. */
   rateLimits?: Partial<RateLimits>;
+  /** Test hook (hosted): verifies a member's own WCL client. Default: the real PING. */
+  verifyWclClient?: Verify;
 }
 
 const openBrowser = (url: string): void => {
@@ -94,7 +97,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   if (hosted) {
     const store = await getStore();
     if (store._db.filename === ":memory:") throw new Error("hosted mode needs a persistent bmpl.db (check BMPL_DB_PATH)");
-    runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch, { ...DEFAULT_RATE_LIMITS, ...opts.rateLimits });
+    runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch, { ...DEFAULT_RATE_LIMITS, ...opts.rateLimits }, { verifyWclClient: opts.verifyWclClient });
     current = runtime;
   }
   const routes: Route[] = [

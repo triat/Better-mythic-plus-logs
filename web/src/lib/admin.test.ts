@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditRow } from "../types.ts";
-import { AUDIT_CHIPS, AUDIT_KIND_OF, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtPts, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
+import { AUDIT_CHIPS, AUDIT_KIND_OF, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
+import { fmtPts } from "./format.ts";
 
 const NOW = 1_800_000_000_000;
 const H = 3600_000;
@@ -18,12 +19,12 @@ const users: AdminUser[] = [
 describe("gauge", () => {
   test("instance points vs limit, reset, floor note, snapshot age", () => {
     const g = gaugeModel(usage, NOW);
-    expect(g).toEqual({ used: "1 412", limit: "3 600", pct: 39, tone: "", sub: "resets in 38 min · floor 100 pts · last rateLimitData 2 min ago" });
+    expect(g).toEqual({ used: "1 412", limit: "3 600", pct: 39, tone: "", sub: "resets in 38 min · floor 100 pts · last rateLimitData 2 min ago" });
   });
   test("tones: yellow above 75 %, red above 90 %; no snapshot yet", () => {
     expect(gaugeModel({ ...usage, instance: { ...usage.instance!, pointsSpentThisHour: 2800 } }, NOW).tone).toBe("tone-warn");
     expect(gaugeModel({ ...usage, instance: { ...usage.instance!, pointsSpentThisHour: 3400 } }, NOW).tone).toBe("tone-bad");
-    expect(gaugeModel({ ...usage, instance: null }, NOW)).toEqual({ used: "—", limit: "3 600", pct: 0, tone: "", sub: "no WCL call observed since the server started" });
+    expect(gaugeModel({ ...usage, instance: null }, NOW)).toEqual({ used: "—", limit: "3 600", pct: 0, tone: "", sub: "no WCL call observed since the server started" });
     expect(gaugeModel(null, NOW).used).toBe("—");
   });
   test("top consumers: largest first, bar vs the member limit, admins unlimited", () => {
@@ -77,11 +78,11 @@ describe("users, invites, instance", () => {
   test("user row: display name, handle, role chip, toggle label, last seen, points, revoke text, self/config guards", () => {
     expect(userRow(users[0]!, NOW, 1)).toEqual({
       id: 1, name: "Muleyoxo", handle: "@muleyoxo", initials: "M", avatarUrl: "a", role: "admin", roleNote: "env", toggle: null,
-      lastSeen: "just now", pointsHour: "181", pointsHourTone: "", points24h: "2 340", discordId: "11", sessions: 2, canRevoke: false,
+      lastSeen: "just now", pointsHour: "181", pointsHourTone: "", points24h: "2 340", discordId: "11", sessions: 2, canRevoke: false,
       banned: false, ban: null, pointsCell: "181",
     });
     const tom = userRow(users[1]!, NOW, 1);
-    expect(tom).toMatchObject({ role: "member", roleNote: null, toggle: "make admin", lastSeen: "2h ago", pointsHour: "252", pointsHourTone: "tone-warn", points24h: "1 118", canRevoke: true });
+    expect(tom).toMatchObject({ role: "member", roleNote: null, toggle: "make admin", lastSeen: "2h ago", pointsHour: "252", pointsHourTone: "tone-warn", points24h: "1 118", canRevoke: true });
     expect(userRow({ ...users[1]!, role: "admin" }, NOW, 1).toggle).toBe("make member");
     expect(userRow({ ...users[1]!, pointsHour: 300 }, NOW, 1).pointsHourTone).toBe("tone-bad");
   });
@@ -95,6 +96,8 @@ describe("users, invites, instance", () => {
     expect(b.pointsCell).toBe("12");
     expect(b.ban).toBe("unban");
     expect(b.banned).toBe(true);
+    expect(b.canRevoke).toBe(false);
+    expect(r.canRevoke).toBe(true);
     expect(userRow({ ...base, id: 1 }, NOW, 1, 300).ban).toBeNull();
     expect(userRow({ ...base, configAdmin: true }, NOW, 1, 300).ban).toBeNull();
   });
@@ -109,7 +112,7 @@ describe("users, invites, instance", () => {
     expect(instanceModel({ ...i, lastBackupAt: null, uptimeS: 90 }, NOW)).toMatchObject({ backup: "never (no last-backup file yet)", uptime: "1 min" });
   });
   test("formatters", () => {
-    expect(fmtPts(1412.4)).toBe("1 412");
+    expect(fmtPts(1412.4)).toBe("1 412");
     expect(fmtPts(37)).toBe("37");
     expect(fmtBytes(43_200_000)).toBe("41.2 MB");
     expect(fmtBytes(800)).toBe("800 B");
@@ -138,11 +141,13 @@ describe("audit rows", () => {
     expect(auditDetail("proposal_approve", { proposalId: 7, patch: { id: 642, cooldownS: 240 }, note: "Matches the tooltip." })).toBe("cd 240 s · note: “Matches the tooltip.”");
     expect(auditDetail("sessions_revoke", { userId: 2, sessionsEnded: 2 })).toBe("2 session(s) ended");
     expect(auditDetail("role_change", { userId: 2, role: "admin" })).toBe("");
+    expect(auditDetail("account_delete", { username: "tom" })).toBe("tom");
+    expect(auditDetail("account_delete", null)).toBe("");
     expect(auditDetail("logout", null)).toBe("");
   });
   test("every action has a kind and chips cover every kind", () => {
     const kinds = new Set(Object.values(AUDIT_KIND_OF));
     for (const c of AUDIT_CHIPS) if (c.kind !== "all") expect(kinds.has(c.kind)).toBe(true);
-    expect(auditShowing(10, 1280)).toBe("showing 10 of 1 280 · newest first");
+    expect(auditShowing(10, 1280)).toBe("showing 10 of 1 280 · newest first");
   });
 });

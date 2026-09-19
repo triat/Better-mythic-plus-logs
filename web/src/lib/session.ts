@@ -1,6 +1,7 @@
 // The signed-in member as the hosted header shows them: trigger label, menu contents, quota line.
 import type { MeUser, QuotaInfo } from "../api.ts";
 import type { OwnClientView } from "../types.ts";
+import { fmtPts } from "./format.ts";
 import { pointsLeft, quotaLabel } from "./quota.ts";
 
 export interface QuotaLine { text: string; sub: string | null; pct: number | null; tone: "" | "tone-warn" | "tone-bad" }
@@ -18,9 +19,6 @@ export interface MenuModel {
 }
 
 const resetText = (s: number): string => `resets in ${Math.max(1, Math.ceil(s / 60))} min`;
-
-/** Thousands separated by a narrow no-break space (U+202F), no decimals: "1 412" — never wraps inside a number. */
-export const fmtPts = (n: number): string => Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
 
 /** Under 30 pts (about one uncached lookup) the line turns yellow; at 0 red. Admins have no limit. */
 export function quotaLine(q: QuotaInfo | null, isAdmin: boolean): QuotaLine {

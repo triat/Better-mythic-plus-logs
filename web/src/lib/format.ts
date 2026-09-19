@@ -8,6 +8,9 @@ export const fmtAmount = (n: number): string => {
   return Math.round(n).toString();
 };
 
+/** WCL points: thousands separated by a narrow no-break space (U+202F, never wraps inside a number), no decimals: "1 412". */
+export const fmtPts = (n: number): string => Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+
 export const fmtAge = (ms: number, now = Date.now()): string => {
   const d = now - ms;
   const H = 3600e3, D = 24 * H;

@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import type { AdminInstance, AdminUsage } from "../../types.ts";
-import { fmtPts, fmtShortAge, instanceModel } from "../../lib/admin.ts";
+import { fmtShortAge, instanceModel } from "../../lib/admin.ts";
+import { fmtPts } from "../../lib/format.ts";
 
 interface Props { instance: AdminInstance | null; usage: AdminUsage | null }
 

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { fmtPts, initialsOf, menuModel, pendingText, quotaLine } from "./session.ts";
+import { initialsOf, menuModel, pendingText, quotaLine } from "./session.ts";
+import { fmtPts } from "./format.ts";
 
 const member = { id: 2, discordId: "22", username: "muleyoxo", globalName: "Muleyoxo", avatarUrl: "https://cdn.discordapp.com/embed/avatars/2.png", role: "member" as const };
 const admin = { ...member, id: 1, role: "admin" as const, globalName: null };

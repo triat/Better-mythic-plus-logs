@@ -1,5 +1,6 @@
 import type { AdminUsage, AdminUser } from "../../types.ts";
-import { fmtPts, gaugeModel, hourBars, topConsumers } from "../../lib/admin.ts";
+import { gaugeModel, hourBars, topConsumers } from "../../lib/admin.ts";
+import { fmtPts } from "../../lib/format.ts";
 import { Avatar } from "../Avatar.tsx";
 
 interface Props { usage: AdminUsage | null; users: AdminUser[] }

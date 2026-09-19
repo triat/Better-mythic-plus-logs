@@ -1,14 +1,12 @@
 // Admin page view models (issue #8): budget gauge, proposal queue, users, invites, instance; audit log rows (issue #9). Pure; tested.
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditAction, AuditKind, AuditRow, OverrideEntry } from "../types.ts";
 import { patchText } from "./deepdive.ts";
-import { fmtAge } from "./format.ts";
+import { fmtAge, fmtPts } from "./format.ts";
 import { initialsOf } from "./session.ts";
 
 const H = 3600_000;
 const minutes = (s: number): number => Math.max(1, Math.ceil(s / 60));
 
-/** Thousands separated by a space, no decimals: "1 412". */
-export const fmtPts = (n: number): string => Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 /** Binary units (KiB/MiB, labelled KB/MB as the canvas does): "41.2 MB", "20.0 KB", "800 B". */
 export const fmtBytes = (n: number): string =>
   n >= 1024 * 1024 ? `${(n / (1024 * 1024)).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : `${n} B`;
@@ -118,7 +116,7 @@ export interface UserRowModel {
   /** "pts · hour" cell: a member with their own WCL client spends nothing from the shared budget. */
   pointsCell: string;
 }
-/** `selfId` is the signed-in admin: no toggle, no revoke, no ban on yourself; env admins have no toggle and cannot be banned either. */
+/** `selfId` is the signed-in admin: no toggle, no revoke, no ban on yourself; env admins have no toggle and cannot be banned either; a ban already ended the sessions (no revoke). */
 export function userRow(u: AdminUser, now = Date.now(), selfId: number, limitPerUser = 300): UserRowModel {
   const name = u.globalName ?? u.username;
   const self = u.id === selfId;
@@ -128,7 +126,7 @@ export function userRow(u: AdminUser, now = Date.now(), selfId: number, limitPer
     id: u.id, name, handle: `@${u.username}`, initials: initialsOf(name), avatarUrl: u.avatarUrl, role: u.role, roleNote: u.configAdmin ? "env" : null,
     toggle: self || u.configAdmin ? null : u.role === "admin" ? "make member" : "make admin",
     lastSeen: fmtAge(u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
-    points24h: fmtPts(u.points24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self,
+    points24h: fmtPts(u.points24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self && !banned,
     banned, ban: self || u.configAdmin ? null : banned ? "unban" : "ban", pointsCell: u.ownClient ? "own client" : pointsHour,
   };
 }
@@ -232,9 +230,10 @@ export function auditDetail(action: AuditAction, detail: Record<string, unknown>
     }
     case "user_ban":
       return `${num(detail.sessionsEnded)} session(s) ended`;
+    case "account_delete":
+      return str(detail.username); // the row's user is gone (userId null): the name is the only trace
     case "role_change":
     case "logout":
-    case "account_delete":
     case "wcl_client_set":
     case "wcl_client_remove":
     case "user_unban":

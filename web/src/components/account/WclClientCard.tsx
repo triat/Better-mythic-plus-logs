@@ -23,6 +23,8 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [busy, setBusy] = useState(false);
   const showForm = m.showForm || (m.state === "set" && replacing);
+  // The typed secret lives in state only while the form is open: leaving it (Cancel, Remove) clears both fields.
+  const clearForm = () => { setClientId(""); setClientSecret(""); setReplacing(false); };
   // The verified line reads "Verified 2 h ago" in soft, the id and counter in faint (canvas): split at the first separator.
   const sep = m.status.indexOf(" · ");
   const [head, tail] = m.state === "set" && sep > 0 ? [m.status.slice(0, sep), m.status.slice(sep)] : [m.status, ""];
@@ -33,10 +35,8 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
     setBusy(true);
     const r = await api.account.saveWclClient(clientId.trim(), clientSecret);
     setBusy(false);
-    if (!r.ok) { onError(r.error); return; }
-    setClientId("");
-    setClientSecret("");
-    setReplacing(false);
+    if (!r.ok) { onError(r.error); return; } // fields kept for a retry
+    clearForm();
     onChange(r.client);
   };
   const verify = async () => {
@@ -52,7 +52,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
     setBusy(false);
     setConfirmRemove(false);
     if (!r.ok) { onError(r.error); return; }
-    setReplacing(false);
+    clearForm();
     onChange(null);
   };
 
@@ -95,7 +95,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
             </label>
             <span className="settings-submit">
               <button type="submit" className="btn btn-primary" disabled={busy || !clientId.trim() || !clientSecret}>Save and verify</button>
-              {replacing && <button type="button" className="btn" disabled={busy} onClick={() => setReplacing(false)}>Cancel</button>}
+              {replacing && <button type="button" className="btn" disabled={busy} onClick={clearForm}>Cancel</button>}
             </span>
           </div>
           <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>

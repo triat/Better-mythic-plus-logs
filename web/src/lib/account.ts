@@ -1,7 +1,6 @@
 // Settings page view models (issue #11): the member's own WCL client card, the typed-word delete, the stored-data sentence. Pure; tested.
 import type { OwnClientView } from "../types.ts";
-import { fmtAge } from "./format.ts";
-import { fmtPts } from "./session.ts";
+import { fmtAge, fmtPts } from "./format.ts";
 
 export type ClientCardState = "disabled" | "none" | "set";
 export interface ClientCardModel { state: ClientCardState; status: string; dot: "dot-none" | "dot-approved"; showForm: boolean }

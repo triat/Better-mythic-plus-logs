@@ -90,4 +90,5 @@ export const INVITE_BODY = obj({ discordId: str({ pattern: DISCORD_ID }), note: 
 export const NOTE_BODY = obj({ note: opt(nullable(str({ max: 500, trim: true }))) });
 export const ROLE_BODY = obj({ role: oneOf(["member", "admin"] as const) });
 export const SETUP_BODY = obj({ clientId: str({ min: 1, max: 200, trim: true }), clientSecret: str({ min: 1, max: 200, trim: true }) });
+export const WCL_CLIENT_BODY = obj({ clientId: str({ min: 1, max: 200, trim: true }), clientSecret: str({ min: 1, max: 200, trim: true }) });
 export const WATCH_BODY = obj({ level: opt(nullable(int({ min: 2, max: 50 }))), spec: opt(nullable(str({ max: 32, trim: true }))), metric: opt(nullable(oneOf(METRIC))) });

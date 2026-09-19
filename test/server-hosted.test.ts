@@ -146,6 +146,18 @@ describe("/api/health", () => {
       expect(body.db).toBe("ok");
     }
   });
+  test("GET /api/health (hosted) reports users, sessions, the shared client and backup age; warnings never flip ok", async () => {
+    const r = await fetch(h("/api/health"));
+    expect(r.status).toBe(200);
+    const body = await r.json();
+    expect(body).toMatchObject({ ok: true, db: "ok", hosted: true, wcl: null, backupAgeS: null });
+    expect(typeof body.users).toBe("number");
+    expect(typeof body.sessions).toBe("number");
+    expect(body.warnings).toContain("no backup marker");
+  });
+  test("GET /api/status (hosted) carries the phase 2 flags", async () => {
+    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, hasCredentials: expect.any(Boolean), openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance" });
+  });
 });
 
 describe("hosted auth gate", () => {

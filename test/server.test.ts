@@ -65,6 +65,13 @@ describe("static routes", () => {
   });
 });
 
+describe("GET /api/health", () => {
+  test("local mode's body has exactly ok, version, uptimeS, db", async () => {
+    const body = await (await fetch(url("/api/health"))).json();
+    expect(Object.keys(body).sort()).toEqual(["db", "ok", "uptimeS", "version"].sort());
+  });
+});
+
 describe("createStaticHandler", () => {
   test("503 when the front is not built, and retries the loader next time", async () => {
     let calls = 0;

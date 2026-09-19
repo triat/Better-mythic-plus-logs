@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { DEEPDIVE_BODY, LOOKUP_BODY, bool, int, num, nullable, obj, oneOf, opt, parseBody, str } from "../../src/server/validate.ts";
+import { DEEPDIVE_BODY, LOOKUP_BODY, WCL_CLIENT_BODY, bool, int, num, nullable, obj, oneOf, opt, parseBody, str } from "../../src/server/validate.ts";
 
 const body = (v: unknown, raw = false) => new Request("http://x/api", { method: "POST", body: raw ? (v as string) : JSON.stringify(v), headers: { "Content-Type": "application/json" } });
 
@@ -50,4 +50,11 @@ describe("request schemas", () => {
     expect(await parseBody(body({ reportCode: "ab12CD", fightID: "7", character: "Biwa" }), DEEPDIVE_BODY)).toEqual({ ok: false, error: "`fightID` must be an integer" });
     expect(await parseBody(body({ reportCode: "../x", fightID: 7, character: "Biwa" }), DEEPDIVE_BODY)).toEqual({ ok: false, error: "`reportCode` is not valid" });
   });
+});
+
+test("WCL_CLIENT_BODY trims and bounds both fields", () => {
+  expect(WCL_CLIENT_BODY.parse({ clientId: " abc ", clientSecret: " s " }, "")).toEqual({ ok: true, value: { clientId: "abc", clientSecret: "s" } });
+  expect(WCL_CLIENT_BODY.parse({ clientId: "abc" }, "")).toEqual({ ok: false, error: "`clientSecret` is required" });
+  expect(WCL_CLIENT_BODY.parse({ clientId: "abc", clientSecret: "x".repeat(201) }, "")).toEqual({ ok: false, error: "`clientSecret` must be at most 200 characters" });
+  expect(WCL_CLIENT_BODY.parse({ clientId: "abc", clientSecret: "s", extra: 1 }, "")).toEqual({ ok: false, error: "Unexpected field `extra`" });
 });

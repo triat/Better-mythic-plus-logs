@@ -9,8 +9,7 @@ import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
 import type { HistoryListItem, HistoryStore } from "../server-history.ts";
 import { WclError } from "../wcl/client.ts";
-import { failureBody } from "./deepdive.ts";
-import { tablesOf, withCachedAnalyses } from "./deepdive.ts";
+import { failureBody, tablesOf, wclScopeFor, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse, parseCharacterInput } from "./http.ts";
 import { LOOKUP_BODY, WOW_NAME, WOW_REALM, parseBody } from "./validate.ts";
 
@@ -133,16 +132,22 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   const user = runtime && ctx.user ? { id: ctx.user.id, role: ctx.user.role } : null;
   runtime?.audit.setTarget(`lookup ${body.character}`);
   const tables = await tablesOf(ctx, runtime);
-  const result = await runLookupWithCache({
+  const scope = await wclScopeFor(runtime, ctx.user);
+  const result = await scope.run(() => runLookupWithCache({
     character: body.character,
     level: body.level ?? null,
     spec: body.spec || null,
     metric: body.metric ?? null,
     refresh: !!body.refresh,
-  }, historyOf(ctx), { reserve: runtime && user ? runtime.quota.for(user) : undefined, tables });
+  }, historyOf(ctx), { reserve: scope.own ? undefined : (runtime && user ? runtime.quota.for(user) : undefined), tables }));
   if (!result.ok) return jsonResponse(failureBody(result, runtime), result.status);
   // Hosted: always attach on read against the member's own tables (a joiner never sees the starter's pending layer).
   const payload = ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
-  const accounting = runtime && user ? { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user) } : {};
+  // A member's own client charges nothing to the shared meter/usage (issue #11 Task 3).
+  const accounting = runtime && user
+    ? scope.own
+      ? { pointsSpent: 0, quota: runtime.quota.status(user), ownClient: runtime.wclClients.view(user.id) }
+      : { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user), ownClient: null }
+    : {};
   return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache, ...accounting });
 }

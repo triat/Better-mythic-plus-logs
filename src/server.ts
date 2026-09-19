@@ -70,10 +70,12 @@ const openBrowser = (url: string): void => {
 /** Which limiter and key a hosted request is counted against, or null when the route is not rate-limited. */
 function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: number | null, ip: string): { limiter: RateLimiter; key: string } | null {
   if (url.pathname.startsWith("/auth/")) return { limiter: runtime.limits.auth, key: `ip:${ip}` };
-  if (req.method !== "POST") return null;
-  // Both routes are `auth: "user"`: the gate has already turned an anonymous request into a 401.
-  if (url.pathname === "/api/lookup") return { limiter: runtime.limits.lookup, key: `user:${userId ?? "anonymous"}` };
-  if (url.pathname === "/api/deepdive") return { limiter: runtime.limits.deepdive, key: `user:${userId ?? "anonymous"}` };
+  // Every route below is `auth: "user"`: the gate has already turned an anonymous request into a 401.
+  const key = `user:${userId ?? "anonymous"}`;
+  if (req.method === "POST" && url.pathname === "/api/lookup") return { limiter: runtime.limits.lookup, key };
+  if (req.method === "POST" && url.pathname === "/api/deepdive") return { limiter: runtime.limits.deepdive, key };
+  if (req.method === "PUT" && url.pathname === "/api/me/wcl-client") return { limiter: runtime.limits.lookup, key };
+  if (req.method === "POST" && url.pathname === "/api/me/wcl-client/verify") return { limiter: runtime.limits.lookup, key };
   return null;
 }
 

@@ -82,6 +82,28 @@ describe("users", () => {
     expect(await res.json()).toEqual({ ok: false, error: "role is set by BMPL_ADMIN_DISCORD_IDS" });
     expect(db.users.byId(configAdmin.user.id)!.role).toBe("admin");
   });
+  test("ban ends sessions and refuses login; unban restores; guards", async () => {
+    const victim = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "555555555555555555", role: "member", username: "bad" });
+    expect((await fetch(u("/api/me"), { headers: { cookie: victim.cookie } })).status).toBe(200);
+    const ban = await fetch(u(`/api/admin/users/${victim.user.id}/ban`), json("POST", undefined, admin.cookie));
+    expect(ban.status).toBe(200);
+    const body = await ban.json();
+    expect(body.sessionsEnded).toBe(1);
+    expect(body.user).toMatchObject({ id: victim.user.id, bannedAt: expect.any(Number), ownClient: false });
+    expect((await fetch(u("/api/me"), { headers: { cookie: victim.cookie } })).status).toBe(401);
+    const list = await (await fetch(u("/api/admin/users"), { headers: { cookie: admin.cookie } })).json();
+    expect(list.users.find((x: { id: number }) => x.id === victim.user.id).bannedAt).toBeGreaterThan(0);
+    expect(db.audit.list({ actions: ["user_ban"], before: null, limit: 1 })[0]).toMatchObject({ target: "bad", detail: { userId: victim.user.id, sessionsEnded: 1 } });
+    expect((await fetch(u(`/api/admin/users/${admin.user.id}/ban`), json("POST", undefined, admin.cookie))).status).toBe(400);
+    const configAdmin = db.users.byDiscordId("444444444444444444") ?? loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "444444444444444444", role: "admin" }).user;
+    expect(await (await fetch(u(`/api/admin/users/${configAdmin.id}/ban`), json("POST", undefined, admin.cookie))).json()).toEqual({ ok: false, error: "Config admins cannot be banned" });
+    expect((await fetch(u("/api/admin/users/9999/ban"), json("POST", undefined, admin.cookie))).status).toBe(404);
+    expect((await fetch(u(`/api/admin/users/${victim.user.id}/ban`), json("POST", undefined, member.cookie))).status).toBe(403);
+    const unban = await fetch(u(`/api/admin/users/${victim.user.id}/unban`), json("POST", undefined, admin.cookie));
+    expect((await unban.json()).user.bannedAt).toBeNull();
+    expect(await (await fetch(u(`/api/admin/users/${victim.user.id}/unban`), json("POST", undefined, admin.cookie))).json()).toEqual({ ok: false, error: "Not banned" });
+    expect(db.audit.list({ actions: ["user_unban"], before: null, limit: 1 })[0]!.target).toBe("bad");
+  });
 });
 
 describe("removing an invite", () => {

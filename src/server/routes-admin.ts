@@ -21,11 +21,12 @@ import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 import { INVITE_BODY, NOTE_BODY, ROLE_BODY, parseBody } from "./validate.ts";
 
-interface AdminUserExtra { pointsHour: number; points24h: number; sessions: number; configAdmin: boolean }
+interface AdminUserExtra { pointsHour: number; points24h: number; sessions: number; configAdmin: boolean; ownClient: boolean }
 
 const adminUser = (u: UserRow, extra: AdminUserExtra) => ({
   id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName,
   avatarUrl: avatarUrl(u.discordId, u.avatarHash), role: u.role, createdAt: u.createdAt, lastSeenAt: u.lastSeenAt,
+  bannedAt: u.bannedAt,
   ...extra,
 });
 
@@ -47,6 +48,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
     points24h: rt.db.usage.byUserSince(at - 24 * HOUR_MS).find((r) => r.userId === u.id)?.points ?? 0,
     sessions: rt.db.sessions.countForUser(u.id, at),
     configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
+    ownClient: rt.wclClients.view(u.id) !== null,
   });
 
   return [
@@ -142,6 +144,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const users = rt.db.users.list().map((u) => adminUser(u, {
         pointsHour: hour.get(u.id) ?? 0, points24h: day.get(u.id) ?? 0,
         sessions: rt.db.sessions.countForUser(u.id, at), configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
+        ownClient: rt.wclClients.view(u.id) !== null,
       }));
       return jsonResponse({ ok: true, users });
     }, "admin"),
@@ -155,6 +158,24 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
         const sessionsEnded = rt.db.sessions.deleteForUser(id);
         rt.audit.record("sessions_revoke", { target: target.username, detail: { userId: id, sessionsEnded } });
         return jsonResponse({ ok: true, sessionsEnded });
+      }
+      const ban = /^(\d+)\/(ban|unban)$/.exec(tail(url, "/api/admin/users/"));
+      if (ban) {
+        const id = Number.parseInt(ban[1]!, 10);
+        const target = rt.db.users.byId(id);
+        if (!target) return jsonResponse({ ok: false, error: "Unknown user" }, 404);
+        if (ban[2] === "ban") {
+          if (id === ctx.user!.id) return jsonResponse({ ok: false, error: "You cannot ban yourself" }, 400);
+          if (rt.config.adminDiscordIds.includes(target.discordId)) return jsonResponse({ ok: false, error: "Config admins cannot be banned" }, 400);
+          rt.db.users.ban(id, ctx.user!.id, ctx.now);
+          const sessionsEnded = rt.db.sessions.deleteForUser(id);
+          rt.audit.record("user_ban", { target: target.username, detail: { userId: id, sessionsEnded } });
+          return jsonResponse({ ok: true, user: adminUser(rt.db.users.byId(id)!, userExtra(target, ctx.now)), sessionsEnded });
+        }
+        if (target.bannedAt === null) return jsonResponse({ ok: false, error: "Not banned" }, 400);
+        rt.db.users.unban(id);
+        rt.audit.record("user_unban", { target: target.username, detail: { userId: id } });
+        return jsonResponse({ ok: true, user: adminUser(rt.db.users.byId(id)!, userExtra(target, ctx.now)) });
       }
       const m = /^(\d+)\/role$/.exec(tail(url, "/api/admin/users/"));
       if (!m) return jsonResponse({ ok: false, error: "Invalid user id" }, 400);

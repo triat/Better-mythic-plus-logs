@@ -185,7 +185,8 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const url = `http://${displayHost}:${server.port}`;
   console.log(`${heading("bmpl serve")}  ${ok(url)}${hosted ? dim("  (hosted mode)") : ""}`);
   if (hosted) {
-    console.log(dim(`  credentials: ${hasCredentials() ? "loaded" : "NOT SET"}  ·  local routes disabled`));
+    const cfg = opts.hostedConfig!;
+    console.log(dim(`  credentials: ${hasCredentials() ? "loaded" : "NOT SET"}  ·  local routes disabled  ·  signup: ${cfg.openSignup ? "open" : "invite-only"}  ·  guild gate: ${cfg.discordGuildId ? "on" : "off"}  ·  own WCL clients: ${cfg.encryptionKey ? "on" : "off"}`));
     if (bindHost) console.log(dim(`  bound to ${bindHost} — put a reverse proxy in front`));
   } else {
     console.log(dim(`  env path: ${envPathHint}  ·  credentials: ${hasCredentials() ? "loaded" : "not set (setup page will open)"}`));

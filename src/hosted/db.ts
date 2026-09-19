@@ -11,7 +11,8 @@ import { AUDIT_KINDS, actionsOf } from "./audit.ts";
 import type { AuditAction, AuditKind, AuditRow } from "./audit.ts";
 
 export type Role = "member" | "admin";
-export interface UserRow { id: number; discordId: string; username: string; globalName: string | null; avatarHash: string | null; role: Role; createdAt: number; lastSeenAt: number }
+export interface UserRow { id: number; discordId: string; username: string; globalName: string | null; avatarHash: string | null; role: Role; createdAt: number; lastSeenAt: number; bannedAt: number | null; bannedBy: number | null }
+export interface WclClientRow { userId: number; clientId: string; secretEnc: string; verifiedAt: number | null; updatedAt: number }
 export interface SessionRow { id: string; userId: number; createdAt: number; expiresAt: number; ip: string | null; userAgent: string | null }
 export interface InviteRow { discordId: string; invitedBy: string; createdAt: number; note: string | null }
 export interface DiscordIdentity { discordId: string; username: string; globalName: string | null; avatarHash: string | null }
@@ -34,6 +35,10 @@ export interface HostedDb {
     list(): UserRow[];
     setRole(id: number, role: Role): boolean;
     touch(id: number, now: number): void;
+    ban(id: number, by: number, now: number): boolean;
+    unban(id: number): boolean;
+    delete(id: number): boolean;
+    count(): number;
   };
   sessions: {
     create(userId: number, meta: { ip: string | null; userAgent: string | null; now: number }): SessionRow;
@@ -42,6 +47,7 @@ export interface HostedDb {
     deleteForUser(userId: number): number;
     purgeExpired(now: number): number;
     countForUser(userId: number, now: number): number;
+    countActive(now: number): number;
   };
   invites: {
     add(discordId: string, invitedBy: string, note: string | null, now: number): InviteRow;
@@ -67,6 +73,14 @@ export interface HostedDb {
   };
   history: UserHistoryRepo;
   defensives: DefensivesRepo;
+  wclClients: {
+    get(userId: number): WclClientRow | null;
+    /** Upserts the row; a re-put resets `verifiedAt` to what is passed. */
+    put(row: { userId: number; clientId: string; secretEnc: string; verifiedAt: number | null; now: number }): WclClientRow;
+    setVerified(userId: number, at: number): boolean;
+    remove(userId: number): boolean;
+    count(): number;
+  };
   audit: {
     /** Inserts one row (`detail` already serialised) and returns its id. */
     add(row: { at: number; userId: number | null; action: AuditAction; target: string | null; detail: string | null; ip: string | null }): number;
@@ -81,12 +95,14 @@ export interface HostedDb {
 
 export const newSessionId = (): string => randomBytes(32).toString("base64url");
 
-interface UserRaw { id: number; discord_id: string; username: string; global_name: string | null; avatar_hash: string | null; role: Role; created_at: number; last_seen_at: number }
+interface UserRaw { id: number; discord_id: string; username: string; global_name: string | null; avatar_hash: string | null; role: Role; created_at: number; last_seen_at: number; banned_at: number | null; banned_by: number | null }
 interface SessionRaw { id: string; user_id: number; created_at: number; expires_at: number; ip: string | null; user_agent: string | null }
 interface InviteRaw { discord_id: string; invited_by: string; created_at: number; note: string | null }
 interface AuditRaw { id: number; at: number; user_id: number | null; username: string | null; action: AuditAction; target: string | null; detail: string | null; ip: string | null }
+interface WclClientRaw { user_id: number; client_id: string; secret_enc: string; verified_at: number | null; updated_at: number }
 
-const user = (r: UserRaw): UserRow => ({ id: r.id, discordId: r.discord_id, username: r.username, globalName: r.global_name, avatarHash: r.avatar_hash, role: r.role, createdAt: r.created_at, lastSeenAt: r.last_seen_at });
+const user = (r: UserRaw): UserRow => ({ id: r.id, discordId: r.discord_id, username: r.username, globalName: r.global_name, avatarHash: r.avatar_hash, role: r.role, createdAt: r.created_at, lastSeenAt: r.last_seen_at, bannedAt: r.banned_at, bannedBy: r.banned_by });
+const wclClient = (r: WclClientRaw): WclClientRow => ({ userId: r.user_id, clientId: r.client_id, secretEnc: r.secret_enc, verifiedAt: r.verified_at, updatedAt: r.updated_at });
 const session = (r: SessionRaw): SessionRow => ({ id: r.id, userId: r.user_id, createdAt: r.created_at, expiresAt: r.expires_at, ip: r.ip, userAgent: r.user_agent });
 const invite = (r: InviteRaw): InviteRow => ({ discordId: r.discord_id, invitedBy: r.invited_by, createdAt: r.created_at, note: r.note });
 const parseDetail = (raw: string | null): Record<string, unknown> | null => {
@@ -111,6 +127,10 @@ export function openHosted(db: Database): HostedDb {
   const userUpdate = db.query("UPDATE users SET username = ?, global_name = ?, avatar_hash = ?, role = ?, last_seen_at = ? WHERE id = ?");
   const userSetRole = db.query("UPDATE users SET role = ? WHERE id = ?");
   const userTouch = db.query("UPDATE users SET last_seen_at = ? WHERE id = ?");
+  const userBan = db.query("UPDATE users SET banned_at = ?, banned_by = ? WHERE id = ?");
+  const userUnban = db.query("UPDATE users SET banned_at = NULL, banned_by = NULL WHERE id = ?");
+  const userDelete = db.query("DELETE FROM users WHERE id = ?");
+  const userCount = db.query<{ n: number }, []>("SELECT COUNT(*) AS n FROM users");
 
   const sessionGet = db.query<SessionRaw, [string]>("SELECT * FROM sessions WHERE id = ?");
   const sessionInsert = db.query("INSERT INTO sessions (id, user_id, created_at, expires_at, ip, user_agent) VALUES (?, ?, ?, ?, ?, ?)");
@@ -119,6 +139,7 @@ export function openHosted(db: Database): HostedDb {
   const sessionDeleteUser = db.query("DELETE FROM sessions WHERE user_id = ?");
   const sessionPurge = db.query("DELETE FROM sessions WHERE expires_at <= ?");
   const sessionCount = db.query<{ n: number }, [number, number]>("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND expires_at > ?");
+  const sessionCountActive = db.query<{ n: number }, [number]>("SELECT COUNT(*) AS n FROM sessions WHERE expires_at > ?");
 
   const inviteGet = db.query<InviteRaw, [string]>("SELECT * FROM invites WHERE discord_id = ?");
   const inviteAll = db.query<InviteRaw, []>("SELECT * FROM invites ORDER BY created_at");
@@ -143,6 +164,15 @@ export function openHosted(db: Database): HostedDb {
   const auditCounts = db.query<{ action: AuditAction; n: number }, [number]>("SELECT action, COUNT(*) AS n FROM audit_log WHERE at >= ? GROUP BY action");
   const auditPurge = db.query("DELETE FROM audit_log WHERE at < ?");
 
+  const wclClientGet = db.query<WclClientRaw, [number]>("SELECT * FROM user_wcl_clients WHERE user_id = ?");
+  const wclClientPut = db.query(
+    "INSERT INTO user_wcl_clients (user_id, client_id, secret_enc, verified_at, updated_at) VALUES (?, ?, ?, ?, ?) " +
+    "ON CONFLICT(user_id) DO UPDATE SET client_id = excluded.client_id, secret_enc = excluded.secret_enc, verified_at = excluded.verified_at, updated_at = excluded.updated_at",
+  );
+  const wclClientSetVerified = db.query("UPDATE user_wcl_clients SET verified_at = ? WHERE user_id = ?");
+  const wclClientRemove = db.query("DELETE FROM user_wcl_clients WHERE user_id = ?");
+  const wclClientCount = db.query<{ n: number }, []>("SELECT COUNT(*) AS n FROM user_wcl_clients");
+
   const changes = (): number => Number(db.query<{ n: number }, []>("SELECT changes() AS n").get()!.n);
 
   return {
@@ -161,6 +191,10 @@ export function openHosted(db: Database): HostedDb {
       list: () => usersAll.all().map(user),
       setRole(id, role) { userSetRole.run(role, id); return changes() === 1; },
       touch(id, now) { userTouch.run(now, id); },
+      ban(id, by, now) { userBan.run(now, by, id); return changes() === 1; },
+      unban(id) { userUnban.run(id); return changes() === 1; },
+      delete(id) { userDelete.run(id); return changes() === 1; },
+      count: () => userCount.get()!.n,
     },
     sessions: {
       create(userId, meta) {
@@ -182,6 +216,7 @@ export function openHosted(db: Database): HostedDb {
       deleteForUser(userId) { sessionDeleteUser.run(userId); return changes(); },
       purgeExpired(now) { sessionPurge.run(now); return changes(); },
       countForUser: (userId, now) => sessionCount.get(userId, now)!.n,
+      countActive: (now) => sessionCountActive.get(now)!.n,
     },
     invites: {
       add(discordId, invitedBy, note, now) {
@@ -209,6 +244,16 @@ export function openHosted(db: Database): HostedDb {
     },
     history: openUserHistory(db),
     defensives: openDefensives(db),
+    wclClients: {
+      get: (userId) => { const r = wclClientGet.get(userId); return r ? wclClient(r) : null; },
+      put(row) {
+        wclClientPut.run(row.userId, row.clientId, row.secretEnc, row.verifiedAt, row.now);
+        return wclClient(wclClientGet.get(row.userId)!);
+      },
+      setVerified(userId, at) { wclClientSetVerified.run(at, userId); return changes() === 1; },
+      remove(userId) { wclClientRemove.run(userId); return changes() === 1; },
+      count: () => wclClientCount.get()!.n,
+    },
     audit: {
       add: (r) => auditInsert.get(r.at, r.userId, r.action, r.target, r.detail, r.ip)!.id,
       list(o) {

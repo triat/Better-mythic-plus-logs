@@ -59,6 +59,7 @@ describe("RateLimiter", () => {
       lookup: { limit: 30, windowMs: 60_000 },
       deepdive: { limit: 60, windowMs: 60_000 },
       security: { limit: 5, windowMs: 60_000 },
+      signup: { limit: 5, windowMs: 3_600_000 },
     });
   });
 });

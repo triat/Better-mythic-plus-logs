@@ -179,7 +179,7 @@ describe("GET /api/admin/instance", () => {
     expect(r.dbPath.endsWith("bmpl.db")).toBe(true);
     expect(r.dbBytes).toBeGreaterThan(0);
     expect(r.lastBackupAt).toBeNull();
-    expect(r.env.map((e: { key: string }) => e.key)).toEqual(["BMPL_BASE_URL", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET", "BMPL_SESSION_SECRET", "BMPL_ADMIN_DISCORD_IDS", "BMPL_POINTS_PER_USER_HOUR", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET"]);
+    expect(r.env.map((e: { key: string }) => e.key)).toEqual(["BMPL_BASE_URL", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET", "BMPL_SESSION_SECRET", "BMPL_ADMIN_DISCORD_IDS", "BMPL_POINTS_PER_USER_HOUR", "BMPL_OPEN_SIGNUP", "BMPL_DISCORD_GUILD_ID", "BMPL_ENCRYPTION_KEY", "BMPL_OPERATOR", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET"]);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.sessionSecret);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.discordClientSecret);
   });

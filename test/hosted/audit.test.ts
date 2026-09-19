@@ -98,4 +98,12 @@ describe("AuditLog", () => {
     expect(clip("a".repeat(300))).toHaveLength(300);
     expect(clip("a".repeat(301))).toHaveLength(300);
   });
+
+  test("phase 2 actions have a kind", () => {
+    expect(kindOf("account_delete")).toBe("login");
+    expect(kindOf("wcl_client_set")).toBe("login");
+    expect(kindOf("wcl_client_remove")).toBe("login");
+    expect(kindOf("user_ban")).toBe("admin");
+    expect(kindOf("user_unban")).toBe("admin");
+  });
 });

@@ -51,7 +51,7 @@ export function resolveRequest(req: Request, deps: { db: HostedDb; secret: strin
   const s = deps.db.sessions.get(id, deps.now);
   if (!s) return anonymous;
   const u = deps.db.users.byId(s.userId);
-  if (!u) return anonymous;
+  if (!u || u.bannedAt !== null) return anonymous;
   return {
     hosted: true,
     user: { id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName, avatarHash: u.avatarHash, role: u.role },

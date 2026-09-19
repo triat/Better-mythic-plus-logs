@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { DISCORD_ME_URL, DISCORD_TOKEN_URL, authorizeUrl, avatarUrl, exchangeCode, fetchDiscordUser, redirectUri } from "../../src/hosted/discord.ts";
+import { DISCORD_ME_URL, DISCORD_TOKEN_URL, authorizeUrl, avatarUrl, exchangeCode, fetchDiscordGuilds, fetchDiscordUser, redirectUri } from "../../src/hosted/discord.ts";
 
 const CFG = { discordClientId: "123456789012345678", discordClientSecret: "sekrit", baseUrl: "https://bmpl.example.com" };
 
@@ -71,4 +71,18 @@ describe("avatarUrl", () => {
   test("a hash that isn't [a-z0-9_] falls back to the default embed avatar", () => {
     expect(avatarUrl("123456789012345678", "../../etc/passwd")).toBe(`https://cdn.discordapp.com/embed/avatars/${(123456789012345678n >> 22n) % 6n}.png`);
   });
+});
+
+test("authorizeUrl asks for guilds only when a guild id is configured", () => {
+  const base = { discordClientId: "123456789012345678", baseUrl: "https://bmpl.example.com" };
+  expect(new URL(authorizeUrl(base, "s")).searchParams.get("scope")).toBe("identify");
+  expect(new URL(authorizeUrl({ ...base, discordGuildId: "987654321098765432" }, "s")).searchParams.get("scope")).toBe("identify guilds");
+});
+test("fetchDiscordGuilds returns the ids, or an error on a bad status / shape", async () => {
+  const ok = (async () => Response.json([{ id: "1", name: "a" }, { id: "2" }])) as unknown as typeof fetch;
+  expect(await fetchDiscordGuilds("t", ok)).toEqual({ ok: true, guildIds: ["1", "2"] });
+  const bad = (async () => new Response("", { status: 401 })) as unknown as typeof fetch;
+  expect(await fetchDiscordGuilds("t", bad)).toEqual({ ok: false, error: "Discord /users/@me/guilds answered 401" });
+  const shape = (async () => Response.json({ nope: 1 })) as unknown as typeof fetch;
+  expect(await fetchDiscordGuilds("t", shape)).toEqual({ ok: false, error: "Discord /users/@me/guilds payload is not a list" });
 });

@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_hash  TEXT,
   role         TEXT    NOT NULL CHECK (role IN ('member', 'admin')),
   created_at   INTEGER NOT NULL,
-  last_seen_at INTEGER NOT NULL
+  last_seen_at INTEGER NOT NULL,
+  banned_at    INTEGER,
+  banned_by    INTEGER
 );
 CREATE TABLE IF NOT EXISTS sessions (
   id         TEXT    PRIMARY KEY,
@@ -98,8 +100,20 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 CREATE INDEX IF NOT EXISTS audit_log_at ON audit_log(at);
 CREATE INDEX IF NOT EXISTS audit_log_action_at ON audit_log(action, at);
+CREATE TABLE IF NOT EXISTS user_wcl_clients (
+  user_id     INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  client_id   TEXT    NOT NULL,
+  secret_enc  TEXT    NOT NULL,
+  verified_at INTEGER,
+  updated_at  INTEGER NOT NULL
+);
 `;
+
+/** Columns added to `users` after its first release; migrated in place on an older database. */
+const USER_COLUMNS: ReadonlyArray<readonly [string, string]> = [["banned_at", "INTEGER"], ["banned_by", "INTEGER"]];
 
 export function applyHostedSchema(db: Database): void {
   db.exec(HOSTED_SCHEMA);
+  const have = new Set(db.query<{ name: string }, []>("PRAGMA table_info(users)").all().map((r) => r.name));
+  for (const [name, type] of USER_COLUMNS) if (!have.has(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${type}`);
 }

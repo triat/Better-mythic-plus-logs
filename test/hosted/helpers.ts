@@ -9,7 +9,13 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   discordClientSecret: "test-client-secret",
   adminDiscordIds: ["111111111111111111", "444444444444444444"],
   pointsPerUserHour: 300,
+  openSignup: false,
+  discordGuildId: null,
+  encryptionKey: null,
+  operator: "the admin of this instance",
 };
+
+export const TEST_ENCRYPTION_KEY = new Uint8Array(32).map((_, i) => i);
 
 /** Inserts a user + session straight into the DB and returns the Cookie header to send. */
 export function loginAs(db: HostedDb, secret: string, who: { discordId: string; role: Role; username?: string }, now = Date.now()): { cookie: string; user: UserRow; sessionId: string } {

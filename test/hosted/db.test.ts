@@ -126,3 +126,51 @@ test("openHosted is idempotent on the same database", () => {
   openHosted(raw);
   expect(raw.query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','sessions','invites')").all()).toHaveLength(3);
 });
+
+describe("phase 2: bans, deletion, wcl clients", () => {
+  test("the users table is migrated in place: banned_at/banned_by appear on a pre-phase-2 database", () => {
+    const raw = new Database(":memory:");
+    raw.exec("CREATE TABLE users (id INTEGER PRIMARY KEY, discord_id TEXT NOT NULL UNIQUE, username TEXT NOT NULL, global_name TEXT, avatar_hash TEXT, role TEXT NOT NULL CHECK (role IN ('member', 'admin')), created_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL)");
+    const db = openHosted(raw);
+    const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
+    expect(u.bannedAt).toBeNull();
+    expect(db.users.ban(u.id, 99, 2000)).toBe(true);
+    expect(db.users.byId(u.id)).toMatchObject({ bannedAt: 2000, bannedBy: 99 });
+    expect(db.users.unban(u.id)).toBe(true);
+    expect(db.users.byId(u.id)!.bannedAt).toBeNull();
+    expect(db.users.ban(9999, 1, 1)).toBe(false);
+  });
+  test("delete cascades sessions, history, settings, usage and the wcl client; approved shared rows and audit rows keep NULL", () => {
+    const raw = new Database(":memory:");
+    const db = openHosted(raw);
+    const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
+    db.sessions.create(u.id, { ip: null, userAgent: null, now: 1000 });
+    expect(db.sessions.countActive(1000)).toBe(1);
+    db.settings.update(u.id, { yourKey: 12 }, 1000);
+    db.usage.add(u.id, 1000, 5);
+    db.wclClients.put({ userId: u.id, clientId: "abc", secretEnc: "v1.x.y", verifiedAt: null, now: 1000 });
+    const auditId = db.audit.add({ at: 1000, userId: u.id, action: "login", target: null, detail: null, ip: null });
+    db.defensives.upsertShared("Paladin:Holy", { id: 498, cooldownS: 90 }, u.id, 1000);
+    expect(db.users.count()).toBe(1);
+    expect(db.users.delete(u.id)).toBe(true);
+    expect(db.users.count()).toBe(0);
+    expect(db.sessions.countActive(1000)).toBe(0);
+    expect(db.wclClients.get(u.id)).toBeNull();
+    expect(db.usage.used(u.id, 1000)).toBe(0);
+    expect(db.audit.list({ actions: null, before: null, limit: 10 }).find((r) => r.id === auditId)).toMatchObject({ userId: null, username: null });
+    expect(db.users.delete(u.id)).toBe(false);
+    expect(raw.query<{ approved_by: number | null }, []>("SELECT approved_by FROM defensives_shared").get()).toEqual({ approved_by: null });
+  });
+  test("wclClients: put upserts, setVerified, remove, count", () => {
+    const db = openHosted(new Database(":memory:"));
+    const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
+    expect(db.wclClients.get(u.id)).toBeNull();
+    expect(db.wclClients.put({ userId: u.id, clientId: "abc", secretEnc: "v1.a.b", verifiedAt: 1500, now: 1000 })).toEqual({ userId: u.id, clientId: "abc", secretEnc: "v1.a.b", verifiedAt: 1500, updatedAt: 1000 });
+    expect(db.wclClients.put({ userId: u.id, clientId: "def", secretEnc: "v1.c.d", verifiedAt: null, now: 2000 })).toMatchObject({ clientId: "def", verifiedAt: null, updatedAt: 2000 });
+    expect(db.wclClients.setVerified(u.id, 2500)).toBe(true);
+    expect(db.wclClients.get(u.id)!.verifiedAt).toBe(2500);
+    expect(db.wclClients.count()).toBe(1);
+    expect(db.wclClients.remove(u.id)).toBe(true);
+    expect(db.wclClients.remove(u.id)).toBe(false);
+  });
+});

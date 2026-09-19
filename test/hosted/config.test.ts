@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { HOSTED_ENV_VARS, resolveMode, validateHostedEnv, weakSecret } from "../../src/hosted/config.ts";
+import { DEFAULT_OPERATOR, HOSTED_ENV_VARS, resolveMode, validateHostedEnv, weakSecret } from "../../src/hosted/config.ts";
 
 const FULL: Record<string, string> = {
   BMPL_BASE_URL: "https://bmpl.example.com",
@@ -119,5 +119,37 @@ describe("validateHostedEnv", () => {
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.invalid).toEqual([`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${bad}")`]);
     }
+  });
+});
+
+describe("phase 2 optional variables", () => {
+  const base = { BMPL_BASE_URL: "https://bmpl.example.com", BMPL_SESSION_SECRET: "x".repeat(20) + "abcdefghijklmnop", BMPL_DISCORD_CLIENT_ID: "123456789012345678", BMPL_DISCORD_CLIENT_SECRET: "s", BMPL_ADMIN_DISCORD_IDS: "123456789012345678", WCL_CLIENT_ID: "a", WCL_CLIENT_SECRET: "b" };
+  test("defaults: closed signup, no guild, no key, default operator", () => {
+    const r = validateHostedEnv(base);
+    expect(r.ok && r.config.openSignup).toBe(false);
+    expect(r.ok && r.config.discordGuildId).toBeNull();
+    expect(r.ok && r.config.encryptionKey).toBeNull();
+    expect(r.ok && r.config.operator).toBe(DEFAULT_OPERATOR);
+  });
+  test("accepts true/false, a guild id, a 32-byte key, an operator", () => {
+    const key = Buffer.alloc(32, 7).toString("base64");
+    const r = validateHostedEnv({ ...base, BMPL_OPEN_SIGNUP: "TRUE", BMPL_DISCORD_GUILD_ID: "987654321098765432", BMPL_ENCRYPTION_KEY: key, BMPL_OPERATOR: "  Muleyoxo " });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.config.openSignup).toBe(true);
+    expect(r.config.discordGuildId).toBe("987654321098765432");
+    expect(r.config.encryptionKey).toEqual(new Uint8Array(32).fill(7));
+    expect(r.config.operator).toBe("Muleyoxo");
+  });
+  test("refuses a bad flag, a bad guild id, a short key, a long operator", () => {
+    const r = validateHostedEnv({ ...base, BMPL_OPEN_SIGNUP: "yes", BMPL_DISCORD_GUILD_ID: "abc", BMPL_ENCRYPTION_KEY: Buffer.alloc(16).toString("base64"), BMPL_OPERATOR: "x".repeat(81) });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.invalid).toEqual([
+      "BMPL_OPEN_SIGNUP: \"true\" or \"false\" (got \"yes\")",
+      "BMPL_DISCORD_GUILD_ID: not a Discord server id",
+      "BMPL_ENCRYPTION_KEY: base64 of 32 random bytes — generate one with `openssl rand -base64 32`",
+      "BMPL_OPERATOR: at most 80 characters",
+    ]);
   });
 });

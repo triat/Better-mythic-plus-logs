@@ -8,8 +8,9 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import type { HostedDb } from "./db.ts";
 
 export type AuditAction =
-  | "login" | "login_denied" | "logout"
+  | "login" | "login_denied" | "logout" | "account_delete" | "wcl_client_set" | "wcl_client_remove"
   | "invite_add" | "invite_remove" | "role_change" | "sessions_revoke" | "proposal_approve" | "proposal_reject"
+  | "user_ban" | "user_unban"
   | "quota_refused"
   | "rate_limited" | "origin_rejected"
   | "wcl_error" | "server_error";
@@ -21,12 +22,17 @@ export const ACTION_KIND: Record<AuditAction, AuditKind> = {
   login: "login",
   login_denied: "login",
   logout: "login",
+  account_delete: "login",
+  wcl_client_set: "login",
+  wcl_client_remove: "login",
   invite_add: "admin",
   invite_remove: "admin",
   role_change: "admin",
   sessions_revoke: "admin",
   proposal_approve: "admin",
   proposal_reject: "admin",
+  user_ban: "admin",
+  user_unban: "admin",
   quota_refused: "quota",
   rate_limited: "security",
   origin_rejected: "security",

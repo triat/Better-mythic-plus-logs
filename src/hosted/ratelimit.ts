@@ -13,6 +13,8 @@ export const DEFAULT_RATE_LIMITS = {
   deepdive: { limit: 60, windowMs: 60_000 },
   /** Not a request limit: how many `origin_rejected` audit rows one IP may write per window (the 403 itself is unconditional). */
   security: { limit: 5, windowMs: 60_000 },
+  /** New accounts under open signup, per IP. */
+  signup: { limit: 5, windowMs: 3_600_000 },
 } as const;
 
 export type RateLimits = { [K in keyof typeof DEFAULT_RATE_LIMITS]: RateLimitRule };

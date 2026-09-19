@@ -7,7 +7,7 @@ export interface EnvRow { key: string; value: string; secret: boolean }
 
 const SET = "•••• (set)";
 const NOT_SET = "(not set)";
-const abbreviate = (id: string): string => (id.length > 12 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id);
+export const abbreviate = (id: string): string => (id.length > 12 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id);
 
 /** The env the instance runs with, in `.env.hosted.example` order; secrets never leave the server. */
 export function describeConfig(config: HostedConfig, wcl: { clientId: string | null; hasSecret: boolean }): EnvRow[] {
@@ -18,6 +18,10 @@ export function describeConfig(config: HostedConfig, wcl: { clientId: string | n
     { key: "BMPL_SESSION_SECRET", value: `•••• (${Buffer.byteLength(config.sessionSecret)} bytes)`, secret: true },
     { key: "BMPL_ADMIN_DISCORD_IDS", value: config.adminDiscordIds.join(", "), secret: false },
     { key: "BMPL_POINTS_PER_USER_HOUR", value: String(config.pointsPerUserHour), secret: false },
+    { key: "BMPL_OPEN_SIGNUP", value: config.openSignup ? "true" : "false", secret: false },
+    { key: "BMPL_DISCORD_GUILD_ID", value: config.discordGuildId ?? NOT_SET, secret: false },
+    { key: "BMPL_ENCRYPTION_KEY", value: config.encryptionKey ? SET : NOT_SET, secret: true },
+    { key: "BMPL_OPERATOR", value: config.operator, secret: false },
     { key: "WCL_CLIENT_ID", value: wcl.clientId ? abbreviate(wcl.clientId) : NOT_SET, secret: false },
     { key: "WCL_CLIENT_SECRET", value: wcl.hasSecret ? SET : NOT_SET, secret: true },
   ];

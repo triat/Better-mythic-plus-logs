@@ -68,3 +68,13 @@ describe("authGate", () => {
     expect(authGate({ auth: "admin" }, LOCAL_CONTEXT("127.0.0.1", new History(1)))).toBeNull();
   });
 });
+
+test("a banned user's cookie resolves to an anonymous context", () => {
+  const db = openHosted(new Database(":memory:"));
+  const u = db.users.upsertFromDiscord({ discordId: "555555555555555555", username: "bad", globalName: null, avatarHash: null }, null, 1000);
+  const s = db.sessions.create(u.id, { ip: null, userAgent: null, now: 1000 });
+  const req2 = new Request("http://x/api/me", { headers: { cookie: `bmpl_session=${signSessionId(s.id, SECRET)}` } });
+  expect(resolveRequest(req2, { db, secret: SECRET, now: 1000, ip: "" }).user?.id).toBe(u.id);
+  db.users.ban(u.id, 1, 2000);
+  expect(resolveRequest(req2, { db, secret: SECRET, now: 3000, ip: "" }).user).toBeNull();
+});

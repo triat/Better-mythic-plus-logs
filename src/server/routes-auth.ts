@@ -4,7 +4,7 @@ import { clip } from "../hosted/audit.ts";
 import type { HostedConfig } from "../hosted/config.ts";
 import { OAUTH_COOKIE, OAUTH_COOKIE_MAX_AGE_S, SESSION_COOKIE, SESSION_COOKIE_MAX_AGE_S, clearCookie, parseCookies, serializeCookie, signSessionId } from "../hosted/cookie.ts";
 import type { HostedDb, Role } from "../hosted/db.ts";
-import { authorizeUrl, avatarUrl, exchangeCode, fetchDiscordUser } from "../hosted/discord.ts";
+import { authorizeUrl, avatarUrl, exchangeCode, fetchDiscordGuilds, fetchDiscordUser } from "../hosted/discord.ts";
 import { newNonce } from "../hosted/oauth-state.ts";
 import type { SessionUser } from "../hosted/auth.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
@@ -21,11 +21,16 @@ const redirect = (location: string, setCookies: string[] = []): Response => {
 export const meUser = (u: SessionUser) =>
   ({ id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName, avatarUrl: avatarUrl(u.discordId, u.avatarHash), role: u.role });
 
-/** Invite-only phase: config admins always get in (as admins); everyone else needs an invite row. */
-export function admission(rt: { config: HostedConfig; db: HostedDb }, discordId: string): { admitted: false } | { admitted: true; role: Role | null } {
+/**
+ * Whether a Discord account may sign in: banned first (regardless of everything else), then a
+ * config admin, an invited account, or (open signup) anyone. The Discord guild gate is checked
+ * separately by the callback — it needs the access token, which this function does not have.
+ */
+export function admission(rt: { config: HostedConfig; db: HostedDb }, discordId: string): { admitted: true; role: Role | null } | { admitted: false; reason: "banned" | "not invited" } {
+  if (rt.db.users.byDiscordId(discordId)?.bannedAt != null) return { admitted: false, reason: "banned" };
   if (rt.config.adminDiscordIds.includes(discordId)) return { admitted: true, role: "admin" };
-  if (rt.db.invites.has(discordId)) return { admitted: true, role: null };
-  return { admitted: false };
+  if (rt.db.invites.has(discordId) || rt.config.openSignup) return { admitted: true, role: null };
+  return { admitted: false, reason: "not invited" };
 }
 
 export function authRoutes(rt: HostedRuntime): Route[] {
@@ -65,10 +70,30 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       const me = await fetchDiscordUser(token.accessToken, rt.fetchFn);
       if (!me.ok) return discordFailure(me.error);
 
+      const deny = (reason: "banned" | "guild" | "not invited" | "rate", location: string): Response => {
+        rt.audit.record("login_denied", { userId: null, target: `discord ${me.identity.discordId}`, detail: { reason } });
+        return redirect(location, [clearOauth]);
+      };
+
       const verdict = admission(rt, me.identity.discordId);
-      if (!verdict.admitted) {
-        rt.audit.record("login_denied", { userId: null, target: `discord ${me.identity.discordId}`, detail: { reason: "not invited" } });
-        return redirect(`/?denied=${encodeURIComponent(me.identity.discordId)}`, [clearOauth]);
+      if (!verdict.admitted) return deny(verdict.reason, verdict.reason === "banned" ? "/?denied=banned" : `/?denied=${encodeURIComponent(me.identity.discordId)}`);
+
+      // The guild gate needs the access token, so it cannot live in `admission`; a config admin
+      // is not exempt from it.
+      if (rt.config.discordGuildId) {
+        const g = await fetchDiscordGuilds(token.accessToken, rt.fetchFn);
+        if (!g.ok) return discordFailure(g.error);
+        if (!g.guildIds.includes(rt.config.discordGuildId)) return deny("guild", "/?denied=guild");
+      }
+
+      // A brand new account under open signup counts against the per-IP signup limit; an
+      // existing account (invited, admin, or already created earlier) never does.
+      if (!rt.db.users.byDiscordId(me.identity.discordId)) {
+        const v = rt.limits.signup.hit(`ip:${ctx.ip}`, Date.now());
+        if (!v.ok) {
+          if (v.first) rt.audit.record("rate_limited", { userId: null, detail: { limit: rt.limits.signup.rule.limit, windowS: Math.round(rt.limits.signup.rule.windowMs / 1000), retryAfterS: v.retryAfterS, what: "signup" } });
+          return redirect("/?denied=rate", [clearOauth]);
+        }
       }
 
       // Re-login rotates the session: an old cookie replayed after a fresh login must not
@@ -96,6 +121,15 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       // extends expires_at); otherwise the browser drops the cookie 30 days after login
       // even though the session itself is still valid.
       res.headers.append("Set-Cookie", serializeCookie(SESSION_COOKIE, signSessionId(ctx.sessionId!, rt.config.sessionSecret), sessionCookieOpts));
+      return res;
+    }),
+
+    route("DELETE", "/api/me", (_req, _url, ctx) => {
+      const u = ctx.user!;
+      rt.audit.record("account_delete", { userId: null, target: `discord ${u.discordId}`, detail: { username: u.username } });
+      rt.db.users.delete(u.id);
+      const res = jsonResponse({ ok: true });
+      res.headers.append("Set-Cookie", clearCookie(SESSION_COOKIE, { path: "/", secure: rt.secure }));
       return res;
     }),
   ];

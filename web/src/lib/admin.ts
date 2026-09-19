@@ -149,12 +149,17 @@ export const AUDIT_KIND_OF: Record<AuditAction, AuditKind> = {
   login: "login",
   login_denied: "login",
   logout: "login",
+  account_delete: "login",
+  wcl_client_set: "login",
+  wcl_client_remove: "login",
   invite_add: "admin",
   invite_remove: "admin",
   role_change: "admin",
   sessions_revoke: "admin",
   proposal_approve: "admin",
   proposal_reject: "admin",
+  user_ban: "admin",
+  user_unban: "admin",
   quota_refused: "quota",
   rate_limited: "security",
   origin_rejected: "security",
@@ -218,8 +223,14 @@ export function auditDetail(action: AuditAction, detail: Record<string, unknown>
       const patch = detail.patch && typeof detail.patch === "object" ? patchText(detail.patch as OverrideEntry) : "";
       return `${patch}${note ? ` · ${note}` : ""}`;
     }
+    case "user_ban":
+      return `${num(detail.sessionsEnded)} session(s) ended`;
     case "role_change":
     case "logout":
+    case "account_delete":
+    case "wcl_client_set":
+    case "wcl_client_remove":
+    case "user_unban":
       return "";
   }
 }

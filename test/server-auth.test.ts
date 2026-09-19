@@ -8,9 +8,11 @@ import { runServer } from "../src/server.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { TEST_HOSTED_CONFIG } from "./hosted/helpers.ts";
 
-// Fake Discord: one token endpoint, one /users/@me; `who` selects the identity returned.
+// Fake Discord: one token endpoint, one /users/@me, one /users/@me/guilds; `who` selects the
+// identity returned, `guilds` the guild ids the fake account belongs to.
 let who = { id: "123456789012345678", username: "tom", global_name: "Tom" as string | null, avatar: "abc" as string | null };
 let tokenStatus = 200;
+let guilds: string[] = [];
 const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => {
   const url = String(input);
   if (url === "https://discord.com/api/oauth2/token") {
@@ -22,6 +24,7 @@ const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => 
     if (new Headers(init?.headers).get("authorization") !== "Bearer tok-" + who.id) return new Response("", { status: 401 });
     return Response.json(who);
   }
+  if (url === "https://discord.com/api/users/@me/guilds") return Response.json(guilds.map((id) => ({ id })));
   throw new Error("unexpected fetch " + url);
 }) as unknown as typeof fetch;
 
@@ -53,12 +56,12 @@ beforeAll(async () => {
 afterAll(() => { server.stop(true); closeStore(); delete process.env.BMPL_DB_PATH; rmSync(dir, { recursive: true, force: true }); });
 
 /** Runs /auth/discord then the callback with the state + nonce it issued; returns the callback response. */
-async function login(overrides: { state?: string; oauthCookie?: string | null; code?: string } = {}): Promise<{ start: Response; cb: Response }> {
-  const start = await fetch(u("/auth/discord"), noRedirect);
+async function login(overrides: { state?: string; oauthCookie?: string | null; code?: string } = {}, base: (p: string) => string = u): Promise<{ start: Response; cb: Response }> {
+  const start = await fetch(base("/auth/discord"), noRedirect);
   const location = new URL(start.headers.get("location")!);
   const state = overrides.state ?? location.searchParams.get("state")!;
   const oauth = overrides.oauthCookie === undefined ? cookieOf(start, "bmpl_oauth") : overrides.oauthCookie;
-  const cb = await fetch(u(`/auth/discord/callback?code=${overrides.code ?? "good-code"}&state=${encodeURIComponent(state)}`), { ...noRedirect, headers: oauth ? { cookie: oauth } : {} });
+  const cb = await fetch(base(`/auth/discord/callback?code=${overrides.code ?? "good-code"}&state=${encodeURIComponent(state)}`), { ...noRedirect, headers: oauth ? { cookie: oauth } : {} });
   return { start, cb };
 }
 
@@ -188,5 +191,83 @@ describe("POST /auth/logout and /api/me", () => {
     const res = await fetch(u("/api/me"));
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ ok: false, error: "sign in" });
+  });
+});
+
+describe("phase 2 admission (closed signup)", () => {
+  test("a banned invited user is refused with ?denied=banned and the reason is audited", async () => {
+    who = { id: "123456789012345678", username: "tom", global_name: "Tom", avatar: "abc" };
+    const first = await login();
+    expect(first.cb.headers.get("location")).toBe("/");
+    const banned = db.users.byDiscordId(who.id)!;
+    db.users.ban(banned.id, 1, Date.now());
+    const { cb } = await login();
+    expect(cb.headers.get("location")).toBe("/?denied=banned");
+    expect(cookieOf(cb, "bmpl_session")).toBeNull();
+    const row = db.audit.list({ actions: ["login_denied"], before: null, limit: 1 })[0]!;
+    expect(row.detail).toEqual({ reason: "banned" });
+    db.users.unban(banned.id);
+  });
+  test("DELETE /api/me removes the account, clears the cookie and audits account_delete", async () => {
+    who = { id: "123456789012345678", username: "tom", global_name: "Tom", avatar: "abc" };
+    const { cb } = await login();
+    const cookie = cookieOf(cb, "bmpl_session")!;
+    const res = await fetch(u("/api/me"), { method: "DELETE", headers: { cookie } });
+    expect(await res.json()).toEqual({ ok: true });
+    expect(res.headers.getSetCookie().some((c) => c.startsWith("bmpl_session=;") || /bmpl_session=.*Max-Age=0/.test(c))).toBe(true);
+    expect(db.users.byDiscordId(who.id)).toBeNull();
+    expect((await fetch(u("/api/me"), { headers: { cookie } })).status).toBe(401);
+    const row = db.audit.list({ actions: ["account_delete"], before: null, limit: 1 })[0]!;
+    expect(row).toMatchObject({ userId: null, target: "discord 123456789012345678", detail: { username: "tom" } });
+  });
+});
+
+describe("phase 2 admission (open signup + guild gate)", () => {
+  let dir2: string;
+  let server2: Awaited<ReturnType<typeof runServer>>;
+  let db2: HostedDb;
+  const u2 = (p: string) => `http://localhost:${server2.port}${p}`;
+
+  beforeAll(async () => {
+    dir2 = mkdtempSync(join(tmpdir(), "bmpl-auth2-"));
+    mkdirSync(join(dir2, "assets"));
+    for (const f of ["index.html", "assets/app.js", "assets/app.css", "wh-config.js"]) writeFileSync(join(dir2, f), "");
+    closeStore();
+    process.env.BMPL_DB_PATH = join(dir2, "bmpl.db");
+    server2 = await runServer({
+      port: 0, open: false, hosted: true,
+      hostedConfig: { ...TEST_HOSTED_CONFIG, openSignup: true, discordGuildId: "987654321098765432" },
+      fetchFn: fakeFetch,
+      rateLimits: { auth: { limit: 1_000, windowMs: 60_000 }, signup: { limit: 2, windowMs: 3_600_000 } },
+      assets: async () => ({ index: join(dir2, "index.html"), appJs: join(dir2, "assets/app.js"), appCss: join(dir2, "assets/app.css"), whConfigJs: join(dir2, "wh-config.js") }),
+    });
+    db2 = openHosted((await getStore())._db);
+  });
+  afterAll(() => { server2.stop(true); closeStore(); delete process.env.BMPL_DB_PATH; rmSync(dir2, { recursive: true, force: true }); });
+
+  test("a stranger in the guild gets in as a member; not in the guild → ?denied=guild", async () => {
+    who = { id: "777777777777777777", username: "stranger", global_name: null, avatar: null };
+    guilds = [];
+    expect((await login({}, u2)).cb.headers.get("location")).toBe("/?denied=guild");
+    expect(db2.users.byDiscordId(who.id)).toBeNull();
+    guilds = ["987654321098765432"];
+    const { cb } = await login({}, u2);
+    expect(cb.headers.get("location")).toBe("/");
+    expect(db2.users.byDiscordId(who.id)!.role).toBe("member");
+  });
+  test("the authorize URL asks for the guilds scope", async () => {
+    const start = await fetch(u2("/auth/discord"), noRedirect);
+    expect(new URL(start.headers.get("location")!).searchParams.get("scope")).toBe("identify guilds");
+  });
+  test("new accounts are rate-limited per IP; an existing account is not", async () => {
+    guilds = ["987654321098765432"];
+    who = { id: "777777777777777778", username: "s2", global_name: null, avatar: null };
+    expect((await login({}, u2)).cb.headers.get("location")).toBe("/"); // 2nd new account this hour (the first was above)
+    who = { id: "777777777777777779", username: "s3", global_name: null, avatar: null };
+    expect((await login({}, u2)).cb.headers.get("location")).toBe("/?denied=rate");
+    expect(db2.users.byDiscordId(who.id)).toBeNull();
+    expect(db2.audit.list({ actions: ["rate_limited"], before: null, limit: 1 })[0]!.target).toBe("GET /auth/discord/callback");
+    who = { id: "777777777777777778", username: "s2", global_name: null, avatar: null };
+    expect((await login({}, u2)).cb.headers.get("location")).toBe("/"); // existing account: no limiter
   });
 });

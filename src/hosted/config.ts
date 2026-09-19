@@ -22,10 +22,20 @@ export interface HostedConfig {
   adminDiscordIds: string[];
   /** Per-member WCL points per calendar hour (admins are exempt). */
   pointsPerUserHour: number;
+  /** Any Discord account may sign in (still subject to a ban or the guild gate); default false = invite-only. */
+  openSignup: boolean;
+  /** Only accounts in this Discord server may sign in; null = no guild gate. */
+  discordGuildId: string | null;
+  /** AES-256-GCM key for a member's own WCL client secret; null disables that feature (issue #11 Task 2). */
+  encryptionKey: Uint8Array | null;
+  /** Shown to members who cannot get in (e.g. "ask Muleyoxo on Discord"). */
+  operator: string;
 }
 
 export const MIN_SESSION_SECRET_BYTES = 32;
 export const DEFAULT_POINTS_PER_USER_HOUR = 300;
+export const ENCRYPTION_KEY_BYTES = 32;
+export const DEFAULT_OPERATOR = "the admin of this instance";
 
 type Env = Record<string, string | undefined>;
 
@@ -86,6 +96,16 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
     invalid.push(`BMPL_POINTS_PER_USER_HOUR: a positive integer (got "${rawPoints}")`);
   }
 
+  const rawOpen = read(env, "BMPL_OPEN_SIGNUP").toLowerCase();
+  if (!["", "true", "false"].includes(rawOpen)) invalid.push(`BMPL_OPEN_SIGNUP: "true" or "false" (got "${read(env, "BMPL_OPEN_SIGNUP")}")`);
+  const rawGuild = read(env, "BMPL_DISCORD_GUILD_ID");
+  if (rawGuild !== "" && !DISCORD_ID.test(rawGuild)) invalid.push("BMPL_DISCORD_GUILD_ID: not a Discord server id");
+  const rawKey = read(env, "BMPL_ENCRYPTION_KEY");
+  const keyBytes = rawKey === "" ? null : Buffer.from(rawKey, "base64");
+  if (keyBytes !== null && keyBytes.length !== ENCRYPTION_KEY_BYTES) invalid.push("BMPL_ENCRYPTION_KEY: base64 of 32 random bytes — generate one with `openssl rand -base64 32`");
+  const operator = read(env, "BMPL_OPERATOR");
+  if (operator.length > 80) invalid.push("BMPL_OPERATOR: at most 80 characters");
+
   if (missing.length > 0 || invalid.length > 0) return { ok: false, missing, invalid };
   return {
     ok: true,
@@ -96,6 +116,10 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
       discordClientSecret: read(env, "BMPL_DISCORD_CLIENT_SECRET"),
       adminDiscordIds,
       pointsPerUserHour,
+      openSignup: rawOpen === "true",
+      discordGuildId: rawGuild || null,
+      encryptionKey: keyBytes ? new Uint8Array(keyBytes) : null,
+      operator: operator || DEFAULT_OPERATOR,
     },
   };
 }

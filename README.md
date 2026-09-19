@@ -534,10 +534,14 @@ hourly WCL usage, defensives proposals, an own WCL client if added, and the
 30-day session and 90-day audit rows. Settings → **Delete my account** (typing
 the word "delete" to confirm) calls `DELETE /api/me`, which records the
 deletion in the audit log, deletes the user row (cascading to sessions,
-history, settings, usage and their own WCL client; their approved shared
-defensives entries and decided proposals keep the correction but lose the
-author), clears the session cookie and signs them out. The audit log itself
-keeps its rows for their normal 90 days.
+history, settings, usage, their own defensives proposals and their own WCL
+client), clears the session cookie and signs them out. An approved defensives
+correction lives in a separate table keyed by the *deciding* admin, so it
+stays in the shared table regardless of what happens to the account that
+proposed it; if the deleted account had itself approved or decided other
+members' proposals as an admin, those rows keep the correction but lose the
+admin's name. The audit log keeps its own rows (without the author) for their
+normal 90 days.
 
 **Shared defensives table.** Corrections made from the panel are proposals:
 they apply to you immediately (marked "pending review" — in the panel a

@@ -1,6 +1,6 @@
 # Web front (Vite + React) — design
 
-**Status:** approved direction (canvas "Direction A"), spec under review; hosted-mode screens (sign-in, user menu, proposal wording) implemented 2026-09-18 — issue #7, canvas page "Hosted"; admin page implemented 2026-09-18 — issue #8, canvas artboards Admin*; audit section 2026-09-18 — issue #9, canvas AdminAudit (A)
+**Status:** approved direction (canvas "Direction A"), spec under review; hosted-mode screens (sign-in, user menu, proposal wording) implemented 2026-09-18 — issue #7, canvas page "Hosted"; admin page implemented 2026-09-18 — issue #8, canvas artboards Admin*; audit section 2026-09-18 — issue #9, canvas AdminAudit (A); hosted settings and privacy pages (own WCL client, account deletion) plus sign-in refusals and admin ban implemented 2026-09-19 — issue #11, canvas artboards Phase2SettingsA/B/C and Phase2Details
 **Sub-project:** 3 of the bmpl roadmap (signals → evaluation → **front** → run deep-dive)
 **Design canvas:** https://claude.ai/artifact/3yUjZKgaQyHKebzyqcio5s — page *Direction A* is the reference;
 page *Explorations* holds the discarded monospace sketch.

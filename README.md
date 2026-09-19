@@ -417,12 +417,15 @@ To run `bmpl` from anywhere, add the folder to your PATH and either keep an
 ## Hosted mode (multi-user)
 
 `bmpl serve --hosted` (or `BMPL_MODE=hosted`) runs one instance for several
-people behind a reverse proxy: Discord login and an invite allow-list, per-account
-lookup history and settings, a shared WCL budget with per-member hourly quotas, a
-shared/proposed defensives table, and an admin page (`/admin`). It disables the
-local-only routes (`/api/setup`, `/api/quit`, clipboard watch), never opens a
-browser, adds security headers (CSP, nosniff, frame-ancestors none, …) and exposes
-`GET /api/health` (`{ ok, version, uptimeS, db }`) for the proxy's health check.
+people behind a reverse proxy: Discord login (invite-only, an optional open
+signup, or a Discord-server allow-list), per-account lookup history and
+settings, a shared WCL budget with per-member hourly quotas or a member's own
+Warcraft Logs client, a shared/proposed defensives table, a privacy page and
+self-service account deletion, and an admin page (`/admin`) that can ban
+accounts. It disables the local-only routes (`/api/setup`, `/api/quit`,
+clipboard watch), never opens a browser, adds security headers (CSP, nosniff,
+frame-ancestors none, …) and exposes `GET /api/health` for the proxy's health
+check and an uptime monitor.
 
 **Hardening** (issue #9): state-changing requests must come from `BMPL_BASE_URL`
 (Origin / Sec-Fetch-Site), `/auth/*` is limited to 10 requests per minute per IP,
@@ -438,23 +441,35 @@ refused), server errors never carry messages or paths, and the audit log
 WCL/server errors.
 
 **Login.** Hosted mode signs people in with Discord (scope `identify` only —
-no e-mail, no server list). Create an application at
+no e-mail, no server list — unless `BMPL_DISCORD_GUILD_ID` is set, which adds
+`guilds` and reads the member's server list once at sign-in to check
+membership; nothing from that list is stored). Create an application at
 https://discord.com/developers/applications → OAuth2: copy the *Client ID*
 and *Client Secret* into `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET`
-and add the redirect `https://<your host>/auth/discord/callback`. Access is
-invite-only: the Discord ids in `BMPL_ADMIN_DISCORD_IDS` are admins and can
-always sign in; everyone else needs an invite — `bmpl invite <discord-id>
-[--note "guild mate"]` on the server (`bmpl invite --list`, `--remove <id>`),
-or the admin page (`/admin`, admins only): invites with a note, who signed in,
-remove. The sign-in page is a single **Sign in
-with Discord** button; a user who is not invited comes back to it with an
-*Invitation required* notice showing their Discord id (with a Copy button) so
-they can send it to you. Sessions last 30
-days (sliding) in an `HttpOnly` cookie; **Sign out** ends one. Removing an
-id from `BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change
-the role on the admin page (Users → make admin / make member) or via
+and add the redirect `https://<your host>/auth/discord/callback`. By default
+access is invite-only: the Discord ids in `BMPL_ADMIN_DISCORD_IDS` are admins
+and can always sign in; everyone else needs an invite — `bmpl invite
+<discord-id> [--note "guild mate"]` on the server (`bmpl invite --list`,
+`--remove <id>`), or the admin page (`/admin`, admins only): invites with a
+note, who signed in, remove. Setting `BMPL_OPEN_SIGNUP=true` lets any Discord
+account sign in without an invite (still subject to the guild gate and to
+bans); new accounts under open signup are limited to 5 per hour per source IP
+(`?denied=rate` when that limit is hit). A banned account (admin page → Users
+→ Ban) is refused at sign-in regardless of invite or open signup. The sign-in
+page is a single **Sign in with Discord** button; a refused sign-in comes
+back to it with a notice: *Invitation required* shows the Discord id (with a
+Copy button) so the user can send it to you; *Members of the guild's Discord
+only*, *Account banned* and *Too many new accounts* explain the other three
+(`?denied=<discordId>|guild|banned|rate`). Sessions last 30 days (sliding) in
+an `HttpOnly` cookie; **Sign out** ends one. Removing an id from
+`BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change the role
+on the admin page (Users → make admin / make member) or via
 `POST /api/admin/users/:id/role`; **Revoke sessions** signs a user out
-everywhere (`POST /api/admin/users/:id/sessions/revoke`).
+everywhere (`POST /api/admin/users/:id/sessions/revoke`); **Ban** (`POST
+/api/admin/users/:id/ban`) does the same and blocks every future sign-in
+(**Unban** reverses it); an admin cannot ban themselves or another config
+admin, and a banned member's rows stay until they delete their account or an
+admin unbans them.
 
 **Per-account state.** Each member has their own lookup history (20 tabs, kept
 in `bmpl.db` across restarts), their own "your key" and legend preference
@@ -492,6 +507,38 @@ rankings ≈ 10 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attrib
 is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
 
+**Your own Warcraft Logs client.** When the admin sets `BMPL_ENCRYPTION_KEY`,
+a member can add their own WCL client (`/settings`, "Your Warcraft Logs
+client" card, or `GET/PUT/DELETE /api/me/wcl-client` and `POST
+/api/me/wcl-client/verify`): create one at
+https://www.warcraftlogs.com/api/clients (any name, no redirect URL needed)
+and paste the client id and secret. Saving (and "Verify again") sends one 0-pt
+PING to WCL to check the credentials before they are stored; the secret is
+encrypted at rest (AES-256-GCM, `BMPL_ENCRYPTION_KEY`), never returned by the
+API and never logged — the card only ever shows the abbreviated client id
+(`a3f1…9c2e`). Every lookup and deep-dive the member runs afterwards goes
+through *their* client instead of the shared one: it does not count against
+`BMPL_POINTS_PER_USER_HOUR`, does not touch the shared budget shown on
+`/api/admin/usage`, and the user menu shows "Your WCL client · 1 412 / 3 600
+pts" instead of the shared quota line. Without `BMPL_ENCRYPTION_KEY` the
+feature is off instance-wide (`GET /api/status` → `wclClients: false`, the
+settings card reads "This instance does not store WCL clients"); losing the
+key after members have saved clients makes those rows undecryptable (a member
+simply saves their client again). `PUT`/`POST /api/me/wcl-client/verify` are
+rate-limited like a lookup (30/min per member).
+
+**Privacy and account deletion.** `/privacy` (linked from the sign-in page
+and the user menu, readable signed out) lists exactly what a row in `bmpl.db`
+can hold about a member: Discord id/username/avatar, lookup history, settings,
+hourly WCL usage, defensives proposals, an own WCL client if added, and the
+30-day session and 90-day audit rows. Settings → **Delete my account** (typing
+the word "delete" to confirm) calls `DELETE /api/me`, which records the
+deletion in the audit log, deletes the user row (cascading to sessions,
+history, settings, usage and their own WCL client; their approved shared
+defensives entries and decided proposals keep the correction but lose the
+author), clears the session cookie and signs them out. The audit log itself
+keeps its rows for their normal 90 days.
+
 **Shared defensives table.** Corrections made from the panel are proposals:
 they apply to you immediately (marked "pending review" — in the panel a
 yellow dot before the entry, a blue one for the approved layer, and a "Your
@@ -513,8 +560,21 @@ audit-defensives --shared` read it).
 section) reports the version, uptime, database size, the last backup (mtime
 of a `last-backup` file next to `.env`, touched by the hourly backup check of
 the VPS deployment — see *Deploying on a VPS*) and the effective environment
-with secrets masked. WCL errors are in the audit
-log (Errors chip).
+with secrets masked (including the four optional variables below —
+`BMPL_ENCRYPTION_KEY` shows only whether a key is set). WCL errors are in the
+audit log (Errors chip).
+
+**Health.** `GET /api/health` is public and unauthenticated (for the reverse
+proxy and an uptime monitor): `{ ok, version, uptimeS, db, hosted: true,
+users, sessions, wcl: { pointsSpentThisHour, limitPerHour, pointsResetIn } |
+null, backupAgeS: number | null, warnings: string[] }`. `ok` only reflects the
+database (`db: "error"` → `ok: false`, HTTP 503); `warnings` never flips it,
+so alert on it separately — e.g. an uptime check or cron running `curl -s
+https://<host>/api/health | jq .warnings` and paging on a non-empty array.
+Today's warnings: `"no backup marker"` (no `last-backup` file yet),
+`"last backup N h ago"` (older than 2 hours), and `"shared WCL budget under
+100 pts"` (the instance-wide floor, not a member's own quota). Local mode
+keeps the plain `{ ok, version, uptimeS, db }`.
 
 Required environment (copy `.env.hosted.example`):
 
@@ -526,8 +586,15 @@ Required environment (copy `.env.hosted.example`):
 | `BMPL_ADMIN_DISCORD_IDS` | Comma-separated Discord user ids of the admins |
 | `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` | The shared Warcraft Logs client |
 
-Optional: `BMPL_POINTS_PER_USER_HOUR` — WCL points each member may spend per
-calendar hour (default 300; admins are exempt).
+Optional:
+
+| Variable | Meaning |
+|---|---|
+| `BMPL_POINTS_PER_USER_HOUR` | WCL points each member may spend per calendar hour (default 300; admins are exempt) |
+| `BMPL_OPEN_SIGNUP` | `true` lets any Discord account sign in without an invite (default `false`) |
+| `BMPL_DISCORD_GUILD_ID` | Only accounts in this Discord server may sign in (adds the `guilds` OAuth scope) |
+| `BMPL_ENCRYPTION_KEY` | 32 random bytes, base64 (`openssl rand -base64 32`); enables members' own WCL clients — losing it makes stored clients unusable |
+| `BMPL_OPERATOR` | Who runs this instance, shown on `/privacy` (default "the admin of this instance") |
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and
 the list of what to fix. Local mode (`bmpl serve`) is unchanged.
@@ -621,13 +688,20 @@ Discord**, open `/admin` and invite the others by Discord id (they read theirs
 on the *Invitation required* notice).
 
 **5. Monitor.** Point UptimeRobot (or any HTTP pinger) at
-`https://bmpl.<domain>/api/health`: 200 with
-`{"ok":true,"version":…,"uptimeS":…,"db":"ok"}`, 503 with `"db":"error"`
-when the database is unreachable (Caddy itself checks the same URL every
-30 s and answers a 5xx of its own while bmpl is down). The admin page's Instance section
-shows the version, uptime, database size and *last backup*. Errors:
-`journalctl -u bmpl` (or `just deploy-logs`), the Caddy access log at
-`/var/log/caddy/bmpl.log`, and the audit log (`/admin` → Audit) for logins,
+`https://bmpl.<domain>/api/health`: 200 with `"ok":true`, 503 with
+`"db":"error"` when the database is unreachable (Caddy itself checks the same
+URL every 30 s and answers a 5xx of its own while bmpl is down). `ok` covers
+only the database; a stale backup or a shared budget running low show up as
+text in the response's `warnings` array without flipping `ok`, so watch them
+separately — a cron or uptime-check body match on
+`curl -s https://bmpl.<domain>/api/health | jq .warnings` is enough to page
+on `"no backup marker"`, `"last backup N h ago"` or `"shared WCL budget under
+100 pts"` instead of checking the backup marker by hand. The admin page's
+Instance section shows the same version, uptime, database size and *last
+backup*, plus the effective environment (including whether open signup, the
+guild gate and members' own WCL clients are on). Errors: `journalctl -u bmpl`
+(or `just deploy-logs`), the Caddy access log at `/var/log/caddy/bmpl.log`,
+and the audit log (`/admin` → Audit) for logins, bans, account deletions,
 quota refusals, security rejections and WCL/server errors. If a guild behind
 one NAT hits the `/auth/*` limit (10 per minute per IP), the numbers are
 `DEFAULT_RATE_LIMITS` in `src/hosted/ratelimit.ts`.

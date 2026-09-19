@@ -196,6 +196,42 @@
       "h": 2080,
       "title": "Admin page — audit log / WCL errors (issue #9): A table · B errors next to the gauge · C activity timeline",
       "page": "hosted"
+    },
+    {
+      "file": "Phase2SettingsA.dc.html",
+      "x": 7800,
+      "y": 0,
+      "w": 1440,
+      "h": 620,
+      "title": "Phase 2 — Settings A: full page (two cards)",
+      "page": "hosted"
+    },
+    {
+      "file": "Phase2SettingsB.dc.html",
+      "x": 7800,
+      "y": 740,
+      "w": 1440,
+      "h": 460,
+      "title": "Phase 2 — Settings B: one compact card",
+      "page": "hosted"
+    },
+    {
+      "file": "Phase2SettingsC.dc.html",
+      "x": 7800,
+      "y": 1320,
+      "w": 1440,
+      "h": 520,
+      "title": "Phase 2 — Settings C: inside the user menu",
+      "page": "hosted"
+    },
+    {
+      "file": "Phase2Details.dc.html",
+      "x": 9360,
+      "y": 0,
+      "w": 1440,
+      "h": 1560,
+      "title": "Phase 2 — Details: verified client, delete, privacy, sign-in, admin ban",
+      "page": "hosted"
     }
   ],
   "annotations": [
@@ -270,6 +306,14 @@
       "w": 560,
       "page": "hosted",
       "text": "Issue #9 — hardening. The only visible change: the audit log on the admin page (logins, admin actions, quota refusals, security rejections, WCL errors). Same data in A / B / C, pick the treatment:\n· A audit table — one section at the bottom, WCL errors are rows, the red chip filters them.\n· B errors next to the gauge — the budget card gets a 'Last WCL errors' column (the issue's wording), the table below has everything else.\n· C activity timeline — sentences grouped by day, same filters.\n\nAll three: a sixth 'Audit' anchor in the sub-nav with the 24 h error count. Rate limits and Origin rejections show as the usual error toast — no new UI."
+    },
+    {
+      "id": "phase2-brief",
+      "x": 7800,
+      "y": -190,
+      "w": 1440,
+      "page": "hosted",
+      "text": "Issue #11 — phase 2 (settings, privacy, account deletion). Pick a settings-page layout: A full page at /settings (consistent with /admin), B one compact card, C inside the user menu. Details board: verified WCL client state, typed-word delete confirmation, /privacy page, sign-in wording for open signup and the guild-denied notice, admin Ban/Unban."
     }
   ],
   "launch": {

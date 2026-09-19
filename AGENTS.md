@@ -44,6 +44,7 @@ just check-deps                             # bun audit on both lockfiles — ru
 - **Config precedence:** flag > env var > file next to `.env` (`bmpl.db`, `evaluation.json`, `defensives.json` all resolve next to the `.env` found by `resolveEnvPath()` in `src/setup.ts`).
 - **Class/spec keys** are WCL's spacing-free names: `DeathKnight:Blood`, `DemonHunter:Havoc`, `Class:*` wildcard. Source of truth: `src/wow/classes.ts` and `src/signals/kick-cooldowns.ts`.
 - **Season data is versioned by file** (`src/signals/avoidable/season-mn-2.json`, `src/deepdive/defensives.json` `version: "mn-2.x"`). Bump the version when the content changes; the deep-dive audit script is the way to validate spell tables, not memory.
+- **Hosted secrets**: `BMPL_ENCRYPTION_KEY` is never logged, never shown, never in an audit row — only whether it is set (`src/hosted/instance.ts`'s `describeConfig`). A member's own WCL client secret is stored only as AES-256-GCM ciphertext (`src/hosted/crypto.ts`) and decrypted back to plaintext only for the duration of one request. A request that runs through a member's own client bypasses the shared meter, `usage_hourly` and the quota gate by design (see `runWithWclClient` in `docs/agents/architecture.md`) — that is not a bug to "fix".
 
 ## Toolchain
 
@@ -64,4 +65,4 @@ web/src/lib/          pure tested view models      web/src/components/   thin Re
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#10 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front, admin page, hardening, VPS deployment) are shipped, next is #11 (phase 2).
+Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#11 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front, admin page, hardening, VPS deployment, open signup / own WCL clients / bans / privacy) are shipped — sub-project 5 is complete.

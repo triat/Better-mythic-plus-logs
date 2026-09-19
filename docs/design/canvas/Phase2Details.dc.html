@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field .lab { font-size: 12px; color: #8b949e; }
+    .input { height: 32px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; padding: 0 10px; font-size: 13px; display: flex; align-items: center; }
+    .input.ph { color: #6e7681; }
+    .dot-ok { background: #56d364; } .dot-none { background: #6e7681; } .dot-bad { background: #f85149; }
+    .h2 { font-size: 16px; font-weight: 700; }
+    .p { font-size: 13px; color: #c9d1d9; line-height: 1.55; }
+    .ul { font-size: 13px; color: #c9d1d9; padding-left: 18px; line-height: 1.6; }
+    .menu { width: 280px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+    .menu-item { padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    .menu-item.hl { background: #21262d; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1560px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="content content-wide" style="gap: 22px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start;">
+      <div>
+    <div class="label" style="margin-bottom: 8px;">SETTINGS — WCL client verified (same card as A, other state; shown narrow here)</div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 6px; ">
+    <div style="display: flex; align-items: center; gap: 10px;"><span class="section-title">Your Warcraft Logs client</span><div style="flex: 1;"></div><span class="dot dot-ok"></span><span class="soft">Verified 2 h ago</span> <span class="faint">· a3f1…9c2e · 1 412 / 3 600 pts</span></div>
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px;"><span class="btn btn-sm">Verify again</span><span class="btn btn-sm">Replace</span><span class="btn btn-sm btn-danger">Remove</span><span class="faint" style="font-size: 12px; margin-left: 6px;">No shared quota.</span></div>
+  </div>
+    <div class="label" style="margin-bottom: 8px;">DELETE ACCOUNT — inline confirmation, typed word</div>
+  <div class="card" style="display: flex; gap: 12px; align-items: center; font-size: 13px;">
+    <span class="inset" style="padding: 8px 12px;">Delete your account? Type <b>delete</b> to confirm. <span class="input" style="display: inline-flex; width: 120px; height: 26px; margin: 0 6px;">delete</span> <span class="btn btn-sm btn-danger">Delete</span> <span class="btn btn-sm">Cancel</span></span>
+  </div>
+      </div>
+      <div>
+    <div class="label" style="margin-bottom: 8px;">/privacy — one static page, linked from the sign-in note, the settings page and the footer of the user menu</div>
+        <div class="card">
+  <div class="content" style="max-width: 760px; gap: 14px;">
+    <div class="h2">Privacy</div>
+    <div class="p">bmpl vets Mythic+ players from public Warcraft Logs and Raider.IO data. This instance is run by <span class="soft">Muleyoxo</span> for their guild; it is not a Blizzard, Warcraft Logs or Discord service.</div>
+    <div class="section-title">What is stored about you</div>
+    <ul class="ul"><li><b>Discord id, username, global name and avatar</b> — from the "identify" scope when you sign in. Nothing else from Discord: no e-mail, no messages, no server list<span class="faint"> (unless this instance requires membership of one server — then the check reads your server list once at sign-in and keeps nothing)</span>.</li><li><b>Your lookup history</b> (the 20 tabs), your settings (your key, legend), your hourly WCL usage, your defensives proposals and the admin's notes on them.</li><li><b>Your Warcraft Logs client</b>, if you added one: the client id in clear, the secret encrypted with a key that only this server holds. Verified once on save; used for your lookups only.</li><li><b>Sessions</b>: a random id in a cookie, your IP and browser at sign-in, for 30 days.</li><li><b>Audit log</b>: sign-ins, refusals and errors with your id and IP, kept 90 days.</li></ul>
+    <div class="section-title">What is not yours</div>
+    <div class="p">Runs, rankings and fight data fetched from Warcraft Logs are public and are cached for everyone; they carry the names of the players in those runs, which is how Warcraft Logs publishes them.</div>
+    <div class="section-title">Deleting your account</div>
+    <div class="p">Settings → <b>Delete my account</b> removes every row above and signs you out. Corrections you proposed that an admin approved stay in the shared table, without your name. The audit log keeps its rows (without your name) until they expire. Backups of the database are kept 30 days.</div>
+    <div class="faint" style="font-size: 12px;">Questions: the admin of this instance on Discord.</div>
+  </div>
+        </div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start;">
+      <div>
+    <div class="label" style="margin-bottom: 8px;">SIGN-IN — open signup (BMPL_OPEN_SIGNUP=true): the invite notice is gone, the note says anyone can sign in</div>
+        <div style="display: flex; justify-content: center; padding: 10px;">
+    <div class="card" style="width: 440px; display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 28px 24px;">
+      <div class="brand" style="font-size: 22px;">bmpl</div>
+      <div class="muted" style="font-size: 13px; text-align: center;">Vet a Mythic+ applicant from Warcraft Logs and Raider.IO.</div>
+      <div style="background: #5865F2; color: #fff; font-weight: 600; padding: 10px 18px; border-radius: 6px; font-size: 14px;">Sign in with Discord</div>
+      <div class="faint" style="font-size: 12px; text-align: center;">Anyone with a Discord account can sign in. Only your Discord id and name are stored — no message or server access. <a href="#">Privacy</a></div>
+    </div>
+        </div>
+      </div>
+      <div>
+    <div class="label" style="margin-bottom: 8px;">SIGN-IN — ?denied=guild (BMPL_DISCORD_GUILD_ID set): must be in the guild's Discord server</div>
+        <div style="display: flex; justify-content: center; padding: 10px;">
+    <div class="card" style="width: 440px; display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 28px 24px;">
+      <div class="brand" style="font-size: 22px;">bmpl</div>
+      <div class="inset" style="padding: 10px 12px; font-size: 13px; width: 100%;"><span class="dot dot-bad"></span><b>Members of the guild's Discord only.</b><div class="muted" style="margin-top: 4px;">Your account is not in that server. Join it, then sign in again.</div></div>
+      <div style="background: #5865F2; color: #fff; font-weight: 600; padding: 10px 18px; border-radius: 6px; font-size: 14px;">Sign in with Discord</div>
+      <div class="faint" style="font-size: 12px; text-align: center;">Sign-in reads your server list once to check membership and keeps nothing from it.</div>
+    </div>
+        </div>
+      </div>
+    </div>
+    <div>
+    <div class="label" style="margin-bottom: 8px;">ADMIN → USERS — a member with their own client shows 'own client' instead of points; Ban / Unban with an inline confirmation; banned rows dimmed</div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 6px;">
+      <div class="row row-user caps" style="padding: 2px 10px; grid-template-columns: 24px 176px 150px 96px 96px 96px 1fr auto;"><span></span><span>name</span><span>role</span><span>last seen</span><span>pts · hour</span><span>pts · 24 h</span><span>discord id</span><span></span></div>
+      <div class="inset row row-user" style="grid-template-columns: 24px 176px 150px 96px 96px 96px 1fr auto;"><span class="avatar">B</span><span>bob <span class="faint">@bobthepally</span></span><span><span class="chip">member</span> <span class="chip" style="margin-left: 4px;">make admin</span></span><span class="muted">3 d ago</span><span class="mono faint">own client</span><span class="mono faint">—</span><span class="mono faint">333333333333333333</span><span><span class="btn btn-sm">Revoke sessions</span> <span class="btn btn-sm btn-danger">Ban</span></span></div>
+      <div class="inset row row-user" style="grid-template-columns: 24px 176px 150px 96px 96px 96px 1fr auto; opacity: .7;"><span class="avatar">X</span><span>xyz <span class="faint">@xyz</span></span><span><span class="chip" style="color: #f85149; border-color: #7a1f1f;">banned</span> <span class="faint" style="font-size: 11px;">2 d ago</span></span><span class="muted">2 d ago</span><span class="mono">0</span><span class="mono">0</span><span class="mono faint">999999999999999999</span><span><span class="btn btn-sm">Unban</span></span></div>
+      <div class="inset" style="padding: 8px 12px; font-size: 13px;">Ban <b>bob</b>? Their sessions end now, they cannot sign in again (open signup or invite), their data stays until they delete it or you do. <span class="btn btn-sm btn-danger" style="margin-left: 8px;">Ban</span> <span class="btn btn-sm">Cancel</span></div>
+    </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

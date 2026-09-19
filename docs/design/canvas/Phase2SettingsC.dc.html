@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field .lab { font-size: 12px; color: #8b949e; }
+    .input { height: 32px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; padding: 0 10px; font-size: 13px; display: flex; align-items: center; }
+    .input.ph { color: #6e7681; }
+    .dot-ok { background: #56d364; } .dot-none { background: #6e7681; } .dot-bad { background: #f85149; }
+    .h2 { font-size: 16px; font-weight: 700; }
+    .p { font-size: 13px; color: #c9d1d9; line-height: 1.55; }
+    .ul { font-size: 13px; color: #c9d1d9; padding-left: 18px; line-height: 1.6; }
+    .menu { width: 280px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+    .menu-item { padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    .menu-item.hl { background: #21262d; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 520px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="top">
+    <div class="brand">bmpl</div>
+    <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><div style="flex: 1; font-size: 14px;">Name-Realm or Raider.IO URL</div><span class="chip">spec any</span></div>
+    <div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div>
+    <div class="lookup">Look up</div>
+    <div style="flex: 1;"></div>
+    <div class="btn"><span class="avatar">M</span>Muleyoxo <span class="faint" style="font-size: 12px;">▾</span></div>
+  </div>
+  <div style="padding: 20px 24px; display: flex; gap: 40px; align-items: flex-start;">
+    <div>
+      <div class="label" style="margin-bottom: 8px;">USER MENU — a "Settings" item opens an inline panel below the quota</div>
+      <div class="menu">
+        <div style="display: flex; gap: 10px; align-items: center; padding: 8px 10px;"><span class="avatar" style="width: 32px; height: 32px;">T</span><div><div style="font-size: 14px; font-weight: 600;">tom</div><div class="faint" style="font-size: 12px;">member</div></div></div>
+        <div style="padding: 6px 10px; font-size: 12px;"><div style="display: flex; justify-content: space-between;"><span class="muted">Your WCL client</span><span class="mono">1 412 / 3 600</span></div><span class="bar" style="margin-top: 4px;"><span style="width: 39%;"></span></span><div class="faint" style="margin-top: 2px;">no shared quota · resets in 38 min</div></div>
+        <div class="menu-item hl">Settings <span class="faint">· WCL client, account</span></div>
+        <div class="menu-item">Admin <span class="faint">· 3</span></div>
+        <div class="menu-item">Sign out</div>
+      </div>
+    </div>
+    <div>
+      <div class="label" style="margin-bottom: 8px;">INLINE PANEL (280 px) — cramped: the secret input, the verify status and the delete flow all fit, but nothing else does</div>
+      <div class="menu" style="width: 320px;">
+        <div class="section-title" style="padding: 6px 10px;">Warcraft Logs client</div>
+        <div style="padding: 0 10px 6px;"><div class="field" style="margin-bottom: 6px;"><span class="lab">Client id</span><span class="input ph">…</span></div><div class="field"><span class="lab">Client secret</span><span class="input ph">••••••••</span></div><div style="margin-top: 8px;"><span class="btn btn-sm btn-primary">Save and verify</span></div></div>
+        <div class="section-title" style="padding: 6px 10px;">Account</div>
+        <div style="padding: 0 10px 8px;"><a href="#" style="font-size: 12px;">Privacy</a> · <a href="#" style="font-size: 12px; color: #f85149;">Delete my account</a></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

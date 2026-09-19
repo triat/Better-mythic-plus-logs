@@ -44,6 +44,10 @@ beforeAll(async () => {
   process.env.WCL_CLIENT_SECRET = "env-secret";
   closeStore();
   process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
+  // The WCL observers (`setWclErrorObserver`, `setRateLimitObserver`) are process-wide and belong to
+  // the runtime created last, so the main server starts second: its audit scope is the one a
+  // `wcl_error` row is attributed to.
+  noKeyServer = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, assets: assets(dir) });
   server = await runServer({
     port: 0,
     open: false,
@@ -52,7 +56,6 @@ beforeAll(async () => {
     assets: assets(dir),
     verifyWclClient: async (c) => { seenCreds.push(c); return verifyResult; },
   });
-  noKeyServer = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, assets: assets(dir) });
   db = openHosted((await getStore())._db);
   member = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "123456789012345678", role: "member", username: "tom" });
   noKeyMember = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "987654321098765432", role: "member", username: "nokey" });
@@ -125,6 +128,32 @@ describe("lookups through the member's own client", () => {
       expect(db.usage.used(member.user.id, Date.now())).toBe(300); // unchanged
       const me = await (await fetch(u("/api/me"), { headers: { cookie: member.cookie } })).json();
       expect(me.ownClient.snapshot.pointsSpentThisHour).toBe(50);
+    } finally {
+      globalThis.fetch = realFetch;
+      await fetch(u("/api/me/wcl-client"), { method: "DELETE", headers: { cookie: member.cookie } });
+    }
+  });
+  test("a refused OAuth on the member's own client is a 502 `WCL: OAuth failed …` and a wcl_error row, never an Internal error", async () => {
+    resetAuthCache();
+    await fetch(u("/api/me/wcl-client"), json("PUT", { clientId: "own-id", clientSecret: "revoked" }, member.cookie));
+    const serverErrorsBefore = db.audit.list({ actions: ["server_error"], before: null, limit: 50 }).length;
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith("http://localhost")) return realFetch(input, init);
+      if (url.endsWith("/oauth/token")) return new Response('{"error":"invalid_client"}', { status: 401 });
+      throw new Error("unexpected fetch " + url);
+    }) as unknown as typeof fetch;
+    try {
+      const r = await fetch(u("/api/lookup"), json("POST", { character: "Nobody-Hyjal" }, member.cookie));
+      expect(r.status).toBe(502);
+      const body = await r.json();
+      expect(body.ok).toBe(false);
+      expect(body.error).toStartWith("WCL: OAuth failed: 401 ");
+      expect(body.error).toEndWith(" — check your client in Settings");
+      const row = db.audit.list({ actions: ["wcl_error"], before: null, limit: 1 })[0]!;
+      expect(row).toMatchObject({ userId: member.user.id, target: "lookup Nobody-Hyjal", detail: { kind: "http", status: 401 } });
+      expect(db.audit.list({ actions: ["server_error"], before: null, limit: 50 })).toHaveLength(serverErrorsBefore);
     } finally {
       globalThis.fetch = realFetch;
       await fetch(u("/api/me/wcl-client"), { method: "DELETE", headers: { cookie: member.cookie } });

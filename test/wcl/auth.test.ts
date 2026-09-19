@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { forgetToken, getAccessToken, resetAuthCache } from "../../src/wcl/auth.ts";
+import { WclOAuthError, forgetToken, getAccessToken, resetAuthCache } from "../../src/wcl/auth.ts";
 
 // Never reaches WCL: fetch is replaced for the whole file, and the env is pinned/restored around it.
 const realFetch = globalThis.fetch;
@@ -42,14 +42,26 @@ describe("getAccessToken", () => {
     resetAuthCache();
     expect(await getAccessToken()).toBe("tok-4");
   });
-  test("a refused OAuth throws a clipped message", async () => {
+  test("the same client id with a rotated secret mints a new token; forgetToken drops both", async () => {
+    expect(await getAccessToken({ clientId: "u1", clientSecret: "old" })).toBe("tok-1");
+    expect(await getAccessToken({ clientId: "u1", clientSecret: "new" })).toBe("tok-2");
+    expect(await getAccessToken({ clientId: "u1", clientSecret: "old" })).toBe("tok-1");
+    expect(await getAccessToken({ clientId: "u1", clientSecret: "new" })).toBe("tok-2");
+    expect(calls.map((c) => c.auth)).toEqual([`Basic ${btoa("u1:old")}`, `Basic ${btoa("u1:new")}`]);
+    forgetToken("u1");
+    expect(await getAccessToken({ clientId: "u1", clientSecret: "old" })).toBe("tok-3");
+    expect(await getAccessToken({ clientId: "u1", clientSecret: "new" })).toBe("tok-4");
+  });
+  test("a refused OAuth throws a WclOAuthError with a clipped message", async () => {
     status = 401;
     const p = getAccessToken({ clientId: "bad", clientSecret: "bad" });
     await expect(p).rejects.toThrow(/^WCL OAuth failed: 401 /);
     // Bun 1.3.4's `toThrow` does not support a predicate function (throws
     // "instanceof called on an object with an invalid prototype property" even
     // in a minimal repro outside this project) — checked directly instead.
-    const err = (await p.catch((e: unknown) => e)) as Error;
+    const err = (await p.catch((e: unknown) => e)) as WclOAuthError;
+    expect(err).toBeInstanceOf(WclOAuthError);
+    expect(err.status).toBe(401);
     expect(err.message.length).toBeLessThanOrEqual(240);
   });
 });

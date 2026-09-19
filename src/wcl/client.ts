@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { config } from "../config.ts";
-import { getAccessToken } from "./auth.ts";
+import { WclOAuthError, getAccessToken } from "./auth.ts";
 import type { WclCredentials } from "./auth.ts";
 import type { RateLimitData } from "./types.ts";
 
@@ -25,7 +25,7 @@ export const observeRateLimit = (data: unknown): void => {
   if (rl) observer(rl);
 };
 
-/** A failed WCL call. `publicMessage` (≤ ~220 chars, body clipped) is safe to show a hosted member; `message` is it with a `WCL ` prefix. */
+/** A failed WCL call. `publicMessage` (≤ ~250 chars, body clipped) is safe to show a hosted member; `message` is it with a `WCL ` prefix. */
 export class WclError extends Error {
   constructor(readonly kind: "http" | "graphql" | "nodata", readonly status: number | null, readonly publicMessage: string) {
     super(`WCL ${publicMessage}`);
@@ -73,7 +73,13 @@ export async function gql<T>(
   variables?: Record<string, unknown>,
 ): Promise<T> {
   const scope = currentWclClient();
-  const token = await getAccessToken(scope?.creds);
+  const token = await getAccessToken(scope?.creds).catch((e: unknown) => {
+    // A refused token is a WCL failure like any other (502 + `wcl_error`), not an internal error;
+    // missing env credentials stay a plain error (a local setup problem, never a member's).
+    if (!(e instanceof WclOAuthError)) throw e;
+    const hint = scope ? " — check your client in Settings" : "";
+    return fail(new WclError("http", e.status, `OAuth failed: ${e.status} ${e.body}${hint}`));
+  });
   const res = await fetch(config.graphqlUrl, {
     method: "POST",
     headers: {

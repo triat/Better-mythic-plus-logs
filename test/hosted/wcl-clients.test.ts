@@ -1,9 +1,10 @@
 import { Database } from "bun:sqlite";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { openHosted } from "../../src/hosted/db.ts";
-import { UserWclClients } from "../../src/hosted/wcl-clients.ts";
+import { UserWclClients, verifyWithPing } from "../../src/hosted/wcl-clients.ts";
 import type { Verify } from "../../src/hosted/wcl-clients.ts";
 import { decrypt } from "../../src/hosted/crypto.ts";
+import { getAccessToken, resetAuthCache } from "../../src/wcl/auth.ts";
 import { TEST_ENCRYPTION_KEY } from "./helpers.ts";
 
 const RL = { limitPerHour: 3600, pointsSpentThisHour: 1412, pointsResetIn: 2280 };
@@ -39,14 +40,61 @@ describe("UserWclClients", () => {
   });
   test("verify: 404 without a client, 400 when the key changed, success re-stamps verifiedAt", async () => {
     const { db, u, svc } = setup(TEST_ENCRYPTION_KEY);
-    expect(await svc.verify(u.id)).toEqual({ ok: false, status: 404, error: "No WCL client saved" });
-    db.wclClients.put({ userId: u.id, clientId: "abc", secretEnc: "v1.AAAAAAAAAAAAAAAA.AAAA", verifiedAt: null, now: 1 });
-    expect(await svc.verify(u.id)).toEqual({ ok: false, status: 400, error: "Stored secret cannot be decrypted — save the client again" });
-    expect(await svc.credentials(u.id)).toBeNull();
+    const errSpy = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(await svc.verify(u.id)).toEqual({ ok: false, status: 404, error: "No WCL client saved" });
+      db.wclClients.put({ userId: u.id, clientId: "abc", secretEnc: "v1.AAAAAAAAAAAAAAAA.AAAA", verifiedAt: null, now: 1 });
+      expect(await svc.verify(u.id)).toEqual({ ok: false, status: 400, error: "Stored secret cannot be decrypted — save the client again" });
+      expect(await svc.credentials(u.id)).toBeNull();
+      // Once per process per user, even across the two undecryptable calls above.
+      expect(errSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      errSpy.mockRestore();
+    }
     await svc.save(u.id, { clientId: "abc", clientSecret: "s" });
     db.wclClients.setVerified(u.id, 1); // pretend it is old
     const r = await svc.verify(u.id);
     expect(r.ok && r.client.verifiedAt).toBe(5000);
+  });
+  test("save forgets the client's cached token before verifying: a rotated secret is checked against WCL, never replayed from a stale cache", async () => {
+    const realFetch = globalThis.fetch;
+    const savedEnv = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+    process.env.WCL_CLIENT_ID = "env-id";
+    process.env.WCL_CLIENT_SECRET = "env-secret";
+    resetAuthCache();
+    let status = 200;
+    const oauthAuths: string[] = [];
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const h = new Headers(init?.headers);
+      if (url.endsWith("/oauth/token")) {
+        oauthAuths.push(h.get("authorization")!);
+        if (status !== 200) return new Response("nope ".repeat(50), { status });
+        return Response.json({ access_token: `tok-${h.get("authorization")}`, expires_in: 3600, token_type: "bearer" });
+      }
+      return Response.json({ data: { rateLimitData: RL } });
+    }) as unknown as typeof fetch;
+    try {
+      const { db, u, svc } = setup(TEST_ENCRYPTION_KEY, verifyWithPing);
+      // Pre-seed a token cached under client id "abc", minted with the OLD secret.
+      await getAccessToken({ clientId: "abc", clientSecret: "old" });
+      // WCL now refuses "abc" (secret rotated on the WCL side, or simply wrong).
+      status = 401;
+      const r = await svc.save(u.id, { clientId: "abc", clientSecret: "new" });
+      expect(r.ok).toBe(false);
+      if (!r.ok) {
+        expect(r.status).toBe(400);
+        expect(r.error.startsWith("WCL refused these credentials: ")).toBe(true);
+      }
+      // The cached token must not have been replayed: a fresh OAuth call was made with the NEW secret.
+      expect(oauthAuths).toEqual([`Basic ${btoa("abc:old")}`, `Basic ${btoa("abc:new")}`]);
+      expect(db.wclClients.get(u.id)).toBeNull();
+    } finally {
+      globalThis.fetch = realFetch;
+      resetAuthCache();
+      if (savedEnv.id === undefined) delete process.env.WCL_CLIENT_ID; else process.env.WCL_CLIENT_ID = savedEnv.id;
+      if (savedEnv.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = savedEnv.secret;
+    }
   });
   test("observe/forget/remove", async () => {
     const { db, u, svc } = setup(TEST_ENCRYPTION_KEY);

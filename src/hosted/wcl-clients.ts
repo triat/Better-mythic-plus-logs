@@ -69,13 +69,18 @@ export class UserWclClients {
 
   async save(userId: number, creds: WclCredentials, now?: number): Promise<{ ok: true; client: OwnClientView } | { ok: false; status: 400 | 503; error: string }> {
     if (!this.enabled) return { ok: false, status: 503, error: "This instance does not store WCL clients (no BMPL_ENCRYPTION_KEY)" };
+    // A client id can be re-saved with a different (rotated) secret: a cached token minted under
+    // the old secret must not let a wrong/rotated secret verify without ever reaching WCL.
+    forgetToken(creds.clientId);
     const outcome = await this.deps.verify(creds);
     if (!outcome.ok) return { ok: false, status: 400, error: `WCL refused these credentials: ${outcome.error}` };
     const at = now ?? this.now();
     const secretEnc = await encrypt(this.deps.key!, creds.clientSecret);
     this.deps.repo.put({ userId, clientId: creds.clientId, secretEnc, verifiedAt: at, now: at });
-    // A re-saved secret must not reuse a token minted with the old one — harmless, but explicit.
+    // The PING itself may have minted a token for the new secret; forget it too, so the very next
+    // call (e.g. a lookup right after saving) still goes through a fresh token — harmless, but explicit.
     forgetToken(creds.clientId);
+    this.warned.delete(userId);
     this.observe(userId, outcome.rateLimit);
     return { ok: true, client: this.view(userId)! };
   }
@@ -89,6 +94,9 @@ export class UserWclClients {
       this.warnUndecryptable(userId);
       return { ok: false, status: 400, error: "Stored secret cannot be decrypted — save the client again" };
     }
+    // A cached token from an earlier verify/save must not let a secret revoked on the WCL side
+    // still "verify" locally — force a fresh OAuth round trip for this PING.
+    forgetToken(row.clientId);
     const outcome = await this.deps.verify({ clientId: row.clientId, clientSecret });
     if (!outcome.ok) return { ok: false, status: 400, error: `WCL refused these credentials: ${outcome.error}` };
     const at = now ?? this.now();
@@ -99,6 +107,7 @@ export class UserWclClients {
 
   remove(userId: number): boolean {
     this.snapshots.delete(userId);
+    this.warned.delete(userId);
     const row = this.deps.repo.get(userId);
     if (row) forgetToken(row.clientId);
     return this.deps.repo.remove(userId);

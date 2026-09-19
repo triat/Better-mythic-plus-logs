@@ -270,4 +270,29 @@ describe("phase 2 admission (open signup + guild gate)", () => {
     who = { id: "777777777777777778", username: "s2", global_name: null, avatar: null };
     expect((await login({}, u2)).cb.headers.get("location")).toBe("/"); // existing account: no limiter
   });
+  test("an invited brand-new account is admitted even when the signup limiter is exhausted", async () => {
+    guilds = ["987654321098765432"];
+    who = { id: "777777777777777779", username: "s3", global_name: null, avatar: null };
+    expect((await login({}, u2)).cb.headers.get("location")).toBe("/?denied=rate"); // still exhausted from the test above
+    db2.invites.add(who.id, "test", null, Date.now());
+    const { cb } = await login({}, u2);
+    expect(cb.headers.get("location")).toBe("/");
+    expect(cookieOf(cb, "bmpl_session")).not.toBeNull();
+    expect(db2.users.byDiscordId(who.id)!.role).toBe("member");
+  });
+  test("an invited account and a config admin outside the guild are still refused with ?denied=guild", async () => {
+    guilds = [];
+    who = { id: "777777777777777780", username: "invited-out", global_name: null, avatar: null };
+    db2.invites.add(who.id, "test", null, Date.now());
+    let { cb } = await login({}, u2);
+    expect(cb.headers.get("location")).toBe("/?denied=guild");
+    expect(cookieOf(cb, "bmpl_session")).toBeNull();
+    expect(db2.users.byDiscordId(who.id)).toBeNull();
+    who = { id: "111111111111111111", username: "boss", global_name: null, avatar: null }; // TEST_HOSTED_CONFIG.adminDiscordIds
+    ({ cb } = await login({}, u2));
+    expect(cb.headers.get("location")).toBe("/?denied=guild");
+    expect(cookieOf(cb, "bmpl_session")).toBeNull();
+    expect(db2.users.byDiscordId(who.id)).toBeNull();
+    expect(db2.audit.list({ actions: ["login_denied"], before: null, limit: 1 })[0]!.detail).toEqual({ reason: "guild" });
+  });
 });

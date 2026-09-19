@@ -443,7 +443,9 @@ WCL/server errors.
 **Login.** Hosted mode signs people in with Discord (scope `identify` only —
 no e-mail, no server list — unless `BMPL_DISCORD_GUILD_ID` is set, which adds
 `guilds` and reads the member's server list once at sign-in to check
-membership; nothing from that list is stored). Create an application at
+membership; nothing from that list is stored). The guild gate is checked at
+sign-in only: a member who leaves the server keeps their session until it
+expires or an admin revokes it. Create an application at
 https://discord.com/developers/applications → OAuth2: copy the *Client ID*
 and *Client Secret* into `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET`
 and add the redirect `https://<your host>/auth/discord/callback`. By default
@@ -453,8 +455,9 @@ and can always sign in; everyone else needs an invite — `bmpl invite
 `--remove <id>`), or the admin page (`/admin`, admins only): invites with a
 note, who signed in, remove. Setting `BMPL_OPEN_SIGNUP=true` lets any Discord
 account sign in without an invite (still subject to the guild gate and to
-bans); new accounts under open signup are limited to 5 per hour per source IP
-(`?denied=rate` when that limit is hit). A banned account (admin page → Users
+bans); new accounts that get in through open signup — not invited, not an
+admin — are limited to 5 per hour per source IP (`?denied=rate` when that
+limit is hit). A banned account (admin page → Users
 → Ban) is refused at sign-in regardless of invite or open signup. The sign-in
 page is a single **Sign in with Discord** button; a refused sign-in comes
 back to it with a notice: *Invitation required* shows the Discord id (with a

@@ -21,15 +21,19 @@ const redirect = (location: string, setCookies: string[] = []): Response => {
 export const meUser = (u: SessionUser) =>
   ({ id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName, avatarUrl: avatarUrl(u.discordId, u.avatarHash), role: u.role });
 
+/** How an admitted account got in; only `open` (a stranger under open signup) is subject to the signup limiter. */
+export type AdmissionVia = "admin" | "invite" | "open";
+
 /**
  * Whether a Discord account may sign in: banned first (regardless of everything else), then a
  * config admin, an invited account, or (open signup) anyone. The Discord guild gate is checked
  * separately by the callback — it needs the access token, which this function does not have.
  */
-export function admission(rt: { config: HostedConfig; db: HostedDb }, discordId: string): { admitted: true; role: Role | null } | { admitted: false; reason: "banned" | "not invited" } {
+export function admission(rt: { config: HostedConfig; db: HostedDb }, discordId: string): { admitted: true; role: Role | null; via: AdmissionVia } | { admitted: false; reason: "banned" | "not invited" } {
   if (rt.db.users.byDiscordId(discordId)?.bannedAt != null) return { admitted: false, reason: "banned" };
-  if (rt.config.adminDiscordIds.includes(discordId)) return { admitted: true, role: "admin" };
-  if (rt.db.invites.has(discordId) || rt.config.openSignup) return { admitted: true, role: null };
+  if (rt.config.adminDiscordIds.includes(discordId)) return { admitted: true, role: "admin", via: "admin" };
+  if (rt.db.invites.has(discordId)) return { admitted: true, role: null, via: "invite" };
+  if (rt.config.openSignup) return { admitted: true, role: null, via: "open" };
   return { admitted: false, reason: "not invited" };
 }
 
@@ -86,9 +90,10 @@ export function authRoutes(rt: HostedRuntime): Route[] {
         if (!g.guildIds.includes(rt.config.discordGuildId)) return deny("guild", "/?denied=guild");
       }
 
-      // A brand new account under open signup counts against the per-IP signup limit; an
-      // existing account (invited, admin, or already created earlier) never does.
-      if (!rt.db.users.byDiscordId(me.identity.discordId)) {
+      // Only a brand new account that got in through open signup (neither a config admin nor
+      // invited) counts against the per-IP signup limit: the limiter exists to slow down strangers,
+      // and an existing account never counts, however it was admitted.
+      if (verdict.via === "open" && !rt.db.users.byDiscordId(me.identity.discordId)) {
         const v = rt.limits.signup.hit(`ip:${ctx.ip}`, Date.now());
         if (!v.ok) {
           if (v.first) rt.audit.record("rate_limited", { userId: null, detail: { limit: rt.limits.signup.rule.limit, windowS: Math.round(rt.limits.signup.rule.windowMs / 1000), retryAfterS: v.retryAfterS, what: "signup" } });

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { AxisScore, Evaluation, LookupPayload } from "../types.ts";
-import { axisRows, heroStats, radarPoints } from "./axes.ts";
+import { axisInfo, axisRows, axisWeightLabel, heroStats, radarPoints } from "./axes.ts";
 
 const axis = (key: AxisScore["key"], score: number | null, evidence: AxisScore["evidence"] = [], confidence: AxisScore["confidence"] = "high"): AxisScore =>
   ({ key, score, confidence, evidence } as AxisScore);
@@ -69,5 +69,28 @@ describe("axes view model", () => {
     ]);
     const bare = { metric: "dps", character: { scoreTop: null }, summary: { ilvl: null, prevSeason: null } } as unknown as LookupPayload;
     expect(heroStats(bare)).toEqual([]);
+  });
+  test("axisWeightLabel reproduces the callout phrasing from the live axisWeights", () => {
+    const w = {
+      dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 },
+      healer: { survival: 3, utility: 2.5, throughput: 2, consistency: 0, preparation: 1, experience: 2 },
+      tank: { survival: 3, utility: 2, throughput: 2, consistency: 0, preparation: 1, experience: 2.5 },
+    };
+    expect(axisWeightLabel(w, "survival")).toBe("weight 3 for every role");
+    expect(axisWeightLabel(w, "utility")).toBe("weight 2 (healer 2.5)");
+    expect(axisWeightLabel(w, "throughput")).toBe("weight 3 for dps, 2 for healer and tank");
+    expect(axisWeightLabel(w, "consistency")).toBe("weight 0 · informational");
+    expect(axisWeightLabel(w, "experience")).toBe("weight 2 (tank 2.5)");
+    expect(axisWeightLabel({ ...w, healer: { ...w.healer, preparation: 2 }, tank: { ...w.tank, preparation: 3 } }, "preparation")).toBe("dps 1 · healer 2 · tank 3");
+  });
+  test("axisInfo pairs the registry summary with the weight label; rows fall back to placeholders without it", () => {
+    const docs = {
+      docs: { axes: { survival: { summary: "Deaths and damage taken." }, utility: { summary: "Kicks." }, throughput: { summary: "P." }, consistency: { summary: "C." }, preparation: { summary: "Pr." }, experience: { summary: "E." } } },
+      config: { axisWeights: { dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 }, healer: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 }, tank: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 } } },
+    } as never;
+    const info = axisInfo(docs);
+    expect(info.survival).toEqual({ description: "Deaths and damage taken.", weight: "weight 3 for every role" });
+    expect(axisRows(ev, info)[0]).toMatchObject({ description: "Deaths and damage taken.", weight: "weight 3 for every role" });
+    expect(axisRows(ev)[0]).toMatchObject({ description: "", weight: "…" });
   });
 });

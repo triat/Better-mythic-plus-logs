@@ -3,6 +3,7 @@ import type { LookupPayload } from "../types.ts";
 import { axisRows, heroStats, radarPoints } from "../lib/axes.ts";
 import { realmName } from "../lib/format.ts";
 import { verdictView } from "../lib/verdict.ts";
+import { useDocs } from "../docs.tsx";
 import type { ReevalHint } from "../lib/keyLevel.ts";
 import { AxisLegend } from "./AxisLegend.tsx";
 import { AxisRows } from "./AxisRows.tsx";
@@ -14,7 +15,7 @@ export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPa
   const v = verdictView(payload.evaluation, payload.targetAutoDetected);
   const color = classHex(c.classID);
   const other = payload.metric === "hps" ? "dps" : "hps";
-  const rows = axisRows(payload.evaluation);
+  const rows = axisRows(payload.evaluation, useDocs().axes);
   return (
     <section className="card hero">
       <div className="hero-left">

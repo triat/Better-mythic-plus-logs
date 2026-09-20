@@ -1,6 +1,7 @@
 import type { AxisKey } from "../types.ts";
 import { ANGLES_DEG, RADAR_VIEWBOX, axisLabelPos, axisPoint, polygonPoints, ringPoints } from "../lib/radar.ts";
-import { AXIS_DESCRIPTIONS, AXIS_LABELS, AXIS_ORDER } from "../lib/verdict.ts";
+import { AXIS_LABELS, AXIS_ORDER } from "../lib/verdict.ts";
+import { useDocs } from "../docs.tsx";
 
 export interface RadarSeries {
   /** Six scores in AXIS_ORDER; null = not applicable. */
@@ -21,6 +22,7 @@ interface Props {
 export function Radar({ series, size = 420, showScores = false }: Props) {
   const height = Math.round((size * 310) / 440);
   const first = series[0];
+  const { axes } = useDocs();
   return (
     <svg width={size} height={height} viewBox={RADAR_VIEWBOX} role="img" aria-label="Six-axis radar">
       {[100, 75, 50, 25].map((ring) => (
@@ -51,7 +53,7 @@ export function Radar({ series, size = 420, showScores = false }: Props) {
         const text = AXIS_LABELS[key].toUpperCase() + (score === undefined ? "" : na ? " n/a" : ` ${Math.round(score)}`);
         return (
           <text key={key} className="radar-label" x={x} y={y} textAnchor={anchor} fontSize="10" fontWeight="600" letterSpacing="0.6" fill={na ? "#6e7681" : "#8b949e"}>
-            <title>{AXIS_DESCRIPTIONS[key]}</title>
+            {axes && <title>{axes[key].description}</title>}
             {text}
           </text>
         );

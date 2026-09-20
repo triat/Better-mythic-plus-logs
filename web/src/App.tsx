@@ -11,6 +11,7 @@ import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, log
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import { parseServerSettings } from "./lib/settings.ts";
 import type { Settings } from "./lib/settings.ts";
+import { DocsProvider } from "./docs.tsx";
 import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
@@ -70,7 +71,9 @@ export function App() {
   }
   return (
     <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
-      <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+      <DocsProvider>
+        <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+      </DocsProvider>
     </SettingsProvider>
   );
 }

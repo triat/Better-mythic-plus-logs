@@ -14,7 +14,7 @@ export const slug = (heading: string): string =>
 const headings = (md: string): Set<string> => new Set([...md.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)].map((m) => slug(m[1]!)));
 /** Relative links only: skips http(s), mailto, and pure in-page anchors are checked against the same file. */
 const links = (md: string): Array<{ path: string; anchor: string | null }> =>
-  [...md.replace(/```[\s\S]*?```/g, "").matchAll(/\]\(([^)\s]+)\)/g)]
+  [...md.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "").matchAll(/\]\(([^)\s]+)\)/g)]
     .map((m) => m[1]!)
     .filter((t) => !/^[a-z]+:/.test(t))
     .map((t) => { const [p, a] = t.split("#"); return { path: p ?? "", anchor: a ?? null }; });
@@ -40,5 +40,8 @@ describe("docs links", () => {
     expect(slug("Deep-dive: defensive cooldowns")).toBe("deep-dive-defensive-cooldowns");
     expect(slug("Getting Warcraft Logs API credentials")).toBe("getting-warcraft-logs-api-credentials");
     expect(slug("Flags (shared across `lookup`, `mplus`, `watch`)")).toBe("flags-shared-across-lookup-mplus-watch");
+  });
+  test("ignores links inside inline code", () => {
+    expect(links("see `[x](nope.md)` and [y](README.md)")).toEqual([{ path: "README.md", anchor: null }]);
   });
 });

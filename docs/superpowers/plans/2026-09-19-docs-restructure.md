@@ -24,7 +24,7 @@
 
 | File | Responsibility |
 |---|---|
-| `test/docs-links.test.ts` (new) | scans `README.md`, `AGENTS.md`, `docs/**/*.md`, `deploy/README.md`, `.env.hosted.example` is skipped; every `[text] (relative/path#anchor)` must point at an existing file and, when an anchor is given, at a heading of that file |
+| `test/docs-links.test.ts` (new) | scans `README.md`, `AGENTS.md`, `docs/**/*.md`, `deploy/README.md`, `.env.hosted.example` is skipped; every `[text](relative/path#anchor)` must point at an existing file and, when an anchor is given, at a heading of that file |
 | `docs/cli.md` (new) | README §Usage (l.226–357), §Windows (358–401), §Troubleshooting (853–864) |
 | `docs/scoring.md` (new) | README §Verdict and axes (36–106) + §API cost (772–787) |
 | `docs/deep-dive.md` (new) | README §Deep-dive: defensive cooldowns (107–171) |
@@ -98,7 +98,7 @@ describe("docs links", () => {
 
 - [ ] **Step 3: Move the three sections**
 
-For each new file: a one-line title (`# bmpl — command line reference` / `# bmpl — scoring model` / `# bmpl — deep-dive: defensive cooldowns`), a one-sentence lead ("Detailed reference; the README has the short version."), then the README lines **verbatim** (headings kept at their level, `##`/`###`), then delete them from the README. Cross-references inside the moved text: "see *Login* above" → `see [Login] (hosted.md#login)` etc. (resolve each against where the target now lives; leave a TODO nowhere — every reference is resolved in this task, targets that move in Task 2 are linked by their future path `hosted.md#…` and the test goes green in Task 2). `docs/scoring.md` ends with the moved §API cost under its own `## API cost` heading.
+For each new file: a one-line title (`# bmpl — command line reference` / `# bmpl — scoring model` / `# bmpl — deep-dive: defensive cooldowns`), a one-sentence lead ("Detailed reference; the README has the short version."), then the README lines **verbatim** (headings kept at their level, `##`/`###`), then delete them from the README. Cross-references inside the moved text: "see *Login* above" → `see [Login](hosted.md#login)` etc. (resolve each against where the target now lives; leave a TODO nowhere — every reference is resolved in this task, targets that move in Task 2 are linked by their future path `hosted.md#…` and the test goes green in Task 2). `docs/scoring.md` ends with the moved §API cost under its own `## API cost` heading.
 
 - [ ] **Step 4: `just check && bun test`** — the link test may be red until Task 2 creates `docs/hosted.md`; if so, point the forward links at `../README.md#hosted-mode-multi-user` for now and re-point them in Task 2 (the test must be green at each commit).
 
@@ -117,7 +117,7 @@ For each new file: a one-line title (`# bmpl — command line reference` / `# bm
 
 - [ ] **Step 1: `docs/hosted.md`** — title `# bmpl — hosted mode (multi-user)`, lead sentence, then README §Hosted mode verbatim, with these edits only: the bold-lead paragraphs become `##` headings so they can be linked (`## Login`, `## Per-account state`, `## WCL budget`, `## Your own Warcraft Logs client`, `## Shared defensives table`, `## Privacy and account deletion`, `## Instance info`, `## Health`, `## Environment` for the env table + optional line); the *Hardening* paragraph → `## Hardening`. Append `## Routes`: one table `| Method | Path | Auth | What |`, built by reading `src/server/routes-shared.ts`, `routes-local.ts`, `routes-auth.ts`, `routes-user.ts`, `routes-admin.ts` (every `route(`/`prefixRoute(` call; auth = `public` / `user` / `admin`; local-only routes marked "local mode only"). The table is checked against the code by the reviewer.
 
-- [ ] **Step 2: `deploy/README.md`** — keep its file table and order of operations; replace both "See `README.md` § Deploying on a VPS" sentences with the moved section itself under `## Deploying on a VPS` (README 609–771 verbatim; its "see *Login* above" → `[Login] (../docs/hosted.md#login)`, "*Getting Warcraft Logs API credentials*" → `[the README] (../README.md#getting-warcraft-logs-api-credentials)`).
+- [ ] **Step 2: `deploy/README.md`** — keep its file table and order of operations; replace both "See `README.md` § Deploying on a VPS" sentences with the moved section itself under `## Deploying on a VPS` (README 609–771 verbatim; its "see *Login* above" → `[Login](../docs/hosted.md#login)`, "*Getting Warcraft Logs API credentials*" → `[the README](../README.md#getting-warcraft-logs-api-credentials)`).
 
 - [ ] **Step 3: README** — cut 417–771, leave a two-line stub under `## Hosted mode (multi-user)` ("One instance for several people behind a reverse proxy: Discord login, per-member quotas, shared corrections, admin page. → `docs/hosted.md`; deploying → `deploy/README.md`.") — Task 3 rewrites around it.
 

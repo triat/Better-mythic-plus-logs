@@ -15,7 +15,7 @@ check and an uptime monitor.
 
 ## Hardening
 
-(Issue #9.) State-changing requests must come from `BMPL_BASE_URL`
+State-changing requests must come from `BMPL_BASE_URL`
 (Origin / Sec-Fetch-Site), `/auth/*` is limited to 10 requests per minute per IP,
 lookups to 30 and analyses to 60 per minute per member (429 with `Retry-After`) —
 the app reads the client IP from the last `X-Forwarded-For` entry, so the reverse

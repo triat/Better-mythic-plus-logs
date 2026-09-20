@@ -10,7 +10,7 @@ The user writes French in chat and expects French replies; the product — code,
 2. **Plan.** `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`: header with Goal/Architecture/Spec, a **Global Constraints** block copied verbatim from the spec (numbers, names, rules), a file-responsibility table, then bite-sized TDD tasks with exact code and commands. No placeholders.
 3. **Execute with subagents** (superpowers `subagent-driven-development`): work on `main` in place (the user's explicit preference — no worktree), fresh implementer per task, spec + quality review after each task, one whole-branch review at the end; findings fixed in loops, deferred minors listed in the final report. Keep the ledger in the plan's workspace; after context compaction trust the ledger and `git log`.
 4. **Verify live.** Build, run, and check the actual UI/CLI (screenshots via the browser tools when it's visual). Report outcomes plainly — failing tests are reported with their output.
-5. **Docs.** README stays the user manual (commands, costs, troubleshooting, repo layout); `docs/agents/*` stays the developer/agent manual. Update both in the same change as the behaviour.
+5. **Docs.** README is the public entry point; the reference lives in `docs/*.md`; update the doc that owns the fact. `docs/operator.md` is the operator manual; `docs/agents/*` stays the developer/agent manual. Update both in the same change as the behaviour.
 
 Small, bounded changes skip the spec/plan but not the tests, the design canvas (if visual), or the review.
 

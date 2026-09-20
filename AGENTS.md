@@ -11,7 +11,7 @@ This file is the entry point. Detail lives in `docs/agents/`:
 | writing or running tests, capturing fixtures | `docs/agents/testing.md` |
 | planning a feature, committing, using subagents, asking the user | `docs/agents/workflow.md` |
 
-Design specs and plans: `docs/superpowers/specs/*.md` (what and why) and `docs/superpowers/plans/*.md` (how, task by task). Read the spec of the area you touch before changing behaviour. The README is the user manual — keep it true when behaviour changes.
+Design specs and plans: `docs/superpowers/specs/*.md` (what and why) and `docs/superpowers/plans/*.md` (how, task by task). Read the spec of the area you touch before changing behaviour. User docs: `README.md` (entry), `docs/{cli,scoring,deep-dive,hosted,operator}.md`, `deploy/README.md` — keep them true when behaviour changes.
 
 ## Commands
 
@@ -60,7 +60,7 @@ src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
 src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, cookie/state/Discord helpers, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
-deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the README runbook
+deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
 web/src/lib/          pure tested view models      web/src/components/   thin React components
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```

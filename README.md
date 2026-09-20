@@ -19,7 +19,9 @@ For a given character and target key level, `bmpl lookup` shows:
   older than 14 days
 - **Gameplay quality per run**, cached forever in a local `bmpl.db`: timed /
   depleted, deaths (what killed them, group wipe or not), DTPS vs. peers,
-  avoidable damage, interrupts normalized by kick cooldown, and dispels
+  avoidable damage (Blizzard's in-game classification, list courtesy of
+  [postmortem](https://github.com/Sharpened-Banana/postmortem)), interrupts
+  normalized by kick cooldown, and dispels
 - **Raider.IO profile** (free, no key): item level, last 10 runs, current +
   previous season score per role
 
@@ -144,7 +146,7 @@ Details: [docs/scoring.md#api-cost](docs/scoring.md#api-cost).
 
 ```
 src/
-  cli.ts, config.ts, mplus.ts, lookup.ts, watch.ts   command dispatch, env → config, fetch+analyze, shared flow, clipboard
+  cli.ts, server.ts, lookup.ts, mplus.ts, watch.ts, config.ts, setup.ts, …
   wcl/            OAuth2 + GraphQL client + queries + types
   signals/        gameplay-quality signals (timed/deaths/DTPS/avoidable/kicks/dispels), peers, RIO, SQLite store
   deepdive/       defensive-cooldown deep-dive: table, WCL fetch, analyze, aggregate, attach

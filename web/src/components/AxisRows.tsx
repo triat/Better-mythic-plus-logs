@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { AxisRowModel } from "../lib/axes.ts";
+import { anchorOf } from "../lib/help.ts";
 import { confidenceColor } from "../lib/verdict.ts";
+import { HelpLink } from "./HelpLink.tsx";
 
 export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
               <span className="conf" style={{ background: confidenceColor(r.confidence) }} />
               <span className="label-caps">{r.label}</span>
               {r.badge && <span className="chip" title="Deep-dive analyses feed this axis">{r.badge}</span>}
+              <HelpLink anchor={anchorOf(r.key)} />
             </div>
             <div className="axis-score mono">{na ? "n/a" : Math.round(r.score!)}</div>
             <div className="axis-evidence">
@@ -34,6 +37,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
                     <span key={i}>
                       {i > 0 && <span className="faint"> · </span>}
                       <span className={e.tone === "good" ? "tone-good" : "tone-bad"}>{e.delta}</span> {e.label}
+                      <HelpLink anchor={anchorOf(e.source)} />
                     </span>
                   ))}
                   {r.top.length === 0 && <span className="faint">{r.note}</span>}
@@ -52,7 +56,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
                     {r.all.map((e, i) => (
                       <span key={i} className="contents">
                         <span className={"mono " + (e.tone === "good" ? "tone-good" : "tone-bad")}>{e.delta}</span>
-                        <span>{e.label}</span>
+                        <span>{e.label}<HelpLink anchor={anchorOf(e.source)} /></span>
                       </span>
                     ))}
                   </div>

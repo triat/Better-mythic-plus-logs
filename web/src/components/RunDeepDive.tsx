@@ -3,6 +3,7 @@ import type { DefensiveKind, EntryOrigin, OverrideEntry, ProposalSummary, RunDef
 import type { ProposalMode } from "../lib/hostedMode.ts";
 import { api } from "../api.ts";
 import { actionLabels, costText, originDot, originLabel, originSuffix, panelModel, proposalLines } from "../lib/deepdive.ts";
+import { HelpLink } from "./HelpLink.tsx";
 import { SpellLink, useWowheadRefresh } from "./SpellLink.tsx";
 
 interface Props {
@@ -73,6 +74,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mo
     <div className="dd inset">
       <div className="dd-head">
         <span className="dd-title">{m.title}</span>
+        <HelpLink anchor="deep-dive" />
         <span className="muted">{m.meta}</span>
         <div className="grow" />
         <button

@@ -91,6 +91,7 @@ export function Header(p: Props) {
           </label>
         )}
         {!p.sseConnected && <span className="muted" title="Reconnecting…">live updates disconnected</span>}
+        <a className="muted" style={{ fontSize: 13 }} href="/help">Help</a>
         {p.controls.setup && <button className="btn" onClick={p.onSetup}>Re-configure</button>}
         {p.controls.quit && <button className="btn" onClick={p.onQuit}>Quit</button>}
         {p.controls.signOut && p.menu && (

@@ -27,11 +27,12 @@ describe("axes view model", () => {
     const rows = axisRows(ev);
     expect(rows.map((r) => r.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
     expect(rows[0]!.top).toEqual([
-      { label: "0.2 individual deaths/run", delta: "+18", tone: "good" },
-      { label: "avoidable +12% vs peers", delta: "−6", tone: "bad" },
+      { label: "0.2 individual deaths/run", delta: "+18", tone: "good", source: "survival.deaths" },
+      { label: "avoidable +12% vs peers", delta: "−6", tone: "bad", source: "survival.avoidable" },
     ]);
     expect(rows[0]!.all).toHaveLength(3);
-    expect(rows[2]!.top[0]).toEqual({ label: "median parse 86%", delta: "+27", tone: "good" });
+    expect(rows[0]!.all[0]!.source).toBe("survival.deaths");
+    expect(rows[2]!.top[0]).toEqual({ label: "median parse 86%", delta: "+27", tone: "good", source: "throughput.medianParse" });
   });
   test("null axis: no confidence, hollow note", () => {
     const c = axisRows(ev)[3]!;

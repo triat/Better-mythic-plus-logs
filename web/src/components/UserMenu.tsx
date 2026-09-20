@@ -39,6 +39,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
             {m.quota.pct !== null && <span className="dd-bar" aria-hidden="true"><span style={{ width: `${m.quota.pct}%` }} /></span>}
           </div>
           <div className="menu-sep" />
+          <a className="menu-item" href="/help" role="menuitem">Help</a>
           <a className="menu-item" href="/settings" role="menuitem">Settings</a>
           {m.isAdmin && <a className="menu-item" href="/admin" role="menuitem">Admin{pending && <span className="faint">· {pending}</span>}</a>}
           <button type="button" className="menu-item" role="menuitem" onClick={onSignOut}>Sign out</button>

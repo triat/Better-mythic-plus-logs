@@ -151,6 +151,10 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .axis-na .axis-score { font-size: 13px; font-weight: 600; }
 .axis-evidence { font-size: 12px; color: var(--text-soft); }
 
+/* contextual "?" links to /help (HelpLink.tsx, canvas HelpDetails variant a) */
+.help-link { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); color: var(--faint); font-size: 10px; line-height: 1; margin-left: 6px; vertical-align: 1px; text-decoration: none; }
+.help-link:hover { color: var(--text); border-color: var(--muted); }
+
 /* tiles */
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
 .tile { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; min-width: 120px; }

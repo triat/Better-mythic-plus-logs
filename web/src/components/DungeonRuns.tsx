@@ -5,6 +5,7 @@ import { analysisFor, costText, tableWarningText, unanalyzedRuns } from "../lib/
 import { missingDungeons, runRows, runsHeadline } from "../lib/runs.ts";
 import type { RunRowModel } from "../lib/runs.ts";
 import type { DeepdiveActions } from "./Detail.tsx";
+import { HelpLink } from "./HelpLink.tsx";
 import { RunDeepDive } from "./RunDeepDive.tsx";
 
 export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; deepdive: DeepdiveActions }) {
@@ -21,6 +22,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
         <button type="button" className="section-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           <span className={"chev" + (open ? " open" : "")}>›</span>
           <span className="section-title">Best run per dungeon</span>
+          <HelpLink anchor="runs" />
           <span className="muted">{runsHeadline(payload)}</span>
         </button>
         <div className="grow" />

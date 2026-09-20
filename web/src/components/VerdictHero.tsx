@@ -6,6 +6,7 @@ import { verdictView } from "../lib/verdict.ts";
 import type { ReevalHint } from "../lib/keyLevel.ts";
 import { AxisLegend } from "./AxisLegend.tsx";
 import { AxisRows } from "./AxisRows.tsx";
+import { HelpLink } from "./HelpLink.tsx";
 import { Radar } from "./Radar.tsx";
 
 export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void }) {
@@ -27,6 +28,7 @@ export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPa
             <span className="badge-label">{v.label}</span>
             {v.score !== null && <span className="badge-score mono">{v.score}</span>}
             <span className="badge-sub">{v.sub}</span>
+            <HelpLink anchor="verdict" />
           </div>
           {hint && (
             <div className="reeval">

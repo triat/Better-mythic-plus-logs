@@ -2,7 +2,7 @@ import type { AxisKey, AxisScore, Confidence, Evaluation, LookupPayload } from "
 import { signed } from "./format.ts";
 import { AXIS_DESCRIPTIONS, AXIS_LABELS, AXIS_ORDER, AXIS_WEIGHTS } from "./verdict.ts";
 
-export interface EvidenceView { label: string; delta: string; tone: "good" | "bad" }
+export interface EvidenceView { label: string; delta: string; tone: "good" | "bad"; source: string }
 
 export interface AxisRowModel {
   key: AxisKey;
@@ -23,6 +23,7 @@ const view = (e: AxisScore["evidence"][number]): EvidenceView => ({
   label: e.label,
   delta: signed(e.delta),
   tone: e.delta >= 0 ? "good" : "bad",
+  source: e.source,
 });
 
 export function axisRows(ev: Evaluation): AxisRowModel[] {

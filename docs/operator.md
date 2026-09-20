@@ -45,7 +45,7 @@ binary is already overwritten by the time `deploy` reports success or
 failure. To roll back, deploy the last good commit instead:
 
 ```bash
-git checkout <previous-sha>            # or: git revert <bad-sha> && git checkout main
+git checkout <previous-sha>            # or: git revert <bad-sha>
 BMPL_DEPLOY_HOST=<vps> just deploy
 git checkout main                      # once you checked out a sha directly
 ```
@@ -64,7 +64,7 @@ curl -s https://<host>/api/health | jq
 ```
 
 **Check** — `ok` reflects only the database (`false`/HTTP 503 means the
-database is unreachable); it never flips for the two conditions below, so
+database is unreachable); it never flips for the three conditions below, so
 read `.warnings` separately:
 
 | Warning | Means | Action |
@@ -89,9 +89,9 @@ litestream` for the reverse proxy and replication themselves.
 `/opt/bmpl/bmpl.db`):
 
 ```bash
-ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl invite <discord-id> --note 'guild mate'"
-ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl invite --list"
-ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl invite --remove <discord-id>"
+ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl invite <discord-id> --note 'guild mate'"
+ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl invite --list"
+ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl invite --remove <discord-id>"
 ```
 
 or the admin page (`/admin` → Invites), which does the same without SSH
@@ -110,7 +110,7 @@ change on the Discord application side, the OAuth scope becomes `identify
 guilds` automatically):
 
 ```bash
-ssh <vps> "echo 'BMPL_DISCORD_GUILD_ID=<guild-id>' >> /opt/bmpl/.env"
+ssh <vps> "sed -i 's/^BMPL_DISCORD_GUILD_ID=.*/BMPL_DISCORD_GUILD_ID=<guild-id>/' /opt/bmpl/.env"
 ssh <vps> systemctl restart bmpl
 ```
 
@@ -156,8 +156,24 @@ To see the shared table as it stands, or spend a small WCL budget to check
 one spec empirically before deciding:
 
 ```bash
-ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl defensives <Class> <Spec> --shared"
-BMPL_DEPLOY_HOST=<vps> just audit-defensives --shared --only <Class>:<Spec>   # ~9 pts for that spec
+ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl defensives <Class> <Spec> --shared"
+just audit-defensives --shared --only <Class>:<Spec>   # ~9 pts for that spec
+```
+
+`just audit-defensives` always runs `bun scripts/audit-defensives.ts` on
+**your own machine** (`justfile:149-150`) and ignores `BMPL_DEPLOY_HOST`
+entirely. With `--shared`, it reads the hosted layer of *your local*
+`bmpl.db` (`openHosted((await getStore())._db)`,
+`scripts/audit-defensives.ts:66`) — on a fresh local database that layer is
+empty, since it isn't the VPS's database. It always spends your local
+`.env`'s WCL client, not any client on the VPS. To audit the live shared
+layer instead, bring a copy of the VPS database local first — from a
+`litestream restore` output, or `scp` it after stopping the service — and
+point `BMPL_DB_PATH` (see `src/setup.ts`) at that copy:
+
+```bash
+scp <vps>:/opt/bmpl/bmpl.db ./bmpl-vps.db   # take it from a litestream restore, or stop bmpl first
+BMPL_DB_PATH=./bmpl-vps.db just audit-defensives --shared --only <Class>:<Spec>   # ~9 pts for that spec, from your machine
 ```
 
 For a broad or seasonal correction (many specs at once, or a mapping error
@@ -248,7 +264,7 @@ recent `last-backup`.
 | `BMPL_SESSION_SECRET` | new value in `/opt/bmpl/.env`, `systemctl restart bmpl` | every session cookie stops verifying — everyone is signed out |
 | `BMPL_DISCORD_CLIENT_SECRET` | regenerate in the Discord application, edit `.env`, restart `bmpl` | new sign-ins fail until updated; existing sessions are unaffected |
 | `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` (shared) | new client at https://www.warcraftlogs.com/api/clients, edit `.env`, restart `bmpl` | shared-client lookups and analyses fail (401) until updated; members with their own WCL client are unaffected |
-| `BMPL_ENCRYPTION_KEY` | `openssl rand -base64 32`, edit `.env`, restart `bmpl` | every previously stored member WCL client becomes undecryptable — the member sees "Stored secret cannot be decrypted — save the client again" on Verify, and re-saves it; nothing else breaks |
+| `BMPL_ENCRYPTION_KEY` | `openssl rand -base64 32`, edit `.env`, restart `bmpl` | every previously stored member WCL client becomes undecryptable, but silently: `credentials()` returns `null` for the row and logs `wcl client of user N cannot be decrypted (key changed?)` (`src/hosted/wcl-clients.ts:117-126`), so the shared-vs-own scope check falls back to the shared client (`src/server/deepdive.ts:25-26`) — the member sees no error, and until they re-save their client, their lookups spend the shared budget and their own quota instead of their client. The only visible sign is Settings → **Verify again**, which shows "Stored secret cannot be decrypted — save the client again" (`wcl-clients.ts:95`); saving it there fixes that one member |
 | litestream bucket key | new key in `/etc/litestream.yml`, `systemctl restart litestream` | nothing live; only replication/restore until rotated — confirm with `just deploy-restore-test` |
 | `BMPL_DEPLOY_HOST` | update it in your own shell/`.envrc` | never stored on the VPS; only your local `just deploy*` recipes are affected |
 
@@ -348,7 +364,8 @@ old — expected in the gap, not a bug.
 | "web UI not built" (503 on `/`) | binary was compiled without `web/dist` | `just build-linux` (runs `web-build` first), then [§1](#1-ship-a-change) |
 | WCL `401` on shared-client lookups | shared `WCL_CLIENT_SECRET` rotated or revoked without updating `.env` | see [§7](#7-rotate-a-secret) |
 | WCL `429` / "shared WCL budget under 100 pts" | shared client near or at its hourly limit | see [§5](#5-wcl-budget); wait for the hourly reset |
-| A member's own WCL client fails with `OAuth failed: <status> <body> — check your client in Settings` | their stored client id/secret is wrong, revoked, or (after an encryption-key rotation) undecryptable | ask them to re-verify or re-save it in Settings |
+| A member's own WCL client fails with `OAuth failed: <status> <body> — check your client in Settings` | their stored client id/secret is wrong or revoked on the WCL side | ask them to re-verify or re-save it in Settings |
+| A member's own WCL client saved fine, but their lookups silently count against the shared budget and their per-member quota, and the user menu shows the shared-quota line instead of their client — no error anywhere except Settings | `BMPL_ENCRYPTION_KEY` was rotated since they saved it: their row is now undecryptable, `credentials()` returns `null` and logs `wcl client of user N cannot be decrypted (key changed?)` (`src/hosted/wcl-clients.ts:117-126`), and `wclScopeFor` falls back to the shared client (`src/server/deepdive.ts:25-26`) | have them open Settings → **Verify again** — it shows `Stored secret cannot be decrypted — save the client again` (`wcl-clients.ts:95`) — then re-save the client |
 | `database is locked` | a manual `sqlite3` session (e.g. [§3](#3-people)'s last-resort delete) left open against `bmpl.db` while `bmpl` or `litestream` is running | close the `sqlite3` session, or stop `bmpl` first next time |
 | Disk filling up on the VPS | `bmpl.db` and its WAL grow with usage; litestream keeps the 30-day (`retention: 720h`) snapshot history in the *bucket*, not locally | `ssh <vps> df -h /opt/bmpl`; litestream itself uses little local disk beyond the live database |
 

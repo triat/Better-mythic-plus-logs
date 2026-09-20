@@ -37,8 +37,8 @@ On top of the raw stats, `bmpl` computes a rule-based verdict — `INVITE` /
 (Survival, Utility, Throughput, Consistency, Preparation, Experience), each
 with plain-language evidence lines. Timed vs. depleted is deliberately not
 scored, and fewer than 3 enriched runs always reads `INSUFFICIENT DATA`. The
-rules are yours to tune via `evaluation.json`; the web UI's Help page
-explains every number. Details: [docs/scoring.md](docs/scoring.md#verdict-and-axes).
+rules are yours to tune via `evaluation.json`. Details:
+[docs/scoring.md](docs/scoring.md#verdict-and-axes).
 
 ## Quick start
 
@@ -65,7 +65,7 @@ explains every number. Details: [docs/scoring.md](docs/scoring.md#verdict-and-ax
 
 Keep the secret private; if it leaks, delete the client on the same page and
 create a new one. Rate limit is **3600 points per hour** per client, roughly
-700 `bmpl lookup` calls.
+360 cached lookups.
 
 ### Setup
 
@@ -79,7 +79,7 @@ cp .env.example .env
 
 just ping
 # ✓ auth ok
-#   budget: 3600 / 3600 pts remaining (resets in 60m)
+#   budget: 3600.00 / 3600 pts remaining (resets in 60m)
 ```
 
 Only EU is wired up (region is hardcoded in `src/config.ts`). Then

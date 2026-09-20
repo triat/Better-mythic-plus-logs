@@ -11,10 +11,13 @@ function walk(dir: string): string[] {
 /** GitHub's heading → anchor rule (the subset the docs use). */
 export const slug = (heading: string): string =>
   heading.trim().toLowerCase().replace(/`/g, "").replace(/[^\p{L}\p{N}\s-]/gu, "").replace(/\s+/g, "-");
-const headings = (md: string): Set<string> => new Set([...md.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)].map((m) => slug(m[1]!)));
+/** Drops fenced code blocks so `#` comment lines inside them aren't mistaken for headings or links. */
+const stripCode = (md: string): string => md.replace(/```[\s\S]*?```/g, "");
+export const headings = (md: string): Set<string> =>
+  new Set([...stripCode(md).matchAll(/^#{1,6}\s+(.+?)\s*$/gm)].map((m) => slug(m[1]!)));
 /** Relative links only: skips http(s), mailto, and pure in-page anchors are checked against the same file. */
 const links = (md: string): Array<{ path: string; anchor: string | null }> =>
-  [...md.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "").matchAll(/\]\(([^)\s]+)\)/g)]
+  [...stripCode(md).replace(/`[^`\n]*`/g, "").matchAll(/\]\(([^)\s]+)\)/g)]
     .map((m) => m[1]!)
     .filter((t) => !/^[a-z]+:/.test(t))
     .map((t) => { const [p, a] = t.split("#"); return { path: p ?? "", anchor: a ?? null }; });
@@ -43,5 +46,9 @@ describe("docs links", () => {
   });
   test("ignores links inside inline code", () => {
     expect(links("see `[x](nope.md)` and [y](README.md)")).toEqual([{ path: "README.md", anchor: null }]);
+  });
+  test("ignores headings inside fenced code blocks", () => {
+    const md = "# Real heading\n\n```bash\n# comment, not a heading\necho hi\n```\n";
+    expect(headings(md)).toEqual(new Set([slug("Real heading")]));
   });
 });

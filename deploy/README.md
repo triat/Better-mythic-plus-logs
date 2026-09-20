@@ -33,8 +33,8 @@ Copy both this `deploy/` directory and `.env.hosted.example` to the VPS before r
 One Linux VPS runs one instance: `bmpl serve --hosted` binds `127.0.0.1:3000`
 (`--host` / `BMPL_HOST` override it; local mode keeps Bun's default), Caddy
 owns 80/443 and proxies to it with automatic HTTPS, litestream replicates
-`bmpl.db` to a bucket. The server-side files live in `deploy/` (`deploy/README.md`
-maps each one to its path on the VPS); the client side is the `justfile`
+`bmpl.db` to a bucket. The server-side files live in `deploy/` (the table
+above maps each one to its path on the VPS); the client side is the `justfile`
 (`build-linux`, `deploy`, `deploy-status`, `deploy-logs`, `deploy-restore-test`).
 Every `deploy-*` recipe is run from your machine, by you, never by an automated
 agent.

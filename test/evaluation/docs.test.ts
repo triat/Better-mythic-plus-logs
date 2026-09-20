@@ -27,6 +27,7 @@ describe("EVALUATION_DOCS", () => {
   test("prose never hard-codes config numbers", () => {
     const text = JSON.stringify(EVALUATION_DOCS);
     for (const n of [String(DEFAULT_CONFIG.verdict.invite), String(DEFAULT_CONFIG.verdict.maybe), "300 pts", "3600"]) expect(text).not.toContain(n);
+    expect(text).not.toMatch(/weights? (of )?\d/i);
   });
   test("hostedOnly FAQ entries exist and are flagged", () => {
     expect(EVALUATION_DOCS.faq.some((f) => f.hostedOnly)).toBe(true);

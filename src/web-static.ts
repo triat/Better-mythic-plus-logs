@@ -24,6 +24,7 @@ const ROUTES: Record<string, { pick: (a: WebAssets) => string; type: string }> =
   "/admin": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/settings": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/privacy": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
+  "/help": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/assets/app.js": { pick: (a) => a.appJs, type: "text/javascript; charset=utf-8" },
   "/assets/app.css": { pick: (a) => a.appCss, type: "text/css; charset=utf-8" },
   "/wh-config.js": { pick: (a) => a.whConfigJs, type: "text/javascript; charset=utf-8" },

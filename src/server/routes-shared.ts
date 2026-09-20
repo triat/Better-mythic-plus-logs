@@ -3,6 +3,11 @@
 import { dirname } from "node:path";
 import pkg from "../../package.json";
 import { hasCredentials } from "../config.ts";
+import { SHIPPED } from "../deepdive/table.ts";
+import { configVersion, getEvalConfig } from "../evaluation/config.ts";
+import type { EvaluationDocs } from "../evaluation/docs.ts";
+import { EVALUATION_DOCS } from "../evaluation/docs.ts";
+import type { CurvePoints, EvaluationConfig } from "../evaluation/types.ts";
 import { lastBackupAt } from "../hosted/instance.ts";
 import { POINTS_FLOOR } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
@@ -17,6 +22,43 @@ import { getStore } from "../signals/store.ts";
 import { watcherStatus } from "./watcher.ts";
 
 export interface SharedContext { hosted: boolean; envPath: string; runtime: HostedRuntime | null }
+
+export interface DocsResponse {
+  ok: true;
+  docs: EvaluationDocs;
+  config: {
+    version: string;
+    levelScale: CurvePoints;
+    expectedIlvl: Record<string, CurvePoints>;
+    axes: EvaluationConfig["axes"];
+    axisWeights: EvaluationConfig["axisWeights"];
+    verdict: EvaluationConfig["verdict"];
+    confidence: EvaluationConfig["confidence"];
+  };
+  defensives: { version: string };
+  season: string | null;
+  hosted: boolean;
+}
+
+/** Pure: the documentation registry plus the effective evaluation config, for GET /api/docs. */
+export function docsResponse(cfg: EvaluationConfig, hosted: boolean): DocsResponse {
+  return {
+    ok: true,
+    docs: EVALUATION_DOCS,
+    config: {
+      version: configVersion(cfg),
+      levelScale: cfg.levelScale,
+      expectedIlvl: cfg.expectedIlvl,
+      axes: cfg.axes,
+      axisWeights: cfg.axisWeights,
+      verdict: cfg.verdict,
+      confidence: cfg.confidence,
+    },
+    defensives: { version: SHIPPED.version },
+    season: Object.keys(cfg.expectedIlvl).at(-1) ?? null,
+    hosted,
+  };
+}
 
 /** null when the trailing segment is not valid percent-encoding (decodeURIComponent throws). */
 export const historyKey = (url: URL): string | null => {
@@ -77,6 +119,7 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
     // In hosted mode the watcher never runs; the initial status is simply "inactive" and the stream is the member's own.
     route("GET", "/api/events", (_req, _url, rc) => eventsResponse({ event: "status", data: watcherStatus() }, rc.user?.id ?? null)),
     route("GET", "/api/health", () => handleHealth(ctx), "public"),
+    route("GET", "/api/docs", async () => jsonResponse(docsResponse(await getEvalConfig(), ctx.hosted)), "public"),
     route("GET", "/api/status", () => {
       const rt = ctx.runtime;
       return rt

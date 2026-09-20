@@ -17,6 +17,7 @@ import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
 import { Forbidden } from "./components/admin/Forbidden.tsx";
+import { HelpPage } from "./components/help/HelpPage.tsx";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
@@ -34,7 +35,7 @@ type Screen =
   | { kind: "signin"; status: StatusInfo }
   | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null; quota: QuotaInfo | null; ownClient: OwnClientView | null };
 
-// No router: /admin, /settings and /privacy are full navigations resolved once from the pathname.
+// No router: /admin, /settings, /privacy and /help are full navigations resolved once from the pathname.
 const page = pageOf(location.pathname);
 
 export function App() {
@@ -61,6 +62,8 @@ export function App() {
   // signing in (it is linked from the sign-in note) and rendered outside `Main` when signed in, so
   // it never gets the app header on top of its own.
   if (screen.status.hosted && page === "privacy") return <PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} />;
+  // /help is public too: an anonymous hosted visitor gets the bare page (brand line, no search); signed in or local, it renders inside `Main` under the app header.
+  if (screen.kind === "signin" && page === "help") return <HelpPage status={screen.status} bare />;
   if (screen.kind === "signin") return <SignIn notice={deniedNotice(location.search)} loginFailed={loginFailed(location.search)} note={signInNote(screen.status)} />;
   if (screen.kind === "setup") {
     return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null, ownClient: null }); }} />;
@@ -314,7 +317,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
   // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
   const showCompare = compareOpen && selected.length >= 2;
-  // /admin and /settings are full navigations from the user menu (no router): same header (no search), their sections instead of the tabs.
+  // /admin, /settings and /help are full navigations (no router): same header (no search), their sections instead of the tabs.
   const isMainPage = page === "main";
   const access = adminAccess(status, me);
   const account = accountAccess(status, me);
@@ -336,6 +339,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           ? <SettingsPage me={me} status={status} quota={quota} ownClient={ownClient} onOwnClientChange={setOwnClient} onDeleted={() => location.assign("/")} />
           : <Forbidden reason="local" handle={null} title="Hosted mode only" text="Settings exist in hosted mode only." />
       )}
+      {page === "help" && <HelpPage status={status} />}
       {page === "privacy" && (
         // Hosted visitors never reach here (App renders the bare page before Main).
         <Forbidden reason="local" handle={null} title="Hosted mode only" text="The privacy page exists in hosted mode only." />

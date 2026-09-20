@@ -339,3 +339,34 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .privacy p { margin: 0; }
 .privacy ul { margin: 0; padding-left: 18px; }
 .privacy li { margin: 4px 0; }
+
+/* --- help page (components/help/*; canvas "HelpA" + "HelpDetails") --- */
+.help-layout { display: flex; gap: 24px; padding: 16px 24px; align-items: flex-start; }
+.help-toc { position: sticky; top: 12px; width: 220px; flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.help-toc a { color: var(--muted); padding: 4px 10px; border-radius: var(--radius); }
+.help-toc a:hover { color: var(--text); }
+.help-toc a.on { color: var(--text); background: var(--card); }
+.help-toc a.sub { padding-left: 22px; font-size: 12px; }
+.help-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.help-body h2 { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+.help-card { display: flex; flex-direction: column; gap: 8px; }
+.help-row { display: flex; gap: 24px; align-items: flex-start; }
+.help-head { display: flex; align-items: baseline; gap: 10px; }
+.help-h3 { font-size: 14px; font-weight: 600; margin: 6px 0 0; }
+.help-p { font-size: 13px; color: var(--text-soft); line-height: 1.55; margin: 0; }
+.help-ul { font-size: 13px; color: var(--text-soft); padding-left: 18px; line-height: 1.6; margin: 0; }
+.sub-card { display: grid; grid-template-columns: 1fr 260px; gap: 12px 24px; padding: 14px 16px; }
+.extra-card { padding: 14px 16px; }
+.sub-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sub-head h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.sub-card .kv, .extra-card .kv { display: grid; grid-template-columns: 64px 1fr; gap: 3px 12px; font-size: 12.5px; }
+.sub-card .kv .k, .extra-card .kv .k { color: var(--muted); }
+.curve { display: flex; flex-direction: column; gap: 6px; }
+.curve table { border-collapse: collapse; font-size: 12px; font-family: var(--mono); align-self: flex-start; }
+.curve td { padding: 1px 8px 1px 0; color: var(--text-soft); }
+.curve td.k { color: var(--muted); }
+.weights { display: flex; gap: 6px; }
+.faq q { display: block; font-weight: 600; font-size: 13px; margin-top: 8px; }
+.faq q::before, .faq q::after { content: ""; }
+.faq .help-p { margin-top: 2px; }
+@media (max-width: 900px) { .help-toc { display: none; } }

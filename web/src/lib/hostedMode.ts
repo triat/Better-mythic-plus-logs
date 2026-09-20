@@ -13,14 +13,14 @@ export interface StatusInfo {
 }
 export interface UiControls { setup: boolean; quit: boolean; watch: boolean; envPath: boolean; signOut: boolean }
 export type BootScreen = "setup" | "main" | "signin";
-/** No router: the pathname picks the page rendered inside `Main` (or, for /privacy, before the sign-in wall). */
-export type Page = "main" | "admin" | "settings" | "privacy";
+/** No router: the pathname picks the page rendered inside `Main` (or, for /privacy and /help, before the sign-in wall). */
+export type Page = "main" | "admin" | "settings" | "privacy" | "help";
 
 /** Used when /api/status itself fails: behave like today's local UI. */
 export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "" };
 
-export const pageOf = (pathname: string): Page =>
-  pathname === "/admin" ? "admin" : pathname === "/settings" ? "settings" : pathname === "/privacy" ? "privacy" : "main";
+const PAGES: Record<string, Page> = { "/admin": "admin", "/settings": "settings", "/privacy": "privacy", "/help": "help" };
+export const pageOf = (pathname: string): Page => PAGES[pathname] ?? "main";
 
 export function uiControls(status: StatusInfo): UiControls {
   const local = !status.hosted;

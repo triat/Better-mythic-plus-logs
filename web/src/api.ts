@@ -10,6 +10,7 @@ import type {
   DefensivesPatchResult,
   DefensivesResponse,
   DeepdiveRequest,
+  DocsResponse,
   HistoryItem,
   LookupPayload,
   LookupRequest,
@@ -106,6 +107,8 @@ export const api = {
     removeWclClient: () => call<Record<never, never>>("/api/me/wcl-client", { method: "DELETE" }),
     deleteAccount: () => call<Record<never, never>>("/api/me", { method: "DELETE" }),
   },
+  /** The documentation registry plus the effective evaluation config (/help): 0 WCL pts, readable signed out. */
+  docs: () => call<Omit<DocsResponse, "ok">>("/api/docs"),
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
     call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),

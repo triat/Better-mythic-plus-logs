@@ -56,7 +56,7 @@ describe("initialsOf / pendingText", () => {
 });
 
 describe("menuModel with an own client", () => {
-  const own = { clientId: "a3f1…9c2e", verifiedAt: 1, updatedAt: 1, snapshot: { pointsSpentThisHour: 1412, limitPerHour: 3600, pointsResetIn: 2280, observedAt: 1 } };
+  const own = { clientId: "a3f1…9c2e", verifiedAt: 1, updatedAt: 1, usable: true, snapshot: { pointsSpentThisHour: 1412, limitPerHour: 3600, pointsResetIn: 2280, observedAt: 1 } };
   test("the quota line is the client's counter and the header never says exhausted", () => {
     const m = menuModel(member, { used: 300, limit: 300, resetInS: 60 }, own);
     expect(m.quota).toEqual({ text: "Your WCL client · 1\u202f412 / 3\u202f600 pts", sub: "resets in 38 min", pct: 61, tone: "" });
@@ -65,6 +65,12 @@ describe("menuModel with an own client", () => {
     expect(menuModel(member, null, { ...own, snapshot: null }).quota).toEqual({ text: "Your WCL client · no request yet", sub: null, pct: null, tone: "" });
     expect(menuModel(member, null, { ...own, snapshot: { ...own.snapshot, pointsSpentThisHour: 3550 } }).quota.tone).toBe("tone-warn");
     expect(menuModel(member, null, { ...own, snapshot: { ...own.snapshot, pointsSpentThisHour: 3600 } }).quota).toMatchObject({ pct: 0, tone: "tone-bad" });
+  });
+  test("an undecryptable client (instance key rotated) warns and falls back to the shared quota", () => {
+    const m = menuModel(member, { used: 300, limit: 300, resetInS: 60 }, { ...own, usable: false });
+    expect(m.quota).toEqual({ text: "Your WCL client needs re-saving · using the shared budget", sub: "Settings → save the client again", pct: null, tone: "tone-warn" });
+    expect(m.exhausted).not.toBeNull();
+    expect(m.ownClient).toBe(false);
   });
   test("fmtPts: thousands separated by a narrow no-break space", () => {
     expect(fmtPts(1412)).toBe("1\u202f412");

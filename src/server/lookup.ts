@@ -146,7 +146,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   // A member's own client charges nothing to the shared meter/usage (issue #11 Task 3).
   const accounting = runtime && user
     ? scope.own
-      ? { pointsSpent: 0, quota: runtime.quota.status(user), ownClient: runtime.wclClients.view(user.id) }
+      ? { pointsSpent: 0, quota: runtime.quota.status(user), ownClient: await runtime.wclClients.view(user.id) }
       : { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user), ownClient: null }
     : {};
   return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache, ...accounting });

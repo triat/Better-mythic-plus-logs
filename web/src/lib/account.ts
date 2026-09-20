@@ -2,7 +2,7 @@
 import type { OwnClientView } from "../types.ts";
 import { fmtAge, fmtPts } from "./format.ts";
 
-export type ClientCardState = "disabled" | "none" | "set";
+export type ClientCardState = "disabled" | "none" | "set" | "stale";
 export interface ClientCardModel { state: ClientCardState; status: string; dot: "dot-none" | "dot-approved"; showForm: boolean }
 
 /** `fmtAge` writes "2h ago"; the canvas card reads "Verified 2 h ago" — same buckets, a space before the unit. */
@@ -14,6 +14,14 @@ export function clientCard(enabled: boolean, client: OwnClientView | null, limit
   if (!client) {
     const budget = limitPerUser === null ? "no quota" : `${limitPerUser} pts per hour`;
     return { state: "none", status: `No client — your lookups use the shared budget (${budget}).`, dot: "dot-none", showForm: true };
+  }
+  if (!client.usable) {
+    return {
+      state: "stale",
+      status: "Stored secret cannot be decrypted (the instance key changed) — save the client again. Your lookups use the shared budget meanwhile.",
+      dot: "dot-none",
+      showForm: true,
+    };
   }
   const when = client.verifiedAt === null ? `Saved ${spacedAge(client.updatedAt, now)}` : `Verified ${spacedAge(client.verifiedAt, now)}`;
   const spent = client.snapshot ? ` · ${fmtPts(client.snapshot.pointsSpentThisHour)} / ${fmtPts(client.snapshot.limitPerHour)} pts` : "";

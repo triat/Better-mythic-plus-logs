@@ -30,8 +30,8 @@ export function userRoutes(rt: HostedRuntime): Route[] {
       return jsonResponse({ ok: true, settings: rt.db.settings.update(ctx.user!.id, parsed.patch, ctx.now) });
     }),
 
-    route("GET", "/api/me/wcl-client", (_req, _url, ctx) =>
-      jsonResponse({ ok: true, enabled: rt.wclClients.enabled, client: rt.wclClients.view(ctx.user!.id) })),
+    route("GET", "/api/me/wcl-client", async (_req, _url, ctx) =>
+      jsonResponse({ ok: true, enabled: rt.wclClients.enabled, client: await rt.wclClients.view(ctx.user!.id) })),
     route("PUT", "/api/me/wcl-client", async (req, _url, ctx) => {
       const b = await parseBody(req, WCL_CLIENT_BODY);
       if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);

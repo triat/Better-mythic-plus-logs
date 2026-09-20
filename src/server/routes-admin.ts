@@ -48,7 +48,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
     points24h: rt.db.usage.byUserSince(at - 24 * HOUR_MS).find((r) => r.userId === u.id)?.points ?? 0,
     sessions: rt.db.sessions.countForUser(u.id, at),
     configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
-    ownClient: rt.wclClients.view(u.id) !== null,
+    ownClient: rt.wclClients.has(u.id),
   });
 
   return [
@@ -144,7 +144,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const users = rt.db.users.list().map((u) => adminUser(u, {
         pointsHour: hour.get(u.id) ?? 0, points24h: day.get(u.id) ?? 0,
         sessions: rt.db.sessions.countForUser(u.id, at), configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
-        ownClient: rt.wclClients.view(u.id) !== null,
+        ownClient: rt.wclClients.has(u.id),
       }));
       return jsonResponse({ ok: true, users });
     }, "admin"),

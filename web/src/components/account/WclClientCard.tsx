@@ -62,7 +62,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
         <span className="section-title">Your Warcraft Logs client</span>
         <span style={{ flex: 1 }} />
         <span className={"dot " + m.dot} />
-        <span className={m.state === "set" ? "" : "muted"}>{head}{tail && <span className="faint">{tail}</span>}</span>
+        <span className={m.state === "set" ? "" : m.state === "stale" ? "tone-warn" : "muted"}>{head}{tail && <span className="faint">{tail}</span>}</span>
       </div>
       {m.state === "set" && !showForm && (
         <div className="settings-actions">

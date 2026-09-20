@@ -122,8 +122,10 @@ through *their* client instead of the shared one: it does not count against
 pts" instead of the shared quota line. Without `BMPL_ENCRYPTION_KEY` the
 feature is off instance-wide (`GET /api/status` → `wclClients: false`, the
 settings card reads "This instance does not store WCL clients"); losing the
-key after members have saved clients makes those rows undecryptable (a member
-simply saves their client again). `PUT`/`POST /api/me/wcl-client/verify` are
+key after members have saved clients makes those rows undecryptable: their
+requests fall back to the shared client, the user menu says "Your WCL client
+needs re-saving" and the settings card asks for the client again (`usable:
+false` on `GET /api/me`'s `ownClient`). `PUT`/`POST /api/me/wcl-client/verify` are
 rate-limited like a lookup (30/min per member).
 
 ## Privacy and account deletion

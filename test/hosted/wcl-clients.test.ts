@@ -18,7 +18,7 @@ describe("UserWclClients", () => {
   test("disabled without a key: view null, save 503, credentials null", async () => {
     const { u, svc } = setup(null);
     expect(svc.enabled).toBe(false);
-    expect(svc.view(u.id)).toBeNull();
+    expect(await svc.view(u.id)).toBeNull();
     expect(await svc.save(u.id, { clientId: "abcdef1234567890", clientSecret: "s" })).toEqual({ ok: false, status: 503, error: "This instance does not store WCL clients (no BMPL_ENCRYPTION_KEY)" });
     expect(await svc.credentials(u.id)).toBeNull();
   });
@@ -26,7 +26,7 @@ describe("UserWclClients", () => {
     const seen: string[] = [];
     const { db, u, svc } = setup(TEST_ENCRYPTION_KEY, async (c) => { seen.push(c.clientId); return { ok: true, rateLimit: RL }; });
     const r = await svc.save(u.id, { clientId: "a3f1000000009c2e", clientSecret: "hunter2" });
-    expect(r).toEqual({ ok: true, client: { clientId: "a3f1…9c2e", verifiedAt: 5000, updatedAt: 5000, snapshot: { ...RL, observedAt: 5000 } } });
+    expect(r).toEqual({ ok: true, client: { clientId: "a3f1…9c2e", verifiedAt: 5000, updatedAt: 5000, usable: true, snapshot: { ...RL, observedAt: 5000 } } });
     expect(seen).toEqual(["a3f1000000009c2e"]);
     const row = db.wclClients.get(u.id)!;
     expect(row.secretEnc).not.toContain("hunter2");
@@ -46,6 +46,9 @@ describe("UserWclClients", () => {
       db.wclClients.put({ userId: u.id, clientId: "abc", secretEnc: "v1.AAAAAAAAAAAAAAAA.AAAA", verifiedAt: null, now: 1 });
       expect(await svc.verify(u.id)).toEqual({ ok: false, status: 400, error: "Stored secret cannot be decrypted — save the client again" });
       expect(await svc.credentials(u.id)).toBeNull();
+      // The view says so too, so the menu and the Settings card can warn without a request going out.
+      expect((await svc.view(u.id))!.usable).toBe(false);
+      expect(svc.has(u.id)).toBe(true);
       // Once per process per user, even across the two undecryptable calls above.
       expect(errSpy).toHaveBeenCalledTimes(1);
     } finally {
@@ -55,6 +58,7 @@ describe("UserWclClients", () => {
     db.wclClients.setVerified(u.id, 1); // pretend it is old
     const r = await svc.verify(u.id);
     expect(r.ok && r.client.verifiedAt).toBe(5000);
+    expect(r.ok && r.client.usable).toBe(true);
   });
   test("save forgets the client's cached token before verifying: a rotated secret is checked against WCL, never replayed from a stale cache", async () => {
     const realFetch = globalThis.fetch;
@@ -100,11 +104,12 @@ describe("UserWclClients", () => {
     const { db, u, svc } = setup(TEST_ENCRYPTION_KEY);
     await svc.save(u.id, { clientId: "abc", clientSecret: "s" });
     svc.observe(u.id, { ...RL, pointsSpentThisHour: 1500 });
-    expect(svc.view(u.id)!.snapshot!.pointsSpentThisHour).toBe(1500);
+    expect((await svc.view(u.id))!.snapshot!.pointsSpentThisHour).toBe(1500);
     svc.forget(u.id);
-    expect(svc.view(u.id)!.snapshot).toBeNull();
+    expect((await svc.view(u.id))!.snapshot).toBeNull();
     expect(svc.remove(u.id)).toBe(true);
-    expect(svc.view(u.id)).toBeNull();
+    expect(await svc.view(u.id)).toBeNull();
+    expect(svc.has(u.id)).toBe(false);
     expect(db.wclClients.get(u.id)).toBeNull();
     expect(svc.remove(u.id)).toBe(false);
   });

@@ -78,7 +78,7 @@ export async function handleDeepdive(req: Request, ctx: RequestContext, runtime:
   // client charges nothing to the shared meter/usage.
   const accounting = runtime && user
     ? scope.own
-      ? { pointsSpent: 0, quota: runtime.quota.status(user), ownClient: runtime.wclClients.view(user.id) }
+      ? { pointsSpent: 0, quota: runtime.quota.status(user), ownClient: await runtime.wclClients.view(user.id) }
       : { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user), ownClient: null }
     : { pointsSpent: r.pointsSpent };
   return jsonResponse({ ok: true, result: r.result, fromCache: r.fromCache, ...accounting });

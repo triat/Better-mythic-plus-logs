@@ -17,6 +17,8 @@ export interface OwnClientView {
   clientId: string; // abbreviated
   verifiedAt: number | null;
   updatedAt: number;
+  /** false when the stored secret no longer decrypts (BMPL_ENCRYPTION_KEY rotated): requests fall back to the shared client until it is saved again. */
+  usable: boolean;
   snapshot: OwnClientSnapshot | null;
 }
 
@@ -55,14 +57,22 @@ export class UserWclClients {
     return this.deps.key !== null;
   }
 
-  view(userId: number): OwnClientView | null {
+  /** Whether a client row exists (no decryption) — the admin user list only needs that. */
+  has(userId: number): boolean {
+    return this.enabled && this.deps.repo.get(userId) !== null;
+  }
+
+  async view(userId: number): Promise<OwnClientView | null> {
     if (!this.enabled) return null;
     const row = this.deps.repo.get(userId);
     if (!row) return null;
+    const usable = (await decrypt(this.deps.key!, row.secretEnc)) !== null;
+    if (!usable) this.warnUndecryptable(userId);
     return {
       clientId: abbreviate(row.clientId),
       verifiedAt: row.verifiedAt,
       updatedAt: row.updatedAt,
+      usable,
       snapshot: this.snapshots.get(userId) ?? null,
     };
   }
@@ -82,7 +92,7 @@ export class UserWclClients {
     forgetToken(creds.clientId);
     this.warned.delete(userId);
     this.observe(userId, outcome.rateLimit);
-    return { ok: true, client: this.view(userId)! };
+    return { ok: true, client: (await this.view(userId))! };
   }
 
   async verify(userId: number, now?: number): Promise<{ ok: true; client: OwnClientView } | { ok: false; status: 400 | 404 | 503; error: string }> {
@@ -102,7 +112,7 @@ export class UserWclClients {
     const at = now ?? this.now();
     this.deps.repo.setVerified(userId, at);
     this.observe(userId, outcome.rateLimit);
-    return { ok: true, client: this.view(userId)! };
+    return { ok: true, client: (await this.view(userId))! };
   }
 
   remove(userId: number): boolean {

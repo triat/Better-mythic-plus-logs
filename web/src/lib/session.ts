@@ -54,19 +54,27 @@ export const initialsOf = (name: string): string => {
 /** "N pending proposal(s)" for the Admin menu item; null when there is nothing to review. */
 export const pendingText = (n: number): string | null => (n > 0 ? `${n} pending proposal${n === 1 ? "" : "s"}` : null);
 
-/** With an own client the shared quota is irrelevant: its counter replaces the line and nothing is ever "exhausted". */
+/** The stored secret no longer decrypts (instance key rotated): requests silently use the shared client, so say so. */
+const STALE_CLIENT_LINE: QuotaLine = { text: "Your WCL client needs re-saving · using the shared budget", sub: "Settings → save the client again", pct: null, tone: "tone-warn" };
+
+/**
+ * With a usable own client the shared quota is irrelevant: its counter replaces the line and nothing is ever "exhausted".
+ * An unusable one (see `OwnClientView.usable`) warns and keeps the shared-quota behaviour, since that is what gets charged.
+ */
 export function menuModel(me: MeUser, q: QuotaInfo | null, ownClient: OwnClientView | null = null): MenuModel {
   const isAdmin = me.role === "admin";
   const name = me.globalName ?? me.username;
   const left = pointsLeft(q);
+  const usable = ownClient !== null && ownClient.usable;
+  const stale = ownClient !== null && !ownClient.usable;
   return {
     name,
     handle: `@${me.username}${isAdmin ? " · admin" : ""}`,
     initials: initialsOf(name),
     avatarUrl: me.avatarUrl,
     isAdmin,
-    quota: ownClient ? ownClientLine(ownClient) : quotaLine(q, isAdmin),
-    exhausted: !ownClient && left !== null && left < 1 ? quotaLabel(q) : null,
-    ownClient: ownClient !== null,
+    quota: usable ? ownClientLine(ownClient) : stale ? STALE_CLIENT_LINE : quotaLine(q, isAdmin),
+    exhausted: !usable && left !== null && left < 1 ? quotaLabel(q) : null,
+    ownClient: usable,
   };
 }

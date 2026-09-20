@@ -22,9 +22,9 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
         <button type="button" className="section-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           <span className={"chev" + (open ? " open" : "")}>›</span>
           <span className="section-title">Best run per dungeon</span>
-          <HelpLink anchor="runs" />
-          <span className="muted">{runsHeadline(payload)}</span>
         </button>
+        <HelpLink anchor="runs" />
+        <span className="muted">{runsHeadline(payload)}</span>
         <div className="grow" />
         {pending > 0 && (
           <button

@@ -154,6 +154,9 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 /* contextual "?" links to /help (HelpLink.tsx, canvas HelpDetails variant a) */
 .help-link { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); color: var(--faint); font-size: 10px; line-height: 1; margin-left: 6px; vertical-align: 1px; text-decoration: none; }
 .help-link:hover { color: var(--text); border-color: var(--muted); }
+/* In a flex row with its own `gap`, the glyph's inline margin-left would compound with that gap: cancel it there
+   (axis name, verdict badge, the runs section row, the deep-dive head); evidence lines stay inline text, 6px kept. */
+.axis-name .help-link, .badge .help-link, .section-row .help-link, .dd-head .help-link { margin-left: 0; }
 
 /* tiles */
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -166,7 +169,7 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 /* sections */
 .section { padding: 14px 20px; display: flex; flex-direction: column; gap: 8px; }
 .section-head { display: flex; align-items: center; gap: 10px; background: transparent; border: 0; padding: 0; cursor: pointer; text-align: left; color: inherit; }
-.section-head .muted { font-size: 12px; }
+.section-head .muted, .section-row > .muted { font-size: 12px; }
 .section-title { font-size: 14px; font-weight: 600; }
 .chev { display: inline-block; color: var(--muted); font-size: 18px; line-height: 1; transition: transform .12s; }
 .chev.open { transform: rotate(90deg); }

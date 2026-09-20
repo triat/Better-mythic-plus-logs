@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../api.ts";
 import type { StatusInfo } from "../../lib/hostedMode.ts";
-import type { AxisKey, DocsResponse, TextBlock } from "../../types.ts";
+import type { DocsResponse, TextBlock } from "../../types.ts";
 import { axisIsInformational, curveTable, faqEntries, fmtThresholds, toc } from "../../lib/help.ts";
+import { AXIS_ORDER } from "../../lib/verdict.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
 import { Toast } from "../Toast.tsx";
 import { AxisSection } from "./AxisSection.tsx";
@@ -11,7 +12,6 @@ import { Faq } from "./Faq.tsx";
 import { HelpToc } from "./HelpToc.tsx";
 
 type Docs = Omit<DocsResponse, "ok">;
-const AXIS_ORDER: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation", "experience"];
 const ROLES = ["dps", "healer", "tank"] as const;
 
 interface Props {
@@ -196,7 +196,7 @@ function Reading() {
       <h2>Reading the page</h2>
       <ul className="help-ul">
         <li><b>Verdict</b> — the badge with the global score and the confidence; the radar has one point per axis, an n/a axis sits hollow at the centre rather than at 0; each axis row expands to its evidence lines.</li>
-        <li><b>Tiles</b> — Median DPS/HPS and Median parse (rankings), Timed (shown) as timed / shown runs, Avg deaths (with the wipe share), Δ DTPS vs peers, Avoidable vs peers and Kicks vs peers (per-run medians), ilvl, RIO recent timed (last 10 Raider.IO runs) and Prev season (previous-season Raider.IO score). A dash means the data is missing, not zero.</li>
+        <li><b>Tiles</b> — Median DPS/HPS and Median parse (rankings), Timed (shown) as timed / enriched runs, Avg deaths (with the wipe share), Δ DTPS vs peers, Avoidable vs peers and Kicks vs peers (per-run medians), ilvl, RIO recent timed (last 10 Raider.IO runs) and Prev season (previous-season Raider.IO score). A dash means the data is missing, not zero.</li>
         <li><b>Runs</b> — one row per shown run: key level, timed / depleted, parse, deaths, DTPS and avoidable vs peers, kicks, dispels, with a link to the Warcraft Logs report. Each row has an Analyze button for the deep-dive.</li>
         <li><b>Deep-dive panel</b> — usage vs capacity per defensive and one line per death; a yellow dot marks a table correction you proposed and still pending, a blue one an entry from the shared table.</li>
         <li><b>Compare</b> — tick two or three tabs to see their radars and axes side by side.</li>

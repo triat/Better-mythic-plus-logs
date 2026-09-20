@@ -53,7 +53,7 @@ describe("GET /api/docs", () => {
     for (const k of Object.keys(b.config.axes)) {
       expect(Object.keys(b.docs.axes[k].subSignals).sort()).toEqual(Object.keys(b.config.axes[k].subSignals).sort());
     }
-    expect(b.config.verdict).toEqual({ invite: 70, maybe: 45, minRuns: 3 });
+    expect(b.config.verdict).toEqual((await getEvalConfig()).verdict);
     expect(typeof b.defensives.version).toBe("string");
     expect(b.season).toBe(Object.keys(b.config.expectedIlvl).at(-1));
     expect(JSON.stringify(b)).not.toContain(process.env.WCL_CLIENT_ID!);

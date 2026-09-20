@@ -1,11 +1,10 @@
 import type { AxisKey, CurvePoints, DocsResponse, EvaluationDocs, FaqEntry } from "../types.ts";
+import { AXIS_ORDER } from "./verdict.ts";
 
 // View models of the /help page: anchors, the table of contents, curve tables and paths, weights and
 // threshold wording. Every number shown on the page comes from GET /api/docs' `config`, never from here.
 
 export type Anchor = string;
-
-const AXIS_ORDER: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation", "experience"];
 
 /** "survival.individualDeaths" → "survival.individualDeaths"; an axis key → "axis-survival"; "experience.prevSeasonBonus" stays as is. */
 export function anchorOf(source: string): Anchor {

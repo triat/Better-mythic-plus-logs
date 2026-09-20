@@ -237,6 +237,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/events` | user | Server-sent events: watcher/lookup status stream |
 | GET | `/api/health` | public | Health check for the reverse proxy / uptime monitor |
 | GET | `/api/status` | public | Whether credentials are set, hosted config flags (open signup, guild gate, own WCL clients, operator) |
+| GET | `/api/docs` | public | The documentation registry plus the effective evaluation config, for `/help` |
 | POST | `/api/setup` | local mode only | Write `WCL_CLIENT_ID`/`WCL_CLIENT_SECRET` to `.env` |
 | POST | `/api/watch/start` | local mode only | Start clipboard watch |
 | POST | `/api/watch/stop` | local mode only | Stop clipboard watch |

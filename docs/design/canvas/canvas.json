@@ -232,6 +232,42 @@
       "h": 1560,
       "title": "Phase 2 — Details: verified client, delete, privacy, sign-in, admin ban",
       "page": "hosted"
+    },
+    {
+      "file": "HelpA.dc.html",
+      "x": 10920,
+      "y": 0,
+      "w": 1440,
+      "h": 1700,
+      "title": "Help A — sticky sidebar table of contents, long page",
+      "page": "hosted"
+    },
+    {
+      "file": "HelpB.dc.html",
+      "x": 10920,
+      "y": 1820,
+      "w": 1440,
+      "h": 1560,
+      "title": "Help B — admin-style title + anchor nav, axes as accordions",
+      "page": "hosted"
+    },
+    {
+      "file": "HelpDetails.dc.html",
+      "x": 12480,
+      "y": 0,
+      "w": 1440,
+      "h": 1480,
+      "title": "Help — details: '?' affordance a/b/c, verdict hero, header link, user menu, level scaling",
+      "page": "hosted"
+    },
+    {
+      "file": "HelpC.dc.html",
+      "x": 12480,
+      "y": 1600,
+      "w": 1440,
+      "h": 1000,
+      "title": "Help C — two-pane reference, one topic at a time",
+      "page": "hosted"
     }
   ],
   "annotations": [
@@ -314,6 +350,14 @@
       "w": 1440,
       "page": "hosted",
       "text": "Issue #11 — phase 2 (settings, privacy, account deletion). Pick a settings-page layout: A full page at /settings (consistent with /admin), B one compact card, C inside the user menu. Details board: verified WCL client state, typed-word delete confirmation, /privacy page, sign-in wording for open signup and the guild-denied notice, admin Ban/Unban."
+    },
+    {
+      "id": "help-brief",
+      "x": 10920,
+      "y": -190,
+      "w": 1440,
+      "page": "hosted",
+      "text": "Help page (spec 2026-09-19-documentation-and-help-design). Pick a layout: A sidebar TOC + long page, B admin-style anchor nav + accordions, C two-pane reference. Details board: the '?' affordance (a glyph, b 'how?' text, c evidence text as link), verdict hero, header Help link (local + hosted), user menu item, key-level scaling section. Numbers come from the effective evaluation config."
     }
   ],
   "launch": {

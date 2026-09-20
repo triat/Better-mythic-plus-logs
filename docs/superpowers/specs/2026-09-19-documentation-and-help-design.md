@@ -1,6 +1,6 @@
 # Documentation restructure and the in-app Help page — design
 
-Status: approved design, 2026-09-19; §1–§2 implemented 2026-09-20.
+Status: approved design, 2026-09-19; §1–§2 implemented 2026-09-20; §3–§6 implemented 2026-09-20.
 
 ## Goal
 

@@ -38,7 +38,9 @@ On top of the raw stats, `bmpl` computes a rule-based verdict — `INVITE` /
 with plain-language evidence lines. Timed vs. depleted is deliberately not
 scored, and fewer than 3 enriched runs always reads `INSUFFICIENT DATA`. The
 rules are yours to tune via `evaluation.json`. Details:
-[docs/scoring.md](docs/scoring.md#verdict-and-axes).
+[docs/scoring.md](docs/scoring.md#verdict-and-axes); the web UI's Help page
+(`/help`) explains every number with this instance's live thresholds and
+curves.
 
 ## Quick start
 

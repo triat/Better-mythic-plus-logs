@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .h1 { font-size: 18px; font-weight: 700; }
+    .h2 { font-size: 16px; font-weight: 700; }
+    .h3 { font-size: 14px; font-weight: 600; }
+    .p { font-size: 13px; color: #c9d1d9; line-height: 1.55; }
+    .ul { font-size: 13px; color: #c9d1d9; padding-left: 18px; line-height: 1.6; margin: 0; }
+    .toc { position: sticky; top: 0; width: 220px; flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; padding: 4px 0; }
+    .toc a { color: #8b949e; padding: 4px 10px; border-radius: 6px; } .toc a.on { color: #e6edf3; background: #161b22; } .toc .sub { padding-left: 22px; font-size: 12px; }
+    .nav { display: flex; gap: 14px; padding: 10px 24px; border-bottom: 1px solid #21262d; font-size: 13px; } .nav a { color: #8b949e; }
+    .sub-card { display: grid; grid-template-columns: 1fr 260px; gap: 12px 24px; padding: 14px 16px; }
+    .sub-card .kv { grid-template-columns: 64px 1fr; gap: 3px 12px; font-size: 12.5px; }
+    .curve { display: flex; flex-direction: column; gap: 6px; }
+    .curve table { border-collapse: collapse; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .curve td { padding: 1px 8px 1px 0; color: #c9d1d9; } .curve td.k { color: #8b949e; }
+    .weights { display: flex; gap: 6px; }
+    .help-q { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; margin-left: 6px; vertical-align: 1px; }
+    .help-txt { color: #6e7681; font-size: 11px; margin-left: 6px; text-decoration: underline dotted; }
+    .axis { display: grid; grid-template-columns: 200px 48px 1fr; gap: 12px; align-items: center; padding: 8px 12px; }
+    .axis .name { display: flex; align-items: center; gap: 8px; }
+    .conf { width: 8px; height: 8px; border-radius: 50%; background: #56d364; display: inline-block; }
+    .score { font-size: 16px; font-weight: 700; text-align: right; }
+    .tone-good { color: #56d364; } .tone-bad { color: #f85149; }
+    .badge { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 14px; border-radius: 8px; background: #0a2e1a; border: 1px solid #1f6f3a; color: #56d364; font-weight: 800; font-size: 15px; }
+    .acc { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+    .acc .chev { color: #6e7681; }
+    .menu { width: 280px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+    .menu-item { padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    .faq q { display: block; font-weight: 600; font-size: 13px; margin-top: 8px; } .faq q::before, .faq q::after { content: ""; }
+    .faq .p { margin-top: 2px; }
+    .scaled { font-size: 11px; color: #d29922; border: 1px solid #7a6a1f; border-radius: 999px; padding: 0 7px; line-height: 16px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1560px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="top">
+    <div class="brand">bmpl</div>
+    <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><div style="flex: 1; font-size: 14px;">Name-Realm or Raider.IO URL</div><span class="chip">spec any</span></div>
+    <div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div>
+    <div class="lookup">Look up</div>
+    <div style="flex: 1;"></div>
+    <div class="btn"><span class="avatar">M</span>Muleyoxo <span class="faint" style="font-size: 12px;">▾</span></div>
+  </div>
+
+  <div style="display: flex; align-items: baseline; gap: 12px; padding: 14px 24px 0;">
+    <a href="#" class="muted" style="font-size: 13px;">← back to lookups</a>
+    <span class="h1">Help</span>
+    <span class="muted" style="font-size: 12px;">what is analysed, how every number is computed, and why some are not</span>
+  </div>
+  <nav class="nav"><a href="#what">Sources</a><a href="#verdict">Verdict</a><a href="#axes">Axes</a><a href="#level-scale">Level scaling</a><a href="#runs">Per-run</a><a href="#deep-dive">Deep-dive</a><a href="#reading">Reading the page</a><a href="#faq">FAQ</a></nav>
+  <div class="content content-wide" style="max-width: 1100px;">
+    <div class="card" id="what" style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="h2">What bmpl looks at</div>
+      <ul class="ul">
+        <li><b>Warcraft Logs rankings</b> — the character's best run per dungeon this season, with parse %, key level and date. Fetched at every lookup; a lookup is kept 6 hours in your history.</li>
+        <li><b>Each run's log</b> — deaths, damage taken, avoidable damage, interrupts, dispels, consumables, for the player and the four others in the group. Fetched once per run (~10 pts) and cached forever.</li>
+        <li><b>Raider.IO</b> — item level, current and previous season score, last 10 runs. Free, no key.</li>
+      </ul>
+      <div class="faint" style="font-size: 12px;">All of it is public data: anyone can open the same logs on warcraftlogs.com and count the same deaths.</div>
+    </div>
+    <div class="card" id="verdict" style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="h2">The verdict</div>
+      <div class="p">The global score is the weighted mean of the axes that could be scored, with the weights of the player's role, rounded to a whole number. <b>INVITE</b> from <span class="mono">70</span>, <b>MAYBE</b> from <span class="mono">45</span>, <b>PASS</b> below. With fewer than <span class="mono">3</span> enriched runs the verdict is <b>INSUFFICIENT DATA</b> whatever the score. Confidence is <b>high</b> from 6 runs, <b>medium</b> from 3, <b>low</b> below.</div>
+      <div class="curve" style="margin-top: 4px;"><div class="caps">axis weights by role (effective config, version 1)</div>
+      <table><tr><td></td><td class="k">survival</td><td class="k">utility</td><td class="k">throughput</td><td class="k">consistency</td><td class="k">preparation</td><td class="k">experience</td></tr><tr><td class="k">dps</td><td>3</td><td>2</td><td>3</td><td>0</td><td>1</td><td>2</td></tr><tr><td class="k">healer</td><td>3</td><td>2.5</td><td>2</td><td>0</td><td>1</td><td>2</td></tr><tr><td class="k">tank</td><td>3</td><td>2</td><td>2</td><td>0</td><td>1</td><td>2.5</td></tr></table></div>
+      <div class="faint" style="font-size: 12px;">Consistency has weight 0 for every role: it is shown, never counted. Timed vs depleted is shown in the run list and never scored.</div>
+    </div>
+    <div class="card" id="axes" style="display: flex; flex-direction: column; gap: 6px;">
+      <div class="h2" style="margin-bottom: 4px;">The six axes</div>
+      <div class="inset" style="padding: 0;"><div class="inset acc"><span class="chev">⌄</span><span class="h3">Survival</span><span class="muted" style="font-size: 12px;">deaths, damage taken, avoidable damage, defensives · 7 sub-signals</span></div>
+        <div style="padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px;">
+          <div class="p">Whether the player stays alive and makes their healer's life easy. Deaths are level-scaled so pushing high keys is not punished.</div>
+      <div class="inset sub-card" id="survival.individualDeaths">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"><span class="h3">Individual deaths</span><span class="faint mono" style="font-size: 11px;">survival.individualDeaths</span><span class="scaled">scaled by key level</span></div>
+          <div class="kv"><span class="k">what</span><span>Deaths that were not part of a group wipe, per run.</span><span class="k">source</span><span>Each run's log (WCL): death events of the character, minus those inside a wipe.</span><span class="k">how</span><span>Mean over the shown runs of (deaths × level factor of that run's key), so a death at +25 counts less than a death at +10.</span><span class="k">why</span><span>The single strongest signal that a player will die in your key too.</span><span class="k">n/a</span><span>Never — every enriched run has death data.</span></div>
+        </div>
+        <div class="curve">
+          <div class="caps">curve · deaths per run, level-scaled → score</div>
+          <svg width="200" height="52" viewBox="0 0 200 52"><line x1="4" y1="26.0" x2="196" y2="26.0" stroke="#21262d" stroke-dasharray="3 3"/><polyline points="4.0,4.0 36.0,10.6 68.0,19.4 132.0,32.6 196.0,43.6" fill="none" stroke="#58a6ff" stroke-width="1.5"/><circle cx="4.0" cy="4.0" r="2" fill="#58a6ff"/><circle cx="36.0" cy="10.6" r="2" fill="#58a6ff"/><circle cx="68.0" cy="19.4" r="2" fill="#58a6ff"/><circle cx="132.0" cy="32.6" r="2" fill="#58a6ff"/><circle cx="196.0" cy="43.6" r="2" fill="#58a6ff"/></svg>
+          <table><tr><td class="k">0</td><td>→ 100</td></tr><tr><td class="k">0.5</td><td>→ 85</td></tr><tr><td class="k">1</td><td>→ 65</td></tr><tr><td class="k">2</td><td>→ 35</td></tr><tr><td class="k">3</td><td>→ 10</td></tr></table>
+          <div class="weights"><span class="chip">dps 3</span><span class="chip">healer 3</span><span class="chip">tank 3</span></div>
+        </div>
+      </div>
+      <div class="inset sub-card" id="survival.avoidableVsPeers">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"><span class="h3">Avoidable damage vs peers</span><span class="faint mono" style="font-size: 11px;">survival.avoidableVsPeers</span></div>
+          <div class="kv"><span class="k">what</span><span>Damage taken from mechanics Blizzard flags as avoidable, compared with the other players of the same run.</span><span class="k">source</span><span>The run's log filtered by the season's avoidable-damage list.</span><span class="k">how</span><span>(mine − median of the four peers) / peer median, in %, then the mean over runs.</span><span class="k">why</span><span>Standing in things is what a parse does not show.</span><span class="k">n/a</span><span>When no peer in the run took avoidable damage (division by zero), or the run has no damage-taken data.</span></div>
+        </div>
+        <div class="curve">
+          <div class="caps">curve · % vs peers → score</div>
+          <svg width="200" height="52" viewBox="0 0 200 52"><line x1="4" y1="26.0" x2="196" y2="26.0" stroke="#21262d" stroke-dasharray="3 3"/><polyline points="4.0,4.0 68.0,12.8 89.3,19.4 132.0,30.4 196.0,43.6" fill="none" stroke="#58a6ff" stroke-width="1.5"/><circle cx="4.0" cy="4.0" r="2" fill="#58a6ff"/><circle cx="68.0" cy="12.8" r="2" fill="#58a6ff"/><circle cx="89.3" cy="19.4" r="2" fill="#58a6ff"/><circle cx="132.0" cy="30.4" r="2" fill="#58a6ff"/><circle cx="196.0" cy="43.6" r="2" fill="#58a6ff"/></svg>
+          <table><tr><td class="k">-40</td><td>→ 100</td></tr><tr><td class="k">-10</td><td>→ 80</td></tr><tr><td class="k">0</td><td>→ 65</td></tr><tr><td class="k">20</td><td>→ 40</td></tr><tr><td class="k">50</td><td>→ 10</td></tr></table>
+          <div class="weights"><span class="chip">dps 2</span><span class="chip">healer 2</span><span class="chip">tank 2</span></div>
+        </div>
+      </div>
+          <div class="faint" style="font-size: 12px;">+ 5 more sub-signals</div>
+        </div>
+      </div><div class="inset acc"><span class="chev">›</span><span class="h3">Utility</span><span class="muted" style="font-size: 12px;">interrupts vs peers, dispels · 3 sub-signals</span></div><div class="inset acc"><span class="chev">›</span><span class="h3">Throughput</span><span class="muted" style="font-size: 12px;">parse %, parse at target · 2 sub-signals</span></div><div class="inset acc"><span class="chev">›</span><span class="h3">Consistency</span><span class="muted" style="font-size: 12px;">spread of parse, deaths, damage · weight 0 · 3 sub-signals</span></div><div class="inset acc"><span class="chev">›</span><span class="h3">Preparation</span><span class="muted" style="font-size: 12px;">potions, healthstones, item level · 3 sub-signals</span></div><div class="inset acc"><span class="chev">›</span><span class="h3">Experience</span><span class="muted" style="font-size: 12px;">coverage, target, recent activity · 4 sub-signals</span></div>
+    </div>
+    <div class="card faq" id="faq" style="display: flex; flex-direction: column; gap: 2px;">
+      <div class="h2">FAQ</div>
+      <q>Why is Utility n/a for this rogue?</q><div class="p">Rogues, warriors and death knights have no dispel; when a spec has neither a kick nor a dispel the axis has nothing to score. Healers are always scored.</div>
+      <q>Why does the parse say "unranked"?</q><div class="p">A 0% parse means Warcraft Logs has not ranked that log yet; it is excluded from every parse-based signal instead of counting as a bad parse.</div>
+      <q>The score differs from the Raider.IO score — which is right?</q><div class="p">They measure different things: Raider.IO scores how high the keys were, bmpl scores how the player played in them. A high RIO with a low bmpl score is a player carried through keys.</div>
+      <q>Why does a depleted key not count against them?</q><div class="p">A depleted key is usually the group's fault. It is shown in the run list as context, never scored.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

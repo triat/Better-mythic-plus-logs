@@ -1,6 +1,8 @@
 # bmpl — scoring model
 
-Detailed reference; the README has the short version.
+Detailed reference; the README has the short version. The web UI's Help page
+(`/help`) explains every number with this instance's live thresholds and
+curves; `GET /api/docs` returns the registry with the effective config.
 
 ## Verdict and axes
 

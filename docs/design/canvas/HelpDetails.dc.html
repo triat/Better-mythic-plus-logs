@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .h1 { font-size: 18px; font-weight: 700; }
+    .h2 { font-size: 16px; font-weight: 700; }
+    .h3 { font-size: 14px; font-weight: 600; }
+    .p { font-size: 13px; color: #c9d1d9; line-height: 1.55; }
+    .ul { font-size: 13px; color: #c9d1d9; padding-left: 18px; line-height: 1.6; margin: 0; }
+    .toc { position: sticky; top: 0; width: 220px; flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; padding: 4px 0; }
+    .toc a { color: #8b949e; padding: 4px 10px; border-radius: 6px; } .toc a.on { color: #e6edf3; background: #161b22; } .toc .sub { padding-left: 22px; font-size: 12px; }
+    .nav { display: flex; gap: 14px; padding: 10px 24px; border-bottom: 1px solid #21262d; font-size: 13px; } .nav a { color: #8b949e; }
+    .sub-card { display: grid; grid-template-columns: 1fr 260px; gap: 12px 24px; padding: 14px 16px; }
+    .sub-card .kv { grid-template-columns: 64px 1fr; gap: 3px 12px; font-size: 12.5px; }
+    .curve { display: flex; flex-direction: column; gap: 6px; }
+    .curve table { border-collapse: collapse; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .curve td { padding: 1px 8px 1px 0; color: #c9d1d9; } .curve td.k { color: #8b949e; }
+    .weights { display: flex; gap: 6px; }
+    .help-q { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; margin-left: 6px; vertical-align: 1px; }
+    .help-txt { color: #6e7681; font-size: 11px; margin-left: 6px; text-decoration: underline dotted; }
+    .axis { display: grid; grid-template-columns: 200px 48px 1fr; gap: 12px; align-items: center; padding: 8px 12px; }
+    .axis .name { display: flex; align-items: center; gap: 8px; }
+    .conf { width: 8px; height: 8px; border-radius: 50%; background: #56d364; display: inline-block; }
+    .score { font-size: 16px; font-weight: 700; text-align: right; }
+    .tone-good { color: #56d364; } .tone-bad { color: #f85149; }
+    .badge { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 14px; border-radius: 8px; background: #0a2e1a; border: 1px solid #1f6f3a; color: #56d364; font-weight: 800; font-size: 15px; }
+    .acc { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+    .acc .chev { color: #6e7681; }
+    .menu { width: 280px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+    .menu-item { padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    .faq q { display: block; font-weight: 600; font-size: 13px; margin-top: 8px; } .faq q::before, .faq q::after { content: ""; }
+    .faq .p { margin-top: 2px; }
+    .scaled { font-size: 11px; color: #d29922; border: 1px solid #7a6a1f; border-radius: 999px; padding: 0 7px; line-height: 16px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1480px; background: #0d1117; display: flex; flex-direction: column;">
+
+  <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 22px;">
+    <div class="label" style="margin-bottom: 8px;">"?" AFFORDANCE — a · a small circled ? after the axis name and after each evidence line (links to /help#axis-survival and /help#survival.individualDeaths)</div>
+<div class="inset axis"><div class="name"><span class="faint">›</span><span class="conf"></span><span class="caps">Survival</span><span class="help-q">?</span></div><div class="score mono">72</div><div style="font-size: 13px;"><span class="tone-good">+9.3</span> 1.2 individual deaths/run<span class="help-q">?</span> <span class="faint">·</span> <span class="tone-bad">−4.1</span> avoidable +18% vs peers<span class="help-q">?</span> <span class="faint">· +3 more</span></div></div>    <div class="label" style="margin-bottom: 8px;">b · a dotted "how?" text link instead of the glyph</div>
+<div class="inset axis"><div class="name"><span class="faint">›</span><span class="conf"></span><span class="caps">Survival</span><span class="help-txt">how?</span></div><div class="score mono">72</div><div style="font-size: 13px;"><span class="tone-good">+9.3</span> 1.2 individual deaths/run<span class="help-txt">how?</span> <span class="faint">·</span> <span class="tone-bad">−4.1</span> avoidable +18% vs peers<span class="help-txt">how?</span> <span class="faint">· +3 more</span></div></div>    <div class="label" style="margin-bottom: 8px;">c · the evidence text itself is the link (dotted underline); only the axis name keeps a ?</div>
+<div class="inset axis"><div class="name"><span class="faint">›</span><span class="conf"></span><span class="caps">Survival</span><span class=help-q>?</span></div><div class="score mono">72</div><div style="font-size: 13px;"><span class="tone-good">+9.3</span> <span style="text-decoration: underline dotted; text-underline-offset: 3px;">1.2 individual deaths/run</span> <span class="faint">·</span> <span class="tone-bad">−4.1</span> <span style="text-decoration: underline dotted; text-underline-offset: 3px;">avoidable +18% vs peers</span> <span class="faint">· +3 more</span></div></div>    <div class="label" style="margin-bottom: 8px;">VERDICT HERO — ? next to the badge → /help#verdict</div>
+
+    <div class="card" style="display: flex; align-items: center; gap: 16px;"><span style="font-weight: 700; font-size: 18px; color: #f48cba;">Biwaadrood</span><span class="muted">Holy Paladin · Nerzhul · EU</span><span class="badge">INVITE <span class="mono" style="font-weight: 600; font-size: 13px;">76</span><span style="font-weight: 400; font-size: 12px; color: #8b949e;">high confidence · 8 runs</span></span><span class="help-q" title="How is this computed?">?</span></div>
+    <div class="label" style="margin-bottom: 8px;">HEADER — "Help" link, local mode (before Re-configure) and hosted mode (before the user menu)</div>
+
+    <div class="top" style="border: 1px solid #21262d; border-radius: 8px;"><div class="brand">bmpl</div><div class="search"><div style="flex: 1; font-size: 14px;">Name-Realm or Raider.IO URL</div><span class="chip">spec any</span></div><div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div><div class="lookup">Look up</div><div style="flex: 1;"></div><a href="#" class="muted" style="font-size: 13px;">Help</a><div class="btn">Re-configure</div><div class="btn">Quit</div></div>
+    <div class="top" style="border: 1px solid #21262d; border-radius: 8px;"><div class="brand">bmpl</div><div class="search"><div style="flex: 1; font-size: 14px;">Name-Realm or Raider.IO URL</div><span class="chip">spec any</span></div><div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div><div class="lookup">Look up</div><div style="flex: 1;"></div><a href="#" class="muted" style="font-size: 13px;">Help</a><div class="btn"><span class="avatar">M</span>Muleyoxo <span class="faint" style="font-size: 12px;">▾</span></div></div>
+    <div class="label" style="margin-bottom: 8px;">USER MENU — "Help" item above Settings</div>
+
+    <div class="menu"><div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; border-bottom: 1px solid #21262d;"><span class="avatar" style="width: 32px; height: 32px;">M</span><div style="display: flex; flex-direction: column; line-height: 1.3; font-size: 12px;"><span style="font-weight: 600; font-size: 13px;">Muleyoxo</span><span class="faint">@muleyoxo · admin</span></div></div><div style="padding: 10px 10px 7px; font-size: 12px;"><span class="mono">unlimited · admin</span></div><div style="border-top: 1px solid #21262d; margin: 4px 0;"></div><div class="menu-item">Help</div><div class="menu-item">Settings</div><div class="menu-item">Admin</div><div class="menu-item">Sign out</div><div style="border-top: 1px solid #21262d; margin: 4px 0;"></div><div class="faint" style="padding: 6px 10px 4px; font-size: 12px;">Privacy</div></div>
+    <div class="label" style="margin-bottom: 8px;">DEEP-DIVE PANEL HEADER and RUN LIST HEADER — same ? glyph</div>
+
+    <div class="inset" style="padding: 10px 14px; display: flex; align-items: center; gap: 10px;"><span class="h3">Defensive cooldowns</span><span class="muted" style="font-size: 12px;">Holy Paladin · usage vs capacity · deaths</span><span class="help-q">?</span></div>
+    <div class="inset" style="padding: 10px 14px; display: flex; align-items: center; gap: 10px;"><span class="h3">Runs</span><span class="muted" style="font-size: 12px;">best run per dungeon · timed / deaths / DTPS / avoidable / kicks / dispels</span><span class="help-q">?</span></div>
+    <div class="label" style="margin-bottom: 8px;">KEY-LEVEL SCALING section (#level-scale) — the factor applied to deaths per run, from the effective config</div>
+
+    <div class="card" style="display: flex; gap: 24px; align-items: flex-start;"><div style="flex: 1;"><div class="h2">Key-level scaling</div><div class="p">A death at +25 is not a death at +10. For the death-based sub-signals each run's count is multiplied by the factor below, read at that run's own key level (not the target), before the curve. Between two points the factor is interpolated; outside them it is clamped.</div></div><div class="curve"><div class="caps">key level → factor</div><svg width="200" height="52" viewBox="0 0 200 52"><line x1="4" y1="26.0" x2="196" y2="26.0" stroke="#21262d" stroke-dasharray="3 3"/><polyline points="4.0,12.8 49.2,19.4 94.4,26.0 139.5,30.4 196.0,33.7" fill="none" stroke="#58a6ff" stroke-width="1.5"/><circle cx="4.0" cy="12.8" r="2" fill="#58a6ff"/><circle cx="49.2" cy="19.4" r="2" fill="#58a6ff"/><circle cx="94.4" cy="26.0" r="2" fill="#58a6ff"/><circle cx="139.5" cy="30.4" r="2" fill="#58a6ff"/><circle cx="196.0" cy="33.7" r="2" fill="#58a6ff"/></svg><table><tr><td class="k">+8</td><td>→ ×1.6</td></tr><tr><td class="k">+12</td><td>→ ×1.3</td></tr><tr><td class="k">+16</td><td>→ ×1.0</td></tr><tr><td class="k">+20</td><td>→ ×0.8</td></tr><tr><td class="k">+25</td><td>→ ×0.65</td></tr></table></div></div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

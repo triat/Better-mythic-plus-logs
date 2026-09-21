@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { LOCALES, LOCALE_LABELS, LOCALE_NAMES, detectLocale, effectiveLocale, fmtDate, fmtNumber, isLocale, pluralCategory } from "./locale.ts";
+import { LOCALES, LOCALE_LABELS, LOCALE_NAMES, detectLocale, effectiveLocale, fmtNumber, isLocale, pluralCategory } from "./locale.ts";
 
 describe("locale", () => {
   test("two locales, labels and names", () => {
@@ -33,12 +33,6 @@ describe("locale", () => {
     expect(fmtNumber("en", 3.14159)).toBe("3.14");
     expect(fmtNumber("fr", 3600.7, 0)).toBe("3 601");
     expect(fmtNumber("en", -7)).toBe("−7");
-  });
-  test("fmtDate: day and short month", () => {
-    // Pinned to what Bun 1.3.4's ICU returns (en-GB abbreviates September as "Sept" since CLDR 42).
-    const ms = Date.UTC(2026, 8, 21, 12);
-    expect(fmtDate("en", ms)).toBe("21 Sept");
-    expect(fmtDate("fr", ms)).toBe("21 sept.");
   });
   test("pluralCategory: English one only for 1, French one for 0 and 1", () => {
     expect(pluralCategory("en", 0)).toBe("other");

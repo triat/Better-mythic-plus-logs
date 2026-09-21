@@ -145,7 +145,7 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mo
       </button>
       {tableOpen && d.defensives.map((u) => (
         <div key={u.id} className="dd-audit">
-          <span><NameCell t={t} id={u.id} name={u.name} origin={u.origin} suffix={false} /> <span className="faint">{u.kind} · {t("deepdive.cdOf", { cd: u.cooldownS })} · {t("deepdive.proposals.duration", { s: u.durationS })}{originSuffix(t, u.origin) ? ` · ${originSuffix(t, u.origin)}` : ""}</span></span>
+          <span><NameCell t={t} id={u.id} name={u.name} origin={u.origin} suffix={false} /> <span className="faint">{u.kind} · {t("deepdive.cdOf", { cd: String(u.cooldownS) })} · {t("deepdive.proposals.duration", { s: String(u.durationS) })}{originSuffix(t, u.origin) ? ` · ${originSuffix(t, u.origin)}` : ""}</span></span>
           {editing?.id === u.id ? (
             <span className="dd-form">
               <label>{t("deepdive.cd")}<input className="mono" value={editing.cd} onChange={(e) => setEditing({ id: u.id, cd: e.target.value })} size={4} />{t("deepdive.s")}</label>

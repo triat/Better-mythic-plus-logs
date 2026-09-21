@@ -121,7 +121,7 @@ export function Header(p: Props) {
             label={LOCALE_LABELS[locale]}
             className={"chip" + (locale !== detectLocale(navigator.language) ? " chip-on" : "")}
             head={t("common.locale.remembered")}
-            items={localeMenu(t, locale)}
+            items={localeMenu(locale)}
             onPick={(v) => setLocale(v as Locale)}
             title={t("common.locale.title")}
           />

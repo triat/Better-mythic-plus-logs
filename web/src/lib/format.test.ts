@@ -28,6 +28,8 @@ describe("format", () => {
   test("fmtAge in French", () => {
     const now = 1_000_000_000_000;
     expect(fmtAge(tFr, now - 3 * 86400e3, now)).toBe("il y a 3 j");
+    expect(fmtAge(tFr, now - 400 * 86400e3, now)).toBe("il y a 1 an");
+    expect(fmtAge(tFr, now - 800 * 86400e3, now)).toBe("il y a 2 ans");
   });
   test("fmtDuration", () => {
     expect(fmtDuration(1_796_000)).toBe("29:56");

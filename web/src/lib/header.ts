@@ -30,9 +30,9 @@ export const regionMenu = (t: T, effective: Region): MenuItem[] =>
 /**
  * The EN / FR chip menu (local mode header): two rows, `on` = the effective locale. The hints are the
  * languages' own names, so a reader who cannot read the current one still finds theirs; the component passes
- * `t("common.locale.remembered")` as the menu head. `t` is here for the view-model convention (prose models take it first).
+ * `t("common.locale.remembered")` as the menu head. No `t`: nothing here is translated.
  */
-export const localeMenu = (_t: T, current: Locale): MenuItem[] =>
+export const localeMenu = (current: Locale): MenuItem[] =>
   LOCALES.map((l) => ({ value: l, label: LOCALE_LABELS[l], hint: LOCALE_NAMES[l], on: l === current }));
 
 /** Picking this value reveals the free-text spec input instead of setting a spec. */

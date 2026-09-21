@@ -68,6 +68,9 @@ export const en = {
     reconnecting: "Reconnecting…",
     reconfigure: "Re-configure",
     quit: "Quit",
+    quitConfirm: "Quit bmpl? The server will stop and this page will no longer work.",
+    stopped: "bmpl stopped",
+    stoppedSub: "You can close this tab.",
     quotaShare: "Your share of the shared Warcraft Logs budget",
     ownClientTitle: "Your Warcraft Logs client",
     busy: { lookingUp: "looking up {name}…", refreshing: "refreshing {name}…" },
@@ -100,6 +103,7 @@ export const en = {
     close: "Close tab",
     closeAll: "Close all tabs",
     clear: "Clear {n}",
+    clearConfirm: "{count, plural, one {Close the only tab?} other {Close all # tabs?}}",
     refresh: "↻ Refresh",
     refreshTitle: "Re-fetch the active tab",
   },
@@ -255,6 +259,7 @@ export const en = {
     profile: "profile", none: "(no recent runs)", timed: "✓+{chests}", depleted: "✗ depleted", open: "Open on Raider.IO",
   },
   compare: {
+    building: "building compare view…",
     evaluation: "Evaluation", score: "Score", na: "n/a", summary: "Summary", target: "Target level", auto: " auto",
     covered: "Dungeons covered", atTarget: "Dungeons ≥ target",
     medianKey: "Median key level", median: "Median {metric}", medianOutput: "Median output", medianParse: "Median parse %", avgDeaths: "Avg deaths",
@@ -401,6 +406,7 @@ export const en = {
       noLimit: "{pts} · no limit", ofLimit: "{pts} / {limit}",
       last24: "Last 24 h · pts per hour", barTitle: "{hour}:00 · {pts} pts", peak: "peak {pts} pts at {hour}:00", noPoints24: "no points spent in the last 24 h",
       minAgo: "{n} min ago",
+      userRef: "user #{id}",
     },
     queue: {
       title: "Proposal queue",

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
-import { canAfford, quotaTooltip } from "./lib/quota.ts";
+import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
@@ -103,9 +103,10 @@ function SettingsLocale({ children }: { children: ReactNode }) {
   const persist = useCallback((l: Locale) => update({ locale: l }), [update]);
   return <LocaleProvider saved={settings.locale} persist={persist}>{children}</LocaleProvider>;
 }
-function Loading() {
+/** The app-level spinner (padded, before anything else exists) or, `inline`, the one a content area shows while its payload loads. */
+function Loading({ inline = false }: { inline?: boolean }) {
   const { t } = useT();
-  return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> {t("common.loading")}</div>;
+  return <div className="muted" style={inline ? undefined : { padding: 24 }}><span className="spinner" /> {t("common.loading")}</div>;
 }
 /** `deniedNotice`/`signInNote` need `t`, which only exists inside the `LocaleProvider` subtree — a plain
  * component (not a value computed directly in `App`'s render) so the hook has somewhere to run. */
@@ -131,14 +132,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const [ownClient, setOwnClient] = useState<OwnClientView | null>(initialOwnClient);
   const menu = me ? menuModel(t, me, quota, ownClient) : null;
   // The toast action on a quota/budget refusal: label from the dictionary, href fixed (session.ts keeps only that).
-  const ownClientAction: ToastAction = { label: t("errors.ownClientAction"), href: OWN_CLIENT_GUIDE.href };
-  /** A quota/budget 429's dictionary message; falls back to the server's English text for any other failure. */
-  const quotaOrBudgetMessage = useCallback((r: { code: "quota" | "budget" | null; quota?: QuotaInfo; budget?: QuotaInfo; error: string }): string => {
-    const min = (s: number) => Math.max(1, Math.ceil(s / 60));
-    if (r.code === "quota" && r.quota) return t("errors.quota", { used: r.quota.used, limit: r.quota.limit ?? 0, min: min(r.quota.resetInS) });
-    if (r.code === "budget" && r.budget) return t("errors.budget", { left: Math.max(0, (r.budget.limit ?? 0) - r.budget.used), min: min(r.budget.resetInS) });
-    return r.error;
-  }, [t]);
+  const ownClientAction = useMemo<ToastAction>(() => ({ label: t("errors.ownClientAction"), href: OWN_CLIENT_GUIDE.href }), [t]);
   // Admins see "N pending proposals" next to the Admin item; counted when the menu opens (0 WCL pts, SQLite only).
   const [pendingProposals, setPendingProposals] = useState<number | null>(null);
   const onMenuOpen = useCallback(async () => {
@@ -238,7 +232,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     const r = await api.lookup({ ...req, refresh });
     setBusy(null);
     // A refusal that carries the member's own quota numbers gets the way out: the guide to an own client.
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(r), r.quota ? ownClientAction : null); return; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
@@ -249,7 +243,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!refresh && r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
     touch();
     await loadHistory();
-  }, [loadHistory, updateSettings, t, quotaOrBudgetMessage, ownClientAction]);
+  }, [loadHistory, updateSettings, t, ownClientAction]);
 
   const onLookup = () => void runLookup(formToRequest(form, yourKey, region), false);
   const onRefresh = () => {
@@ -271,10 +265,10 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
 
   /** Re-run the active tab's lookup for "your key" and drop the old tab (the cache key includes the level). */
   const reevaluate = async () => {
-    const t = tabs.find((x) => x.key === activeKey);
-    if (!t) return;
-    const oldKey = t.key;
-    await runLookup({ ...t.request, level: yourKey }, false);
+    const tab = tabs.find((x) => x.key === activeKey);
+    if (!tab) return;
+    const oldKey = tab.key;
+    await runLookup({ ...tab.request, level: yourKey }, false);
     // runLookup activated the new key; the old entry is redundant now.
     await api.removeHistory(oldKey);
     payloads.current.delete(oldKey);
@@ -282,7 +276,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   };
 
   const clearAll = async () => {
-    if (!window.confirm(`Close all ${tabs.length} tabs?`)) return;
+    if (!window.confirm(t("tabs.clearConfirm", { count: tabs.length }))) return;
     await api.clearHistory();
     payloads.current.clear();
     setActiveKey(null);
@@ -305,7 +299,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   };
 
   const onQuit = async () => {
-    if (!window.confirm("Quit bmpl? The server will stop and this page will no longer work.")) return;
+    if (!window.confirm(t("header.quitConfirm"))) return;
     await api.quit();
     setStopped(true);
   };
@@ -316,7 +310,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     location.assign("/");
   };
 
-  const activeTab = tabs.find((t) => t.key === activeKey) ?? null;
+  const activeTab = tabs.find((x) => x.key === activeKey) ?? null;
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
 
   // --- run deep-dive ---
@@ -336,14 +330,14 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     const key = `${run.reportCode}:${run.fightID}`;
     setAnalyzing(key);
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(quotaOrBudgetMessage(r), r.quota ? ownClientAction : null); return false; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return false; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
     setAnalyzing(null);
     return true;
-  }, [activePayload, reloadActive, quotaOrBudgetMessage, ownClientAction]);
+  }, [activePayload, reloadActive, t, ownClientAction]);
 
   const analyzeAll = useCallback(async () => {
     if (!activePayload) return;
@@ -370,7 +364,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     mode: proposalMode(status, me),
   };
 
-  if (stopped) return <main className="stopped"><h2>bmpl stopped</h2><p className="muted">You can close this tab.</p></main>;
+  if (stopped) return <main className="stopped"><h2>{t("header.stopped")}</h2><p className="muted">{t("header.stoppedSub")}</p></main>;
 
   const empty = tabs.length === 0;
   // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
@@ -417,7 +411,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
             {!empty && !showCompare && activePayload && (
               <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
             )}
-            {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
+            {!empty && !showCompare && !activePayload && activeKey && <Loading inline />}
             {showCompare && (
               <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => void showTab(k)} />
             )}
@@ -436,6 +430,7 @@ function CompareLoader(p: {
   fetchPayload: (key: string) => Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }>;
   onJump: (key: string) => void;
 }) {
+  const { t } = useT();
   const [, bump] = useState(0);
   useEffect(() => {
     let alive = true;
@@ -443,8 +438,8 @@ function CompareLoader(p: {
     return () => { alive = false; };
   }, [p.keys.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
   const entries = p.keys
-    .map((k) => ({ item: p.tabs.find((t) => t.key === k), payload: p.cache.get(k) }))
+    .map((k) => ({ item: p.tabs.find((x) => x.key === k), payload: p.cache.get(k) }))
     .filter((e): e is { item: HistoryItem; payload: LookupPayload } => !!e.item && !!e.payload);
-  if (entries.length < 2) return <div className="muted"><span className="spinner" /> building compare view…</div>;
+  if (entries.length < 2) return <div className="muted"><span className="spinner" /> {t("compare.building")}</div>;
   return <Compare entries={entries} onJump={p.onJump} />;
 }

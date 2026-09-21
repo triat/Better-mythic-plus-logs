@@ -27,6 +27,20 @@ export function quotaTooltip(t: T, q: QuotaInfo | null): string {
     : t("header.quota.tooltipNoReset");
 }
 
+/** A refused call as `api.ts` returns it: the 429 kind (null for anything else), the numbers it carried, the server's English message. */
+export interface QuotaFailure { code: "quota" | "budget" | null; quota?: QuotaInfo; budget?: QuotaInfo; error: string }
+
+/**
+ * A quota/budget 429's dictionary message; falls back to the server's English text for any other failure.
+ * Points are REALs on the wire (the meter estimates fractions): rounded here as the server did in its own message.
+ */
+export function quotaOrBudgetMessage(t: T, r: QuotaFailure): string {
+  const min = (s: number) => Math.max(1, Math.ceil(s / 60));
+  if (r.code === "quota" && r.quota) return t("errors.quota", { used: Math.round(r.quota.used), limit: Math.round(r.quota.limit ?? 0), min: min(r.quota.resetInS) });
+  if (r.code === "budget" && r.budget) return t("errors.budget", { left: Math.round(Math.max(0, (r.budget.limit ?? 0) - r.budget.used)), min: min(r.budget.resetInS) });
+  return r.error;
+}
+
 /** A 429 body from the quota gate: `error: "quota"` carries the member's own numbers, `error: "budget"` the client's — only the former updates the label. */
 export function quotaFromFailure(data: unknown): QuotaInfo | null {
   if (!data || typeof data !== "object") return null;

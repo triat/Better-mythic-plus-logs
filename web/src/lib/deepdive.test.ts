@@ -191,6 +191,9 @@ describe("hosted panel: labels, dots, proposals", () => {
     expect(patchText(tFr, { id: 1, ignore: true })).toBe("ignorer");
     expect(patchText(tFr, { id: 1, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 })).toBe("+ minor, cd 25 s, 6 s");
     expect(patchText(tFr, { id: 1 })).toBe("aucun changement");
+    // Seconds are never thousands-grouped, in either language (the old English printed them raw).
+    expect(patchText(tFr, { id: 1, cooldownS: 1200 })).toBe("cd 1200 s");
+    expect(patchText(tEn, { id: 1, cooldownS: 1200 })).toBe("cd 1200 s");
   });
   test("proposalLines: name from the patch or the table, status with age and note", () => {
     const now = 1_000_000 + 2 * 3600_000;

@@ -47,7 +47,7 @@ export function topConsumers(t: T, u: AdminUsage | null, users: AdminUser[]): Co
   return u.users.map((r) => {
     const user = users.find((x) => x.id === r.userId);
     const isAdmin = (user?.role ?? r.role) === "admin";
-    const name = user?.globalName ?? user?.username ?? r.username ?? `user #${r.userId}`;
+    const name = user?.globalName ?? user?.username ?? r.username ?? t("admin.gauge.userRef", { id: String(r.userId) });
     return {
       userId: r.userId, name, initials: initialsOf(name), avatarUrl: user?.avatarUrl ?? "", isAdmin,
       pct: Math.min(100, Math.round((r.points / u.limitPerUser) * 100)),
@@ -75,10 +75,10 @@ export interface DiffRow { field: string; from: string; to: string }
 export function diffRows(t: T, p: AdminProposal): DiffRow[] {
   const patch: OverrideEntry = p.patch;
   const cur = p.current;
-  const secs = (n: number | undefined): string => (n === undefined ? "—" : t("admin.queue.seconds", { n }));
+  const secs = (n: number | undefined): string => (n === undefined ? "—" : t("admin.queue.seconds", { n: String(n) }));
   const notInTable = t("admin.queue.notInTable");
   if (patch.ignore) {
-    const from = cur ? t("admin.queue.listed", { kind: cur.kind, cd: cur.cooldownS }) : p.ignored ? t("admin.queue.alreadyIgnored") : notInTable;
+    const from = cur ? t("admin.queue.listed", { kind: cur.kind, cd: String(cur.cooldownS) }) : p.ignored ? t("admin.queue.alreadyIgnored") : notInTable;
     return [{ field: t("admin.queue.field.ignore"), from, to: t("admin.queue.ignoredForSpec") }];
   }
   const rows: DiffRow[] = [];
@@ -220,7 +220,7 @@ export function auditDetail(t: T, action: AuditAction, detail: Record<string, un
         used: num(detail.used), limit: num(detail.limit), min: minutes(num(detail.resetInS)),
       });
     case "rate_limited":
-      return t("admin.audit.detail.rateLimited", { limit: num(detail.limit), window: num(detail.windowS), retry: num(detail.retryAfterS) });
+      return t("admin.audit.detail.rateLimited", { limit: String(num(detail.limit)), window: String(num(detail.windowS)), retry: String(num(detail.retryAfterS)) });
     case "origin_rejected":
       return `Origin ${str(detail.origin) || "—"}${detail.fetchSite ? ` · Sec-Fetch-Site ${str(detail.fetchSite)}` : ""}`;
     case "login":

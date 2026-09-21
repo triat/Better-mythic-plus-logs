@@ -59,7 +59,7 @@ const usageRow = (t: T, u: DefensiveUse): UsageRow => {
   return {
     id: u.id, name: u.name, kind: u.kind, counts: `${u.casts} / ${u.capacity}`, pct,
     pctText: countsUsage ? `${pct}%` : "—", cls: countsUsage ? usageTone(pct) : "faint",
-    cd: t("deepdive.cdOf", { cd: u.cooldownS }) + (u.observedMinIntervalS !== null ? t("deepdive.seenMin", { s: u.observedMinIntervalS }) : ""),
+    cd: t("deepdive.cdOf", { cd: String(u.cooldownS) }) + (u.observedMinIntervalS !== null ? t("deepdive.seenMin", { s: String(u.observedMinIntervalS) }) : ""),
     mismatch: u.cdMismatch, origin: u.origin, countsUsage,
   };
 };
@@ -71,7 +71,7 @@ const deathLine = (t: T, x: DeathAnalysis, idOf: (name: string) => number | null
   states: [
     ...x.active.map((n) => ({ id: idOf(n), name: n, text: t("deepdive.active"), cls: "tone-good" })),
     ...x.available.map((n) => ({ id: idOf(n), name: n, text: t("deepdive.available"), cls: "tone-bad" })),
-    ...x.onCooldown.map((c) => ({ id: idOf(c.name), name: c.name, text: t("deepdive.onCd", { s: c.readyInS }), cls: "faint" })),
+    ...x.onCooldown.map((c) => ({ id: idOf(c.name), name: c.name, text: t("deepdive.onCd", { s: String(c.readyInS) }), cls: "faint" })),
   ],
 });
 
@@ -130,8 +130,8 @@ export function patchText(t: T, p: OverrideEntry): string {
   if (p.ignore) return t("deepdive.proposals.ignore");
   const parts: string[] = [];
   if (p.kind) parts.push(t("deepdive.proposals.kind", { kind: p.kind }));
-  if (p.cooldownS !== undefined) parts.push(t("deepdive.proposals.cd", { cd: p.cooldownS }));
-  if (p.durationS !== undefined && p.kind) parts.push(t("deepdive.proposals.duration", { s: p.durationS }));
+  if (p.cooldownS !== undefined) parts.push(t("deepdive.proposals.cd", { cd: String(p.cooldownS) }));
+  if (p.durationS !== undefined && p.kind) parts.push(t("deepdive.proposals.duration", { s: String(p.durationS) }));
   return parts.length > 0 ? parts.join(", ") : t("deepdive.proposals.noChange");
 }
 
@@ -168,7 +168,7 @@ export function panelModel(t: T, d: RunDefensives, now = Date.now(), tableWarnin
     majorsText: d.majorUsage === null ? null : t("deepdive.majorsUsed", { pct: Math.round(d.majorUsage * 100) }),
     deathsHeadline: d.deaths.length === 0 ? t("deepdive.noDeaths") : t("deepdive.deathsAvailable", { n: d.avoidableDeaths, total: d.countedDeaths }),
     deaths: d.deaths.map((x) => deathLine(t, x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
-    unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: t("deepdive.uptime", { casts: u.casts, s: u.uptimeS }) })),
+    unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: t("deepdive.uptime", { casts: String(u.casts), s: String(u.uptimeS) }) })),
     specClass,
     tableParts: tableUsedParts(t, d.defensives, specClass),
   };

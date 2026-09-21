@@ -26,10 +26,6 @@ export function fmtNumber(locale: Locale, n: number, maxFractionDigits = 2): str
   return (n < 0 ? "−" : "") + s;
 }
 
-/** "21 Sept" / "21 sept." — the run list and the deep-dive ages that show a date. */
-export const fmtDate = (locale: Locale, ms: number): string =>
-  new Intl.DateTimeFormat(INTL_TAG[locale], { day: "numeric", month: "short", timeZone: "UTC" }).format(ms);
-
 /** ICU categories we use: French says "1 run" for 0 and 1, English only for 1. */
 export const pluralCategory = (locale: Locale, n: number): "one" | "other" =>
   new Intl.PluralRules(INTL_TAG[locale]).select(n) === "one" ? "one" : "other";

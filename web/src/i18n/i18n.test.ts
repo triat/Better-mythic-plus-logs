@@ -14,7 +14,7 @@ describe("dictionaries", () => {
     const get = (d: unknown, key: string) => key.split(".").reduce<any>((o, k) => o[k], d) as string;
     for (const key of keys) expect({ key, ph: placeholders(get(fr, key)) }).toEqual({ key, ph: placeholders(get(en, key)) });
   });
-  test("no message is empty and none is left in English in fr where en has letters", () => {
+  test("no message is empty in either dictionary", () => {
     for (const key of leafKeys(fr)) {
       const get = (d: unknown) => key.split(".").reduce<any>((o, k) => o[k], d) as string;
       expect(get(fr).trim().length).toBeGreaterThan(0);

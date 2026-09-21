@@ -42,6 +42,11 @@ describe("gauge", () => {
     expect(gaugeModel(tFr, null, NOW).sub).toBe("aucun appel WCL observé depuis le démarrage du serveur");
     expect(topConsumers(tFr, usage, users)[1]!.text).toBe("181 · sans limite");
   });
+  test("top consumers: a spender the user list no longer knows is named by id", () => {
+    const gone = { ...usage, users: [{ userId: 9, discordId: "99", username: null, role: "member" as const, points: 10 }] };
+    expect(topConsumers(tEn, gone, users)[0]!.name).toBe("user #9");
+    expect(topConsumers(tFr, gone, users)[0]!.name).toBe("membre #9");
+  });
   test("hour bars: 24 slots ending now, missing hours at 0, heights relative to the peak, current hour marked", () => {
     const bars = hourBars(usage, NOW);
     expect(bars).toHaveLength(24);

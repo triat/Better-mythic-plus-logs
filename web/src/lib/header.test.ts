@@ -51,10 +51,10 @@ describe("header chips", () => {
 
 describe("localeMenu", () => {
   test("two entries, the current one on, labels from the locale tables", () => {
-    expect(localeMenu(tEn, "fr")).toEqual([
+    expect(localeMenu("fr")).toEqual([
       { value: "en", label: "EN", hint: "English", on: false },
       { value: "fr", label: "FR", hint: "Français", on: true },
     ]);
-    expect(localeMenu(tEn, "en").map((i) => i.on)).toEqual([true, false]);
+    expect(localeMenu("en").map((i) => i.on)).toEqual([true, false]);
   });
 });

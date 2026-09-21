@@ -28,7 +28,7 @@ describe("formatMessage", () => {
     expect(formatMessage("en", "for a +{level}", { level: 21 })).toBe("for a +21");
     expect(formatMessage("fr", "{pts} pts", { pts: 1412 })).toBe("1 412 pts");
     expect(formatMessage("en", "{a} and {b}", { a: "x" })).toBe("x and {b}");
-    expect(formatMessage("fr", "{v} %", { v: 12.5 })).toBe("12,5 %");
+    expect(formatMessage("fr", "{v}\u202f%", { v: 12.5 })).toBe("12,5\u202f%");
   });
   test("plural: one / other with # as the formatted count", () => {
     const m = "{count, plural, one {# run scored} other {# runs scored}}";

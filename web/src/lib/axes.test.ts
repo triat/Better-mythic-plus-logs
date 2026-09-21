@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import type { AxisScore, Evaluation, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
-import { DEFAULT_CONFIG, validateConfig } from "../../../src/evaluation/config.ts";
-import { evaluate } from "../../../src/evaluation/evaluate.ts";
-import { EVIDENCE_SOURCES } from "../../../src/evaluation/axes/index.ts";
-import { fixturePayload } from "../../../test/evaluation/helpers.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { axisInfo, axisRows, axisWeightLabel, evidenceText, heroStats, radarPoints } from "./axes.ts";
@@ -67,7 +63,7 @@ describe("axes view model", () => {
     const rows = axisRows(tFr, "fr", { ...ev, analyzedRuns: 3 });
     expect(rows.map((r) => r.label)).toEqual(["Survie", "Utilité", "Throughput", "Régularité", "Préparation", "Expérience"]);
     expect(rows[0]!.badge).toBe("3 runs analysés");
-    expect(rows[0]!.top.map((e) => e.label)).toEqual(["0,2 mort(s) individuelle(s) / run", "évitable +12 % vs pairs"]);
+    expect(rows[0]!.top.map((e) => e.label)).toEqual(["0,2 mort(s) individuelle(s) / run", "évitable +12 % vs pairs"]);
     expect(rows[3]!.note).toBe("pas assez de données pour cet axe");
     expect(rows[1]!.note).toBe("aucun indice");
   });
@@ -118,40 +114,26 @@ describe("axes view model", () => {
 });
 
 describe("evidenceText", () => {
-  const probe = (source: string, value = 1.25): Evidence => ({ source, value, delta: 0, label: "", extra: { runs: 2, count: 1, total: 3 } });
-
-  test("every EVIDENCE_SOURCES entry has a message in both languages (never a bare key)", () => {
-    for (const source of EVIDENCE_SOURCES) {
-      for (const [t, locale] of [[tEn, "en"], [tFr, "fr"]] as const) {
-        const out = evidenceText(t, locale, probe(source));
-        expect(out, `${locale} ${source}`).not.toContain("evidence.");
-        expect(out.length, `${locale} ${source}`).toBeGreaterThan(0);
-      }
-    }
-  });
-  test("English is byte-identical to the server label for every evidence entry of the fixture evaluations", async () => {
-    const cfg = validateConfig(DEFAULT_CONFIG);
-    const all = [evaluate(await fixturePayload("s1-tank", false), cfg), evaluate(await fixturePayload("s2-healer", true), cfg)]
-      .flatMap((e) => e.axes.flatMap((a) => a.evidence));
-    expect(all.length).toBeGreaterThan(20);
-    expect(new Set(all.map((e) => e.source)).size).toBeGreaterThan(15);
-    for (const e of all) expect(evidenceText(tEn, "en", e), e.source).toBe(e.label);
-  });
+  // The byte-identity check against real server labels (evaluate over the fixtures) and the EVIDENCE_SOURCES
+  // coverage check live in test/evaluation/evidence-text.test.ts: tests under web/src import src/ types only.
   test("rounding per source, in both languages", () => {
     const line = (source: EvidenceSource, value: number, extra?: Evidence["extra"]) =>
       [tEn, tFr].map((t, i) => evidenceText(t, i === 0 ? "en" : "fr", { source, value, delta: 0, label: "", ...(extra ? { extra } : {}) }));
     expect(line("survival.individualDeaths", 0)).toEqual(["0.0 individual deaths/run", "0,0 mort(s) individuelle(s) / run"]);
-    expect(line("survival.avoidableVsPeers", -11.4)).toEqual(["avoidable −11% vs peers", "évitable −11 % vs pairs"]);
-    expect(line("survival.dtpsVsPeers", 4.6)).toEqual(["DTPS +5% vs peers", "DTPS +5 % vs pairs"]);
-    expect(line("survival.defensiveUsage", 0.6, { runs: 1 })).toEqual(["majors used 60% of possible (1 run)", "majors utilisés à 60 % du possible (1 run)"]);
-    expect(line("survival.defensiveUsage", 0.6, { runs: 3 })).toEqual(["majors used 60% of possible (3 runs)", "majors utilisés à 60 % du possible (3 runs)"]);
+    expect(line("survival.avoidableVsPeers", -11.4)).toEqual(["avoidable −11% vs peers", "évitable −11 % vs pairs"]);
+    expect(line("survival.dtpsVsPeers", 4.6)).toEqual(["DTPS +5% vs peers", "DTPS +5 % vs pairs"]);
+    expect(line("survival.defensiveUsage", 0.6, { runs: 1 })).toEqual(["majors used 60% of possible (1 run)", "majors utilisés à 60 % du possible (1 run)"]);
+    expect(line("survival.defensiveUsage", 0.6, { runs: 3 })).toEqual(["majors used 60% of possible (3 runs)", "majors utilisés à 60 % du possible (3 runs)"]);
     expect(line("survival.avoidableDeaths", 2 / 3, { count: 2, total: 3 })).toEqual(["2/3 deaths with a defensive available", "2/3 morts avec un defensive dispo"]);
-    expect(line("utility.kicksAbsolute", 0.2)).toEqual(["20% of kick capacity used", "20 % de la capacité de kick utilisée"]);
+    expect(line("utility.kicksAbsolute", 0.2)).toEqual(["20% of kick capacity used", "20 % de la capacité de kick utilisée"]);
     expect(line("utility.dispels", 9)).toEqual(["9.0 dispels/run", "9,0 dispels / run"]);
-    expect(line("throughput.medianParse", 66.6)).toEqual(["median parse 67%", "parse médian 67 %"]);
+    expect(line("throughput.medianParse", 66.6)).toEqual(["median parse 67%", "parse médian 67 %"]);
+    // French percent: a narrow no-break space (U+202F) before the sign, carried by the dictionary string.
+    expect(line("throughput.medianParse", 66.6)[1]).toContain("\u202f%");
+    expect(line("throughput.medianParse", 66.6)[0]).not.toContain(" %");
     expect(line("consistency.deathsSpread", 1.25)).toEqual(["deaths spread ±1.3", "écart de morts ±1,3"]);
     expect(line("preparation.ilvlVsLevel", -4)).toEqual(["ilvl −4 vs expected", "ilvl −4 vs attendu"]);
-    expect(line("experience.coverage", 1)).toEqual(["100% dungeons covered", "100 % des donjons couverts"]);
+    expect(line("experience.coverage", 1)).toEqual(["100% dungeons covered", "100 % des donjons couverts"]);
     expect(line("experience.medianVsTarget", 0)).toEqual(["median key +0 vs target", "key médiane +0 vs cible"]);
     expect(line("experience.activity", 10)).toEqual(["10 runs in last 7 days", "10 runs sur les 7 derniers jours"]);
     expect(line("experience.prevSeasonBonus", 4152.7)).toEqual(["previous season 4153", "saison précédente 4153"]);

@@ -63,7 +63,7 @@ describe("signalParts", () => {
     ]);
     const s = sig({ deaths: { count: 0, groupTotal: 0, events: [] }, interrupts: { count: 8, kickCooldownS: 15, capacity: 20, usage: 0.4, peer: { median: 0.3, count: 3 } } });
     expect(signalParts(tFr, s).map((p) => p.text)).toContain("0 mort");
-    expect(signalParts(tFr, s).map((p) => p.text)).toContain("kicks 8/20 (pairs 30 %)");
+    expect(signalParts(tFr, s).map((p) => p.text)).toContain("kicks 8/20 (pairs 30 %)");
   });
 });
 
@@ -102,7 +102,7 @@ describe("runRows", () => {
     const p = payload([run()]);
     expect(missingDungeons(p)).toEqual(["Den of Nalorakk"]);
     expect(runsHeadline(tEn, p)).toBe("1/2 dungeons · median +21, 312.0k hps, 79.4% · 1/2 at or above +21");
-    expect(runsHeadline(tFr, p)).toBe("1/2 donjons · médiane +21, 312.0k hps, 79.4 % · 1/2 au niveau +21 ou plus");
+    expect(runsHeadline(tFr, p)).toBe("1/2 donjons · médiane +21, 312.0k hps, 79.4 % · 1/2 au niveau +21 ou plus");
   });
   test("French rows: keystone, unranked, age", () => {
     const rows = runRows(tFr, payload([

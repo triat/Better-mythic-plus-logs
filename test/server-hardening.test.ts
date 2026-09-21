@@ -141,7 +141,7 @@ describe("secrets hygiene", () => {
   test("a handler that throws answers a bare Internal error and logs server_error", async () => {
     // A stored payload that is not JSON makes the history read throw inside the handler
     // (`JSON.parse` in src/hosted/history.ts `entry()`), after the auth gate and inside the audit scope.
-    const request = { character: "Corrupt-Realm", level: 10, spec: null, metric: null };
+    const request = { character: "Corrupt-Realm", level: 10, spec: null, metric: null, region: "eu" as const };
     const key = cacheKey(request);
     (await getStore())._db.run(
       "INSERT INTO user_history (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",

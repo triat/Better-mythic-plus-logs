@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { DEEPDIVE_BODY, LOOKUP_BODY, WCL_CLIENT_BODY, bool, int, num, nullable, obj, oneOf, opt, parseBody, str } from "../../src/server/validate.ts";
+import { DEEPDIVE_BODY, LOOKUP_BODY, WATCH_BODY, WCL_CLIENT_BODY, bool, int, num, nullable, obj, oneOf, opt, parseBody, str } from "../../src/server/validate.ts";
 
 const body = (v: unknown, raw = false) => new Request("http://x/api", { method: "POST", body: raw ? (v as string) : JSON.stringify(v), headers: { "Content-Type": "application/json" } });
 
@@ -43,6 +43,14 @@ describe("request schemas", () => {
     expect(await parseBody(body({ character: "a", evil: 1 }), LOOKUP_BODY)).toEqual({ ok: false, error: "Unexpected field `evil`" });
     expect(await parseBody(body("{not json", true), LOOKUP_BODY)).toEqual({ ok: false, error: "Invalid JSON body" });
     expect(await parseBody(body([1]), LOOKUP_BODY)).toEqual({ ok: false, error: "Body must be a JSON object" });
+  });
+  test("lookup and watch: region is optional and one of the four WCL regions, lower-case", async () => {
+    expect(await parseBody(body({ character: "a", region: "us" }), LOOKUP_BODY)).toEqual({ ok: true, value: { character: "a", region: "us" } });
+    expect(await parseBody(body({ character: "a" }), LOOKUP_BODY)).toEqual({ ok: true, value: { character: "a" } });
+    expect(await parseBody(body({ character: "a", region: "cn" }), LOOKUP_BODY)).toEqual({ ok: false, error: "`region` must be one of eu, us, kr, tw" });
+    expect(await parseBody(body({ character: "a", region: "EU" }), LOOKUP_BODY)).toEqual({ ok: false, error: "`region` must be one of eu, us, kr, tw" });
+    expect(await parseBody(body({ region: "tw" }), WATCH_BODY)).toEqual({ ok: true, value: { region: "tw" } });
+    expect(await parseBody(body({ region: "cn" }), WATCH_BODY)).toEqual({ ok: false, error: "`region` must be one of eu, us, kr, tw" });
   });
   test("deepdive: fightID must be a positive integer, reportCode alphanumeric", async () => {
     expect(await parseBody(body({ reportCode: "ab12CD", fightID: 7, character: "Biwa" }), DEEPDIVE_BODY)).toEqual({ ok: true, value: { reportCode: "ab12CD", fightID: 7, character: "Biwa" } });

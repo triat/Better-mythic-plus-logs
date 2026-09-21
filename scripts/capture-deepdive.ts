@@ -4,6 +4,7 @@
 import { SHIPPED, loadDefensives, specDefensives } from "../src/deepdive/table.ts";
 import { playerOf } from "../src/deepdive/player.ts";
 import { fetchRawDeepDive } from "../src/deepdive/wcl.ts";
+import { config } from "../src/config.ts";
 import { fetchMplusData } from "../src/mplus.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { parseNameRealm } from "../src/util.ts";
@@ -16,7 +17,7 @@ const fightID = Number.parseInt(fightStr, 10);
 const store = await getStore();
 const report = store.getWclRun(code, fightID);
 if (!report) { console.error("run not in cache — run `bmpl lookup` for this character first"); process.exit(1); }
-const data = await fetchMplusData(target.name, target.realm, {});
+const data = await fetchMplusData(target.name, target.realm, { region: config.region });
 const run = data.runs.find((r) => r.reportCode === code && r.fightID === fightID);
 if (!run) { console.error("run not in this character's rankings"); process.exit(1); }
 const player = playerOf(report, data.character.name)!;

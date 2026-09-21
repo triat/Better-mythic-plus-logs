@@ -7,8 +7,9 @@ import { openHosted } from "../../src/hosted/db.ts";
 import { HISTORY_MAX_PER_USER, SHARED_HISTORY_TTL_MS, openUserHistory } from "../../src/hosted/history.ts";
 import { cacheKey } from "../../src/server-history.ts";
 import type { HistoryRecord } from "../../src/server-history.ts";
+import type { Region } from "../../src/wow/regions.ts";
 
-const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null });
+const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null, region: "eu" as Region });
 const entry = (over: Partial<HistoryRecord> = {}): HistoryRecord => ({
   result: { any: "payload" },
   label: "Muleyoxo-Silvermoon",
@@ -93,6 +94,15 @@ describe("SQLite history — same semantics as the in-memory History", () => {
     expect(item).toEqual({ key: e.key, request: req("A-B", 10), fetchedAt: 4242, label: "A-B", charClass: 7, spec: "Holy", targetLevel: 10, targetAutoDetected: false });
     expect("result" in item!).toBe(false);
     expect(h.get(e.key)).toEqual({ ...item!, result: { v: 1 } });
+  });
+
+  test("a stored request that predates the region reads as the instance region", () => {
+    const { db, a: h, ua } = setup();
+    const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10 }));
+    db.run("UPDATE user_history SET request = ? WHERE user_id = ? AND key = ?", [JSON.stringify({ character: "A-B", level: 10, spec: null, metric: null }), ua.id, e.key]);
+    expect(h.list()[0]!.request.region).toBe("eu");
+    expect(h.get(e.key)!.request.region).toBe("eu");
+    expect(h.remove(e.key)).toBe(true); // forget() re-derives the auto alias from the stored request
   });
 });
 

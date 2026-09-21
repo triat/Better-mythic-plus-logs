@@ -1,10 +1,10 @@
-import { config } from "./config.ts";
 import { type Metric, isHealerSpec, metricForSpec } from "./roles.ts";
 import type { RunSignals } from "./signals/types.ts";
 import { realmToSlug } from "./util.ts";
 import { gql } from "./wcl/client.ts";
 import { CHARACTER_METRIC_PROBE_QUERY, RATE_LIMIT, ZONES_QUERY } from "./wcl/queries.ts";
 import type { ZonesData } from "./wcl/types.ts";
+import type { Region } from "./wow/regions.ts";
 
 export interface MPlusRun {
   encounterID: number;
@@ -177,6 +177,7 @@ interface ProbeResult {
 async function probe(
   name: string,
   realm: string,
+  region: Region,
   zone: CurrentMplusZone,
 ): Promise<ProbeResult> {
   const serverSlug = realmToSlug(realm);
@@ -195,7 +196,7 @@ async function probe(
   }>(CHARACTER_METRIC_PROBE_QUERY, {
     name,
     serverSlug,
-    serverRegion: config.region.toUpperCase(),
+    serverRegion: region.toUpperCase(),
     zoneID: zone.id,
     partition: zone.partition,
   });
@@ -215,6 +216,8 @@ const hasScoredSpec = (z: ZoneRankingsJson | null): boolean =>
   (z?.allStars?.length ?? 0) > 0;
 
 export interface FetchOptions {
+  /** The WCL/Raider.IO region of the character (lower-case; upper-cased for WCL's `serverRegion`). */
+  region: Region;
   metric?: Metric;
   specFilter?: string | null;
   zone?: CurrentMplusZone;
@@ -223,15 +226,15 @@ export interface FetchOptions {
 export async function fetchMplusData(
   name: string,
   realm: string,
-  opts: FetchOptions = {},
+  opts: FetchOptions,
 ): Promise<MPlusData> {
   const serverSlug = realmToSlug(realm);
   const activeZone = opts.zone ?? (await getCurrentMplusZone());
 
-  const probed = await probe(name, realm, activeZone);
+  const probed = await probe(name, realm, opts.region, activeZone);
   if (!probed.character) {
     throw new Error(
-      `Character not found: ${name}-${realm} (slug: ${serverSlug}, region: ${config.region})`,
+      `Character not found: ${name}-${realm} (slug: ${serverSlug}, region: ${opts.region})`,
     );
   }
 
@@ -302,7 +305,7 @@ export async function fetchMplusData(
   }>(multiQuery, {
     name,
     serverSlug,
-    serverRegion: config.region.toUpperCase(),
+    serverRegion: opts.region.toUpperCase(),
     partition: activeZone.partition,
     metric,
   });

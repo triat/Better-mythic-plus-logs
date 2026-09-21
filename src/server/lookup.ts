@@ -1,4 +1,4 @@
-import { hasCredentials } from "../config.ts";
+import { config, hasCredentials } from "../config.ts";
 import type { LoadedTables } from "../deepdive/types.ts";
 import type { RequestContext } from "../hosted/auth.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
@@ -7,7 +7,8 @@ import { buildLookupPayload, performLookup } from "../lookup.ts";
 import type { LookupOutcome, LookupPayload } from "../lookup.ts";
 import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
-import type { HistoryListItem, HistoryStore } from "../server-history.ts";
+import type { HistoryListItem, HistoryRequest, HistoryStore } from "../server-history.ts";
+import type { Region } from "../wow/regions.ts";
 import { WclError } from "../wcl/client.ts";
 import { failureBody, tablesOf, wclScopeFor, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse, parseCharacterInput } from "./http.ts";
@@ -31,7 +32,16 @@ export const historyOf = (ctx: RequestContext): HistoryStore => {
 };
 
 export interface LookupError { ok: false; error: string; status: number; quota?: QuotaRefusal; /** The WCL error's public message when the failure came from WCL (safe to show in hosted mode). */ wcl?: string }
-export interface LookupSuccess { ok: true; key: string; result: unknown; fromCache: boolean; /** Shared another caller's in-flight fetch of the same request. */ joined: boolean }
+export interface LookupSuccess {
+  ok: true;
+  key: string;
+  result: unknown;
+  fromCache: boolean;
+  /** Shared another caller's in-flight fetch of the same request. */
+  joined: boolean;
+  /** The effective request — the region may differ from the one asked for when a Raider.IO URL carried its own. */
+  request: HistoryRequest;
+}
 export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup; tables?: LoadedTables }
 
 // Identical lookups that overlap share one WCL fetch (keyed like the history, "auto" level included).
@@ -46,6 +56,8 @@ export async function runLookupWithCache(opts: {
   spec: string | null;
   metric: Metric | null;
   refresh: boolean;
+  /** The caller's region; a Raider.IO URL's own region wins for that lookup. */
+  region: Region;
 }, history: HistoryStore, deps: LookupDeps = {}): Promise<LookupSuccess | LookupError> {
   if (!hasCredentials()) {
     return { ok: false, error: "No credentials configured. Visit /setup first.", status: 400 };
@@ -60,11 +72,22 @@ export async function runLookupWithCache(opts: {
   }
 
   const requestCharacter = `${target.name}-${target.realm}`;
-  const request = { character: requestCharacter, level: opts.level, spec: opts.spec, metric: opts.metric };
+  const region = target.region ?? opts.region;
+  const request: HistoryRequest = { character: requestCharacter, level: opts.level, spec: opts.spec, metric: opts.metric, region };
+  const lookupOptions = {
+    name: target.name,
+    realm: target.realm,
+    region,
+    level: opts.level,
+    spec: opts.spec,
+    metric: opts.metric ?? undefined,
+    enrich: true,
+    refresh: opts.refresh,
+  };
 
   if (!opts.refresh) {
     const hit = history.cached(request);
-    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true, joined: false };
+    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true, joined: false, request };
   }
 
   try {
@@ -72,15 +95,7 @@ export async function runLookupWithCache(opts: {
     let flight = opts.refresh ? undefined : inflight.get(flightKey);
     const joined = flight !== undefined;
     if (!flight) {
-      flight = (deps.performLookup ?? performLookup)({
-        name: target.name,
-        realm: target.realm,
-        level: opts.level,
-        spec: opts.spec,
-        metric: opts.metric ?? undefined,
-        enrich: true,
-        refresh: opts.refresh,
-      }, { reserve: deps.reserve, tables: deps.tables });
+      flight = (deps.performLookup ?? performLookup)(lookupOptions, { reserve: deps.reserve, tables: deps.tables });
       if (!inflight.has(flightKey)) inflight.set(flightKey, flight);
       const started = flight;
       void started.catch(() => {}).finally(() => { if (inflight.get(flightKey) === started) inflight.delete(flightKey); });
@@ -91,15 +106,7 @@ export async function runLookupWithCache(opts: {
       // *starter's* quota numbers, not the joiner's own. Run the joiner's own lookup once, directly —
       // not through the in-flight map: the joiner's continuation runs before the shared flight's
       // `.finally` cleanup, so re-joining here would just hit the same, already-settled flight again.
-      o = await (deps.performLookup ?? performLookup)({
-        name: target.name,
-        realm: target.realm,
-        level: opts.level,
-        spec: opts.spec,
-        metric: opts.metric ?? undefined,
-        enrich: true,
-        refresh: opts.refresh,
-      }, { reserve: deps.reserve, tables: deps.tables });
+      o = await (deps.performLookup ?? performLookup)(lookupOptions, { reserve: deps.reserve, tables: deps.tables });
     }
     if (!o.ok) return { ok: false, status: o.status, error: o.error, ...(o.quota ? { quota: o.quota } : {}) };
     const payload = buildLookupPayload(o, target.realm);
@@ -114,7 +121,7 @@ export async function runLookupWithCache(opts: {
       targetAutoDetected: o.result.targetAutoDetected,
     });
 
-    return { ok: true, key: entry.key, result: payload, fromCache: false, joined };
+    return { ok: true, key: entry.key, result: payload, fromCache: false, joined, request };
   } catch (e) {
     if (e instanceof WclError) return { ok: false, status: 502, error: e.message, wcl: e.publicMessage };
     return {
@@ -139,6 +146,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
     spec: body.spec || null,
     metric: body.metric ?? null,
     refresh: !!body.refresh,
+    region: body.region ?? config.region,
   }, historyOf(ctx), { reserve: scope.own ? undefined : (runtime && user ? runtime.quota.for(user) : undefined), tables }));
   if (!result.ok) return jsonResponse(failureBody(result, runtime), result.status);
   // Hosted: always attach on read against the member's own tables (a joiner never sees the starter's pending layer).
@@ -149,5 +157,5 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
       ? { pointsSpent: 0, quota: runtime.quota.status(user), ownClient: await runtime.wclClients.view(user.id) }
       : { pointsSpent: runtime.meter.charge()?.spent ?? 0, quota: runtime.quota.status(user), ownClient: null }
     : {};
-  return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache, ...accounting });
+  return jsonResponse({ ok: true, result: payload, key: result.key, fromCache: result.fromCache, request: result.request, ...accounting });
 }

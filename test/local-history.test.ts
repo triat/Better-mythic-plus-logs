@@ -4,10 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getLocalHistory, openLocalHistory } from "../src/server/local-history.ts";
 import { closeStore } from "../src/signals/store.ts";
+import type { Region } from "../src/wow/regions.ts";
 
 // Local mode keeps its lookup tabs in bmpl.db (tables local_history / local_history_auto), so a
 // `bmpl serve` restart — or the CLI opening the same db — sees them again. No WCL call anywhere here.
-const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null });
+const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null, region: "eu" as Region });
 const rec = { result: { any: "payload" }, label: "Muleyoxo-Silvermoon", charClass: 7, spec: "Holy", targetLevel: 21, targetAutoDetected: true };
 
 let dir: string;

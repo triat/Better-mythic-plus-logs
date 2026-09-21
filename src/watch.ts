@@ -3,6 +3,7 @@ import {
   detectClipboardReader,
   isPlausibleNameRealm,
 } from "./clipboard.ts";
+import { config } from "./config.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import { renderLookup } from "./format-mplus.ts";
 import { performLookup } from "./lookup.ts";
@@ -91,6 +92,7 @@ export async function runWatch(opts: WatchOptions): Promise<void> {
       const o = await performLookup({
         name: parsed.name,
         realm: parsed.realm,
+        region: config.region,
         level: opts.level,
         spec: opts.spec,
         metric: opts.metric,

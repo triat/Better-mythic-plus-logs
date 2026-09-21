@@ -1,6 +1,7 @@
 // src/server/routes-local.ts
 // Local single-user routes: they touch the machine (write .env, read the clipboard, exit the
 // process) and are therefore never registered in hosted mode.
+import { config } from "../config.ts";
 import { closeStore } from "../signals/store.ts";
 import { writeCredentials } from "../setup.ts";
 import { resetAuthCache } from "../wcl/auth.ts";
@@ -25,7 +26,7 @@ async function handleSetup(req: Request): Promise<Response> {
 async function handleWatchStart(req: Request): Promise<Response> {
   const b = await parseBody(req, WATCH_BODY, {});
   if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
-  const opts = { level: b.value.level ?? null, spec: b.value.spec || null, metric: b.value.metric ?? null };
+  const opts = { level: b.value.level ?? null, spec: b.value.spec || null, metric: b.value.metric ?? null, region: b.value.region ?? config.region };
   try {
     await startWatcher(opts);
     return jsonResponse({ ok: true, active: true, opts });

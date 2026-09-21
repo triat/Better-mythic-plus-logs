@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { AuditLog } from "../src/hosted/audit.ts";
 import { openHosted } from "../src/hosted/db.ts";
 import type { HostedRuntime } from "../src/hosted/runtime.ts";
-import type { LookupOutcome } from "../src/lookup.ts";
+import type { LookupOptions, LookupOutcome } from "../src/lookup.ts";
 import { History } from "../src/server-history.ts";
 import { failureBody } from "../src/server/deepdive.ts";
 import { runLookupWithCache } from "../src/server/lookup.ts";
@@ -22,13 +22,15 @@ const outcome = (): Extract<LookupOutcome, { ok: true }> => {
   const p = payloadWith([], { targetLevel: 18 });
   return {
     ok: true,
+    region: "eu",
+    specsSeen: [],
     data: { zoneID: 1, zoneName: "z", partition: 1, metric: "dps", metricAutoSelected: true, alternateMetricHasData: false, character: { id: 1, name: "Muleyoxo", classID: 7, spec: "Holy", scoreTop: null }, runs: [], seasonDungeons: [], specFilter: null },
     result: { targetLevel: 18, targetAutoDetected: false, atOrAboveTarget: [], prevLevelBest: null, perDungeon: p.perDungeon },
     rio: null, summary: p.summary, evaluation: { role: "dps", targetLevel: 18, axes: [], global: null, verdict: "insufficient data", runsUsed: 0, analyzedRuns: 0, configVersion: "test" },
     deepdive: [], deepdiveSummary: { tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
   } as unknown as Extract<LookupOutcome, { ok: true }>;
 };
-const opts = (refresh = false) => ({ character: "Muleyoxo-Silvermoon", level: 18, spec: null, metric: null, refresh });
+const opts = (refresh = false) => ({ character: "Muleyoxo-Silvermoon", level: 18, spec: null, metric: null, refresh, region: "eu" as const });
 
 describe("runLookupWithCache — in-flight dedupe", () => {
   test("overlapping identical lookups share one fetch; each caller records its own history", async () => {
@@ -93,6 +95,31 @@ describe("runLookupWithCache — in-flight dedupe", () => {
     expect(calls).toBe(2); // the joiner retried on its own
     expect(rj.ok && rj.joined && !rj.fromCache).toBe(true);
     expect(b.size).toBe(1); // the joiner's own success is recorded in its own history
+  });
+});
+
+describe("region", () => {
+  test("a Raider.IO URL overrides the requested region and the effective request is returned", async () => {
+    const seen: LookupOptions[] = [];
+    const performLookup = (async (o: LookupOptions) => { seen.push(o); return outcome(); }) as never;
+    const r = await runLookupWithCache({ character: "https://raider.io/characters/us/hyjal/Biwaasham", level: null, spec: null, metric: null, refresh: false, region: "eu" }, new History(5), { performLookup });
+    expect(r.ok && r.request.region).toBe("us");
+    expect(r.ok && r.request.character).toBe("Biwaasham-hyjal");
+    expect(seen[0]!.region).toBe("us");
+  });
+  test("the requested region reaches the lookup and keys the history; two regions are two entries", async () => {
+    const seen: LookupOptions[] = [];
+    const performLookup = (async (o: LookupOptions) => { seen.push(o); return outcome(); }) as never;
+    const h = new History(5);
+    const eu = await runLookupWithCache(opts(), h, { performLookup });
+    const kr = await runLookupWithCache({ ...opts(), region: "kr" }, h, { performLookup });
+    expect(seen.map((o) => o.region)).toEqual(["eu", "kr"]);
+    expect(eu.ok && kr.ok && eu.key !== kr.key).toBe(true);
+    expect(h.list().map((i) => i.request.region)).toEqual(["kr", "eu"]);
+    // A repeat in the same region is a cache hit that still reports its request.
+    const again = await runLookupWithCache({ ...opts(), region: "kr" }, h, { performLookup });
+    expect(again.ok && again.fromCache && again.request.region).toBe("kr");
+    expect(seen.length).toBe(2);
   });
 });
 

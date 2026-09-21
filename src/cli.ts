@@ -176,7 +176,7 @@ async function cmdLookup(
   enrich: boolean,
   json: boolean,
 ): Promise<void> {
-  const o = await performLookup({ name, realm, level: targetLevel, spec, metric, enrich });
+  const o = await performLookup({ name, realm, region: config.region, level: targetLevel, spec, metric, enrich });
   if (!o.ok) {
     console.error(json ? o.error : err("✗ " + o.error));
     closeStore();
@@ -244,7 +244,7 @@ async function cmdAnalyze(
     closeStore();
     process.exit(2);
   }
-  const o = await performLookup({ name, realm, level: targetLevel, spec, enrich: true });
+  const o = await performLookup({ name, realm, region: config.region, level: targetLevel, spec, enrich: true });
   if (!o.ok) { console.error(json ? o.error : err("✗ " + o.error)); closeStore(); process.exit(1); }
   const shown = displayedRuns(o.result);
   const analyzed = new Set(o.deepdive.map((d) => `${d.reportCode}:${d.fightID}`));
@@ -304,6 +304,7 @@ async function cmdMplus(
   json: boolean,
 ): Promise<void> {
   let data = await fetchMplusData(name, realm, {
+    region: config.region,
     metric,
     specFilter: spec,
   });

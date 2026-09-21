@@ -1,11 +1,19 @@
 import type { Metric } from "./roles.ts";
+import { type Region, isRegion } from "./wow/regions.ts";
 
 export interface HistoryRequest {
   character: string;
   level: number | null;
   spec: string | null;
   metric: Metric | null;
+  region: Region;
 }
+
+/** A stored request (JSON) may predate the region: default it. */
+export const requestFromJson = (json: string, fallbackRegion: Region): HistoryRequest => {
+  const r = JSON.parse(json) as Omit<HistoryRequest, "region"> & { region?: unknown };
+  return { ...r, region: isRegion(r.region) ? r.region : fallbackRegion };
+};
 
 export interface HistoryEntry {
   key: string;
@@ -23,13 +31,14 @@ export interface HistoryEntry {
 
 export type HistoryRecord = Omit<HistoryEntry, "key" | "request" | "fetchedAt">;
 
-/** Cache key: character + effective level + spec + metric. `level: null` is the auto-alias key. */
+/** Cache key: character + effective level + spec + metric + region. `level: null` is the auto-alias key. */
 export const cacheKey = (r: HistoryRequest): string =>
   JSON.stringify([
     r.character.trim().toLowerCase(),
     r.level ?? "auto",
     r.spec ? r.spec.trim().toLowerCase() : "",
     r.metric ?? "",
+    r.region,
   ]);
 
 /** A history entry without its payload — what the tab strip needs. */

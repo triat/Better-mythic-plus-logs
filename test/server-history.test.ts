@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { History, cacheKey } from "../src/server-history.ts";
+import { History, cacheKey, requestFromJson } from "../src/server-history.ts";
+import type { Region } from "../src/wow/regions.ts";
 
-const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null });
+const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null, region: "eu" as Region });
 const entry = (over: Partial<Parameters<History["record"]>[1]> = {}) => ({
   result: { any: "payload" },
   label: "Muleyoxo-Silvermoon",
@@ -14,7 +15,17 @@ const entry = (over: Partial<Parameters<History["record"]>[1]> = {}) => ({
 
 describe("History — keyed by effective level", () => {
   test("cacheKey normalizes and carries the level", () => {
-    expect(cacheKey(req(" Muleyoxo-Silvermoon ", 18))).toBe(JSON.stringify(["muleyoxo-silvermoon", 18, "", ""]));
+    expect(cacheKey(req(" Muleyoxo-Silvermoon ", 18))).toBe(JSON.stringify(["muleyoxo-silvermoon", 18, "", "", "eu"]));
+  });
+
+  test("cacheKey carries the region; two regions are two tabs", () => {
+    expect(cacheKey({ ...req("Biwaasham-Hyjal", 18), region: "eu" })).toBe(JSON.stringify(["biwaasham-hyjal", 18, "", "", "eu"]));
+    expect(cacheKey({ ...req("Biwaasham-Hyjal", 18), region: "us" })).not.toBe(cacheKey({ ...req("Biwaasham-Hyjal", 18), region: "eu" }));
+  });
+
+  test("requestFromJson defaults a stored request without region", () => {
+    expect(requestFromJson(JSON.stringify({ character: "A-B", level: null, spec: null, metric: null }), "eu").region).toBe("eu");
+    expect(requestFromJson(JSON.stringify({ character: "A-B", level: 2, spec: null, metric: null, region: "kr" }), "eu").region).toBe("kr");
   });
 
   test("an auto lookup that resolves to +21 merges with an explicit +21 entry", () => {

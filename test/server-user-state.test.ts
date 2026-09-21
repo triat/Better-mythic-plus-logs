@@ -16,7 +16,7 @@ let local: Awaited<ReturnType<typeof runServer>>;
 let db: HostedDb;
 let a: ReturnType<typeof loginAs>;
 let b: ReturnType<typeof loginAs>;
-const savedCreds = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+const savedCreds = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET, region: process.env.BMPL_REGION };
 
 beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), "bmpl-user-state-"));
@@ -31,6 +31,7 @@ beforeAll(async () => {
   // plan) then fails at WCL OAuth instead of spending points.
   process.env.WCL_CLIENT_ID = "bmpl-test";
   process.env.WCL_CLIENT_SECRET = "bmpl-test";
+  process.env.BMPL_REGION = "eu"; // the instance default the region tests below assume
   const assets = async () => ({
     index: join(dir, "index.html"),
     appJs: join(dir, "assets", "app.js"),
@@ -50,6 +51,7 @@ afterAll(() => {
   delete process.env.BMPL_DB_PATH;
   if (savedCreds.id === undefined) delete process.env.WCL_CLIENT_ID; else process.env.WCL_CLIENT_ID = savedCreds.id;
   if (savedCreds.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = savedCreds.secret;
+  if (savedCreds.region === undefined) delete process.env.BMPL_REGION; else process.env.BMPL_REGION = savedCreds.region;
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -59,7 +61,7 @@ const as = (who: { cookie: string }, init: RequestInit = {}): RequestInit => ({ 
 
 /** A payload attachDeepdive accepts: no runs, so it only re-runs the evaluation and yields `deepdive: []`. */
 const seedPayload = (name: string) => ({ ...payloadWith([]), character: { name, classID: 7, spec: "Holy" }, deepdive: [] });
-const request = (character: string, level: number | null) => ({ character, level, spec: null, metric: null });
+const request = (character: string, level: number | null) => ({ character, level, spec: null, metric: null, region: "eu" as const });
 
 describe("per-user history (hosted)", () => {
   test("a user's entries are invisible to another user; lists, reads, deletes and clears are scoped", async () => {
@@ -99,6 +101,18 @@ describe("per-user history (hosted)", () => {
     expect(inherited.key).toBe(own.key);
     const theirs = await (await fetch(h("/api/history"), as(b))).json();
     expect(theirs.items.map((i: { key: string }) => i.key)).toEqual([own.key]);
+  });
+
+  test("POST /api/lookup: region validated, defaults to the instance region, stored on the history item", async () => {
+    const bad = await fetch(h("/api/lookup"), as(a, { method: "POST", body: JSON.stringify({ character: "Muleyoxo-Silvermoon", region: "cn" }) }));
+    expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toContain("region");
+    // No region in the body: the instance default (eu) keys the request, so the seeded entry is a hit.
+    const own = await (await fetch(h("/api/lookup"), as(a, { method: "POST", body: JSON.stringify({ character: "Muleyoxo-Silvermoon", level: 21 }) }))).json();
+    expect(own.fromCache).toBe(true);
+    expect(own.request).toEqual(request("Muleyoxo-Silvermoon", 21));
+    const mine = await (await fetch(h("/api/history"), as(a))).json();
+    expect(mine.items.map((i: { request: { region: string } }) => i.request.region)).toEqual(["eu"]);
   });
 
   test("history survives a server restart", async () => {

@@ -3,7 +3,9 @@ import {
   detectClipboardReader,
   isPlausibleNameRealm,
 } from "../clipboard.ts";
+import { config } from "../config.ts";
 import type { Metric } from "../roles.ts";
+import type { Region } from "../wow/regions.ts";
 import { getLocalHistory } from "./local-history.ts";
 import { broadcast } from "./sse.ts";
 import { runLookupWithCache } from "./lookup.ts";
@@ -16,6 +18,7 @@ interface WatcherState {
     level: number | null;
     spec: string | null;
     metric: Metric | null;
+    region: Region;
   };
   intervalId: ReturnType<typeof setInterval> | null;
   backend: ClipboardBackend | null;
@@ -24,7 +27,7 @@ interface WatcherState {
 
 const watcher: WatcherState = {
   active: false,
-  opts: { level: null, spec: null, metric: null },
+  opts: { level: null, spec: null, metric: null, region: config.region },
   intervalId: null,
   backend: null,
   lastSeen: "",
@@ -52,6 +55,7 @@ async function watcherTick(): Promise<void> {
     spec: watcher.opts.spec,
     metric: watcher.opts.metric,
     refresh: false,
+    region: watcher.opts.region,
   }, getLocalHistory());
   if (result.ok) {
     broadcast("result", { key: result.key, fromCache: result.fromCache });

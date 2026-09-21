@@ -5,7 +5,8 @@
 // cache hit (copied into the caller's history), so two members vetting the same applicant cost
 // one WCL fetch.
 import type { Database } from "bun:sqlite";
-import { cacheKey } from "../server-history.ts";
+import { config } from "../config.ts";
+import { cacheKey, requestFromJson } from "../server-history.ts";
 import type { HistoryEntry, HistoryListItem, HistoryRecord, HistoryRequest, HistoryStore } from "../server-history.ts";
 
 export const HISTORY_MAX_PER_USER = 20;
@@ -24,7 +25,7 @@ const ITEM_COLUMNS = "key, request, label, char_class, spec, target_level, targe
 
 const item = (r: ItemRaw): HistoryListItem => ({
   key: r.key,
-  request: JSON.parse(r.request) as HistoryRequest,
+  request: requestFromJson(r.request, config.region),
   fetchedAt: r.fetched_at,
   label: r.label,
   charClass: r.char_class,
@@ -74,7 +75,7 @@ export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables
       // Drop the auto alias only if it pointed at this entry (mirrors History.forget).
       const forget = (e: ItemRaw): void => {
         deleteOne.run(userId, e.key);
-        autoDeleteIf.run(userId, cacheKey({ ...(JSON.parse(e.request) as HistoryRequest), level: null }), e.target_level);
+        autoDeleteIf.run(userId, cacheKey({ ...requestFromJson(e.request, config.region), level: null }), e.target_level);
       };
 
       const write = (r: HistoryRequest, rec: HistoryRecord, fetchedAt: number): HistoryEntry => {

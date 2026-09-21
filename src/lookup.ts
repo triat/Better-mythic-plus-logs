@@ -1,4 +1,3 @@
-import { config } from "./config.ts";
 import { deepdiveSummary } from "./deepdive/aggregate.ts";
 import { analyzeCached } from "./deepdive/attach.ts";
 import { getDefensives } from "./deepdive/table.ts";
@@ -10,13 +9,14 @@ import type { Evaluation, EvaluationConfig } from "./evaluation/types.ts";
 import {
   type LookupResult,
   type MPlusData,
+  type MPlusRun,
   analyzeLookup,
   fetchMplusData,
   filterBySpec,
   inferTargetLevel,
   uniqueSpecs,
 } from "./mplus.ts";
-import type { Metric } from "./roles.ts";
+import { type Metric, metricForSpec } from "./roles.ts";
 import { type GqlFn, displayedRuns, enrichRuns } from "./signals/enrich.ts";
 import { fetchRioProfile } from "./signals/rio-client.ts";
 import { type Store, getStore } from "./signals/store.ts";
@@ -24,11 +24,14 @@ import { type SignalSummary, signalSummary } from "./signals/summary.ts";
 import type { RioProfile } from "./signals/types.ts";
 import { realmToSlug } from "./util.ts";
 import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "./wcl/meter.ts";
+import type { Region } from "./wow/regions.ts";
 import type { QuotaRefusal, Reserve } from "./hosted/quota.ts";
 
 export interface LookupOptions {
   name: string;
   realm: string;
+  /** Lower-case; the WCL and Raider.IO calls, the history key and the payload all carry it. */
+  region: Region;
   level: number | null;
   spec: string | null;
   metric?: Metric;
@@ -36,10 +39,29 @@ export interface LookupOptions {
   refresh?: boolean;
 }
 
+/** One spec the character has indexed runs on this season (before any spec filter). */
+export interface SpecSeen {
+  spec: string;
+  runs: number;
+  metric: Metric;
+}
+
+/** Every indexed run's spec with its run count, sorted by runs desc then name. */
+export const specsSeen = (runs: MPlusRun[]): SpecSeen[] => {
+  const counts = new Map<string, number>();
+  for (const r of runs) counts.set(r.spec, (counts.get(r.spec) ?? 0) + 1);
+  return [...counts]
+    .map(([spec, n]) => ({ spec, runs: n, metric: metricForSpec(spec) }))
+    .sort((a, b) => b.runs - a.runs || a.spec.localeCompare(b.spec));
+};
+
 export type LookupOutcome =
   | {
       ok: true;
+      region: Region;
       data: MPlusData;
+      /** Specs on the unfiltered rankings — what the spec picker offers. */
+      specsSeen: SpecSeen[];
       result: LookupResult;
       rio: RioProfile | null;
       rioError?: string;
@@ -68,9 +90,11 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
   const refusedRankings = deps.reserve?.(ESTIMATE_RANKINGS);
   if (refusedRankings) return { ok: false, status: 429, error: refusedRankings.message, quota: refusedRankings };
   let data = await (deps.fetchMplus ?? fetchMplusData)(opts.name, opts.realm, {
+    region: opts.region,
     metric: opts.metric,
     specFilter: opts.spec,
   });
+  const seen = specsSeen(data.runs);
 
   if (opts.spec) {
     const runs = filterBySpec(data.runs, opts.spec);
@@ -110,7 +134,7 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     opts.enrich
       ? enrichRuns(shown, data.character.name, store, { gql: deps.gql })
       : Promise.resolve(),
-    fetchRioProfile(config.region, opts.realm, data.character.name, store, {
+    fetchRioProfile(opts.region, opts.realm, data.character.name, store, {
       refresh: opts.refresh,
       fetchFn: deps.fetchFn,
     }),
@@ -134,7 +158,9 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
 
   return {
     ok: true,
+    region: opts.region,
     data,
+    specsSeen: seen,
     result,
     rio: rioRes.profile,
     ...(rioRes.error ? { rioError: rioRes.error } : {}),
@@ -157,12 +183,13 @@ void _evalPayloadContract;
 export function buildLookupPayload(o: Extract<LookupOutcome, { ok: true }>, realm: string) {
   const { data, result } = o;
   return {
-    character: { ...data.character, realmSlug: realmToSlug(realm), region: config.region },
+    character: { ...data.character, realmSlug: realmToSlug(realm), region: o.region },
     zone: { id: data.zoneID, name: data.zoneName, partition: data.partition },
     metric: data.metric,
     metricAutoSelected: data.metricAutoSelected,
     alternateMetricHasData: data.alternateMetricHasData,
     specFilter: data.specFilter,
+    specsSeen: o.specsSeen,
     runsIndexed: data.runs.length,
     seasonDungeons: data.seasonDungeons,
     targetLevel: result.targetLevel,

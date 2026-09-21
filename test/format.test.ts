@@ -95,7 +95,7 @@ describe("renderSummaryLine", () => {
 const evalFixture = (over: Partial<Evaluation> = {}): Evaluation => ({
   role: "dps", targetLevel: 16, runsUsed: 9, analyzedRuns: 0, global: 78.4, verdict: "invite", configVersion: "deadbeef",
   axes: [
-    { key: "survival", score: 82, confidence: "high", evidence: [{ label: "0.2 individual deaths/run", delta: 18, source: "survival.individualDeaths" }, { label: "avoidable +12% vs peers", delta: -6, source: "survival.avoidableVsPeers" }, { label: "x", delta: 1, source: "survival.wipeDeaths" }] },
+    { key: "survival", score: 82, confidence: "high", evidence: [{ label: "0.2 individual deaths/run", delta: 18, source: "survival.individualDeaths", value: 0.2 }, { label: "avoidable +12% vs peers", delta: -6, source: "survival.avoidableVsPeers", value: 12 }, { label: "x", delta: 1, source: "survival.wipeDeaths", value: 0 }] },
     { key: "utility", score: 61, confidence: "high", evidence: [] },
     { key: "throughput", score: 88, confidence: "high", evidence: [] },
     { key: "consistency", score: null, confidence: "low", evidence: [] },
@@ -112,7 +112,7 @@ describe("renderEvaluation", () => {
     expect(out).toContain("Survival 82");
     expect(out).toContain("Consistency n/a");
     expect(out).toContain("(medium confidence, 9 runs)");
-    expect(out).toMatch(/Survival\s+\+18 0\.2 individual deaths\/run\s+·\s+-6 avoidable \+12% vs peers/);
+    expect(out).toMatch(/Survival\s+\+18 0\.2 individual deaths\/run\s+·\s+−6 avoidable \+12% vs peers/);
     expect(out).not.toContain("+1 x");
   });
   test("insufficient data", () => {

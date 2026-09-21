@@ -18,7 +18,7 @@ export function scoreExperience(i: EvalInputs, cfg: EvaluationConfig): AxisScore
   const score = Math.round(clamp(result.score + bonus, 0, 100));
   const evidence: Evidence[] = [
     ...result.evidence,
-    { label: `previous season ${e.prevSeasonAll.toFixed(0)}`, delta: Math.round(bonus * 10) / 10, source: "experience.prevSeasonBonus" },
+    { label: `previous season ${e.prevSeasonAll.toFixed(0)}`, delta: Math.round(bonus * 10) / 10, source: "experience.prevSeasonBonus", value: e.prevSeasonAll },
   ];
   evidence.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
   return { ...result, score, evidence };

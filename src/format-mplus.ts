@@ -217,7 +217,7 @@ export const renderEvaluation = (ev: Evaluation): string => {
     if (a.evidence.length === 0) continue;
     const ev2 = a.evidence.slice(0, 2).map((e) => {
       const d = Math.round(e.delta);
-      const tag = `${d >= 0 ? "+" : "-"}${Math.abs(d)}`;
+      const tag = `${d >= 0 ? "+" : "−"}${Math.abs(d)}`;
       return `${d >= 0 ? pc.green(tag) : pc.red(tag)} ${e.label}`;
     });
     lines.push(`  ${AXIS_LABEL[a.key].padEnd(12)} ${ev2.join(`  ${dim("·")}  `)}`);

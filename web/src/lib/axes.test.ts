@@ -9,13 +9,13 @@ const ev: Evaluation = {
   role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
   axes: [
     axis("throughput", 88, [
-      { label: "median parse 86%", delta: 27.4, source: "throughput.medianParse" },
-      { label: "parse 79% at target level", delta: 10.6, source: "throughput.atTarget" },
+      { label: "median parse 86%", delta: 27.4, source: "throughput.medianParse", value: 86 },
+      { label: "parse 79% at target level", delta: 10.6, source: "throughput.atTarget", value: 79 },
     ]),
     axis("survival", 82, [
-      { label: "0.2 individual deaths/run", delta: 18, source: "survival.deaths" },
-      { label: "avoidable +12% vs peers", delta: -6.2, source: "survival.avoidable" },
-      { label: "DTPS −3% vs peers", delta: 1, source: "survival.dtps" },
+      { label: "0.2 individual deaths/run", delta: 18, source: "survival.deaths", value: 0.2 },
+      { label: "avoidable +12% vs peers", delta: -6.2, source: "survival.avoidable", value: 12 },
+      { label: "DTPS −3% vs peers", delta: 1, source: "survival.dtps", value: -3 },
     ]),
     axis("consistency", null, [], "low"),
     axis("utility", 61), axis("preparation", 55), axis("experience", 74),

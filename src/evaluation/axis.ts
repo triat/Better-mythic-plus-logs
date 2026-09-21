@@ -1,5 +1,5 @@
 import { curve } from "./curve.ts";
-import type { AxisKey, AxisScore, Confidence, EvaluationConfig, Evidence, Role } from "./types.ts";
+import type { AxisKey, AxisScore, Confidence, EvaluationConfig, Evidence, EvidenceExtra, Role } from "./types.ts";
 
 export interface SubSignalInput {
   id: string;
@@ -8,6 +8,8 @@ export interface SubSignalInput {
   x?: (raw: number) => number;
   /** Value handed to `label` instead of `value` when present (e.g. an unscaled mean kept for display). */
   raw?: number;
+  /** Extra numbers the label uses besides the value; copied onto the evidence for the front. */
+  extra?: EvidenceExtra;
 }
 
 export const confidenceFor = (runsUsed: number, cfg: EvaluationConfig): Confidence =>
@@ -20,7 +22,7 @@ export const confidenceFor = (runsUsed: number, cfg: EvaluationConfig): Confiden
  */
 export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg: EvaluationConfig, runsUsed: number): AxisScore {
   const conf = cfg.axes[key].subSignals;
-  const contributing: { source: string; w: number; s: number; label: string }[] = [];
+  const contributing: { source: string; w: number; s: number; label: string; value: number; extra?: EvidenceExtra }[] = [];
   let den = 0;
   for (const sub of subs) {
     const sc = conf[sub.id];
@@ -28,14 +30,15 @@ export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg:
     const w = sc.weights[role];
     if (sub.value === null || w <= 0) continue;
     const s = curve(sub.x ? sub.x(sub.value) : sub.value, sc.curve);
-    contributing.push({ source: `${key}.${sub.id}`, w, s, label: sub.label(sub.raw ?? sub.value) });
+    const value = sub.raw ?? sub.value;
+    contributing.push({ source: `${key}.${sub.id}`, w, s, label: sub.label(value), value, ...(sub.extra ? { extra: sub.extra } : {}) });
     den += w;
   }
   let num = 0;
   const evidence: Evidence[] = [];
-  for (const { source, w, s, label } of contributing) {
+  for (const { source, w, s, label, value, extra } of contributing) {
     num += w * s;
-    evidence.push({ label, delta: Math.round(((w * (s - 50)) / den) * 10) / 10, source });
+    evidence.push({ label, delta: Math.round(((w * (s - 50)) / den) * 10) / 10, source, value, ...(extra ? { extra } : {}) });
   }
   evidence.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
   return { key, score: den > 0 ? Math.round(num / den) : null, confidence: confidenceFor(runsUsed, cfg), evidence };

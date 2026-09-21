@@ -1,14 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { scoreAxis } from "../../src/evaluation/axis.ts";
-import { scoreAllAxes } from "../../src/evaluation/axes/index.ts";
+import { EVIDENCE_SOURCES, scoreAllAxes } from "../../src/evaluation/axes/index.ts";
 import { scoreConsistency } from "../../src/evaluation/axes/consistency.ts";
 import { scoreExperience } from "../../src/evaluation/axes/experience.ts";
 import { scorePreparation } from "../../src/evaluation/axes/preparation.ts";
 import { scoreSurvival } from "../../src/evaluation/axes/survival.ts";
 import { scoreUtility } from "../../src/evaluation/axes/utility.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
+import { evaluate } from "../../src/evaluation/evaluate.ts";
 import { collectInputs, type EvalInputs } from "../../src/evaluation/inputs.ts";
-import { deaths, payloadWith, runWith } from "./helpers.ts";
+import { AXIS_KEYS } from "../../src/evaluation/types.ts";
+import { deaths, fixturePayload, payloadWith, runWith } from "./helpers.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
 
@@ -37,6 +39,8 @@ describe("scoreAxis engine", () => {
     expect(a.evidence[0]!.delta).toBe(-16);
     expect(a.evidence[1]!.delta).toBe(9);
     expect(a.evidence[1]!.label).toBe("1 deaths");
+    expect(a.evidence[1]!.value).toBe(1);
+    expect(a.evidence[1]!.extra).toBeUndefined();
     expect(a.confidence).toBe("high");
   });
   test("no contributing sub-signal → null score", () => {
@@ -49,7 +53,16 @@ describe("scoreAxis engine", () => {
     const a = scoreAxis("survival", [{ id: "individualDeaths", value: 2, x: (r) => r / 2, label: (r) => `${r}` }], "tank", cfg, 4);
     expect(a.score).toBe(65);
     expect(a.evidence[0]!.label).toBe("2");
+    expect(a.evidence[0]!.value).toBe(2);
     expect(a.confidence).toBe("medium");
+  });
+  test("raw wins over value as the evidence value; extra is copied onto the evidence", () => {
+    const a = scoreAxis("survival", [
+      { id: "individualDeaths", value: 2, raw: 1.25, label: (r) => `${r}` },
+      { id: "avoidableDeaths", value: 0.5, extra: { count: 1, total: 2 }, label: () => "1/2" },
+    ], "tank", cfg, 4);
+    expect(a.evidence.find((e) => e.source === "survival.individualDeaths")).toMatchObject({ label: "1.25", value: 1.25 });
+    expect(a.evidence.find((e) => e.source === "survival.avoidableDeaths")).toMatchObject({ value: 0.5, extra: { count: 1, total: 2 } });
   });
 });
 
@@ -98,10 +111,36 @@ describe("survival", () => {
     const a = scoreSurvival(baseInputs({ analyzedRuns: 3, survival: { ...baseInputs().survival, defensiveUsage: 0.6, avoidableDeathShare: 2 / 3, avoidableDeathsCount: 2, countedDeathsCount: 3 } }), cfg);
     const usage = a.evidence.find((e) => e.source === "survival.defensiveUsage")!;
     expect(usage.label).toBe("majors used 60% of possible (3 runs)");
+    expect(usage.value).toBe(0.6);
+    expect(usage.extra).toEqual({ runs: 3 });
     const deaths = a.evidence.find((e) => e.source === "survival.avoidableDeaths")!;
     expect(deaths.label).toBe("2/3 deaths with a defensive available");
+    expect(deaths.value).toBeCloseTo(2 / 3, 6);
+    expect(deaths.extra).toEqual({ count: 2, total: 3 });
     expect(deaths.delta).toBeLessThan(0);   // 0.67 → 30 on the curve
     expect(usage.delta).toBeGreaterThan(0); // 0.6 → 85
+  });
+});
+
+describe("EVIDENCE_SOURCES", () => {
+  test("lists the default config's sub-signals plus the previous-season bonus, nothing else", () => {
+    const fromConfig = AXIS_KEYS.flatMap((k) => Object.keys(DEFAULT_CONFIG.axes[k].subSignals).map((id) => `${k}.${id}`));
+    expect([...(EVIDENCE_SOURCES as readonly string[])].sort()).toEqual([...fromConfig, "experience.prevSeasonBonus"].sort());
+  });
+  test("every evidence entry of the fixture evaluations has a listed source, a finite value, and extra where the label needs it", async () => {
+    const all = [evaluate(await fixturePayload("s1-tank", false), cfg), evaluate(await fixturePayload("s2-healer", true), cfg)]
+      .flatMap((e) => e.axes.flatMap((a) => a.evidence));
+    expect(all.length).toBeGreaterThan(20);
+    for (const e of all) {
+      expect(EVIDENCE_SOURCES as readonly string[]).toContain(e.source);
+      expect(Number.isFinite(e.value), e.source).toBe(true);
+    }
+    expect(all.find((e) => e.source === "experience.prevSeasonBonus")).toMatchObject({ label: "previous season 4153", value: 4152.7 });
+    expect(all.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl −4 vs expected");
+  });
+  test("survival.defensiveUsage carries extra.runs when a deep-dive exists", () => {
+    const a = scoreSurvival(baseInputs({ analyzedRuns: 1, survival: { ...baseInputs().survival, defensiveUsage: 0.5 } }), cfg);
+    expect(a.evidence.find((e) => e.source === "survival.defensiveUsage")).toMatchObject({ label: "majors used 50% of possible (1 run)", value: 0.5, extra: { runs: 1 } });
   });
 });
 

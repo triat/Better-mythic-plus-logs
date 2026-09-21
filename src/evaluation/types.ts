@@ -6,11 +6,17 @@ export type Confidence = "high" | "medium" | "low";
 export type CurvePoints = [number, number][];
 
 export interface Evidence {
+  /** English line as the CLI prints it; the web front rebuilds it per locale from `value` / `extra`. */
   label: string;
   /** Contribution in axis points vs. neutral 50; sums to score − 50. Comparable across axes. */
   delta: number;
   source: string; // "<axis>.<subSignalId>"
+  /** The raw number behind `label` (the unscaled mean when one exists), unrounded. */
+  value: number;
+  /** Extra numbers a few labels need: analyzed runs (survival.defensiveUsage), death counts (survival.avoidableDeaths). */
+  extra?: EvidenceExtra;
 }
+export interface EvidenceExtra { runs?: number; count?: number; total?: number }
 
 export interface AxisScore {
   key: AxisKey;

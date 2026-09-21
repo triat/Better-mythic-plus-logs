@@ -141,11 +141,11 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .metaline { font-size: 12px; }
 .metaline b { color: var(--text-soft); }
 .axes { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-.axis { display: grid; grid-template-columns: 120px 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 10px; cursor: pointer; }
+.axis { display: grid; grid-template-columns: 150px 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 10px; cursor: pointer; }
 .axis:hover { border-color: var(--border); }
 .axis-na { border-style: dashed; }
 .axis-na .label-caps, .axis-na .axis-score { color: var(--faint); }
-.axis-name { display: flex; align-items: center; gap: 6px; }
+.axis-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .conf { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 .axis-score { font-size: 16px; font-weight: 700; text-align: right; }
 .axis-na .axis-score { font-size: 13px; font-weight: 600; }

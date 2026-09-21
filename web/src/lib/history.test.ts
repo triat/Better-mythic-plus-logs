@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { HistoryItem } from "../types.ts";
-import { MAX_COMPARE, pruneSelection, tabSubtitle, toggleSelection } from "./history.ts";
+import { MAX_COMPARE, pruneSelection, tabLevel, tabSubtitle, toggleSelection } from "./history.ts";
 
 describe("history selection", () => {
   test("toggle adds, removes, keeps order", () => {
@@ -18,9 +18,16 @@ describe("history selection", () => {
   test("tab subtitle", () => {
     const item = (over: Partial<HistoryItem>): HistoryItem => ({
       key: "k", label: "Muleyoxo-Silvermoon", charClass: 7, spec: null, targetLevel: 21, targetAutoDetected: true, fetchedAt: 0,
-      request: { character: "Muleyoxo-Silvermoon", level: null, spec: null, metric: null }, ...over,
+      request: { character: "Muleyoxo-Silvermoon", level: null, spec: null, metric: null, region: "eu" }, ...over,
     });
-    expect(tabSubtitle(item({}))).toBe("+21 auto");
-    expect(tabSubtitle(item({ targetAutoDetected: false, spec: "Holy" }))).toBe("+21 · Holy");
+    expect(tabSubtitle(item({}), "eu")).toBe("+21 auto");
+    expect(tabSubtitle(item({ targetAutoDetected: false, spec: "Holy" }), "eu")).toBe("+21 · Holy");
+  });
+  test("tabSubtitle names the region only when it is not the instance default", () => {
+    const item = { targetLevel: 18, targetAutoDetected: true, spec: null, request: { character: "Biwaasham-Hyjal", level: null, spec: null, metric: null, region: "us" } } as never;
+    expect(tabSubtitle(item, "eu")).toBe("US · +18 auto");
+    expect(tabSubtitle(item, "us")).toBe("+18 auto");
+    expect(tabLevel(item, "eu")).toBe("US · +18");
+    expect(tabLevel(item, "us")).toBe("+18");
   });
 });

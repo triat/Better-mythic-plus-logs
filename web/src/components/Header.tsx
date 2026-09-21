@@ -3,6 +3,9 @@ import type { FormEvent } from "react";
 import { KeyStepper } from "./KeyStepper.tsx";
 import type { UiControls } from "../lib/hostedMode.ts";
 import type { MenuModel } from "../lib/session.ts";
+import type { LookupPayload, Region } from "../types.ts";
+import { OTHER_SPEC, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../lib/header.ts";
+import { ChipMenu } from "./ChipMenu.tsx";
 import { UserMenu } from "./UserMenu.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
@@ -11,6 +14,12 @@ export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
 interface Props {
   form: LookupForm;
   onChange: (f: LookupForm) => void;
+  /** The region the next lookup uses (the setting, else the instance default). */
+  region: Region;
+  instanceRegion: Region;
+  onRegionChange: (r: Region) => void;
+  /** The shown tab's payload: its specs feed the spec picker. */
+  payload: LookupPayload | null;
   yourKey: number | null;
   keyFallback: number | null;
   onKeyChange: (v: number | null) => void;
@@ -38,11 +47,30 @@ export function Header(p: Props) {
   const showSearch = p.search ?? true;
   const submit = (e: FormEvent) => { e.preventDefault(); if (p.form.character.trim()) p.onLookup(); };
   const set = (patch: Partial<LookupForm>) => p.onChange({ ...p.form, ...patch });
+  const pickSpec = (v: string) => {
+    if (v === OTHER_SPEC) { setOpen(true); return; }
+    set({ spec: v });
+    setOpen(false);
+  };
   const chips = (
     <span className="chips">
-      <button type="button" className="chip" onClick={() => setOpen((o) => !o)} title="Options">
-        spec {p.form.spec || "any"}
-      </button>
+      <ChipMenu
+        label={regionChipLabel(p.region)}
+        className={"chip" + (p.region !== p.instanceRegion ? " chip-on" : "")}
+        head="Region · remembered"
+        items={regionMenu(p.region)}
+        onPick={(v) => p.onRegionChange(v as Region)}
+        title="Region"
+      />
+      <ChipMenu
+        label={specChipLabel(p.form.spec)}
+        className={"chip" + (p.form.spec ? " chip-on" : "")}
+        head={p.payload ? `Spec · seen on ${p.payload.character.name} this season` : "Spec · load a character to pick from its specs"}
+        items={specMenu(p.payload, p.form.spec)}
+        onPick={pickSpec}
+        title="Spec filter"
+        separateLast
+      />
       {p.form.metric && <span className="chip">{p.form.metric}</span>}
     </span>
   );

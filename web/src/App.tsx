@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
-import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClientView } from "./types.ts";
+import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaTooltip } from "./lib/quota.ts";
@@ -9,7 +9,7 @@ import { menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
-import { isRegion } from "./lib/regions.ts";
+import { effectiveRegion, isRegion } from "./lib/regions.ts";
 import { parseServerSettings } from "./lib/settings.ts";
 import type { Settings } from "./lib/settings.ts";
 import { DocsProvider } from "./docs.tsx";
@@ -80,11 +80,12 @@ export function App() {
   );
 }
 
-const formToRequest = (f: LookupForm, level: number | null): LookupRequest => ({
+const formToRequest = (f: LookupForm, level: number | null, region: Region): LookupRequest => ({
   character: f.character.trim(),
   level,
   spec: f.spec.trim() || null,
   metric: f.metric || null,
+  region,
 });
 
 function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; initialOwnClient: OwnClientView | null; onSetup: () => void }) {
@@ -105,6 +106,10 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const { settings, update: updateSettings } = useSettings();
   const yourKey = settings.yourKey;
   const onKeyChange = (v: number | null) => updateSettings({ yourKey: v });
+  // The region: the saved choice, else the instance default. Not part of the form — it is a setting like "your key".
+  const region = effectiveRegion(settings.region, status.region);
+  const regionRef = useRef(region);
+  regionRef.current = region;
   const [tabs, setTabs] = useState<HistoryItem[]>([]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -193,11 +198,13 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
     setActiveKey(r.key);
+    // A pasted Raider.IO URL carries its own region: the chip flips to it (and it is remembered).
+    if (r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
     touch();
     await loadHistory();
-  }, [loadHistory]);
+  }, [loadHistory, updateSettings]);
 
-  const onLookup = () => void runLookup(formToRequest(form, yourKey), false);
+  const onLookup = () => void runLookup(formToRequest(form, yourKey, region), false);
   const onRefresh = () => {
     const t = tabs.find((x) => x.key === activeKey);
     if (t) void runLookup(t.request, true);
@@ -245,7 +252,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   });
 
   const onWatchToggle = async (wanted: boolean) => {
-    const r = wanted ? await api.watchStart({ level: yourKey, spec: form.spec.trim() || null, metric: form.metric || null }) : await api.watchStop();
+    const r = wanted ? await api.watchStart({ level: yourKey, spec: form.spec.trim() || null, metric: form.metric || null, region }) : await api.watchStop();
     if (!r.ok) setToast(r.error);
     // The `status` SSE event is the source of truth for the toggle.
   };
@@ -331,6 +338,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     <>
       <Header
         form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
+        region={region} instanceRegion={status.region} onRegionChange={(r) => updateSettings({ region: r })} payload={activePayload}
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && isMainPage} search={isMainPage} controls={controls}
@@ -355,7 +363,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
             items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
             onSelectTab={(k) => void showTab(k)} onToggle={(k) => setSelected((s) => toggleSelection(s, k))}
             onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
-            onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache}
+            onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} region={status.region}
           />
           <main className={"content" + (empty ? " content-home" : "")}>
             {empty && <Home envPath={controls.envPath ? status.envPath : null} />}

@@ -12,6 +12,7 @@ import type {
   DeepdiveRequest,
   DocsResponse,
   HistoryItem,
+  HistoryRequest,
   LookupPayload,
   LookupRequest,
   OwnClientView,
@@ -70,7 +71,7 @@ export const api = {
   setup: (clientId: string, clientSecret: string) =>
     call<{ envPath: string }>("/api/setup", post({ clientId, clientSecret })),
   lookup: (req: LookupRequest) =>
-    call<{ result: LookupPayload; key: string; fromCache: boolean; pointsSpent?: number; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/lookup", post(req)),
+    call<{ result: LookupPayload; key: string; fromCache: boolean; request: HistoryRequest; pointsSpent?: number; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/lookup", post(req)),
   history: () => call<{ items: HistoryItem[] }>("/api/history"),
   historyEntry: (key: string) => call<{ result: LookupPayload; key: string }>(historyPath(key)),
   removeHistory: (key: string) => call<Record<never, never>>(historyPath(key), { method: "DELETE" }),

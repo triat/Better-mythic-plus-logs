@@ -1,0 +1,41 @@
+// The two chips inside the search field (design: canvas "RegionSpec", option B): the region menu and
+// the spec picker. Pure — the Header component maps these rows to `.menu-item`s.
+import type { LookupPayload, Region } from "../types.ts";
+import { REGIONS, REGION_LABELS, regionLabel } from "./regions.ts";
+
+export interface MenuItem {
+  value: string;
+  label: string;
+  /** Right-aligned secondary text (`.n`), null for none. */
+  hint: string | null;
+  /** The current choice. */
+  on: boolean;
+}
+
+/** The region menu: four rows; `on` = the effective region. */
+export const regionMenu = (effective: Region): MenuItem[] =>
+  REGIONS.map((r) => ({ value: r, label: regionLabel(r), hint: REGION_LABELS[r], on: r === effective }));
+
+const runsText = (n: number): string => `${n} run${n === 1 ? "" : "s"}`;
+
+/** Picking this value reveals the free-text spec input instead of setting a spec. */
+export const OTHER_SPEC = "other";
+
+/**
+ * The spec menu: "any" (with the run total), one row per spec seen on the loaded payload (null before any
+ * tab) with its run count and the metric it implies, then "Other…" for a free-text name. `current` is the
+ * form's spec filter ("" = any).
+ */
+export function specMenu(payload: Pick<LookupPayload, "specsSeen" | "runsIndexed"> | null, current: string): MenuItem[] {
+  const seen = payload?.specsSeen ?? [];
+  // `runsIndexed` is the filtered count when the lookup carried a spec; the unfiltered total is the sum.
+  const total = seen.length ? seen.reduce((n, s) => n + s.runs, 0) : payload?.runsIndexed ?? null;
+  return [
+    { value: "", label: "any", hint: total === null ? null : runsText(total), on: current === "" },
+    ...seen.map((s) => ({ value: s.spec, label: s.spec, hint: `${runsText(s.runs)} · ${s.metric}`, on: s.spec === current })),
+    { value: OTHER_SPEC, label: "Other…", hint: "type a name", on: false },
+  ];
+}
+
+export const specChipLabel = (spec: string): string => (spec ? `spec ${spec} ▾` : "spec any ▾");
+export const regionChipLabel = (r: Region): string => `${regionLabel(r)} ▾`;

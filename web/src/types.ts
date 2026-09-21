@@ -4,9 +4,12 @@ import type { ProposalSummary } from "@shared/hosted/defensives.ts";
 import type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 import type { EnvRow } from "@shared/hosted/instance.ts";
 import type { AuditKind, AuditRow } from "@shared/hosted/audit.ts";
+import type { HistoryRequest } from "@shared/server-history.ts";
+import type { Region } from "@shared/wow/regions.ts";
 
-export type { LookupPayload } from "@shared/lookup.ts";
+export type { LookupPayload, SpecSeen } from "@shared/lookup.ts";
 export type { Region } from "@shared/wow/regions.ts";
+export type { HistoryRequest } from "@shared/server-history.ts";
 export type { ProposalSummary } from "@shared/hosted/defensives.ts";
 export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 export type { DefensiveSpell } from "@shared/deepdive/types.ts";
@@ -41,7 +44,8 @@ export interface HistoryItem {
   targetLevel: number;
   targetAutoDetected: boolean;
   fetchedAt: number;
-  request: { character: string; level: number | null; spec: string | null; metric: "dps" | "hps" | null };
+  /** The effective request (region included) — what Refresh re-runs. */
+  request: HistoryRequest;
 }
 
 export interface LookupRequest {
@@ -49,6 +53,8 @@ export interface LookupRequest {
   level?: number | null;
   spec?: string | null;
   metric?: "dps" | "hps" | null;
+  /** Lower-case; omitted = the instance default. A pasted Raider.IO URL's own region wins. */
+  region?: Region;
   refresh?: boolean;
 }
 
@@ -56,6 +62,7 @@ export interface WatchOpts {
   level?: number | string | null;
   spec?: string | null;
   metric?: string | null;
+  region?: Region | null;
 }
 
 export interface WatchStatus {

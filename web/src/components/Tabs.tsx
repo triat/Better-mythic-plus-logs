@@ -1,6 +1,6 @@
 import { classHex, className } from "@shared/wow/classes.ts";
-import type { HistoryItem } from "../types.ts";
-import { MAX_COMPARE, tabSubtitle } from "../lib/history.ts";
+import type { HistoryItem, Region } from "../types.ts";
+import { MAX_COMPARE, tabLevel, tabSubtitle } from "../lib/history.ts";
 import { fmtAge } from "../lib/format.ts";
 
 interface Props {
@@ -16,6 +16,8 @@ interface Props {
   onRefresh: () => void;
   fetchedAt: number | null;
   fromCache: boolean;
+  /** The instance default: a tab names its region only when it differs. */
+  region: Region;
 }
 
 export function Tabs(p: Props) {
@@ -34,7 +36,7 @@ export function Tabs(p: Props) {
               onClick={() => p.onSelectTab(t.key)}
               role="tab"
               aria-selected={active}
-              title={`${t.label} · ${className(t.charClass)} · ${tabSubtitle(t)}`}
+              title={`${t.label} · ${className(t.charClass)} · ${tabSubtitle(t, p.region)}`}
             >
               <button
                 type="button"
@@ -46,7 +48,7 @@ export function Tabs(p: Props) {
                 {checked && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>}
               </button>
               <span className="tab-title" style={{ color: classHex(t.charClass) }}>{t.label.split("-")[0]}</span>
-              <span className="tab-level mono">+{t.targetLevel}</span>
+              <span className="tab-level mono">{tabLevel(t, p.region)}</span>
               <button type="button" className="tab-close" title="Close tab" aria-label="Close tab" onClick={(e) => { e.stopPropagation(); p.onClose(t.key); }}>×</button>
             </div>
           );

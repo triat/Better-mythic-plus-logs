@@ -68,6 +68,14 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .chips { display: flex; gap: 6px; }
 .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; background: transparent; cursor: pointer; white-space: nowrap; }
 .chip:hover { color: var(--text); }
+/* The region / spec chips open a menu under themselves (ChipMenu.tsx; design: canvas "RegionSpec", option B). */
+.chip-menu { position: relative; display: inline-flex; }
+.chip-menu .menu { left: 0; right: auto; top: calc(100% + 6px); width: auto; min-width: 220px; white-space: nowrap; }
+.chip-menu .menu-head { border-bottom: 0; padding: 6px 10px 2px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.chip-menu .menu-item { gap: 8px; }
+.chip-menu .menu-item.on { background: var(--inset); color: var(--text); }
+.chip-menu .menu-item.sep { border-top: 1px solid var(--border-soft); border-radius: 0 0 var(--radius) var(--radius); margin-top: 4px; padding-top: 9px; }
+.menu-item .n { margin-left: auto; padding-left: 12px; font-size: 11px; color: var(--muted); }
 .options { display: flex; gap: 16px; }
 .options label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .options input, .options select { width: 200px; }

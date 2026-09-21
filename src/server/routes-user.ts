@@ -1,5 +1,5 @@
 // src/server/routes-user.ts
-// Per-user settings ("your key", legend state) and a member's own WCL client (issue #11 Task 3).
+// Per-user settings ("your key", legend state, remembered region) and a member's own WCL client (issue #11 Task 3).
 // Only registered in hosted mode: local mode keeps settings in the browser (web/src/lib/settings.ts)
 // and has no notion of a member's own WCL client.
 import type { UserSettings } from "../hosted/db.ts";

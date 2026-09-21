@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { openHosted } from "../../src/hosted/db.ts";
-import { HISTORY_MAX_PER_USER, SHARED_HISTORY_TTL_MS, openUserHistory } from "../../src/hosted/history.ts";
+import { HISTORY_MAX_PER_USER, SHARED_HISTORY_TTL_MS, USER_HISTORY_TABLES, openUserHistory } from "../../src/hosted/history.ts";
 import { cacheKey } from "../../src/server-history.ts";
 import type { HistoryRecord } from "../../src/server-history.ts";
 import type { Region } from "../../src/wow/regions.ts";
@@ -26,7 +26,7 @@ function setup(max = HISTORY_MAX_PER_USER, now: () => number = () => 1000, file 
   const hosted = openHosted(db);
   const ua = hosted.users.upsertFromDiscord({ discordId: "100000000000000001", username: "a", globalName: null, avatarHash: null }, null, 0);
   const ub = hosted.users.upsertFromDiscord({ discordId: "100000000000000002", username: "b", globalName: null, avatarHash: null }, null, 0);
-  const repo = openUserHistory(db, max);
+  const repo = openUserHistory(db, max, USER_HISTORY_TABLES, "eu");
   return { db, hosted, a: repo.forUser(ua.id, now), b: repo.forUser(ub.id, now), ua, ub };
 }
 
@@ -103,6 +103,50 @@ describe("SQLite history — same semantics as the in-memory History", () => {
     expect(h.list()[0]!.request.region).toBe("eu");
     expect(h.get(e.key)!.request.region).toBe("eu");
     expect(h.remove(e.key)).toBe(true); // forget() re-derives the auto alias from the stored request
+  });
+
+  test("opening the store migrates pre-region rows: 4-element keys gain the default region and hit again", () => {
+    const db = new Database(":memory:");
+    openHosted(db); // schema + a first (migrating) open on empty tables
+    const ua = openHosted(db).users.upsertFromDiscord({ discordId: "100000000000000001", username: "a", globalName: null, avatarHash: null }, null, 0);
+    const oldKey = JSON.stringify(["a-x", 18, "", ""]);
+    const oldAlias = JSON.stringify(["a-x", "auto", "", ""]);
+    const oldRequest = JSON.stringify({ character: "A-X", level: null, spec: null, metric: null });
+    db.run(
+      "INSERT INTO user_history (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [ua.id, oldKey, oldRequest, JSON.stringify({ any: "payload" }), "A-X", 7, null, 18, 1, 500, 1],
+    );
+    db.run("INSERT INTO user_history_auto (user_id, alias_key, level, set_at) VALUES (?, ?, ?, ?)", [ua.id, oldAlias, 18, 500]);
+
+    const h = openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, "eu").forUser(ua.id, () => 1000);
+    const key = cacheKey(req("A-X", 18));
+    expect(key).toBe('["a-x",18,"","","eu"]'); // JSON1 output must equal this string for the hit below
+    expect(h.get(key)).toBeDefined();
+    expect(h.get(key)!.request).toEqual({ character: "A-X", level: null, spec: null, metric: null, region: "eu" });
+    expect(h.cached(req("A-X", null))?.key).toBe(key); // the migrated alias resolves the auto request
+    expect(db.query<{ key: string }, []>("SELECT key FROM user_history").all().map((r) => r.key)).toEqual([key]);
+    expect(db.query<{ k: string }, []>("SELECT alias_key AS k FROM user_history_auto").all().map((r) => r.k)).toEqual([cacheKey(req("A-X", null))]);
+
+    // Idempotent: a second open changes nothing.
+    openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, "eu");
+    expect(db.query<{ key: string }, []>("SELECT key FROM user_history").all().map((r) => r.key)).toEqual([key]);
+  });
+
+  test("a pre-region row whose migrated key already exists is dropped: the newer row wins", () => {
+    const db = new Database(":memory:");
+    const ua = openHosted(db).users.upsertFromDiscord({ discordId: "100000000000000001", username: "a", globalName: null, avatarHash: null }, null, 0);
+    const fresh = openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, "eu").forUser(ua.id, () => 2000);
+    const e = fresh.record(req("A-X", null), entry({ label: "A-X", targetLevel: 18, result: { v: "new" } }));
+    db.run(
+      "INSERT INTO user_history (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [ua.id, JSON.stringify(["a-x", 18, "", ""]), JSON.stringify({ character: "A-X", level: null, spec: null, metric: null }), JSON.stringify({ v: "old" }), "A-X", 7, null, 18, 1, 500, 0],
+    );
+    db.run("INSERT INTO user_history_auto (user_id, alias_key, level, set_at) VALUES (?, ?, ?, ?)", [ua.id, JSON.stringify(["a-x", "auto", "", ""]), 17, 500]);
+
+    const h = openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, "eu").forUser(ua.id, () => 2000);
+    expect(h.size).toBe(1);
+    expect(h.get(e.key)!.result).toEqual({ v: "new" });
+    expect(h.cached(req("A-X", null))?.key).toBe(e.key); // the fresh alias (18) survived, the old one (17) went
   });
 });
 

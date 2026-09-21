@@ -5,9 +5,9 @@
 // cache hit (copied into the caller's history), so two members vetting the same applicant cost
 // one WCL fetch.
 import type { Database } from "bun:sqlite";
-import { config } from "../config.ts";
 import { cacheKey, requestFromJson } from "../server-history.ts";
 import type { HistoryEntry, HistoryListItem, HistoryRecord, HistoryRequest, HistoryStore } from "../server-history.ts";
+import type { Region } from "../wow/regions.ts";
 
 export const HISTORY_MAX_PER_USER = 20;
 /** Another user's entry is reused only while younger than this. */
@@ -23,9 +23,9 @@ interface EntryRaw extends ItemRaw { payload: string }
 
 const ITEM_COLUMNS = "key, request, label, char_class, spec, target_level, target_auto, fetched_at";
 
-const item = (r: ItemRaw): HistoryListItem => ({
+const item = (r: ItemRaw, defaultRegion: Region): HistoryListItem => ({
   key: r.key,
-  request: requestFromJson(r.request, config.region),
+  request: requestFromJson(r.request, defaultRegion),
   fetchedAt: r.fetched_at,
   label: r.label,
   charClass: r.char_class,
@@ -33,7 +33,7 @@ const item = (r: ItemRaw): HistoryListItem => ({
   targetLevel: r.target_level,
   targetAutoDetected: r.target_auto === 1,
 });
-const entry = (r: EntryRaw): HistoryEntry => ({ ...item(r), result: JSON.parse(r.payload) as unknown });
+const entry = (r: EntryRaw, defaultRegion: Region): HistoryEntry => ({ ...item(r, defaultRegion), result: JSON.parse(r.payload) as unknown });
 const asRecord = (e: HistoryEntry): HistoryRecord =>
   ({ result: e.result, label: e.label, charClass: e.charClass, spec: e.spec, targetLevel: e.targetLevel, targetAutoDetected: e.targetAutoDetected });
 
@@ -41,9 +41,43 @@ const asRecord = (e: HistoryEntry): HistoryRecord =>
 export interface HistoryTables { history: string; auto: string }
 export const USER_HISTORY_TABLES: HistoryTables = { history: "user_history", auto: "user_history_auto" };
 
-export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables: HistoryTables = USER_HISTORY_TABLES): UserHistoryRepo {
+/**
+ * Rows stored before the region travelled with the request have a 4-element key (`["char",18,"",""]`)
+ * and a request without `region`: they would never hit again and would sit next to a duplicate tab.
+ * One-shot and idempotent: append the instance default to every 4-element key/alias and set it on the
+ * request. SQLite's JSON1 minifies its output exactly like `JSON.stringify`, so the migrated key equals
+ * `cacheKey()`'s. A 4-element row whose migrated key already exists for the same user (looked up again
+ * since the upgrade) is dropped: the newer row wins.
+ */
+function migrateRegionlessKeys(db: Database, tables: HistoryTables, defaultRegion: Region): void {
   const T = tables.history;
   const A = tables.auto;
+  db.transaction(() => {
+    db.run(
+      `DELETE FROM ${T} WHERE json_array_length(key) = 4
+         AND EXISTS (SELECT 1 FROM ${T} t2 WHERE t2.user_id = ${T}.user_id AND t2.key = json_insert(${T}.key, '$[4]', ?))`,
+      [defaultRegion],
+    );
+    db.run(
+      `UPDATE ${T} SET key = json_insert(key, '$[4]', ?), request = json_set(request, '$.region', ?) WHERE json_array_length(key) = 4`,
+      [defaultRegion, defaultRegion],
+    );
+    db.run(
+      `DELETE FROM ${A} WHERE json_array_length(alias_key) = 4
+         AND EXISTS (SELECT 1 FROM ${A} a2 WHERE a2.user_id = ${A}.user_id AND a2.alias_key = json_insert(${A}.alias_key, '$[4]', ?))`,
+      [defaultRegion],
+    );
+    db.run(`UPDATE ${A} SET alias_key = json_insert(alias_key, '$[4]', ?) WHERE json_array_length(alias_key) = 4`, [defaultRegion]);
+  })();
+}
+
+/** `defaultRegion` (the instance default) completes rows that predate the region — at open, then on read. */
+export function openUserHistory(db: Database, max: number, tables: HistoryTables, defaultRegion: Region): UserHistoryRepo {
+  const T = tables.history;
+  const A = tables.auto;
+  migrateRegionlessKeys(db, tables, defaultRegion);
+  const toItem = (r: ItemRaw) => item(r, defaultRegion);
+  const toEntry = (r: EntryRaw) => entry(r, defaultRegion);
   const getOne = db.query<EntryRaw, [number, string]>(`SELECT ${ITEM_COLUMNS}, payload FROM ${T} WHERE user_id = ? AND key = ?`);
   const listAll = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM ${T} WHERE user_id = ? ORDER BY seq DESC`);
   const count = db.query<{ n: number }, [number]>(`SELECT COUNT(*) AS n FROM ${T} WHERE user_id = ?`);
@@ -75,7 +109,7 @@ export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables
       // Drop the auto alias only if it pointed at this entry (mirrors History.forget).
       const forget = (e: ItemRaw): void => {
         deleteOne.run(userId, e.key);
-        autoDeleteIf.run(userId, cacheKey({ ...requestFromJson(e.request, config.region), level: null }), e.target_level);
+        autoDeleteIf.run(userId, cacheKey({ ...requestFromJson(e.request, defaultRegion), level: null }), e.target_level);
       };
 
       const write = (r: HistoryRequest, rec: HistoryRecord, fetchedAt: number): HistoryEntry => {
@@ -113,7 +147,7 @@ export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables
         const level = r.level ?? autoNewest.get(cacheKey(r), since)?.level;
         if (level === undefined) return null;
         const row = sharedNewest.get(cacheKey({ ...r, level }), since, userId);
-        return row ? entry(row) : null;
+        return row ? toEntry(row) : null;
       };
 
       return {
@@ -123,7 +157,7 @@ export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables
           const own = key === null ? null : getOne.get(userId, key);
           if (own) {
             touch.run(nextSeq.get(userId)!.n, userId, key!);
-            return entry(own);
+            return toEntry(own);
           }
           const other = shared(r);
           // The copy reflects the caller's own request, not the other user's: an explicit request
@@ -133,9 +167,9 @@ export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables
         record: (r, rec) => record(r, rec, now()),
         get(key) {
           const row = getOne.get(userId, key);
-          return row ? entry(row) : undefined;
+          return row ? toEntry(row) : undefined;
         },
-        list: () => listAll.all(userId).map(item),
+        list: () => listAll.all(userId).map(toItem),
         remove(key) {
           const row = getOne.get(userId, key);
           if (!row) return false;

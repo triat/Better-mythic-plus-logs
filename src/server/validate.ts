@@ -1,8 +1,8 @@
 // One validator for every JSON body the server accepts (issue #9): explicit shapes, unknown fields refused,
 // numbers finite, integers where the domain is integer. Pure; the routes call parseBody().
 import { DISCORD_ID } from "../hosted/config.ts";
-import { KEY_MAX, KEY_MIN } from "../hosted/settings-limits.ts";
-import { REGIONS } from "../wow/regions.ts"; // moved out of routes-user.ts (which now imports them from here too) — no validate ↔ routes cycle
+import { KEY_MAX, KEY_MIN } from "../hosted/settings-limits.ts"; // moved out of routes-user.ts (which now imports them from here too) — no validate ↔ routes cycle
+import { REGIONS } from "../wow/regions.ts";
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 export interface Schema<T> { parse(v: unknown, path: string): Result<T> }

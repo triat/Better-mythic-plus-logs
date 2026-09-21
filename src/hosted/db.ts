@@ -5,7 +5,8 @@ import { randomBytes } from "node:crypto";
 import type { Region } from "../wow/regions.ts";
 import { isRegion } from "../wow/regions.ts";
 import { applyHostedSchema } from "./schema.ts";
-import { openUserHistory } from "./history.ts";
+import { config } from "../config.ts";
+import { HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, openUserHistory } from "./history.ts";
 import type { UserHistoryRepo } from "./history.ts";
 import { openDefensives } from "./defensives.ts";
 import type { DefensivesRepo } from "./defensives.ts";
@@ -244,7 +245,7 @@ export function openHosted(db: Database): HostedDb {
       byUserSince: (sinceAt) => usageByUserSince.all(hourStart(sinceAt)).map((r) => ({ userId: r.user_id, points: r.points })),
       totals: (sinceAt) => usageTotals.all(hourStart(sinceAt)).map((r) => ({ hourStart: r.hour_start, points: r.points })),
     },
-    history: openUserHistory(db),
+    history: openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, config.region),
     defensives: openDefensives(db),
     wclClients: {
       get: (userId) => { const r = wclClientGet.get(userId); return r ? wclClient(r) : null; },

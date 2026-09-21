@@ -67,8 +67,8 @@ header, tabs, hero, axes, tiles and the quota toast (`docs/design/canvas/Locale.
   numbers or keys do not take `t`.
 - Label tables become key tables: `AXIS_LABELS` → `t(\`axes.${key}.title\`)`, role / confidence / verdict
   labels likewise. `AXIS_ORDER` and every key stay as they are.
-- Dates: `fmtDate(locale, ms)` with `Intl.DateTimeFormat(locale, { day: "numeric", month: "short" })`
-  (`21 Sep` / `21 sept.`); relative ages (`3 d ago`) come from the dictionary.
+- Dates: relative ages (`3 d ago`) come from the dictionary (`common.age.*`, `fmtAge`). No absolute date is
+  shown anywhere, so the `fmtDate(locale, ms)` helper planned here was dropped (final review).
 
 ## Server-side content
 

@@ -108,7 +108,8 @@ Windows (`.exe` cross-compile, double-click flow): [docs/cli.md#windows](docs/cl
 The web UI reads in English or French — the CLI, `--json` output and the docs stay English. It picks a language
 from your browser on first visit (French for `fr`/`fr-FR`/`fr-CA`, English otherwise), and remembers an explicit
 choice from the **EN | FR** switch — a chip at the right of the header in local mode, a row in the user menu in
-hosted mode — per browser locally (`localStorage`) or per account when hosted (`/settings`). WoW terms stay English
+hosted mode — per browser locally (`localStorage`) or per account when hosted (the user-menu row saves it through
+`PUT /api/settings`, so it follows you across browsers). WoW terms stay English
 in French text the way players say them (*kick, key, timed/depleted, parse, tank/heal, DPS/HPS, Mythic+,
 deep-dive, run, reset*); the rest, including the Help page and the verdict wording, is French.
 

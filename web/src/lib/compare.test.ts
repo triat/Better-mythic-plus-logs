@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import type { LookupPayload } from "../types.ts";
+import { fr } from "../i18n/fr.ts";
+import { makeT, tEn } from "../i18n/t.ts";
 import { bestIndices, compareSections } from "./compare.ts";
+
+const tFr = makeT(fr, "fr");
 
 describe("bestIndices", () => {
   test("higher / lower / ties / nulls / none", () => {
@@ -38,7 +42,7 @@ describe("compareSections", () => {
     evaluation: { role: "tank", targetLevel: 18, global: 66, verdict: "maybe", runsUsed: 5, configVersion: "x",
       axes: [{ key: "survival", score: 100, confidence: "high", evidence: [] }, { key: "utility", score: 71, confidence: "high", evidence: [] }, { key: "throughput", score: 66, confidence: "high", evidence: [] }, { key: "consistency", score: 72, confidence: "medium", evidence: [] }, { key: "preparation", score: 38, confidence: "medium", evidence: [] }, { key: "experience", score: 58, confidence: "high", evidence: [] }] },
   });
-  const sections = compareSections([a, b]);
+  const sections = compareSections(tEn, [a, b]);
   const row = (title: string, label: string) => sections.find((s) => s.title === title)!.rows.find((r) => r.label === label)!;
 
   test("score + axes", () => {
@@ -63,13 +67,23 @@ describe("compareSections", () => {
     expect(d.rows[1]!.cells[0]!.text).toBe("—");
   });
   test("same metric keeps the metric label", () => {
-    const s = compareSections([a, payload({ character: { name: "C", classID: 7, spec: null, scoreTop: null } })]);
+    const s = compareSections(tEn, [a, payload({ character: { name: "C", classID: 7, spec: null, scoreTop: null } })]);
     expect(s.find((x) => x.title === "Summary")!.rows.find((r) => r.label === "Median HPS")!.cells.map((c) => c.text)).toEqual(["312.0k", "312.0k"]);
+  });
+  test("French: section titles, row labels, cells", () => {
+    const s = compareSections(tFr, [a, b]);
+    expect(s.map((x) => x.title)).toEqual(["Évaluation", "Résumé", "Par donjon (meilleur run)"]);
+    expect(s[0]!.rows.map((r) => r.label)).toEqual(["Score", "Survie", "Utilité", "Throughput", "Régularité", "Préparation", "Expérience"]);
+    expect(s[0]!.rows[4]!.cells[0]!.text).toBe("n/a");
+    const rowFr = (label: string) => s[1]!.rows.find((r) => r.label === label)!;
+    expect(rowFr("Niveau cible").cells.map((c) => c.text)).toEqual(["+21 auto", "+18 auto"]);
+    expect(rowFr("Saison préc.").cells.map((c) => c.text)).toEqual(["— pas de données (reroll ?)", "2900 tank"]);
+    expect(rowFr("Output médian").cells.map((c) => c.text)).toEqual(["312.0k hps", "1.20m dps"]);
   });
   test("Defensives row: higher usage wins, dash without analyses", () => {
     const a = payload({ deepdiveSummary: { tableWarning: null, analyzedRuns: 2, majorUsage: 0.8, avoidableDeathShare: 0.5, avoidableDeaths: 1, countedDeaths: 2 } });
     const b = payload({});
-    const s = compareSections([a, b]);
+    const s = compareSections(tEn, [a, b]);
     const row = s.find((x) => x.title === "Summary")!.rows.find((r) => r.label === "Defensives")!;
     expect(row.cells[0]).toEqual({ text: "80% · 1/2 avoidable", cls: "", best: true });
     expect(row.cells[1]).toEqual({ text: "—", cls: "faint", best: false });

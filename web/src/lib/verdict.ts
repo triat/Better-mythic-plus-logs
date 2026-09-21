@@ -1,14 +1,9 @@
 import type { AxisKey, Confidence, Evaluation } from "../types.ts";
+import type { T } from "../i18n/t.ts";
 
 export const AXIS_ORDER: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation", "experience"];
-export const AXIS_LABELS: Record<AxisKey, string> = {
-  survival: "Survival",
-  utility: "Utility",
-  throughput: "Throughput",
-  consistency: "Consistency",
-  preparation: "Preparation",
-  experience: "Experience",
-};
+/** "Survival" / "Survie" — the axis name as the UI shows it. */
+export const axisTitle = (t: T, key: AxisKey): string => t(`verdict.axes.${key}`);
 
 export interface VerdictView {
   label: string;
@@ -17,17 +12,16 @@ export interface VerdictView {
   sub: string;
 }
 
-const runs = (n: number) => `${n} run${n === 1 ? "" : "s"} scored`;
-
-export function verdictView(ev: Evaluation, autoTarget = false): VerdictView {
+export function verdictView(t: T, ev: Evaluation, autoTarget = false): VerdictView {
+  const runs = t("verdict.runsScored", { count: ev.runsUsed });
   if (ev.verdict === "insufficient" || ev.global === null) {
-    return { label: "NOT ENOUGH DATA", score: null, cls: "badge-insufficient", sub: `only ${runs(ev.runsUsed)}` };
+    return { label: t("verdict.words.insufficient"), score: null, cls: "badge-insufficient", sub: t("verdict.only", { runs }) };
   }
   return {
-    label: ev.verdict.toUpperCase(),
+    label: t(`verdict.words.${ev.verdict}`),
     score: String(Math.round(ev.global)),
     cls: `badge-${ev.verdict}`,
-    sub: `for a +${ev.targetLevel}${autoTarget ? " (auto)" : ""} · ${runs(ev.runsUsed)} · confidence per axis`,
+    sub: t("verdict.forLevel", { level: ev.targetLevel, auto: autoTarget ? t("verdict.autoSuffix") : "", runs }),
   };
 }
 

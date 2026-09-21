@@ -1,6 +1,11 @@
 // Every string the web front shows, in English — the source of truth. fr.ts mirrors it key for key
 // (Mirror<typeof en> makes a missing or extra key a tsc error). Placeholders: {name}; plurals:
 // {count, plural, one {# run} other {# runs}}. Numbers in params are formatted per locale by t.
+import type { AxisKey, EvidenceSource } from "../types.ts";
+
+/** One message per evidence source, nested by axis: `evidence.<axis>.<id>` is `t`'s key for `Evidence.source`. */
+type EvidenceMessages = { [A in AxisKey]: { [S in EvidenceSource as S extends `${A}.${infer Id}` ? Id : never]: string } };
+
 export const en = {
   common: {
     loading: "loading…",
@@ -142,5 +147,120 @@ export const en = {
     hint: "Paste a Raider.IO URL or a Name-Realm above.",
     hintWatch: "Paste a Raider.IO URL or a Name-Realm above, or turn on clipboard watch and copy one from anywhere.",
     unknownPath: "unknown",
+  },
+  verdict: {
+    axes: { survival: "Survival", utility: "Utility", throughput: "Throughput", consistency: "Consistency", preparation: "Preparation", experience: "Experience" },
+    words: { invite: "INVITE", maybe: "MAYBE", pass: "PASS", insufficient: "NOT ENOUGH DATA" },
+    confidence: { high: "high", medium: "medium", low: "low" },
+    role: { dps: "dps", healer: "healer", tank: "tank" },
+    runsScored: "{count, plural, one {# run scored} other {# runs scored}}",
+    only: "only {runs}",
+    forLevel: "for a +{level}{auto} · {runs} · confidence per axis",
+    autoSuffix: " (auto)",
+    replaces: " (replaces this tab · cached data)",
+    runsIndexed: "runs indexed",
+    metricAuto: " · metric auto-selected; {other} data exists too",
+    filter: "filter: {spec}",
+    rings: "rings = 25 / 50 / 75 / 100 · hollow point = not applicable",
+    radar: "Six-axis radar",
+    na: "n/a",
+    notApplicable: "not applicable",
+    confidenceOf: "{c} confidence",
+    more: " · +{n} more",
+    axisClick: "Click to see what is measured and every piece of evidence",
+    deepdiveFeeds: "Deep-dive analyses feed this axis",
+    legend: { title: "How the verdict is built", sub: "six axes scored 0–100, weighted by role · the dot is the axis confidence" },
+    measured: "What's measured",
+    noEvidence: "no evidence",
+    notEnough: "not enough data for this axis",
+    analyzed: "{count, plural, one {# run analyzed} other {# runs analyzed}}",
+    weight: {
+      all: "weight {w} for every role",
+      info: "weight 0 · informational",
+      each: "{role} {w}",
+      dpsOdd: "weight {odd} for dps, {common} for {others}",
+      oneOdd: "weight {common} ({role} {odd})",
+      and: " and ",
+    },
+    stats: { score: "{metric} score", ilvl: "ilvl", region: "region", server: "server", prevSeason: "prev season" },
+    howComputed: "How is this computed?",
+  },
+  evidence: {
+    survival: {
+      individualDeaths: "{value} individual deaths/run",
+      wipeDeaths: "{value} deaths in wipes/run",
+      avoidableVsPeers: "avoidable {value}% vs peers",
+      dtpsVsPeers: "DTPS {value}% vs peers",
+      groupDeaths: "{value} teammate deaths/run",
+      defensiveUsage: "majors used {value}% of possible ({runs, plural, one {# run} other {# runs}})",
+      avoidableDeaths: "{count}/{total} deaths with a defensive available",
+    },
+    utility: {
+      kicksVsPeers: "kicks {value} pts vs peers",
+      kicksAbsolute: "{value}% of kick capacity used",
+      dispels: "{value} dispels/run",
+    },
+    throughput: {
+      medianParse: "median parse {value}%",
+      parseAtTarget: "parse {value}% at target level",
+    },
+    consistency: {
+      parseSpread: "parse spread ±{value}%",
+      deathsSpread: "deaths spread ±{value}",
+      damageSpread: "damage-vs-peers spread ±{value}%",
+    },
+    preparation: {
+      potions: "{value} potions/run",
+      healthstones: "{value} healthstones/run",
+      ilvlVsLevel: "ilvl {value} vs expected",
+    },
+    experience: {
+      coverage: "{value}% dungeons covered",
+      atTarget: "{value}% dungeons at/above target",
+      medianVsTarget: "median key {value} vs target",
+      activity: "{value} runs in last 7 days",
+      prevSeasonBonus: "previous season {value}",
+    },
+  } satisfies EvidenceMessages,
+  tiles: {
+    median: "Median {metric}", medianParse: "Median parse", timed: "Timed (shown)", avgDeaths: "Avg deaths", inWipes: "{n} in wipes",
+    dtps: "Δ DTPS vs peers", avoidable: "Avoidable vs peers", kicks: "Kicks vs peers", ilvl: "ilvl", rioRecent: "RIO recent timed",
+    prevSeason: "Prev season", noData: "— no data (reroll?)",
+  },
+  runs: {
+    none: "No M+ runs indexed this season.",
+    best: "Best run per dungeon",
+    analyzeAll: "Analyze all shown ({cost})",
+    analyze: "Analyze · {cost}", reanalyze: "Re-analyze · {cost}", analyzed: "Analyzed ✓", analyzing: "Analyzing {done}/{total}…",
+    cost: "~{pts} pts",
+    olderThan: "older than {days} days",
+    stale: " · stale",
+    noStats: "No WCL stats for this run",
+    openLog: "Open log",
+    deaths: "{count, plural, one {# death} other {# deaths}}", wipes: " ({n} in wipe)",
+    dtpsVs: "{dtps} dtps {delta} vs {n} dps", dtps: "{dtps} dtps",
+    avoidableVs: "avoidable {perMin}/min ({delta})", avoidable: "avoidable {perMin}/min",
+    kicksNoSpec: "kicks {n} (no kick on spec)", kicks: "kicks {n}", kicksCap: "kicks {n}/{cap} (peer {peer}%)", kicksCapNoPeer: "kicks {n}/{cap}",
+    dispels: "dispels {n}", dispelsNoSpec: "dispels {n} (no dispel on spec)",
+    consumables: "{pots} pots · {hs} hs",
+    timed: "✓+{chests} {time}", depleted: "✗ depleted {time}",
+    unranked: "unranked",
+    headline: "{covered}/{total} dungeons · median +{level}, {amount} {metric}, {parse}%",
+    atTarget: " · {n}/{total} at or above +{level}",
+    missing: "no run in: {list}",
+  },
+  rio: {
+    error: "Raider.IO: {text}", noData: "no data",
+    title: "Recent runs (Raider.IO)", summary: "{total} runs · {timed} timed", last: " · last {age}", score: " · score {score}",
+    profile: "profile", none: "(no recent runs)", timed: "✓+{chests}", depleted: "✗ depleted", open: "Open on Raider.IO",
+  },
+  compare: {
+    evaluation: "Evaluation", score: "Score", na: "n/a", summary: "Summary", target: "Target level", auto: " auto",
+    covered: "Dungeons covered", atTarget: "Dungeons ≥ target",
+    medianKey: "Median key level", median: "Median {metric}", medianOutput: "Median output", medianParse: "Median parse %", avgDeaths: "Avg deaths",
+    dtps: "Median Δ DTPS vs peers", timed: "Timed (shown runs)", avoidable: "Avoidable dmg vs peers", kicks: "Kicks vs peers", defensives: "Defensives",
+    ilvl: "ilvl", rioRecent: "RIO recent timed", prevSeason: "Prev season", noData: "— no data (reroll?)", bestPrev: "Best run prev-level",
+    perDungeon: "Per-dungeon (best run)", deathsShort: "{n}d",
+    note: "Avg deaths and median Δ DTPS are computed across displayed runs. Highlight = best on that row.",
   },
 } as const;

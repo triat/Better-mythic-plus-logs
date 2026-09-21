@@ -1,9 +1,11 @@
 import type { AxisRowModel } from "../lib/axes.ts";
 import { confidenceColor } from "../lib/verdict.ts";
+import { useT } from "../locale.tsx";
 import { useSettings } from "../settings.tsx";
 
 /** "How the verdict is built": one line per axis with its weight; open by default, remembered per browser (local) or per account (hosted). */
 export function AxisLegend({ rows }: { rows: AxisRowModel[] }) {
+  const { t } = useT();
   const { settings, update } = useSettings();
   const open = settings.legendOpen;
   const toggle = () => update({ legendOpen: !open });
@@ -11,8 +13,8 @@ export function AxisLegend({ rows }: { rows: AxisRowModel[] }) {
     <div className="legend">
       <button type="button" className="section-head" onClick={toggle} aria-expanded={open}>
         <span className={"chev" + (open ? " open" : "")}>›</span>
-        <span className="legend-title">How the verdict is built</span>
-        <span className="muted">six axes scored 0–100, weighted by role · the dot is the axis confidence</span>
+        <span className="legend-title">{t("verdict.legend.title")}</span>
+        <span className="muted">{t("verdict.legend.sub")}</span>
       </button>
       {open && (
         <div className="legend-grid">

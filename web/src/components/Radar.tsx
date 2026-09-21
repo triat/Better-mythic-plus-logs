@@ -1,7 +1,8 @@
 import type { AxisKey } from "../types.ts";
 import { ANGLES_DEG, RADAR_VIEWBOX, axisLabelPos, axisPoint, polygonPoints, ringPoints } from "../lib/radar.ts";
-import { AXIS_LABELS, AXIS_ORDER } from "../lib/verdict.ts";
+import { AXIS_ORDER, axisTitle } from "../lib/verdict.ts";
 import { useDocs } from "../docs.tsx";
+import { useT } from "../locale.tsx";
 
 export interface RadarSeries {
   /** Six scores in AXIS_ORDER; null = not applicable. */
@@ -23,8 +24,9 @@ export function Radar({ series, size = 420, showScores = false }: Props) {
   const height = Math.round((size * 310) / 440);
   const first = series[0];
   const { axes } = useDocs();
+  const { t } = useT();
   return (
-    <svg width={size} height={height} viewBox={RADAR_VIEWBOX} role="img" aria-label="Six-axis radar">
+    <svg width={size} height={height} viewBox={RADAR_VIEWBOX} role="img" aria-label={t("verdict.radar")}>
       {[100, 75, 50, 25].map((ring) => (
         <polygon key={ring} points={ringPoints(ring)} fill="none" stroke={ring === 100 ? "#30363d" : "#21262d"} strokeWidth="1" />
       ))}
@@ -50,7 +52,7 @@ export function Radar({ series, size = 420, showScores = false }: Props) {
         const { x, y, anchor } = axisLabelPos(i);
         const score = showScores && first ? first.points[i] : undefined;
         const na = score === null;
-        const text = AXIS_LABELS[key].toUpperCase() + (score === undefined ? "" : na ? " n/a" : ` ${Math.round(score)}`);
+        const text = axisTitle(t, key).toUpperCase() + (score === undefined ? "" : na ? ` ${t("verdict.na")}` : ` ${Math.round(score)}`);
         return (
           <text key={key} className="radar-label" x={x} y={y} textAnchor={anchor} fontSize="10" fontWeight="600" letterSpacing="0.6" fill={na ? "#6e7681" : "#8b949e"}>
             {axes && <title>{axes[key].description}</title>}

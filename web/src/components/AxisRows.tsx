@@ -2,9 +2,11 @@ import { useState } from "react";
 import type { AxisRowModel } from "../lib/axes.ts";
 import { anchorOf } from "../lib/help.ts";
 import { confidenceColor } from "../lib/verdict.ts";
+import { useT } from "../locale.tsx";
 import { HelpLink } from "./HelpLink.tsx";
 
 export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
+  const { t } = useT();
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="axes">
@@ -18,19 +20,19 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
             onClick={() => setOpen(expanded ? null : r.key)}
             role="button"
             aria-expanded={expanded}
-            title={expanded ? undefined : "Click to see what is measured and every piece of evidence"}
+            title={expanded ? undefined : t("verdict.axisClick")}
           >
             <div className="axis-name">
               <span className={"chev" + (expanded ? " open" : "")}>›</span>
               <span className="conf" style={{ background: confidenceColor(r.confidence) }} />
               <span className="label-caps">{r.label}</span>
-              {r.badge && <span className="chip" title="Deep-dive analyses feed this axis">{r.badge}</span>}
+              {r.badge && <span className="chip" title={t("verdict.deepdiveFeeds")}>{r.badge}</span>}
               <HelpLink anchor={anchorOf(r.key)} />
             </div>
-            <div className="axis-score mono">{na ? "n/a" : Math.round(r.score!)}</div>
+            <div className="axis-score mono">{na ? t("verdict.na") : Math.round(r.score!)}</div>
             <div className="axis-evidence">
               {expanded ? (
-                <span className="muted">{r.confidence ? `${r.confidence} confidence` : "not applicable"}</span>
+                <span className="muted">{r.confidence ? t("verdict.confidenceOf", { c: t(`verdict.confidence.${r.confidence}`) }) : t("verdict.notApplicable")}</span>
               ) : (
                 <>
                   {r.top.map((e, i) => (
@@ -41,14 +43,14 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
                     </span>
                   ))}
                   {r.top.length === 0 && <span className="faint">{r.note}</span>}
-                  {r.all.length > 2 && <span className="faint"> · +{r.all.length - 2} more</span>}
+                  {r.all.length > 2 && <span className="faint">{t("verdict.more", { n: r.all.length - 2 })}</span>}
                 </>
               )}
             </div>
             {expanded && (
               <div className="axis-detail">
                 <div className="axis-callout">
-                  <div className="label-caps axis-callout-title">What's measured · {r.weight}</div>
+                  <div className="label-caps axis-callout-title">{t("verdict.measured")} · {r.weight}</div>
                   <div>{r.description}</div>
                 </div>
                 {r.all.length > 0 ? (

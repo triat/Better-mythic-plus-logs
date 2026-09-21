@@ -3,13 +3,15 @@ import type { HistoryItem, LookupPayload } from "../types.ts";
 import { radarPoints } from "../lib/axes.ts";
 import { compareSections } from "../lib/compare.ts";
 import { verdictView } from "../lib/verdict.ts";
+import { useT } from "../locale.tsx";
 import { Radar } from "./Radar.tsx";
 
 export interface CompareEntry { item: HistoryItem; payload: LookupPayload }
 
 export function Compare({ entries, onJump }: { entries: CompareEntry[]; onJump: (key: string) => void }) {
+  const { t } = useT();
   const series = entries.map((e) => ({ points: radarPoints(e.payload.evaluation), color: classHex(e.payload.character.classID), label: e.payload.character.name, id: e.item.key }));
-  const sections = compareSections(entries.map((e) => e.payload));
+  const sections = compareSections(t, entries.map((e) => e.payload));
   return (
     <section className="card compare">
       <div className="radar-wrap">
@@ -24,7 +26,7 @@ export function Compare({ entries, onJump }: { entries: CompareEntry[]; onJump: 
             <tr>
               <th />
               {entries.map((e) => {
-                const v = verdictView(e.payload.evaluation);
+                const v = verdictView(t, e.payload.evaluation);
                 return (
                   <th key={e.item.key}>
                     <a href="#" onClick={(ev) => { ev.preventDefault(); onJump(e.item.key); }} style={{ color: classHex(e.payload.character.classID) }}>{e.payload.character.name}</a>
@@ -58,7 +60,7 @@ export function Compare({ entries, onJump }: { entries: CompareEntry[]; onJump: 
             ))}
           </tbody>
         </table>
-        <p className="faint" style={{ fontSize: 12, marginTop: 12 }}>Avg deaths and median Δ DTPS are computed across displayed runs. Highlight = best on that row.</p>
+        <p className="faint" style={{ fontSize: 12, marginTop: 12 }}>{t("compare.note")}</p>
       </div>
     </section>
   );

@@ -349,12 +349,12 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!activePayload) return;
     const todo = unanalyzedRuns(activePayload);
     for (let i = 0; i < todo.length; i++) {
-      setProgress(`Analyzing ${i + 1}/${todo.length}…`);
+      setProgress(t("runs.analyzing", { done: i + 1, total: todo.length }));
       const ok = await analyze(todo[i]!);
       if (!ok) break; // a 402/502 stops the batch; the toast says why
     }
     setProgress(null);
-  }, [activePayload, analyze]);
+  }, [activePayload, analyze, t]);
 
   const patchDefensives = useCallback(async (className: string, spec: string, patch: OverrideEntry) => {
     const r = await api.patchDefensives({ className, spec, patch });

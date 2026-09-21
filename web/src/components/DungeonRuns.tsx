@@ -4,27 +4,29 @@ import { STALE_DAYS } from "../lib/format.ts";
 import { analysisFor, costText, tableWarningText, unanalyzedRuns } from "../lib/deepdive.ts";
 import { missingDungeons, runRows, runsHeadline } from "../lib/runs.ts";
 import type { RunRowModel } from "../lib/runs.ts";
+import { useT } from "../locale.tsx";
 import type { DeepdiveActions } from "./Detail.tsx";
 import { HelpLink } from "./HelpLink.tsx";
 import { RunDeepDive } from "./RunDeepDive.tsx";
 
 export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; deepdive: DeepdiveActions }) {
+  const { t } = useT();
   const [open, setOpen] = useState(true);
   const [openRow, setOpenRow] = useState<string | null>(null);
-  const rows = runRows(payload);
+  const rows = runRows(t, payload);
   const missing = missingDungeons(payload);
   const pending = unanalyzedRuns(payload).length;
   const tableWarning = tableWarningText(payload.deepdiveSummary.tableWarning);
-  if (rows.length === 0) return <section className="card muted">No M+ runs indexed this season.</section>;
+  if (rows.length === 0) return <section className="card muted">{t("runs.none")}</section>;
   return (
     <section className="card section">
       <div className="section-row">
         <button type="button" className="section-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           <span className={"chev" + (open ? " open" : "")}>›</span>
-          <span className="section-title">Best run per dungeon</span>
+          <span className="section-title">{t("runs.best")}</span>
         </button>
         <HelpLink anchor="runs" />
-        <span className="muted">{runsHeadline(payload)}</span>
+        <span className="muted">{runsHeadline(t, payload)}</span>
         <div className="grow" />
         {pending > 0 && (
           <button
@@ -33,7 +35,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
             title={deepdive.canAfford(pending) ? undefined : deepdive.quotaTooltip}
             onClick={() => void deepdive.analyzeAll()}
           >
-            {deepdive.progress ?? `Analyze all shown (${costText(pending)})`}
+            {deepdive.progress ?? t("runs.analyzeAll", { cost: costText(pending) })}
           </button>
         )}
       </div>
@@ -46,7 +48,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
               expanded={openRow === r.key} onToggle={() => setOpenRow(openRow === r.key ? null : r.key)}
             />
           ))}
-          {missing.length > 0 && <div className="faint" style={{ fontSize: 12, padding: "4px 10px" }}>no run in: {missing.join(", ")}</div>}
+          {missing.length > 0 && <div className="faint" style={{ fontSize: 12, padding: "4px 10px" }}>{t("runs.missing", { list: missing.join(", ") })}</div>}
         </div>
       )}
     </section>
@@ -60,6 +62,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useT();
   // runRows maps perDungeon.runs 1:1, so the run behind a row always exists.
   const run: MPlusRun = payload.perDungeon.runs.find((x) => `${x.reportCode}:${x.fightID}` === r.key)!;
   const a = analysisFor(payload, run);
@@ -83,8 +86,8 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
         <div className="mono">{r.amount} <span className="muted" style={{ fontSize: 11 }}>{r.metric}</span></div>
         <div className={"mono " + r.parseCls} style={{ fontWeight: 600 }}>{r.parse}</div>
         <div className="muted">{r.spec}</div>
-        <div className={r.stale ? "tone-warn" : "muted"} title={r.stale ? `older than ${STALE_DAYS} days` : undefined}>{r.age}{r.stale ? " · stale" : ""}</div>
-        {!run.signals && <span className="faint" title="No WCL stats for this run">—</span>}
+        <div className={r.stale ? "tone-warn" : "muted"} title={r.stale ? t("runs.olderThan", { days: STALE_DAYS }) : undefined}>{r.age}{r.stale ? t("runs.stale") : ""}</div>
+        {!run.signals && <span className="faint" title={t("runs.noStats")}>—</span>}
         {run.signals && !a && (
           <button
             type="button" className="btn btn-sm"
@@ -92,15 +95,15 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
             title={deepdive.canAfford(1) ? undefined : deepdive.quotaTooltip}
             onClick={() => void deepdive.analyze(run)}
           >
-            {busy ? <span className="spinner" /> : null} Analyze · {costText(1)}
+            {busy ? <span className="spinner" /> : null} {t("runs.analyze", { cost: costText(1) })}
           </button>
         )}
         {run.signals && a && (
           <button type="button" className={"btn btn-sm" + (expanded ? " active" : "")} onClick={onToggle} aria-expanded={expanded}>
-            Analyzed ✓ <span className={"chev" + (expanded ? " open" : "")}>›</span>
+            {t("runs.analyzed")} <span className={"chev" + (expanded ? " open" : "")}>›</span>
           </button>
         )}
-        <a href={r.url} target="_blank" rel="noopener" title="Open log">↗</a>
+        <a href={r.url} target="_blank" rel="noopener" title={t("runs.openLog")}>↗</a>
       </div>
       {expanded && a && (
         <RunDeepDive

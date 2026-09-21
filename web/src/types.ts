@@ -18,6 +18,7 @@ export type { AuditAction, AuditKind, AuditRow } from "@shared/hosted/audit.ts";
 export type { OwnClientView, OwnClientSnapshot } from "@shared/hosted/wcl-clients.ts";
 export type { AxisKey, AxisScore, Confidence, CurvePoints, Evaluation, Evidence, Verdict } from "@shared/evaluation/types.ts";
 export type { Role } from "@shared/evaluation/types.ts";
+export type { EvidenceSource } from "@shared/evaluation/axes/index.ts";
 export type { EvaluationDocs, AxisDoc, SubSignalDoc, ExtraDoc, FaqEntry, SourceDoc, TextBlock } from "@shared/evaluation/docs.ts";
 export type { DocsResponse } from "@shared/server/routes-shared.ts";
 export type { WclClientDoc } from "@shared/evaluation/docs.ts";

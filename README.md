@@ -85,7 +85,7 @@ just ping
 ```
 
 Any WCL region works: `bmpl` defaults to EU, override with `BMPL_REGION` in
-`.env` or `--region` per command. Then `bmpl serve` opens the web UI at
+`.env` or `--region` on `lookup`/`mplus`/`analyze`/`watch`. Then `bmpl serve` opens the web UI at
 `http://localhost:3000` — first run lands on a setup page that writes `.env`
 for you, no manual editing required.
 

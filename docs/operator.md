@@ -313,7 +313,8 @@ the only override that applies there. `BMPL_OPERATOR` (shown on `/privacy`)
 is set the same way as any other variable, restart required. `BMPL_REGION`
 (`eu`/`us`/`kr`/`tw`, default `eu`) sets the instance's default WoW region — same variable style
 as `BMPL_OPERATOR`, same restart; each member can still pick their own region
-in Settings, which applies immediately.
+with the region chip inside the search field (remembered per account through
+`PUT /api/settings`), which applies immediately.
 
 **Check** — `bmpl evaluate saved.json` reflects the intended change before
 you restart the server; a fresh lookup after restart reflects it live.

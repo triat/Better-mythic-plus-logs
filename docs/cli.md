@@ -130,8 +130,8 @@ the API keeps working.
 | `--level N` | Target key level. Default: auto (median of the best run per dungeon) |
 | `--spec <name>` | Filter to one spec (`Augmentation`, `Restoration`, …). Case-insensitive |
 | `--metric dps \| hps` | Override the auto-selected metric |
-| `--region <eu\|us\|kr\|tw>` | WoW region for this lookup. Default: the `BMPL_REGION` env var, else `eu`; an invalid value warns and falls back to `eu`. A pasted Raider.IO URL carries its own region and wins for that lookup; also accepted by `analyze` |
-| `--json` | Structured output (lookup / mplus only) |
+| `--region <eu\|us\|kr\|tw>` | WoW region for this lookup. Default: the `BMPL_REGION` env var, else `eu`; an invalid `--region` value is refused (exit 2), an invalid `BMPL_REGION` warns once and falls back to `eu`. A pasted Raider.IO URL carries its own region and wins for that lookup; also accepted by `analyze` |
+| `--json` | Structured output (lookup / mplus only); `character.region` is the lower-case region code (`"eu"`, `"us"`, `"kr"`, `"tw"`) |
 | `--no-stats` | Skip per-run WCL enrichment (timed state, deaths, DTPS, avoidable, kicks, dispels). Saves ~90 pts on an uncached lookup; Raider.IO is still fetched |
 | `--interval <ms>` | Clipboard poll rate for `watch` (default 750ms) |
 

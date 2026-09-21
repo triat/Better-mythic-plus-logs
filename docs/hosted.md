@@ -215,7 +215,7 @@ Optional:
 | `BMPL_DISCORD_GUILD_ID` | Only accounts in this Discord server may sign in (adds the `guilds` OAuth scope) |
 | `BMPL_ENCRYPTION_KEY` | 32 random bytes, base64 (`openssl rand -base64 32`); enables members' own WCL clients — losing it makes stored clients unusable |
 | `BMPL_OPERATOR` | Who runs this instance, shown on `/privacy` (default "the admin of this instance") |
-| `BMPL_REGION` | Instance default WoW region (`eu`/`us`/`kr`/`tw`, default `eu`); a member can override it in Settings, and `/api/status` reports it |
+| `BMPL_REGION` | Instance default WoW region (`eu`/`us`/`kr`/`tw`, default `eu`); a member picks their own with the region chip inside the search field (remembered per account through `PUT /api/settings`), and `/api/status` reports it |
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and
 the list of what to fix. Local mode (`bmpl serve`) is unchanged.

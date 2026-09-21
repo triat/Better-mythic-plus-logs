@@ -67,7 +67,9 @@ curves.
 
 Keep the secret private; if it leaks, delete the client on the same page and
 create a new one. Rate limit is **3600 points per hour** per client, roughly
-360 cached lookups.
+360 cached lookups. On a hosted instance every member can add their own
+client under Settings — the same steps, written up on the instance's
+`/help#wcl-client` page, which the quota messages link to.
 
 ### Setup
 

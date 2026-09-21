@@ -21,7 +21,7 @@ export function canAfford(q: QuotaInfo | null, points: number): boolean {
 
 /** Tooltip of an Analyze button disabled by the quota. */
 export function quotaTooltip(q: QuotaInfo | null): string {
-  return q ? `Hourly quota reached · resets in ${Math.max(1, Math.ceil(q.resetInS / 60))} min` : "Hourly quota reached";
+  return `${q ? `Hourly quota reached · resets in ${Math.max(1, Math.ceil(q.resetInS / 60))} min` : "Hourly quota reached"} · your own client: see Help`;
 }
 
 /** A 429 body from the quota gate: `error: "quota"` carries the member's own numbers, `error: "budget"` the client's — only the former updates the label. */

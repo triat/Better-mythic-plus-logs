@@ -25,9 +25,9 @@ describe("quota view model", () => {
 
 describe("quotaTooltip / quotaFromFailure", () => {
   test("tooltip of a disabled Analyze button says when the quota resets", () => {
-    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 2280 })).toBe("Hourly quota reached · resets in 38 min");
-    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 5 })).toBe("Hourly quota reached · resets in 1 min");
-    expect(quotaTooltip(null)).toBe("Hourly quota reached");
+    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 2280 })).toBe("Hourly quota reached · resets in 38 min · your own client: see Help");
+    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 5 })).toBe("Hourly quota reached · resets in 1 min · your own client: see Help");
+    expect(quotaTooltip(null)).toBe("Hourly quota reached · your own client: see Help");
   });
   test("only an `error: \"quota\"` body carries the member's numbers", () => {
     expect(quotaFromFailure({ ok: false, error: "quota", message: "x", used: 300, limit: 300, resetInS: 120 })).toEqual({ used: 300, limit: 300, resetInS: 120 });

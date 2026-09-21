@@ -1,4 +1,5 @@
 import type { AxisKey, CurvePoints, DocsResponse, EvaluationDocs, FaqEntry } from "../types.ts";
+import { fmtPts } from "./format.ts";
 import { AXIS_ORDER } from "./verdict.ts";
 
 // View models of the /help page: anchors, the table of contents, curve tables and paths, weights and
@@ -13,8 +14,8 @@ export function anchorOf(source: string): Anchor {
 
 export interface TocEntry { anchor: Anchor; label: string; sub?: boolean }
 
-/** what, verdict, axes (+ six sub entries), level-scale, expected-ilvl, runs, peers, deep-dive, reading, faq. */
-export function toc(docs: EvaluationDocs, _hosted: boolean): TocEntry[] {
+/** what, verdict, axes (+ six sub entries), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), reading, faq. */
+export function toc(docs: EvaluationDocs, hosted: boolean): TocEntry[] {
   return [
     { anchor: "what", label: "What bmpl looks at" },
     { anchor: "verdict", label: "The verdict" },
@@ -25,6 +26,7 @@ export function toc(docs: EvaluationDocs, _hosted: boolean): TocEntry[] {
     { anchor: "runs", label: "Per-run signals" },
     { anchor: "peers", label: "Peers" },
     { anchor: "deep-dive", label: "Deep-dive" },
+    ...(hosted ? [{ anchor: "wcl-client", label: "Your own WCL client" }] : []),
     { anchor: "reading", label: "Reading the page" },
     { anchor: "faq", label: "FAQ" },
   ];
@@ -86,4 +88,29 @@ export function axisNote(key: AxisKey, c: DocsResponse["config"]["confidence"]):
   if (key === "survival") return `The two deep-dive sub-signals appear once at least ${c.deepdiveMinRuns} shown run${c.deepdiveMinRuns === 1 ? " has" : "s have"} been analyzed.`;
   if (key === "consistency") return `Every sub-signal needs at least ${c.consistencyMinRuns} run${c.consistencyMinRuns === 1 ? "" : "s"}; below that the axis is n/a.`;
   return null;
+}
+
+export type TextSegment = { text: string; href?: string; code?: true };
+
+/** Splits registry prose on `[label](href)` links and `` `code` `` spans: "Open [Settings](/settings), type `bmpl`" → text / link / text / code. Plain text stays one segment. */
+export function linkSegments(text: string): TextSegment[] {
+  const out: TextSegment[] = [];
+  const re = /\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`/g;
+  let last = 0;
+  for (let m = re.exec(text); m !== null; m = re.exec(text)) {
+    if (m.index > last) out.push({ text: text.slice(last, m.index) });
+    out.push(m[3] !== undefined ? { text: m[3], code: true } : { text: m[1]!, href: m[2]! });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length || out.length === 0) out.push({ text: text.slice(last) });
+  return out;
+}
+
+export interface BudgetPill { pts: string; lookups: string }
+
+/** "100 pts / h" + "about 10 uncached lookups", at roughly 10 pts per lookup (the rankings query); null when the instance has no per-member quota. */
+export function budgetPill(pointsPerHour: number | null): BudgetPill | null {
+  if (pointsPerHour === null) return null;
+  const n = Math.max(1, Math.round(pointsPerHour / 10));
+  return { pts: `${fmtPts(pointsPerHour)} pts / h`, lookups: `about ${n} uncached lookup${n === 1 ? "" : "s"}` };
 }

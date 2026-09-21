@@ -10,6 +10,7 @@ import { AxisSection } from "./AxisSection.tsx";
 import { CurveChart } from "./CurveChart.tsx";
 import { Faq } from "./Faq.tsx";
 import { HelpToc } from "./HelpToc.tsx";
+import { WclClientGuide } from "./WclClientGuide.tsx";
 
 type Docs = Omit<DocsResponse, "ok">;
 const ROLES = ["dps", "healer", "tank"] as const;
@@ -53,6 +54,7 @@ export function HelpPage({ status, bare = false }: Props) {
             <Runs data={data} />
             <section className="card help-card" id="peers"><h2>Peers</h2><p className="help-p">{data.docs.peers}</p></section>
             <DeepDive data={data} />
+            {status.hosted && <WclClientGuide doc={data.docs.wclClient} quota={data.quota} />}
             <Reading />
             <Faq entries={faqEntries(data.docs, status.hosted)} />
           </div>

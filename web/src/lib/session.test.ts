@@ -28,6 +28,7 @@ describe("menuModel", () => {
     expect(m.quota.text).toBe("212 of 300 pts left this hour");
     expect(m.exhausted).toBeNull();
     expect(m.ownClient).toBe(false);
+    expect(m.guideLink).toEqual({ label: "Use your own Warcraft Logs client →", href: "/help#wcl-client" });
   });
   test("admin: username as name, ' · admin' in the handle", () => {
     const m = menuModel(admin, null);
@@ -35,6 +36,7 @@ describe("menuModel", () => {
     expect(m.handle).toBe("@muleyoxo · admin");
     expect(m.isAdmin).toBe(true);
     expect(m.quota.text).toBe("unlimited · admin");
+    expect(m.guideLink).toBeNull();
   });
   test("exhausted: the header label only once nothing is left", () => {
     expect(menuModel(member, { used: 299, limit: 300, resetInS: 90 }).exhausted).toBeNull();
@@ -62,6 +64,7 @@ describe("menuModel with an own client", () => {
     expect(m.quota).toEqual({ text: "Your WCL client · 1\u202f412 / 3\u202f600 pts", sub: "resets in 38 min", pct: 61, tone: "" });
     expect(m.exhausted).toBeNull();
     expect(m.ownClient).toBe(true);
+    expect(m.guideLink).toBeNull();
     expect(menuModel(member, null, { ...own, snapshot: null }).quota).toEqual({ text: "Your WCL client · no request yet", sub: null, pct: null, tone: "" });
     expect(menuModel(member, null, { ...own, snapshot: { ...own.snapshot, pointsSpentThisHour: 3550 } }).quota.tone).toBe("tone-warn");
     expect(menuModel(member, null, { ...own, snapshot: { ...own.snapshot, pointsSpentThisHour: 3600 } }).quota).toMatchObject({ pct: 0, tone: "tone-bad" });
@@ -71,6 +74,7 @@ describe("menuModel with an own client", () => {
     expect(m.quota).toEqual({ text: "Your WCL client needs re-saving · using the shared budget", sub: "Settings → save the client again", pct: null, tone: "tone-warn" });
     expect(m.exhausted).not.toBeNull();
     expect(m.ownClient).toBe(false);
+    expect(m.guideLink).not.toBeNull();
   });
   test("fmtPts: thousands separated by a narrow no-break space", () => {
     expect(fmtPts(1412)).toBe("1\u202f412");

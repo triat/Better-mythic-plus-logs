@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { anchorOf, axisIsInformational, axisNote, curvePath, curveTable, faqEntries, fmtThresholds, roleWeights, toc } from "./help.ts";
+import { anchorOf, axisIsInformational, axisNote, budgetPill, curvePath, curveTable, faqEntries, fmtThresholds, linkSegments, roleWeights, toc } from "./help.ts";
 
 const docs = {
   axes: {
@@ -29,6 +29,29 @@ describe("toc", () => {
       "level-scale", "expected-ilvl", "runs", "peers", "deep-dive", "reading", "faq",
     ]);
     expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation", "Experience"]);
+  });
+  test("hosted: the own-client guide sits between deep-dive and reading", () => {
+    const anchors = toc(docs, true).map((e) => e.anchor);
+    expect(anchors.slice(anchors.indexOf("deep-dive"), anchors.indexOf("reading") + 1)).toEqual(["deep-dive", "wcl-client", "reading"]);
+    expect(toc(docs, true).find((e) => e.anchor === "wcl-client")!.label).toBe("Your own WCL client");
+  });
+});
+
+describe("own-client guide", () => {
+  test("linkSegments splits [label](href) links and keeps plain text whole", () => {
+    expect(linkSegments("plain")).toEqual([{ text: "plain" }]);
+    expect(linkSegments("Open [Settings](/settings#wcl-client), paste both.")).toEqual([
+      { text: "Open " }, { text: "Settings", href: "/settings#wcl-client" }, { text: ", paste both." },
+    ]);
+    expect(linkSegments("[a](https://x.y/) and [b](/z)")).toEqual([{ text: "a", href: "https://x.y/" }, { text: " and " }, { text: "b", href: "/z" }]);
+    expect(linkSegments("")).toEqual([{ text: "" }]);
+    expect(linkSegments("set it to `http://localhost`, then")).toEqual([{ text: "set it to " }, { text: "http://localhost", code: true }, { text: ", then" }]);
+  });
+  test("budgetPill: pts per hour and a rough lookup count; null without a quota", () => {
+    expect(budgetPill(100)).toEqual({ pts: "100 pts / h", lookups: "about 10 uncached lookups" });
+    expect(budgetPill(3600)).toEqual({ pts: "3 600 pts / h", lookups: "about 360 uncached lookups" });
+    expect(budgetPill(5)).toEqual({ pts: "5 pts / h", lookups: "about 1 uncached lookup" });
+    expect(budgetPill(null)).toBeNull();
   });
 });
 

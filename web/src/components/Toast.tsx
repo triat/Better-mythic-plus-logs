@@ -1,17 +1,20 @@
 import { useEffect } from "react";
 
-interface Props { message: string | null; onClose: () => void }
+export interface ToastAction { label: string; href: string }
+interface Props { message: string | null; action?: ToastAction | null; onClose: () => void }
 
-export function Toast({ message, onClose }: Props) {
+/** An error toast; with an `action` link it stays twice as long so the link can be reached. */
+export function Toast({ message, action = null, onClose }: Props) {
   useEffect(() => {
     if (!message) return;
-    const t = setTimeout(onClose, 5000);
+    const t = setTimeout(onClose, action ? 10000 : 5000);
     return () => clearTimeout(t);
-  }, [message, onClose]);
+  }, [message, action, onClose]);
   if (!message) return null;
   return (
     <div className="toast err" role="alert">
       <span>✗ {message}</span>
+      {action && <a className="toast-action" href={action.href}>{action.label}</a>}
       <button className="toast-close" onClick={onClose} aria-label="Dismiss">×</button>
     </div>
   );

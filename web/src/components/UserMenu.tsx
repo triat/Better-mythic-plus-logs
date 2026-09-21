@@ -37,6 +37,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
               {m.quota.sub && <span className="faint">{m.quota.sub}</span>}
             </div>
             {m.quota.pct !== null && <span className="dd-bar" aria-hidden="true"><span style={{ width: `${m.quota.pct}%` }} /></span>}
+            {m.guideLink && <a className="menu-guide" href={m.guideLink.href}>{m.guideLink.label}</a>}
           </div>
           <div className="menu-sep" />
           <a className="menu-item" href="/help" role="menuitem">Help</a>

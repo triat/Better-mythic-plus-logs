@@ -277,6 +277,15 @@
       "h": 1380,
       "title": "Region per lookup (A/B/C) and the spec picker",
       "page": "hosted"
+    },
+    {
+      "file": "WclGuide.dc.html",
+      "x": 16080,
+      "y": 0,
+      "w": 1440,
+      "h": 1560,
+      "title": "Your own WCL client — help card (A/B) and where it is linked",
+      "page": "hosted"
     }
   ],
   "annotations": [
@@ -375,6 +384,14 @@
       "w": 1440,
       "page": "hosted",
       "text": "Region per lookup, remembered per user (setting like Your key). Pick A segmented control / B chip in the search field / C prefix of the search field. Below: the spec picker fed by the loaded character's specs (with run counts), free text before any lookup; tabs show the region only when it is not the instance default."
+    },
+    {
+      "id": "wclguide-brief",
+      "x": 16080,
+      "y": -170,
+      "w": 1440,
+      "page": "hosted",
+      "text": "Guide for members who hit the shared quota: a /help card explaining why and how to create their own Warcraft Logs client (A one column with two step lists / B two columns with a checklist), plus the three places that link to it: the quota toast, the user menu's quota line, the Settings card hint."
     }
   ],
   "launch": {

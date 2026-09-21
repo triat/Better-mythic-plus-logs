@@ -29,6 +29,12 @@ describe("EVALUATION_DOCS", () => {
     for (const n of [String(DEFAULT_CONFIG.verdict.invite), String(DEFAULT_CONFIG.verdict.maybe), "300 pts", "3600"]) expect(text).not.toContain(n);
     expect(text).not.toMatch(/weights? (of )?\d/i);
   });
+  test("the own-client guide links warcraftlogs.com and our Settings page, and prints no budget number", () => {
+    const g = EVALUATION_DOCS.wclClient;
+    expect(g.onWcl.join(" ")).toContain("](https://www.warcraftlogs.com/api/clients)");
+    expect(g.inBmpl.join(" ")).toContain("](/settings#wcl-client)");
+    expect(JSON.stringify(g)).not.toMatch(/\d{3,}/);
+  });
   test("hostedOnly FAQ entries exist and are flagged", () => {
     expect(EVALUATION_DOCS.faq.some((f) => f.hostedOnly)).toBe(true);
     expect(EVALUATION_DOCS.faq.some((f) => !f.hostedOnly)).toBe(true);

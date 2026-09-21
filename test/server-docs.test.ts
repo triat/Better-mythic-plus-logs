@@ -50,6 +50,7 @@ describe("GET /api/docs", () => {
     const b = await r.json();
     expect(b.ok).toBe(true);
     expect(b.hosted).toBe(false);
+    expect(b.quota).toEqual({ pointsPerUserHour: null, wclPointsPerHour: 3600 });
     for (const k of Object.keys(b.config.axes)) {
       expect(Object.keys(b.docs.axes[k].subSignals).sort()).toEqual(Object.keys(b.config.axes[k].subSignals).sort());
     }
@@ -117,6 +118,9 @@ describe("GET /api/docs (hosted, anonymous)", () => {
     const url = `http://localhost:${hserver.port}/api/docs`;
     const r = await fetch(url);
     expect(r.status).toBe(200);
-    expect((await r.json()).hosted).toBe(true);
+    const b = await r.json();
+    expect(b.hosted).toBe(true);
+    // The /help guide prints the instance's per-member quota next to WCL's own limit.
+    expect(b.quota).toEqual({ pointsPerUserHour: TEST_HOSTED_CONFIG.pointsPerUserHour, wclPointsPerHour: 3600 });
   });
 });

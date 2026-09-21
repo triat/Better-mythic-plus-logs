@@ -16,7 +16,11 @@ export interface MenuModel {
   exhausted: string | null;
   /** The member runs lookups through their own WCL client: the quota line is that client's counter (issue #11). */
   ownClient: boolean;
+  /** Under the quota bar while on the shared budget (not an admin, no usable own client): the /help guide to an own client. */
+  guideLink: { label: string; href: string } | null;
 }
+
+export const OWN_CLIENT_GUIDE = { label: "Use your own Warcraft Logs client →", href: "/help#wcl-client" } as const;
 
 const resetText = (s: number): string => `resets in ${Math.max(1, Math.ceil(s / 60))} min`;
 
@@ -76,5 +80,6 @@ export function menuModel(me: MeUser, q: QuotaInfo | null, ownClient: OwnClientV
     quota: usable ? ownClientLine(ownClient) : stale ? STALE_CLIENT_LINE : quotaLine(q, isAdmin),
     exhausted: !usable && left !== null && left < 1 ? quotaLabel(q) : null,
     ownClient: usable,
+    guideLink: !usable && !isAdmin && q !== null && q.limit !== null ? OWN_CLIENT_GUIDE : null,
   };
 }

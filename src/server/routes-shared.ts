@@ -38,10 +38,15 @@ export interface DocsResponse {
   defensives: { version: string };
   season: string | null;
   hosted: boolean;
+  /** The numbers of the "own WCL client" guide: the per-member hourly quota (null locally) and what one WCL client gets. */
+  quota: { pointsPerUserHour: number | null; wclPointsPerHour: number };
 }
 
+/** What Warcraft Logs grants one API client per hour (rateLimitData.limitPerHour); shown by the /help guide. */
+export const WCL_POINTS_PER_HOUR = 3600;
+
 /** Pure: the documentation registry plus the effective evaluation config, for GET /api/docs. */
-export function docsResponse(cfg: EvaluationConfig, hosted: boolean): DocsResponse {
+export function docsResponse(cfg: EvaluationConfig, hosted: boolean, pointsPerUserHour: number | null = null): DocsResponse {
   return {
     ok: true,
     docs: EVALUATION_DOCS,
@@ -57,6 +62,7 @@ export function docsResponse(cfg: EvaluationConfig, hosted: boolean): DocsRespon
     defensives: { version: SHIPPED.version },
     season: Object.keys(cfg.expectedIlvl).at(-1) ?? null,
     hosted,
+    quota: { pointsPerUserHour, wclPointsPerHour: WCL_POINTS_PER_HOUR },
   };
 }
 
@@ -119,7 +125,7 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
     // In hosted mode the watcher never runs; the initial status is simply "inactive" and the stream is the member's own.
     route("GET", "/api/events", (_req, _url, rc) => eventsResponse({ event: "status", data: watcherStatus() }, rc.user?.id ?? null)),
     route("GET", "/api/health", () => handleHealth(ctx), "public"),
-    route("GET", "/api/docs", async () => jsonResponse(docsResponse(await getEvalConfig(), ctx.hosted)), "public"),
+    route("GET", "/api/docs", async () => jsonResponse(docsResponse(await getEvalConfig(), ctx.hosted, ctx.runtime?.config.pointsPerUserHour ?? null)), "public"),
     route("GET", "/api/status", () => {
       const rt = ctx.runtime;
       return rt

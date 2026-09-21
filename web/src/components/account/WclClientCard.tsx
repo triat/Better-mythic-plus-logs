@@ -57,7 +57,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
   };
 
   return (
-    <section className="card settings-card">
+    <section className="card settings-card" id="wcl-client">
       <div className="settings-head">
         <span className="section-title">Your Warcraft Logs client</span>
         <span style={{ flex: 1 }} />
@@ -99,7 +99,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
             </span>
           </div>
           <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>
-            Create a client at <a href={CLIENTS_URL} target="_blank" rel="noreferrer">warcraftlogs.com/api/clients</a> (any name, no redirect URL).
+            Create a client at <a href={CLIENTS_URL} target="_blank" rel="noreferrer">warcraftlogs.com/api/clients</a> — <a href="/help#wcl-client">step by step in Help</a>.
             The secret is stored encrypted and never shown again; saving sends one PING to check it.
           </div>
         </form>

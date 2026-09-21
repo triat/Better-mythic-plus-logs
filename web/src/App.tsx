@@ -5,7 +5,7 @@ import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClien
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaTooltip } from "./lib/quota.ts";
-import { menuModel } from "./lib/session.ts";
+import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
@@ -30,6 +30,7 @@ import { Setup } from "./components/Setup.tsx";
 import { SignIn } from "./components/SignIn.tsx";
 import { Tabs } from "./components/Tabs.tsx";
 import { Toast } from "./components/Toast.tsx";
+import type { ToastAction } from "./components/Toast.tsx";
 
 type Screen =
   | { kind: "loading" }
@@ -115,8 +116,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const [selected, setSelected] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const closeToast = useCallback(() => setToast(null), []);
+  const [toast, setToastState] = useState<{ message: string; action: ToastAction | null } | null>(null);
+  const setToast = useCallback((message: string, action: ToastAction | null = null) => setToastState({ message, action }), []);
+  const closeToast = useCallback(() => setToastState(null), []);
   const [fromCache, setFromCache] = useState(false);
   const [watch, setWatch] = useState<{ active: boolean; label: string | null }>({ active: false, label: null });
   const [stopped, setStopped] = useState(false);
@@ -192,7 +194,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     setCompareOpen(false);
     const r = await api.lookup({ ...req, refresh });
     setBusy(null);
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(r.error); return; }
+    // A refusal that carries the member's own quota numbers gets the way out: the guide to an own client.
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(r.error, r.quota ? OWN_CLIENT_GUIDE : null); return; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
@@ -290,7 +293,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     const key = `${run.reportCode}:${run.fightID}`;
     setAnalyzing(key);
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(r.error); return false; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(r.error, r.quota ? OWN_CLIENT_GUIDE : null); return false; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     // Keep the buttons disabled until the refreshed payload is in.
@@ -378,7 +381,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           </main>
         </>
       )}
-      <Toast message={toast} onClose={closeToast} />
+      <Toast message={toast?.message ?? null} action={toast?.action ?? null} onClose={closeToast} />
     </>
   );
 }

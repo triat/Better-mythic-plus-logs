@@ -20,6 +20,8 @@ export type { AxisKey, AxisScore, Confidence, CurvePoints, Evaluation, Evidence,
 export type { Role } from "@shared/evaluation/types.ts";
 export type { EvaluationDocs, AxisDoc, SubSignalDoc, ExtraDoc, FaqEntry, SourceDoc, TextBlock } from "@shared/evaluation/docs.ts";
 export type { DocsResponse } from "@shared/server/routes-shared.ts";
+export type { WclClientDoc } from "@shared/evaluation/docs.ts";
+export type { TextSegment } from "./lib/help.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";

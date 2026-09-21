@@ -12,6 +12,23 @@ export interface AxisDoc { title: string; summary: string; why: string; subSigna
 export interface TextBlock { title: string; text: string }
 export interface SourceDoc extends TextBlock { freshness: string }
 export interface FaqEntry { q: string; a: string; hostedOnly?: boolean }
+/**
+ * The hosted-only guide to a member's own Warcraft Logs client (/help#wcl-client). Prose may carry
+ * links as `[label](href)`; the front renders them (web/src/lib/help.ts `linkSegments`). The
+ * numbers (shared quota, WCL's own limit) come from GET /api/docs' `quota`, never from here.
+ */
+export interface WclClientDoc {
+  title: string;
+  /** Why bother: what the shared budget is and what an own client changes. */
+  why: string;
+  /** Captions of the two budget pills: "{n} pts / h" is printed above each by the front. */
+  sharedHint: string;
+  ownHint: string;
+  /** Numbered steps on warcraftlogs.com, then in bmpl. */
+  onWcl: string[];
+  inBmpl: string[];
+  safety: string;
+}
 export interface EvaluationDocs {
   axes: Record<AxisKey, AxisDoc>;
   verdict: { summary: string; global: string; thresholds: string; confidence: string; insufficient: string; role: string };
@@ -24,6 +41,7 @@ export interface EvaluationDocs {
   deepdive: { summary: string; usage: string; deaths: string; table: string; cost: string };
   sources: SourceDoc[];
   faq: FaqEntry[];
+  wclClient: WclClientDoc;
 }
 
 export const EVALUATION_DOCS: EvaluationDocs = {
@@ -148,4 +166,21 @@ export const EVALUATION_DOCS: EvaluationDocs = {
     { q: "What is the quota in the user menu?", a: "On a shared instance every member has an hourly budget of Warcraft Logs points; cached data never counts. When the budget is reached, lookups that would fetch are refused until the hour resets. Members who add their own Warcraft Logs client in Settings run on their own budget instead.", hostedOnly: true },
     { q: "What does the instance store about me?", a: "See the Privacy page: your Discord id, name and avatar, your lookup history and settings, your hourly usage, your corrections, and — if you added one — your Warcraft Logs client with its secret encrypted.", hostedOnly: true },
   ],
+  wclClient: {
+    title: "Your own Warcraft Logs client",
+    why: "Every lookup that is not already cached spends Warcraft Logs points. On this instance you share a small hourly budget with the other members; with your own client — free, two minutes to create — you get Warcraft Logs' full budget for yourself and never wait for the hour to reset.",
+    sharedHint: "shared budget, per member",
+    ownHint: "your own client, nobody else on it",
+    onWcl: [
+      "Sign in at [warcraftlogs.com](https://www.warcraftlogs.com/) — any free account works.",
+      "Open [warcraftlogs.com/api/clients](https://www.warcraftlogs.com/api/clients) (avatar → Clients) and click Create Client.",
+      "Name it anything (say `bmpl`), set Redirect URLs to `http://localhost`, leave Public Client? unchecked, submit.",
+      "Copy the Client ID and the Client Secret — the secret is shown once.",
+    ],
+    inBmpl: [
+      "Open [Settings → Warcraft Logs client](/settings#wcl-client), paste both, Save and verify.",
+      "Done: the quota line in your menu now shows your own counter, and your lookups no longer touch the shared budget.",
+    ],
+    safety: "The secret is stored encrypted and only ever sent to Warcraft Logs. If it leaks, delete the client on the same page and create a new one.",
+  },
 };

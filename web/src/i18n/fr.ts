@@ -283,7 +283,7 @@ export const fr: Mirror<typeof en> = {
     tableChanged: "La table a changé depuis l'analyse de ce run — ré-analyse pour inclure les nouvelles entrées.",
     truncated: "Les événements de cast ont été tronqués (plus de 5 pages) — les compteurs peuvent être bas.",
     title: "Defensives · {spec}", analyzedAgo: "analysé {age}", pointsSpent: " · {pts} pts",
-    majorsUsed: "majors utilisés à {pct} % du possible", noDeaths: "Aucune mort", deathsAvailable: "{n}/{total} morts avec un defensive dispo",
-    uptime: " · {casts}× · {s} s actif", summaryNoDeaths: "aucune mort", summaryAvoidable: "{n}/{total} évitables", summary: "{pct} % · {deaths}",
+    majorsUsed: "majors utilisés à {pct} % du possible", noDeaths: "Aucune mort", deathsAvailable: "{n}/{total} morts avec un defensive dispo",
+    uptime: " · {casts}× · {s} s actif", summaryNoDeaths: "aucune mort", summaryAvoidable: "{n}/{total} évitables", summary: "{pct} % · {deaths}",
   },
 };

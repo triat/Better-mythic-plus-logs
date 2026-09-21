@@ -109,7 +109,8 @@ describe("panelModel", () => {
     expect(m.meta).toBe("analysé il y a 2 h · 3 pts");
     expect(m.deaths[0]!.verdict).toBe("immunité dispo");
     expect(m.deaths[1]!.verdict).toBe("couvert");
-    expect(m.majorsText).toBe("majors utilisés à 87 % du possible");
+    expect(panelModel(tFr, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "nothing available" }] })).deaths[0]!.verdict).toBe("rien de dispo");
+    expect(m.majorsText).toBe("majors utilisés à 87 % du possible");
     expect(m.deathsHeadline).toBe("1/1 morts avec un defensive dispo");
     expect(panelModel(tFr, dd({ deaths: [], countedDeaths: 0, avoidableDeaths: 0 })).deathsHeadline).toBe("Aucune mort");
     expect(panelModel(tFr, dd({ staleTable: true })).notice).toBe("La table a changé depuis l'analyse de ce run — ré-analyse pour inclure les nouvelles entrées.");
@@ -125,11 +126,11 @@ describe("defensivesCell", () => {
     noDeaths.deepdiveSummary = { tableWarning: null, analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
     expect(defensivesCell(tEn, noDeaths)).toEqual({ text: "50% · no deaths", value: 0.5 });
   });
-  test("French: the space before % and the translated fragments", () => {
-    expect(defensivesCell(tFr, payload([dd()]))).toEqual({ text: "87 % · 1/1 évitables", value: 0.87 });
+  test("French: the narrow no-break space before % and the translated fragments", () => {
+    expect(defensivesCell(tFr, payload([dd()]))).toEqual({ text: "87 % · 1/1 évitables", value: 0.87 });
     const noDeaths = payload([dd({ countedDeaths: 0, avoidableDeaths: 0 })]);
     noDeaths.deepdiveSummary = { tableWarning: null, analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
-    expect(defensivesCell(tFr, noDeaths)).toEqual({ text: "50 % · aucune mort", value: 0.5 });
+    expect(defensivesCell(tFr, noDeaths)).toEqual({ text: "50 % · aucune mort", value: 0.5 });
   });
 });
 

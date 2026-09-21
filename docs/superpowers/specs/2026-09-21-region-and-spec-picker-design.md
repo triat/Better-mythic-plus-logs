@@ -1,6 +1,6 @@
 # Region per lookup and the spec picker — design
 
-Status: approved design, 2026-09-21 (canvas "Hosted" page, board "Region per lookup (A/B/C) and the spec picker", option **B** chosen); implemented 2026-09-21 (plan `docs/superpowers/plans/2026-09-21-region-and-spec-picker.md`; 5 commits a90abb4..ef49499 for Tasks 1–5, plus this docs commit for Task 6).
+Status: approved design, 2026-09-21 (canvas "Hosted" page, board "Region per lookup (A/B/C) and the spec picker", option **B** chosen); implemented 2026-09-21 (plan `docs/superpowers/plans/2026-09-21-region-and-spec-picker.md`; 5 commits a90abb4^..ef49499 for Tasks 1–5, plus this docs commit for Task 6).
 
 ## Goal
 

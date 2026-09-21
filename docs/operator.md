@@ -311,9 +311,9 @@ A `defensives.json` next to `/opt/bmpl/.env` is **ignored in hosted mode** —
 the shared table in `bmpl.db` ([§4](#4-moderate-defensives-proposals)) is
 the only override that applies there. `BMPL_OPERATOR` (shown on `/privacy`)
 is set the same way as any other variable, restart required. `BMPL_REGION`
-(`eu`/`us`/`kr`/`tw`, default `eu`) sets the instance's default WoW region;
-each member can still pick their own in Settings, same variable, same
-restart.
+(default `eu`) sets the instance's default WoW region — same variable style
+as `BMPL_OPERATOR`, same restart; each member can still pick their own region
+in Settings, which applies immediately.
 
 **Check** — `bmpl evaluate saved.json` reflects the intended change before
 you restart the server; a fresh lookup after restart reflects it live.

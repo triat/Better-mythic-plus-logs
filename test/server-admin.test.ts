@@ -216,7 +216,7 @@ describe("audit log", () => {
     expect(r.ok).toBe(true);
     expect(r.rows.map((x: { action: string }) => x.action)).toEqual(["invite_remove", "invite_add"]);
     expect(r.rows[1]).toMatchObject({ userId: admin.user.id, username: "boss", target: "888888888888888888", detail: { note: "audit" } });
-    expect(r.rows[1].ip).toMatch(/127\.0\.0\.1$/);
+    expect(r.rows[1].ip).toMatch(/^(::ffff:)?127\.0\.0\.1$|^::1$/); // loopback, whichever family localhost resolved to
     expect(typeof r.rows[1].at).toBe("number");
     expect(r.rows[0]).toMatchObject({ action: "invite_remove", target: "888888888888888888", detail: { sessionsEnded: 0 } });
     expect(r.counts.admin).toBeGreaterThanOrEqual(2);

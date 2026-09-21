@@ -105,7 +105,7 @@ describe("rate limits", () => {
     expect(await r.json()).toEqual({ ok: false, error: `Too many requests — try again in ${retryAfter} s` });
     const a = await audit("kind=security&limit=1");
     expect(a.rows[0]).toMatchObject({ action: "rate_limited", userId: null, target: "GET /auth/discord", detail: { limit: 3, windowS: 60, retryAfterS: retryAfter } });
-    expect(a.rows[0].ip).toMatch(/127\.0\.0\.1$/); // the socket peer (dual-stack: ::ffff:127.0.0.1); no X-Forwarded-For here
+    expect(a.rows[0].ip).toMatch(/^(::ffff:)?127\.0\.0\.1$|^::1$/); // the socket peer (127.0.0.1, ::ffff:127.0.0.1 or ::1 depending on how localhost resolves); no X-Forwarded-For here
     // Only the first refusal of the burst is audited: 5 more 429s, still exactly one rate_limited row for this target.
     for (let i = 0; i < 5; i++) expect((await fetch(u("/auth/discord"), { redirect: "manual" })).status).toBe(429);
     const rows = ((await audit("kind=security&limit=200")).rows as { action: string; target: string }[]).filter((r) => r.action === "rate_limited" && r.target === "GET /auth/discord");

@@ -6,6 +6,7 @@ import type { EnvRow } from "@shared/hosted/instance.ts";
 import type { AuditKind, AuditRow } from "@shared/hosted/audit.ts";
 
 export type { LookupPayload } from "@shared/lookup.ts";
+export type { Region } from "@shared/wow/regions.ts";
 export type { ProposalSummary } from "@shared/hosted/defensives.ts";
 export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 export type { DefensiveSpell } from "@shared/deepdive/types.ts";

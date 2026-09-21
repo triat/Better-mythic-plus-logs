@@ -5,17 +5,19 @@
 import type { UserSettings } from "../hosted/db.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { WclCredentials } from "../wcl/auth.ts";
+import type { Region } from "../wow/regions.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 import { SETTINGS_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
 
 /** The "Nothing to update" rule on an already-validated (SETTINGS_BODY) patch. */
-export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
+export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
   const patch: Partial<UserSettings> = {};
   if ("yourKey" in value) patch.yourKey = value.yourKey!;
   if ("legendOpen" in value) patch.legendOpen = value.legendOpen!;
-  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey` and/or `legendOpen`" };
+  if ("region" in value) patch.region = value.region!;
+  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen` and/or `region`" };
   return { ok: true, patch };
 }
 

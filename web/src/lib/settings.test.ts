@@ -10,11 +10,11 @@ const fakeStore = (init: Record<string, string> = {}) => {
 describe("readLocalSettings", () => {
   test("defaults without storage or with empty storage", () => {
     expect(readLocalSettings(null)).toEqual(DEFAULT_SETTINGS);
-    expect(readLocalSettings(fakeStore())).toEqual({ yourKey: null, legendOpen: true });
+    expect(readLocalSettings(fakeStore())).toEqual({ yourKey: null, legendOpen: true, region: null });
   });
   test("reads the legacy keys: bmpl.yourKey (validated) and bmpl.legendOpen ('0' = closed)", () => {
-    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "18", [LEGEND_STORAGE_KEY]: "0" }))).toEqual({ yourKey: 18, legendOpen: false });
-    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "99", [LEGEND_STORAGE_KEY]: "1" }))).toEqual({ yourKey: null, legendOpen: true });
+    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "18", [LEGEND_STORAGE_KEY]: "0" }))).toEqual({ yourKey: 18, legendOpen: false, region: null });
+    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "99", [LEGEND_STORAGE_KEY]: "1" }))).toEqual({ yourKey: null, legendOpen: true, region: null });
   });
   test("a throwing storage (private mode) yields the defaults", () => {
     const boom = { getItem: () => { throw new Error("denied"); }, setItem: () => {}, removeItem: () => {} };
@@ -40,10 +40,23 @@ describe("writeLocalSettings", () => {
 
 describe("parseServerSettings", () => {
   test("accepts the server shape and clamps garbage to the defaults", () => {
-    expect(parseServerSettings({ yourKey: 18, legendOpen: false })).toEqual({ yourKey: 18, legendOpen: false });
-    expect(parseServerSettings({ yourKey: null, legendOpen: true })).toEqual({ yourKey: null, legendOpen: true });
-    expect(parseServerSettings({ yourKey: 99 })).toEqual({ yourKey: null, legendOpen: true });
+    expect(parseServerSettings({ yourKey: 18, legendOpen: false })).toEqual({ yourKey: 18, legendOpen: false, region: null });
+    expect(parseServerSettings({ yourKey: null, legendOpen: true })).toEqual({ yourKey: null, legendOpen: true, region: null });
+    expect(parseServerSettings({ yourKey: 99 })).toEqual({ yourKey: null, legendOpen: true, region: null });
     expect(parseServerSettings(null)).toEqual(DEFAULT_SETTINGS);
     expect(parseServerSettings("nope")).toEqual(DEFAULT_SETTINGS);
   });
+});
+
+test("region is remembered in the browser and parsed from the server, junk → null", () => {
+  const store = fakeStore({ "bmpl.region": "us" });
+  expect(readLocalSettings(store).region).toBe("us");
+  writeLocalSettings(store, { region: "kr" });
+  expect(store.getItem("bmpl.region")).toBe("kr");
+  writeLocalSettings(store, { region: null });
+  expect(store.getItem("bmpl.region")).toBeNull();
+  expect(readLocalSettings(fakeStore({ "bmpl.region": "cn" })).region).toBeNull();
+  expect(parseServerSettings({ region: "tw" }).region).toBe("tw");
+  expect(parseServerSettings({ region: "cn" }).region).toBeNull();
+  expect(parseServerSettings({}).region).toBeNull();
 });

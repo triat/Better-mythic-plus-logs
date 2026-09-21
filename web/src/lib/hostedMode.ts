@@ -1,4 +1,5 @@
 import type { MeResult, MeUser } from "../api.ts";
+import type { Region } from "../types.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
 export interface StatusInfo {
@@ -10,6 +11,8 @@ export interface StatusInfo {
   guildRequired: boolean;
   wclClients: boolean;
   operator: string;
+  /** The instance default region — the region a fresh lookup uses until the member picks (and saves) their own. */
+  region: Region;
 }
 export interface UiControls { setup: boolean; quit: boolean; watch: boolean; envPath: boolean; signOut: boolean }
 export type BootScreen = "setup" | "main" | "signin";
@@ -17,7 +20,7 @@ export type BootScreen = "setup" | "main" | "signin";
 export type Page = "main" | "admin" | "settings" | "privacy" | "help";
 
 /** Used when /api/status itself fails: behave like today's local UI. */
-export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "" };
+export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", region: "eu" };
 
 const PAGES: Record<string, Page> = { "/admin": "admin", "/settings": "settings", "/privacy": "privacy", "/help": "help" };
 export const pageOf = (pathname: string): Page => PAGES[pathname] ?? "main";

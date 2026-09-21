@@ -9,6 +9,7 @@ import { menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
+import { isRegion } from "./lib/regions.ts";
 import { parseServerSettings } from "./lib/settings.ts";
 import type { Settings } from "./lib/settings.ts";
 import { DocsProvider } from "./docs.tsx";
@@ -48,6 +49,7 @@ export function App() {
         ? {
             hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null,
             openSignup: s.openSignup ?? false, guildRequired: s.guildRequired ?? false, wclClients: s.wclClients ?? false, operator: s.operator ?? "",
+            region: isRegion(s.region) ? s.region : "eu",
           }
         : LOCAL_STATUS;
       const me = status.hosted ? await api.me() : null;

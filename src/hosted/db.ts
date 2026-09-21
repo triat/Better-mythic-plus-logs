@@ -2,6 +2,8 @@
 // per-user history lives in history.ts.
 import type { Database } from "bun:sqlite";
 import { randomBytes } from "node:crypto";
+import type { Region } from "../wow/regions.ts";
+import { isRegion } from "../wow/regions.ts";
 import { applyHostedSchema } from "./schema.ts";
 import { openUserHistory } from "./history.ts";
 import type { UserHistoryRepo } from "./history.ts";
@@ -16,8 +18,8 @@ export interface WclClientRow { userId: number; clientId: string; secretEnc: str
 export interface SessionRow { id: string; userId: number; createdAt: number; expiresAt: number; ip: string | null; userAgent: string | null }
 export interface InviteRow { discordId: string; invitedBy: string; createdAt: number; note: string | null }
 export interface DiscordIdentity { discordId: string; username: string; globalName: string | null; avatarHash: string | null }
-export interface UserSettings { yourKey: number | null; legendOpen: boolean }
-export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true };
+export interface UserSettings { yourKey: number | null; legendOpen: boolean; region: Region | null }
+export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true, region: null };
 
 /** WCL usage buckets are calendar hours (epoch ms). */
 export const HOUR_MS = 3_600_000;
@@ -146,11 +148,11 @@ export function openHosted(db: Database): HostedDb {
   const inviteUpsert = db.query("INSERT INTO invites (discord_id, invited_by, created_at, note) VALUES (?, ?, ?, ?) ON CONFLICT(discord_id) DO UPDATE SET invited_by = excluded.invited_by, note = excluded.note");
   const inviteDelete = db.query("DELETE FROM invites WHERE discord_id = ?");
 
-  const settingsGet = db.query<{ your_key: number | null; legend_open: number }, [number]>("SELECT your_key, legend_open FROM user_settings WHERE user_id = ?");
-  const settingsUpsert = db.query("INSERT INTO user_settings (user_id, your_key, legend_open, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET your_key = excluded.your_key, legend_open = excluded.legend_open, updated_at = excluded.updated_at");
+  const settingsGet = db.query<{ your_key: number | null; legend_open: number; region: string | null }, [number]>("SELECT your_key, legend_open, region FROM user_settings WHERE user_id = ?");
+  const settingsUpsert = db.query("INSERT INTO user_settings (user_id, your_key, legend_open, region, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET your_key = excluded.your_key, legend_open = excluded.legend_open, region = excluded.region, updated_at = excluded.updated_at");
   const settings = (userId: number): UserSettings => {
     const r = settingsGet.get(userId);
-    return r ? { yourKey: r.your_key, legendOpen: r.legend_open === 1 } : { ...DEFAULT_USER_SETTINGS };
+    return r ? { yourKey: r.your_key, legendOpen: r.legend_open === 1, region: isRegion(r.region) ? r.region : null } : { ...DEFAULT_USER_SETTINGS };
   };
 
   const usageAdd = db.query("INSERT INTO usage_hourly (user_id, hour_start, points) VALUES (?, ?, ?) ON CONFLICT(user_id, hour_start) DO UPDATE SET points = points + excluded.points");
@@ -231,7 +233,7 @@ export function openHosted(db: Database): HostedDb {
       get: settings,
       update(userId, patch, now) {
         const next = { ...settings(userId), ...patch };
-        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, now);
+        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, next.region, now);
         return next;
       },
     },

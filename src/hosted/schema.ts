@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   user_id     INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   your_key    INTEGER,
   legend_open INTEGER NOT NULL DEFAULT 1,
+  region      TEXT,
   updated_at  INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS usage_hourly (
@@ -111,9 +112,16 @@ CREATE TABLE IF NOT EXISTS user_wcl_clients (
 
 /** Columns added to `users` after its first release; migrated in place on an older database. */
 const USER_COLUMNS: ReadonlyArray<readonly [string, string]> = [["banned_at", "INTEGER"], ["banned_by", "INTEGER"]];
+/** Columns added to `user_settings` after its first release; migrated in place on an older database. */
+const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [["region", "TEXT"]];
+
+function migrateColumns(db: Database, table: string, columns: ReadonlyArray<readonly [string, string]>): void {
+  const have = new Set(db.query<{ name: string }, []>(`PRAGMA table_info(${table})`).all().map((r) => r.name));
+  for (const [name, type] of columns) if (!have.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`);
+}
 
 export function applyHostedSchema(db: Database): void {
   db.exec(HOSTED_SCHEMA);
-  const have = new Set(db.query<{ name: string }, []>("PRAGMA table_info(users)").all().map((r) => r.name));
-  for (const [name, type] of USER_COLUMNS) if (!have.has(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${type}`);
+  migrateColumns(db, "users", USER_COLUMNS);
+  migrateColumns(db, "user_settings", SETTINGS_COLUMNS);
 }

@@ -10,11 +10,11 @@ import type {
   RunDefensives,
 } from "../types.ts";
 import type { ProposalMode } from "./hostedMode.ts";
-import { tEn } from "../i18n/t.ts";
+import type { MessageKey, T } from "../i18n/t.ts";
 import { fmtAge } from "./format.ts";
 
 export const POINTS_PER_RUN = 3;
-export const costText = (runs: number): string => `~${runs * POINTS_PER_RUN} pts`;
+export const costText = (t: T, runs: number): string => t("runs.cost", { pts: runs * POINTS_PER_RUN });
 
 const runKey = (r: { reportCode: string; fightID: number }) => `${r.reportCode}:${r.fightID}`;
 
@@ -32,7 +32,7 @@ export function unanalyzedRuns(p: LookupPayload): MPlusRun[] {
 export interface UsageRow { id: number; name: string; kind: DefensiveUse["kind"]; counts: string; pct: number; pctText: string; cls: string; cd: string; mismatch: boolean; origin: DefensiveUse["origin"]; countsUsage: boolean }
 /** A spell mention: `id` null when WCL gave no guid (no Wowhead link then). */
 export interface SpellRef { id: number | null; name: string }
-export interface DeathLine { time: string; verdict: DeathAnalysis["verdict"]; cls: string; wipe: boolean; hits: (SpellRef & { text: string })[]; blow: string | null; states: (SpellRef & { text: string; cls: string })[] }
+export interface DeathLine { time: string; verdict: string; cls: string; wipe: boolean; hits: (SpellRef & { text: string })[]; blow: string | null; states: (SpellRef & { text: string; cls: string })[] }
 export interface PanelModel {
   title: string; meta: string; notice: string | null;
   usage: UsageRow[]; majorsText: string | null;
@@ -45,57 +45,65 @@ const mmss = (ms: number): string => { const s = Math.floor(ms / 1000); return `
 const usageTone = (pct: number): string => (pct >= 70 ? "tone-good" : pct >= 40 ? "tone-warn" : "tone-bad");
 const verdictTone = (v: DeathAnalysis["verdict"]): string => (v === "immunity available" ? "tone-bad" : v === "defensive available" ? "tone-warn" : "tone-good");
 
-const usageRow = (u: DefensiveUse): UsageRow => {
+/** DeathAnalysis.verdict is already the display text in English — but it must be translated for the UI. */
+const VERDICT_KEY: Record<DeathAnalysis["verdict"], MessageKey> = {
+  "immunity available": "deepdive.verdict.immunity",
+  "defensive available": "deepdive.verdict.defensive",
+  covered: "deepdive.verdict.covered",
+  "nothing available": "deepdive.verdict.nothing",
+};
+
+const usageRow = (t: T, u: DefensiveUse): UsageRow => {
   const pct = Math.round(u.usage * 100);
   const countsUsage = u.kind !== "minor";
   return {
     id: u.id, name: u.name, kind: u.kind, counts: `${u.casts} / ${u.capacity}`, pct,
     pctText: countsUsage ? `${pct}%` : "—", cls: countsUsage ? usageTone(pct) : "faint",
-    cd: `cd ${u.cooldownS} s${u.observedMinIntervalS !== null ? ` · seen ${u.observedMinIntervalS} s` : ""}`,
+    cd: t("deepdive.cdOf", { cd: u.cooldownS }) + (u.observedMinIntervalS !== null ? t("deepdive.seenMin", { s: u.observedMinIntervalS }) : ""),
     mismatch: u.cdMismatch, origin: u.origin, countsUsage,
   };
 };
 
-const deathLine = (x: DeathAnalysis, idOf: (name: string) => number | null): DeathLine => ({
-  time: mmss(x.atMs), verdict: x.verdict, cls: verdictTone(x.verdict), wipe: x.inWipe,
+const deathLine = (t: T, x: DeathAnalysis, idOf: (name: string) => number | null): DeathLine => ({
+  time: mmss(x.atMs), verdict: t(VERDICT_KEY[x.verdict]), cls: verdictTone(x.verdict), wipe: x.inWipe,
   hits: x.killingHits.map((h) => ({ id: h.id, name: h.name, text: `${Math.round(h.share * 100)}%` })),
-  blow: x.killingBlow ? `killing blow: ${x.killingBlow}` : null,
+  blow: x.killingBlow ? t("deepdive.killingBlow", { spell: x.killingBlow }) : null,
   states: [
-    ...x.active.map((n) => ({ id: idOf(n), name: n, text: "active", cls: "tone-good" })),
-    ...x.available.map((n) => ({ id: idOf(n), name: n, text: "available", cls: "tone-bad" })),
-    ...x.onCooldown.map((c) => ({ id: idOf(c.name), name: c.name, text: `on cd · ${c.readyInS} s left`, cls: "faint" })),
+    ...x.active.map((n) => ({ id: idOf(n), name: n, text: t("deepdive.active"), cls: "tone-good" })),
+    ...x.available.map((n) => ({ id: idOf(n), name: n, text: t("deepdive.available"), cls: "tone-bad" })),
+    ...x.onCooldown.map((c) => ({ id: idOf(c.name), name: c.name, text: t("deepdive.onCd", { s: c.readyInS }), cls: "faint" })),
   ],
 });
 
 /** The table-override load error (payload.deepdiveSummary.tableWarning) as a UI line; null when the file is fine or absent. */
-export const tableWarningText = (warning: string | null | undefined): string | null =>
-  warning ? `Your defensives.json is ignored: ${warning}` : null;
+export const tableWarningText = (t: T, warning: string | null | undefined): string | null =>
+  warning ? t("deepdive.ignoredWarning", { warning }) : null;
 
 /** Suffix shown next to an entry that is not from the shipped table; null for shipped. */
-export function originLabel(origin: EntryOrigin): string | null {
+export function originLabel(t: T, origin: EntryOrigin): string | null {
   switch (origin) {
-    case "override": return "override";
-    case "shared": return "shared";
-    case "pending": return "pending review";
+    case "override": return t("deepdive.origin.override");
+    case "shared": return t("deepdive.origin.shared");
+    case "pending": return t("deepdive.origin.pending");
     default: return null;
   }
 }
 
 /** "Table used: …" line: the local override count, or the hosted shared/pending counts. */
-export const tableUsedText = (defensives: Array<{ origin: EntryOrigin }>, specClass: string): string =>
-  tableUsedParts(defensives, specClass).map((p) => p.text).join(" · ");
+export const tableUsedText = (t: T, defensives: Array<{ origin: EntryOrigin }>, specClass: string): string =>
+  tableUsedParts(t, defensives, specClass).map((p) => p.text).join(" · ");
 
 export interface ActionLabels { add: (kind: DefensiveKind) => string; ignore: string; editCd: string; remove: string; addSubmit: (kind: DefensiveKind) => string; save: string }
 /** Members propose; local mode and admins edit the table directly (an admin's correction is approved on the spot). */
-export function actionLabels(mode: ProposalMode): ActionLabels {
+export function actionLabels(t: T, mode: ProposalMode): ActionLabels {
   const p = mode === "propose";
   return {
-    add: (kind) => (p ? `Propose + ${kind}` : `+ ${kind}`),
-    ignore: p ? "Propose ignore" : "Ignore",
-    editCd: p ? "Propose cd" : "Edit cd",
-    remove: p ? "Propose removal" : "Remove for this spec",
-    addSubmit: (kind) => (p ? `Propose as ${kind}` : `Add as ${kind}`),
-    save: p ? "Propose" : "Save",
+    add: (kind) => t(p ? "deepdive.actions.propose.add" : "deepdive.actions.local.add", { kind }),
+    ignore: t(p ? "deepdive.actions.propose.ignore" : "deepdive.actions.local.ignore"),
+    editCd: t(p ? "deepdive.actions.propose.cd" : "deepdive.actions.local.cd"),
+    remove: t(p ? "deepdive.actions.propose.remove" : "deepdive.actions.local.remove"),
+    addSubmit: (kind) => t(p ? "deepdive.actions.propose.addAs" : "deepdive.actions.local.addAs", { kind }),
+    save: t(p ? "deepdive.actions.propose.save" : "deepdive.actions.local.save"),
   };
 }
 
@@ -103,72 +111,73 @@ export type OriginDot = "dot-shared" | "dot-pending";
 /** Colour dot before an entry name: blue for the shared layer, yellow while pending; null for shipped and local override entries. */
 export const originDot = (origin: EntryOrigin): OriginDot | null => (origin === "shared" ? "dot-shared" : origin === "pending" ? "dot-pending" : null);
 /** Text suffix (" · override") for the origins that have no dot. */
-export const originSuffix = (origin: EntryOrigin): string | null => (originDot(origin) ? null : originLabel(origin));
+export const originSuffix = (t: T, origin: EntryOrigin): string | null => (originDot(origin) ? null : originLabel(t, origin));
 
 export interface TablePart { text: string; dot: OriginDot | null }
 /** `tableUsedText` split into parts so the hosted counts carry their dot. Joined with " · " it equals `tableUsedText`. */
-export function tableUsedParts(defensives: Array<{ origin: EntryOrigin }>, specClass: string): TablePart[] {
+export function tableUsedParts(t: T, defensives: Array<{ origin: EntryOrigin }>, specClass: string): TablePart[] {
   const count = (o: EntryOrigin) => defensives.filter((u) => u.origin === o).length;
-  const parts: TablePart[] = [{ text: `Table used: ${specClass} · ${defensives.length} entries`, dot: null }];
+  const parts: TablePart[] = [{ text: t("deepdive.tableUsed", { spec: specClass, n: defensives.length }), dot: null }];
   const override = count("override"), shared = count("shared"), pending = count("pending");
-  if (override > 0) parts.push({ text: `${override} from your override`, dot: null });
-  if (shared > 0) parts.push({ text: `${shared} shared`, dot: "dot-shared" });
-  if (pending > 0) parts.push({ text: `${pending} pending review`, dot: "dot-pending" });
+  if (override > 0) parts.push({ text: t("deepdive.fromOverride", { n: override }), dot: null });
+  if (shared > 0) parts.push({ text: t("deepdive.shared", { n: shared }), dot: "dot-shared" });
+  if (pending > 0) parts.push({ text: t("deepdive.pendingReview", { n: pending }), dot: "dot-pending" });
   return parts;
 }
 
 /** What a proposal changes, as the "Your proposals" footer says it. */
-export function patchText(p: OverrideEntry): string {
-  if (p.ignore) return "ignore";
+export function patchText(t: T, p: OverrideEntry): string {
+  if (p.ignore) return t("deepdive.proposals.ignore");
   const parts: string[] = [];
-  if (p.kind) parts.push(`+ ${p.kind}`);
-  if (p.cooldownS !== undefined) parts.push(`cd ${p.cooldownS} s`);
-  if (p.durationS !== undefined && p.kind) parts.push(`${p.durationS} s`);
-  return parts.length > 0 ? parts.join(", ") : "no change";
+  if (p.kind) parts.push(t("deepdive.proposals.kind", { kind: p.kind }));
+  if (p.cooldownS !== undefined) parts.push(t("deepdive.proposals.cd", { cd: p.cooldownS }));
+  if (p.durationS !== undefined && p.kind) parts.push(t("deepdive.proposals.duration", { s: p.durationS }));
+  return parts.length > 0 ? parts.join(", ") : t("deepdive.proposals.noChange");
 }
 
 export interface ProposalLine { id: number; dot: "dot-pending" | "dot-rejected" | "dot-approved"; what: string; when: string }
 /** The member's own proposals for this spec, newest first as the server returns them; the spell name comes from the patch, else the run's table. */
-export function proposalLines(proposals: ProposalSummary[], names: Array<{ id: number; name: string }>, now = Date.now()): ProposalLine[] {
+export function proposalLines(t: T, proposals: ProposalSummary[], names: Array<{ id: number; name: string }>, now = Date.now()): ProposalLine[] {
   return proposals.map((p) => {
-    const name = p.patch.name ?? names.find((n) => n.id === p.spellId)?.name ?? `spell ${p.spellId}`;
-    const what = `${name} · ${patchText(p.patch)}`;
-    if (p.status === "pending") return { id: p.id, dot: "dot-pending" as const, what, when: `pending · ${fmtAge(tEn, p.createdAt, now)}` };
-    const note = p.note ? ` — "${p.note}"` : "";
-    const age = fmtAge(tEn, p.decidedAt ?? p.createdAt, now);
+    // A raw string, not a number: a spell id is an identifier, never grouped like a quantity.
+    const name = p.patch.name ?? names.find((n) => n.id === p.spellId)?.name ?? t("deepdive.proposals.spell", { id: String(p.spellId) });
+    const what = `${name} · ${patchText(t, p.patch)}`;
+    if (p.status === "pending") return { id: p.id, dot: "dot-pending" as const, what, when: t("deepdive.proposals.pending", { age: fmtAge(t, p.createdAt, now) }) };
+    const note = p.note ? t("deepdive.proposals.note", { note: p.note }) : "";
+    const age = fmtAge(t, p.decidedAt ?? p.createdAt, now);
     return p.status === "rejected"
-      ? { id: p.id, dot: "dot-rejected" as const, what, when: `rejected ${age}${note}` }
-      : { id: p.id, dot: "dot-approved" as const, what, when: `approved ${age}${note}` };
+      ? { id: p.id, dot: "dot-rejected" as const, what, when: t("deepdive.proposals.rejected", { age, note }) }
+      : { id: p.id, dot: "dot-approved" as const, what, when: t("deepdive.proposals.approved", { age, note }) };
   });
 }
 
-export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: string | null): PanelModel {
+export function panelModel(t: T, d: RunDefensives, now = Date.now(), tableWarning?: string | null): PanelModel {
   const specClass = `${d.spec} ${d.className}`;
   // Precedence: an ignored override file (the run was analyzed against the shipped table) beats every per-run notice.
   let notice: string | null = null;
-  const warning = tableWarningText(tableWarning);
+  const warning = tableWarningText(t, tableWarning);
   if (warning) notice = warning;
-  else if (d.tableMissing) notice = `No defensives table for ${specClass} yet — add entries from the audit below.`;
-  else if (d.staleTable) notice = "The table changed since this run was analyzed — re-analyze to include the new entries.";
-  else if (d.truncated) notice = "Cast events were truncated (more than 5 pages) — counts may be low.";
+  else if (d.tableMissing) notice = t("deepdive.noTable", { spec: specClass });
+  else if (d.staleTable) notice = t("deepdive.tableChanged");
+  else if (d.truncated) notice = t("deepdive.truncated");
   return {
-    title: `Defensives · ${specClass}`,
-    meta: `analyzed ${fmtAge(tEn, d.fetchedAt, now)}${d.pointsSpent !== null ? ` · ${d.pointsSpent} pts` : ""}`,
+    title: t("deepdive.title", { spec: specClass }),
+    meta: t("deepdive.analyzedAgo", { age: fmtAge(t, d.fetchedAt, now) }) + (d.pointsSpent !== null ? t("deepdive.pointsSpent", { pts: d.pointsSpent }) : ""),
     notice,
-    usage: d.defensives.map(usageRow),
-    majorsText: d.majorUsage === null ? null : `majors used ${Math.round(d.majorUsage * 100)}% of possible`,
-    deathsHeadline: d.deaths.length === 0 ? "No deaths" : `${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`,
-    deaths: d.deaths.map((x) => deathLine(x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
-    unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: ` · ${u.casts}× · ${u.uptimeS} s up` })),
+    usage: d.defensives.map((u) => usageRow(t, u)),
+    majorsText: d.majorUsage === null ? null : t("deepdive.majorsUsed", { pct: Math.round(d.majorUsage * 100) }),
+    deathsHeadline: d.deaths.length === 0 ? t("deepdive.noDeaths") : t("deepdive.deathsAvailable", { n: d.avoidableDeaths, total: d.countedDeaths }),
+    deaths: d.deaths.map((x) => deathLine(t, x, (name) => d.defensives.find((u) => u.name === name)?.id ?? null)),
+    unlisted: d.unlisted.map((u) => ({ id: u.id, name: u.name, text: t("deepdive.uptime", { casts: u.casts, s: u.uptimeS }) })),
     specClass,
-    tableParts: tableUsedParts(d.defensives, specClass),
+    tableParts: tableUsedParts(t, d.defensives, specClass),
   };
 }
 
 /** Compare-table cell. */
-export function defensivesCell(p: LookupPayload): { text: string; value: number | null } {
+export function defensivesCell(t: T, p: LookupPayload): { text: string; value: number | null } {
   const s = p.deepdiveSummary;
   if (s.analyzedRuns === 0 || s.majorUsage === null) return { text: "—", value: null };
-  const deaths = s.countedDeaths === 0 ? "no deaths" : `${s.avoidableDeaths}/${s.countedDeaths} avoidable`;
-  return { text: `${Math.round(s.majorUsage * 100)}% · ${deaths}`, value: s.majorUsage };
+  const deaths = s.countedDeaths === 0 ? t("deepdive.summaryNoDeaths") : t("deepdive.summaryAvoidable", { n: s.avoidableDeaths, total: s.countedDeaths });
+  return { text: t("deepdive.summary", { pct: Math.round(s.majorUsage * 100), deaths }), value: s.majorUsage };
 }

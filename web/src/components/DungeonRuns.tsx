@@ -16,7 +16,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
   const rows = runRows(t, payload);
   const missing = missingDungeons(payload);
   const pending = unanalyzedRuns(payload).length;
-  const tableWarning = tableWarningText(payload.deepdiveSummary.tableWarning);
+  const tableWarning = tableWarningText(t, payload.deepdiveSummary.tableWarning);
   if (rows.length === 0) return <section className="card muted">{t("runs.none")}</section>;
   return (
     <section className="card section">
@@ -35,7 +35,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
             title={deepdive.canAfford(pending) ? undefined : deepdive.quotaTooltip}
             onClick={() => void deepdive.analyzeAll()}
           >
-            {deepdive.progress ?? t("runs.analyzeAll", { cost: costText(pending) })}
+            {deepdive.progress ?? t("runs.analyzeAll", { cost: costText(t, pending) })}
           </button>
         )}
       </div>
@@ -95,7 +95,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
             title={deepdive.canAfford(1) ? undefined : deepdive.quotaTooltip}
             onClick={() => void deepdive.analyze(run)}
           >
-            {busy ? <span className="spinner" /> : null} {t("runs.analyze", { cost: costText(1) })}
+            {busy ? <span className="spinner" /> : null} {t("runs.analyze", { cost: costText(t, 1) })}
           </button>
         )}
         {run.signals && a && (

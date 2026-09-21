@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { EntryOrigin, LookupPayload, ProposalSummary, RunDefensives } from "../types.ts";
+import { fr } from "../i18n/fr.ts";
+import { makeT, tEn } from "../i18n/t.ts";
 import {
   actionLabels,
   analysisFor,
@@ -16,6 +18,8 @@ import {
   tableWarningText,
   unanalyzedRuns,
 } from "./deepdive.ts";
+
+const tFr = makeT(fr, "fr");
 
 const dd = (over: Partial<RunDefensives> = {}): RunDefensives => ({
   reportCode: "ABC", fightID: 3, character: "Muleyoxo", className: "Paladin", spec: "Holy", tableMissing: false, tableVersion: "t",
@@ -54,14 +58,15 @@ describe("analysisFor / unanalyzedRuns / costText", () => {
     expect(unanalyzedRuns(noSig)).toEqual([]);
   });
   test("cost text", () => {
-    expect(costText(1)).toBe("~3 pts");
-    expect(costText(8)).toBe("~24 pts");
+    expect(costText(tEn, 1)).toBe("~3 pts");
+    expect(costText(tEn, 8)).toBe("~24 pts");
+    expect(costText(tFr, 8)).toBe("~24 pts");
   });
 });
 
 describe("panelModel", () => {
   test("usage rows, deaths, audit and headline", () => {
-    const m = panelModel(dd(), 1_000_000 + 2 * 3600_000);
+    const m = panelModel(tEn, dd(), 1_000_000 + 2 * 3600_000);
     expect(m.title).toBe("Defensives · Holy Paladin");
     expect(m.meta).toBe("analyzed 2h ago · 3 pts");
     expect(m.usage[0]).toEqual({ id: 498, name: "Divine Protection", kind: "major", counts: "27 / 30", pct: 90, pctText: "90%", cls: "tone-good", cd: "cd 60 s · seen 38 s", mismatch: true, origin: "shipped", countsUsage: true });
@@ -82,82 +87,109 @@ describe("panelModel", () => {
     expect(m.notice).toBeNull();
   });
   test("verdict tones and notices", () => {
-    expect(panelModel(dd({ deaths: [{ ...dd().deaths[0]!, verdict: "defensive available" }] })).deaths[0]!.cls).toBe("tone-warn");
-    expect(panelModel(dd({ deaths: [{ ...dd().deaths[0]!, verdict: "nothing available" }] })).deaths[0]!.cls).toBe("tone-good");
-    expect(panelModel(dd({ deaths: [], countedDeaths: 0, avoidableDeaths: 0 })).deathsHeadline).toBe("No deaths");
-    expect(panelModel(dd({ tableMissing: true, defensives: [], majorUsage: null })).notice).toBe("No defensives table for Holy Paladin yet — add entries from the audit below.");
-    expect(panelModel(dd({ staleTable: true })).notice).toBe("The table changed since this run was analyzed — re-analyze to include the new entries.");
-    expect(panelModel(dd({ truncated: true })).notice).toBe("Cast events were truncated (more than 5 pages) — counts may be low.");
-    expect(panelModel(dd({ pointsSpent: null })).meta).toMatch(/analyzed .* ago$/);
+    expect(panelModel(tEn, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "defensive available" }] })).deaths[0]!.cls).toBe("tone-warn");
+    expect(panelModel(tEn, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "nothing available" }] })).deaths[0]!.cls).toBe("tone-good");
+    expect(panelModel(tEn, dd({ deaths: [], countedDeaths: 0, avoidableDeaths: 0 })).deathsHeadline).toBe("No deaths");
+    expect(panelModel(tEn, dd({ tableMissing: true, defensives: [], majorUsage: null })).notice).toBe("No defensives table for Holy Paladin yet — add entries from the audit below.");
+    expect(panelModel(tEn, dd({ staleTable: true })).notice).toBe("The table changed since this run was analyzed — re-analyze to include the new entries.");
+    expect(panelModel(tEn, dd({ truncated: true })).notice).toBe("Cast events were truncated (more than 5 pages) — counts may be low.");
+    expect(panelModel(tEn, dd({ pointsSpent: null })).meta).toMatch(/analyzed .* ago$/);
   });
   test("an ignored override file outranks every other notice and names the file", () => {
     const warning = "bmpl: ignoring /home/me/.config/bmpl/defensives.json: Unexpected token";
-    expect(panelModel(dd({ tableMissing: true, staleTable: true, truncated: true }), 0, warning).notice).toBe(`Your defensives.json is ignored: ${warning}`);
-    expect(panelModel(dd(), 0, null).notice).toBeNull();
-    expect(tableWarningText(warning)).toBe(`Your defensives.json is ignored: ${warning}`);
-    expect(tableWarningText(null)).toBeNull();
-    expect(tableWarningText(undefined)).toBeNull();
+    expect(panelModel(tEn, dd({ tableMissing: true, staleTable: true, truncated: true }), 0, warning).notice).toBe(`Your defensives.json is ignored: ${warning}`);
+    expect(panelModel(tEn, dd(), 0, null).notice).toBeNull();
+    expect(tableWarningText(tEn, warning)).toBe(`Your defensives.json is ignored: ${warning}`);
+    expect(tableWarningText(tEn, null)).toBeNull();
+    expect(tableWarningText(tEn, undefined)).toBeNull();
+  });
+  test("French: verdict words, notices and the table-used line", () => {
+    const m = panelModel(tFr, dd(), 1_000_000 + 2 * 3600_000);
+    expect(m.title).toBe("Defensives · Holy Paladin");
+    expect(m.meta).toBe("analysé il y a 2 h · 3 pts");
+    expect(m.deaths[0]!.verdict).toBe("immunité dispo");
+    expect(m.deaths[1]!.verdict).toBe("couvert");
+    expect(m.majorsText).toBe("majors utilisés à 87 % du possible");
+    expect(m.deathsHeadline).toBe("1/1 morts avec un defensive dispo");
+    expect(panelModel(tFr, dd({ deaths: [], countedDeaths: 0, avoidableDeaths: 0 })).deathsHeadline).toBe("Aucune mort");
+    expect(panelModel(tFr, dd({ staleTable: true })).notice).toBe("La table a changé depuis l'analyse de ce run — ré-analyse pour inclure les nouvelles entrées.");
+    expect(tableUsedText(tFr, dd().defensives, "Holy Paladin")).toBe("Table utilisée : Holy Paladin · 3 entrées · 1 de ton override");
   });
 });
 
 describe("defensivesCell", () => {
   test("usage and avoidable share; dash without analyses", () => {
-    expect(defensivesCell(payload([dd()]))).toEqual({ text: "87% · 1/1 avoidable", value: 0.87 });
-    expect(defensivesCell(payload([]))).toEqual({ text: "—", value: null });
+    expect(defensivesCell(tEn, payload([dd()]))).toEqual({ text: "87% · 1/1 avoidable", value: 0.87 });
+    expect(defensivesCell(tEn, payload([]))).toEqual({ text: "—", value: null });
     const noDeaths = payload([dd({ countedDeaths: 0, avoidableDeaths: 0 })]);
     noDeaths.deepdiveSummary = { tableWarning: null, analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
-    expect(defensivesCell(noDeaths)).toEqual({ text: "50% · no deaths", value: 0.5 });
+    expect(defensivesCell(tEn, noDeaths)).toEqual({ text: "50% · no deaths", value: 0.5 });
+  });
+  test("French: the space before % and the translated fragments", () => {
+    expect(defensivesCell(tFr, payload([dd()]))).toEqual({ text: "87 % · 1/1 évitables", value: 0.87 });
+    const noDeaths = payload([dd({ countedDeaths: 0, avoidableDeaths: 0 })]);
+    noDeaths.deepdiveSummary = { tableWarning: null, analyzedRuns: 1, majorUsage: 0.5, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 };
+    expect(defensivesCell(tFr, noDeaths)).toEqual({ text: "50 % · aucune mort", value: 0.5 });
   });
 });
 
 describe("originLabel / tableUsedText", () => {
   test("labels every non-shipped origin", () => {
-    expect(originLabel("shipped")).toBeNull();
-    expect(originLabel("override")).toBe("override");
-    expect(originLabel("shared")).toBe("shared");
-    expect(originLabel("pending")).toBe("pending review");
+    expect(originLabel(tEn, "shipped")).toBeNull();
+    expect(originLabel(tEn, "override")).toBe("override");
+    expect(originLabel(tEn, "shared")).toBe("shared");
+    expect(originLabel(tEn, "pending")).toBe("pending review");
   });
   test("the table line counts the local override or the hosted layers", () => {
     const o = (origin: EntryOrigin) => ({ origin });
-    expect(tableUsedText([o("shipped"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries");
-    expect(tableUsedText([o("shipped"), o("override")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries · 1 from your override");
-    expect(tableUsedText([o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 3 entries · 1 shared · 1 pending review");
-    expect(tableUsedText([o("shared")], "Holy Paladin")).toBe("Table used: Holy Paladin · 1 entries · 1 shared");
+    expect(tableUsedText(tEn, [o("shipped"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries");
+    expect(tableUsedText(tEn, [o("shipped"), o("override")], "Holy Paladin")).toBe("Table used: Holy Paladin · 2 entries · 1 from your override");
+    expect(tableUsedText(tEn, [o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toBe("Table used: Holy Paladin · 3 entries · 1 shared · 1 pending review");
+    expect(tableUsedText(tEn, [o("shared")], "Holy Paladin")).toBe("Table used: Holy Paladin · 1 entries · 1 shared");
   });
 });
 
 describe("hosted panel: labels, dots, proposals", () => {
   test("actionLabels: members propose, local and admin edit", () => {
-    const p = actionLabels("propose");
+    const p = actionLabels(tEn, "propose");
     expect([p.add("major"), p.ignore, p.editCd, p.remove, p.addSubmit("minor"), p.save]).toEqual(["Propose + major", "Propose ignore", "Propose cd", "Propose removal", "Propose as minor", "Propose"]);
     for (const mode of ["local", "admin"] as const) {
-      const l = actionLabels(mode);
+      const l = actionLabels(tEn, mode);
       expect([l.add("major"), l.ignore, l.editCd, l.remove, l.addSubmit("minor"), l.save]).toEqual(["+ major", "Ignore", "Edit cd", "Remove for this spec", "Add as minor", "Save"]);
     }
+  });
+  test("French actionLabels", () => {
+    const p = actionLabels(tFr, "propose");
+    expect([p.add("major"), p.ignore, p.editCd, p.remove, p.addSubmit("minor"), p.save]).toEqual(["Proposer + major", "Proposer d'ignorer", "Proposer un cd", "Proposer la suppression", "Proposer en minor", "Proposer"]);
   });
   test("originDot marks shared and pending; originSuffix keeps the text only for a local override", () => {
     expect(originDot("shared")).toBe("dot-shared");
     expect(originDot("pending")).toBe("dot-pending");
     expect(originDot("override")).toBeNull();
     expect(originDot("shipped")).toBeNull();
-    expect(originSuffix("override")).toBe("override");
-    expect(originSuffix("shared")).toBeNull();
-    expect(originSuffix("pending")).toBeNull();
-    expect(originSuffix("shipped")).toBeNull();
+    expect(originSuffix(tEn, "override")).toBe("override");
+    expect(originSuffix(tEn, "shared")).toBeNull();
+    expect(originSuffix(tEn, "pending")).toBeNull();
+    expect(originSuffix(tEn, "shipped")).toBeNull();
   });
   test("tableUsedParts splits the line so shared / pending counts get their dot", () => {
     const o = (origin: EntryOrigin) => ({ origin });
-    expect(tableUsedParts([o("shipped"), o("override")], "Holy Paladin")).toEqual([{ text: "Table used: Holy Paladin · 2 entries", dot: null }, { text: "1 from your override", dot: null }]);
-    expect(tableUsedParts([o("shared"), o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toEqual([
+    expect(tableUsedParts(tEn, [o("shipped"), o("override")], "Holy Paladin")).toEqual([{ text: "Table used: Holy Paladin · 2 entries", dot: null }, { text: "1 from your override", dot: null }]);
+    expect(tableUsedParts(tEn, [o("shared"), o("shared"), o("pending"), o("shipped")], "Holy Paladin")).toEqual([
       { text: "Table used: Holy Paladin · 4 entries", dot: null }, { text: "2 shared", dot: "dot-shared" }, { text: "1 pending review", dot: "dot-pending" },
     ]);
-    expect(tableUsedParts([o("shipped"), o("override")], "Holy Paladin").map((p) => p.text).join(" · ")).toBe(tableUsedText([o("shipped"), o("override")], "Holy Paladin"));
+    expect(tableUsedParts(tEn, [o("shipped"), o("override")], "Holy Paladin").map((p) => p.text).join(" · ")).toBe(tableUsedText(tEn, [o("shipped"), o("override")], "Holy Paladin"));
   });
   test("patchText describes a patch", () => {
-    expect(patchText({ id: 1, ignore: true })).toBe("ignore");
-    expect(patchText({ id: 1, cooldownS: 300 })).toBe("cd 300 s");
-    expect(patchText({ id: 1, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 })).toBe("+ minor, cd 25 s, 6 s");
-    expect(patchText({ id: 1 })).toBe("no change");
+    expect(patchText(tEn, { id: 1, ignore: true })).toBe("ignore");
+    expect(patchText(tEn, { id: 1, cooldownS: 300 })).toBe("cd 300 s");
+    expect(patchText(tEn, { id: 1, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 })).toBe("+ minor, cd 25 s, 6 s");
+    expect(patchText(tEn, { id: 1 })).toBe("no change");
+  });
+  test("French patchText", () => {
+    expect(patchText(tFr, { id: 1, ignore: true })).toBe("ignorer");
+    expect(patchText(tFr, { id: 1, name: "Blessing of Freedom", kind: "minor", cooldownS: 25, durationS: 6 })).toBe("+ minor, cd 25 s, 6 s");
+    expect(patchText(tFr, { id: 1 })).toBe("aucun changement");
   });
   test("proposalLines: name from the patch or the table, status with age and note", () => {
     const now = 1_000_000 + 2 * 3600_000;
@@ -168,7 +200,7 @@ describe("hosted panel: labels, dots, proposals", () => {
       { id: 4, spellId: 9999, status: "pending", patch: { id: 9999, name: "Aura Mastery", ignore: true }, note: null, createdAt: now, decidedAt: null },
       { id: 5, spellId: 8888, status: "pending", patch: { id: 8888, ignore: true }, note: null, createdAt: now, decidedAt: null },
     ];
-    expect(proposalLines(proposals, dd().defensives, now)).toEqual([
+    expect(proposalLines(tEn, proposals, dd().defensives, now)).toEqual([
       { id: 3, dot: "dot-pending", what: "Divine Shield · cd 300 s", when: "pending · 2h ago" },
       { id: 2, dot: "dot-rejected", what: "Blessing of Freedom · + minor, cd 25 s, 6 s", when: "rejected 2d ago — \"It is a freedom, not a defensive.\"" },
       { id: 1, dot: "dot-approved", what: "Divine Protection · cd 60 s", when: "approved 5d ago" },
@@ -176,8 +208,19 @@ describe("hosted panel: labels, dots, proposals", () => {
       { id: 5, dot: "dot-pending", what: "spell 8888 · ignore", when: "pending · just now" },
     ]);
   });
+  test("French proposalLines", () => {
+    const now = 1_000_000 + 2 * 3600_000;
+    const proposals: ProposalSummary[] = [
+      { id: 3, spellId: 642, status: "pending", patch: { id: 642, cooldownS: 300 }, note: null, createdAt: 1_000_000, decidedAt: null },
+      { id: 5, spellId: 8888, status: "pending", patch: { id: 8888, ignore: true }, note: null, createdAt: now, decidedAt: null },
+    ];
+    expect(proposalLines(tFr, proposals, dd().defensives, now)).toEqual([
+      { id: 3, dot: "dot-pending", what: "Divine Shield · cd 300 s", when: "en attente · il y a 2 h" },
+      { id: 5, dot: "dot-pending", what: "sort 8888 · ignorer", when: "en attente · à l'instant" },
+    ]);
+  });
   test("panelModel exposes specClass and tableParts", () => {
-    const m = panelModel(dd(), 1_000_000);
+    const m = panelModel(tEn, dd(), 1_000_000);
     expect(m.specClass).toBe("Holy Paladin");
     expect(m.tableParts).toEqual([{ text: "Table used: Holy Paladin · 3 entries", dot: null }, { text: "1 from your override", dot: null }]);
   });

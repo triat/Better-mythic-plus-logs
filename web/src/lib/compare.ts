@@ -65,7 +65,7 @@ export function compareSections(t: T, ps: LookupPayload[]): CompareSection[] {
         sm.map((s) => (s.timedShown === null ? cell(DASH, "faint") : cell(`${s.timedShown}/${s.runsWithSignals}`)))),
       row(t("compare.avoidable"), "lower", sm.map((s) => s.avoidableDeltaPct), sm.map((s) => (s.avoidableDeltaPct === null ? cell(DASH, "faint") : cell(signed(s.avoidableDeltaPct, 0, "%"), toneClass(lowerTone(s.avoidableDeltaPct)))))),
       row(t("compare.kicks"), "higher", sm.map((s) => s.kicksDeltaPts), sm.map((s) => (s.kicksDeltaPts === null ? cell(DASH, "faint") : cell(signed(s.kicksDeltaPts, 0, " pts"), toneClass(higherTone(s.kicksDeltaPts)))))),
-      row(t("compare.defensives"), "higher", ps.map((p) => defensivesCell(p).value), ps.map((p) => { const c = defensivesCell(p); return cell(c.text, c.value === null ? "faint" : ""); })),
+      row(t("compare.defensives"), "higher", ps.map((p) => defensivesCell(t, p).value), ps.map((p) => { const c = defensivesCell(t, p); return cell(c.text, c.value === null ? "faint" : ""); })),
       row(t("compare.ilvl"), "higher", sm.map((s) => s.ilvl), sm.map((s) => cell(s.ilvl === null ? DASH : String(Math.round(s.ilvl)), s.ilvl === null ? "faint" : ""))),
       row(t("compare.rioRecent"), "higher", sm.map((s) => (s.recentTotal === null || s.recentTotal === 0 || s.recentTimed === null ? null : s.recentTimed / s.recentTotal)),
         sm.map((s) => (s.recentTotal === null ? cell(DASH, "faint") : cell(`${s.recentTimed}/${s.recentTotal}`)))),

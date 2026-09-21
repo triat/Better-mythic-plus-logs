@@ -106,7 +106,7 @@ export interface DecidedLine { id: number; dot: "dot-approved" | "dot-rejected";
 export function decidedLine(p: AdminProposal, now = Date.now()): DecidedLine {
   const status = p.status === "approved" ? "approved" : "rejected";
   const name = p.current?.name ?? p.patch.name ?? `spell ${p.patch.id}`;
-  return { id: p.id, dot: status === "approved" ? "dot-approved" : "dot-rejected", what: `${name} · ${p.key} · ${patchText(p.patch)}`, author: p.username ?? "unknown user", status, when: fmtAge(tEn, p.decidedAt ?? p.createdAt, now), note: p.note };
+  return { id: p.id, dot: status === "approved" ? "dot-approved" : "dot-rejected", what: `${name} · ${p.key} · ${patchText(tEn, p.patch)}`, author: p.username ?? "unknown user", status, when: fmtAge(tEn, p.decidedAt ?? p.createdAt, now), note: p.note };
 }
 
 export interface UserRowModel {
@@ -226,7 +226,7 @@ export function auditDetail(action: AuditAction, detail: Record<string, unknown>
     case "proposal_approve":
     case "proposal_reject": {
       const note = noteText(detail.note);
-      const patch = detail.patch && typeof detail.patch === "object" ? patchText(detail.patch as OverrideEntry) : "";
+      const patch = detail.patch && typeof detail.patch === "object" ? patchText(tEn, detail.patch as OverrideEntry) : "";
       return `${patch}${note ? ` · ${note}` : ""}`;
     }
     case "user_ban":

@@ -38,7 +38,7 @@ just check-deps                             # bun audit on both lockfiles — ru
 
 - **Never spend WCL points automatically.** Every WCL call costs budget (3600 pts/h per API client). Only `lookup`/`mplus` (rankings + run enrichment) and the explicit `analyze` / `POST /api/deepdive` fetch; anything else reads the SQLite cache. Raw WCL results are immutable → cached forever; analysis is always recomputed from raw.
 - **`just check` and `bun test` green at the end of every task**, with `web/dist` absent (server answers 503 for static routes then).
-- **English everywhere in code, UI strings, docs, commits.** The user writes French in chat; answer in French, write the product in English.
+- **English everywhere in code, docs and commits; UI strings live in `web/src/i18n/` — `en.ts` is the source, `fr.ts` mirrors it key for key; never write a UI literal in a component.** The user writes French in chat; answer in French.
 - **`web/` imports from `src/` are types only** (`import type … from "@shared/…"`), single runtime exception `src/wow/classes.ts`. `verbatimModuleSyntax` enforces it.
 - **Front colours/radii/fonts come from `web/src/styles/tokens.css`**; never invent a value. Any visible UI change goes through the Claude Design canvas first (see `docs/agents/workflow.md`).
 - **Git:** work on `main` in place, no history rewriting, no force push, push only when asked. Never stage the user's local files at the repo root: `biwaasham.json` (saved payload), `defensives.json`, `evaluation.json`, `.env`, `bmpl.db*`.

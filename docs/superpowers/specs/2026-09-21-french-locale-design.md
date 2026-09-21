@@ -1,6 +1,6 @@
 # French locale for the web front — design
 
-Status: approved design, 2026-09-21 (brainstorm in chat; canvas "Hosted" page, board "Locale — EN / FR chip (A/B) and the French preview", option **A** chosen: the chip lives in the user menu in hosted mode and at the right of the header in local mode).
+Status: approved design, 2026-09-21 (brainstorm in chat; canvas "Hosted" page, board "Locale — EN / FR chip (A/B) and the French preview", option **A** chosen: the chip lives in the user menu in hosted mode and at the right of the header in local mode); implemented 2026-09-21 (plan `docs/superpowers/plans/2026-09-21-french-locale.md`, commits `a26a03e^..f7875fb`).
 
 ## Why
 

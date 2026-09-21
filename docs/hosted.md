@@ -67,8 +67,8 @@ admin unbans them.
 ## Per-account state
 
 Each member has their own lookup history (20 tabs, kept
-in `bmpl.db` across restarts), their own "your key", legend preference and
-region (`GET/PUT /api/settings`), and their own live-event stream. A member's
+in `bmpl.db` across restarts), their own "your key", legend preference,
+region and UI language (`GET/PUT /api/settings`), and their own live-event stream. A member's
 saved region defaults to `null` (the instance's `BMPL_REGION`) until they pick
 one; a pasted Raider.IO URL's own region wins for that one lookup without
 changing the saved preference. Two members looking
@@ -244,7 +244,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/events` | user | Server-sent events: watcher/lookup status stream |
 | GET | `/api/health` | public | Health check for the reverse proxy / uptime monitor |
 | GET | `/api/status` | public | Whether credentials are set, hosted config flags (open signup, guild gate, own WCL clients, operator) |
-| GET | `/api/docs` | public | The documentation registry plus the effective evaluation config, for `/help` |
+| GET | `/api/docs?lang=` | public | The documentation registry (`lang=fr` for French, anything else English) plus the effective evaluation config, for `/help` |
 | POST | `/api/setup` | local mode only | Write `WCL_CLIENT_ID`/`WCL_CLIENT_SECRET` to `.env` |
 | POST | `/api/watch/start` | local mode only | Start clipboard watch |
 | POST | `/api/watch/stop` | local mode only | Stop clipboard watch |
@@ -255,8 +255,8 @@ are registered in both modes; the local-only routes
 | POST | `/auth/logout` | public | End the caller's session |
 | GET | `/api/me` | user | The signed-in member, their quota status and own WCL client (if any) |
 | DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, proposals, own WCL client) |
-| GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region) |
-| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default |
+| GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region, UI language) |
+| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser |
 | GET | `/api/me/wcl-client` | user | The caller's own WCL client, if set |
 | PUT | `/api/me/wcl-client` | user | Save the caller's own WCL client (verified with a 0-pt PING first) |
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |

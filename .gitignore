@@ -18,3 +18,4 @@ evaluation.json
 web/dist/
 web/node_modules/
 .superpowers/
+.claude/settings.local.json

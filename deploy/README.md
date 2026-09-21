@@ -4,7 +4,9 @@ Templates and scripts for running bmpl in hosted mode on a bare VPS (Debian/Ubun
 
 | File | VPS path | Purpose |
 |---|---|---|
-| `bootstrap.sh` | run once, from this directory | Installs Caddy, litestream, ufw, sqlite3; creates the `bmpl` system user; opens 22/80/443 only; installs the units below and enables them |
+| `bootstrap.sh` | run once, from this directory | Installs Caddy, litestream, ufw, sqlite3; creates the `bmpl` system user and the `deploy` user; opens 22/80/443 only; installs the units below and enables them |
+| `sudoers-bmpl-deploy` | `/etc/sudoers.d/bmpl-deploy` | What `deploy` may do without a password: install the binary and restart `bmpl` as root, anything as `bmpl` |
+| `restore-test.sh` | `/usr/local/sbin/bmpl-restore-test` | `just deploy-restore-test`: restores the latest replica into a scratch dir, checks it opens (runs as user `bmpl`) |
 | `Caddyfile` | `/etc/caddy/Caddyfile` | Reverse proxy to `127.0.0.1:3000`, automatic HTTPS, HSTS, compression |
 | `bmpl.service` | `/etc/systemd/system/bmpl.service` | Runs `/opt/bmpl/bmpl serve --hosted --port 3000 --host 127.0.0.1` as user `bmpl`, hardened, `Restart=always` |
 | `litestream.yml` | `/etc/litestream.yml` | Continuous replication config for `/opt/bmpl/bmpl.db` to an S3-compatible bucket |
@@ -19,12 +21,13 @@ Copy both this `deploy/` directory and `.env.hosted.example` to the VPS before r
 
 ## Order of operations
 
-1. `sudo bash bootstrap.sh bmpl.example.com` on the fresh VPS (both scripts ship with the exec bit set; `bash bootstrap.sh` also works if it was lost in transfer) — installs packages, the `bmpl` user, the firewall rules, and the systemd units (enabled, not started).
-2. Fill `/opt/bmpl/.env` on the VPS (copied from `.env.hosted.example` by bootstrap if absent) with real secrets.
-3. Fill `/etc/litestream.yml` with the real bucket, endpoint and keys.
-4. `just deploy` from your machine — builds and ships the `bmpl` binary to `/opt/bmpl/bmpl`, then starts/restarts `bmpl.service`.
-5. First deploy only: `sudo systemctl start litestream bmpl-backup-check.timer`.
-6. Verify: `systemctl status bmpl caddy litestream bmpl-backup-check.timer`, hit `https://bmpl.example.com/api/health` (`curl -s … | jq .warnings` should print `[]` once the first backup snapshot and check have run), and after the first hour check `/opt/bmpl/last-backup` exists.
+1. `sudo bash bootstrap.sh bmpl.example.com` on the fresh VPS (the scripts ship with the exec bit set; `bash bootstrap.sh` also works if it was lost in transfer) — installs packages, the `bmpl` and `deploy` users, the firewall rules, and the systemd units (enabled, not started).
+2. Put your public key in `/home/deploy/.ssh/authorized_keys` — `just deploy` logs in as `deploy`, never as root.
+3. Fill `/opt/bmpl/.env` on the VPS (copied from `.env.hosted.example` by bootstrap if absent) with real secrets.
+4. Fill `/etc/litestream.yml` with the real bucket, endpoint and keys (or a local `type: file` replica).
+5. `BMPL_DEPLOY_HOST=deploy@bmpl.example.com just deploy` from your machine — builds and ships the `bmpl` binary to `/opt/bmpl/bmpl`, then starts/restarts `bmpl.service`.
+6. First deploy only: `sudo systemctl start litestream bmpl-backup-check.timer`.
+7. Verify: `systemctl status bmpl caddy litestream bmpl-backup-check.timer`, hit `https://bmpl.example.com/api/health` (`curl -s … | jq .warnings` should print `[]` once the first backup snapshot and check have run), and after the first hour check `/opt/bmpl/last-backup` exists.
 
 `/opt/bmpl/.env` also takes four optional variables beyond the required ones: `BMPL_OPEN_SIGNUP`, `BMPL_DISCORD_GUILD_ID`, `BMPL_ENCRYPTION_KEY` (enables members' own Warcraft Logs clients — generate with `openssl rand -base64 32`), `BMPL_OPERATOR`. See `.env.hosted.example` and [docs/hosted.md](../docs/hosted.md#environment) for what each does.
 
@@ -37,7 +40,8 @@ owns 80/443 and proxies to it with automatic HTTPS, litestream replicates
 above maps each one to its path on the VPS); the client side is the `justfile`
 (`build-linux`, `deploy`, `deploy-status`, `deploy-logs`, `deploy-restore-test`).
 Every `deploy-*` recipe is run from your machine, by you, never by an automated
-agent.
+agent, and logs in as the `deploy` user — root is for the operator's own
+administration (`.env`, `litestream.yml`, re-running `bootstrap.sh`).
 
 **1. What you need.** A Debian/Ubuntu VPS with a public IPv4 and root SSH; a
 DNS `A` record `bmpl.<domain>` pointing at it, live before bootstrap (Caddy
@@ -45,7 +49,9 @@ needs it to obtain the certificate); an S3-compatible bucket (Backblaze B2,
 Hetzner Object Storage, …) with an application key that can read and write
 it; a Discord application (see [Login](../docs/hosted.md#login)); a Warcraft Logs API client
 (see [the README](../README.md#getting-warcraft-logs-api-credentials)). On your machine: this repo,
-Bun, `just`, and an SSH key that opens `root@<vps>`.
+Bun, `just`, and an SSH key that opens `root@<vps>` (bootstrap and
+administration) — the same key or a dedicated one goes to `deploy@<vps>` for
+the `deploy-*` recipes.
 
 **2. Bootstrap** (once). Key-only SSH first: on Ubuntu 24.04 cloud images
 `/etc/ssh/sshd_config.d/50-cloud-init.conf` sets `PasswordAuthentication yes`
@@ -68,11 +74,15 @@ ssh root@<vps> 'cd /root/bmpl-deploy/deploy && bash bootstrap.sh bmpl.<domain>'
 apt repository) and litestream (the `.deb` of `LITESTREAM_VERSION`, 0.3.13 by
 default); sets ufw to deny incoming and allows `22/tcp`, `80/tcp`, `443/tcp`
 only (port 3000 never leaves loopback); creates the `bmpl` system user (no
-shell, home `/opt/bmpl`, mode 750); writes `/etc/caddy/Caddyfile` with your
+shell, home `/opt/bmpl`, mode 750) and the `deploy` user (bash, home
+`/home/deploy`, member of `systemd-journal`, sudo limited by
+`/etc/sudoers.d/bmpl-deploy` to `install … /opt/bmpl/bmpl`, `systemctl
+restart bmpl` and anything as `bmpl`); writes `/etc/caddy/Caddyfile` with your
 domain and runs `caddy validate`; installs `bmpl.service`,
 `litestream.service`, `bmpl-backup-check.service` and
-`bmpl-backup-check.timer` into `/etc/systemd/system/` and the check script,
-root-owned, at `/usr/local/sbin/bmpl-backup-check`; installs the
+`bmpl-backup-check.timer` into `/etc/systemd/system/` and the two scripts,
+root-owned, at `/usr/local/sbin/bmpl-backup-check` and
+`/usr/local/sbin/bmpl-restore-test`; installs the
 `/etc/litestream.yml` template (owner `bmpl`, mode 600) unless a file already
 mentioning `/opt/bmpl/bmpl.db` is there; seeds `/opt/bmpl/.env` from
 `.env.hosted.example` (never overwrites an existing `.env`); enables and
@@ -84,7 +94,11 @@ bootstrap's `reload` — and retries in the background on failure, so the DNS
 `A` record must already point at the VPS before you run `bootstrap.sh`;
 watch `journalctl -u caddy` to see the certificate obtained.
 
-**3. Configure.** `ssh root@<vps> 'nano /opt/bmpl/.env'` and fill every
+**3. Configure.** First the deploy key: `ssh root@<vps> 'cat >>
+/home/deploy/.ssh/authorized_keys' < ~/.ssh/id_ed25519.pub` (the file already
+exists with the right owner and mode), then check `ssh deploy@<vps> sudo -n
+-l` lists the two root commands and `(bmpl) ALL`. Then `ssh root@<vps> 'nano
+/opt/bmpl/.env'` and fill every
 variable of [the environment table](../docs/hosted.md#environment): `BMPL_BASE_URL=https://bmpl.<domain>`,
 `BMPL_SESSION_SECRET` from `openssl rand -base64 48`, the Discord client id
 and secret with `https://bmpl.<domain>/auth/discord/callback` registered as
@@ -100,17 +114,17 @@ days of snapshots) and `snapshot-interval: 1h`.
 shell (`just` does not read `.env`):
 
 ```bash
-BMPL_DEPLOY_HOST=root@<vps> just deploy
+BMPL_DEPLOY_HOST=deploy@<vps> just deploy
 ssh root@<vps> 'systemctl start litestream bmpl-backup-check.timer'   # first deploy only: the database now exists
-BMPL_DEPLOY_HOST=root@<vps> just deploy-status  # unit states, /api/health, last-backup marker
-BMPL_DEPLOY_HOST=root@<vps> just deploy-logs    # journalctl -u bmpl -f
+BMPL_DEPLOY_HOST=deploy@<vps> just deploy-status  # unit states, /api/health (backupAgeS = the last-backup marker's age)
+BMPL_DEPLOY_HOST=deploy@<vps> just deploy-logs    # journalctl -u bmpl -f
 ```
 
 `just deploy` runs `build-linux` (Vite build of the web front, then
 `bun build --compile --target=bun-linux-x64` → `dist/bmpl-linux`; it
-cross-compiles from any OS), copies the binary to `/opt/bmpl/bmpl.new`,
-installs it as `/opt/bmpl/bmpl` (owner `bmpl`, mode 755), runs
-`systemctl restart bmpl` and polls `http://127.0.0.1:3000/api/health` for
+cross-compiles from any OS), copies the binary to `/home/deploy/bmpl.new`,
+installs it as `/opt/bmpl/bmpl` (owner `bmpl`, mode 755) and runs
+`systemctl restart bmpl` through the two sudo rules, then polls `http://127.0.0.1:3000/api/health` for
 up to 30 s; when the app does not answer it prints the last 30 journal lines
 and exits 1 (the previous binary is already replaced — deploy the last good
 commit to roll back). The first admin is the Discord id you put in
@@ -155,10 +169,11 @@ chown bmpl:bmpl /opt/bmpl/bmpl.db
 systemctl start litestream bmpl
 ```
 
-Test the restore without touching production: `BMPL_DEPLOY_HOST=root@<vps>
-just deploy-restore-test` restores the latest replica into a temporary
-directory on the VPS, runs `PRAGMA integrity_check` and counts the `users`
-rows, then deletes the directory. Do it once after the first day of
+Test the restore without touching production: `BMPL_DEPLOY_HOST=deploy@<vps>
+just deploy-restore-test` runs `/usr/local/sbin/bmpl-restore-test` as user
+`bmpl`: it restores the latest replica into a temporary directory on the VPS,
+runs `PRAGMA integrity_check` and counts the `users` rows, then deletes the
+directory. Do it once after the first day of
 replication and note the date; repeat after changing the bucket or its key.
 
 **7. Rotate a secret.** `BMPL_SESSION_SECRET`: new value in `/opt/bmpl/.env`,
@@ -171,7 +186,7 @@ key: new key in `/etc/litestream.yml`,
 new key reads the replica.
 
 **8. Upgrade.** `git pull` on your machine, then
-`BMPL_DEPLOY_HOST=root@<vps> just deploy`. The schema is additive
+`BMPL_DEPLOY_HOST=deploy@<vps> just deploy`. The schema is additive
 (`CREATE … IF NOT EXISTS`), there is no migration step, and cached WCL data is
 kept. Downgrade: check out the previous commit and `just deploy` again. If the
 `deploy/` files changed, copy them again and re-run `bootstrap.sh` (it keeps

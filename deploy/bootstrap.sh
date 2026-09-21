@@ -35,8 +35,19 @@ ufw --force enable
 id -u bmpl >/dev/null 2>&1 || useradd --system --home-dir /opt/bmpl --shell /usr/sbin/nologin bmpl
 install -d -o bmpl -g bmpl -m 750 /opt/bmpl
 
-# 4. Files from this directory → their places (never overwrite an existing .env or litestream.yml).
+# 3b. The deploy user: what `just deploy` logs in as. Not root — a sudoers file grants it the two
+# gestures of a deploy (install the binary, restart the unit) and anything as `bmpl`; the
+# systemd-journal group lets `just deploy-logs` read the unit's journal. Its SSH keys are yours to
+# add: /home/deploy/.ssh/authorized_keys.
 HERE="$(cd "$(dirname "$0")" && pwd)"
+id -u deploy >/dev/null 2>&1 || useradd --create-home --shell /bin/bash --groups systemd-journal deploy
+usermod -aG systemd-journal deploy
+install -d -o deploy -g deploy -m 700 /home/deploy/.ssh
+touch /home/deploy/.ssh/authorized_keys && chown deploy:deploy /home/deploy/.ssh/authorized_keys && chmod 600 /home/deploy/.ssh/authorized_keys
+visudo -cf "$HERE/sudoers-bmpl-deploy" >/dev/null
+install -o root -g root -m 440 "$HERE/sudoers-bmpl-deploy" /etc/sudoers.d/bmpl-deploy
+
+# 4. Files from this directory → their places (never overwrite an existing .env or litestream.yml).
 sed "s/bmpl\.example\.com/${DOMAIN}/" "$HERE/Caddyfile" > /etc/caddy/Caddyfile
 caddy validate --config /etc/caddy/Caddyfile
 # Caddy >= 2.8 opens the access log during validation, creating it root:root 0600;
@@ -47,6 +58,7 @@ install -m 644 "$HERE/litestream.service" /etc/systemd/system/litestream.service
 install -m 644 "$HERE/bmpl-backup-check.service" /etc/systemd/system/bmpl-backup-check.service
 install -m 644 "$HERE/bmpl-backup-check.timer" /etc/systemd/system/bmpl-backup-check.timer
 install -m 755 "$HERE/backup-check.sh" /usr/local/sbin/bmpl-backup-check
+install -m 755 "$HERE/restore-test.sh" /usr/local/sbin/bmpl-restore-test
 # The litestream .deb ships its own sample /etc/litestream.yml — check its content, not just its presence.
 grep -qs "/opt/bmpl/bmpl.db" /etc/litestream.yml || install -o bmpl -g bmpl -m 600 "$HERE/litestream.yml" /etc/litestream.yml
 if [ -f /opt/bmpl/.env ]; then
@@ -62,4 +74,4 @@ systemctl daemon-reload
 systemctl enable --now caddy
 systemctl reload caddy || systemctl restart caddy
 systemctl enable bmpl litestream bmpl-backup-check.timer
-echo "bootstrap done — next: fill /opt/bmpl/.env and /etc/litestream.yml, then 'just deploy' from your machine"
+echo "bootstrap done — next: your public key in /home/deploy/.ssh/authorized_keys, fill /opt/bmpl/.env and /etc/litestream.yml, then 'just deploy' from your machine"

@@ -7,12 +7,14 @@ rotating secrets, tuning the scoring model, picking up a new season, and
 troubleshooting. It assumes a VPS already set up per
 [deploy/README.md](../deploy/README.md#deploying-on-a-vps) — `bmpl.service`,
 `caddy`, `litestream` and `bmpl-backup-check.timer` installed and enabled —
-and `BMPL_DEPLOY_HOST=user@host` exported in your own shell (`just` does not
-read `.env`). Each section below is **When** it applies, **Do** the
+and `BMPL_DEPLOY_HOST=deploy@host` exported in your own shell (`just` does not
+read `.env`; the `deploy-*` recipes log in as the `deploy` user, whose sudo is
+limited to installing the binary, restarting `bmpl` and acting as `bmpl`). Each section below is **When** it applies, **Do** the
 commands, **Check** what confirms it worked, and **Reference** for the
 explanation this page deliberately doesn't repeat. Replace `<vps>` with your
-SSH destination (e.g. `root@bmpl.example.com`) and `<host>` with your public
-hostname (e.g. `bmpl.example.com`).
+root SSH destination (e.g. `root@bmpl.example.com` — the commands below edit
+`/opt/bmpl/.env` and restart units; the ones prefixed `sudo -u bmpl` also work
+as `deploy@`) and `<host>` with your public hostname (e.g. `bmpl.example.com`).
 
 ## 1. Ship a change
 
@@ -22,13 +24,13 @@ hostname (e.g. `bmpl.example.com`).
 
 ```bash
 just check && bun test
-BMPL_DEPLOY_HOST=<vps> just deploy
+BMPL_DEPLOY_HOST=deploy@<host> just deploy
 ```
 
 **Check**
 
 ```bash
-BMPL_DEPLOY_HOST=<vps> just deploy-status   # unit states, /api/health, last-backup marker
+BMPL_DEPLOY_HOST=deploy@<host> just deploy-status   # unit states, /api/health (backupAgeS)
 ```
 
 `just deploy` builds `dist/bmpl-linux`, copies it to `/opt/bmpl/bmpl.new`,
@@ -37,7 +39,7 @@ installs it over `/opt/bmpl/bmpl`, restarts `bmpl.service` and polls
 itself, so a red `deploy` is usually self-explanatory — otherwise:
 
 ```bash
-BMPL_DEPLOY_HOST=<vps> just deploy-logs   # journalctl -u bmpl -f
+BMPL_DEPLOY_HOST=deploy@<host> just deploy-logs   # journalctl -u bmpl -f
 ```
 
 **There is no automatic rollback and no previous binary kept** — the old
@@ -46,7 +48,7 @@ failure. To roll back, deploy the last good commit instead:
 
 ```bash
 git checkout <previous-sha>            # or: git revert <bad-sha>
-BMPL_DEPLOY_HOST=<vps> just deploy
+BMPL_DEPLOY_HOST=deploy@<host> just deploy
 git checkout main                      # once you checked out a sha directly
 ```
 
@@ -89,9 +91,9 @@ litestream` for the reverse proxy and replication themselves.
 `/opt/bmpl/bmpl.db`):
 
 ```bash
-ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl invite <discord-id> --note 'guild mate'"
-ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl invite --list"
-ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl invite --remove <discord-id>"
+ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl invite <discord-id> --note 'guild mate'"
+ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl invite --list"
+ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl invite --remove <discord-id>"
 ```
 
 or the admin page (`/admin` → Invites), which does the same without SSH
@@ -156,7 +158,7 @@ To see the shared table as it stands, or spend a small WCL budget to check
 one spec empirically before deciding:
 
 ```bash
-ssh <vps> "runuser -u bmpl -- /opt/bmpl/bmpl defensives <Class> <Spec> --shared"
+ssh <vps> "sudo -u bmpl /opt/bmpl/bmpl defensives <Class> <Spec> --shared"
 just audit-defensives --shared --only <Class>:<Spec>   # ~9 pts for that spec
 ```
 
@@ -227,7 +229,7 @@ without touching production, once after the first day of replication and
 again after changing the bucket or its key:
 
 ```bash
-BMPL_DEPLOY_HOST=<vps> just deploy-restore-test
+BMPL_DEPLOY_HOST=deploy@<host> just deploy-restore-test
 ```
 
 A real restore, on the VPS as root:
@@ -249,7 +251,7 @@ audit log, encrypted own-WCL-client secrets, and the WCL response cache.
 **Check** — `just deploy-restore-test` prints `PRAGMA integrity_check` → `ok`
 and a `users` count; after a real restore, `/api/health`'s `warnings` is
 empty once the next hourly check runs, and `just deploy-status` shows a
-recent `last-backup`.
+small `backupAgeS`.
 
 **Reference** — [deploy/README.md § Deploying on a VPS, part 6](../deploy/README.md#deploying-on-a-vps).
 
@@ -344,7 +346,7 @@ you restart the server; a fresh lookup after restart reflects it live.
 
    ```bash
    just check && bun test
-   BMPL_DEPLOY_HOST=<vps> just deploy
+   BMPL_DEPLOY_HOST=deploy@<host> just deploy
    ```
 
 **Check** — a lookup against the new season shows fresh (non-stale) item

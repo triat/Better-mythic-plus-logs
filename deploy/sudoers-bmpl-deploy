@@ -1,0 +1,6 @@
+# /etc/sudoers.d/bmpl-deploy — what the `deploy` user (the one `just deploy` logs in as) may do without a password.
+# Root: exactly the two gestures of `just deploy`, fixed paths, no wildcards.
+# bmpl: anything — the service user has no shell and sees only /opt/bmpl, so this covers
+# `bmpl invite`, `bmpl defensives --shared` and the litestream restore test at the app's own privilege.
+deploy ALL=(root) NOPASSWD: /usr/bin/install -o bmpl -g bmpl -m 755 /home/deploy/bmpl.new /opt/bmpl/bmpl, /usr/bin/systemctl restart bmpl
+deploy ALL=(bmpl) NOPASSWD: ALL

@@ -1,3 +1,5 @@
+import type { Locale } from "../hosted/locale.ts";
+import { EVALUATION_DOCS_FR } from "./docs.fr.ts";
 import type { AxisKey } from "./types.ts";
 
 export interface SubSignalDoc {
@@ -184,3 +186,6 @@ export const EVALUATION_DOCS: EvaluationDocs = {
     safety: "The secret is stored encrypted and only ever sent to Warcraft Logs. If it leaks, delete the client on the same page and create a new one.",
   },
 };
+
+/** The registry per UI language: GET /api/docs?lang= picks one; the CLI and the tests read the English one directly. */
+export const EVALUATION_DOCS_BY_LOCALE: Record<Locale, EvaluationDocs> = { en: EVALUATION_DOCS, fr: EVALUATION_DOCS_FR };

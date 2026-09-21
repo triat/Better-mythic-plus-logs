@@ -79,6 +79,23 @@ describe("GET /api/docs", () => {
     rmSync(overrideDir, { recursive: true, force: true });
   });
 
+  test("?lang=fr serves the French registry; an unknown or missing lang serves English", async () => {
+    const fr = await (await fetch(u("/api/docs?lang=fr"))).json();
+    expect(fr.docs.axes.survival.title).toBe("Survie");
+    expect(fr.docs.wclClient.inBmpl.join(" ")).toContain("](/settings#wcl-client)");
+    expect(fr.config).toEqual((await (await fetch(u("/api/docs"))).json()).config);
+    expect((await (await fetch(u("/api/docs?lang=de"))).json()).docs.axes.survival.title).toBe("Survival");
+    expect((await (await fetch(u("/api/docs?lang="))).json()).docs.axes.survival.title).toBe("Survival");
+    expect((await (await fetch(u("/api/docs"))).json()).docs.axes.survival.title).toBe("Survival");
+  });
+
+  test("docsResponse defaults to English and takes a locale", async () => {
+    const cfg = await getEvalConfig();
+    expect(docsResponse(cfg, false).docs.axes.survival.title).toBe("Survival");
+    expect(docsResponse(cfg, false, null, "en").docs.axes.survival.title).toBe("Survival");
+    expect(docsResponse(cfg, false, null, "fr").docs.axes.survival.title).toBe("Survie");
+  });
+
   test("/help is served as an SPA entry point", async () => {
     expect((await fetch(u("/help"))).status).toBe(200);
   });

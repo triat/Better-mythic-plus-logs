@@ -6,9 +6,11 @@ import { config, hasCredentials } from "../config.ts";
 import { SHIPPED } from "../deepdive/table.ts";
 import { configVersion, getEvalConfig } from "../evaluation/config.ts";
 import type { EvaluationDocs } from "../evaluation/docs.ts";
-import { EVALUATION_DOCS } from "../evaluation/docs.ts";
+import { EVALUATION_DOCS_BY_LOCALE } from "../evaluation/docs.ts";
 import type { CurvePoints, EvaluationConfig } from "../evaluation/types.ts";
 import { lastBackupAt } from "../hosted/instance.ts";
+import { isLocale } from "../hosted/locale.ts";
+import type { Locale } from "../hosted/locale.ts";
 import { POINTS_FLOOR } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { LookupPayload } from "../lookup.ts";
@@ -45,11 +47,11 @@ export interface DocsResponse {
 /** What Warcraft Logs grants one API client per hour (rateLimitData.limitPerHour); shown by the /help guide. */
 export const WCL_POINTS_PER_HOUR = 3600;
 
-/** Pure: the documentation registry plus the effective evaluation config, for GET /api/docs. */
-export function docsResponse(cfg: EvaluationConfig, hosted: boolean, pointsPerUserHour: number | null = null): DocsResponse {
+/** Pure: the documentation registry in `locale` plus the effective evaluation config, for GET /api/docs?lang=. */
+export function docsResponse(cfg: EvaluationConfig, hosted: boolean, pointsPerUserHour: number | null = null, locale: Locale = "en"): DocsResponse {
   return {
     ok: true,
-    docs: EVALUATION_DOCS,
+    docs: EVALUATION_DOCS_BY_LOCALE[locale],
     config: {
       version: configVersion(cfg),
       levelScale: cfg.levelScale,
@@ -125,7 +127,10 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
     // In hosted mode the watcher never runs; the initial status is simply "inactive" and the stream is the member's own.
     route("GET", "/api/events", (_req, _url, rc) => eventsResponse({ event: "status", data: watcherStatus() }, rc.user?.id ?? null)),
     route("GET", "/api/health", () => handleHealth(ctx), "public"),
-    route("GET", "/api/docs", async () => jsonResponse(docsResponse(await getEvalConfig(), ctx.hosted, ctx.runtime?.config.pointsPerUserHour ?? null)), "public"),
+    route("GET", "/api/docs", async (_req, url) => {
+      const lang = url.searchParams.get("lang");
+      return jsonResponse(docsResponse(await getEvalConfig(), ctx.hosted, ctx.runtime?.config.pointsPerUserHour ?? null, isLocale(lang) ? lang : "en"));
+    }, "public"),
     route("GET", "/api/status", () => {
       const rt = ctx.runtime;
       return rt

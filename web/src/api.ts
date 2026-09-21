@@ -21,6 +21,7 @@ import type {
   WatchOpts,
   WatchStatus,
 } from "./types.ts";
+import type { Locale } from "./lib/locale.ts";
 import type { Settings } from "./lib/settings.ts";
 import { budgetFromFailure, quotaFromFailure } from "./lib/quota.ts";
 
@@ -121,8 +122,8 @@ export const api = {
     removeWclClient: () => call<Record<never, never>>("/api/me/wcl-client", { method: "DELETE" }),
     deleteAccount: () => call<Record<never, never>>("/api/me", { method: "DELETE" }),
   },
-  /** The documentation registry plus the effective evaluation config (/help): 0 WCL pts, readable signed out. */
-  docs: () => call<Omit<DocsResponse, "ok">>("/api/docs"),
+  /** The documentation registry in `locale` plus the effective evaluation config (/help): 0 WCL pts, readable signed out. */
+  docs: (locale: Locale = "en") => call<Omit<DocsResponse, "ok">>(`/api/docs?lang=${locale}`),
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
     call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),

@@ -1,5 +1,6 @@
 import type { DocsResponse, TextSegment, WclClientDoc } from "../../types.ts";
 import { budgetPill, linkSegments } from "../../lib/help.ts";
+import { useT } from "../../locale.tsx";
 
 /** Registry prose with its `[label](href)` links rendered; external links open in a new tab. */
 export function Prose({ text }: { text: string }) {
@@ -21,8 +22,9 @@ const Steps = ({ items, start = 1 }: { items: string[]; start?: number }) => (
 
 /** /help#wcl-client (hosted only), layout A of the canvas "WclGuide": why, the two budget pills, the steps on warcraftlogs.com then in bmpl. */
 export function WclClientGuide({ doc, quota }: { doc: WclClientDoc; quota: DocsResponse["quota"] }) {
-  const shared = budgetPill(quota.pointsPerUserHour);
-  const own = budgetPill(quota.wclPointsPerHour);
+  const { t } = useT();
+  const shared = budgetPill(t, quota.pointsPerUserHour);
+  const own = budgetPill(t, quota.wclPointsPerHour);
   return (
     <section className="card help-card" id="wcl-client">
       <h2>{doc.title}</h2>
@@ -31,9 +33,9 @@ export function WclClientGuide({ doc, quota }: { doc: WclClientDoc; quota: DocsR
         {shared && <div className="budget-pill shared"><span className="mono big">{shared.pts}</span><span className="faint">{doc.sharedHint} · {shared.lookups}</span></div>}
         {own && <div className="budget-pill own"><span className="mono big">{own.pts}</span><span className="faint">{doc.ownHint} · {own.lookups}</span></div>}
       </div>
-      <h3 className="help-h3">On warcraftlogs.com</h3>
+      <h3 className="help-h3">{t("help.guide.onWcl")}</h3>
       <Steps items={doc.onWcl} />
-      <h3 className="help-h3">In bmpl</h3>
+      <h3 className="help-h3">{t("help.guide.inBmpl")}</h3>
       <Steps items={doc.inBmpl} start={doc.onWcl.length + 1} />
       <p className="faint" style={{ fontSize: 12, margin: 0 }}>{doc.safety}</p>
     </section>

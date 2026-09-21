@@ -334,6 +334,54 @@ export const en = {
       + "The audit log keeps your Discord id, the username you had at deletion and your IP for up to 90 days, unlinked from any account. Backups of the database are kept 30 days.",
     questions: "Questions: the admin of this instance on Discord.",
   },
+  help: {
+    title: "Help", sub: "what is analysed, how every number is computed, and why some are not",
+    toc: {
+      what: "What bmpl looks at", verdict: "The verdict", axes: "The six axes", levelScale: "Key-level scaling", expectedIlvl: "Expected item level",
+      runs: "Per-run signals", peers: "Peers", deepdive: "Deep-dive", wclClient: "Your own WCL client", reading: "Reading the page", faq: "FAQ",
+    },
+    publicData: "All of it is public data: anyone can open the same logs on warcraftlogs.com and count the same deaths.",
+    thresholds: {
+      verdict: "{invite} from {inviteAt}, {maybe} from {maybeAt}, {pass} below.",
+      confidence: "{high} from {highAt}, {medium} from {mediumAt}, {low} below.",
+      minimum: "Minimum: {minRuns}.",
+      runs: "{count, plural, one {# run} other {# runs}}",
+      enriched: "{count, plural, one {# enriched run} other {# enriched runs}}",
+    },
+    weightsCaption: "axis weights by role (effective config, version {version})",
+    informational: "{list} {count, plural, one {has} other {have}} weight 0 for every role: shown, never counted. Timed vs depleted is shown in the run list and never scored.",
+    axesIntro: "Each axis scores 0–100. A sub-signal's value goes through its curve — printed beside it, linear between the points and clamped outside them — into a "
+      + "0–100 score; the axis is the mean of those scores weighted by the player's role (the chips under each curve), rounded. A sub-signal that is n/a, or whose "
+      + "weight for the role is 0, is left out. Each evidence line on an axis row is that sub-signal's share of the distance from 50, in axis points.",
+    survivalNote: "The two deep-dive sub-signals appear once at least {count, plural, one {# shown run has} other {# shown runs have}} been analyzed.",
+    consistencyNote: "Every sub-signal needs at least {count, plural, one {# run} other {# runs}}; below that the axis is n/a.",
+    subSignals: "{count, plural, one {# sub-signal} other {# sub-signals}}", bonus: " · {n} bonus",
+    whyPrefix: "why · ", informationalChip: "informational",
+    informationalAxis: "Weight 0 for every role on this instance: the axis is shown, never counted in the global score.",
+    scaledByLevel: "scaled by key level",
+    kv: { what: "what", source: "source", how: "how", why: "why", na: "n/a" },
+    curve: {
+      caption: "curve · {unit} → score", keyToFactor: "key level → factor", keyToIlvl: "key level → item level", season: " · season ",
+      noSeason: "no season curve configured",
+    },
+    shownNotScored: "Shown, not scored",
+    tableVersion: "table version ",
+    reading: {
+      labels: { verdict: "Verdict", tiles: "Tiles", runs: "Runs", deepdive: "Deep-dive panel", compare: "Compare", stale: "Stale", cached: "Cached" },
+      lines: {
+        verdict: "{label} — the badge with the global score and the confidence; the radar has one point per axis, an n/a axis sits hollow at the centre rather than at 0; each axis row expands to its evidence lines.",
+        tiles: "{label} — Median DPS/HPS and Median parse (rankings), Timed (shown) as timed / enriched runs, Avg deaths (with the wipe share), Δ DTPS vs peers, Avoidable vs peers and Kicks vs peers (per-run medians), ilvl, RIO recent timed (last 10 Raider.IO runs) and Prev season (previous-season Raider.IO score). A dash means the data is missing, not zero.",
+        runs: "{label} — one row per shown run: key level, timed / depleted, parse, deaths, DTPS and avoidable vs peers, kicks, dispels, with a link to the Warcraft Logs report. Each row has an Analyze button for the deep-dive.",
+        deepdive: "{label} — usage vs capacity per defensive and one line per death; a yellow dot marks a table correction you proposed and still pending, a blue one an entry from the shared table.",
+        compare: "{label} — tick two or three tabs to see their radars and axes side by side.",
+        stale: "{stale} — a run older than {days} days carries a stale badge. {cached} — on a shared instance, a lookup already made by another member in the last 6 hours is reused; the tab says so and it costs nothing.",
+      },
+    },
+    guide: {
+      onWcl: "On warcraftlogs.com", inBmpl: "In bmpl", pts: "{pts} pts / h",
+      lookups: "{count, plural, one {about # uncached lookup} other {about # uncached lookups}}",
+    },
+  },
   admin: {
     page: {
       title: "Admin", sub: "invites, users, proposals, budget, instance",

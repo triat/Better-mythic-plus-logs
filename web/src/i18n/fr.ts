@@ -331,6 +331,54 @@ export const fr: Mirror<typeof en> = {
       + "Le journal d'audit garde ton id Discord, le nom d'utilisateur que tu avais à la suppression et ton IP jusqu'à 90 jours, sans lien avec aucun compte. Les backups de la base sont gardés 30 jours.",
     questions: "Questions : l'admin de cette instance, sur Discord.",
   },
+  help: {
+    title: "Aide", sub: "ce qui est analysé, comment chaque nombre est calculé, et pourquoi certains ne le sont pas",
+    toc: {
+      what: "Ce que bmpl regarde", verdict: "Le verdict", axes: "Les six axes", levelScale: "Pondération par niveau de key", expectedIlvl: "Item level attendu",
+      runs: "Signaux par run", peers: "Pairs", deepdive: "Deep-dive", wclClient: "Ton propre client WCL", reading: "Lire la page", faq: "FAQ",
+    },
+    publicData: "Tout ça est public : n'importe qui peut ouvrir les mêmes logs sur warcraftlogs.com et compter les mêmes morts.",
+    thresholds: {
+      verdict: "{invite} à partir de {inviteAt}, {maybe} à partir de {maybeAt}, {pass} en dessous.",
+      confidence: "{high} à partir de {highAt}, {medium} à partir de {mediumAt}, {low} en dessous.",
+      minimum: "Minimum : {minRuns}.",
+      runs: "{count, plural, one {# run} other {# runs}}",
+      enriched: "{count, plural, one {# run enrichi} other {# runs enrichis}}",
+    },
+    weightsCaption: "poids des axes par rôle (config effective, version {version})",
+    informational: "{list} {count, plural, one {a un poids 0 pour tous les rôles : affiché, jamais compté} other {ont un poids 0 pour tous les rôles : affichés, jamais comptés}}. Timed vs depleted est affiché dans la liste des runs et jamais noté.",
+    axesIntro: "Chaque axe est noté de 0 à 100. La valeur d'un sous-signal passe par sa courbe — imprimée à côté, linéaire entre les points et bornée en dehors — pour donner un "
+      + "score de 0 à 100 ; l'axe est la moyenne de ces scores pondérée par le rôle du joueur (les chips sous chaque courbe), arrondie. Un sous-signal n/a, ou dont le "
+      + "poids pour le rôle est 0, est exclu. Chaque ligne d'indice sur une ligne d'axe est la part de ce sous-signal dans la distance à 50, en points d'axe.",
+    survivalNote: "Les deux sous-signaux deep-dive apparaissent une fois qu'au moins {count, plural, one {# run affiché a été analysé} other {# runs affichés ont été analysés}}.",
+    consistencyNote: "Chaque sous-signal demande au moins {count, plural, one {# run} other {# runs}} ; en dessous l'axe est n/a.",
+    subSignals: "{count, plural, one {# sous-signal} other {# sous-signaux}}", bonus: " · {n} bonus",
+    whyPrefix: "pourquoi · ", informationalChip: "informatif",
+    informationalAxis: "Poids 0 pour tous les rôles sur cette instance : l'axe est affiché, jamais compté dans le score global.",
+    scaledByLevel: "pondéré par niveau de key",
+    kv: { what: "quoi", source: "source", how: "comment", why: "pourquoi", na: "n/a" },
+    curve: {
+      caption: "courbe · {unit} → score", keyToFactor: "niveau de key → facteur", keyToIlvl: "niveau de key → item level", season: " · saison ",
+      noSeason: "pas de courbe de saison configurée",
+    },
+    shownNotScored: "Affiché, pas noté",
+    tableVersion: "version de la table ",
+    reading: {
+      labels: { verdict: "Verdict", tiles: "Tuiles", runs: "Runs", deepdive: "Panneau deep-dive", compare: "Comparer", stale: "Ancien", cached: "En cache" },
+      lines: {
+        verdict: "{label} — le badge avec le score global et la confiance ; le radar a un point par axe, un axe n/a est creux au centre plutôt qu'à 0 ; chaque ligne d'axe se déplie sur ses lignes d'indice.",
+        tiles: "{label} — DPS/HPS médian et Parse médian (classements), Timed (affichés) en runs timed / enrichis, Morts moy. (avec la part en wipe), Δ DTPS vs pairs, Évitable vs pairs et Kicks vs pairs (médianes par run), ilvl, RIO récents timed (les 10 derniers runs Raider.IO) et Saison préc. (score Raider.IO de la saison précédente). Un tiret veut dire que la donnée manque, pas zéro.",
+        runs: "{label} — une ligne par run affiché : niveau de key, timed / depleted, parse, morts, DTPS et évitable vs pairs, kicks, dispels, avec un lien vers le report Warcraft Logs. Chaque ligne a un bouton Analyser pour le deep-dive.",
+        deepdive: "{label} — utilisation vs capacité par defensive et une ligne par mort ; un point jaune marque une correction de table que tu as proposée et encore en attente, un bleu une entrée de la table partagée.",
+        compare: "{label} — coche deux ou trois onglets pour voir leurs radars et leurs axes côte à côte.",
+        stale: "{stale} — un run de plus de {days} jours porte un badge « ancien ». {cached} — sur une instance partagée, une recherche déjà faite par un autre membre dans les 6 dernières heures est réutilisée ; l'onglet l'indique et ça ne coûte rien.",
+      },
+    },
+    guide: {
+      onWcl: "Sur warcraftlogs.com", inBmpl: "Dans bmpl", pts: "{pts} pts / h",
+      lookups: "{count, plural, one {environ # recherche non cachée} other {environ # recherches non cachées}}",
+    },
+  },
   admin: {
     page: {
       title: "Admin", sub: "invitations, membres, propositions, budget, instance",

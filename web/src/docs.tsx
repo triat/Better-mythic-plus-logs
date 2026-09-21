@@ -11,15 +11,19 @@ export interface DocsContext { docs: Docs | null; axes: Record<AxisKey, AxisInfo
 
 const Ctx = createContext<DocsContext>({ docs: null, axes: null });
 
-/** GET /api/docs once per page load (public, 0 WCL pts): the registry and the effective config that the callouts and the radar tooltips print. */
+/**
+ * GET /api/docs?lang= once per page load and again when the UI language changes (public, 0 WCL pts): the registry and
+ * the effective config that the callouts and the radar tooltips print. The previous language's docs stay up while the
+ * next ones load, so a switch never blanks the callouts.
+ */
 export function DocsProvider({ children }: { children: ReactNode }) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const [docs, setDocs] = useState<Docs | null>(null);
   useEffect(() => {
     let alive = true;
-    api.docs().then((r) => { if (alive && r.ok) setDocs(r); });
+    api.docs(locale).then((r) => { if (alive && r.ok) setDocs(r); });
     return () => { alive = false; };
-  }, []);
+  }, [locale]);
   // The weight line is prose: it follows the UI language, the registry text follows the response.
   const value = useMemo<DocsContext>(() => ({ docs, axes: docs ? axisInfo(t, docs) : null }), [docs, t]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -1,4 +1,5 @@
 import type { AxisKey, CurvePoints, DocsResponse, EvaluationDocs, FaqEntry } from "../types.ts";
+import type { T } from "../i18n/t.ts";
 import { fmtPts } from "./format.ts";
 import { AXIS_ORDER } from "./verdict.ts";
 
@@ -14,21 +15,21 @@ export function anchorOf(source: string): Anchor {
 
 export interface TocEntry { anchor: Anchor; label: string; sub?: boolean }
 
-/** what, verdict, axes (+ six sub entries), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), reading, faq. */
-export function toc(docs: EvaluationDocs, hosted: boolean): TocEntry[] {
+/** what, verdict, axes (+ six sub entries, titled by the registry), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), reading, faq. */
+export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
   return [
-    { anchor: "what", label: "What bmpl looks at" },
-    { anchor: "verdict", label: "The verdict" },
-    { anchor: "axes", label: "The six axes" },
+    { anchor: "what", label: t("help.toc.what") },
+    { anchor: "verdict", label: t("help.toc.verdict") },
+    { anchor: "axes", label: t("help.toc.axes") },
     ...AXIS_ORDER.map((key) => ({ anchor: anchorOf(key), label: docs.axes[key].title, sub: true })),
-    { anchor: "level-scale", label: "Key-level scaling" },
-    { anchor: "expected-ilvl", label: "Expected item level" },
-    { anchor: "runs", label: "Per-run signals" },
-    { anchor: "peers", label: "Peers" },
-    { anchor: "deep-dive", label: "Deep-dive" },
-    ...(hosted ? [{ anchor: "wcl-client", label: "Your own WCL client" }] : []),
-    { anchor: "reading", label: "Reading the page" },
-    { anchor: "faq", label: "FAQ" },
+    { anchor: "level-scale", label: t("help.toc.levelScale") },
+    { anchor: "expected-ilvl", label: t("help.toc.expectedIlvl") },
+    { anchor: "runs", label: t("help.toc.runs") },
+    { anchor: "peers", label: t("help.toc.peers") },
+    { anchor: "deep-dive", label: t("help.toc.deepdive") },
+    ...(hosted ? [{ anchor: "wcl-client", label: t("help.toc.wclClient") }] : []),
+    { anchor: "reading", label: t("help.toc.reading") },
+    { anchor: "faq", label: t("help.toc.faq") },
   ];
 }
 
@@ -73,9 +74,10 @@ export function axisIsInformational(axisWeights: DocsResponse["config"]["axisWei
   return (["dps", "healer", "tank"] as const).every((role) => (axisWeights[role]?.[key] ?? 0) === 0);
 }
 
-export function fmtThresholds(v: { invite: number; maybe: number; minRuns: number }, c: { high: number; medium: number }): { invite: string; maybe: string; minRuns: string; high: string; medium: string } {
-  const runs = (n: number) => `${n} run${n === 1 ? "" : "s"}`;
-  return { invite: String(v.invite), maybe: String(v.maybe), minRuns: `${v.minRuns} enriched run${v.minRuns === 1 ? "" : "s"}`, high: runs(c.high), medium: runs(c.medium) };
+/** The verdict thresholds as printed under The verdict: the two scores as is, the three run counts as words. */
+export function fmtThresholds(t: T, v: { invite: number; maybe: number; minRuns: number }, c: { high: number; medium: number }): { invite: string; maybe: string; minRuns: string; high: string; medium: string } {
+  const runs = (n: number) => t("help.thresholds.runs", { count: n });
+  return { invite: String(v.invite), maybe: String(v.maybe), minRuns: t("help.thresholds.enriched", { count: v.minRuns }), high: runs(c.high), medium: runs(c.medium) };
 }
 
 /** hostedOnly entries only on a hosted instance. */
@@ -84,9 +86,9 @@ export function faqEntries(docs: EvaluationDocs, hosted: boolean): FaqEntry[] {
 }
 
 /** The axis-level minimum printed under the axis intro: deep-dive runs for Survival, the consistency minimum; null for the others. */
-export function axisNote(key: AxisKey, c: DocsResponse["config"]["confidence"]): string | null {
-  if (key === "survival") return `The two deep-dive sub-signals appear once at least ${c.deepdiveMinRuns} shown run${c.deepdiveMinRuns === 1 ? " has" : "s have"} been analyzed.`;
-  if (key === "consistency") return `Every sub-signal needs at least ${c.consistencyMinRuns} run${c.consistencyMinRuns === 1 ? "" : "s"}; below that the axis is n/a.`;
+export function axisNote(t: T, key: AxisKey, c: DocsResponse["config"]["confidence"]): string | null {
+  if (key === "survival") return t("help.survivalNote", { count: c.deepdiveMinRuns });
+  if (key === "consistency") return t("help.consistencyNote", { count: c.consistencyMinRuns });
   return null;
 }
 
@@ -109,8 +111,8 @@ export function linkSegments(text: string): TextSegment[] {
 export interface BudgetPill { pts: string; lookups: string }
 
 /** "100 pts / h" + "about 10 uncached lookups", at roughly 10 pts per lookup (the rankings query); null when the instance has no per-member quota. */
-export function budgetPill(pointsPerHour: number | null): BudgetPill | null {
+export function budgetPill(t: T, pointsPerHour: number | null): BudgetPill | null {
   if (pointsPerHour === null) return null;
   const n = Math.max(1, Math.round(pointsPerHour / 10));
-  return { pts: `${fmtPts(pointsPerHour)} pts / h`, lookups: `about ${n} uncached lookup${n === 1 ? "" : "s"}` };
+  return { pts: t("help.guide.pts", { pts: fmtPts(pointsPerHour) }), lookups: t("help.guide.lookups", { count: n }) };
 }

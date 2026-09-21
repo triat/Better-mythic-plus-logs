@@ -5,6 +5,9 @@ import type { DocsResponse, TextBlock } from "../../types.ts";
 import { axisIsInformational, curveTable, faqEntries, fmtThresholds, toc } from "../../lib/help.ts";
 import { AXIS_ORDER } from "../../lib/verdict.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
+import { useT } from "../../locale.tsx";
+import type { T } from "../../i18n/t.ts";
+import { Around } from "../Around.tsx";
 import { Toast } from "../Toast.tsx";
 import { AxisSection } from "./AxisSection.tsx";
 import { CurveChart } from "./CurveChart.tsx";
@@ -21,41 +24,46 @@ interface Props {
   bare?: boolean;
 }
 
-/** /help, layout A of the canvas ("HelpA" + "HelpDetails"): sticky TOC and one long page. Every number comes from GET /api/docs (0 WCL pts). */
+/**
+ * /help, layout A of the canvas ("HelpA" + "HelpDetails"): sticky TOC and one long page. Every number comes from
+ * GET /api/docs (0 WCL pts), fetched in the UI language and again when it changes — the previous language's page
+ * stays up until the next one arrives.
+ */
 export function HelpPage({ status, bare = false }: Props) {
+  const { t, locale } = useT();
   const [data, setData] = useState<Docs | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const closeToast = useCallback(() => setToast(null), []);
   useEffect(() => {
     let alive = true;
-    api.docs().then((r) => { if (!alive) return; if (r.ok) setData(r); else setToast(r.error); });
+    api.docs(locale).then((r) => { if (!alive) return; if (r.ok) setData(r); else setToast(r.error); });
     return () => { alive = false; };
-  }, []);
-  const entries = useMemo(() => (data ? toc(data.docs, status.hosted) : []), [data, status.hosted]);
+  }, [locale]);
+  const entries = useMemo(() => (data ? toc(t, data.docs, status.hosted) : []), [t, data, status.hosted]);
   return (
     <>
       {bare && <header className="top"><div className="top-row"><div className="brand">bmpl</div></div></header>}
       <div className="admin-title">
-        <a href="/" className="muted" style={{ fontSize: 13 }}>← back to lookups</a>
-        <h1>Help</h1>
-        <span className="muted" style={{ fontSize: 12 }}>what is analysed, how every number is computed, and why some are not</span>
+        <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.backToLookups")}</a>
+        <h1>{t("help.title")}</h1>
+        <span className="muted" style={{ fontSize: 12 }}>{t("help.sub")}</span>
       </div>
-      {!data && <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>}
+      {!data && <div className="muted" style={{ padding: 24 }}><span className="spinner" /> {t("common.loading")}</div>}
       {data && (
         <div className="help-layout">
           <HelpToc entries={entries} />
           <div className="help-body">
-            <What data={data} />
-            <Verdict data={data} />
-            <Axes />
+            <What t={t} data={data} />
+            <Verdict t={t} data={data} />
+            <Axes t={t} />
             {AXIS_ORDER.map((key) => <AxisSection key={key} axisKey={key} doc={data.docs.axes[key]} config={data.config} />)}
-            <LevelScale data={data} />
-            <ExpectedIlvl data={data} />
-            <Runs data={data} />
-            <section className="card help-card" id="peers"><h2>Peers</h2><p className="help-p">{data.docs.peers}</p></section>
-            <DeepDive data={data} />
+            <LevelScale t={t} data={data} />
+            <ExpectedIlvl t={t} data={data} />
+            <Runs t={t} data={data} />
+            <section className="card help-card" id="peers"><h2>{t("help.toc.peers")}</h2><p className="help-p">{data.docs.peers}</p></section>
+            <DeepDive t={t} data={data} />
             {status.hosted && <WclClientGuide doc={data.docs.wclClient} quota={data.quota} />}
-            <Reading />
+            <Reading t={t} />
             <Faq entries={faqEntries(data.docs, status.hosted)} />
           </div>
         </div>
@@ -65,79 +73,98 @@ export function HelpPage({ status, bare = false }: Props) {
   );
 }
 
+interface SectionProps { t: T; data: Docs }
+
 const Blocks = ({ items }: { items: TextBlock[] }) => (
   <ul className="help-ul">{items.map((b) => <li key={b.title}><b>{b.title}</b> — {b.text}</li>)}</ul>
 );
 
-function What({ data }: { data: Docs }) {
+function What({ t, data }: SectionProps) {
   return (
     <section className="card help-card" id="what">
-      <h2>What bmpl looks at</h2>
+      <h2>{t("help.toc.what")}</h2>
       <ul className="help-ul">
         {data.docs.sources.map((s) => <li key={s.title}><b>{s.title}</b> — {s.text} <span className="faint">{s.freshness}</span></li>)}
       </ul>
-      <p className="faint" style={{ fontSize: 12, margin: 0 }}>All of it is public data: anyone can open the same logs on warcraftlogs.com and count the same deaths.</p>
+      <p className="faint" style={{ fontSize: 12, margin: 0 }}>{t("help.publicData")}</p>
     </section>
   );
 }
 
-function Verdict({ data }: { data: Docs }) {
+function Verdict({ t, data }: SectionProps) {
   const v = data.docs.verdict;
-  const t = fmtThresholds(data.config.verdict, data.config.confidence);
+  const th = fmtThresholds(t, data.config.verdict, data.config.confidence);
+  const mono = (s: string) => <span className="mono">{s}</span>;
   const informational = AXIS_ORDER.filter((k) => axisIsInformational(data.config.axisWeights, k)).map((k) => data.docs.axes[k].title);
   return (
     <section className="card help-card" id="verdict">
-      <h2>The verdict</h2>
+      <h2>{t("help.toc.verdict")}</h2>
       <p className="help-p">{v.summary}</p>
       <p className="help-p">{v.role}</p>
       <p className="help-p">{v.global}</p>
-      <p className="help-p">{v.thresholds} <b>INVITE</b> from <span className="mono">{t.invite}</span>, <b>MAYBE</b> from <span className="mono">{t.maybe}</span>, <b>PASS</b> below.</p>
-      <p className="help-p">{v.confidence} <b>high</b> from <span className="mono">{t.high}</span>, <b>medium</b> from <span className="mono">{t.medium}</span>, <b>low</b> below.</p>
-      <p className="help-p">{v.insufficient} Minimum: <span className="mono">{t.minRuns}</span>.</p>
+      <p className="help-p">
+        {v.thresholds}{" "}
+        <Around
+          message={t("help.thresholds.verdict")}
+          params={{
+            invite: <b>{t("verdict.words.invite")}</b>, inviteAt: mono(th.invite),
+            maybe: <b>{t("verdict.words.maybe")}</b>, maybeAt: mono(th.maybe),
+            pass: <b>{t("verdict.words.pass")}</b>,
+          }}
+        />
+      </p>
+      <p className="help-p">
+        {v.confidence}{" "}
+        <Around
+          message={t("help.thresholds.confidence")}
+          params={{
+            high: <b>{t("verdict.confidence.high")}</b>, highAt: mono(th.high),
+            medium: <b>{t("verdict.confidence.medium")}</b>, mediumAt: mono(th.medium),
+            low: <b>{t("verdict.confidence.low")}</b>,
+          }}
+        />
+      </p>
+      <p className="help-p">{v.insufficient} <Around message={t("help.thresholds.minimum")} params={{ minRuns: mono(th.minRuns) }} /></p>
       <div className="curve" style={{ marginTop: 4 }}>
-        <div className="label-caps">axis weights by role (effective config, version {data.config.version})</div>
+        <div className="label-caps">{t("help.weightsCaption", { version: data.config.version })}</div>
         <table>
           <thead><tr><td />{AXIS_ORDER.map((k) => <td key={k} className="k">{k}</td>)}</tr></thead>
           <tbody>
             {ROLES.map((role) => (
-              <tr key={role}><td className="k">{role}</td>{AXIS_ORDER.map((k) => <td key={k}>{data.config.axisWeights[role][k]}</td>)}</tr>
+              <tr key={role}><td className="k">{t(`verdict.role.${role}`)}</td>{AXIS_ORDER.map((k) => <td key={k}>{data.config.axisWeights[role][k]}</td>)}</tr>
             ))}
           </tbody>
         </table>
       </div>
       {informational.length > 0 && (
         <p className="faint" style={{ fontSize: 12, margin: 0 }}>
-          {informational.join(", ")} {informational.length === 1 ? "has" : "have"} weight 0 for every role: shown, never counted. Timed vs depleted is shown in the run list and never scored.
+          {t("help.informational", { list: informational.join(", "), count: informational.length })}
         </p>
       )}
     </section>
   );
 }
 
-function Axes() {
+function Axes({ t }: { t: T }) {
   return (
     <section className="card help-card" id="axes">
-      <h2>The six axes</h2>
-      <p className="help-p">
-        Each axis scores 0–100. A sub-signal's value goes through its curve — printed beside it, linear between the points and clamped outside them — into a
-        0–100 score; the axis is the mean of those scores weighted by the player's role (the chips under each curve), rounded. A sub-signal that is n/a, or whose
-        weight for the role is 0, is left out. Each evidence line on an axis row is that sub-signal's share of the distance from 50, in axis points.
-      </p>
+      <h2>{t("help.toc.axes")}</h2>
+      <p className="help-p">{t("help.axesIntro")}</p>
     </section>
   );
 }
 
-function LevelScale({ data }: { data: Docs }) {
+function LevelScale({ t, data }: SectionProps) {
   const points = data.config.levelScale;
   const yMax = Math.max(...points.map(([, f]) => f));
   return (
     <section className="card help-row" id="level-scale">
       <div className="help-card" style={{ flex: 1 }}>
-        <h2>Key-level scaling</h2>
+        <h2>{t("help.toc.levelScale")}</h2>
         <p className="help-p">{data.docs.levelScale}</p>
       </div>
       <div className="curve">
-        <div className="label-caps">key level → factor</div>
+        <div className="label-caps">{t("help.curve.keyToFactor")}</div>
         <CurveChart points={points} yMax={yMax} />
         <table><tbody>{curveTable(points, "key level").map((r) => <tr key={r.x}><td className="k">{r.x}</td><td>→ ×{r.y}</td></tr>)}</tbody></table>
       </div>
@@ -145,64 +172,67 @@ function LevelScale({ data }: { data: Docs }) {
   );
 }
 
-function ExpectedIlvl({ data }: { data: Docs }) {
+function ExpectedIlvl({ t, data }: SectionProps) {
   const season = data.season;
   const points = season ? data.config.expectedIlvl[season] ?? null : null;
   return (
     <section className="card help-row" id="expected-ilvl">
       <div className="help-card" style={{ flex: 1 }}>
-        <h2>Expected item level</h2>
+        <h2>{t("help.toc.expectedIlvl")}</h2>
         <p className="help-p">{data.docs.expectedIlvl}</p>
       </div>
       <div className="curve">
-        <div className="label-caps">key level → item level{season && <> · season <span className="mono">{season}</span></>}</div>
+        <div className="label-caps">{t("help.curve.keyToIlvl")}{season && <>{t("help.curve.season")}<span className="mono">{season}</span></>}</div>
         {points
           ? <table><tbody>{curveTable(points, "key level").map((r) => <tr key={r.x}><td className="k">{r.x}</td><td>→ {r.y}</td></tr>)}</tbody></table>
-          : <span className="faint" style={{ fontSize: 12 }}>no season curve configured</span>}
+          : <span className="faint" style={{ fontSize: 12 }}>{t("help.curve.noSeason")}</span>}
       </div>
     </section>
   );
 }
 
-function Runs({ data }: { data: Docs }) {
+function Runs({ t, data }: SectionProps) {
   return (
     <section className="card help-card" id="runs">
-      <h2>Per-run signals</h2>
+      <h2>{t("help.toc.runs")}</h2>
       <p className="help-p">{data.docs.runsUsed}</p>
       <Blocks items={data.docs.runSignals} />
-      <h3 className="help-h3">Shown, not scored</h3>
+      <h3 className="help-h3">{t("help.shownNotScored")}</h3>
       <Blocks items={data.docs.notScored} />
     </section>
   );
 }
 
-function DeepDive({ data }: { data: Docs }) {
+function DeepDive({ t, data }: SectionProps) {
   const d = data.docs.deepdive;
   return (
     <section className="card help-card" id="deep-dive">
-      <h2>Deep-dive</h2>
+      <h2>{t("help.toc.deepdive")}</h2>
       <p className="help-p">{d.summary}</p>
       <p className="help-p">{d.usage}</p>
       <p className="help-p">{d.deaths}</p>
       <p className="help-p">{d.table}</p>
       <p className="help-p">{d.cost}</p>
-      <p className="faint" style={{ fontSize: 12, margin: 0 }}>table version <span className="mono">{data.defensives.version}</span></p>
+      <p className="faint" style={{ fontSize: 12, margin: 0 }}>{t("help.tableVersion")}<span className="mono">{data.defensives.version}</span></p>
     </section>
   );
 }
 
-function Reading() {
+const READING = ["verdict", "tiles", "runs", "deepdive", "compare"] as const;
+
+function Reading({ t }: { t: T }) {
   // Static prose: what each block of the lookup page shows; the numbers of the evaluation live in the sections above.
   return (
     <section className="card help-card" id="reading">
-      <h2>Reading the page</h2>
+      <h2>{t("help.toc.reading")}</h2>
       <ul className="help-ul">
-        <li><b>Verdict</b> — the badge with the global score and the confidence; the radar has one point per axis, an n/a axis sits hollow at the centre rather than at 0; each axis row expands to its evidence lines.</li>
-        <li><b>Tiles</b> — Median DPS/HPS and Median parse (rankings), Timed (shown) as timed / enriched runs, Avg deaths (with the wipe share), Δ DTPS vs peers, Avoidable vs peers and Kicks vs peers (per-run medians), ilvl, RIO recent timed (last 10 Raider.IO runs) and Prev season (previous-season Raider.IO score). A dash means the data is missing, not zero.</li>
-        <li><b>Runs</b> — one row per shown run: key level, timed / depleted, parse, deaths, DTPS and avoidable vs peers, kicks, dispels, with a link to the Warcraft Logs report. Each row has an Analyze button for the deep-dive.</li>
-        <li><b>Deep-dive panel</b> — usage vs capacity per defensive and one line per death; a yellow dot marks a table correction you proposed and still pending, a blue one an entry from the shared table.</li>
-        <li><b>Compare</b> — tick two or three tabs to see their radars and axes side by side.</li>
-        <li><b>Stale</b> — a run older than {STALE_DAYS} days carries a stale badge. <b>Cached</b> — on a shared instance, a lookup already made by another member in the last 6 hours is reused; the tab says so and it costs nothing.</li>
+        {READING.map((k) => <li key={k}><Around message={t(`help.reading.lines.${k}`)} params={{ label: <b>{t(`help.reading.labels.${k}`)}</b> }} /></li>)}
+        <li>
+          <Around
+            message={t("help.reading.lines.stale", { days: STALE_DAYS })}
+            params={{ stale: <b>{t("help.reading.labels.stale")}</b>, cached: <b>{t("help.reading.labels.cached")}</b> }}
+          />
+        </li>
       </ul>
     </section>
   );

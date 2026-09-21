@@ -1,0 +1,6 @@
+// /etc/apt/apt.conf.d/52unattended-upgrades-bmpl — on top of Ubuntu's defaults (security updates,
+// daily): reboot when an update asks for it, at 04:00 UTC. bmpl, Caddy and litestream are enabled
+// units, so the instance is back within a minute of the reboot.
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";

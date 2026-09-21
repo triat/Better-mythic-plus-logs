@@ -1,0 +1,11 @@
+# /etc/fail2ban/jail.local — ban an IP after repeated SSH failures. Password auth is off (key only),
+# so this mostly silences the background noise; bans go through ufw so they show in `ufw status`.
+[DEFAULT]
+backend = systemd
+banaction = ufw
+bantime = 1h
+findtime = 10m
+maxretry = 5
+
+[sshd]
+enabled = true

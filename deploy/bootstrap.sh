@@ -6,9 +6,9 @@ export DEBIAN_FRONTEND=noninteractive
 # The 0.3.x line; only the amd64 asset is fetched below (no arm64 VPS support here).
 LITESTREAM_VERSION="${LITESTREAM_VERSION:-0.3.13}"
 
-# 1. Packages: Caddy (official repo), ufw, curl, sqlite3, gnupg.
+# 1. Packages: Caddy (official repo), ufw, curl, sqlite3, gnupg, fail2ban, unattended-upgrades.
 apt-get update -y
-apt-get install -y curl ufw debian-keyring debian-archive-keyring apt-transport-https sqlite3 gnupg
+apt-get install -y curl ufw debian-keyring debian-archive-keyring apt-transport-https sqlite3 gnupg fail2ban python3-systemd unattended-upgrades
 if ! command -v caddy >/dev/null; then
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor --batch --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list
@@ -69,7 +69,15 @@ else
   echo "note: copy .env.hosted.example to /opt/bmpl/.env by hand"
 fi
 
-# 5. Services. bmpl itself starts once the binary and .env are in place (`just deploy`).
+# 5. Hardening: fail2ban on sshd (bans through ufw) and unattended security upgrades with a
+# scheduled reboot — Ubuntu ships 20auto-upgrades already enabled, this only adds the reboot policy.
+install -m 644 "$HERE/fail2ban-jail.local" /etc/fail2ban/jail.local
+install -m 644 "$HERE/52unattended-upgrades-bmpl" /etc/apt/apt.conf.d/52unattended-upgrades-bmpl
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades
+systemctl enable --now fail2ban
+fail2ban-client reload >/dev/null
+
+# 6. Services. bmpl itself starts once the binary and .env are in place (`just deploy`).
 systemctl daemon-reload
 systemctl enable --now caddy
 systemctl reload caddy || systemctl restart caddy

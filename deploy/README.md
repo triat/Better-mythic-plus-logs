@@ -4,7 +4,9 @@ Templates and scripts for running bmpl in hosted mode on a bare VPS (Debian/Ubun
 
 | File | VPS path | Purpose |
 |---|---|---|
-| `bootstrap.sh` | run once, from this directory | Installs Caddy, litestream, ufw, sqlite3; creates the `bmpl` system user and the `deploy` user; opens 22/80/443 only; installs the units below and enables them |
+| `bootstrap.sh` | run once, from this directory | Installs Caddy, litestream, ufw, sqlite3, fail2ban, unattended-upgrades; creates the `bmpl` system user and the `deploy` user; opens 22/80/443 only; installs the units below and enables them |
+| `fail2ban-jail.local` | `/etc/fail2ban/jail.local` | Bans an IP for 1 h after 5 SSH failures in 10 min (through ufw) |
+| `52unattended-upgrades-bmpl` | `/etc/apt/apt.conf.d/52unattended-upgrades-bmpl` | Security updates apply daily (Ubuntu default); this adds the reboot at 04:00 UTC when one needs it |
 | `sudoers-bmpl-deploy` | `/etc/sudoers.d/bmpl-deploy` | What `deploy` may do without a password: install the binary and restart `bmpl` as root, anything as `bmpl` |
 | `restore-test.sh` | `/usr/local/sbin/bmpl-restore-test` | `just deploy-restore-test`: restores the latest replica into a scratch dir, checks it opens (runs as user `bmpl`) |
 | `Caddyfile` | `/etc/caddy/Caddyfile` | Reverse proxy to `127.0.0.1:3000`, automatic HTTPS, HSTS, compression |
@@ -70,9 +72,9 @@ ssh root@<vps> 'cd /root/bmpl-deploy/deploy && bash bootstrap.sh bmpl.<domain>'
 ```
 
 `bootstrap.sh` is idempotent (re-run it after a `git pull` that touched
-`deploy/`). It installs `curl`, `ufw`, `sqlite3`, `gnupg`, Caddy (its official
-apt repository) and litestream (the `.deb` of `LITESTREAM_VERSION`, 0.3.13 by
-default); sets ufw to deny incoming and allows `22/tcp`, `80/tcp`, `443/tcp`
+`deploy/`). It installs `curl`, `ufw`, `sqlite3`, `gnupg`, `fail2ban`,
+`unattended-upgrades`, Caddy (its official apt repository) and litestream
+(the `.deb` of `LITESTREAM_VERSION`, 0.3.13 by default); sets ufw to deny incoming and allows `22/tcp`, `80/tcp`, `443/tcp`
 only (port 3000 never leaves loopback); creates the `bmpl` system user (no
 shell, home `/opt/bmpl`, mode 750) and the `deploy` user (bash, home
 `/home/deploy`, member of `systemd-journal`, sudo limited by
@@ -85,8 +87,9 @@ root-owned, at `/usr/local/sbin/bmpl-backup-check` and
 `/usr/local/sbin/bmpl-restore-test`; installs the
 `/etc/litestream.yml` template (owner `bmpl`, mode 600) unless a file already
 mentioning `/opt/bmpl/bmpl.db` is there; seeds `/opt/bmpl/.env` from
-`.env.hosted.example` (never overwrites an existing `.env`); enables and
-starts Caddy, and enables `bmpl`, `litestream` and the timer without starting
+`.env.hosted.example` (never overwrites an existing `.env`); installs the
+fail2ban jail (`sshd`, bans through ufw) and the unattended-upgrades reboot
+policy and starts fail2ban; enables and starts Caddy, and enables `bmpl`, `litestream` and the timer without starting
 them — they start once configured and deployed. If sshd listens on a port
 other than 22, change the `ufw allow 22/tcp` line before running the script,
 or you lock yourself out. ACME starts as soon as the config loads — during

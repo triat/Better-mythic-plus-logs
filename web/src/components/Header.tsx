@@ -4,7 +4,10 @@ import { KeyStepper } from "./KeyStepper.tsx";
 import type { UiControls } from "../lib/hostedMode.ts";
 import type { MenuModel } from "../lib/session.ts";
 import type { LookupPayload, Region } from "../types.ts";
-import { OTHER_SPEC, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../lib/header.ts";
+import { OTHER_SPEC, localeMenu, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../lib/header.ts";
+import { LOCALE_LABELS, detectLocale } from "../lib/locale.ts";
+import type { Locale } from "../lib/locale.ts";
+import { useT } from "../locale.tsx";
 import { ChipMenu } from "./ChipMenu.tsx";
 import { UserMenu } from "./UserMenu.tsx";
 
@@ -43,6 +46,7 @@ interface Props {
 }
 
 export function Header(p: Props) {
+  const { t, locale, setLocale } = useT();
   const [open, setOpen] = useState(false);
   const showSearch = p.search ?? true;
   const submit = (e: FormEvent) => { e.preventDefault(); if (p.form.character.trim()) p.onLookup(); };
@@ -110,6 +114,17 @@ export function Header(p: Props) {
         <div className="brand">bmpl</div>
         {showSearch && !p.hero && search}
         <div className="grow" />
+        {p.controls.watch && (
+          // Local mode: the EN / FR chip (design: canvas "Locale", option A); hosted mode has the row in the user menu.
+          <ChipMenu
+            label={LOCALE_LABELS[locale]}
+            className={"chip" + (locale !== detectLocale(navigator.language) ? " chip-on" : "")}
+            head={t("common.locale.remembered")}
+            items={localeMenu(t, locale)}
+            onPick={(v) => setLocale(v as Locale)}
+            title={t("common.locale.title")}
+          />
+        )}
         {p.controls.watch && (
           <label className={"watch" + (p.watchActive ? " on" : "")} title="Look up whatever Name-Realm you copy to the clipboard">
             <input type="checkbox" checked={p.watchActive} onChange={(e) => p.onWatchToggle(e.target.checked)} />

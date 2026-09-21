@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { regionChipLabel, regionMenu, specChipLabel, specMenu } from "./header.ts";
+import { tEn } from "../i18n/t.ts";
+import { localeMenu, regionChipLabel, regionMenu, specChipLabel, specMenu } from "./header.ts";
 
 describe("header chips", () => {
   test("regionMenu marks the effective region", () => {
@@ -31,5 +32,15 @@ describe("header chips", () => {
     expect(specMenu(p, "Augmentation")[0]).toEqual({ value: "", label: "any", hint: "83 runs", on: false });
     expect(specMenu(p, "Augmentation").some((i) => i.on)).toBe(false);
     expect(specMenu({ runsIndexed: 1, specsSeen: [{ spec: "Holy", runs: 1, metric: "hps" as const }] }, "")[0].hint).toBe("1 run");
+  });
+});
+
+describe("localeMenu", () => {
+  test("two entries, the current one on, labels from the locale tables", () => {
+    expect(localeMenu(tEn, "fr")).toEqual([
+      { value: "en", label: "EN", hint: "English", on: false },
+      { value: "fr", label: "FR", hint: "Français", on: true },
+    ]);
+    expect(localeMenu(tEn, "en").map((i) => i.on)).toEqual([true, false]);
   });
 });

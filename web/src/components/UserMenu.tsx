@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
+import { LOCALES, LOCALE_LABELS } from "../lib/locale.ts";
 import type { MenuModel } from "../lib/session.ts";
 import { pendingText } from "../lib/session.ts";
+import { useT } from "../locale.tsx";
 import { Avatar } from "./Avatar.tsx";
 
 interface Props { m: MenuModel; pendingProposals: number | null; onOpen: () => void; onSignOut: () => void }
 
-/** Header trigger "[avatar] Name ▾" and its dropdown: identity, quota line + bar, Settings, Admin (admins), Sign out, Privacy. Design: canvas "Hosted", header A; "Phase2SettingsA" for the menu additions. */
+/** Header trigger "[avatar] Name ▾" and its dropdown: identity, quota line + bar, the EN | FR language row, Help, Settings, Admin (admins), Sign out, Privacy. Design: canvas "Hosted", header A; "Phase2SettingsA" for the menu additions; "Locale" (A) for the language row. */
 export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
+  const { t, locale, setLocale } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -39,13 +42,21 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
             {m.quota.pct !== null && <span className="dd-bar" aria-hidden="true"><span style={{ width: `${m.quota.pct}%` }} /></span>}
             {m.guideLink && <a className="menu-guide" href={m.guideLink.href}>{m.guideLink.label}</a>}
           </div>
+          <div className="menu-row" role="group" aria-label={t("common.locale.title")}>
+            <span className="faint">{t("common.locale.title")}</span>
+            <span className="seg" title={t("common.locale.hint")}>
+              {LOCALES.map((l) => (
+                <button key={l} type="button" className={"seg-item" + (l === locale ? " on" : "")} onClick={() => setLocale(l)} aria-pressed={l === locale}>{LOCALE_LABELS[l]}</button>
+              ))}
+            </span>
+          </div>
           <div className="menu-sep" />
-          <a className="menu-item" href="/help" role="menuitem">Help</a>
-          <a className="menu-item" href="/settings" role="menuitem">Settings</a>
-          {m.isAdmin && <a className="menu-item" href="/admin" role="menuitem">Admin{pending && <span className="faint">· {pending}</span>}</a>}
-          <button type="button" className="menu-item" role="menuitem" onClick={onSignOut}>Sign out</button>
+          <a className="menu-item" href="/help" role="menuitem">{t("common.help")}</a>
+          <a className="menu-item" href="/settings" role="menuitem">{t("common.settings")}</a>
+          {m.isAdmin && <a className="menu-item" href="/admin" role="menuitem">{t("common.admin")}{pending && <span className="faint">· {pending}</span>}</a>}
+          <button type="button" className="menu-item" role="menuitem" onClick={onSignOut}>{t("common.signOut")}</button>
           <div className="menu-sep" />
-          <a className="menu-foot faint" href="/privacy">Privacy</a>
+          <a className="menu-foot faint" href="/privacy">{t("common.privacy")}</a>
         </div>
       )}
     </div>

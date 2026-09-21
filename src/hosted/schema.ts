@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   your_key    INTEGER,
   legend_open INTEGER NOT NULL DEFAULT 1,
   region      TEXT,
+  locale      TEXT,
   updated_at  INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS usage_hourly (
@@ -113,7 +114,7 @@ CREATE TABLE IF NOT EXISTS user_wcl_clients (
 /** Columns added to `users` after its first release; migrated in place on an older database. */
 const USER_COLUMNS: ReadonlyArray<readonly [string, string]> = [["banned_at", "INTEGER"], ["banned_by", "INTEGER"]];
 /** Columns added to `user_settings` after its first release; migrated in place on an older database. */
-const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [["region", "TEXT"]];
+const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [["region", "TEXT"], ["locale", "TEXT"]];
 
 function migrateColumns(db: Database, table: string, columns: ReadonlyArray<readonly [string, string]>): void {
   const have = new Set(db.query<{ name: string }, []>(`PRAGMA table_info(${table})`).all().map((r) => r.name));

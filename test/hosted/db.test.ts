@@ -127,16 +127,18 @@ test("openHosted is idempotent on the same database", () => {
   expect(raw.query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','sessions','invites')").all()).toHaveLength(3);
 });
 
-test("user_settings is migrated in place: region appears on a pre-region database", () => {
+test("user_settings is migrated in place: region and locale appear on a pre-region database", () => {
   const raw = new Database(":memory:");
   raw.exec("CREATE TABLE users (id INTEGER PRIMARY KEY, discord_id TEXT NOT NULL UNIQUE, username TEXT NOT NULL, global_name TEXT, avatar_hash TEXT, role TEXT NOT NULL CHECK (role IN ('member', 'admin')), created_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL, banned_at INTEGER, banned_by INTEGER)");
   raw.exec("CREATE TABLE user_settings (user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, your_key INTEGER, legend_open INTEGER NOT NULL DEFAULT 1, updated_at INTEGER NOT NULL)");
   const db = openHosted(raw);
   const columns = raw.query<{ name: string }, []>("PRAGMA table_info(user_settings)").all().map((r) => r.name);
   expect(columns).toContain("region");
+  expect(columns).toContain("locale");
   const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
-  expect(db.settings.get(u.id)).toEqual({ yourKey: null, legendOpen: true, region: null });
-  expect(db.settings.update(u.id, { region: "tw" }, 2000)).toEqual({ yourKey: null, legendOpen: true, region: "tw" });
+  expect(db.settings.get(u.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null });
+  expect(db.settings.update(u.id, { region: "tw" }, 2000)).toEqual({ yourKey: null, legendOpen: true, region: "tw", locale: null });
+  expect(db.settings.update(u.id, { locale: "fr" }, 3000)).toEqual({ yourKey: null, legendOpen: true, region: "tw", locale: "fr" });
 });
 
 describe("phase 2: bans, deletion, wcl clients", () => {

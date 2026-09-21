@@ -1,6 +1,10 @@
 // The two chips inside the search field (design: canvas "RegionSpec", option B): the region menu and
-// the spec picker. Pure — the Header component maps these rows to `.menu-item`s.
+// the spec picker; plus the EN / FR chip at the right of the local header (canvas "Locale", option A).
+// Pure — the Header component maps these rows to `.menu-item`s.
+import type { T } from "../i18n/t.ts";
 import type { LookupPayload, Region } from "../types.ts";
+import { LOCALES, LOCALE_LABELS, LOCALE_NAMES } from "./locale.ts";
+import type { Locale } from "./locale.ts";
 import { REGIONS, REGION_LABELS, regionLabel } from "./regions.ts";
 
 export interface MenuItem {
@@ -15,6 +19,14 @@ export interface MenuItem {
 /** The region menu: four rows; `on` = the effective region. */
 export const regionMenu = (effective: Region): MenuItem[] =>
   REGIONS.map((r) => ({ value: r, label: regionLabel(r), hint: REGION_LABELS[r], on: r === effective }));
+
+/**
+ * The EN / FR chip menu (local mode header): two rows, `on` = the effective locale. The hints are the
+ * languages' own names, so a reader who cannot read the current one still finds theirs; the component passes
+ * `t("common.locale.remembered")` as the menu head. `t` is here for the view-model convention (prose models take it first).
+ */
+export const localeMenu = (_t: T, current: Locale): MenuItem[] =>
+  LOCALES.map((l) => ({ value: l, label: LOCALE_LABELS[l], hint: LOCALE_NAMES[l], on: l === current }));
 
 const runsText = (n: number): string => `${n} run${n === 1 ? "" : "s"}`;
 

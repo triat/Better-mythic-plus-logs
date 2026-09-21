@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
@@ -9,10 +10,12 @@ import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
+import type { Locale } from "./lib/locale.ts";
 import { effectiveRegion, isRegion } from "./lib/regions.ts";
-import { parseServerSettings } from "./lib/settings.ts";
-import type { Settings } from "./lib/settings.ts";
+import { parseServerSettings, readLocalSettings, writeLocalSettings } from "./lib/settings.ts";
+import type { KeyValueStore, Settings } from "./lib/settings.ts";
 import { DocsProvider } from "./docs.tsx";
+import { LocaleProvider, useT } from "./locale.tsx";
 import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
@@ -61,24 +64,48 @@ export function App() {
       } else setScreen({ kind, status });
     })();
   }, []);
-  if (screen.kind === "loading") return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> loading…</div>;
+  // The screens before the settings exist (loading, sign-in, setup, the bare pages) read the locale from the browser only.
+  if (screen.kind === "loading") return <BrowserLocale><Loading /></BrowserLocale>;
   // The privacy page is one bare page (brand header, no search) for everyone: readable before
   // signing in (it is linked from the sign-in note) and rendered outside `Main` when signed in, so
   // it never gets the app header on top of its own.
-  if (screen.status.hosted && page === "privacy") return <PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} />;
+  if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} /></BrowserLocale>;
   // /help is public too: an anonymous hosted visitor gets the bare page (brand line, no search); signed in or local, it renders inside `Main` under the app header.
-  if (screen.kind === "signin" && page === "help") return <HelpPage status={screen.status} bare />;
-  if (screen.kind === "signin") return <SignIn notice={deniedNotice(location.search)} loginFailed={loginFailed(location.search)} note={signInNote(screen.status)} />;
+  if (screen.kind === "signin" && page === "help") return <BrowserLocale><HelpPage status={screen.status} bare /></BrowserLocale>;
+  if (screen.kind === "signin") return <BrowserLocale><SignIn notice={deniedNotice(location.search)} loginFailed={loginFailed(location.search)} note={signInNote(screen.status)} /></BrowserLocale>;
   if (screen.kind === "setup") {
-    return <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null, ownClient: null }); }} />;
+    return (
+      <BrowserLocale>
+        <Setup envPath={screen.status.envPath ?? ""} hasCredentials={screen.status.hasCredentials} onDone={() => { history.replaceState({}, "", "/"); setScreen({ kind: "main", status: { ...screen.status, hasCredentials: true }, me: null, settings: null, quota: null, ownClient: null }); }} />
+      </BrowserLocale>
+    );
   }
   return (
     <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
-      <DocsProvider>
-        <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
-      </DocsProvider>
+      <SettingsLocale>
+        <DocsProvider>
+          <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+        </DocsProvider>
+      </SettingsLocale>
     </SettingsProvider>
   );
+}
+
+const browserStore = (): KeyValueStore | null => { try { return localStorage; } catch { return null; } };
+/** Anonymous screens: the remembered choice lives in the browser only (`bmpl.locale`). */
+function BrowserLocale({ children }: { children: ReactNode }) {
+  const persist = useCallback((l: Locale) => writeLocalSettings(browserStore(), { locale: l }), []);
+  return <LocaleProvider saved={readLocalSettings(browserStore()).locale} persist={persist}>{children}</LocaleProvider>;
+}
+/** Signed in / local: the choice is a setting (hosted: PUT /api/settings, mirrored to the browser by SettingsProvider). */
+function SettingsLocale({ children }: { children: ReactNode }) {
+  const { settings, update } = useSettings();
+  const persist = useCallback((l: Locale) => update({ locale: l }), [update]);
+  return <LocaleProvider saved={settings.locale} persist={persist}>{children}</LocaleProvider>;
+}
+function Loading() {
+  const { t } = useT();
+  return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> {t("common.loading")}</div>;
 }
 
 const formToRequest = (f: LookupForm, level: number | null, region: Region): LookupRequest => ({

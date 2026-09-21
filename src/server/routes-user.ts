@@ -1,10 +1,11 @@
 // src/server/routes-user.ts
-// Per-user settings ("your key", legend state, remembered region) and a member's own WCL client (issue #11 Task 3).
+// Per-user settings ("your key", legend state, remembered region and locale) and a member's own WCL client (issue #11 Task 3).
 // Only registered in hosted mode: local mode keeps settings in the browser (web/src/lib/settings.ts)
 // and has no notion of a member's own WCL client.
 import type { UserSettings } from "../hosted/db.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { WclCredentials } from "../wcl/auth.ts";
+import type { Locale } from "../hosted/locale.ts";
 import type { Region } from "../wow/regions.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
@@ -12,12 +13,13 @@ import type { Route } from "./routes.ts";
 import { SETTINGS_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
 
 /** The "Nothing to update" rule on an already-validated (SETTINGS_BODY) patch. */
-export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
+export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
   const patch: Partial<UserSettings> = {};
   if ("yourKey" in value) patch.yourKey = value.yourKey!;
   if ("legendOpen" in value) patch.legendOpen = value.legendOpen!;
   if ("region" in value) patch.region = value.region!;
-  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen` and/or `region`" };
+  if ("locale" in value) patch.locale = value.locale!;
+  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region` and/or `locale`" };
   return { ok: true, patch };
 }
 

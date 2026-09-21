@@ -105,7 +105,7 @@ async function cmdChar(name: string, realm: string): Promise<void> {
   const data = await gql<CharacterBasic>(CHARACTER_BASIC_QUERY, {
     name,
     serverSlug,
-    serverRegion: config.region,
+    serverRegion: config.region.toUpperCase(),
   });
   const c = data.characterData.character;
   if (!c) {
@@ -389,7 +389,7 @@ async function cmdRawRankings(
     {
       name,
       serverSlug,
-      serverRegion: config.region,
+      serverRegion: config.region.toUpperCase(),
       zoneID,
       partition: partition ?? null,
       byBracket,
@@ -416,7 +416,7 @@ async function cmdRawEncounter(
     {
       name,
       serverSlug,
-      serverRegion: config.region,
+      serverRegion: config.region.toUpperCase(),
       encounterID,
       partition: partition ?? null,
       byBracket,

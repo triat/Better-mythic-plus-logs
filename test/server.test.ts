@@ -7,8 +7,11 @@ import { createStaticHandler } from "../src/web-static.ts";
 
 let dir: string;
 let server: Awaited<ReturnType<typeof runServer>>;
+let savedRegion: string | undefined;
 
 beforeAll(async () => {
+  savedRegion = process.env.BMPL_REGION;
+  process.env.BMPL_REGION = "eu";
   dir = mkdtempSync(join(tmpdir(), "bmpl-web-"));
   mkdirSync(join(dir, "assets"));
   writeFileSync(join(dir, "index.html"), "<!doctype html><title>t</title><div id=root></div>");
@@ -29,6 +32,8 @@ beforeAll(async () => {
 afterAll(() => {
   server.stop(true);
   rmSync(dir, { recursive: true, force: true });
+  if (savedRegion === undefined) delete process.env.BMPL_REGION;
+  else process.env.BMPL_REGION = savedRegion;
 });
 
 const url = (p: string) => `http://localhost:${server.port}${p}`;
@@ -60,7 +65,9 @@ describe("static routes", () => {
     expect((await fetch(url("/nope"))).status).toBe(404);
     const st = await fetch(url("/api/status"));
     expect(st.status).toBe(200);
-    expect((await st.json()).ok).toBe(true);
+    const stBody = await st.json();
+    expect(stBody.ok).toBe(true);
+    expect(stBody.region).toBe("eu");
     expect((await fetch(url("/api/status"))).headers.get("content-security-policy")).toBeNull();
   });
 });

@@ -1,3 +1,8 @@
+import type { Region } from "./wow/regions.ts";
+import { parseRegion } from "./wow/regions.ts";
+
+let warnedInvalidRegion = false;
+
 export const config = {
   get clientId(): string {
     return (process.env.WCL_CLIENT_ID ?? "").trim();
@@ -7,7 +12,16 @@ export const config = {
   },
   oauthUrl: "https://www.warcraftlogs.com/oauth/token",
   graphqlUrl: "https://www.warcraftlogs.com/api/v2/client",
-  region: "EU" as const,
+  get region(): Region {
+    const raw = process.env.BMPL_REGION;
+    const parsed = parseRegion(raw);
+    if (parsed) return parsed;
+    if (raw !== undefined && raw !== "" && !warnedInvalidRegion) {
+      warnedInvalidRegion = true;
+      console.error(`bmpl: ignoring BMPL_REGION="${raw}": expected one of eu, us, kr, tw`);
+    }
+    return "eu";
+  },
 };
 
 export const hasCredentials = (): boolean =>

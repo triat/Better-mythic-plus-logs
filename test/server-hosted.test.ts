@@ -14,6 +14,7 @@ let hosted: Awaited<ReturnType<typeof runServer>>;
 let local: Awaited<ReturnType<typeof runServer>>;
 let db: HostedDb;
 let cookie: string;
+let savedRegion: string | undefined;
 
 const assets = async () => ({
   index: join(dir, "index.html"),
@@ -23,6 +24,8 @@ const assets = async () => ({
 });
 
 beforeAll(async () => {
+  savedRegion = process.env.BMPL_REGION;
+  process.env.BMPL_REGION = "eu";
   dir = mkdtempSync(join(tmpdir(), "bmpl-hosted-"));
   mkdirSync(join(dir, "assets"));
   writeFileSync(join(dir, "index.html"), "<!doctype html><title>t</title><div id=root></div>");
@@ -42,6 +45,8 @@ afterAll(() => {
   closeStore();
   delete process.env.BMPL_DB_PATH;
   rmSync(dir, { recursive: true, force: true });
+  if (savedRegion === undefined) delete process.env.BMPL_REGION;
+  else process.env.BMPL_REGION = savedRegion;
 });
 
 const h = (p: string) => `http://localhost:${hosted.port}${p}`;
@@ -156,7 +161,7 @@ describe("/api/health", () => {
     expect(body.warnings).toContain("no backup marker");
   });
   test("GET /api/status (hosted) carries the phase 2 flags", async () => {
-    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, hasCredentials: expect.any(Boolean), openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance" });
+    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, hasCredentials: expect.any(Boolean), region: "eu", openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance" });
   });
 });
 

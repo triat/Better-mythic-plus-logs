@@ -195,7 +195,7 @@ async function probe(
   }>(CHARACTER_METRIC_PROBE_QUERY, {
     name,
     serverSlug,
-    serverRegion: config.region,
+    serverRegion: config.region.toUpperCase(),
     zoneID: zone.id,
     partition: zone.partition,
   });
@@ -302,7 +302,7 @@ export async function fetchMplusData(
   }>(multiQuery, {
     name,
     serverSlug,
-    serverRegion: config.region,
+    serverRegion: config.region.toUpperCase(),
     partition: activeZone.partition,
     metric,
   });

@@ -2,7 +2,7 @@
 // Routes that exist in both modes. Local-only routes live in routes-local.ts.
 import { dirname } from "node:path";
 import pkg from "../../package.json";
-import { hasCredentials } from "../config.ts";
+import { config, hasCredentials } from "../config.ts";
 import { SHIPPED } from "../deepdive/table.ts";
 import { configVersion, getEvalConfig } from "../evaluation/config.ts";
 import type { EvaluationDocs } from "../evaluation/docs.ts";
@@ -124,11 +124,13 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
       const rt = ctx.runtime;
       return rt
         ? jsonResponse({
-            ok: true, hosted: true, hasCredentials: hasCredentials(),
+            ok: true, hosted: true, hasCredentials: hasCredentials(), region: config.region,
             openSignup: rt.config.openSignup, guildRequired: rt.config.discordGuildId !== null,
             wclClients: rt.wclClients.enabled, operator: rt.config.operator,
           })
-        : jsonResponse({ ok: true, hosted: false, hasCredentials: hasCredentials(), envPath: ctx.envPath });
+        : jsonResponse({
+            ok: true, hosted: false, hasCredentials: hasCredentials(), envPath: ctx.envPath, region: config.region,
+          });
     }, "public"),
   ];
 }

@@ -4,7 +4,7 @@ import {
   isPlausibleNameRealm,
 } from "../clipboard.ts";
 import type { Metric } from "../roles.ts";
-import { localHistory } from "./local-history.ts";
+import { getLocalHistory } from "./local-history.ts";
 import { broadcast } from "./sse.ts";
 import { runLookupWithCache } from "./lookup.ts";
 
@@ -52,7 +52,7 @@ async function watcherTick(): Promise<void> {
     spec: watcher.opts.spec,
     metric: watcher.opts.metric,
     refresh: false,
-  }, localHistory);
+  }, getLocalHistory());
   if (result.ok) {
     broadcast("result", { key: result.key, fromCache: result.fromCache });
   } else {

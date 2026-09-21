@@ -49,6 +49,29 @@ CREATE TABLE IF NOT EXISTS wcl_deepdive (
   json          TEXT    NOT NULL,
   PRIMARY KEY (report_code, fight_id, character)
 );
+-- Local mode's lookup tabs (one person → user_id 0): the hosted user_history tables without the users FK.
+-- Same columns, read/written by src/hosted/history.ts' openUserHistory with LOCAL_HISTORY_TABLES.
+CREATE TABLE IF NOT EXISTS local_history (
+  user_id      INTEGER NOT NULL,
+  key          TEXT    NOT NULL,
+  request      TEXT    NOT NULL,
+  payload      TEXT    NOT NULL,
+  label        TEXT    NOT NULL,
+  char_class   INTEGER NOT NULL,
+  spec         TEXT,
+  target_level INTEGER NOT NULL,
+  target_auto  INTEGER NOT NULL,
+  fetched_at   INTEGER NOT NULL,
+  seq          INTEGER NOT NULL,
+  PRIMARY KEY (user_id, key)
+);
+CREATE TABLE IF NOT EXISTS local_history_auto (
+  user_id   INTEGER NOT NULL,
+  alias_key TEXT    NOT NULL,
+  level     INTEGER NOT NULL,
+  set_at    INTEGER NOT NULL,
+  PRIMARY KEY (user_id, alias_key)
+);
 CREATE TABLE IF NOT EXISTS rio_profile (
   region     TEXT    NOT NULL,
   realm      TEXT    NOT NULL,

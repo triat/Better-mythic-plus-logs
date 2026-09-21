@@ -13,7 +13,7 @@ import type { LookupPayload } from "../lookup.ts";
 import { getStore } from "../signals/store.ts";
 import { runWithWclClient } from "../wcl/client.ts";
 import { jsonResponse } from "./http.ts";
-import { localHistory } from "./local-history.ts";
+import { getLocalHistory } from "./local-history.ts";
 import { DEEPDIVE_BODY, DEFENSIVES_BODY, parseBody } from "./validate.ts";
 
 /** The WCL scope a lookup/deep-dive runs in (issue #11 Task 3): a member's own client when they have
@@ -43,7 +43,11 @@ export async function withCachedAnalyses(payload: LookupPayload, tables: LoadedT
 /** Local mode: re-attach on every entry of the process-wide history after an analysis or a table change. 0 pts. */
 export async function refreshLocalHistory(): Promise<void> {
   const [store, tables, cfg] = await Promise.all([getStore(), getDefensives(), getEvalConfig()]);
-  for (const e of localHistory.list()) localHistory.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
+  const history = getLocalHistory();
+  for (const item of history.list()) {
+    const e = history.get(item.key);
+    if (e) history.updateResult(e.key, attachDeepdive(e.result as LookupPayload, store, tables, cfg));
+  }
 }
 
 /**

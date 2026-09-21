@@ -18,7 +18,7 @@ import { authRoutes } from "./server/routes-auth.ts";
 import { userRoutes } from "./server/routes-user.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
-import { localHistory } from "./server/local-history.ts";
+import { getLocalHistory, openLocalHistory } from "./server/local-history.ts";
 import { jsonResponse } from "./server/http.ts";
 import { withSecurityHeaders } from "./server/security.ts";
 import { closeStore, getStore } from "./signals/store.ts";
@@ -96,6 +96,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader);
 
   let runtime: HostedRuntime | null = null;
+  if (!hosted) await openLocalHistory();
   if (hosted) {
     const store = await getStore();
     if (store._db.filename === ":memory:") throw new Error("hosted mode needs a persistent bmpl.db (check BMPL_DB_PATH)");
@@ -132,7 +133,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
           return jsonResponse({ ok: false, error: "Cross-site request refused" }, 403);
         }
       }
-      const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, localHistory);
+      const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, getLocalHistory());
       const gate = authGate(r, ctx);
       if (gate) return gate;
       if (!runtime) return await r.handle(req, url, ctx);

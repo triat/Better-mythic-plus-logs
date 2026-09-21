@@ -42,6 +42,7 @@ bmpl lookup / POST /api/lookup
 | `users` | `id` | hosted-mode Discord identity + role | until removed |
 | `sessions` | `id` | hosted-mode login session | 30 d sliding, purged hourly |
 | `invites` | `discord_id` | hosted-mode allow-list entry | until removed |
+| `local_history` / `local_history_auto` | `(user_id = 0, key)` | local-mode lookup tabs — the `user_history` tables without the `users` FK, served by the same `openUserHistory` (`src/server/local-history.ts`); a `bmpl serve` restart shows the same tabs | 20, oldest evicted |
 | `user_history` | `(user_id, key)` | hosted-mode lookup history, one row per tab, raw payload | 20 per user, oldest evicted |
 | `user_history_auto` | `(user_id, alias_key)` | hosted-mode auto-level alias | with its entry |
 | `user_settings` | `user_id` | hosted-mode "your key" + legend state | until removed |

@@ -72,8 +72,9 @@ in `bmpl.db` across restarts), their own "your key" and legend preference
 up the same character within 6 hours share one WCL fetch: the second lookup
 reuses the first member's result (shown as cached; **Refresh** fetches again).
 Deep-dive analyses are attached when a tab is opened, so an analysis run by one
-member shows up for everyone who has that run in a tab. Local mode is unchanged:
-history in memory, settings in the browser.
+member shows up for everyone who has that run in a tab. Local mode keeps its own
+tabs in `bmpl.db` too (no sharing, no TTL — they survive a `bmpl serve` restart)
+and its settings in the browser.
 
 ## WCL budget
 

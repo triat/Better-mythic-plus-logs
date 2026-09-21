@@ -36,32 +36,38 @@ const entry = (r: EntryRaw): HistoryEntry => ({ ...item(r), result: JSON.parse(r
 const asRecord = (e: HistoryEntry): HistoryRecord =>
   ({ result: e.result, label: e.label, charClass: e.charClass, spec: e.spec, targetLevel: e.targetLevel, targetAutoDetected: e.targetAutoDetected });
 
-export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER): UserHistoryRepo {
-  const getOne = db.query<EntryRaw, [number, string]>(`SELECT ${ITEM_COLUMNS}, payload FROM user_history WHERE user_id = ? AND key = ?`);
-  const listAll = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM user_history WHERE user_id = ? ORDER BY seq DESC`);
-  const count = db.query<{ n: number }, [number]>("SELECT COUNT(*) AS n FROM user_history WHERE user_id = ?");
-  const nextSeq = db.query<{ n: number }, [number]>("SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM user_history WHERE user_id = ?");
-  const oldest = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM user_history WHERE user_id = ? ORDER BY seq ASC LIMIT 1`);
-  const touch = db.query("UPDATE user_history SET seq = ? WHERE user_id = ? AND key = ?");
+/** Table pair backing a repo: the hosted per-user tables, or local mode's FK-free copies in the signals store. */
+export interface HistoryTables { history: string; auto: string }
+export const USER_HISTORY_TABLES: HistoryTables = { history: "user_history", auto: "user_history_auto" };
+
+export function openUserHistory(db: Database, max = HISTORY_MAX_PER_USER, tables: HistoryTables = USER_HISTORY_TABLES): UserHistoryRepo {
+  const T = tables.history;
+  const A = tables.auto;
+  const getOne = db.query<EntryRaw, [number, string]>(`SELECT ${ITEM_COLUMNS}, payload FROM ${T} WHERE user_id = ? AND key = ?`);
+  const listAll = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM ${T} WHERE user_id = ? ORDER BY seq DESC`);
+  const count = db.query<{ n: number }, [number]>(`SELECT COUNT(*) AS n FROM ${T} WHERE user_id = ?`);
+  const nextSeq = db.query<{ n: number }, [number]>(`SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM ${T} WHERE user_id = ?`);
+  const oldest = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM ${T} WHERE user_id = ? ORDER BY seq ASC LIMIT 1`);
+  const touch = db.query(`UPDATE ${T} SET seq = ? WHERE user_id = ? AND key = ?`);
   const upsert = db.query(
-    `INSERT INTO user_history (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq)
+    `INSERT INTO ${T} (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id, key) DO UPDATE SET request = excluded.request, payload = excluded.payload, label = excluded.label,
        char_class = excluded.char_class, spec = excluded.spec, target_level = excluded.target_level,
        target_auto = excluded.target_auto, fetched_at = excluded.fetched_at, seq = excluded.seq`,
   );
-  const setPayload = db.query("UPDATE user_history SET payload = ? WHERE user_id = ? AND key = ?");
-  const deleteOne = db.query("DELETE FROM user_history WHERE user_id = ? AND key = ?");
-  const deleteAll = db.query("DELETE FROM user_history WHERE user_id = ?");
+  const setPayload = db.query(`UPDATE ${T} SET payload = ? WHERE user_id = ? AND key = ?`);
+  const deleteOne = db.query(`DELETE FROM ${T} WHERE user_id = ? AND key = ?`);
+  const deleteAll = db.query(`DELETE FROM ${T} WHERE user_id = ?`);
   const sharedNewest = db.query<EntryRaw, [string, number, number]>(
-    `SELECT ${ITEM_COLUMNS}, payload FROM user_history WHERE key = ? AND fetched_at >= ? AND user_id <> ? ORDER BY fetched_at DESC LIMIT 1`,
+    `SELECT ${ITEM_COLUMNS}, payload FROM ${T} WHERE key = ? AND fetched_at >= ? AND user_id <> ? ORDER BY fetched_at DESC LIMIT 1`,
   );
 
-  const autoGet = db.query<{ level: number }, [number, string]>("SELECT level FROM user_history_auto WHERE user_id = ? AND alias_key = ?");
-  const autoNewest = db.query<{ level: number }, [string, number]>("SELECT level FROM user_history_auto WHERE alias_key = ? AND set_at >= ? ORDER BY set_at DESC LIMIT 1");
-  const autoSet = db.query("INSERT INTO user_history_auto (user_id, alias_key, level, set_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, alias_key) DO UPDATE SET level = excluded.level, set_at = excluded.set_at");
-  const autoDeleteIf = db.query("DELETE FROM user_history_auto WHERE user_id = ? AND alias_key = ? AND level = ?");
-  const autoDeleteAll = db.query("DELETE FROM user_history_auto WHERE user_id = ?");
+  const autoGet = db.query<{ level: number }, [number, string]>(`SELECT level FROM ${A} WHERE user_id = ? AND alias_key = ?`);
+  const autoNewest = db.query<{ level: number }, [string, number]>(`SELECT level FROM ${A} WHERE alias_key = ? AND set_at >= ? ORDER BY set_at DESC LIMIT 1`);
+  const autoSet = db.query(`INSERT INTO ${A} (user_id, alias_key, level, set_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, alias_key) DO UPDATE SET level = excluded.level, set_at = excluded.set_at`);
+  const autoDeleteIf = db.query(`DELETE FROM ${A} WHERE user_id = ? AND alias_key = ? AND level = ?`);
+  const autoDeleteAll = db.query(`DELETE FROM ${A} WHERE user_id = ?`);
 
   return {
     forUser(userId, now = Date.now) {

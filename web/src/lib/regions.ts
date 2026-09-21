@@ -3,13 +3,6 @@ import type { Region } from "../types.ts";
 
 export const REGIONS: readonly Region[] = ["eu", "us", "kr", "tw"];
 
-export const REGION_LABELS: Record<Region, string> = {
-  eu: "Europe",
-  us: "Americas & Oceania",
-  kr: "Korea",
-  tw: "Taiwan",
-};
-
 export const isRegion = (v: unknown): v is Region => typeof v === "string" && (REGIONS as readonly string[]).includes(v);
 
 export const regionLabel = (r: Region): string => r.toUpperCase();

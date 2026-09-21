@@ -10,6 +10,7 @@ import type {
   RunDefensives,
 } from "../types.ts";
 import type { ProposalMode } from "./hostedMode.ts";
+import { tEn } from "../i18n/t.ts";
 import { fmtAge } from "./format.ts";
 
 export const POINTS_PER_RUN = 3;
@@ -132,9 +133,9 @@ export function proposalLines(proposals: ProposalSummary[], names: Array<{ id: n
   return proposals.map((p) => {
     const name = p.patch.name ?? names.find((n) => n.id === p.spellId)?.name ?? `spell ${p.spellId}`;
     const what = `${name} · ${patchText(p.patch)}`;
-    if (p.status === "pending") return { id: p.id, dot: "dot-pending" as const, what, when: `pending · ${fmtAge(p.createdAt, now)}` };
+    if (p.status === "pending") return { id: p.id, dot: "dot-pending" as const, what, when: `pending · ${fmtAge(tEn, p.createdAt, now)}` };
     const note = p.note ? ` — "${p.note}"` : "";
-    const age = fmtAge(p.decidedAt ?? p.createdAt, now);
+    const age = fmtAge(tEn, p.decidedAt ?? p.createdAt, now);
     return p.status === "rejected"
       ? { id: p.id, dot: "dot-rejected" as const, what, when: `rejected ${age}${note}` }
       : { id: p.id, dot: "dot-approved" as const, what, when: `approved ${age}${note}` };
@@ -152,7 +153,7 @@ export function panelModel(d: RunDefensives, now = Date.now(), tableWarning?: st
   else if (d.truncated) notice = "Cast events were truncated (more than 5 pages) — counts may be low.";
   return {
     title: `Defensives · ${specClass}`,
-    meta: `analyzed ${fmtAge(d.fetchedAt, now)}${d.pointsSpent !== null ? ` · ${d.pointsSpent} pts` : ""}`,
+    meta: `analyzed ${fmtAge(tEn, d.fetchedAt, now)}${d.pointsSpent !== null ? ` · ${d.pointsSpent} pts` : ""}`,
     notice,
     usage: d.defensives.map(usageRow),
     majorsText: d.majorUsage === null ? null : `majors used ${Math.round(d.majorUsage * 100)}% of possible`,

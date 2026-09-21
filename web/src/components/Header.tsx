@@ -56,26 +56,27 @@ export function Header(p: Props) {
     set({ spec: v });
     setOpen(false);
   };
+  const metricLabel = (m: "" | "dps" | "hps"): string => (m === "dps" ? t("header.metric.dps") : m === "hps" ? t("header.metric.hps") : t("header.metric.auto"));
   const chips = (
     <span className="chips">
       <ChipMenu
         label={regionChipLabel(p.region)}
         className={"chip" + (p.region !== p.instanceRegion ? " chip-on" : "")}
-        head="Region · remembered"
-        items={regionMenu(p.region)}
+        head={t("header.region.remembered")}
+        items={regionMenu(t, p.region)}
         onPick={(v) => p.onRegionChange(v as Region)}
-        title="Region"
+        title={t("header.region.title")}
       />
       <ChipMenu
-        label={specChipLabel(p.form.spec)}
+        label={specChipLabel(t, p.form.spec)}
         className={"chip" + (p.form.spec ? " chip-on" : "")}
-        head={p.payload ? `Spec · seen on ${p.payload.character.name} this season` : "Spec · load a character to pick from its specs"}
-        items={specMenu(p.payload, p.form.spec)}
+        head={p.payload ? t("header.spec.seenOn", { name: p.payload.character.name }) : t("header.spec.loadFirst")}
+        items={specMenu(t, p.payload, p.form.spec)}
         onPick={pickSpec}
-        title="Spec filter"
+        title={t("header.spec.title")}
         separateLast
       />
-      {p.form.metric && <span className="chip">{p.form.metric}</span>}
+      {p.form.metric && <span className="chip">{metricLabel(p.form.metric)}</span>}
     </span>
   );
   const search = (
@@ -85,7 +86,7 @@ export function Header(p: Props) {
         <input
           value={p.form.character}
           onChange={(e) => set({ character: e.target.value })}
-          placeholder="Name-Realm or Raider.IO URL"
+          placeholder={t("header.searchPlaceholder")}
           autoFocus
           autoComplete="off"
           spellCheck={false}
@@ -94,17 +95,17 @@ export function Header(p: Props) {
       </div>
       <KeyStepper value={p.yourKey} fallback={p.keyFallback} onChange={p.onKeyChange} />
       <button type="submit" className="btn btn-primary btn-lg" disabled={!!p.busy}>
-        {p.busy ? <span className="spinner" /> : null} Look up
+        {p.busy ? <span className="spinner" /> : null} {t("header.lookup")}
       </button>
     </form>
   );
   const options = open && (
     <div className="options">
-      <label>Spec filter
-        <input value={p.form.spec} placeholder="e.g. Augmentation" onChange={(e) => set({ spec: e.target.value })} /></label>
-      <label>Metric
+      <label>{t("header.spec.title")}
+        <input value={p.form.spec} placeholder={t("header.specPlaceholder")} onChange={(e) => set({ spec: e.target.value })} /></label>
+      <label>{t("header.metric.title")}
         <select value={p.form.metric} onChange={(e) => set({ metric: e.target.value as LookupForm["metric"] })}>
-          <option value="">auto</option><option value="dps">dps</option><option value="hps">hps</option>
+          <option value="">{t("header.metric.auto")}</option><option value="dps">{t("header.metric.dps")}</option><option value="hps">{t("header.metric.hps")}</option>
         </select></label>
     </div>
   );
@@ -126,20 +127,20 @@ export function Header(p: Props) {
           />
         )}
         {p.controls.watch && (
-          <label className={"watch" + (p.watchActive ? " on" : "")} title="Look up whatever Name-Realm you copy to the clipboard">
+          <label className={"watch" + (p.watchActive ? " on" : "")} title={t("header.watch.title")}>
             <input type="checkbox" checked={p.watchActive} onChange={(e) => p.onWatchToggle(e.target.checked)} />
             <span className="switch" />
-            <span>Clipboard watch <b>{p.watchActive ? "on" : "off"}</b></span>
+            <span>{t("header.watch.label")} <b>{p.watchActive ? t("header.watch.on") : t("header.watch.off")}</b></span>
             {p.watchLabel && <span className="muted">· {p.watchLabel}</span>}
           </label>
         )}
-        {!p.sseConnected && <span className="muted" title="Reconnecting…">live updates disconnected</span>}
-        <a className="muted" style={{ fontSize: 13 }} href="/help">Help</a>
-        {p.controls.setup && <button className="btn" onClick={p.onSetup}>Re-configure</button>}
-        {p.controls.quit && <button className="btn" onClick={p.onQuit}>Quit</button>}
+        {!p.sseConnected && <span className="muted" title={t("header.reconnecting")}>{t("header.liveDisconnected")}</span>}
+        <a className="muted" style={{ fontSize: 13 }} href="/help">{t("common.help")}</a>
+        {p.controls.setup && <button className="btn" onClick={p.onSetup}>{t("header.reconfigure")}</button>}
+        {p.controls.quit && <button className="btn" onClick={p.onQuit}>{t("header.quit")}</button>}
         {p.controls.signOut && p.menu && (
           <>
-            {p.menu.exhausted && <span className="mono quota-exhausted" title="Your share of the shared Warcraft Logs budget">{p.menu.exhausted}</span>}
+            {p.menu.exhausted && <span className="mono quota-exhausted" title={t("header.quotaShare")}>{p.menu.exhausted}</span>}
             <UserMenu m={p.menu} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
           </>
         )}

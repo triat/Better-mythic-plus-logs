@@ -1,11 +1,11 @@
 // The two chips inside the search field (design: canvas "RegionSpec", option B): the region menu and
 // the spec picker; plus the EN / FR chip at the right of the local header (canvas "Locale", option A).
 // Pure — the Header component maps these rows to `.menu-item`s.
-import type { T } from "../i18n/t.ts";
+import type { MessageKey, T } from "../i18n/t.ts";
 import type { LookupPayload, Region } from "../types.ts";
 import { LOCALES, LOCALE_LABELS, LOCALE_NAMES } from "./locale.ts";
 import type { Locale } from "./locale.ts";
-import { REGIONS, REGION_LABELS, regionLabel } from "./regions.ts";
+import { REGIONS, regionLabel } from "./regions.ts";
 
 export interface MenuItem {
   value: string;
@@ -16,9 +16,16 @@ export interface MenuItem {
   on: boolean;
 }
 
-/** The region menu: four rows; `on` = the effective region. */
-export const regionMenu = (effective: Region): MenuItem[] =>
-  REGIONS.map((r) => ({ value: r, label: regionLabel(r), hint: REGION_LABELS[r], on: r === effective }));
+const REGION_HINT_KEY: Record<Region, MessageKey> = {
+  eu: "header.region.eu",
+  us: "header.region.us",
+  kr: "header.region.kr",
+  tw: "header.region.tw",
+};
+
+/** The region menu: four rows; `on` = the effective region. The hints are the region names, from the dictionary. */
+export const regionMenu = (t: T, effective: Region): MenuItem[] =>
+  REGIONS.map((r) => ({ value: r, label: regionLabel(r), hint: t(REGION_HINT_KEY[r]), on: r === effective }));
 
 /**
  * The EN / FR chip menu (local mode header): two rows, `on` = the effective locale. The hints are the
@@ -28,8 +35,6 @@ export const regionMenu = (effective: Region): MenuItem[] =>
 export const localeMenu = (_t: T, current: Locale): MenuItem[] =>
   LOCALES.map((l) => ({ value: l, label: LOCALE_LABELS[l], hint: LOCALE_NAMES[l], on: l === current }));
 
-const runsText = (n: number): string => `${n} run${n === 1 ? "" : "s"}`;
-
 /** Picking this value reveals the free-text spec input instead of setting a spec. */
 export const OTHER_SPEC = "other";
 
@@ -38,16 +43,17 @@ export const OTHER_SPEC = "other";
  * tab) with its run count and the metric it implies, then "Other…" for a free-text name. `current` is the
  * form's spec filter ("" = any).
  */
-export function specMenu(payload: Pick<LookupPayload, "specsSeen" | "runsIndexed"> | null, current: string): MenuItem[] {
+export function specMenu(t: T, payload: Pick<LookupPayload, "specsSeen" | "runsIndexed"> | null, current: string): MenuItem[] {
   const seen = payload?.specsSeen ?? [];
+  const runsText = (n: number) => t("header.spec.runs", { count: n });
   // `runsIndexed` is the filtered count when the lookup carried a spec; the unfiltered total is the sum.
   const total = seen.length ? seen.reduce((n, s) => n + s.runs, 0) : payload?.runsIndexed ?? null;
   return [
-    { value: "", label: "any", hint: total === null ? null : runsText(total), on: current === "" },
+    { value: "", label: t("header.spec.any"), hint: total === null ? null : runsText(total), on: current === "" },
     ...seen.map((s) => ({ value: s.spec, label: s.spec, hint: `${runsText(s.runs)} · ${s.metric}`, on: s.spec === current })),
-    { value: OTHER_SPEC, label: "Other…", hint: "type a name", on: false },
+    { value: OTHER_SPEC, label: t("header.spec.other"), hint: t("header.spec.typeName"), on: false },
   ];
 }
 
-export const specChipLabel = (spec: string): string => (spec ? `spec ${spec} ▾` : "spec any ▾");
+export const specChipLabel = (t: T, spec: string): string => (spec ? t("header.spec.chip", { spec }) : t("header.spec.chipAny"));
 export const regionChipLabel = (r: Region): string => `${regionLabel(r)} ▾`;

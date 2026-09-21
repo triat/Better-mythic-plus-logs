@@ -1,3 +1,5 @@
+import type { T } from "../i18n/t.ts";
+
 export const STALE_DAYS = 14;
 export type Tone = "good" | "warn" | "bad" | "neutral";
 export type ParseTier = "legendary" | "magenta" | "blue" | "green" | "gray";
@@ -11,16 +13,16 @@ export const fmtAmount = (n: number): string => {
 /** WCL points: thousands separated by a narrow no-break space (U+202F, never wraps inside a number), no decimals: "1 412". */
 export const fmtPts = (n: number): string => Math.floor(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
 
-export const fmtAge = (ms: number, now = Date.now()): string => {
+export const fmtAge = (t: T, ms: number, now = Date.now()): string => {
   const d = now - ms;
   const H = 3600e3, D = 24 * H;
-  if (d < H) return "just now";
-  if (d < D) return Math.floor(d / H) + "h ago";
+  if (d < H) return t("common.age.justNow");
+  if (d < D) return t("common.age.hours", { n: Math.floor(d / H) });
   const days = Math.floor(d / D);
-  if (days < 7) return days + "d ago";
-  if (days < 30) return Math.floor(days / 7) + "w ago";
-  if (days < 365) return Math.floor(days / 30) + "mo ago";
-  return Math.floor(days / 365) + "y ago";
+  if (days < 7) return t("common.age.days", { n: days });
+  if (days < 30) return t("common.age.weeks", { n: Math.floor(days / 7) });
+  if (days < 365) return t("common.age.months", { n: Math.floor(days / 30) });
+  return t("common.age.years", { n: Math.floor(days / 365) });
 };
 
 export const ageDays = (ms: number, now = Date.now()): number => Math.max(0, (now - ms) / 86400000);

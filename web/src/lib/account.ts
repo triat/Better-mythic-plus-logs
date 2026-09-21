@@ -1,12 +1,14 @@
 // Settings page view models (issue #11): the member's own WCL client card, the typed-word delete, the stored-data sentence. Pure; tested.
 import type { OwnClientView } from "../types.ts";
+import { tEn } from "../i18n/t.ts";
 import { fmtAge, fmtPts } from "./format.ts";
 
 export type ClientCardState = "disabled" | "none" | "set" | "stale";
 export interface ClientCardModel { state: ClientCardState; status: string; dot: "dot-none" | "dot-approved"; showForm: boolean }
 
-/** `fmtAge` writes "2h ago"; the canvas card reads "Verified 2 h ago" — same buckets, a space before the unit. */
-const spacedAge = (ms: number, now: number): string => fmtAge(ms, now).replace(/^(\d+)([a-z]+) ago$/, "$1 $2 ago");
+/** `fmtAge` writes "2h ago"; the canvas card reads "Verified 2 h ago" — same buckets, a space before the unit.
+ * English only for now (`tEn`); this card's own strings are not yet in the dictionary. */
+const spacedAge = (ms: number, now: number): string => fmtAge(tEn, ms, now).replace(/^(\d+)([a-z]+) ago$/, "$1 $2 ago");
 
 /** Canvas "Phase2SettingsA" (none) and "Phase2Details" (verified): the header dot + status line and whether the id/secret form shows. */
 export function clientCard(enabled: boolean, client: OwnClientView | null, limitPerUser: number | null, now = Date.now()): ClientCardModel {

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { fr } from "../i18n/fr.ts";
+import { makeT, tEn } from "../i18n/t.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, initialScreen, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./hostedMode.ts";
 
+const tFr = makeT(fr, "fr");
 const local = { hosted: false, hasCredentials: true, envPath: "/x/.env", openSignup: false, guildRequired: false, wclClients: false, operator: "", region: "eu" as const };
 const hosted = { hosted: true, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: true, operator: "Muleyoxo", region: "eu" as const };
 
@@ -46,20 +49,24 @@ describe("bootScreen", () => {
 describe("deniedNotice / signInNote / pageOf / accountAccess", () => {
   const me = { kind: "ok" as const, user: { id: 1, discordId: "1", username: "t", globalName: null, avatarUrl: "", role: "member" as const }, quota: null, ownClient: null };
   test("denied kinds", () => {
-    expect(deniedNotice("?denied=123456789012345678")).toEqual({ kind: "invite", discordId: "123456789012345678" });
-    expect(deniedNotice("?denied=guild")).toEqual({ kind: "guild" });
-    expect(deniedNotice("?denied=banned")).toEqual({ kind: "banned" });
-    expect(deniedNotice("?denied=rate")).toEqual({ kind: "rate" });
-    expect(deniedNotice("?denied=abc")).toBeNull();
-    expect(deniedNotice("")).toBeNull();
-    expect(deniedNotice("?x=1")).toBeNull();
+    expect(deniedNotice(tEn, "?denied=123456789012345678")).toEqual({ kind: "invite", discordId: "123456789012345678" });
+    expect(deniedNotice(tEn, "?denied=guild")).toEqual({ kind: "guild", title: "Members of the guild's Discord only", text: "Your account is not in that server. Join it, then sign in again." });
+    expect(deniedNotice(tEn, "?denied=banned")).toEqual({ kind: "banned", title: "Account banned", text: "This account cannot sign in here. Contact the admin on Discord." });
+    expect(deniedNotice(tEn, "?denied=rate")).toEqual({ kind: "rate", title: "Too many new accounts", text: "Too many sign-ups from your network in the last hour — try again later." });
+    expect(deniedNotice(tEn, "?denied=abc")).toBeNull();
+    expect(deniedNotice(tEn, "")).toBeNull();
+    expect(deniedNotice(tEn, "?x=1")).toBeNull();
   });
   test("sign-in note per mode", () => {
     const h = { ...hosted, openSignup: false, guildRequired: false, wclClients: false, operator: "x" };
-    expect(signInNote(h)).toBe("Invite-only. Only your Discord id and name are stored — no message or server access.");
-    expect(signInNote({ ...h, openSignup: true })).toBe("Anyone with a Discord account can sign in. Only your Discord id and name are stored — no message or server access.");
-    expect(signInNote({ ...h, openSignup: true, guildRequired: true })).toBe("Members of the guild's Discord only. Sign-in reads your server list once to check membership and keeps nothing from it.");
-    expect(signInNote({ ...h, guildRequired: true })).toBe("Members of the guild's Discord only. Sign-in reads your server list once to check membership and keeps nothing from it.");
+    expect(signInNote(tEn, h)).toBe("Invite-only. Only your Discord id and name are stored — no message or server access.");
+    expect(signInNote(tEn, { ...h, openSignup: true })).toBe("Anyone with a Discord account can sign in. Only your Discord id and name are stored — no message or server access.");
+    expect(signInNote(tEn, { ...h, openSignup: true, guildRequired: true })).toBe("Members of the guild's Discord only. Sign-in reads your server list once to check membership and keeps nothing from it.");
+    expect(signInNote(tEn, { ...h, guildRequired: true })).toBe("Members of the guild's Discord only. Sign-in reads your server list once to check membership and keeps nothing from it.");
+  });
+  test("in French", () => {
+    expect(deniedNotice(tFr, "?denied=guild")).toEqual({ kind: "guild", title: "Réservé aux membres du Discord de la guilde", text: "Ton compte n'est pas sur ce serveur. Rejoins-le, puis reconnecte-toi." });
+    expect(signInNote(tFr, hosted)).toBe("Sur invitation uniquement. Seuls ton id et ton nom Discord sont stockés — aucun accès aux messages ni aux serveurs.");
   });
   test("pages", () => {
     expect(pageOf("/")).toBe("main");

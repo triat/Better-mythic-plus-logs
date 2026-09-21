@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { fr } from "../i18n/fr.ts";
+import { makeT, tEn } from "../i18n/t.ts";
 import {
   ageDays, deathsTone, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, realmName, rioHref, signed, toneClass, wclUrl,
 } from "./format.ts";
+
+const tFr = makeT(fr, "fr");
 
 describe("format", () => {
   test("fmtAmount", () => {
@@ -12,14 +16,18 @@ describe("format", () => {
   test("fmtAge / ageDays", () => {
     const now = 1_000_000_000_000;
     const H = 3600e3, D = 24 * H;
-    expect(fmtAge(now - 10 * 60e3, now)).toBe("just now");
-    expect(fmtAge(now - 5 * H, now)).toBe("5h ago");
-    expect(fmtAge(now - 3 * D, now)).toBe("3d ago");
-    expect(fmtAge(now - 20 * D, now)).toBe("2w ago");
-    expect(fmtAge(now - 100 * D, now)).toBe("3mo ago");
-    expect(fmtAge(now - 800 * D, now)).toBe("2y ago");
+    expect(fmtAge(tEn, now - 10 * 60e3, now)).toBe("just now");
+    expect(fmtAge(tEn, now - 5 * H, now)).toBe("5h ago");
+    expect(fmtAge(tEn, now - 3 * D, now)).toBe("3d ago");
+    expect(fmtAge(tEn, now - 20 * D, now)).toBe("2w ago");
+    expect(fmtAge(tEn, now - 100 * D, now)).toBe("3mo ago");
+    expect(fmtAge(tEn, now - 800 * D, now)).toBe("2y ago");
     expect(ageDays(now - 2 * D, now)).toBe(2);
     expect(ageDays(now + D, now)).toBe(0);
+  });
+  test("fmtAge in French", () => {
+    const now = 1_000_000_000_000;
+    expect(fmtAge(tFr, now - 3 * 86400e3, now)).toBe("il y a 3 j");
   });
   test("fmtDuration", () => {
     expect(fmtDuration(1_796_000)).toBe("29:56");

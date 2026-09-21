@@ -1,5 +1,6 @@
 // Admin page view models (issue #8): budget gauge, proposal queue, users, invites, instance; audit log rows (issue #9). Pure; tested.
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditAction, AuditKind, AuditRow, OverrideEntry } from "../types.ts";
+import { tEn } from "../i18n/t.ts";
 import { patchText } from "./deepdive.ts";
 import { fmtAge, fmtPts } from "./format.ts";
 import { initialsOf } from "./session.ts";
@@ -25,7 +26,7 @@ export function fmtShortAge(ms: number, now = Date.now()): string {
   const d = now - ms;
   if (d < 60_000) return "just now";
   if (d < H) return `${Math.floor(d / 60_000)} min ago`;
-  return fmtAge(ms, now);
+  return fmtAge(tEn, ms, now);
 }
 
 export interface GaugeModel { used: string; limit: string; pct: number; tone: "" | "tone-warn" | "tone-bad"; sub: string }
@@ -98,14 +99,14 @@ export function diffRows(p: AdminProposal): DiffRow[] {
 
 export interface ProposalCardModel { id: number; spellId: number; name: string; key: string; author: string; when: string; rows: DiffRow[] }
 export function proposalCard(p: AdminProposal, now = Date.now()): ProposalCardModel {
-  return { id: p.id, spellId: p.spellId, name: p.current?.name ?? p.patch.name ?? `spell ${p.patch.id}`, key: p.key, author: p.username ?? "unknown user", when: fmtAge(p.createdAt, now), rows: diffRows(p) };
+  return { id: p.id, spellId: p.spellId, name: p.current?.name ?? p.patch.name ?? `spell ${p.patch.id}`, key: p.key, author: p.username ?? "unknown user", when: fmtAge(tEn, p.createdAt, now), rows: diffRows(p) };
 }
 
 export interface DecidedLine { id: number; dot: "dot-approved" | "dot-rejected"; what: string; author: string; status: "approved" | "rejected"; when: string; note: string | null }
 export function decidedLine(p: AdminProposal, now = Date.now()): DecidedLine {
   const status = p.status === "approved" ? "approved" : "rejected";
   const name = p.current?.name ?? p.patch.name ?? `spell ${p.patch.id}`;
-  return { id: p.id, dot: status === "approved" ? "dot-approved" : "dot-rejected", what: `${name} · ${p.key} · ${patchText(p.patch)}`, author: p.username ?? "unknown user", status, when: fmtAge(p.decidedAt ?? p.createdAt, now), note: p.note };
+  return { id: p.id, dot: status === "approved" ? "dot-approved" : "dot-rejected", what: `${name} · ${p.key} · ${patchText(p.patch)}`, author: p.username ?? "unknown user", status, when: fmtAge(tEn, p.decidedAt ?? p.createdAt, now), note: p.note };
 }
 
 export interface UserRowModel {
@@ -125,7 +126,7 @@ export function userRow(u: AdminUser, now = Date.now(), selfId: number, limitPer
   return {
     id: u.id, name, handle: `@${u.username}`, initials: initialsOf(name), avatarUrl: u.avatarUrl, role: u.role, roleNote: u.configAdmin ? "env" : null,
     toggle: self || u.configAdmin ? null : u.role === "admin" ? "make member" : "make admin",
-    lastSeen: fmtAge(u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
+    lastSeen: fmtAge(tEn, u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
     points24h: fmtPts(u.points24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self && !banned,
     banned, ban: self || u.configAdmin ? null : banned ? "unban" : "ban", pointsCell: u.ownClient ? "own client" : pointsHour,
   };
@@ -135,7 +136,7 @@ export interface InviteRowModel { discordId: string; note: string; added: string
 /** The "added" text always reads "admin #N" — resolving the id to a name is a component concern (it has the users list). */
 export function inviteRow(i: AdminInvite, now = Date.now()): InviteRowModel {
   const by = i.invitedBy.startsWith("admin:") ? `admin #${i.invitedBy.slice(6)}` : i.invitedBy;
-  return { discordId: i.discordId, note: i.note ?? "—", added: `${fmtAge(i.createdAt, now)} · ${by}`, status: i.user ? `signed in as ${i.user.username}` : "not signed in yet", signedIn: i.user !== null };
+  return { discordId: i.discordId, note: i.note ?? "—", added: `${fmtAge(tEn, i.createdAt, now)} · ${by}`, status: i.user ? `signed in as ${i.user.username}` : "not signed in yet", signedIn: i.user !== null };
 }
 
 export interface InstanceModel { version: string; uptime: string; db: string; dbPath: string; backup: string; env: AdminInstance["env"] }
@@ -193,7 +194,7 @@ function auditTime(at: number, now: number): string {
   if (sameDay(d, n)) return hm;
   const yesterday = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
   if (sameDay(d, yesterday)) return `yesterday ${hm}`;
-  return fmtAge(at, now);
+  return fmtAge(tEn, at, now);
 }
 
 const str = (v: unknown): string => (typeof v === "string" ? v : v === null || v === undefined ? "" : String(v));

@@ -1,4 +1,5 @@
 import type { MeResult, MeUser } from "../api.ts";
+import type { T } from "../i18n/t.ts";
 import type { Region } from "../types.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
@@ -42,21 +43,26 @@ export function bootScreen(status: StatusInfo, me: MeResult | null, pathname: st
   return initialScreen(status, pathname);
 }
 
-/** The sign-in callback's `?denied=<discordId>|banned|guild|rate` (canvas "Phase2Details", sign-in variants). */
-export type DeniedNotice = { kind: "invite"; discordId: string } | { kind: "guild" } | { kind: "banned" } | { kind: "rate" } | null;
-export function deniedNotice(search: string): DeniedNotice {
+/**
+ * The sign-in callback's `?denied=<discordId>|banned|guild|rate` (canvas "Phase2Details", sign-in variants).
+ * The three id-less refusals carry their title and explanation already localized — `SignIn.tsx` just renders them.
+ */
+export type DeniedNotice = { kind: "invite"; discordId: string } | { kind: "guild" | "banned" | "rate"; title: string; text: string } | null;
+export function deniedNotice(t: T, search: string): DeniedNotice {
   const v = new URLSearchParams(search).get("denied");
   if (!v) return null;
   if (/^\d{17,20}$/.test(v)) return { kind: "invite", discordId: v };
-  if (v === "guild" || v === "banned" || v === "rate") return { kind: v };
+  if (v === "guild") return { kind: "guild", title: t("signin.denied.guild.title"), text: t("signin.denied.guild.text") };
+  if (v === "banned") return { kind: "banned", title: t("signin.denied.banned.title"), text: t("signin.denied.banned.text") };
+  if (v === "rate") return { kind: "rate", title: t("signin.denied.rate.title"), text: t("signin.denied.rate.text") };
   return null;
 }
 
 /** The faint line under the Discord button: who may sign in and what sign-in reads, per instance mode. */
-export function signInNote(status: StatusInfo): string {
-  if (status.guildRequired) return "Members of the guild's Discord only. Sign-in reads your server list once to check membership and keeps nothing from it.";
-  if (status.openSignup) return "Anyone with a Discord account can sign in. Only your Discord id and name are stored — no message or server access.";
-  return "Invite-only. Only your Discord id and name are stored — no message or server access.";
+export function signInNote(t: T, status: StatusInfo): string {
+  if (status.guildRequired) return t("signin.note.guild");
+  if (status.openSignup) return t("signin.note.open");
+  return t("signin.note.invite");
 }
 
 /** Discord (or bmpl) failed the login round-trip: the callback sent `?login=failed`. */

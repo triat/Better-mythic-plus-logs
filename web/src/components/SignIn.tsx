@@ -1,14 +1,8 @@
 import { useState } from "react";
 import type { DeniedNotice } from "../lib/hostedMode.ts";
+import { useT } from "../locale.tsx";
 
 interface Props { notice: DeniedNotice; loginFailed: boolean; note: string }
-
-/** The three refusals that carry no id (canvas "Phase2Details", sign-in variants): title + explanation in the same inset as the invite notice. */
-const REFUSALS = {
-  guild: { title: "Members of the guild's Discord only", text: "Your account is not in that server. Join it, then sign in again." },
-  banned: { title: "Account banned", text: "This account cannot sign in here. Contact the admin on Discord." },
-  rate: { title: "Too many new accounts", text: "Too many sign-ups from your network in the last hour — try again later." },
-} as const;
 
 const DiscordMark = () => (
   <svg width="20" height="16" viewBox="0 0 127 96" fill="currentColor" aria-hidden="true">
@@ -18,9 +12,10 @@ const DiscordMark = () => (
 
 /** Hosted-mode gate (GET /api/me → 401). Design: canvas page "Hosted", sign-in A + denied notice 2; "Phase2Details" for the mode note and the other refusals. */
 export function SignIn({ notice, loginFailed, note }: Props) {
+  const { t } = useT();
   const [copied, setCopied] = useState(false);
   const deniedDiscordId = notice?.kind === "invite" ? notice.discordId : null;
-  const refusal = notice && notice.kind !== "invite" ? REFUSALS[notice.kind] : null;
+  const refusal = notice && notice.kind !== "invite" ? notice : null;
   const copy = async () => {
     if (!deniedDiscordId) return;
     try { await navigator.clipboard.writeText(deniedDiscordId); setCopied(true); } catch { /* no clipboard access: the id is plain text, selectable */ }
@@ -29,19 +24,19 @@ export function SignIn({ notice, loginFailed, note }: Props) {
     <>
       <header className="top"><div className="top-row"><div className="brand">bmpl</div></div></header>
       <main className="signin">
-        <h1>Who applied to your key?</h1>
-        <p className="muted">Vet a Mythic+ applicant from their Warcraft Logs and Raider.IO history.</p>
-        <a className="btn btn-discord" href="/auth/discord"><DiscordMark /> Sign in with Discord</a>
-        {loginFailed && <p style={{ color: "var(--red)", fontSize: 13 }}>✗ Sign-in failed — Discord did not complete the login. Try again.</p>}
+        <h1>{t("signin.tagline")}</h1>
+        <p className="muted">{t("signin.sub")}</p>
+        <a className="btn btn-discord" href="/auth/discord"><DiscordMark /> {t("signin.discord")}</a>
+        {loginFailed && <p style={{ color: "var(--red)", fontSize: 13 }}>{t("signin.failed")}</p>}
         {deniedDiscordId && (
           <div className="inset signin-denied">
-            <div className="label-caps">Invitation required</div>
-            <div>Your Discord account signed in fine, but it is not invited. Send your id to the admin:</div>
+            <div className="label-caps">{t("signin.invite.title")}</div>
+            <div>{t("signin.invite.body")}</div>
             <div className="signin-id">
               <span className="mono">{deniedDiscordId}</span>
-              <button type="button" className="chip" onClick={() => void copy()}>{copied ? "Copied" : "Copy"}</button>
+              <button type="button" className="chip" onClick={() => void copy()}>{copied ? t("signin.copied") : t("signin.copy")}</button>
             </div>
-            <div className="faint" style={{ fontSize: 12 }}>Then sign in again — no need to reload.</div>
+            <div className="faint" style={{ fontSize: 12 }}>{t("signin.invite.then")}</div>
           </div>
         )}
         {refusal && (
@@ -50,7 +45,7 @@ export function SignIn({ notice, loginFailed, note }: Props) {
             <div>{refusal.text}</div>
           </div>
         )}
-        <p className="signin-note">{note} <a href="/privacy" className="faint">Privacy</a></p>
+        <p className="signin-note">{note} <a href="/privacy" className="faint">{t("common.privacy")}</a></p>
       </main>
     </>
   );

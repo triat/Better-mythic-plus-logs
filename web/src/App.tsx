@@ -72,7 +72,7 @@ export function App() {
   if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} /></BrowserLocale>;
   // /help is public too: an anonymous hosted visitor gets the bare page (brand line, no search); signed in or local, it renders inside `Main` under the app header.
   if (screen.kind === "signin" && page === "help") return <BrowserLocale><HelpPage status={screen.status} bare /></BrowserLocale>;
-  if (screen.kind === "signin") return <BrowserLocale><SignIn notice={deniedNotice(location.search)} loginFailed={loginFailed(location.search)} note={signInNote(screen.status)} /></BrowserLocale>;
+  if (screen.kind === "signin") return <BrowserLocale><SignInScreen status={screen.status} search={location.search} /></BrowserLocale>;
   if (screen.kind === "setup") {
     return (
       <BrowserLocale>
@@ -107,6 +107,12 @@ function Loading() {
   const { t } = useT();
   return <div className="muted" style={{ padding: 24 }}><span className="spinner" /> {t("common.loading")}</div>;
 }
+/** `deniedNotice`/`signInNote` need `t`, which only exists inside the `LocaleProvider` subtree — a plain
+ * component (not a value computed directly in `App`'s render) so the hook has somewhere to run. */
+function SignInScreen({ status, search }: { status: StatusInfo; search: string }) {
+  const { t } = useT();
+  return <SignIn notice={deniedNotice(t, search)} loginFailed={loginFailed(search)} note={signInNote(t, status)} />;
+}
 
 const formToRequest = (f: LookupForm, level: number | null, region: Region): LookupRequest => ({
   character: f.character.trim(),
@@ -117,12 +123,22 @@ const formToRequest = (f: LookupForm, level: number | null, region: Region): Loo
 });
 
 function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; initialOwnClient: OwnClientView | null; onSetup: () => void }) {
+  const { t } = useT();
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
   // The member's own WCL client (issue #11): its counter replaces the quota line; lookups and deep-dives carry the latest view.
   const [ownClient, setOwnClient] = useState<OwnClientView | null>(initialOwnClient);
-  const menu = me ? menuModel(me, quota, ownClient) : null;
+  const menu = me ? menuModel(t, me, quota, ownClient) : null;
+  // The toast action on a quota/budget refusal: label from the dictionary, href fixed (session.ts keeps only that).
+  const ownClientAction: ToastAction = { label: t("errors.ownClientAction"), href: OWN_CLIENT_GUIDE.href };
+  /** A quota/budget 429's dictionary message; falls back to the server's English text for any other failure. */
+  const quotaOrBudgetMessage = useCallback((r: { code: "quota" | "budget" | null; quota?: QuotaInfo; budget?: QuotaInfo; error: string }): string => {
+    const min = (s: number) => Math.max(1, Math.ceil(s / 60));
+    if (r.code === "quota" && r.quota) return t("errors.quota", { used: r.quota.used, limit: r.quota.limit ?? 0, min: min(r.quota.resetInS) });
+    if (r.code === "budget" && r.budget) return t("errors.budget", { left: Math.max(0, (r.budget.limit ?? 0) - r.budget.used), min: min(r.budget.resetInS) });
+    return r.error;
+  }, [t]);
   // Admins see "N pending proposals" next to the Admin item; counted when the menu opens (0 WCL pts, SQLite only).
   const [pendingProposals, setPendingProposals] = useState<number | null>(null);
   const onMenuOpen = useCallback(async () => {
@@ -217,12 +233,12 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   }, [activeKey, fetchPayload, tick]);
 
   const runLookup = useCallback(async (req: LookupRequest, refresh: boolean) => {
-    setBusy(`${refresh ? "refreshing" : "looking up"} ${req.character}…`);
+    setBusy(t(refresh ? "header.busy.refreshing" : "header.busy.lookingUp", { name: req.character }));
     setCompareOpen(false);
     const r = await api.lookup({ ...req, refresh });
     setBusy(null);
     // A refusal that carries the member's own quota numbers gets the way out: the guide to an own client.
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(r.error, r.quota ? OWN_CLIENT_GUIDE : null); return; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(r), r.quota ? ownClientAction : null); return; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
@@ -233,12 +249,12 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!refresh && r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
     touch();
     await loadHistory();
-  }, [loadHistory, updateSettings]);
+  }, [loadHistory, updateSettings, t, quotaOrBudgetMessage, ownClientAction]);
 
   const onLookup = () => void runLookup(formToRequest(form, yourKey, region), false);
   const onRefresh = () => {
-    const t = tabs.find((x) => x.key === activeKey);
-    if (t) void runLookup(t.request, true);
+    const tab = tabs.find((x) => x.key === activeKey);
+    if (tab) void runLookup(tab.request, true);
   };
 
   const closeTab = async (key: string) => {
@@ -277,7 +293,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
 
   const sseConnected = useSse({
     status: (s) => setWatch({ active: s.active, label: s.backend }),
-    searching: (d) => setWatch((w) => ({ ...w, label: `looking up ${d.character}…` })),
+    searching: (d) => setWatch((w) => ({ ...w, label: t("header.busy.lookingUp", { name: d.character }) })),
     result: async (d) => { await loadHistory(); if (!d.fromCache) payloads.current.delete(d.key); await showTab(d.key); setFromCache(d.fromCache); },
     error: (d) => setToast(d.message),
   });
@@ -320,14 +336,14 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     const key = `${run.reportCode}:${run.fightID}`;
     setAnalyzing(key);
     const r = await api.deepdive({ reportCode: run.reportCode, fightID: run.fightID, character: activePayload.character.name, force });
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(r.error, r.quota ? OWN_CLIENT_GUIDE : null); return false; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(quotaOrBudgetMessage(r), r.quota ? ownClientAction : null); return false; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
     setAnalyzing(null);
     return true;
-  }, [activePayload, reloadActive]);
+  }, [activePayload, reloadActive, quotaOrBudgetMessage, ownClientAction]);
 
   const analyzeAll = useCallback(async () => {
     if (!activePayload) return;
@@ -350,7 +366,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     analyzing, progress, analyze: async (run, force) => { await analyze(run, force); }, analyzeAll, patch: patchDefensives,
     // An own client never blocks an analysis: the shared quota is not what it spends from.
     canAfford: (runs) => ownClient !== null || canAfford(quota, runs * POINTS_PER_RUN),
-    quotaTooltip: quotaTooltip(quota),
+    quotaTooltip: quotaTooltip(t, quota),
     mode: proposalMode(status, me),
   };
 
@@ -399,7 +415,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           <main className={"content" + (empty ? " content-home" : "")}>
             {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
             {!empty && !showCompare && activePayload && (
-              <Detail payload={activePayload} hint={activeTab ? reevalHint(yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
+              <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
             )}
             {!empty && !showCompare && !activePayload && activeKey && <div className="muted"><span className="spinner" /> loading…</div>}
             {showCompare && (

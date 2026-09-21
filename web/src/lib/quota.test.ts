@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { canAfford, pointsLeft, quotaFromFailure, quotaLabel, quotaTooltip } from "./quota.ts";
+import { fr } from "../i18n/fr.ts";
+import { makeT, tEn } from "../i18n/t.ts";
+import { budgetFromFailure, canAfford, pointsLeft, quotaFromFailure, quotaLabel, quotaTooltip } from "./quota.ts";
+
+const tFr = makeT(fr, "fr");
 
 describe("quota view model", () => {
   test("pointsLeft: limit minus used, never negative; null without a limit or a quota", () => {
@@ -9,11 +13,14 @@ describe("quota view model", () => {
     expect(pointsLeft(null)).toBeNull();
   });
   test("quotaLabel rounds down and says when it resets once exhausted", () => {
-    expect(quotaLabel({ used: 120.4, limit: 300, resetInS: 900 })).toBe("179 pts left this hour");
-    expect(quotaLabel({ used: 300, limit: 300, resetInS: 90 })).toBe("quota reached · resets in 2 min");
-    expect(quotaLabel({ used: 300, limit: 300, resetInS: 5 })).toBe("quota reached · resets in 1 min");
-    expect(quotaLabel({ used: 1, limit: null, resetInS: 900 })).toBeNull();
-    expect(quotaLabel(null)).toBeNull();
+    expect(quotaLabel(tEn, { used: 120.4, limit: 300, resetInS: 900 })).toBe("179 pts left this hour");
+    expect(quotaLabel(tEn, { used: 300, limit: 300, resetInS: 90 })).toBe("quota reached · resets in 2 min");
+    expect(quotaLabel(tEn, { used: 300, limit: 300, resetInS: 5 })).toBe("quota reached · resets in 1 min");
+    expect(quotaLabel(tEn, { used: 1, limit: null, resetInS: 900 })).toBeNull();
+    expect(quotaLabel(tEn, null)).toBeNull();
+  });
+  test("quotaLabel in French", () => {
+    expect(quotaLabel(tFr, { used: 300, limit: 300, resetInS: 90 })).toBe("quota atteint · reset dans 2 min");
   });
   test("canAfford compares the estimate with what is left; unlimited always can", () => {
     expect(canAfford({ used: 298, limit: 300, resetInS: 1 }, 3)).toBe(false);
@@ -23,11 +30,11 @@ describe("quota view model", () => {
   });
 });
 
-describe("quotaTooltip / quotaFromFailure", () => {
+describe("quotaTooltip / quotaFromFailure / budgetFromFailure", () => {
   test("tooltip of a disabled Analyze button says when the quota resets", () => {
-    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 2280 })).toBe("Hourly quota reached · resets in 38 min · your own client: see Help");
-    expect(quotaTooltip({ used: 300, limit: 300, resetInS: 5 })).toBe("Hourly quota reached · resets in 1 min · your own client: see Help");
-    expect(quotaTooltip(null)).toBe("Hourly quota reached · your own client: see Help");
+    expect(quotaTooltip(tEn, { used: 300, limit: 300, resetInS: 2280 })).toBe("Hourly quota reached · resets in 38 min · your own client: see Help");
+    expect(quotaTooltip(tEn, { used: 300, limit: 300, resetInS: 5 })).toBe("Hourly quota reached · resets in 1 min · your own client: see Help");
+    expect(quotaTooltip(tEn, null)).toBe("Hourly quota reached · your own client: see Help");
   });
   test("only an `error: \"quota\"` body carries the member's numbers", () => {
     expect(quotaFromFailure({ ok: false, error: "quota", message: "x", used: 300, limit: 300, resetInS: 120 })).toEqual({ used: 300, limit: 300, resetInS: 120 });
@@ -35,5 +42,12 @@ describe("quotaTooltip / quotaFromFailure", () => {
     expect(quotaFromFailure({ ok: false, error: "quota", message: "x" })).toBeNull();
     expect(quotaFromFailure(null)).toBeNull();
     expect(quotaFromFailure("nope")).toBeNull();
+  });
+  test("only an `error: \"budget\"` body carries the shared client's numbers", () => {
+    expect(budgetFromFailure({ ok: false, error: "budget", message: "x", used: 3500, limit: 3600, resetInS: 120 })).toEqual({ used: 3500, limit: 3600, resetInS: 120 });
+    expect(budgetFromFailure({ ok: false, error: "quota", message: "x", used: 300, limit: 300, resetInS: 120 })).toBeNull();
+    expect(budgetFromFailure({ ok: false, error: "budget", message: "x" })).toBeNull();
+    expect(budgetFromFailure(null)).toBeNull();
+    expect(budgetFromFailure("nope")).toBeNull();
   });
 });

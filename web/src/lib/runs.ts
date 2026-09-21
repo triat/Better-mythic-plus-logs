@@ -1,4 +1,5 @@
 import type { LookupPayload, MPlusRun, RunSignals } from "../types.ts";
+import { tEn } from "../i18n/t.ts";
 import { STALE_DAYS, ageDays, deathsTone, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, signed, toneClass, wclUrl } from "./format.ts";
 
 export interface Part { text: string; cls: string }
@@ -77,7 +78,7 @@ const rowOf = (r: MPlusRun, metric: string, now: number): RunRowModel => {
     parse: r.parsePercent > 0 ? r.parsePercent.toFixed(1) + "%" : "unranked",
     parseCls: r.parsePercent > 0 ? `tier-${parseTier(r.parsePercent)}` : "faint",
     spec: r.spec,
-    age: fmtAge(r.startTime, now),
+    age: fmtAge(tEn, r.startTime, now),
     stale: ageDays(r.startTime, now) >= STALE_DAYS,
     url: wclUrl(r.reportCode, r.fightID),
   };

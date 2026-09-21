@@ -18,17 +18,17 @@ describe("api", () => {
   test("HTTP error with JSON error body", async () => {
     mock(() => Response.json({ ok: false, error: "Not in history" }, { status: 404 }));
     const r = await api.historyEntry("a b");
-    expect(r).toEqual({ ok: false, error: "Not in history" });
+    expect(r).toEqual({ ok: false, error: "Not in history", code: null });
   });
 
   test("HTTP error with non-JSON body", async () => {
     mock(() => new Response("boom", { status: 500 }));
-    expect(await api.history()).toEqual({ ok: false, error: "HTTP 500" });
+    expect(await api.history()).toEqual({ ok: false, error: "HTTP 500", code: null });
   });
 
   test("network failure", async () => {
     mock(() => { throw new TypeError("fetch failed"); });
-    expect(await api.quit()).toEqual({ ok: false, error: "Network error" });
+    expect(await api.quit()).toEqual({ ok: false, error: "Network error", code: null });
   });
 
   test("lookup posts JSON and encodes history keys", async () => {

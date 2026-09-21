@@ -22,9 +22,14 @@ import type {
   WatchStatus,
 } from "./types.ts";
 import type { Settings } from "./lib/settings.ts";
-import { quotaFromFailure } from "./lib/quota.ts";
+import { budgetFromFailure, quotaFromFailure } from "./lib/quota.ts";
 
-export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; quota?: QuotaInfo };
+/**
+ * `code` distinguishes the two 429 refusals when the caller wants the dictionary-driven wording
+ * (`errors.quota` / `errors.budget`): `quota` also carries the member's own numbers (and updates the header's
+ * quota line), `budget` carries the shared client's numbers for the toast only.
+ */
+export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; code: "quota" | "budget" | null; quota?: QuotaInfo; budget?: QuotaInfo };
 
 export interface MeUser {
   id: number;
@@ -46,13 +51,20 @@ async function call<T>(path: string, init?: RequestInit): Promise<ApiResult<T>> 
   try {
     res = await fetch(path, init);
   } catch {
-    return { ok: false, error: "Network error" };
+    return { ok: false, error: "Network error", code: null };
   }
   const data = (await res.json().catch(() => null)) as ({ ok?: boolean; error?: string; message?: string } & T) | null;
-  if (!data || typeof data !== "object") return { ok: false, error: `HTTP ${res.status}` };
+  if (!data || typeof data !== "object") return { ok: false, error: `HTTP ${res.status}`, code: null };
   if (!res.ok || data.ok === false) {
     const quota = quotaFromFailure(data);
-    return { ok: false, error: data.message ?? data.error ?? `HTTP ${res.status}`, ...(quota ? { quota } : {}) };
+    const budget = budgetFromFailure(data);
+    return {
+      ok: false,
+      error: data.message ?? data.error ?? `HTTP ${res.status}`,
+      code: quota ? "quota" : budget ? "budget" : null,
+      ...(quota ? { quota } : {}),
+      ...(budget ? { budget } : {}),
+    };
   }
   return { ...data, ok: true } as ApiResult<T>;
 }

@@ -1,3 +1,4 @@
+import type { T } from "../i18n/t.ts";
 import type { HistoryItem, Region } from "../types.ts";
 import { regionLabel } from "./regions.ts";
 
@@ -20,5 +21,5 @@ const regionPrefix = (item: HistoryItem, instanceRegion: Region): string =>
 export const tabLevel = (item: HistoryItem, instanceRegion: Region): string =>
   `${regionPrefix(item, instanceRegion)}+${item.targetLevel}`;
 
-export const tabSubtitle = (item: HistoryItem, instanceRegion: Region): string =>
-  `${tabLevel(item, instanceRegion)}${item.targetAutoDetected ? " auto" : ""}${item.spec ? ` · ${item.spec}` : ""}`;
+export const tabSubtitle = (t: T, item: HistoryItem, instanceRegion: Region): string =>
+  `${tabLevel(item, instanceRegion)}${item.targetAutoDetected ? ` ${t("tabs.auto")}` : ""}${item.spec ? ` · ${item.spec}` : ""}`;

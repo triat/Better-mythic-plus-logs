@@ -1,10 +1,13 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api.ts";
+import { useT } from "../locale.tsx";
+import { Around } from "./Around.tsx";
 
 interface Props { envPath: string; hasCredentials: boolean; onDone: () => void }
 
 export function Setup({ envPath, hasCredentials, onDone }: Props) {
+  const { t } = useT();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [state, setState] = useState<{ kind: "idle" } | { kind: "saving" } | { kind: "error"; error: string } | { kind: "saved" }>({ kind: "idle" });
@@ -18,24 +21,26 @@ export function Setup({ envPath, hasCredentials, onDone }: Props) {
   };
   return (
     <main className="setup">
-      <h1>bmpl · setup</h1>
-      {hasCredentials && <p><a href="/">← Back to lookups</a></p>}
-      <p className="muted">Paste your Warcraft Logs API credentials. They are saved locally to <code className="mono">{envPath}</code> and used only to talk to the WCL API.</p>
-      {hasCredentials && <p className="tone-warn">⚠ Credentials are already set; saving will replace them.</p>}
+      <h1>{t("setup.title")}</h1>
+      {hasCredentials && <p><a href="/">{t("setup.back")}</a></p>}
+      <p className="muted">
+        <Around message={t("setup.intro")} param="path"><code className="mono">{envPath}</code></Around>
+      </p>
+      {hasCredentials && <p className="tone-warn">{t("setup.replace")}</p>}
       <div className="card">
         <ol>
-          <li>Log in at <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a></li>
-          <li>Open <a href="https://www.warcraftlogs.com/api/clients/" target="_blank" rel="noopener">Clients</a> → <strong>Create Client</strong></li>
-          <li>Any name. Redirect URL: <code className="mono">http://localhost</code>. Leave <em>Public Client</em> unchecked.</li>
-          <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> below.</li>
+          <li><Around message={t("setup.step1")} param="site"><a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a></Around></li>
+          <li><Around message={t("setup.step2")} param="clients"><a href="https://www.warcraftlogs.com/api/clients/" target="_blank" rel="noopener">Clients</a></Around></li>
+          <li><Around message={t("setup.step3")} param="url"><code className="mono">http://localhost</code></Around></li>
+          <li>{t("setup.step4")}</li>
         </ol>
         <form onSubmit={submit} className="setup-form">
-          <label>Client ID<input value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="off" required /></label>
-          <label>Client Secret<input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} autoComplete="off" required /></label>
-          <button className="btn btn-primary" disabled={state.kind === "saving"}>Save &amp; continue</button>
+          <label>{t("setup.clientId")}<input value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="off" required /></label>
+          <label>{t("setup.clientSecret")}<input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} autoComplete="off" required /></label>
+          <button className="btn btn-primary" disabled={state.kind === "saving"}>{t("setup.save")}</button>
         </form>
-        {state.kind === "saving" && <p className="muted">Saving…</p>}
-        {state.kind === "saved" && <p className="tone-good">✓ saved</p>}
+        {state.kind === "saving" && <p className="muted">{t("setup.saving")}</p>}
+        {state.kind === "saved" && <p className="tone-good">{t("setup.saved")}</p>}
         {state.kind === "error" && <p className="err">✗ {state.error}</p>}
       </div>
     </main>

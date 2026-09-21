@@ -22,7 +22,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
     return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
     // onOpen is read once per opening
   }, [open]);
-  const pending = pendingProposals === null ? null : pendingText(pendingProposals);
+  const pending = pendingProposals === null ? null : pendingText(t, pendingProposals);
   return (
     <div className="user-menu" ref={ref}>
       <button type="button" className={"btn" + (open ? " active" : "")} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} title={m.handle}>
@@ -34,7 +34,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
             <Avatar src={m.avatarUrl} initials={m.initials} size={32} />
             <div className="menu-id"><span className="menu-name">{m.name}</span><span className="faint">{m.handle}</span></div>
           </div>
-          <div className="menu-quota" title={m.ownClient ? "Your Warcraft Logs client" : "Your share of the shared Warcraft Logs budget"}>
+          <div className="menu-quota" title={m.ownClient ? t("header.ownClientTitle") : t("header.quotaShare")}>
             <div className="menu-quota-row">
               <span className={"mono " + m.quota.tone}>{m.quota.text}</span>
               {m.quota.sub && <span className="faint">{m.quota.sub}</span>}

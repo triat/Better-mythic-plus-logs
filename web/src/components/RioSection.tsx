@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { LookupPayload } from "../types.ts";
+import { tEn } from "../i18n/t.ts";
 import { fmtAge, fmtDuration, rioHref } from "../lib/format.ts";
 
 export function RioSection({ payload }: { payload: LookupPayload }) {
@@ -17,7 +18,7 @@ export function RioSection({ payload }: { payload: LookupPayload }) {
           <span className={"chev" + (open ? " open" : "")}>›</span>
           <span className="section-title">Recent runs (Raider.IO)</span>
           <span className="muted">
-            {rio.derived.recentTotal} runs · {rio.derived.recentTimed} timed{last ? ` · last ${fmtAge(last)}` : ""}
+            {rio.derived.recentTotal} runs · {rio.derived.recentTimed} timed{last ? ` · last ${fmtAge(tEn, last)}` : ""}
             {current && current.all > 0 ? ` · score ${current.all.toFixed(0)}` : ""}
           </span>
         </button>
@@ -35,7 +36,7 @@ export function RioSection({ payload }: { payload: LookupPayload }) {
                 <span>{r.dungeon}</span>
                 <span className={r.chests > 0 ? "tone-good" : "tone-bad"}>{r.chests > 0 ? `✓+${r.chests}` : "✗ depleted"}</span>
                 <span className="muted mono">{fmtDuration(r.clearMs)} / {fmtDuration(r.parMs)}</span>
-                <span className="muted">{fmtAge(r.completedAt)}</span>
+                <span className="muted">{fmtAge(tEn, r.completedAt)}</span>
                 {href ? <a href={href} target="_blank" rel="noopener" title="Open on Raider.IO">↗</a> : <span />}
               </div>
             );

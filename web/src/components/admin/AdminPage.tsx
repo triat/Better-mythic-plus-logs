@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../../api.ts";
 import type { MeUser } from "../../api.ts";
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditKind } from "../../types.ts";
+import { useT } from "../../locale.tsx";
 import { Toast } from "../Toast.tsx";
 import { Audit } from "./Audit.tsx";
 import { Gauge } from "./Gauge.tsx";
@@ -15,6 +16,7 @@ const EMPTY: AdminData = { usage: null, users: [], invites: [], pending: [], dec
 
 /** Layout B of the canvas: every section stacked, anchor sub-nav. All data is 0 WCL pts (SQLite + the meter's last snapshot). */
 export function AdminPage({ me }: { me: MeUser }) {
+  const { t } = useT();
   const [data, setData] = useState<AdminData>(EMPTY);
   const [toast, setToast] = useState<string | null>(null);
   const [auditKind, setAuditKind] = useState<AuditKind | "all">("all");
@@ -37,24 +39,24 @@ export function AdminPage({ me }: { me: MeUser }) {
   /** Runs an admin action, shows its error, reloads everything (the sections are small; one round trip keeps them consistent). */
   const act = useCallback(async (r: Promise<{ ok: boolean; error?: string }>) => {
     const res = await r;
-    if (!res.ok) setToast(res.error ?? "Request failed");
+    if (!res.ok) setToast(res.error ?? t("admin.page.requestFailed"));
     await reload();
-  }, [reload]);
+  }, [reload, t]);
   return (
     <>
       <div className="admin-title">
-        <a href="/" className="muted" style={{ fontSize: 13 }}>← back to lookups</a>
-        <h1>Admin</h1>
-        <span className="muted" style={{ fontSize: 12 }}>invites, users, proposals, budget, instance</span>
+        <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.backToLookups")}</a>
+        <h1>{t("admin.page.title")}</h1>
+        <span className="muted" style={{ fontSize: 12 }}>{t("admin.page.sub")}</span>
       </div>
       <nav className="admin-nav">
-        <a href="#budget">Budget</a>
-        <a href="#proposals">Proposals{data.pending.length > 0 && <span className="chip chip-warn" style={{ marginLeft: 4 }}>{data.pending.length}</span>}</a>
-        <a href="#users">Users</a>
-        <a href="#invites">Invites</a>
-        <a href="#instance">Instance</a>
+        <a href="#budget">{t("admin.page.nav.budget")}</a>
+        <a href="#proposals">{t("admin.page.nav.proposals")}{data.pending.length > 0 && <span className="chip chip-warn" style={{ marginLeft: 4 }}>{data.pending.length}</span>}</a>
+        <a href="#users">{t("admin.page.nav.users")}</a>
+        <a href="#invites">{t("admin.page.nav.invites")}</a>
+        <a href="#instance">{t("admin.page.nav.instance")}</a>
         <a href="#audit" onClick={() => { if (data.errors24h > 0) setAuditKind("error"); }}>
-          Audit{data.errors24h > 0 && <span className="chip" style={{ marginLeft: 4, color: "var(--red)" }}>{data.errors24h} errors</span>}
+          {t("admin.page.nav.audit")}{data.errors24h > 0 && <span className="chip" style={{ marginLeft: 4, color: "var(--red)" }}>{t("admin.page.errors", { n: data.errors24h })}</span>}
         </a>
       </nav>
       <main className="content content-home">

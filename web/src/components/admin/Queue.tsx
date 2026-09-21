@@ -1,6 +1,8 @@
 import { Fragment, useState } from "react";
 import type { AdminProposal } from "../../types.ts";
 import { decidedLine, proposalCard } from "../../lib/admin.ts";
+import { useT } from "../../locale.tsx";
+import { Around } from "../Around.tsx";
 import { SpellLink, useWowheadRefresh } from "../SpellLink.tsx";
 
 interface Props {
@@ -11,6 +13,7 @@ interface Props {
 
 /** Members' defensives corrections: pending cards with a diff and a note to the author; decided lines (canvas "Proposal queue"). */
 export function Queue({ pending, decided, onDecide }: Props) {
+  const { t } = useT();
   const [view, setView] = useState<"pending" | "decided">("pending");
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -23,23 +26,25 @@ export function Queue({ pending, decided, onDecide }: Props) {
   return (
     <section id="proposals" className="card admin-section">
       <div className="admin-section-head">
-        <span style={{ fontWeight: 600 }}>Proposal queue</span>
-        <span className="muted">members' defensives corrections · approve applies to everyone, reject drops it for the author (note is shown to them)</span>
+        <span style={{ fontWeight: 600 }}>{t("admin.queue.title")}</span>
+        <span className="muted">{t("admin.queue.sub")}</span>
         <div className="grow" />
-        <button type="button" className={"chip" + (view === "pending" ? " chip-on" : "")} onClick={() => setView("pending")}>Pending · {pending.length}</button>
-        <button type="button" className={"chip" + (view === "decided" ? " chip-on" : "")} onClick={() => setView("decided")}>Decided · {decided.length}</button>
+        <button type="button" className={"chip" + (view === "pending" ? " chip-on" : "")} onClick={() => setView("pending")}>{t("admin.queue.pending", { n: pending.length })}</button>
+        <button type="button" className={"chip" + (view === "decided" ? " chip-on" : "")} onClick={() => setView("decided")}>{t("admin.queue.decided", { n: decided.length })}</button>
       </div>
-      {view === "pending" && pending.length === 0 && <div className="faint" style={{ fontSize: 13 }}>Nothing to review. Members' corrections land here.</div>}
+      {view === "pending" && pending.length === 0 && <div className="faint" style={{ fontSize: 13 }}>{t("admin.queue.empty")}</div>}
       {view === "pending" && pending.map((p) => {
-        const c = proposalCard(p);
+        const c = proposalCard(t, p);
         const disabled = busy === c.id;
         return (
           <div key={c.id} className="inset proposal">
             <div>
               <div style={{ fontSize: 13 }}>
-                <span className="dot dot-pending" /><SpellLink id={c.spellId} name={c.name} /> <span className="faint">· {c.key} · id {c.spellId}</span>
+                <span className="dot dot-pending" /><SpellLink id={c.spellId} name={c.name} /> <span className="faint">{t("admin.queue.meta", { key: c.key, id: String(c.spellId) })}</span>
               </div>
-              <div className="muted" style={{ fontSize: 12 }}>by <span className="text-soft">{c.author}</span> · {c.when}</div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                <Around message={t("admin.queue.by", { when: c.when })} params={{ author: <span className="text-soft">{c.author}</span> }} />
+              </div>
             </div>
             <div className="diff">
               {c.rows.map((r) => (
@@ -49,23 +54,23 @@ export function Queue({ pending, decided, onDecide }: Props) {
               ))}
             </div>
             <div className="proposal-actions">
-              <input placeholder="Note to the author (optional)" maxLength={500} value={notes[c.id] ?? ""} onChange={(e) => setNotes((n) => ({ ...n, [c.id]: e.target.value }))} disabled={disabled} />
-              <button type="button" className="btn btn-sm btn-primary" disabled={disabled} onClick={() => void decide(c.id, "approve")}>Approve</button>
-              <button type="button" className="btn btn-sm btn-danger" disabled={disabled} onClick={() => void decide(c.id, "reject")}>Reject</button>
+              <input placeholder={t("admin.queue.notePlaceholder")} maxLength={500} value={notes[c.id] ?? ""} onChange={(e) => setNotes((n) => ({ ...n, [c.id]: e.target.value }))} disabled={disabled} />
+              <button type="button" className="btn btn-sm btn-primary" disabled={disabled} onClick={() => void decide(c.id, "approve")}>{t("admin.queue.approve")}</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={disabled} onClick={() => void decide(c.id, "reject")}>{t("admin.queue.reject")}</button>
             </div>
           </div>
         );
       })}
-      {view === "decided" && decided.length === 0 && <div className="faint" style={{ fontSize: 13 }}>No decision yet.</div>}
+      {view === "decided" && decided.length === 0 && <div className="faint" style={{ fontSize: 13 }}>{t("admin.queue.noDecision")}</div>}
       {view === "decided" && decided.map((p) => {
-        const l = decidedLine(p);
+        const l = decidedLine(t, p);
         return (
           <div key={l.id} className="admin-row admin-row-decided inset">
             <span title={l.what}><span className={"dot " + l.dot} />{l.what}</span>
             <span className="muted">{l.author}</span>
-            <span><span className={"chip" + (l.status === "approved" ? " chip-ok" : "")}>{l.status}</span></span>
+            <span><span className={"chip" + (l.status === "approved" ? " chip-ok" : "")}>{t(l.status === "approved" ? "admin.queue.status.approved" : "admin.queue.status.rejected")}</span></span>
             <span className="muted">{l.when}</span>
-            <span className="faint" title={l.note ?? undefined}>{l.note ? `"${l.note}"` : ""}</span>
+            <span className="faint" title={l.note ?? undefined}>{l.note ? t("admin.queue.noteQuoted", { note: l.note }) : ""}</span>
           </div>
         );
       })}

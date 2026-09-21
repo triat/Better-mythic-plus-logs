@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../api.ts";
 import type { AdminAudit, AuditKind, AuditRow } from "../../types.ts";
-import { AUDIT_CHIPS, auditRow, auditShowing } from "../../lib/admin.ts";
+import { auditChips, auditRow, auditShowing } from "../../lib/admin.ts";
+import { useT } from "../../locale.tsx";
 
 interface Props {
   kind: AuditKind | "all";
@@ -13,6 +14,7 @@ const NO_COUNTS: AdminAudit["counts"] = { all: 0, login: 0, admin: 0, quota: 0, 
 
 /** The audit log (canvas A): kind chips with totals, one kind at a time, newest first, keyset-paged "Load 50 more". Owns its data (0 WCL pts). */
 export function Audit({ kind, onKind }: Props) {
+  const { t } = useT();
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [counts, setCounts] = useState<AdminAudit["counts"]>(NO_COUNTS);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
@@ -50,10 +52,10 @@ export function Audit({ kind, onKind }: Props) {
   return (
     <section id="audit" className="card admin-section">
       <div className="admin-section-head">
-        <span style={{ fontWeight: 600 }}>Audit log</span>
-        <span className="muted">logins, admin actions, quota refusals, security rejections, WCL errors · kept 90 days</span>
+        <span style={{ fontWeight: 600 }}>{t("admin.audit.title")}</span>
+        <span className="muted">{t("admin.audit.sub")}</span>
         <div className="grow" />
-        {AUDIT_CHIPS.map((c) => (
+        {auditChips(t).map((c) => (
           <button
             key={c.kind} type="button" className={"chip" + (kind === c.kind ? " chip-on" : "")}
             style={c.kind === "error" && counts.error > 0 ? { color: "var(--red)" } : undefined}
@@ -64,11 +66,11 @@ export function Audit({ kind, onKind }: Props) {
         ))}
       </div>
       <div className="admin-row admin-row-head admin-row-audit label-caps">
-        <span>time</span><span>who</span><span>action</span><span>target</span><span>detail</span>
+        <span>{t("admin.audit.head.time")}</span><span>{t("admin.audit.head.who")}</span><span>{t("admin.audit.head.action")}</span><span>{t("admin.audit.head.target")}</span><span>{t("admin.audit.head.detail")}</span>
       </div>
-      {rows.length === 0 && !busy && !error && <div className="faint" style={{ fontSize: 13 }}>Nothing logged yet.</div>}
+      {rows.length === 0 && !busy && !error && <div className="faint" style={{ fontSize: 13 }}>{t("admin.audit.empty")}</div>}
       {rows.map((row) => {
-        const r = auditRow(row);
+        const r = auditRow(t, row);
         return (
           <div key={r.id} className="inset admin-row admin-row-audit">
             <span className="mono faint">{r.time}</span>
@@ -81,8 +83,8 @@ export function Audit({ kind, onKind }: Props) {
       })}
       {error && <div className="faint" style={{ fontSize: 12 }}>{error}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 4 }}>
-        {nextBefore !== null && <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void loadMore()}>Load 50 more</button>}
-        <span className="faint" style={{ fontSize: 12 }}>{auditShowing(rows.length, counts[kind])}</span>
+        {nextBefore !== null && <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void loadMore()}>{t("admin.audit.loadMore", { n: PAGE })}</button>}
+        <span className="faint" style={{ fontSize: 12 }}>{auditShowing(t, rows.length, counts[kind])}</span>
       </div>
     </section>
   );

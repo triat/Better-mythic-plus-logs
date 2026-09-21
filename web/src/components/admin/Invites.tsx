@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import type { AdminInvite, AdminUser } from "../../types.ts";
 import { inviteRow } from "../../lib/admin.ts";
+import { useT } from "../../locale.tsx";
+import { Around } from "../Around.tsx";
 
 interface Props {
   invites: AdminInvite[];
@@ -21,6 +23,7 @@ const withAdminName = (added: string, users: AdminUser[]): string =>
 
 /** Who may sign in: add a Discord id with a note, remove one (inline confirmation; canvas "Invites"). */
 export function Invites({ invites, users, onAdd, onRemove }: Props) {
+  const { t } = useT();
   const [id, setId] = useState("");
   const [note, setNote] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -44,36 +47,41 @@ export function Invites({ invites, users, onAdd, onRemove }: Props) {
   return (
     <section id="invites" className="card admin-section">
       <div className="admin-section-head">
-        <span style={{ fontWeight: 600 }}>Invites</span>
-        <span className="muted">{invites.length} · a Discord id may sign in once it is listed here (admins from the env are implicit)</span>
+        <span style={{ fontWeight: 600 }}>{t("admin.invites.title")}</span>
+        <span className="muted">{t("admin.invites.sub", { n: invites.length })}</span>
       </div>
       <form className="admin-form" onSubmit={(e) => void submit(e)}>
-        <input className="mono" placeholder="Discord id (17–20 digits)" value={id} maxLength={20} onChange={(e) => setId(e.target.value.trim())} autoComplete="off" spellCheck={false} />
-        <input placeholder="Note (guild mate, alt of…)" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} autoComplete="off" />
-        <button type="submit" className="btn btn-primary" disabled={!valid || busy}>Invite</button>
-        <span className="faint" style={{ fontSize: 12 }}>Developer Mode → Copy User ID</span>
+        <input className="mono" placeholder={t("admin.invites.idPlaceholder")} value={id} maxLength={20} onChange={(e) => setId(e.target.value.trim())} autoComplete="off" spellCheck={false} />
+        <input placeholder={t("admin.invites.notePlaceholder")} value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} autoComplete="off" />
+        <button type="submit" className="btn btn-primary" disabled={!valid || busy}>{t("admin.invites.invite")}</button>
+        <span className="faint" style={{ fontSize: 12 }}>{t("admin.invites.devMode")}</span>
       </form>
       <div className="admin-row admin-row-head admin-row-invite label-caps">
-        <span>discord id</span><span>note</span><span>added</span><span>status</span><span />
+        <span>{t("admin.invites.head.discordId")}</span><span>{t("admin.invites.head.note")}</span><span>{t("admin.invites.head.added")}</span><span>{t("admin.invites.head.status")}</span><span />
       </div>
       {invites.map((i) => {
-        const r = inviteRow(i);
+        const r = inviteRow(t, i);
         const asking = confirm === r.discordId;
         return (
           <div key={r.discordId} className="inset admin-row admin-row-invite">
             <span className="mono">{r.discordId}</span>
             {asking ? (
               <span className="inset confirm" style={{ gridColumn: "2 / -1" }}>
-                <span>Remove the invite for <b>{r.discordId}</b>? {r.signedIn ? "They are signed out and cannot sign in again." : "They will not be able to sign in."}</span>
-                <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => void remove(r.discordId)}>Remove</button>
-                <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirm(null)}>Cancel</button>
+                <span>
+                  <Around
+                    message={t("admin.invites.removeConfirm", { consequence: t(r.signedIn ? "admin.invites.signedOut" : "admin.invites.cannotSignIn") })}
+                    params={{ id: <b>{r.discordId}</b> }}
+                  />
+                </span>
+                <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => void remove(r.discordId)}>{t("admin.invites.remove")}</button>
+                <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirm(null)}>{t("common.cancel")}</button>
               </span>
             ) : (
               <>
                 <span className={r.note === "—" ? "faint" : "muted"} title={r.note}>{r.note}</span>
                 <span className="muted">{withAdminName(r.added, users)}</span>
                 <span><span className={"chip" + (r.signedIn ? " chip-ok" : "")}>{r.status}</span></span>
-                <span><button type="button" className="btn btn-sm" onClick={() => setConfirm(r.discordId)}>Remove</button></span>
+                <span><button type="button" className="btn btn-sm" onClick={() => setConfirm(r.discordId)}>{t("admin.invites.remove")}</button></span>
               </>
             )}
           </div>

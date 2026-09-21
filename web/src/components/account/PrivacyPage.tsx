@@ -1,37 +1,39 @@
+import { useT } from "../../locale.tsx";
+import { Around } from "../Around.tsx";
+
 interface Props { operator: string; guildRequired: boolean }
 
 /** /privacy: one static page, readable signed out (brand header only, no search). Text from the canvas "Phase2Details". */
 export function PrivacyPage({ operator, guildRequired }: Props) {
+  const { t } = useT();
   return (
     <>
       <header className="top"><div className="top-row"><div className="brand">bmpl</div></div></header>
       <main className="privacy">
-        <a href="/" className="muted" style={{ fontSize: 13 }}>← back</a>
-        <h1>Privacy</h1>
-        <p>
-          bmpl vets Mythic+ players from public Warcraft Logs and Raider.IO data. This instance is run by <b>{operator}</b> for their guild;
-          it is not a Blizzard, Warcraft Logs or Discord service.
-        </p>
-        <h2>What is stored about you</h2>
+        <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.back")}</a>
+        <h1>{t("privacy.title")}</h1>
+        <p><Around message={t("privacy.intro")} params={{ operator: <b>{operator}</b> }} /></p>
+        <h2>{t("privacy.stored")}</h2>
         <ul>
           <li>
-            <b>Discord id, username, global name and avatar</b> — from the "identify" scope when you sign in. Nothing else from Discord: no e-mail, no messages, no server list
-            {guildRequired && <span className="faint"> (unless this instance requires membership of one server — then the check reads your server list once at sign-in and keeps nothing)</span>}.
+            <Around
+              message={t("privacy.identityLine")}
+              params={{
+                identity: <b>{t("privacy.identity")}</b>,
+                guild: guildRequired ? <span className="faint">{t("privacy.identityGuild")}</span> : "",
+              }}
+            />
           </li>
-          <li><b>Your lookup history</b> (the 20 tabs), your settings (your key, legend), your hourly WCL usage, your defensives proposals and the admin's notes on them.</li>
-          <li><b>Your Warcraft Logs client</b>, if you added one: the client id in clear, the secret encrypted with a key that only this server holds. Verified once on save; used for your lookups only.</li>
-          <li><b>Sessions</b>: a random id in a cookie, your IP and browser at sign-in, for 30 days.</li>
-          <li><b>Audit log</b>: sign-ins, refusals and errors with your id and IP, kept 90 days.</li>
+          <li><Around message={t("privacy.historyLine")} params={{ history: <b>{t("privacy.history")}</b> }} /></li>
+          <li><Around message={t("privacy.clientLine")} params={{ client: <b>{t("privacy.client")}</b> }} /></li>
+          <li><Around message={t("privacy.sessionsLine")} params={{ sessions: <b>{t("privacy.sessions")}</b> }} /></li>
+          <li><Around message={t("privacy.auditLine")} params={{ audit: <b>{t("privacy.audit")}</b> }} /></li>
         </ul>
-        <h2>What is not yours</h2>
-        <p>Runs, rankings and fight data fetched from Warcraft Logs are public and are cached for everyone; they carry the names of the players in those runs, which is how Warcraft Logs publishes them.</p>
-        <h2>Deleting your account</h2>
-        <p>
-          Settings → <b>Delete my account</b> removes every row above and signs you out. Corrections you proposed that an admin approved stay in the shared table, without your name.
-          The audit log keeps your Discord id, the username you had at deletion and your IP for up to 90 days, unlinked from any account.
-          Backups of the database are kept 30 days.
-        </p>
-        <p className="faint" style={{ fontSize: 12 }}>Questions: the admin of this instance on Discord.</p>
+        <h2>{t("privacy.notYours")}</h2>
+        <p>{t("privacy.publicData")}</p>
+        <h2>{t("privacy.deleting")}</h2>
+        <p><Around message={t("privacy.deleteLine")} params={{ deleteMine: <b>{t("privacy.deleteMine")}</b> }} /></p>
+        <p className="faint" style={{ fontSize: 12 }}>{t("privacy.questions")}</p>
       </main>
     </>
   );

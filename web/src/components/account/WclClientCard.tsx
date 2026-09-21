@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import { api } from "../../api.ts";
 import type { OwnClientView } from "../../types.ts";
 import { clientCard } from "../../lib/account.ts";
+import { useT } from "../../locale.tsx";
+import { Around } from "../Around.tsx";
 
 interface Props {
   enabled: boolean;
@@ -16,7 +18,8 @@ const CLIENTS_URL = "https://www.warcraftlogs.com/api/clients";
 
 /** "Your Warcraft Logs client": none (id/secret form), set (Verify again / Replace / Remove), disabled. Canvas "Phase2SettingsA" + "Phase2Details". */
 export function WclClientCard({ enabled, client, limitPerUser, onChange, onError }: Props) {
-  const m = clientCard(enabled, client, limitPerUser);
+  const { t } = useT();
+  const m = clientCard(t, enabled, client, limitPerUser);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [replacing, setReplacing] = useState(false);
@@ -59,7 +62,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
   return (
     <section className="card settings-card" id="wcl-client">
       <div className="settings-head">
-        <span className="section-title">Your Warcraft Logs client</span>
+        <span className="section-title">{t("account.client.title")}</span>
         <span style={{ flex: 1 }} />
         <span className={"dot " + m.dot} />
         <span className={m.state === "set" ? "" : m.state === "stale" ? "tone-warn" : "muted"}>{head}{tail && <span className="faint">{tail}</span>}</span>
@@ -68,16 +71,16 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
         <div className="settings-actions">
           {confirmRemove ? (
             <span className="inset confirm">
-              <span>Remove your client? Your lookups go back to the shared budget.</span>
-              <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => void remove()}>Remove</button>
-              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirmRemove(false)}>Cancel</button>
+              <span>{t("account.client.removeConfirm")}</span>
+              <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => void remove()}>{t("account.client.remove")}</button>
+              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirmRemove(false)}>{t("common.cancel")}</button>
             </span>
           ) : (
             <>
-              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void verify()}>Verify again</button>
-              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setReplacing(true)}>Replace</button>
-              <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => setConfirmRemove(true)}>Remove</button>
-              <span className="faint" style={{ fontSize: 12, marginLeft: 6 }}>No shared quota.</span>
+              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void verify()}>{t("account.client.verify")}</button>
+              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setReplacing(true)}>{t("account.client.replace")}</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => setConfirmRemove(true)}>{t("account.client.remove")}</button>
+              <span className="faint" style={{ fontSize: 12, marginLeft: 6 }}>{t("account.client.noQuota")}</span>
             </>
           )}
         </div>
@@ -86,21 +89,26 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
         <form onSubmit={(e) => void save(e)}>
           <div className="settings-grid">
             <label className="field">
-              <span className="lab">Client id</span>
-              <input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="from warcraftlogs.com/api/clients" autoComplete="off" spellCheck={false} />
+              <span className="lab">{t("account.client.clientId")}</span>
+              <input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder={t("account.client.idPlaceholder")} autoComplete="off" spellCheck={false} />
             </label>
             <label className="field">
-              <span className="lab">Client secret</span>
+              <span className="lab">{t("account.client.clientSecret")}</span>
               <input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} placeholder="••••••••••••••••••••••••" autoComplete="off" />
             </label>
             <span className="settings-submit">
-              <button type="submit" className="btn btn-primary" disabled={busy || !clientId.trim() || !clientSecret}>Save and verify</button>
-              {replacing && <button type="button" className="btn" disabled={busy} onClick={clearForm}>Cancel</button>}
+              <button type="submit" className="btn btn-primary" disabled={busy || !clientId.trim() || !clientSecret}>{t("account.client.save")}</button>
+              {replacing && <button type="button" className="btn" disabled={busy} onClick={clearForm}>{t("common.cancel")}</button>}
             </span>
           </div>
           <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>
-            Create a client at <a href={CLIENTS_URL} target="_blank" rel="noreferrer">warcraftlogs.com/api/clients</a> — <a href="/help#wcl-client">step by step in Help</a>.
-            The secret is stored encrypted and never shown again; saving sends one PING to check it.
+            <Around
+              message={t("account.client.hint")}
+              params={{
+                site: <a href={CLIENTS_URL} target="_blank" rel="noreferrer">warcraftlogs.com/api/clients</a>,
+                guide: <a href="/help#wcl-client">{t("account.client.guideLink")}</a>,
+              }}
+            />
           </div>
         </form>
       )}

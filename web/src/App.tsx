@@ -397,12 +397,12 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       {page === "settings" && (
         account === "ok" && me
           ? <SettingsPage me={me} status={status} quota={quota} ownClient={ownClient} onOwnClientChange={setOwnClient} onDeleted={() => location.assign("/")} />
-          : <Forbidden reason="local" handle={null} title="Hosted mode only" text="Settings exist in hosted mode only." />
+          : <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.settingsHosted")} />
       )}
       {page === "help" && <HelpPage status={status} />}
       {page === "privacy" && (
         // Hosted visitors never reach here (App renders the bare page before Main).
-        <Forbidden reason="local" handle={null} title="Hosted mode only" text="The privacy page exists in hosted mode only." />
+        <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.privacyHosted")} />
       )}
       {isMainPage && (
         <>

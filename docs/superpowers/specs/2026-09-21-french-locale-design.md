@@ -1,6 +1,6 @@
 # French locale for the web front — design
 
-Status: approved design, 2026-09-21 (brainstorm in chat; canvas board "Locale" to come before the chip is coded).
+Status: approved design, 2026-09-21 (brainstorm in chat; canvas "Hosted" page, board "Locale — EN / FR chip (A/B) and the French preview", option **A** chosen: the chip lives in the user menu in hosted mode and at the right of the header in local mode).
 
 ## Why
 
@@ -39,12 +39,13 @@ product: one code base, one set of behaviours, two languages on the screen.
 
 ### Switching
 
-A chip **EN / FR** (`ChipMenu`, the same component as the region chip): in the user menu under the quota
-block in hosted mode, at the right of the header in local mode (before the watch toggle). Picking a
-locale writes `settings.locale` (hosted: `PUT /api/settings { locale }`) and re-renders; nothing is
-re-fetched except `/api/docs`. The canvas board "Locale" (page Hosted) shows the chip in both places and
-the French versions of the header, the verdict hero and the user menu; the user picks the placement before
-Task 1 codes it.
+Canvas option A. Hosted mode: a "Language" row in the user menu, under the quota block, with a two-way
+segmented control **EN | FR** (the current locale highlighted). Local mode: a `chip` (`chip-on` when the
+locale differs from the browser's detection) at the right of the header, before the clipboard-watch
+toggle, opening the same two-entry `ChipMenu` as the region chip ("Language · remembered": EN English /
+FR Français). Picking a locale writes `settings.locale` (hosted: `PUT /api/settings { locale }`) and
+re-renders; nothing is re-fetched except `/api/docs`. The board also fixes the French preview of the
+header, tabs, hero, axes, tiles and the quota toast (`docs/design/canvas/Locale.dc.html`).
 
 ## Dictionaries (`web/src/i18n/`)
 

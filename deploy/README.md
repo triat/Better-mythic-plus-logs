@@ -49,11 +49,13 @@ Bun, `just`, and an SSH key that opens `root@<vps>`.
 
 **2. Bootstrap** (once). Key-only SSH first: on Ubuntu 24.04 cloud images
 `/etc/ssh/sshd_config.d/50-cloud-init.conf` sets `PasswordAuthentication yes`
-and overrides the main file, so put `PasswordAuthentication no` in a drop-in
-that sorts after it, `/etc/ssh/sshd_config.d/zz-bmpl.conf` (or delete the
-cloud-init drop-in), then `systemctl restart ssh`. Verify with `sshd -T |
-grep -i passwordauthentication` and keep the current session open until a
-fresh key-based login works. Then, from the repo root:
+and overrides the main file. sshd keeps the *first* value it reads and the
+drop-ins are included in lexical order, so put `PasswordAuthentication no` in
+a drop-in that sorts *before* it, `/etc/ssh/sshd_config.d/00-bmpl.conf` (a
+`zz-` name is silently ignored; deleting the cloud-init drop-in also works),
+then `sshd -t && systemctl restart ssh`. Verify with `sshd -T | grep -i
+passwordauthentication` and keep the current session open until a fresh
+key-based login works. Then, from the repo root:
 
 ```bash
 ssh root@<vps> 'mkdir -p /root/bmpl-deploy'

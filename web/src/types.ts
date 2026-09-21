@@ -62,7 +62,7 @@ export interface WatchOpts {
   level?: number | string | null;
   spec?: string | null;
   metric?: string | null;
-  region?: Region | null;
+  region?: Region;
 }
 
 export interface WatchStatus {

@@ -198,8 +198,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
     setActiveKey(r.key);
-    // A pasted Raider.IO URL carries its own region: the chip flips to it (and it is remembered).
-    if (r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
+    // A user lookup whose effective region differs (a pasted Raider.IO URL carries its own) flips the
+    // remembered region to it. A refresh is not a choice: refreshing a foreign-region tab leaves it alone.
+    if (!refresh && r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
     touch();
     await loadHistory();
   }, [loadHistory, updateSettings]);

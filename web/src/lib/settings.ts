@@ -1,5 +1,5 @@
-// Per-user settings: "your key" and the legend state. Hosted mode keeps them on the server
-// (GET/PUT /api/settings); local mode keeps them in the browser under the same keys as before.
+// Per-user settings: "your key", the legend state and the remembered region. Hosted mode keeps them on
+// the server (GET/PUT /api/settings); local mode keeps them in the browser under the same keys as before.
 import type { Region } from "../types.ts";
 import { STORAGE_KEY, parseStoredKey } from "./keyLevel.ts";
 import { isRegion } from "./regions.ts";

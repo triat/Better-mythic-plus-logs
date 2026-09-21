@@ -48,7 +48,7 @@ export function Header(p: Props) {
   const submit = (e: FormEvent) => { e.preventDefault(); if (p.form.character.trim()) p.onLookup(); };
   const set = (patch: Partial<LookupForm>) => p.onChange({ ...p.form, ...patch });
   const pickSpec = (v: string) => {
-    if (v === OTHER_SPEC) { setOpen(true); return; }
+    if (v === OTHER_SPEC) { setOpen((o) => !o); return; }   // "Other…" toggles the free-text row
     set({ spec: v });
     setOpen(false);
   };

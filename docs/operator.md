@@ -20,7 +20,17 @@ as `deploy@`) and `<host>` with your public hostname (e.g. `bmpl.example.com`).
 
 **When** — you've merged a change to `main` and want it live.
 
-**Do**
+**Do** — publish a release; the `deploy` GitHub workflow ships it
+([deploy/README.md § 9](../deploy/README.md#deploying-on-a-vps)):
+
+```bash
+# bump "version" in package.json first — the workflow refuses a tag that differs from it
+gh release create v0.2.0 --generate-notes
+gh run watch
+```
+
+A push to `main` alone deploys nothing. By hand, from your machine (the
+fallback when GitHub is down, same gestures):
 
 ```bash
 just check && bun test
@@ -33,18 +43,21 @@ BMPL_DEPLOY_HOST=deploy@<host> just deploy
 BMPL_DEPLOY_HOST=deploy@<host> just deploy-status   # unit states, /api/health (backupAgeS)
 ```
 
-`just deploy` builds `dist/bmpl-linux`, copies it to `/opt/bmpl/bmpl.new`,
-installs it over `/opt/bmpl/bmpl`, restarts `bmpl.service` and polls
-`/api/health` for up to 30 s; on failure it prints the last 30 journal lines
-itself, so a red `deploy` is usually self-explanatory — otherwise:
+The workflow and `just deploy` build `dist/bmpl-linux`, copy it to
+`/home/deploy/bmpl.new`, install it over `/opt/bmpl/bmpl`, restart
+`bmpl.service` and poll `/api/health` for up to 30 s; on failure they print
+the last 30 journal lines, so a red run is usually self-explanatory —
+otherwise:
 
 ```bash
 BMPL_DEPLOY_HOST=deploy@<host> just deploy-logs   # journalctl -u bmpl -f
 ```
 
 **There is no automatic rollback and no previous binary kept** — the old
-binary is already overwritten by the time `deploy` reports success or
-failure. To roll back, deploy the last good commit instead:
+binary is already overwritten by the time the deploy reports success or
+failure. To roll back, re-run the workflow on the last good release (Actions
+→ deploy → *Run workflow* → pick its tag, or `gh workflow run deploy --ref
+v0.1.9`), or deploy the last good commit by hand:
 
 ```bash
 git checkout <previous-sha>            # or: git revert <bad-sha>

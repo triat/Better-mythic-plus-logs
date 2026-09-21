@@ -193,7 +193,33 @@ kept. Downgrade: check out the previous commit and `just deploy` again. If the
 your `.env` and `litestream.yml`), then `systemctl restart bmpl litestream`
 if the units changed.
 
-**9. Uninstall.** On the VPS as root:
+**9. Auto-deploy from GitHub.** `.github/workflows/deploy.yml` ships a
+published release (`gh release create vX.Y.Z --generate-notes`, or the
+*Releases* page) — never a plain push to `main`. The job checks the tag
+against `"version"` in `package.json` (bump it in the release commit),
+installs with frozen lockfiles, runs `just check` and `bun test` (no `.env`:
+everything runs on fakes, no WCL points), builds `dist/bmpl-linux`, then does
+exactly what `just deploy` does over SSH as the `deploy` user, and finally
+checks `<BMPL_PUBLIC_URL>/api/health` reports `ok` with the new version. A
+failure before the SSH step leaves the VPS untouched. *Run workflow* on the
+Actions page re-deploys any ref by hand (`gh workflow run deploy --ref
+vX.Y.Z`), which is also the rollback. It needs, in the repository settings:
+
+| Kind | Name | Value |
+|---|---|---|
+| secret | `BMPL_DEPLOY_SSH_KEY` | a private key whose public half is in `/home/deploy/.ssh/authorized_keys` — a dedicated one (`ssh-keygen -t ed25519 -C bmpl-ci`), so it can be revoked alone |
+| secret | `BMPL_DEPLOY_KNOWN_HOSTS` | `ssh-keyscan -t ed25519 <ip>` — the VPS host key, pinned instead of trusting on first use |
+| variable | `BMPL_DEPLOY_HOST` | `deploy@<ip>` |
+| variable | `BMPL_PUBLIC_URL` | `https://bmpl.<domain>` |
+
+`gh secret set BMPL_DEPLOY_SSH_KEY < key`, `gh secret set
+BMPL_DEPLOY_KNOWN_HOSTS < known_hosts`, `gh variable set BMPL_DEPLOY_HOST
+--body deploy@<ip>`. Revoke the CI key by deleting its line in
+`/home/deploy/.ssh/authorized_keys`; rotate the host key secret after a
+reinstall of the VPS. `concurrency: deploy` queues overlapping runs instead
+of interleaving them.
+
+**10. Uninstall.** On the VPS as root:
 
 ```bash
 systemctl disable --now bmpl litestream bmpl-backup-check.timer

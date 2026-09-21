@@ -33,7 +33,7 @@ Anything the user will see is mocked first on the Claude Design canvas (`docs/ag
 - Browsers cache `assets/app.js` (fixed name): hard-reload after `just build`; an old `./bmpl serve` on :3000 silently serves the old UI.
 - Commands containing raw terminal escape bytes are rejected by the tooling; write such content to a file instead.
 - WCL points are a shared hourly budget: state the estimated cost before any command that fetches, and prefer cached data (`bmpl analyze` lists cached runs at 0 pts).
-- `just deploy` / `deploy-status` / `deploy-logs` / `deploy-restore-test` need `BMPL_DEPLOY_HOST=user@host` exported in the shell (`just` does not read `.env`) and an SSH key for that host. They touch the production VPS: only the user runs them, from their machine — never from an agent or a subagent, not even `deploy-status`. `just build-linux` alone is safe (local cross-compile into `dist/`, git-ignored).
+- `just deploy` / `deploy-status` / `deploy-logs` / `deploy-restore-test` need `BMPL_DEPLOY_HOST=user@host` exported in the shell (`just` does not read `.env`) and an SSH key for that host. They touch the production VPS: only the user runs them, from their machine — never from an agent or a subagent, not even `deploy-status`. `just build-linux` alone is safe (local cross-compile into `dist/`, git-ignored). Production ships through GitHub releases (`.github/workflows/deploy.yml`, `deploy/README.md` § 9): a push to `main` deploys nothing, publishing a release does — so never create a release or a `v*` tag unless the user asks for one.
 
 ## Roadmap pointer
 

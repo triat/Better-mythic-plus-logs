@@ -27,7 +27,8 @@ just l Name-Realm [--level N]       # bmpl lookup, the core flow
 bun src/cli.ts analyze Name-Realm   # deep-dive (spends WCL points — read architecture.md first)
 just audit-defensives [--only Class:Spec]   # ~9 WCL pts per spec per run
 just build-linux                            # cross-compile dist/bmpl-linux for the VPS (local, safe)
-just deploy                                 # touches the VPS — only when the user asks, never from an agent (needs BMPL_DEPLOY_HOST)
+just deploy                                 # touches the VPS by hand — only when the user asks, never from an agent (needs BMPL_DEPLOY_HOST)
+gh release create vX.Y.Z --generate-notes   # the normal way to ship: the deploy workflow ships a published release (bump package.json first)
 just check-deps                             # bun audit on both lockfiles — run before a release
 ```
 

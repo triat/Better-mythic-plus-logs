@@ -3,12 +3,12 @@ import {
   detectClipboardReader,
   isPlausibleNameRealm,
 } from "./clipboard.ts";
-import { config } from "./config.ts";
 import { dim, err, heading, ok } from "./format.ts";
 import { renderLookup } from "./format-mplus.ts";
 import { performLookup } from "./lookup.ts";
 import type { Metric } from "./roles.ts";
 import { closeStore } from "./signals/store.ts";
+import type { Region } from "./wow/regions.ts";
 
 export interface WatchOptions {
   level: number | null;
@@ -16,6 +16,7 @@ export interface WatchOptions {
   metric: Metric | undefined;
   intervalMs: number;
   enrich: boolean;
+  region: Region;
 }
 
 const divider = () => dim("─".repeat(60));
@@ -92,7 +93,7 @@ export async function runWatch(opts: WatchOptions): Promise<void> {
       const o = await performLookup({
         name: parsed.name,
         realm: parsed.realm,
-        region: config.region,
+        region: opts.region,
         level: opts.level,
         spec: opts.spec,
         metric: opts.metric,

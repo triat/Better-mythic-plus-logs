@@ -38,18 +38,23 @@ import type { HostedConfig } from "./hosted/config.ts";
 import { openHosted } from "./hosted/db.ts";
 import { tablesFor } from "./hosted/defensives.ts";
 import { runWatch } from "./watch.ts";
+import { regionFlag } from "./wow/regions.ts";
+import type { Region } from "./wow/regions.ts";
 
 const USAGE = `bmpl — Better Mythic+ Logs (Warcraft Logs analyzer)
 
 Usage:
-  bmpl lookup <Name-Realm> | <name> <realm>  [--level <N>] [--spec X] [--metric dps|hps] [--json]
+  bmpl lookup <Name-Realm> | <name> <realm>  [--level <N>] [--spec X] [--metric dps|hps]
+                                     [--region eu|us|kr|tw] [--json]
                                      Vet a player for a +N key: best run at +N-1
                                      + per-dungeon profile. Omit --level to auto-
                                      detect target (median of best runs). Metric
                                      auto-selects (hps for healers, dps else).
-  bmpl mplus  <Name-Realm> | <name> <realm>  [--spec X] [--metric dps|hps] [--json]
+  bmpl mplus  <Name-Realm> | <name> <realm>  [--spec X] [--metric dps|hps]
+                                     [--region eu|us|kr|tw] [--json]
                                      Full M+ summary for current season.
-  bmpl watch  [--level <N>] [--spec X] [--metric dps|hps] [--interval <ms>]
+  bmpl watch  [--level <N>] [--spec X] [--metric dps|hps] [--region eu|us|kr|tw]
+                                     [--interval <ms>]
                                      Poll the clipboard; runs lookup whenever a
                                      Name-Realm string is copied. Omit --level
                                      to auto-detect per character. Ctrl+C to quit.
@@ -67,7 +72,8 @@ Usage:
                                      Re-run the evaluation model on a saved lookup
                                      (--json output). Uses evaluation.json next to
                                      .env if present.
-  bmpl analyze <Name-Realm> [--run <code>:<fight>]... [--all] [--force] [--yes] [--level <N>] [--spec X] [--json]
+  bmpl analyze <Name-Realm> [--run <code>:<fight>]... [--all] [--force] [--yes]
+                                     [--level <N>] [--spec X] [--region eu|us|kr|tw] [--json]
                                      Deep-dive the defensive cooldowns of shown runs
                                      (~3 WCL pts per run, cached forever). Without
                                      --run/--all: lists the runs and their status.
@@ -83,6 +89,9 @@ Usage:
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).
   bmpl help                          Show this help.
+
+Flags:
+  --region     WCL/Raider.IO region (default: BMPL_REGION or eu)
 
 Debug:
   bmpl raw-rankings <name> <realm> --zone <id> [--partition <n>] [--by-bracket]
@@ -175,8 +184,9 @@ async function cmdLookup(
   metric: Metric | undefined,
   enrich: boolean,
   json: boolean,
+  region: Region,
 ): Promise<void> {
-  const o = await performLookup({ name, realm, region: config.region, level: targetLevel, spec, metric, enrich });
+  const o = await performLookup({ name, realm, region, level: targetLevel, spec, metric, enrich });
   if (!o.ok) {
     console.error(json ? o.error : err("✗ " + o.error));
     closeStore();
@@ -237,14 +247,14 @@ export function selectRuns<R extends { reportCode: string; fightID: number }>(
 
 async function cmdAnalyze(
   name: string, realm: string, targetLevel: number | null, spec: string | null,
-  runKeys: string[], all: boolean, force: boolean, yes: boolean, json: boolean,
+  runKeys: string[], all: boolean, force: boolean, yes: boolean, json: boolean, region: Region,
 ): Promise<void> {
   if (json && !yes && (all || runKeys.length > 0)) {
     console.error(err("✗ --json needs --yes to fetch runs"));
     closeStore();
     process.exit(2);
   }
-  const o = await performLookup({ name, realm, region: config.region, level: targetLevel, spec, enrich: true });
+  const o = await performLookup({ name, realm, region, level: targetLevel, spec, enrich: true });
   if (!o.ok) { console.error(json ? o.error : err("✗ " + o.error)); closeStore(); process.exit(1); }
   const shown = displayedRuns(o.result);
   const analyzed = new Set(o.deepdive.map((d) => `${d.reportCode}:${d.fightID}`));
@@ -302,9 +312,10 @@ async function cmdMplus(
   spec: string | null,
   metric: Metric | undefined,
   json: boolean,
+  region: Region,
 ): Promise<void> {
   let data = await fetchMplusData(name, realm, {
-    region: config.region,
+    region,
     metric,
     specFilter: spec,
   });
@@ -331,7 +342,7 @@ async function cmdMplus(
           character: {
             ...data.character,
             realmSlug: realmToSlug(realm),
-            region: config.region,
+            region,
           },
           zone: {
             id: data.zoneID,
@@ -564,16 +575,22 @@ async function main(): Promise<void> {
         const metric = parseMetric(parseFlag(rest, "--metric"));
         const json = hasFlag(rest, "--json");
         const enrich = !hasFlag(rest, "--no-stats");
+        const rf = regionFlag(rest);
+        if (rf.invalid !== null) {
+          console.error(err(`Invalid --region value: ${rf.invalid} (eu, us, kr, tw)`));
+          process.exit(2);
+        }
+        const region = rf.region ?? config.region;
         const positional = stripFlags(
           rest,
-          ["--level", "--spec", "--metric"],
+          ["--level", "--spec", "--metric", "--region"],
           ["--json", "--no-stats"],
         );
         const target = resolveTarget(positional);
         if (!target) {
           console.error(
             err(
-              "Usage: bmpl lookup <name> <realm> [--level <N>] [--spec X] [--metric dps|hps] [--no-stats] [--json]\n" +
+              "Usage: bmpl lookup <name> <realm> [--level <N>] [--spec X] [--metric dps|hps] [--region eu|us|kr|tw] [--no-stats] [--json]\n" +
                 "       bmpl lookup <Name-Realm> ...\n" +
                 "       (omit --level to auto-detect target from the level they actually play)",
             ),
@@ -596,6 +613,7 @@ async function main(): Promise<void> {
           metric,
           enrich,
           json,
+          region,
         );
         break;
       }
@@ -614,12 +632,18 @@ async function main(): Promise<void> {
         const lvlStr = parseFlag(rest, "--level");
         const spec = parseFlag(rest, "--spec") ?? null;
         const runs = parseFlags(rest, "--run");
-        const positional = stripFlags(rest, ["--level", "--spec", "--run"], ["--all", "--force", "--yes", "--json"]);
+        const rf = regionFlag(rest);
+        if (rf.invalid !== null) {
+          console.error(err(`Invalid --region value: ${rf.invalid} (eu, us, kr, tw)`));
+          process.exit(2);
+        }
+        const region = rf.region ?? config.region;
+        const positional = stripFlags(rest, ["--level", "--spec", "--run", "--region"], ["--all", "--force", "--yes", "--json"]);
         const target = resolveTarget(positional);
-        if (!target) { console.error(err("Usage: bmpl analyze <Name-Realm> [--run <code>:<fight>]... [--all] [--force] [--yes] [--level <N>] [--spec X] [--json]")); process.exit(2); }
+        if (!target) { console.error(err("Usage: bmpl analyze <Name-Realm> [--run <code>:<fight>]... [--all] [--force] [--yes] [--level <N>] [--spec X] [--region eu|us|kr|tw] [--json]")); process.exit(2); }
         let lvl: number | null = null;
         if (lvlStr) { lvl = Number.parseInt(lvlStr, 10); if (!Number.isFinite(lvl) || lvl < 2) { console.error(err(`Invalid --level value: ${lvlStr}`)); process.exit(2); } }
-        await cmdAnalyze(target.name, target.realm, lvl, spec, runs, hasFlag(rest, "--all"), hasFlag(rest, "--force"), hasFlag(rest, "--yes"), hasFlag(rest, "--json"));
+        await cmdAnalyze(target.name, target.realm, lvl, spec, runs, hasFlag(rest, "--all"), hasFlag(rest, "--force"), hasFlag(rest, "--yes"), hasFlag(rest, "--json"), region);
         break;
       }
       case "defensives": {
@@ -631,18 +655,24 @@ async function main(): Promise<void> {
         const spec = parseFlag(rest, "--spec") ?? null;
         const metric = parseMetric(parseFlag(rest, "--metric"));
         const json = hasFlag(rest, "--json");
-        const positional = stripFlags(rest, ["--spec", "--metric"], ["--json"]);
+        const rf = regionFlag(rest);
+        if (rf.invalid !== null) {
+          console.error(err(`Invalid --region value: ${rf.invalid} (eu, us, kr, tw)`));
+          process.exit(2);
+        }
+        const region = rf.region ?? config.region;
+        const positional = stripFlags(rest, ["--spec", "--metric", "--region"], ["--json"]);
         const target = resolveTarget(positional);
         if (!target) {
           console.error(
             err(
-              "Usage: bmpl mplus <name> <realm> [--spec <name>] [--metric dps|hps] [--json]\n" +
+              "Usage: bmpl mplus <name> <realm> [--spec <name>] [--metric dps|hps] [--region eu|us|kr|tw] [--json]\n" +
                 "       bmpl mplus <Name-Realm> ...",
             ),
           );
           process.exit(2);
         }
-        await cmdMplus(target.name, target.realm, spec, metric, json);
+        await cmdMplus(target.name, target.realm, spec, metric, json, region);
         break;
       }
       case "serve": {
@@ -680,8 +710,14 @@ async function main(): Promise<void> {
           );
           process.exit(2);
         }
+        const rf = regionFlag(rest);
+        if (rf.invalid !== null) {
+          console.error(err(`Invalid --region value: ${rf.invalid} (eu, us, kr, tw)`));
+          process.exit(2);
+        }
+        const region = rf.region ?? config.region;
         const enrich = !hasFlag(rest, "--no-stats");
-        await runWatch({ level: lvl, spec, metric, intervalMs, enrich });
+        await runWatch({ level: lvl, spec, metric, intervalMs, enrich, region });
         break;
       }
       case "zones":

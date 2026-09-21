@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { config } from "../src/config.ts";
-import { REGIONS, REGION_LABELS, isRegion, parseRegion } from "../src/wow/regions.ts";
+import { REGIONS, REGION_LABELS, isRegion, parseRegion, regionFlag } from "../src/wow/regions.ts";
 
 const saved = process.env.BMPL_REGION;
 afterEach(() => { if (saved === undefined) delete process.env.BMPL_REGION; else process.env.BMPL_REGION = saved; });
@@ -25,5 +25,11 @@ describe("regions", () => {
     expect(config.region).toBe("us");
     process.env.BMPL_REGION = "mars";
     expect(config.region).toBe("eu");
+  });
+  test("regionFlag reads --region, case-insensitive, and reports junk", () => {
+    expect(regionFlag(["Biwaasham-Hyjal", "--region", "US"])).toEqual({ region: "us", invalid: null });
+    expect(regionFlag(["Biwaasham-Hyjal"])).toEqual({ region: null, invalid: null });
+    expect(regionFlag(["--region", "cn"])).toEqual({ region: null, invalid: "cn" });
+    expect(regionFlag(["--region"])).toEqual({ region: null, invalid: "" });
   });
 });

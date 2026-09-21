@@ -5,7 +5,7 @@ Read this before changing anything under `src/`. The specs in `docs/superpowers/
 ## Data flow of a lookup
 
 ```
-bmpl lookup / POST /api/lookup
+bmpl lookup / POST /api/lookup                          opts.region: eu/us/kr/tw (a Raider.IO URL's own region wins)
   └─ performLookup(opts, deps)                         src/lookup.ts
        ├─ fetchMplusData → rankings (WCL, ~10 pts)     src/mplus.ts, src/wcl/queries.ts
        ├─ analysis: metric (dps/hps by spec), spec filter, per-dungeon best runs, displayed runs (≤ 9)
@@ -101,7 +101,7 @@ Commands: `ping, char, lookup, mplus, evaluate, analyze, defensives, serve, invi
 
 ## Config and files next to `.env`
 
-`resolveEnvPath()` looks in cwd then next to the executable. Beside that `.env`: `bmpl.db`, `evaluation.json`, `defensives.json`. Env overrides: `BMPL_DB_PATH`, `BMPL_EVAL_CONFIG`, `BMPL_DEFENSIVES`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET`. All are user data: git-ignored or, at the repo root, simply never staged.
+`resolveEnvPath()` looks in cwd then next to the executable. Beside that `.env`: `bmpl.db`, `evaluation.json`, `defensives.json`. Env overrides: `BMPL_DB_PATH`, `BMPL_EVAL_CONFIG`, `BMPL_DEFENSIVES`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET`, `BMPL_REGION` (instance default WoW region, `eu`/`us`/`kr`/`tw`, falls back to `eu` with a one-line warning on an invalid value). All are user data: git-ignored or, at the repo root, simply never staged. A lookup's region: the request's own `region` (CLI `--region`, or the `region` field the front sends — the caller's saved setting or the search field's chip) falls back to `config.region` (`BMPL_REGION`, default `eu`) when absent.
 
 Hosted mode (`bmpl serve --hosted`) additionally requires `BMPL_BASE_URL`, `BMPL_SESSION_SECRET`, `BMPL_DISCORD_CLIENT_ID`, `BMPL_DISCORD_CLIENT_SECRET`, `BMPL_ADMIN_DISCORD_IDS`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` — see `.env.hosted.example` and `docs/hosted.md#environment`.
 

@@ -67,8 +67,11 @@ admin unbans them.
 ## Per-account state
 
 Each member has their own lookup history (20 tabs, kept
-in `bmpl.db` across restarts), their own "your key" and legend preference
-(`GET/PUT /api/settings`), and their own live-event stream. Two members looking
+in `bmpl.db` across restarts), their own "your key", legend preference and
+region (`GET/PUT /api/settings`), and their own live-event stream. A member's
+saved region defaults to `null` (the instance's `BMPL_REGION`) until they pick
+one; a pasted Raider.IO URL's own region wins for that one lookup without
+changing the saved preference. Two members looking
 up the same character within 6 hours share one WCL fetch: the second lookup
 reuses the first member's result (shown as cached; **Refresh** fetches again).
 Deep-dive analyses are attached when a tab is opened, so an analysis run by one
@@ -212,6 +215,7 @@ Optional:
 | `BMPL_DISCORD_GUILD_ID` | Only accounts in this Discord server may sign in (adds the `guilds` OAuth scope) |
 | `BMPL_ENCRYPTION_KEY` | 32 random bytes, base64 (`openssl rand -base64 32`); enables members' own WCL clients — losing it makes stored clients unusable |
 | `BMPL_OPERATOR` | Who runs this instance, shown on `/privacy` (default "the admin of this instance") |
+| `BMPL_REGION` | Instance default WoW region (`eu`/`us`/`kr`/`tw`, default `eu`); a member can override it in Settings, and `/api/status` reports it |
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and
 the list of what to fix. Local mode (`bmpl serve`) is unchanged.
@@ -251,8 +255,8 @@ are registered in both modes; the local-only routes
 | POST | `/auth/logout` | public | End the caller's session |
 | GET | `/api/me` | user | The signed-in member, their quota status and own WCL client (if any) |
 | DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, proposals, own WCL client) |
-| GET | `/api/settings` | user | The caller's settings ("your key", legend preference) |
-| PUT | `/api/settings` | user | Update the caller's settings |
+| GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region) |
+| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default |
 | GET | `/api/me/wcl-client` | user | The caller's own WCL client, if set |
 | PUT | `/api/me/wcl-client` | user | Save the caller's own WCL client (verified with a 0-pt PING first) |
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |

@@ -84,15 +84,16 @@ just ping
 #   budget: 3600.00 / 3600 pts remaining (resets in 60m)
 ```
 
-Only EU is wired up (region is hardcoded in `src/config.ts`). Then
-`bmpl serve` opens the web UI at `http://localhost:3000` — first run lands on
-a setup page that writes `.env` for you, no manual editing required.
+Any WCL region works: `bmpl` defaults to EU, override with `BMPL_REGION` in
+`.env` or `--region` per command. Then `bmpl serve` opens the web UI at
+`http://localhost:3000` — first run lands on a setup page that writes `.env`
+for you, no manual editing required.
 
 ## Command line
 
-- `bmpl lookup <Name-Realm>` (alias `l`) — vet one player, `--level`/`--spec`/`--metric`/`--json`/`--no-stats`
-- `bmpl analyze <Name-Realm>` — deep-dive defensive cooldowns, `--run`/`--all`/`--yes`/`--json`
-- `bmpl watch` — clipboard watcher, hands-free vetting while alt-tabbed into the game
+- `bmpl lookup <Name-Realm>` (alias `l`) — vet one player, `--level`/`--spec`/`--metric`/`--region`/`--json`/`--no-stats`
+- `bmpl analyze <Name-Realm>` — deep-dive defensive cooldowns, `--run`/`--all`/`--yes`/`--json`/`--region`
+- `bmpl watch` — clipboard watcher, hands-free vetting while alt-tabbed into the game, `--region`
 - `bmpl evaluate <payload.json>` — replay the scoring model on a saved lookup, 0 API cost
 - `bmpl defensives <Class> <Spec>` — print the effective defensives table, or `--check` to validate an override
 - `bmpl serve` — the web UI (`--hosted` for multi-user mode, `--port`/`--host`/`--no-open`)

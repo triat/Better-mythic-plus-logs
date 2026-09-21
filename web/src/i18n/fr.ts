@@ -89,7 +89,7 @@ export const fr: Mirror<typeof en> = {
   tabs: {
     auto: "auto",
     profiles: "{n, plural, one {# profil} other {# profils}}",
-    selected: " · {n} sélectionné(s)",
+    selected: " · {n, plural, one {# sélectionné} other {# sélectionnés}}",
     fetched: " · récupéré {age}",
     cached: " · en cache · 0 pt API",
     compare: "Sélectionner pour comparer",
@@ -130,9 +130,9 @@ export const fr: Mirror<typeof en> = {
     intro: "Colle tes identifiants d'API Warcraft Logs. Ils sont enregistrés localement dans {path} et servent uniquement à parler à l'API WCL.",
     replace: "⚠ Des identifiants existent déjà ; enregistrer les remplacera.",
     step1: "Connecte-toi sur {site}",
-    step2: "Ouvre {clients} → Create Client",
-    step3: "N'importe quel nom. Redirect URL : {url}. Laisse Public Client décoché.",
-    step4: "Copie le Client ID et le Client Secret ci-dessous.",
+    step2: "Ouvre {clients} → {createClient}",
+    step3: "N'importe quel nom. Redirect URL : {url}. Laisse {publicClient} décoché.",
+    step4: "Copie le {clientId} et le {clientSecret} ci-dessous.",
     clientId: "Client ID",
     clientSecret: "Client Secret",
     save: "Enregistrer & continuer",
@@ -142,7 +142,7 @@ export const fr: Mirror<typeof en> = {
   },
   home: {
     hint: "Colle un lien Raider.IO ou un Nom-Serveur ci-dessus.",
-    hintWatch: "Colle un lien Raider.IO ou un Nom-Serveur ci-dessus, ou active la surveillance du presse-papiers et copie-en un depuis n'importe où.",
+    hintWatch: "Colle un lien Raider.IO ou un Nom-Serveur ci-dessus, ou active la surveillance du presse-papiers et copies-en un depuis n'importe où.",
     unknownPath: "inconnu",
   },
 };

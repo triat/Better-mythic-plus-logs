@@ -24,15 +24,33 @@ export function Setup({ envPath, hasCredentials, onDone }: Props) {
       <h1>{t("setup.title")}</h1>
       {hasCredentials && <p><a href="/">{t("setup.back")}</a></p>}
       <p className="muted">
-        <Around message={t("setup.intro")} param="path"><code className="mono">{envPath}</code></Around>
+        <Around message={t("setup.intro")} params={{ path: <code className="mono">{envPath}</code> }} />
       </p>
       {hasCredentials && <p className="tone-warn">{t("setup.replace")}</p>}
       <div className="card">
         <ol>
-          <li><Around message={t("setup.step1")} param="site"><a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a></Around></li>
-          <li><Around message={t("setup.step2")} param="clients"><a href="https://www.warcraftlogs.com/api/clients/" target="_blank" rel="noopener">Clients</a></Around></li>
-          <li><Around message={t("setup.step3")} param="url"><code className="mono">http://localhost</code></Around></li>
-          <li>{t("setup.step4")}</li>
+          <li><Around message={t("setup.step1")} params={{ site: <a href="https://www.warcraftlogs.com/" target="_blank" rel="noopener">warcraftlogs.com</a> }} /></li>
+          <li>
+            <Around
+              message={t("setup.step2")}
+              params={{
+                clients: <a href="https://www.warcraftlogs.com/api/clients/" target="_blank" rel="noopener">Clients</a>,
+                createClient: <strong>Create Client</strong>,
+              }}
+            />
+          </li>
+          <li>
+            <Around
+              message={t("setup.step3")}
+              params={{ url: <code className="mono">http://localhost</code>, publicClient: <em>Public Client</em> }}
+            />
+          </li>
+          <li>
+            <Around
+              message={t("setup.step4")}
+              params={{ clientId: <strong>{t("setup.clientId")}</strong>, clientSecret: <strong>{t("setup.clientSecret")}</strong> }}
+            />
+          </li>
         </ol>
         <form onSubmit={submit} className="setup-form">
           <label>{t("setup.clientId")}<input value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="off" required /></label>

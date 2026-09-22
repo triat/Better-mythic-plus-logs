@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+
+    .seg { display: inline-flex; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .seg span { padding: 0 12px; display: flex; align-items: center; font-size: 13px; font-weight: 600; color: #8b949e; border-right: 1px solid #21262d; }
+    .seg span:last-child { border-right: 0; }
+    .seg .on { background: #161b22; color: #e6edf3; }
+    .seg .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .prefix { display: flex; align-items: center; gap: 6px; height: 100%; padding-right: 10px; margin-right: 4px; border-right: 1px solid #21262d; color: #e6edf3; font-weight: 700; font-size: 13px; }
+    .caret { font-size: 10px; color: #6e7681; }
+    .menu { width: 260px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+    .menu-item { padding: 7px 10px; border-radius: 6px; font-size: 13px; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+    .menu-item.on { background: #0b0f14; color: #e6edf3; }
+    .menu-item .n { margin-left: auto; font-size: 11px; color: #8b949e; }
+    .menu-head { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681; padding: 6px 10px 2px; }
+    .tabstrip { display: flex; gap: 6px; padding: 10px 24px; border-bottom: 1px solid #21262d; }
+    .tab .t { font-weight: 600; } .tab .x { color: #6e7681; margin-left: 2px; }
+    .row { display: flex; gap: 24px; align-items: flex-start; }
+    .note { font-size: 12px; color: #8b949e; line-height: 1.5; max-width: 620px; }
+    .id { display: flex; align-items: baseline; gap: 10px; padding: 16px 24px 0; }
+    .id .nm { font-size: 22px; font-weight: 800; color: #58a6ff; } .id .sp { color: #58a6ff; font-size: 14px; }
+  </style>
+<div style="width: 1440px; min-height: 1760px; background: #0d1117; display: flex; flex-direction: column; padding-bottom: 24px;">
+  <style>
+    .live-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; color: #8b949e; white-space: nowrap; }
+    .live-chip.on { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .live-chip.wait { color: #8b949e; border-color: #30363d; }
+    .live-chip.err { color: #d29922; border-color: #7a6a1f; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #56d364; display: inline-block; }
+    .live-dot.grey { background: #6e7681; } .live-dot.warn { background: #d29922; }
+    .live { border-bottom: 1px solid #21262d; padding: 10px 24px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .live-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .live-row { display: grid; grid-template-columns: 18px 210px 66px 74px 1fr auto; align-items: center; gap: 12px; padding: 5px 8px; border-radius: 6px; font-size: 13px; }
+    .live-row.alt { background: #0b0f14; }
+    .live-row > * { justify-self: start; }
+    .live-row > *:last-child { justify-self: end; }
+    .live-sep { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681; padding: 6px 8px 2px; }
+    .live-sep i { flex: 1; height: 1px; background: #21262d; display: block; }
+    .cls { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+    .badge-sm { display: inline-flex; align-items: baseline; gap: 6px; border-radius: 8px; padding: 3px 8px; border: 1px solid; font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+    .badge-invite { background: #0a2e1a; border-color: #1f6f3a; color: #56d364; }
+    .badge-maybe { background: #2e2a0a; border-color: #7a6a1f; color: #e3b341; }
+    .badge-pass { background: #2e0a0a; border-color: #7a1f1f; color: #f85149; }
+    .badge-insufficient { background: #161b22; border-color: #30363d; color: #8b949e; }
+    .sc { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+    .sw { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #8b949e; }
+    .sw i { width: 28px; height: 16px; border-radius: 999px; background: #21262d; border: 1px solid #30363d; position: relative; display: inline-block; }
+    .sw i b { position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; border-radius: 50%; background: #6e7681; display: block; }
+    .sw.on i { background: #0a2e1a; border-color: #1f6f3a; } .sw.on i b { left: 13px; background: #56d364; }
+    .sw.off-disabled { color: #6e7681; }
+    .lchip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; background: transparent; white-space: nowrap; }
+    .lchip .nm { font-weight: 600; }
+  </style>
+
+  <div class="label" style="margin: 18px 24px 8px;">Live A — full-width band under the header: one row per player, applicants then party, cached verdict or a Check button</div>
+  <div class="top">
+    <div class="brand">bmpl</div>
+    <div class="search" style="width: 460px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><span class="chip">EU</span><span style="flex: 1;">Name-Realm or Raider.IO link</span></div>
+    <div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div>
+    <div class="lookup">Look up</div>
+    <div style="flex: 1;"></div>
+    <span class="live-chip on"><span class="live-dot"></span>Live · 5</span>
+    <div class="btn" style="color: #e6edf3; border-color: #8b949e;"><span class="avatar">M</span>Muleyoxo <span class="faint" style="font-size: 12px;">▾</span></div>
+  </div>
+
+  <div class="live">
+    <div class="live-head">
+      <span class="section-title">Group Finder</span>
+      <span class="muted">3 applicants · updated 1 s ago</span>
+      <span style="flex: 1;"></span>
+      <span class="sw on"><i><b></b></i>Evaluate new applicants automatically</span>
+      <span class="faint">▾</span>
+    </div>
+    <div class="live-row alt">
+      <span class="cls" style="background: #ff7c0a;"></span>
+      <span><span style="font-weight: 600;">Biwaadrood</span><span class="faint">-Nerzhul</span></span>
+      <span class="muted">Healer</span>
+      <span class="sc" style="color: #e6edf3;">3412</span>
+      <span class="badge-sm badge-invite">INVITE <span style="font-weight: 800; color: #56d364;">78</span></span>
+      <span class="faint" style="font-size: 12px;">vetted 12 min ago</span>
+    </div>
+    <div class="live-row">
+      <span class="cls" style="background: #c41f3b;"></span>
+      <span><span style="font-weight: 600;">Tankadin</span><span class="faint">-Hyjal</span></span>
+      <span class="muted">Tank</span>
+      <span class="sc" style="color: #e6edf3;">2890</span>
+      <span class="badge-sm badge-maybe">MAYBE <span style="font-weight: 800; color: #e3b341;">54</span></span>
+      <span class="faint" style="font-size: 12px;">vetted 2 h ago</span>
+    </div>
+    <div class="live-row alt">
+      <span class="cls" style="background: #a330c9;"></span>
+      <span><span style="font-weight: 600;">Sombrelame</span><span class="faint">-Dalaran</span></span>
+      <span class="muted">DPS</span>
+      <span class="sc" style="color: #e6edf3;">3105</span>
+      <span class="muted" style="font-size: 12px;">not vetted yet</span>
+      <span class="btn btn-sm" style="color: #e6edf3; border-color: #8b949e;">Check</span>
+    </div>
+    <div class="live-sep">Your group<i></i></div>
+    <div class="live-row">
+      <span class="cls" style="background: #00ff96;"></span>
+      <span><span style="font-weight: 600;">Muleyoxo</span><span class="faint">-Hyjal</span></span>
+      <span class="muted">DPS</span>
+      <span class="sc" style="color: #6e7681;">3240</span>
+      <span class="faint" style="font-size: 12px;">you</span>
+      <span></span>
+    </div>
+    <div class="live-row alt">
+      <span class="cls" style="background: #3fc7eb;"></span>
+      <span><span style="font-weight: 600;">Shamwow</span><span class="faint">-Kazzak</span></span>
+      <span class="muted">Healer</span>
+      <span class="sc" style="color: #e6edf3;">2740</span>
+      <span class="badge-sm badge-pass">PASS <span style="font-weight: 800; color: #f85149;">31</span></span>
+      <span class="faint" style="font-size: 12px;">vetted 5 min ago</span>
+    </div>
+  </div>
+  <div class="note" style="margin: 10px 24px 0;">The band replaces nothing: the search bar, tabs and every existing flow stay where they are. A click on a row opens the usual lookup tab. Cached verdicts cost 0 pts — they come from your own history or from another member's lookup younger than 6 h.</div>
+
+  <div class="label" style="margin: 26px 24px 8px;">Live B — the roster as chips, in the tab strip's language: denser, one line, no columns</div>
+  <div class="top">
+    <div class="brand">bmpl</div>
+    <div class="search" style="width: 460px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><span class="chip">EU</span><span style="flex: 1;">Name-Realm or Raider.IO link</span></div>
+    <div class="stepper"><span class="lab">Your key</span><span class="b">−</span><span class="v">+18</span><span class="b">+</span><span class="auto">auto</span></div>
+    <div class="lookup">Look up</div>
+    <div style="flex: 1;"></div>
+    <span class="live-chip on"><span class="live-dot"></span>Live · 5</span>
+    <div class="btn" style="color: #e6edf3; border-color: #8b949e;"><span class="avatar">M</span>Muleyoxo <span class="faint" style="font-size: 12px;">▾</span></div>
+  </div>
+  <div class="live">
+    <div class="live-head">
+      <span class="label" style="letter-spacing: .08em;">APPLICANTS</span>
+      <span style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <span class="lchip"><span class="cls" style="background: #ff7c0a;"></span><span class="nm">Biwaadrood</span><span class="badge-sm badge-invite" style="padding: 1px 6px; font-size: 11px;">78</span></span>
+        <span class="lchip"><span class="cls" style="background: #c41f3b;"></span><span class="nm">Tankadin</span><span class="badge-sm badge-maybe" style="padding: 1px 6px; font-size: 11px;">54</span></span>
+        <span class="lchip" style="border-color: #30363d;"><span class="cls" style="background: #a330c9;"></span><span class="nm">Sombrelame</span><span class="muted" style="font-size: 12px;">3105 · check</span></span>
+      </span>
+      <span style="flex: 1;"></span>
+      <span class="sw on"><i><b></b></i>Auto</span>
+    </div>
+    <div class="live-head">
+      <span class="label" style="letter-spacing: .08em;">GROUP</span>
+      <span style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <span class="lchip"><span class="cls" style="background: #00ff96;"></span><span class="nm">Muleyoxo</span><span class="faint" style="font-size: 11px;">you</span></span>
+        <span class="lchip"><span class="cls" style="background: #3fc7eb;"></span><span class="nm">Shamwow</span><span class="badge-sm badge-pass" style="padding: 1px 6px; font-size: 11px;">31</span></span>
+      </span>
+    </div>
+  </div>
+  <div class="note" style="margin: 10px 24px 0;">Same data, chip language: class colour, name, verdict score. Role and Raider.IO score move into the tooltip; hovering a chip shows them. Fits five to twelve applicants on one line before wrapping, and never pushes the page down like the band does.</div>
+
+  <div class="label" style="margin: 26px 24px 8px;">Shared — the Live chip's states (header, right of the search, before the user menu)</div>
+  <div style="display: flex; gap: 12px; padding: 0 24px; align-items: center; flex-wrap: wrap;">
+    <span class="live-chip"><span class="live-dot grey"></span>Live</span>
+    <span class="faint" style="font-size: 12px;">off — click to connect</span>
+    <span class="live-chip wait"><span class="live-dot grey"></span>Live · waiting for the Group Finder</span>
+    <span class="faint" style="font-size: 12px;">connected, strip hidden in game (normal)</span>
+    <span class="live-chip on"><span class="live-dot"></span>Live · 5</span>
+    <span class="faint" style="font-size: 12px;">roster fresh</span>
+    <span class="live-chip err"><span class="live-dot warn"></span>Live · reconnect</span>
+    <span class="faint" style="font-size: 12px;">share stopped or window closed</span>
+  </div>
+
+  <div class="label" style="margin: 26px 24px 8px;">Shared — the connect dialog (once per session), the auto switch disabled, and the two in-game errors</div>
+  <div style="display: flex; gap: 16px; padding: 0 24px; align-items: flex-start;">
+    <div class="card" style="width: 420px;">
+      <div class="section-title" style="margin-bottom: 8px;">Connect World of Warcraft</div>
+      <div class="note" style="max-width: none;">Pick the <b class="soft">World of Warcraft</b> window in the next dialog. bmpl reads a small strip of pixels the addon draws while the Group Finder is open.<br><br><b class="soft">The image never leaves your browser</b> — only the names read from it are sent, and only to check what bmpl already knows.<br><br>You need the bmpl addon installed, and WoW in <b class="soft">windowed fullscreen</b>.</div>
+      <div style="display: flex; gap: 8px; margin-top: 14px; align-items: center;">
+        <span class="btn btn-primary">Pick the window</span>
+        <span class="btn">Cancel</span>
+        <a href="#" style="font-size: 12px; margin-left: auto;">Get the addon</a>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px; width: 560px;">
+      <div class="card" style="padding: 12px 16px;">
+        <span class="sw off-disabled"><i><b></b></i>Evaluate new applicants automatically</span>
+        <div class="note" style="margin-top: 6px;">Needs your own Warcraft Logs client — <a href="#">how to set one up</a>. With the shared client this would burn your 100 pts/h in one recruiting session.</div>
+      </div>
+      <div class="card" style="padding: 12px 16px; border-color: #7a6a1f;">
+        <div style="color: #e3b341; font-weight: 600; font-size: 13px;">Switch WoW to windowed fullscreen</div>
+        <div class="note" style="margin-top: 4px;">Exclusive fullscreen cannot be captured. The Group Finder is open but bmpl sees no strip.</div>
+      </div>
+      <div class="card" style="padding: 12px 16px; border-color: #7a6a1f;">
+        <div style="color: #e3b341; font-weight: 600; font-size: 13px;">Increase your UI scale or the window size</div>
+        <div class="note" style="margin-top: 4px;">The strip is readable but too small: more than half the frames fail their checksum.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="label" style="margin: 26px 24px 8px;">Shared — what the addon draws in game (top-left, only while the Group Finder is open or you are listed)</div>
+  <div style="display: flex; gap: 16px; padding: 0 24px; align-items: flex-start;">
+    <div style="width: 420px; height: 236px; background: #10161d; border: 1px solid #30363d; border-radius: 8px; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 6px; left: 6px; display: grid; grid-template-columns: repeat(24, 5px); grid-auto-rows: 5px;">
+        <span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span>
+        <span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span>
+        <span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span>
+        <span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span><span style="background:#000"></span><span style="background:#fff"></span><span style="background:#fff"></span><span style="background:#000"></span>
+      </div>
+      <div class="faint" style="position: absolute; bottom: 10px; left: 12px; font-size: 12px;">World of Warcraft — Group Finder open</div>
+    </div>
+    <div class="note" style="width: 560px;">Roughly 120 × 25 physical pixels in the very corner, cells of 6 px, black and white only (luminance survives the browser's video pipeline). It shows when the Group Finder window is open or you have an active listing, and hides everywhere else — never during a run. <span class="mono">/bmpl show</span> forces it on for troubleshooting.</div>
+  </div>
+
+  <div class="note" style="margin: 16px 24px 0;">Both variants read the same roster and use the same chip states, dialog and errors — the choice is only the panel's density. A: every column visible, scales to 15 applicants, pushes the page down by ~150 px. B: one or two lines whatever the queue size, role and score on hover, closer to the existing tab strip.</div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../locale.tsx";
 import { useWowCapture } from "../lib/live/useWowCapture.ts";
+import { Around } from "./Around.tsx";
 
 /** True once, at mount, and never re-derived: a browser either has `getDisplayMedia` or it doesn't. */
 const SUPPORTS_CAPTURE = typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
@@ -77,9 +78,9 @@ export function LiveChip() {
       {open && state.kind !== "error" && SUPPORTS_CAPTURE && (
         <div className="card live-dialog" role="dialog">
           <div className="section-title">{t("live.connect.title")}</div>
-          <p>{t("live.connect.pick")}</p>
-          <p>{t("live.connect.privacy")}</p>
-          <p>{t("live.connect.needs")}</p>
+          <p><Around message={t("live.connect.pick")} params={{ game: <b className="text-soft">{t("live.connect.game")}</b> }} /></p>
+          <p><Around message={t("live.connect.privacy")} params={{ neverLeaves: <b className="text-soft">{t("live.connect.neverLeaves")}</b> }} /></p>
+          <p><Around message={t("live.connect.needs")} params={{ fullscreen: <b className="text-soft">{t("live.connect.fullscreen")}</b> }} /></p>
           <div className="live-dialog-actions">
             <button type="button" className="btn btn-primary" onClick={go}>{t("live.connect.go")}</button>
             <button type="button" className="btn" onClick={() => setOpen(false)}>{t("live.connect.cancel")}</button>

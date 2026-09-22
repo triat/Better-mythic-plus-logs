@@ -96,9 +96,15 @@ export const en = {
     chip: { off: "Live", waiting: "Live · waiting for the Group Finder", on: "Live · {count}", reconnect: "Live · reconnect" },
     connect: {
       title: "Connect World of Warcraft",
-      pick: "Pick the World of Warcraft window in the next dialog. bmpl reads a small strip of pixels the addon draws while the Group Finder is open.",
-      privacy: "The image never leaves your browser — only the names read from it are sent, and only to check what bmpl already knows.",
-      needs: "You need the bmpl addon installed, and WoW in windowed fullscreen.",
+      // Bold emphasis (canvas: <b class="soft">) on "World of Warcraft" / "The image never leaves your
+      // browser" / "windowed fullscreen" is added at the component with Around.tsx around {game} /
+      // {neverLeaves} / {fullscreen} — the sentences below are unchanged from the plain-text version.
+      pick: "Pick the {game} window in the next dialog. bmpl reads a small strip of pixels the addon draws while the Group Finder is open.",
+      game: "World of Warcraft",
+      privacy: "{neverLeaves} — only the names read from it are sent, and only to check what bmpl already knows.",
+      neverLeaves: "The image never leaves your browser",
+      needs: "You need the bmpl addon installed, and WoW in {fullscreen}.",
+      fullscreen: "windowed fullscreen",
       go: "Pick the window",
       cancel: "Cancel",
       addon: "Get the addon",

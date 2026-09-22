@@ -1,8 +1,12 @@
 // Screen capture → roster. `liveState` is pure (no React, no DOM) so capture.test.ts exercises the
-// chip's state machine directly; `useWowCapture` is the browser-only loop that feeds it.
-import { useCallback, useEffect, useRef, useState } from "react";
+// chip's state machine directly. `createCapture` is the browser-loop *logic*, built against an
+// injectable `CaptureDeps` so its lifecycle (teardown on the track's `ended` event or `disconnect()`,
+// no leaked interval/listener across two `connect()`s) is testable with fake deps and no real DOM;
+// `useWowCapture` is a thin React wrapper around it (real `navigator`/`document`/timers as deps).
+import { useEffect, useRef, useState } from "react";
 import { decodeCells } from "./codec.ts";
-import { findStrip, readCells, toGray } from "./scan.ts";
+import type { LiveFrame } from "./codec.ts";
+import { findStrip, toGray } from "./scan.ts";
 import { RosterAssembler } from "./roster.ts";
 import type { Roster } from "./roster.ts";
 
@@ -52,8 +56,49 @@ export function liveState(s: CaptureStats): LiveState {
 
 const OFF: LiveState = { kind: "off" };
 
-const supportsCapture = (): boolean =>
-  typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
+// --- Injectable capture surface -------------------------------------------------------------------
+// Narrow shapes of the DOM APIs the loop actually calls, so a test can supply fakes with no real
+// browser: a real MediaStreamTrack/HTMLVideoElement/HTMLCanvasElement structurally satisfies these
+// (browserDeps below adapts them with a boundary cast) without dragging the full DOM surface into a test.
+
+export interface CaptureTrack {
+  stop(): void;
+  addEventListener(type: "ended", listener: () => void): void;
+}
+export interface CaptureStream {
+  getTracks(): CaptureTrack[];
+  getVideoTracks(): CaptureTrack[];
+}
+export interface CaptureVideo {
+  srcObject: CaptureStream | null;
+  readonly readyState: number;
+  readonly videoWidth: number;
+  readonly videoHeight: number;
+  play(): Promise<void>;
+  pause(): void;
+}
+export interface CaptureImageData { data: Uint8ClampedArray }
+export interface CaptureContext2D {
+  drawImage(source: CaptureVideo, sx: number, sy: number, sw: number, sh: number, dx: number, dy: number, dw: number, dh: number): void;
+  getImageData(x: number, y: number, w: number, h: number): CaptureImageData;
+}
+export interface CaptureCanvas {
+  width: number;
+  height: number;
+  getContext(type: "2d", options?: { willReadFrequently?: boolean }): CaptureContext2D | null;
+}
+export interface CaptureDeps {
+  getDisplayMedia(): Promise<CaptureStream>;
+  createVideo(stream: CaptureStream): CaptureVideo;
+  createCanvas(): CaptureCanvas;
+  now(): number;
+  setInterval(fn: () => void, ms: number): number;
+  clearInterval(id: number): void;
+}
+
+/** `readyState >= HAVE_CURRENT_DATA` (2): the video has at least one decoded frame to draw. Hardcoded
+ * rather than read off a real `HTMLVideoElement` so `CaptureVideo` stays a plain data shape for fakes. */
+const HAVE_CURRENT_DATA = 2;
 
 interface Mutable {
   connected: boolean;
@@ -65,47 +110,61 @@ interface Mutable {
 
 const initialStats = (): Mutable => ({ connected: false, lastFrameAt: null, lastMarkerAt: null, crcFails: 0, crcTotal: 0 });
 
-export function useWowCapture(): { state: LiveState; roster: Roster | null; connect: () => Promise<void>; disconnect: () => void } {
-  const [state, setState] = useState<LiveState>(OFF);
-  const [roster, setRoster] = useState<Roster | null>(null);
-  const statsRef = useRef<Mutable>(initialStats());
-  const streamRef = useRef<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const assemblerRef = useRef(new RosterAssembler());
+export interface Capture {
+  getState(): LiveState;
+  getRoster(): Roster | null;
+  /** Fires after every state/roster change. Returns the unsubscribe function. */
+  subscribe(listener: () => void): () => void;
+  connect(): Promise<void>;
+  disconnect(): void;
+}
 
-  const stop = useCallback(() => {
-    if (intervalRef.current !== null) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    for (const track of streamRef.current?.getTracks() ?? []) track.stop();
-    streamRef.current = null;
-    videoRef.current?.pause();
-    videoRef.current = null;
-    canvasRef.current = null;
-    assemblerRef.current = new RosterAssembler();
-  }, []);
+/**
+ * The capture loop against an injected `CaptureDeps`, with no DOM/React of its own — see
+ * capture.test.ts's `createCapture` suite for the lifecycle this guards: the track's `ended` event
+ * (browser "Stop sharing") must tear the whole session down and latch `{ kind: "reconnect" }` so that
+ * no tick still in flight (real or forced by a test) can silently revert the chip to "live"; `connect()`
+ * is the only thing that clears that latch.
+ */
+export function createCapture(deps: CaptureDeps): Capture {
+  let state: LiveState = OFF;
+  let roster: Roster | null = null;
+  const listeners = new Set<() => void>();
 
-  const disconnect = useCallback(() => {
-    stop();
-    statsRef.current = initialStats();
-    setState(OFF);
-    setRoster(null);
-  }, [stop]);
+  let stats: Mutable = initialStats();
+  let stream: CaptureStream | null = null;
+  let video: CaptureVideo | null = null;
+  let canvas: CaptureCanvas | null = null;
+  let intervalId: number | null = null;
+  let assembler = new RosterAssembler();
+  /** Set by `ended`/`disconnect`, cleared only by a fresh `connect()`: guards `tick` even if something
+   * (a stray timer, a test) invokes it after the session it belonged to has already been torn down. */
+  let latched = true;
 
-  /** `liveState` doesn't know the player count (`CaptureStats` carries no roster) — filled in here from the roster the assembler actually holds. */
-  const publish = useCallback((now: number) => {
-    const current = assemblerRef.current.current(now);
-    setRoster(current);
-    const next = liveState({ ...statsRef.current, rosterAt: current?.at ?? null, now });
-    setState(next.kind === "live" ? { kind: "live", players: current!.players.length } : next);
-  }, []);
+  const notify = () => { for (const l of listeners) l(); };
 
-  const tick = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const stats = statsRef.current;
-    const now = Date.now();
-    if (!video || !canvas || video.readyState < video.HAVE_CURRENT_DATA) {
+  const teardown = () => {
+    if (intervalId !== null) { deps.clearInterval(intervalId); intervalId = null; }
+    for (const track of stream?.getTracks() ?? []) track.stop();
+    stream = null;
+    video?.pause();
+    video = null;
+    canvas = null;
+    assembler = new RosterAssembler();
+  };
+
+  const publish = (now: number) => {
+    const current = assembler.current(now);
+    roster = current;
+    const next = liveState({ ...stats, rosterAt: current?.at ?? null, now });
+    state = next.kind === "live" ? { kind: "live", players: current!.players.length } : next;
+    notify();
+  };
+
+  const tick = () => {
+    if (latched) return; // the session this tick was scheduled for has already ended.
+    const now = deps.now();
+    if (!video || !canvas || video.readyState < HAVE_CURRENT_DATA) {
       publish(now);
       return;
     }
@@ -120,61 +179,107 @@ export function useWowCapture(): { state: LiveState; roster: Roster | null; conn
         ctx.drawImage(video, 0, 0, w, h, 0, 0, w, h);
         const { data } = ctx.getImageData(0, 0, w, h);
         const gray = toGray(data, w, h);
-        // findStrip must validate every candidate row through decodeCells: a decoy pattern drawn
-        // elsewhere in the game UI (above the real strip) would otherwise starve detection forever.
-        const geom = findStrip(gray, (cells) => decodeCells(cells) !== null);
-        if (geom) {
+        // One scan per tick. `accept` both validates a candidate row (so a decoy pattern drawn
+        // elsewhere in the game UI, above the real strip, is skipped rather than returned) and records
+        // what it saw, so a null `findStrip` result can still tell "no marker row anywhere" (Group
+        // Finder simply closed — normal) apart from "a marker row exists but nothing under it decodes"
+        // (the strip is on screen but unreadable — the scale error) without a second scan.
+        let seenCandidate = false;
+        let decoded: LiveFrame | null = null;
+        const geom = findStrip(gray, (cells) => {
+          seenCandidate = true;
+          decoded = decodeCells(cells);
+          return decoded !== null;
+        });
+        if (geom && decoded) {
           stats.lastMarkerAt = now;
-          const frame = decodeCells(readCells(gray, geom));
-          if (frame) {
-            stats.crcFails = 0;
-            stats.crcTotal = 0;
-            assemblerRef.current.push(frame, now);
-          } else {
-            // Unreachable in practice (findStrip already validated this geometry), kept as a guard.
-            stats.crcFails = Math.min(CRC_FAIL_WINDOW, stats.crcFails + 1);
-            stats.crcTotal = Math.min(CRC_FAIL_WINDOW, stats.crcTotal + 1);
-          }
-        } else {
-          // No row passed the accept gate. A raw (unvalidated) scan tells us whether a marker-shaped
-          // row exists at all: present but never decoding is the "scale too small" error; genuinely
-          // absent is the Group Finder simply being closed, which must not count against the CRC ratio.
-          const raw = findStrip(gray);
-          if (raw) {
-            stats.lastMarkerAt = now;
-            stats.crcFails = Math.min(CRC_FAIL_WINDOW, stats.crcFails + 1);
-            stats.crcTotal = Math.min(CRC_FAIL_WINDOW, stats.crcTotal + 1);
-          }
+          stats.crcFails = 0;
+          stats.crcTotal = 0;
+          assembler.push(decoded, now);
+        } else if (seenCandidate) {
+          stats.lastMarkerAt = now;
+          stats.crcFails = Math.min(CRC_FAIL_WINDOW, stats.crcFails + 1);
+          stats.crcTotal = Math.min(CRC_FAIL_WINDOW, stats.crcTotal + 1);
         }
       }
     }
     publish(now);
-  }, [publish]);
+  };
 
-  const connect = useCallback(async () => {
-    if (!supportsCapture()) return; // LiveChip renders the dictionary's "unsupported" message instead of calling this.
+  const disconnect = () => {
+    latched = true;
+    teardown();
+    stats = initialStats();
+    roster = null;
+    state = OFF;
+    notify();
+  };
+
+  const connect = async () => {
+    teardown(); // drop whatever the previous session (if any) left running before starting a new one.
+    latched = true;
+    const nextStream = await deps.getDisplayMedia();
+    stream = nextStream;
+    // `lastFrameAt` is set here, not left for the first tick: without it the state machine would read
+    // "reconnect" (lastFrameAt === null) for the ~100 ms until that first tick runs.
+    stats = { ...initialStats(), connected: true, lastFrameAt: deps.now() };
+    video = deps.createVideo(nextStream);
+    await video.play().catch(() => {});
+    canvas = deps.createCanvas();
+    const [track] = nextStream.getVideoTracks();
+    track?.addEventListener("ended", () => {
+      if (stream !== nextStream) return; // a later connect() already replaced this session.
+      latched = true;
+      teardown();
+      stats.lastFrameAt = null;
+      publish(deps.now());
+    });
+    latched = false;
+    publish(deps.now());
+    intervalId = deps.setInterval(tick, 1000 / CAPTURE_HZ);
+  };
+
+  return {
+    getState: () => state,
+    getRoster: () => roster,
+    subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
+    connect,
+    disconnect,
+  };
+}
+
+const supportsCapture = (): boolean =>
+  typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
+
+const browserDeps: CaptureDeps = {
+  getDisplayMedia: async () => {
+    if (!supportsCapture()) throw new Error("getDisplayMedia unsupported"); // LiveChip never offers the button in this case; belt and suspenders.
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: CAPTURE_HZ }, audio: false });
-    stop();
-    statsRef.current = { ...initialStats(), connected: true };
-    streamRef.current = stream;
+    return stream as unknown as CaptureStream;
+  },
+  createVideo: (stream) => {
     const video = document.createElement("video");
     video.playsInline = true;
     video.muted = true;
     video.autoplay = true;
-    video.srcObject = stream;
-    await video.play().catch(() => {});
-    videoRef.current = video;
-    canvasRef.current = document.createElement("canvas");
-    const [track] = stream.getVideoTracks();
-    track?.addEventListener("ended", () => {
-      statsRef.current.lastFrameAt = null;
-      publish(Date.now());
-    });
-    publish(Date.now());
-    intervalRef.current = setInterval(tick, 1000 / CAPTURE_HZ);
-  }, [stop, tick, publish]);
+    video.srcObject = stream as unknown as MediaStream;
+    return video as unknown as CaptureVideo;
+  },
+  createCanvas: () => document.createElement("canvas") as unknown as CaptureCanvas,
+  now: () => Date.now(),
+  setInterval: (fn, ms) => setInterval(fn, ms) as unknown as number,
+  clearInterval: (id) => clearInterval(id),
+};
 
-  useEffect(() => () => stop(), [stop]);
+export function useWowCapture(): { state: LiveState; roster: Roster | null; connect: () => Promise<void>; disconnect: () => void } {
+  const captureRef = useRef<Capture | null>(null);
+  captureRef.current ??= createCapture(browserDeps);
+  const capture = captureRef.current;
+  const [state, setState] = useState<LiveState>(capture.getState());
+  const [roster, setRoster] = useState<Roster | null>(capture.getRoster());
 
-  return { state, roster, connect, disconnect };
+  useEffect(() => capture.subscribe(() => { setState(capture.getState()); setRoster(capture.getRoster()); }), [capture]);
+  useEffect(() => () => capture.disconnect(), [capture]);
+
+  return { state, roster, connect: capture.connect, disconnect: capture.disconnect };
 }

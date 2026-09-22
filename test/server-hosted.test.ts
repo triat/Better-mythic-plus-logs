@@ -133,6 +133,11 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp.match(/script-src[^;]*/)?.[0]).not.toContain("unsafe-inline");
   });
+  test("Permissions-Policy is exactly clipboard-read=(), display-capture=(self)", () => {
+    // Pinned literally: every other assertion in this file compares a response header against
+    // SECURITY_HEADERS itself, which would not catch display-capture=(self) being dropped.
+    expect(SECURITY_HEADERS["Permissions-Policy"]).toBe("clipboard-read=(), display-capture=(self)");
+  });
   test("local mode sends none of them", async () => {
     const res = await fetch(l("/api/status"));
     for (const k of Object.keys(SECURITY_HEADERS)) expect(res.headers.get(k)).toBeNull();

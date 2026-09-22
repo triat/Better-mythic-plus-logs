@@ -6,6 +6,7 @@ import type { UserSettings } from "../hosted/db.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { WclCredentials } from "../wcl/auth.ts";
 import type { Locale } from "../hosted/locale.ts";
+import type { LiveRole, LiveSort } from "../hosted/live.ts";
 import type { Region } from "../wow/regions.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
@@ -13,13 +14,16 @@ import type { Route } from "./routes.ts";
 import { SETTINGS_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
 
 /** The "Nothing to update" rule on an already-validated (SETTINGS_BODY) patch. */
-export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
+export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null; liveSort?: LiveSort; liveRoles?: LiveRole[]; liveClasses?: string[] }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
   const patch: Partial<UserSettings> = {};
   if ("yourKey" in value) patch.yourKey = value.yourKey!;
   if ("legendOpen" in value) patch.legendOpen = value.legendOpen!;
   if ("region" in value) patch.region = value.region!;
   if ("locale" in value) patch.locale = value.locale!;
-  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region` and/or `locale`" };
+  if ("liveSort" in value) patch.liveSort = value.liveSort!;
+  if ("liveRoles" in value) patch.liveRoles = value.liveRoles!;
+  if ("liveClasses" in value) patch.liveClasses = value.liveClasses!;
+  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region`, `locale`, `liveSort`, `liveRoles` and/or `liveClasses`" };
   return { ok: true, patch };
 }
 

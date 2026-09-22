@@ -6,6 +6,8 @@ import type { Region } from "../wow/regions.ts";
 import { isRegion } from "../wow/regions.ts";
 import type { Locale } from "./locale.ts";
 import { isLocale } from "./locale.ts";
+import type { LiveRole, LiveSort } from "./live.ts";
+import { DEFAULT_LIVE, isLiveRole, isLiveSort } from "./live.ts";
 import { applyHostedSchema } from "./schema.ts";
 import { config } from "../config.ts";
 import { HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, openUserHistory } from "./history.ts";
@@ -21,8 +23,8 @@ export interface WclClientRow { userId: number; clientId: string; secretEnc: str
 export interface SessionRow { id: string; userId: number; createdAt: number; expiresAt: number; ip: string | null; userAgent: string | null }
 export interface InviteRow { discordId: string; invitedBy: string; createdAt: number; note: string | null }
 export interface DiscordIdentity { discordId: string; username: string; globalName: string | null; avatarHash: string | null }
-export interface UserSettings { yourKey: number | null; legendOpen: boolean; region: Region | null; locale: Locale | null }
-export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true, region: null, locale: null };
+export interface UserSettings { yourKey: number | null; legendOpen: boolean; region: Region | null; locale: Locale | null; liveSort: LiveSort; liveRoles: LiveRole[]; liveClasses: string[] }
+export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true, region: null, locale: null, ...DEFAULT_LIVE };
 
 /** WCL usage buckets are calendar hours (epoch ms). */
 export const HOUR_MS = 3_600_000;
@@ -151,13 +153,46 @@ export function openHosted(db: Database): HostedDb {
   const inviteUpsert = db.query("INSERT INTO invites (discord_id, invited_by, created_at, note) VALUES (?, ?, ?, ?) ON CONFLICT(discord_id) DO UPDATE SET invited_by = excluded.invited_by, note = excluded.note");
   const inviteDelete = db.query("DELETE FROM invites WHERE discord_id = ?");
 
-  const settingsGet = db.query<{ your_key: number | null; legend_open: number; region: string | null; locale: string | null }, [number]>("SELECT your_key, legend_open, region, locale FROM user_settings WHERE user_id = ?");
-  const settingsUpsert = db.query("INSERT INTO user_settings (user_id, your_key, legend_open, region, locale, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET your_key = excluded.your_key, legend_open = excluded.legend_open, region = excluded.region, locale = excluded.locale, updated_at = excluded.updated_at");
+  const settingsGet = db.query<{ your_key: number | null; legend_open: number; region: string | null; locale: string | null; live_sort: string | null; live_roles: string | null; live_classes: string | null }, [number]>(
+    "SELECT your_key, legend_open, region, locale, live_sort, live_roles, live_classes FROM user_settings WHERE user_id = ?",
+  );
+  const settingsUpsert = db.query(
+    "INSERT INTO user_settings (user_id, your_key, legend_open, region, locale, live_sort, live_roles, live_classes, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+    "ON CONFLICT(user_id) DO UPDATE SET your_key = excluded.your_key, legend_open = excluded.legend_open, region = excluded.region, locale = excluded.locale, " +
+    "live_sort = excluded.live_sort, live_roles = excluded.live_roles, live_classes = excluded.live_classes, updated_at = excluded.updated_at",
+  );
+  /** A malformed JSON array (or an array with a bad item) falls back to the default, never throws. */
+  const parseLiveRoles = (raw: string | null): LiveRole[] => {
+    if (raw === null) return [...DEFAULT_LIVE.liveRoles];
+    try {
+      const v: unknown = JSON.parse(raw);
+      return Array.isArray(v) && v.every(isLiveRole) ? (v as LiveRole[]) : [...DEFAULT_LIVE.liveRoles];
+    } catch {
+      return [...DEFAULT_LIVE.liveRoles];
+    }
+  };
+  const parseLiveClasses = (raw: string | null): string[] => {
+    if (raw === null) return [];
+    try {
+      const v: unknown = JSON.parse(raw);
+      return Array.isArray(v) && v.every((s) => typeof s === "string") ? (v as string[]) : [];
+    } catch {
+      return [];
+    }
+  };
   const settings = (userId: number): UserSettings => {
     const r = settingsGet.get(userId);
     return r
-      ? { yourKey: r.your_key, legendOpen: r.legend_open === 1, region: isRegion(r.region) ? r.region : null, locale: isLocale(r.locale) ? r.locale : null }
-      : { ...DEFAULT_USER_SETTINGS };
+      ? {
+          yourKey: r.your_key,
+          legendOpen: r.legend_open === 1,
+          region: isRegion(r.region) ? r.region : null,
+          locale: isLocale(r.locale) ? r.locale : null,
+          liveSort: isLiveSort(r.live_sort) ? r.live_sort : DEFAULT_LIVE.liveSort,
+          liveRoles: parseLiveRoles(r.live_roles),
+          liveClasses: parseLiveClasses(r.live_classes),
+        }
+      : { ...DEFAULT_USER_SETTINGS, liveRoles: [...DEFAULT_LIVE.liveRoles], liveClasses: [] };
   };
 
   const usageAdd = db.query("INSERT INTO usage_hourly (user_id, hour_start, points) VALUES (?, ?, ?) ON CONFLICT(user_id, hour_start) DO UPDATE SET points = points + excluded.points");
@@ -238,7 +273,7 @@ export function openHosted(db: Database): HostedDb {
       get: settings,
       update(userId, patch, now) {
         const next = { ...settings(userId), ...patch };
-        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, next.region, next.locale, now);
+        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, next.region, next.locale, next.liveSort, JSON.stringify(next.liveRoles), JSON.stringify(next.liveClasses), now);
         return next;
       },
     },

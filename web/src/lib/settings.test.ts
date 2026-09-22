@@ -10,11 +10,11 @@ const fakeStore = (init: Record<string, string> = {}) => {
 describe("readLocalSettings", () => {
   test("defaults without storage or with empty storage", () => {
     expect(readLocalSettings(null)).toEqual(DEFAULT_SETTINGS);
-    expect(readLocalSettings(fakeStore())).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null });
+    expect(readLocalSettings(fakeStore())).toMatchObject({ yourKey: null, legendOpen: true, region: null, locale: null });
   });
   test("reads the legacy keys: bmpl.yourKey (validated) and bmpl.legendOpen ('0' = closed)", () => {
-    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "18", [LEGEND_STORAGE_KEY]: "0" }))).toEqual({ yourKey: 18, legendOpen: false, region: null, locale: null });
-    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "99", [LEGEND_STORAGE_KEY]: "1" }))).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null });
+    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "18", [LEGEND_STORAGE_KEY]: "0" }))).toMatchObject({ yourKey: 18, legendOpen: false, region: null, locale: null });
+    expect(readLocalSettings(fakeStore({ [STORAGE_KEY]: "99", [LEGEND_STORAGE_KEY]: "1" }))).toMatchObject({ yourKey: null, legendOpen: true, region: null, locale: null });
   });
   test("a throwing storage (private mode) yields the defaults", () => {
     const boom = { getItem: () => { throw new Error("denied"); }, setItem: () => {}, removeItem: () => {} };
@@ -40,9 +40,9 @@ describe("writeLocalSettings", () => {
 
 describe("parseServerSettings", () => {
   test("accepts the server shape and clamps garbage to the defaults", () => {
-    expect(parseServerSettings({ yourKey: 18, legendOpen: false })).toEqual({ yourKey: 18, legendOpen: false, region: null, locale: null });
-    expect(parseServerSettings({ yourKey: null, legendOpen: true })).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null });
-    expect(parseServerSettings({ yourKey: 99 })).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null });
+    expect(parseServerSettings({ yourKey: 18, legendOpen: false })).toMatchObject({ yourKey: 18, legendOpen: false, region: null, locale: null });
+    expect(parseServerSettings({ yourKey: null, legendOpen: true })).toMatchObject({ yourKey: null, legendOpen: true, region: null, locale: null });
+    expect(parseServerSettings({ yourKey: 99 })).toMatchObject({ yourKey: null, legendOpen: true, region: null, locale: null });
     expect(parseServerSettings(null)).toEqual(DEFAULT_SETTINGS);
     expect(parseServerSettings("nope")).toEqual(DEFAULT_SETTINGS);
   });
@@ -71,4 +71,15 @@ test("locale: read from bmpl.locale, invalid values ignored, written and removed
   expect(store.getItem("bmpl.locale")).toBeNull();
   expect(parseServerSettings({ yourKey: null, legendOpen: true, region: null, locale: "fr" }).locale).toBe("fr");
   expect(parseServerSettings({ yourKey: null, legendOpen: true, region: null, locale: "xx" }).locale).toBeNull();
+});
+
+test("Live settings round-trip through local storage, with defaults on junk", () => {
+  const store = fakeStore();
+  writeLocalSettings(store, { liveSort: "verdict", liveRoles: ["tank", "healer"], liveClasses: ["Druid"] });
+  expect(readLocalSettings(store)).toMatchObject({ liveSort: "verdict", liveRoles: ["tank", "healer"], liveClasses: ["Druid"] });
+
+  store.setItem("bmpl.liveSort", "nonsense");
+  store.setItem("bmpl.liveRoles", "not json");
+  store.setItem("bmpl.liveClasses", '"not an array"');
+  expect(readLocalSettings(store)).toMatchObject({ liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] });
 });

@@ -55,12 +55,15 @@ CREATE TABLE IF NOT EXISTS user_history_auto (
 );
 CREATE INDEX IF NOT EXISTS user_history_auto_key ON user_history_auto(alias_key, set_at);
 CREATE TABLE IF NOT EXISTS user_settings (
-  user_id     INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  your_key    INTEGER,
-  legend_open INTEGER NOT NULL DEFAULT 1,
-  region      TEXT,
-  locale      TEXT,
-  updated_at  INTEGER NOT NULL
+  user_id      INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  your_key     INTEGER,
+  legend_open  INTEGER NOT NULL DEFAULT 1,
+  region       TEXT,
+  locale       TEXT,
+  live_sort    TEXT,
+  live_roles   TEXT,
+  live_classes TEXT,
+  updated_at   INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS usage_hourly (
   user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -114,7 +117,13 @@ CREATE TABLE IF NOT EXISTS user_wcl_clients (
 /** Columns added to `users` after its first release; migrated in place on an older database. */
 const USER_COLUMNS: ReadonlyArray<readonly [string, string]> = [["banned_at", "INTEGER"], ["banned_by", "INTEGER"]];
 /** Columns added to `user_settings` after its first release; migrated in place on an older database. */
-const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [["region", "TEXT"], ["locale", "TEXT"]];
+const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [
+  ["region", "TEXT"],
+  ["locale", "TEXT"],
+  ["live_sort", "TEXT"],
+  ["live_roles", "TEXT"],
+  ["live_classes", "TEXT"],
+];
 
 function migrateColumns(db: Database, table: string, columns: ReadonlyArray<readonly [string, string]>): void {
   const have = new Set(db.query<{ name: string }, []>(`PRAGMA table_info(${table})`).all().map((r) => r.name));

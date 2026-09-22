@@ -135,10 +135,13 @@ test("user_settings is migrated in place: region and locale appear on a pre-regi
   const columns = raw.query<{ name: string }, []>("PRAGMA table_info(user_settings)").all().map((r) => r.name);
   expect(columns).toContain("region");
   expect(columns).toContain("locale");
+  expect(columns).toContain("live_sort");
+  expect(columns).toContain("live_roles");
+  expect(columns).toContain("live_classes");
   const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
-  expect(db.settings.get(u.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null });
-  expect(db.settings.update(u.id, { region: "tw" }, 2000)).toEqual({ yourKey: null, legendOpen: true, region: "tw", locale: null });
-  expect(db.settings.update(u.id, { locale: "fr" }, 3000)).toEqual({ yourKey: null, legendOpen: true, region: "tw", locale: "fr" });
+  expect(db.settings.get(u.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] });
+  expect(db.settings.update(u.id, { region: "tw" }, 2000)).toMatchObject({ yourKey: null, legendOpen: true, region: "tw", locale: null });
+  expect(db.settings.update(u.id, { locale: "fr" }, 3000)).toMatchObject({ yourKey: null, legendOpen: true, region: "tw", locale: "fr" });
 });
 
 describe("phase 2: bans, deletion, wcl clients", () => {

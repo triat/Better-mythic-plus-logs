@@ -17,6 +17,7 @@ import type { LookupPayload } from "../lookup.ts";
 import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, tablesOf, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse } from "./http.ts";
 import { handleLookup, historyOf, historySummary } from "./lookup.ts";
+import { liveRoutes } from "./routes-live.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 import { eventsResponse } from "./sse.ts";
@@ -124,6 +125,7 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
       if (key === null) return jsonResponse({ ok: false, error: "Invalid history key" }, 400);
       return jsonResponse({ ok: historyOf(rc).remove(key) });
     }),
+    ...liveRoutes(),
     // In hosted mode the watcher never runs; the initial status is simply "inactive" and the stream is the member's own.
     route("GET", "/api/events", (_req, _url, rc) => eventsResponse({ event: "status", data: watcherStatus() }, rc.user?.id ?? null)),
     route("GET", "/api/health", () => handleHealth(ctx), "public"),

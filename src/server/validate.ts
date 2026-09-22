@@ -36,6 +36,20 @@ export const bool = (): Schema<boolean> => ({ parse: (v, path) => (typeof v === 
 export const oneOf = <T extends string>(values: readonly T[]): Schema<T> => ({
   parse: (v, path) => (typeof v === "string" && (values as readonly string[]).includes(v) ? { ok: true, value: v as T } : fail(`${label(path)} must be one of ${values.join(", ")}`)),
 });
+export const arr = <T>(item: Schema<T>, o: { min?: number; max?: number } = {}): Schema<T[]> => ({
+  parse(v, path) {
+    if (!Array.isArray(v)) return fail(`${label(path)} must be an array`);
+    if (o.min !== undefined && v.length < o.min) return fail(`${label(path)} must have at least ${o.min} item${o.min === 1 ? "" : "s"}`);
+    if (o.max !== undefined && v.length > o.max) return fail(`${label(path)} must have at most ${o.max} items`);
+    const out: T[] = [];
+    for (let i = 0; i < v.length; i++) {
+      const r = item.parse(v[i], `${path}[${i}]`);
+      if (!r.ok) return r;
+      out.push(r.value);
+    }
+    return { ok: true, value: out };
+  },
+});
 /** Absent or `undefined` is fine; the key is then left out of the value. */
 export const opt = <T>(s: Schema<T>): Schema<T | undefined> & { optional: true } => ({ optional: true, parse: (v, path) => (v === undefined ? { ok: true, value: undefined } : s.parse(v, path)) });
 export const nullable = <T>(s: Schema<T>): Schema<T | null> => ({ parse: (v, path) => (v === null ? { ok: true, value: null } : s.parse(v, path)) });
@@ -94,3 +108,7 @@ export const ROLE_BODY = obj({ role: oneOf(["member", "admin"] as const) });
 export const SETUP_BODY = obj({ clientId: str({ min: 1, max: 200, trim: true }), clientSecret: str({ min: 1, max: 200, trim: true }) });
 export const WCL_CLIENT_BODY = obj({ clientId: str({ min: 1, max: 200, trim: true }), clientSecret: str({ min: 1, max: 200, trim: true }) });
 export const WATCH_BODY = obj({ level: opt(nullable(int({ min: 2, max: 50 }))), spec: opt(nullable(str({ max: 32, trim: true }))), metric: opt(nullable(oneOf(METRIC))), region: opt(oneOf(REGIONS)) });
+/** A `Name-Realm` as the addon emits it; the same shape parseNameRealm() accepts. */
+const CHARACTER = /^[^|\s]{1,24}-[^|\s]{1,32}$/;
+export const LIVE_PLAYER = obj({ character: str({ min: 3, max: 60, trim: true, pattern: CHARACTER }), region: opt(oneOf(REGIONS)) });
+export const LIVE_CACHED_BODY = obj({ level: nullable(int({ min: KEY_MIN, max: KEY_MAX })), players: arr(LIVE_PLAYER, { min: 1, max: 40 }) });

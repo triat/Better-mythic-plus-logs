@@ -43,25 +43,35 @@ function markerRun(img: Gray, y: number, maxX: number): { x: number; cell: numbe
   return null;
 }
 
-/** The marker row and column give the origin and the cell size; null when no strip is on screen. */
-export function findStrip(img: Gray): StripGeometry | null {
+/**
+ * The marker row and column give the origin and the cell size; null when no strip is on screen.
+ * Keeps scanning candidate rows until `accept` (default: anything) is satisfied by the cells read at
+ * that geometry — a lone row that merely looks like a marker (e.g. a decoy checkerboard) is skipped
+ * rather than returned, so a caller that can validate a decode (Task 6's `decodeCells(cells) !== null`)
+ * finds the real strip even when it sits below something that structurally mimics the marker.
+ */
+export function findStrip(img: Gray, accept: (cells: Uint8Array) => boolean = () => true): StripGeometry | null {
   const maxY = Math.floor(img.height * SCAN_REGION.h);
   const maxX = Math.floor(img.width * SCAN_REGION.w);
   for (let y = 0; y < maxY; y++) {
     const row = markerRun(img, y, maxX);
     if (!row) continue;
     const cell = row.cell;
-    // The marker row must be one cell tall and the strip must fit inside the image.
-    if (row.x + cell * STRIP.cols > img.width + cell || y + cell * STRIP.rows > img.height + cell) continue;
     const x0 = row.x + cell / 2;
     const y0 = y + cell / 2;
+    // The whole strip, sampled at cell centres, must lie inside the image.
+    const lastX = x0 + (STRIP.cols - 1) * cell;
+    const lastY = y0 + (STRIP.rows - 1) * cell;
+    if (lastX >= img.width || lastY >= img.height) continue;
     // Verify the marker column: cell (0,0) light, then alternating down the strip.
     let ok = true;
     for (let r = 0; r < STRIP.rows && ok; r++) {
       const v = sample(img, x0, y0 + r * cell);
       ok = r % 2 === 0 ? v >= LIGHT : v <= DARK;
     }
-    if (ok) return { x: x0, y: y0, cell };
+    if (!ok) continue;
+    const geom = { x: x0, y: y0, cell };
+    if (accept(readCells(img, geom))) return geom;
   }
   return null;
 }

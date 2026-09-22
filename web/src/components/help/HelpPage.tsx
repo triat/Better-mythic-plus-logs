@@ -13,6 +13,7 @@ import { AxisSection } from "./AxisSection.tsx";
 import { CurveChart } from "./CurveChart.tsx";
 import { Faq } from "./Faq.tsx";
 import { HelpToc } from "./HelpToc.tsx";
+import { LiveAddonGuide } from "./LiveAddonGuide.tsx";
 import { WclClientGuide } from "./WclClientGuide.tsx";
 
 type Docs = Omit<DocsResponse, "ok">;
@@ -63,6 +64,7 @@ export function HelpPage({ status, bare = false }: Props) {
             <section className="card help-card" id="peers"><h2>{t("help.toc.peers")}</h2><p className="help-p">{data.docs.peers}</p></section>
             <DeepDive t={t} data={data} />
             {status.hosted && <WclClientGuide doc={data.docs.wclClient} quota={data.quota} />}
+            <LiveAddonGuide doc={data.docs.liveAddon} />
             <Reading t={t} />
             <Faq entries={faqEntries(data.docs, status.hosted)} />
           </div>

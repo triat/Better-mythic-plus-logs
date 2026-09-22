@@ -379,7 +379,7 @@ export const fr: Mirror<typeof en> = {
     title: "Aide", sub: "ce qui est analysé, comment chaque nombre est calculé, et pourquoi certains ne le sont pas",
     toc: {
       what: "Ce que bmpl regarde", verdict: "Le verdict", axes: "Les six axes", levelScale: "Pondération par niveau de key", expectedIlvl: "Item level attendu",
-      runs: "Signaux par run", peers: "Pairs", deepdive: "Deep-dive", wclClient: "Ton propre client WCL", reading: "Lire la page", faq: "FAQ",
+      runs: "Signaux par run", peers: "Pairs", deepdive: "Deep-dive", wclClient: "Ton propre client WCL", liveAddon: "L'addon en jeu", reading: "Lire la page", faq: "FAQ",
     },
     publicData: "Tout ça est public : n'importe qui peut ouvrir les mêmes logs sur warcraftlogs.com et compter les mêmes morts.",
     thresholds: {
@@ -421,6 +421,7 @@ export const fr: Mirror<typeof en> = {
     guide: {
       onWcl: "Sur warcraftlogs.com", inBmpl: "Dans bmpl", pts: "{pts} pts / h",
       lookups: "{count, plural, one {environ # recherche non cachée} other {environ # recherches non cachées}}",
+      install: "Installer", connect: "Connecter",
     },
   },
   admin: {

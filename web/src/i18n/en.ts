@@ -385,7 +385,7 @@ export const en = {
     title: "Help", sub: "what is analysed, how every number is computed, and why some are not",
     toc: {
       what: "What bmpl looks at", verdict: "The verdict", axes: "The six axes", levelScale: "Key-level scaling", expectedIlvl: "Expected item level",
-      runs: "Per-run signals", peers: "Peers", deepdive: "Deep-dive", wclClient: "Your own WCL client", reading: "Reading the page", faq: "FAQ",
+      runs: "Per-run signals", peers: "Peers", deepdive: "Deep-dive", wclClient: "Your own WCL client", liveAddon: "The in-game addon", reading: "Reading the page", faq: "FAQ",
     },
     publicData: "All of it is public data: anyone can open the same logs on warcraftlogs.com and count the same deaths.",
     thresholds: {
@@ -427,6 +427,7 @@ export const en = {
     guide: {
       onWcl: "On warcraftlogs.com", inBmpl: "In bmpl", pts: "{pts} pts / h",
       lookups: "{count, plural, one {about # uncached lookup} other {about # uncached lookups}}",
+      install: "Install", connect: "Connect",
     },
   },
   admin: {

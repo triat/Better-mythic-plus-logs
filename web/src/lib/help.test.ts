@@ -30,16 +30,22 @@ describe("toc", () => {
     const t = toc(tEn, docs, false);
     expect(t.map((e) => e.anchor)).toEqual([
       "what", "verdict", "axes", "axis-survival", "axis-utility", "axis-throughput", "axis-consistency", "axis-preparation", "axis-experience",
-      "level-scale", "expected-ilvl", "runs", "peers", "deep-dive", "reading", "faq",
+      "level-scale", "expected-ilvl", "runs", "peers", "deep-dive", "live-addon", "reading", "faq",
     ]);
     expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation", "Experience"]);
     expect(t.filter((e) => !e.sub).map((e) => e.label)).toEqual([
-      "What bmpl looks at", "The verdict", "The six axes", "Key-level scaling", "Expected item level", "Per-run signals", "Peers", "Deep-dive", "Reading the page", "FAQ",
+      "What bmpl looks at", "The verdict", "The six axes", "Key-level scaling", "Expected item level", "Per-run signals", "Peers", "Deep-dive",
+      "The in-game addon", "Reading the page", "FAQ",
     ]);
   });
-  test("hosted: the own-client guide sits between deep-dive and reading", () => {
+  test("live-addon is not hosted-gated: present, in the same spot, whether hosted or not", () => {
+    expect(toc(tEn, docs, false).map((e) => e.anchor)).toContain("live-addon");
+    expect(toc(tEn, docs, true).map((e) => e.anchor)).toContain("live-addon");
+    expect(toc(tEn, docs, false).find((e) => e.anchor === "live-addon")!.label).toBe("The in-game addon");
+  });
+  test("hosted: the own-client guide sits between deep-dive and live-addon, before reading", () => {
     const anchors = toc(tEn, docs, true).map((e) => e.anchor);
-    expect(anchors.slice(anchors.indexOf("deep-dive"), anchors.indexOf("reading") + 1)).toEqual(["deep-dive", "wcl-client", "reading"]);
+    expect(anchors.slice(anchors.indexOf("deep-dive"), anchors.indexOf("reading") + 1)).toEqual(["deep-dive", "wcl-client", "live-addon", "reading"]);
     expect(toc(tEn, docs, true).find((e) => e.anchor === "wcl-client")!.label).toBe("Your own WCL client");
   });
   test("French: the section labels follow the dictionary, the axis labels follow the registry served", () => {
@@ -47,7 +53,7 @@ describe("toc", () => {
     expect(t.map((e) => e.anchor)).toEqual(toc(tEn, docs, true).map((e) => e.anchor));
     expect(t.filter((e) => !e.sub).map((e) => e.label)).toEqual([
       "Ce que bmpl regarde", "Le verdict", "Les six axes", "Pondération par niveau de key", "Item level attendu", "Signaux par run", "Pairs", "Deep-dive",
-      "Ton propre client WCL", "Lire la page", "FAQ",
+      "Ton propre client WCL", "L'addon en jeu", "Lire la page", "FAQ",
     ]);
     // The registry is fetched in the UI language (api.docs(locale)); the toc prints whatever titles it carries.
     expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation", "Experience"]);

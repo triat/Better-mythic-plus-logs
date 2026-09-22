@@ -21,7 +21,7 @@ export type { Role } from "@shared/evaluation/types.ts";
 export type { EvidenceSource } from "@shared/evaluation/axes/index.ts";
 export type { EvaluationDocs, AxisDoc, SubSignalDoc, ExtraDoc, FaqEntry, SourceDoc, TextBlock } from "@shared/evaluation/docs.ts";
 export type { DocsResponse } from "@shared/server/routes-shared.ts";
-export type { WclClientDoc } from "@shared/evaluation/docs.ts";
+export type { WclClientDoc, LiveAddonDoc } from "@shared/evaluation/docs.ts";
 export type { TextSegment } from "./lib/help.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";

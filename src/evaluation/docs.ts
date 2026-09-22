@@ -205,14 +205,14 @@ export const EVALUATION_DOCS: EvaluationDocs = {
   },
   liveAddon: {
     title: "The in-game addon",
-    why: "The Live panel reads a small strip of pixels the bmpl addon draws in-game, through a screen share — there is no server round trip and the addon has no network code of its own. Install it once and every applicant and party member you see in the Group Finder shows up here automatically, with class, role and score.",
+    why: "The Live panel reads a small strip of pixels the bmpl addon draws in-game, through a screen share — there is no server round trip and the addon has no network code of its own. Install it once and every applicant and party member you see in the Group Finder shows up here automatically, with class, role and score. A tank or healer applicant's spec is exact; a DPS applicant's spec is a best-effort guess, since Blizzard's Group Finder does not expose it before you invite them.",
     install: [
       "Download `bmpl-addon.zip` (from the repo's releases, or build it yourself with `just addon-zip`) and unzip it.",
       "Copy the `bmpl` folder into `World of Warcraft/_retail_/Interface/AddOns/`.",
-      "`/reload`, and tick **bmpl** on the AddOns list if it isn't already.",
+      "`/reload`, and tick bmpl on the AddOns list if it isn't already.",
     ],
     connect: [
-      "Click the **Live** chip in the header, **Pick the window**, and share the World of Warcraft window in the browser's own dialog.",
+      "Click the Live chip in the header, then Pick the window, and share the World of Warcraft window in the browser's own dialog.",
       "Open the Group Finder in-game, or have an active posting — the strip appears top-left and this panel fills in within a couple of seconds.",
     ],
     sends: "The addon sends nothing, receives nothing and stores nothing — it only draws pixels. The browser reads them locally; only the player names it recognizes are sent to bmpl, to check against evaluations it already has.",

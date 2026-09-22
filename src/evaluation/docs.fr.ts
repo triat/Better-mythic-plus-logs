@@ -144,14 +144,14 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
   },
   liveAddon: {
     title: "L'addon en jeu",
-    why: "Le panneau Live lit une petite bande de pixels que l'addon bmpl dessine en jeu, via un partage d'écran — pas d'aller-retour serveur, l'addon n'a aucun code réseau à lui. Installe-le une fois et chaque candidat et membre de groupe que tu vois dans le Group Finder apparaît ici automatiquement, avec classe, rôle et score.",
+    why: "Le panneau Live lit une petite bande de pixels que l'addon bmpl dessine en jeu, via un partage d'écran — pas d'aller-retour serveur, l'addon n'a aucun code réseau à lui. Installe-le une fois et chaque candidat et membre de groupe que tu vois dans le Group Finder apparaît ici automatiquement, avec classe, rôle et score. Le spec d'un candidat tank ou heal est exact ; le spec d'un candidat DPS est une estimation au mieux, parce que le Group Finder de Blizzard ne l'expose pas avant que tu l'invites.",
     install: [
       "Télécharge `bmpl-addon.zip` (depuis les releases du repo, ou construis-le toi-même avec `just addon-zip`) et décompresse-le.",
       "Copie le dossier `bmpl` dans `World of Warcraft/_retail_/Interface/AddOns/`.",
-      "`/reload`, et coche **bmpl** dans la liste des AddOns si ce n'est pas déjà fait.",
+      "`/reload`, et coche bmpl dans la liste des AddOns si ce n'est pas déjà fait.",
     ],
     connect: [
-      "Clique sur la puce **Live** dans l'en-tête, **Choisir la fenêtre**, et partage la fenêtre World of Warcraft dans le dialogue du navigateur.",
+      "Clique sur la puce Live dans l'en-tête, puis Choisir la fenêtre, et partage la fenêtre World of Warcraft dans le dialogue du navigateur.",
       "Ouvre le Group Finder en jeu, ou aie une annonce active — la bande apparaît en haut à gauche et ce panneau se remplit en quelques secondes.",
     ],
     sends: "L'addon n'envoie rien, ne reçoit rien et ne stocke rien — il ne fait que dessiner des pixels. Le navigateur les lit localement ; seuls les noms de joueurs qu'il y reconnaît sont envoyés à bmpl, pour vérifier ce qu'il sait déjà.",

@@ -15,7 +15,7 @@ export function anchorOf(source: string): Anchor {
 
 export interface TocEntry { anchor: Anchor; label: string; sub?: boolean }
 
-/** what, verdict, axes (+ six sub entries, titled by the registry), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), reading, faq. */
+/** what, verdict, axes (+ six sub entries, titled by the registry), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), live-addon, reading, faq. */
 export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
   return [
     { anchor: "what", label: t("help.toc.what") },
@@ -28,6 +28,8 @@ export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
     { anchor: "peers", label: t("help.toc.peers") },
     { anchor: "deep-dive", label: t("help.toc.deepdive") },
     ...(hosted ? [{ anchor: "wcl-client", label: t("help.toc.wclClient") }] : []),
+    // Not hosted-gated: the Live panel and its addon work the same way locally and hosted.
+    { anchor: "live-addon", label: t("help.toc.liveAddon") },
     { anchor: "reading", label: t("help.toc.reading") },
     { anchor: "faq", label: t("help.toc.faq") },
   ];

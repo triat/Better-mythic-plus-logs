@@ -24,8 +24,18 @@ export function liveRoutes(): Route[] {
       if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
       const history = historyOf(rc);
       const verdicts = b.value.players.map((p): LiveVerdict | null => {
+        // `LIVE_PLAYER`'s CHARACTER regex allows a trailing "-" inside the 32-char realm
+        // group (e.g. "A-B-"), which parseNameRealm() then rejects (its lastIndexOf() split
+        // lands on the very last char) — so this guard is not dead code, just a rare shape
+        // the regex alone doesn't rule out.
         const parsed = parseNameRealm(p.character);
         if (!parsed) return null;
+        // Contract: the caller sends each player's *effective* region (the same
+        // effectiveRegion(settings.region, status.region) the front uses for every other
+        // lookup), not left to default. `config.region` here is only the instance-default
+        // dead-letter fallback for a caller that omits it — cacheKey() embeds region, so a
+        // mismatch against the region the entry was actually cached under reads as a silent
+        // "not in history" (null), not an error.
         const entry = history.cached({
           character: p.character,
           level: b.value.level,

@@ -20,10 +20,11 @@ describe("user settings repository", () => {
 
   test("update merges a partial patch and returns the whole row; users are independent", () => {
     const { s, ua, ub, db } = setup();
-    expect(s.update(ua.id, { yourKey: 18 }, 1000)).toMatchObject({ yourKey: 18, legendOpen: true, region: null, locale: null });
-    expect(s.update(ua.id, { legendOpen: false }, 2000)).toMatchObject({ yourKey: 18, legendOpen: false, region: null, locale: null });
-    expect(s.update(ua.id, { yourKey: null }, 3000)).toMatchObject({ yourKey: null, legendOpen: false, region: null, locale: null });
-    expect(s.get(ub.id)).toMatchObject({ yourKey: null, legendOpen: true, region: null, locale: null });
+    const liveDefaults = { liveSort: DEFAULT_USER_SETTINGS.liveSort, liveRoles: [...DEFAULT_USER_SETTINGS.liveRoles], liveClasses: [...DEFAULT_USER_SETTINGS.liveClasses] };
+    expect(s.update(ua.id, { yourKey: 18 }, 1000)).toEqual({ yourKey: 18, legendOpen: true, region: null, locale: null, ...liveDefaults });
+    expect(s.update(ua.id, { legendOpen: false }, 2000)).toEqual({ yourKey: 18, legendOpen: false, region: null, locale: null, ...liveDefaults });
+    expect(s.update(ua.id, { yourKey: null }, 3000)).toEqual({ yourKey: null, legendOpen: false, region: null, locale: null, ...liveDefaults });
+    expect(s.get(ub.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, ...liveDefaults });
     expect(db.query("SELECT updated_at FROM user_settings WHERE user_id = ?").get(ua.id)).toEqual({ updated_at: 3000 });
   });
 

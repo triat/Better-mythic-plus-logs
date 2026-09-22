@@ -139,11 +139,12 @@ describe("/api/settings (hosted)", () => {
   });
 
   test("PUT merges partial patches per user", async () => {
-    expect(await (await put(a, { yourKey: 22 })).json()).toMatchObject({ ok: true, settings: { yourKey: 22, legendOpen: true, region: null, locale: null } });
-    expect(await (await put(a, { legendOpen: false })).json()).toMatchObject({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null } });
-    expect(await (await fetch(h("/api/settings"), as(a))).json()).toMatchObject({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null } });
-    expect(await (await fetch(h("/api/settings"), as(b))).json()).toMatchObject({ ok: true, settings: { yourKey: null, legendOpen: true, region: null, locale: null } });
-    expect(await (await put(a, { yourKey: null })).json()).toMatchObject({ ok: true, settings: { yourKey: null, legendOpen: false, region: null, locale: null } });
+    const liveDefaults = { liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] };
+    expect(await (await put(a, { yourKey: 22 })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: true, region: null, locale: null, ...liveDefaults } });
+    expect(await (await put(a, { legendOpen: false })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null, ...liveDefaults } });
+    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null, ...liveDefaults } });
+    expect(await (await fetch(h("/api/settings"), as(b))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true, region: null, locale: null, ...liveDefaults } });
+    expect(await (await put(a, { yourKey: null })).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: false, region: null, locale: null, ...liveDefaults } });
   });
 
   test("PUT validates its body", async () => {

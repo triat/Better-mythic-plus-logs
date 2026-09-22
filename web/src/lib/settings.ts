@@ -17,7 +17,19 @@ export interface Settings {
   liveRoles: LiveRole[];
   liveClasses: string[];
 }
-export const DEFAULT_SETTINGS: Settings = { yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: [...LIVE_ROLES], liveClasses: [] };
+// liveRoles/liveClasses are frozen: DEFAULT_SETTINGS is a module-scoped singleton handed out as-is
+// on the "no storage" / throwing-storage fast paths below — a caller that sorted or pushed in place
+// would otherwise corrupt the default for the whole session. Callers that need a mutable array
+// already copy with `[...LIVE_ROLES]` / `readJsonArray`'s fallback.
+export const DEFAULT_SETTINGS: Settings = {
+  yourKey: null,
+  legendOpen: true,
+  region: null,
+  locale: null,
+  liveSort: "arrival",
+  liveRoles: Object.freeze([...LIVE_ROLES]) as LiveRole[],
+  liveClasses: Object.freeze([] as string[]) as string[],
+};
 export const LEGEND_STORAGE_KEY = "bmpl.legendOpen";
 export const REGION_STORAGE_KEY = "bmpl.region";
 /** `null` (absent) = follow the browser's language; also read by the anonymous screens (sign-in, /privacy, /help). */

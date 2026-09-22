@@ -135,6 +135,14 @@ deletion, and an admin page. Reference and route table:
 [deploy/README.md](deploy/README.md#deploying-on-a-vps). Running one
 day-to-day: [docs/operator.md](docs/operator.md).
 
+## In-game integration
+
+A small WoW addon (`addon/`) draws a black-and-white pixel strip, top-left, only while the Group
+Finder is in play; the web UI's **Live** chip reads it through a screen share and turns it into a live
+view of your applicants and party — no server round trip, and the addon sends, receives and stores
+nothing. Install guide and slash commands: [addon/README.md](addon/README.md), or `/help#live-addon`
+on your own instance.
+
 ## API cost
 
 - `lookup`, fully uncached: ~100 pts per character; already cached: ~10 pts

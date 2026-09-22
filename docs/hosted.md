@@ -10,8 +10,9 @@ Warcraft Logs client, a shared/proposed defensives table, a privacy page and
 self-service account deletion, and an admin page (`/admin`) that can ban
 accounts. It disables the local-only routes (`/api/setup`, `/api/quit`,
 clipboard watch), never opens a browser, adds security headers (CSP, nosniff,
-frame-ancestors none, …) and exposes `GET /api/health` for the proxy's health
-check and an uptime monitor.
+frame-ancestors none, `Permissions-Policy: clipboard-read=(), display-capture=(self)` — the Live
+chip's `getDisplayMedia()` screen share is same-origin only, …) and exposes `GET /api/health` for the
+proxy's health check and an uptime monitor.
 
 ## Hardening
 
@@ -245,6 +246,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/health` | public | Health check for the reverse proxy / uptime monitor |
 | GET | `/api/status` | public | Whether credentials are set, hosted config flags (open signup, guild gate, own WCL clients, operator) |
 | GET | `/api/docs?lang=` | public | The documentation registry (`lang=fr` for French, anything else English) plus the effective evaluation config, for `/help` |
+| POST | `/api/live/cached` | user | Names → the verdicts bmpl already has (the Live panel's only server call): `{ level, players: [{ character, region? }] }`, up to 40 players; never touches WCL, 0 pts |
 | POST | `/api/setup` | local mode only | Write `WCL_CLIENT_ID`/`WCL_CLIENT_SECRET` to `.env` |
 | POST | `/api/watch/start` | local mode only | Start clipboard watch |
 | POST | `/api/watch/stop` | local mode only | Stop clipboard watch |
@@ -256,7 +258,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/me` | user | The signed-in member, their quota status and own WCL client (if any) |
 | DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, proposals, own WCL client) |
 | GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region, UI language) |
-| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser |
+| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale?, liveSort?, liveRoles?, liveClasses? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser, `liveSort` one of the Live panel's sort orders (`arrival`/`verdict`/`score`/`role`/`class`), `liveRoles` up to 3 of `tank`/`healer`/`dps` and `liveClasses` up to 13 class names — both empty/full means "no filter" |
 | GET | `/api/me/wcl-client` | user | The caller's own WCL client, if set |
 | PUT | `/api/me/wcl-client` | user | Save the caller's own WCL client (verified with a 0-pt PING first) |
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |

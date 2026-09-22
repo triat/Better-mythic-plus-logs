@@ -31,6 +31,23 @@ export interface WclClientDoc {
   inBmpl: string[];
   safety: string;
 }
+/**
+ * The guide to the in-game addon that draws the Live panel's pixel strip (/help#live-addon, the Live
+ * chip's connect dialog links here — see `LiveChip.tsx`'s "Get the addon" link). Same shape as
+ * `WclClientDoc`: prose, two numbered step lists, one closing line. Not hosted-only — the Live panel
+ * works the same way locally and hosted (`useWowCapture()` is unconditional in `App.tsx`).
+ */
+export interface LiveAddonDoc {
+  title: string;
+  /** Why bother: what the addon draws and why the browser needs it. */
+  why: string;
+  /** Numbered steps: download/unzip/reload. */
+  install: string[];
+  /** Numbered steps: the Live chip, sharing the window, opening the Group Finder. */
+  connect: string[];
+  /** Closing line: the addon sends/receives/stores nothing — what actually leaves the browser. */
+  sends: string;
+}
 export interface EvaluationDocs {
   axes: Record<AxisKey, AxisDoc>;
   verdict: { summary: string; global: string; thresholds: string; confidence: string; insufficient: string; role: string };
@@ -44,6 +61,7 @@ export interface EvaluationDocs {
   sources: SourceDoc[];
   faq: FaqEntry[];
   wclClient: WclClientDoc;
+  liveAddon: LiveAddonDoc;
 }
 
 export const EVALUATION_DOCS: EvaluationDocs = {
@@ -184,6 +202,20 @@ export const EVALUATION_DOCS: EvaluationDocs = {
       "Done: the quota line in your menu now shows your own counter, and your lookups no longer touch the shared budget.",
     ],
     safety: "The secret is stored encrypted and only ever sent to Warcraft Logs. If it leaks, delete the client on the same page and create a new one.",
+  },
+  liveAddon: {
+    title: "The in-game addon",
+    why: "The Live panel reads a small strip of pixels the bmpl addon draws in-game, through a screen share — there is no server round trip and the addon has no network code of its own. Install it once and every applicant and party member you see in the Group Finder shows up here automatically, with class, role and score.",
+    install: [
+      "Download `bmpl-addon.zip` (from the repo's releases, or build it yourself with `just addon-zip`) and unzip it.",
+      "Copy the `bmpl` folder into `World of Warcraft/_retail_/Interface/AddOns/`.",
+      "`/reload`, and tick **bmpl** on the AddOns list if it isn't already.",
+    ],
+    connect: [
+      "Click the **Live** chip in the header, **Pick the window**, and share the World of Warcraft window in the browser's own dialog.",
+      "Open the Group Finder in-game, or have an active posting — the strip appears top-left and this panel fills in within a couple of seconds.",
+    ],
+    sends: "The addon sends nothing, receives nothing and stores nothing — it only draws pixels. The browser reads them locally; only the player names it recognizes are sent to bmpl, to check against evaluations it already has.",
   },
 };
 

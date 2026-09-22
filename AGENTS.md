@@ -62,6 +62,7 @@ src/deepdive/         defensive-cooldown analysis  scripts/              dev-onl
 src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, cookie/state/Discord helpers, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
+addon/bmpl/            in-game addon: draws the Live panel's pixel strip, mirrors web/src/lib/live/codec.ts — addon/README.md
 web/src/lib/          pure tested view models      web/src/components/   thin React components
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```

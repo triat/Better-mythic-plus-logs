@@ -1,5 +1,5 @@
 {
-  "version": "mn-2.2",
+  "version": "mn-2.3",
   "denylist": [
     17,
     974,
@@ -46,6 +46,22 @@
     1297761
   ],
   "specs": {
+    "*:*": [
+      {
+        "id": 1234768,
+        "name": "Silvermoon Health Potion",
+        "cooldownS": 300,
+        "durationS": 0,
+        "kind": "minor"
+      },
+      {
+        "id": 1295247,
+        "name": "Concentrated Silvermoon Health Potion",
+        "cooldownS": 300,
+        "durationS": 0,
+        "kind": "minor"
+      }
+    ],
     "DeathKnight:*": [
       {
         "id": 48707,

@@ -23,8 +23,10 @@ bmpl analyze Biwaadrood-Nerzhul --all --yes --json # structured output (--json n
 
 Which spells count as defensives per spec lives in `src/deepdive/defensives.json`
 (shipped) and can be extended or corrected with a `defensives.json` next to
-your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"` or
-`"Class:*"`. Each entry supports three shapes:
+your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"`, `"Class:*"`
+or `"*:*"` (every spec — the shipped table keeps the health potions there, as
+`minor` entries: listed and judged at each death, not scored). Each entry
+supports three shapes:
 
 ```json
 {
@@ -54,10 +56,12 @@ Every spell name in the panel links to Wowhead and shows the spell's tooltip
 on hover (Wowhead's `tooltips.js`, loaded from `wow.zamimg.com` — the only
 third-party script in the UI; without internet the names are plain links).
 
-The shipped table (`src/deepdive/defensives.json`, version `mn-2.2`) was
+The shipped table (`src/deepdive/defensives.json`, version `mn-2.3`) was
 audited on 2026-09-16 against the top 2 Voidscar Arena runs of every spec:
 entries nobody cast were dropped, ids corrected, audit noise (beacons, raid
 buffs, trinkets, racials, forms/stances/mobility) added to the denylist.
+`mn-2.3` (2026-09-22) added the Silvermoon Health Potion (season 1) and its
+Concentrated version under `"*:*"`; other potions stay audit noise.
 `just audit-defensives [--only Class:Spec] [--runs N]` re-runs that check
 (~9 pts per spec) and prints, per spec, the table entries never cast and the
 self-cast buffs not in the table — the input for the next table revision.

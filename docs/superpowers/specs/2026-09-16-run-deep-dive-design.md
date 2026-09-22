@@ -87,9 +87,11 @@ web/src/components/RunDeepDive.tsx, DefensivesTable.tsx
 }
 ```
 
-- Keys are `Class:Spec` with WCL's spacing-free class names (`DeathKnight`, `DemonHunter`) and
-  `Class:*` for spells every spec of the class has. `defensivesFor` merges `Class:*` then
-  `Class:Spec` (spec entries override same ids).
+- Keys are `Class:Spec` with WCL's spacing-free class names (`DeathKnight`, `DemonHunter`),
+  `Class:*` for spells every spec of the class has and `*:*` for consumables every spec can use
+  (health potions, added in `mn-2.3`). `specDefensives` merges `*:*`, then `Class:*`, then
+  `Class:Spec` (the most specific key overrides same ids); `*:*` alone does not make a spec's table
+  "present".
 - `kind`: `major` — a personal damage-reduction/absorb cooldown that counts toward usage;
   `immunity` — full immunity, counts toward usage and ranks above `major` in the death verdict;
   `minor` — listed and shown (availability at death) but excluded from the usage score (short

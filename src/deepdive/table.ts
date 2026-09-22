@@ -5,7 +5,9 @@ import type { DefensiveKind, DefensiveSpell, EffectiveEntry, EntryOrigin, Loaded
 export const SHIPPED = shippedJson as ShippedTable;
 
 const KINDS: readonly DefensiveKind[] = ["major", "immunity", "minor"];
-const KEY_RE = /^[A-Za-z]+:(\*|[A-Za-z]+)$/;
+/** "Class:Spec", "Class:*" or the universal "*:*" (consumables every spec can use). */
+const KEY_RE = /^([A-Za-z]+:(\*|[A-Za-z]+)|\*:\*)$/;
+export const UNIVERSAL_KEY = "*:*";
 
 /** WCL reports multi-word classes without spaces ("DeathKnight"); normalize so "Death Knight" matches too. */
 export const specKey = (className: string, spec: string): string => `${className.replace(/\s+/g, "")}:${spec.replace(/\s+/g, "")}`;
@@ -34,7 +36,7 @@ export function validateOverride(obj: unknown): Override {
   if (!isObj(obj)) return fail("must be an object keyed by \"Class:Spec\"");
   const out: Override = {};
   for (const [key, list] of Object.entries(obj)) {
-    if (!KEY_RE.test(key)) return fail(`key "${key}" must look like "Class:Spec" or "Class:*"`);
+    if (!KEY_RE.test(key)) return fail(`key "${key}" must look like "Class:Spec", "Class:*" or "*:*"`);
     if (!Array.isArray(list)) return fail(`${key}: must be an array`);
     out[key] = list.map((e, i) => validateEntry(e, `${key}[${i}]${isObj(e) && typeof e.id === "number" ? ` (id ${e.id})` : ""}`));
   }
@@ -44,24 +46,28 @@ export function validateOverride(obj: unknown): Override {
 const complete = (e: OverrideEntry): e is OverrideEntry & DefensiveSpell =>
   typeof e.name === "string" && typeof e.cooldownS === "number" && typeof e.durationS === "number" && e.kind !== undefined;
 
-/** Effective list for a class/spec: shipped Class:* ⊕ Class:Spec, then override entries of both keys. */
+/**
+ * Effective list for a class/spec: shipped *:* ⊕ Class:* ⊕ Class:Spec (the most specific key wins on the same id),
+ * then override entries of the three keys in the same order. Only the class keys decide `tableMissing`:
+ * the universal key alone (potions) is not a table for the spec.
+ */
 export function specDefensives(shipped: ShippedTable, override: Override, className: string, spec: string): SpecDefensives {
   const key = specKey(className, spec);
   const starKey = specKey(className, "*");
-  const keys = [starKey, key];
+  const keys = [UNIVERSAL_KEY, starKey, key];
   const byId = new Map<number, EffectiveEntry>();
   let present = false;
   for (const k of keys) {
     const list = shipped.specs[k];
     if (!list) continue;
-    present = true;
+    if (k !== UNIVERSAL_KEY) present = true;
     for (const e of list) byId.set(e.id, { ...e, origin: "shipped" });
   }
   const ignored: number[] = [];
   for (const k of keys) {
     const list = override[k];
     if (!list) continue;
-    present = true;
+    if (k !== UNIVERSAL_KEY) present = true;
     for (const e of list) {
       if (e.ignore) { byId.delete(e.id); if (!ignored.includes(e.id)) ignored.push(e.id); continue; }
       const cur = byId.get(e.id);
@@ -107,7 +113,7 @@ export function layerPatches(base: Override, patches: Array<{ key: string; patch
  * keeps only the patched fields; `ignore` replaces any earlier patch; an unknown id must be complete.
  */
 export function applyPatch(override: Override, key: string, patch: OverrideEntry, effective: SpecDefensives): Override {
-  if (!KEY_RE.test(key)) fail(`key "${key}" must look like "Class:Spec" or "Class:*"`);
+  if (!KEY_RE.test(key)) fail(`key "${key}" must look like "Class:Spec", "Class:*" or "*:*"`);
   const list = mergeEntry(override[key] ?? [], patch);
   if (!patch.ignore) {
     const known = effective.entries.some((e) => e.id === patch.id) || effective.ignored.includes(patch.id);

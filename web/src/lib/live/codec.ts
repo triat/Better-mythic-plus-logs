@@ -8,7 +8,7 @@ export const STRIP = {
   cell: 6,
   /** Cells outside the marker row and column. */
   dataCells: 39 * 15,
-  /** Header (12) + payload; 73 bytes = 584 bits ≤ 585 data cells. */
+  /** Max frame size: header (12) + max payload (61) = 73 bytes = 584 bits ≤ 585 data cells. A frame with a shorter payload is smaller than this. */
   headerBytes: 12,
   frameBytes: 73,
   payloadMax: 61,
@@ -37,6 +37,7 @@ export function crc16(bytes: Uint8Array): number {
 
 export function encodeFrame(f: LiveFrame): Uint8Array {
   if (f.payload.length > STRIP.payloadMax) throw new Error(`payload of ${f.payload.length} bytes exceeds ${STRIP.payloadMax}`);
+  // Sized to the real payload, never padded to STRIP.frameBytes: the CRC below must cover exactly what is sent.
   const out = new Uint8Array(STRIP.headerBytes + f.payload.length);
   out.set(MAGIC, 0);
   out[4] = f.version;

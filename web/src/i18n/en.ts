@@ -92,6 +92,25 @@ export const en = {
       adminHandle: " · admin",
     },
   },
+  live: {
+    chip: { off: "Live", waiting: "Live · waiting for the Group Finder", on: "Live · {count}", reconnect: "Live · reconnect" },
+    connect: {
+      title: "Connect World of Warcraft",
+      pick: "Pick the World of Warcraft window in the next dialog. bmpl reads a small strip of pixels the addon draws while the Group Finder is open.",
+      privacy: "The image never leaves your browser — only the names read from it are sent, and only to check what bmpl already knows.",
+      needs: "You need the bmpl addon installed, and WoW in windowed fullscreen.",
+      go: "Pick the window",
+      cancel: "Cancel",
+      addon: "Get the addon",
+    },
+    error: {
+      fullscreen: "Switch WoW to windowed fullscreen",
+      fullscreenSub: "Exclusive fullscreen cannot be captured. The Group Finder is open but bmpl sees no strip.",
+      scale: "Increase your UI scale or the window size",
+      scaleSub: "The strip is readable but too small: more than half the frames fail their checksum.",
+      unsupported: "This browser cannot share a single window — try Chrome, Edge or Firefox on desktop.",
+    },
+  },
   tabs: {
     auto: "auto",
     profiles: "{n, plural, one {# profile} other {# profiles}}",

@@ -89,6 +89,25 @@ export const fr: Mirror<typeof en> = {
       adminHandle: " · admin",
     },
   },
+  live: {
+    chip: { off: "Live", waiting: "Live · en attente du Group Finder", on: "Live · {count}", reconnect: "Live · reconnexion" },
+    connect: {
+      title: "Connecter World of Warcraft",
+      pick: "Choisis la fenêtre World of Warcraft dans le dialogue suivant. bmpl lit une petite bande de pixels que l'addon dessine quand le Group Finder est ouvert.",
+      privacy: "L'image ne quitte jamais ton navigateur — seuls les noms qui en sont lus sont envoyés, et uniquement pour vérifier ce que bmpl sait déjà.",
+      needs: "Il te faut l'addon bmpl installé, et WoW en fenêtré plein écran.",
+      go: "Choisir la fenêtre",
+      cancel: "Annuler",
+      addon: "Récupérer l'addon",
+    },
+    error: {
+      fullscreen: "Passe WoW en fenêtré plein écran",
+      fullscreenSub: "Le plein écran exclusif ne peut pas être capturé. Le Group Finder est ouvert mais bmpl ne voit aucune bande.",
+      scale: "Augmente ton échelle d'UI ou la taille de la fenêtre",
+      scaleSub: "La bande est lisible mais trop petite : plus de la moitié des trames ratent leur checksum.",
+      unsupported: "Ce navigateur ne sait pas partager une seule fenêtre — essaie Chrome, Edge ou Firefox sur desktop.",
+    },
+  },
   tabs: {
     auto: "auto",
     profiles: "{n, plural, one {# profil} other {# profils}}",

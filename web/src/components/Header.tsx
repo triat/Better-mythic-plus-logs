@@ -9,6 +9,7 @@ import { LOCALE_LABELS, detectLocale } from "../lib/locale.ts";
 import type { Locale } from "../lib/locale.ts";
 import { useT } from "../locale.tsx";
 import { ChipMenu } from "./ChipMenu.tsx";
+import { LiveChip } from "./LiveChip.tsx";
 import { UserMenu } from "./UserMenu.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
@@ -115,6 +116,7 @@ export function Header(p: Props) {
         <div className="brand">bmpl</div>
         {showSearch && !p.hero && search}
         <div className="grow" />
+        <LiveChip />
         {p.controls.watch && (
           // Local mode: the EN / FR chip (design: canvas "Locale", option A); hosted mode has the row in the user menu.
           <ChipMenu

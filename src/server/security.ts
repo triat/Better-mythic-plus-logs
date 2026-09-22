@@ -23,7 +23,8 @@ export const SECURITY_HEADERS: Readonly<Record<string, string>> = Object.freeze(
   "Content-Security-Policy": CSP,
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "clipboard-read=()",
+  // display-capture=(self): the Live chip's getDisplayMedia call (issue: game integration) is same-origin only.
+  "Permissions-Policy": "clipboard-read=(), display-capture=(self)",
   "X-Frame-Options": "DENY",
 });
 

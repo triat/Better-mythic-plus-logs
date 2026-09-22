@@ -111,6 +111,28 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .live-dialog-error { border-color: var(--yellow-border); }
 .live-dialog-error .section-title { color: var(--yellow); }
 
+/* Live panel (roster band, LivePanel.tsx; design: canvas "Live", variant A) */
+.live { border-bottom: 1px solid var(--border-soft); padding: 10px 24px 12px; display: flex; flex-direction: column; gap: 8px; }
+.live-head { display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
+.rolefilter { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 24px; }
+.rolefilter .rf { display: flex; align-items: center; padding: 0 9px; height: 100%; font-size: 12px; color: var(--faint); border: 0; border-right: 1px solid var(--border-soft); background: var(--inset); cursor: pointer; }
+.rolefilter .rf:last-child { border-right: 0; }
+.rolefilter .rf.on { color: var(--text); background: var(--card); }
+.live-row { display: grid; grid-template-columns: 18px 210px 66px 74px 1fr auto; align-items: center; gap: 12px; padding: 5px 8px; border-radius: var(--radius); font-size: 13px; cursor: pointer; }
+.live-row:hover { background: var(--inset); }
+.live-row.alt { background: var(--inset); }
+.live-row.alt:hover { background: var(--card); }
+.live-row > * { justify-self: start; }
+.live-row > *:last-child { justify-self: end; }
+.live-row .nm { font-weight: 600; }
+.live-status { font-size: 12px; }
+.live-sep { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 6px 8px 2px; }
+.live-sep i { flex: 1; height: 1px; background: var(--border-soft); display: block; }
+.cls { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.sc { font-size: 13px; }
+.live-auto-guide { font-size: 12px; align-self: flex-end; }
+.watch.disabled { opacity: .5; cursor: default; pointer-events: none; }
+
 /* your-key stepper */
 .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--inset); overflow: hidden; flex: none; }
 .stepper-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 10px; border-right: 1px solid var(--border-soft); height: 100%; display: flex; align-items: center; }

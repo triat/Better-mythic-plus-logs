@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../locale.tsx";
-import { useWowCapture } from "../lib/live/useWowCapture.ts";
+import type { LiveState } from "../lib/live/useWowCapture.ts";
 import { Around } from "./Around.tsx";
 
 /** True once, at mount, and never re-derived: a browser either has `getDisplayMedia` or it doesn't. */
@@ -10,10 +10,13 @@ const SUPPORTS_CAPTURE = typeof navigator !== "undefined" && typeof navigator.me
  * The Live chip (header, right of the search / before the locale chip locally, before the user menu
  * hosted): a screen-capture status dot plus the connect dialog and the two in-game error cards.
  * Design: canvas "Live", variant A ("Shared — the Live chip's states" / "the connect dialog").
+ *
+ * `state`/`connect` come from `Main`'s single `useWowCapture()` (Task 7): the Live panel needs the same
+ * roster, and two independent hook instances would each open their own `getDisplayMedia()` capture (a
+ * second permission prompt, two scan loops) — so this chip no longer owns the hook itself.
  */
-export function LiveChip() {
+export function LiveChip({ state, connect }: { state: LiveState; connect: () => Promise<void> }) {
   const { t } = useT();
-  const { state, connect } = useWowCapture();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 

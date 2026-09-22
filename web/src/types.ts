@@ -25,6 +25,7 @@ export type { WclClientDoc } from "@shared/evaluation/docs.ts";
 export type { TextSegment } from "./lib/help.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
+export type { LiveVerdict } from "@shared/server/routes-live.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";
 export type { Metric } from "@shared/roles.ts";
 export type {

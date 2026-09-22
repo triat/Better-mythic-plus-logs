@@ -13,6 +13,7 @@ import type {
   DocsResponse,
   HistoryItem,
   HistoryRequest,
+  LiveVerdict,
   LookupPayload,
   LookupRequest,
   OwnClientView,
@@ -91,6 +92,15 @@ export const api = {
   clearHistory: () => call<Record<never, never>>("/api/history", { method: "DELETE" }),
   watchStart: (opts: WatchOpts) => call<WatchStatus>("/api/watch/start", post(opts)),
   watchStop: () => call<{ active: false }>("/api/watch/stop", post()),
+  /**
+   * The Live panel's only server call: names → cached verdicts, index-aligned with `players`, 0 WCL pts.
+   * Unlike every other `api.*` call this returns the array directly rather than `ApiResult` — a failure
+   * (network, server error) is not worth a toast here, it just means every row reads "not vetted yet".
+   */
+  liveCached: async (players: Array<{ character: string; region?: Region }>, level: number | null): Promise<Array<LiveVerdict | null>> => {
+    const r = await call<{ verdicts: Array<LiveVerdict | null> }>("/api/live/cached", post({ players, level }));
+    return r.ok ? r.verdicts : players.map(() => null);
+  },
   quit: () => call<Record<never, never>>("/api/quit", post()),
   deepdive: (req: DeepdiveRequest) =>
     call<{ result: RunDefensives; fromCache: boolean; pointsSpent: number | null; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/deepdive", post(req)),

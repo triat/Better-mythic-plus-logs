@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { KeyStepper } from "./KeyStepper.tsx";
 import type { UiControls } from "../lib/hostedMode.ts";
+import type { LiveState } from "../lib/live/useWowCapture.ts";
 import type { MenuModel } from "../lib/session.ts";
 import type { LookupPayload, Region } from "../types.ts";
 import { OTHER_SPEC, localeMenu, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../lib/header.ts";
@@ -44,6 +45,8 @@ interface Props {
   pendingProposals: number | null;
   onMenuOpen: () => void;
   onSignOut: () => void;
+  /** Screen-capture state, lifted to `Main` so the Live panel shares it (see `LiveChip.tsx`). */
+  live: { state: LiveState; connect: () => Promise<void> };
 }
 
 export function Header(p: Props) {
@@ -116,7 +119,7 @@ export function Header(p: Props) {
         <div className="brand">bmpl</div>
         {showSearch && !p.hero && search}
         <div className="grow" />
-        <LiveChip />
+        <LiveChip state={p.live.state} connect={p.live.connect} />
         {p.controls.watch && (
           // Local mode: the EN / FR chip (design: canvas "Locale", option A); hosted mode has the row in the user menu.
           <ChipMenu

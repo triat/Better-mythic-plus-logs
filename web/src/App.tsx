@@ -10,6 +10,9 @@ import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
+import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
+import { autoQueue } from "./lib/live/panel.ts";
+import { useWowCapture } from "./lib/live/useWowCapture.ts";
 import type { Locale } from "./lib/locale.ts";
 import { effectiveRegion, isRegion } from "./lib/regions.ts";
 import { parseServerSettings, readLocalSettings, writeLocalSettings } from "./lib/settings.ts";
@@ -29,6 +32,7 @@ import type { DeepdiveActions } from "./components/Detail.tsx";
 import { EMPTY_FORM, Header } from "./components/Header.tsx";
 import type { LookupForm } from "./components/Header.tsx";
 import { Home } from "./components/Home.tsx";
+import { LivePanel } from "./components/LivePanel.tsx";
 import { Setup } from "./components/Setup.tsx";
 import { SignIn } from "./components/SignIn.tsx";
 import { Tabs } from "./components/Tabs.tsx";
@@ -313,6 +317,74 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const activeTab = tabs.find((x) => x.key === activeKey) ?? null;
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
 
+  // --- Live panel (game-integration Task 7): a single `useWowCapture()` here, shared by the header's
+  // Live chip and the panel below (two hook instances would each open their own screen capture). ---
+  const live = useWowCapture();
+  const [liveVerdicts, setLiveVerdicts] = useState<Map<string, CachedVerdict>>(new Map());
+  const [liveAuto, setLiveAuto] = useState(false);
+  const [liveAutoInFlight, setLiveAutoInFlight] = useState<string | null>(null);
+  // The auto switch needs a WCL client that isn't the shared meter: the member's own (hosted, usable) or
+  // local mode (the CLI's own credentials — never the shared budget either).
+  const liveAutoAllowed = !status.hosted || (ownClient !== null && ownClient.usable);
+  useEffect(() => { if (!liveAutoAllowed) setLiveAuto(false); }, [liveAutoAllowed]);
+
+  // POST /api/live/cached whenever the roster's *player set* changes (not on every frame — `liveCharKey`
+  // is stable across frames that redraw the same roster). 0 WCL pts; region is sent for every player,
+  // computed exactly like every other lookup (`effectiveRegion`) — see Task 4's review note in the brief.
+  const liveCharKey = live.roster ? live.roster.players.map((pl) => pl.character).join("|") : "";
+  useEffect(() => {
+    const roster = live.roster;
+    if (!roster) return;
+    const players = roster.players.map((pl) => ({ character: pl.character, region }));
+    let alive = true;
+    void api.liveCached(players, yourKey).then((verdicts) => {
+      if (!alive) return;
+      setLiveVerdicts((prev) => {
+        const next = new Map(prev);
+        verdicts.forEach((v, i) => { if (v) next.set(players[i]!.character, { verdict: v.verdict, score: v.score, targetLevel: v.targetLevel, fetchedAt: v.fetchedAt }); });
+        return next;
+      });
+    });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveCharKey, region, yourKey]);
+
+  // The auto-lookup queue: one in-flight `api.lookup` at a time, re-evaluated whenever the roster or the
+  // verdict map changes. It never touches the active tab (the member keeps browsing whatever they had
+  // open) but the lookup still lands in history like any other, so the applicant becomes a normal tab.
+  useEffect(() => {
+    const roster = live.roster;
+    if (!liveAuto || !liveAutoAllowed || !roster || liveAutoInFlight) return;
+    const next = autoQueue(roster.players, liveVerdicts, new Set())[0];
+    if (!next) return;
+    setLiveAutoInFlight(next);
+    (async () => {
+      const r = await api.lookup({ character: next, level: yourKey, spec: null, metric: null, region, refresh: false });
+      if (!r.ok) {
+        setLiveAuto(false); // a quota/budget refusal turns the switch off, same toast as a manual lookup.
+        if (r.quota) setQuota(r.quota);
+        setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null);
+        setLiveAutoInFlight(null);
+        return;
+      }
+      if (r.quota) setQuota(r.quota);
+      if (r.ownClient !== undefined) setOwnClient(r.ownClient);
+      payloads.current.set(r.key, r.result);
+      touch();
+      await loadHistory();
+      const ev = r.result.evaluation;
+      setLiveVerdicts((prev) => {
+        const merged = new Map(prev);
+        merged.set(next, { verdict: ev.verdict, score: ev.global, targetLevel: ev.targetLevel, fetchedAt: Date.now() });
+        return merged;
+      });
+      setLiveAutoInFlight(null);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveAuto, liveAutoAllowed, live.roster, liveVerdicts, liveAutoInFlight, yourKey, region]);
+
+  const onLiveSelect = (character: string) => void runLookup({ character, level: yourKey, spec: null, metric: null, region }, false);
+
   // --- run deep-dive ---
   const [analyzing, setAnalyzing] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
@@ -384,7 +456,21 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && isMainPage} search={isMainPage} controls={controls}
         menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
+        live={{ state: live.state, connect: live.connect }}
       />
+      {isMainPage && live.roster && (
+        <LivePanel
+          roster={live.roster} verdicts={liveVerdicts}
+          sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
+          onSortChange={(v: LiveSort) => updateSettings({ liveSort: v })}
+          onRolesChange={(v: LiveRole[]) => updateSettings({ liveRoles: v })}
+          onClassesChange={(v: string[]) => updateSettings({ liveClasses: v })}
+          onSelect={onLiveSelect}
+          auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={setLiveAuto}
+          queued={liveAutoInFlight ? new Set([liveAutoInFlight]) : new Set<string>()}
+          now={Date.now()}
+        />
+      )}
       {page === "admin" && (
         access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
       )}

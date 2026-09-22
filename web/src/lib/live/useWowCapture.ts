@@ -56,6 +56,18 @@ export function liveState(s: CaptureStats): LiveState {
 
 const OFF: LiveState = { kind: "off" };
 
+/**
+ * `publish`'s "notify only on a real transition" check (review round 1, finding 1): compares the fields
+ * each `kind` actually carries, not object identity — `liveState` returns a fresh object literal every
+ * call, so `a === b` would never be true even when nothing changed.
+ */
+function sameLiveState(a: LiveState, b: LiveState): boolean {
+  if (a.kind !== b.kind) return false;
+  if (a.kind === "live" && b.kind === "live") return a.players === b.players;
+  if (a.kind === "error" && b.kind === "error") return a.code === b.code;
+  return true; // off / waiting / reconnect carry no other field
+}
+
 // --- Injectable capture surface -------------------------------------------------------------------
 // Narrow shapes of the DOM APIs the loop actually calls, so a test can supply fakes with no real
 // browser: a real MediaStreamTrack/HTMLVideoElement/HTMLCanvasElement structurally satisfies these
@@ -155,9 +167,18 @@ export function createCapture(deps: CaptureDeps): Capture {
 
   const publish = (now: number) => {
     const current = assembler.current(now);
-    roster = current;
+    // `RosterAssembler.current()` returns the SAME object reference across every tick that re-decodes an
+    // unchanged, already-assembled roster (it only ever creates a new object when a roster completes) —
+    // so reference inequality is exactly "a new roster arrived or the old one went stale", not a proxy.
+    const rosterChanged = current !== roster;
     const next = liveState({ ...stats, rosterAt: current?.at ?? null, now });
-    state = next.kind === "live" ? { kind: "live", players: current!.players.length } : next;
+    const nextState: LiveState = next.kind === "live" ? { kind: "live", players: current!.players.length } : next;
+    const stateChanged = !sameLiveState(state, nextState);
+    roster = current;
+    // Review round 1, finding 1: at CAPTURE_HZ (10/s) this ran unconditionally, so every tick re-rendered
+    // the whole `Main` tree while connected. Notify only on a real transition.
+    if (!rosterChanged && !stateChanged) return;
+    state = nextState;
     notify();
   };
 

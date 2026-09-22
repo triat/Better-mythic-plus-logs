@@ -127,6 +127,8 @@ export const en = {
       auto: "Evaluate new applicants automatically",
       autoNeedsClient: "Needs your own Warcraft Logs client",
       queued: "queued",
+      sortChip: "Sort · {value}",
+      classChip: "Class · {value}",
     },
     sort: { arrival: "arrival", verdict: "verdict", score: "Raider.IO score", role: "role", class: "class" },
     role: { tank: "Tank", healer: "Heal", dps: "DPS" },

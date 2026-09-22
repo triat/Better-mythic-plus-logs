@@ -4,6 +4,7 @@ import type { CachedVerdict, LiveRole, LiveSort, Roster } from "../lib/live/rost
 import { LIVE_ROLES } from "../lib/live/roster.ts";
 import { classMenu, panelView, sortMenu } from "../lib/live/panel.ts";
 import type { PanelRow } from "../lib/live/panel.ts";
+import { OWN_CLIENT_GUIDE } from "../lib/session.ts";
 import { ChipMenu } from "./ChipMenu.tsx";
 
 interface Props {
@@ -49,13 +50,18 @@ export function LivePanel(p: Props) {
     p.onRolesChange(on ? p.roles.filter((r) => r !== role) : [...p.roles, role]);
   };
 
-  const row = (r: PanelRow, isParty: boolean, i: number) => {
+  // Review round 1, finding 5: only the player's own "self" row ever shows "you" — a party row with no
+  // cached verdict gets the exact same "not vetted yet" / Check treatment an applicant row does (a click
+  // on it still runs a normal lookup, ruled "keep as is": vetting someone already in the group is exactly
+  // why the party block exists).
+  const row = (r: PanelRow, i: number) => {
+    const isSelf = r.player.kind === "self";
     const status = r.verdict ? (
       <span className={"badge-sm badge-" + r.verdict.verdict}>
         {t(`verdict.words.${r.verdict.verdict}`)}
         {r.verdict.score !== null && <> <b>{Math.round(r.verdict.score)}</b></>}
       </span>
-    ) : isParty ? (
+    ) : isSelf ? (
       <span className="faint live-status">{t("live.panel.you")}</span>
     ) : p.queued.has(r.player.character) ? (
       <span className="muted live-status">{t("live.panel.queued")}</span>
@@ -64,7 +70,7 @@ export function LivePanel(p: Props) {
     );
     const trailing = r.verdict ? (
       <span className="faint live-status">{r.ageLabel}</span>
-    ) : !isParty && !p.queued.has(r.player.character) ? (
+    ) : !isSelf && !p.queued.has(r.player.character) ? (
       <button type="button" className="btn btn-sm" onClick={(e) => { e.stopPropagation(); p.onSelect(r.player.character); }}>
         {t("live.panel.check")}
       </button>
@@ -96,35 +102,37 @@ export function LivePanel(p: Props) {
           ))}
         </span>
         <ChipMenu
-          // No dedicated "Sort ▾" caption key in the brief's dictionary list (the chip's own value,
-          // e.g. "verdict ▾", already says what it is — same minimal style as `regionChipLabel`, which
-          // has no "Region ·" prefix either); the menu's head repeats that value rather than a blank one.
-          label={t(`live.sort.${p.sort}`) + " ▾"}
+          // Review round 1, finding 2: restore the canvas's "Sort · verdict" / "Class · all" captions,
+          // through the dictionary (live.panel.sortChip / classChip), not a literal in the component.
+          label={t("live.panel.sortChip", { value: t(`live.sort.${p.sort}`) }) + " ▾"}
           className="chip chip-on"
-          head={t(`live.sort.${p.sort}`)}
+          head={t("live.panel.sortChip", { value: t(`live.sort.${p.sort}`) })}
           items={sortMenu(t, p.sort)}
           onPick={(v) => p.onSortChange(v as LiveSort)}
         />
         <ChipMenu
-          label={(p.classes.length === 0 ? t("live.class.all") : classLabel(p.classes[0]!)) + " ▾"}
+          label={t("live.panel.classChip", { value: p.classes.length === 0 ? t("live.class.all") : classLabel(p.classes[0]!) }) + " ▾"}
           className={"chip" + (p.classes.length > 0 ? " chip-on" : "")}
-          head={p.classes.length === 0 ? t("live.class.all") : classLabel(p.classes[0]!)}
+          head={t("live.panel.classChip", { value: p.classes.length === 0 ? t("live.class.all") : classLabel(p.classes[0]!) })}
           items={classMenu(t, classLabel, applicantsForClassMenu, p.classes)}
           onPick={(v) => p.onClassesChange(v ? [v] : [])}
         />
         <span className="grow" />
-        <label className={"watch" + (p.auto ? " on" : "") + (p.autoAllowed ? "" : " disabled")} title={t("live.panel.auto")}>
+        {/* Review round 1, finding 3: the board's own green `.sw` pill, not `.watch` (blue/orange) — the
+            clipboard-watch toggle in Header.tsx keeps `.watch` untouched, so local mode stays pixel-identical. */}
+        <label className={"sw" + (p.auto ? " on" : "") + (p.autoAllowed ? "" : " off-disabled")} title={t("live.panel.auto")}>
           <input type="checkbox" checked={p.auto} disabled={!p.autoAllowed} onChange={(e) => p.onAutoChange(e.target.checked)} />
-          <span className="switch" />
+          <span className="sw-track"><span className="sw-knob" /></span>
           <span>{t("live.panel.auto")}</span>
         </label>
       </div>
-      {!p.autoAllowed && <a className="faint live-auto-guide" href="/help#wcl-client">{t("live.panel.autoNeedsClient")}</a>}
-      {view.applicants.map((r, i) => row(r, false, i))}
+      {/* Review round 1, finding 4: the shared guide link constant, not a hardcoded href. */}
+      {!p.autoAllowed && <a className="faint live-auto-guide" href={OWN_CLIENT_GUIDE.href}>{t("live.panel.autoNeedsClient")}</a>}
+      {view.applicants.map((r, i) => row(r, i))}
       {view.party.length > 0 && (
         <>
           <div className="live-sep">{t("live.panel.yourGroup")}<i /></div>
-          {view.party.map((r, i) => row(r, true, view.applicants.length + i))}
+          {view.party.map((r, i) => row(r, view.applicants.length + i))}
         </>
       )}
     </div>

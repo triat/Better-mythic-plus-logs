@@ -32,12 +32,13 @@ const toRow = (t: T, verdicts: Map<string, CachedVerdict>, now: number, player: 
 };
 
 /**
- * `applicants` is filtered then sorted (so `countLine` reports the filtered count); `party` is never
- * filtered or sorted — it stays in the roster's own order (the addon lists your group, not applicants).
+ * `applicants` is filtered then sorted (so `countLine` reports the filtered count); `party` — `kind ===
+ * "party"` and the player's own `"self"` row together — is never filtered or sorted: it stays in the
+ * roster's own order (the addon lists your group, not applicants).
  */
 export function panelView(t: T, o: { roster: Roster; verdicts: Map<string, CachedVerdict>; settings: PanelFilter; now: number }): PanelView {
   const applicants = o.roster.players.filter((p) => p.kind === "applicant");
-  const party = o.roster.players.filter((p) => p.kind === "party");
+  const party = o.roster.players.filter((p) => p.kind === "party" || p.kind === "self");
   const filtered = filterApplicants(applicants, { roles: o.settings.liveRoles, classes: o.settings.liveClasses });
   const sorted = sortApplicants(filtered, o.settings.liveSort, (character) => o.verdicts.get(character) ?? null);
   return {
@@ -50,8 +51,9 @@ export function panelView(t: T, o: { roster: Roster; verdicts: Map<string, Cache
 
 /**
  * The characters an auto-lookup should fetch next, oldest first (lowest roster index — see
- * `RosterPlayer.index`). Never a party member (kept safe even when `applicants` is the whole roster),
- * never one already cached, never one `alreadyQueued` (the in-flight lookup, so the caller never bursts).
+ * `RosterPlayer.index`). Never a party member or the player's own `"self"` row (kept safe even when
+ * `applicants` is the whole roster), never one already cached, never one `alreadyQueued` (the in-flight
+ * lookup, so the caller never bursts).
  */
 export function autoQueue(applicants: readonly RosterPlayer[], verdicts: Map<string, CachedVerdict>, alreadyQueued: Set<string>): string[] {
   return applicants

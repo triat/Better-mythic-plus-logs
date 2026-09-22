@@ -12,7 +12,14 @@ export const isLiveSort = (v: unknown): v is LiveSort => typeof v === "string" &
 export const ROSTER_STALE_MS = 10_000;
 
 export interface RosterPlayer {
-  kind: "applicant" | "party";
+  /**
+   * The addon's line kind: `applicant` (`a`), `party` (`p`, another group member) or `self` (`s`, the
+   * player's own character). `self` behaves exactly like `party` everywhere that separates applicants
+   * from the group (never sorted/filtered as an applicant, never auto-queued) — it is only ever
+   * distinguished to show the "you" label instead of a verdict/Check button (review round 1, finding 5;
+   * Task 8's addon brief carries the `s`-for-self / `p`-for-others line-format contract).
+   */
+  kind: "applicant" | "party" | "self";
   name: string;
   realm: string;
   /** `Name-Realm`, the form every bmpl lookup takes. */
@@ -45,10 +52,10 @@ export function parseRoster(text: string): RosterPlayer[] {
     const parts = line.split("|");
     if (parts.length !== 6) continue;
     const [kind, character, className, spec, role, score] = parts as [string, string, string, string, string, string];
-    if ((kind !== "a" && kind !== "p") || !NAME_REALM.test(character) || !ROLE_OF[role] || !className || !spec) continue;
+    if ((kind !== "a" && kind !== "p" && kind !== "s") || !NAME_REALM.test(character) || !ROLE_OF[role] || !className || !spec) continue;
     const dash = character.lastIndexOf("-");
     players.push({
-      kind: kind === "a" ? "applicant" : "party",
+      kind: kind === "a" ? "applicant" : kind === "p" ? "party" : "self",
       name: character.slice(0, dash),
       realm: character.slice(dash + 1),
       character,

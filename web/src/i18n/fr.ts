@@ -121,6 +121,8 @@ export const fr: Mirror<typeof en> = {
       auto: "Évaluer les nouveaux candidats automatiquement",
       autoNeedsClient: "Nécessite ton propre client Warcraft Logs",
       queued: "en attente",
+      sortChip: "Trier · {value}",
+      classChip: "Classe · {value}",
     },
     sort: { arrival: "arrivée", verdict: "verdict", score: "score Raider.IO", role: "rôle", class: "classe" },
     role: { tank: "Tank", healer: "Heal", dps: "DPS" },

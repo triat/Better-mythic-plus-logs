@@ -142,6 +142,45 @@ describe("createCapture", () => {
 
 });
 
+// --- publish() notifies only on a real transition (review round 1, finding 1): at CAPTURE_HZ (10/s)
+// this used to run unconditionally, re-rendering the whole `Main` tree on every tick while connected.
+
+describe("createCapture: publish only on a real transition", () => {
+  test("ticks with nothing changing produce exactly one state notification; a real transition produces one more", async () => {
+    const { deps, tracks, ticks } = fakeDeps();
+    const capture = createCapture(deps);
+    let notifications = 0;
+    capture.subscribe(() => { notifications++; });
+    await capture.connect(); // off -> waiting: the one real transition so far.
+    expect(notifications).toBe(1);
+    const doTick = ticks[0]!;
+    for (let i = 0; i < 20; i++) doTick(); // the video never reaches HAVE_CURRENT_DATA, no roster: nothing changes.
+    expect(notifications).toBe(1);
+    tracks[0]!.fireEnded(); // waiting -> reconnect: a real transition.
+    expect(notifications).toBe(2);
+  });
+
+  test("re-decoding the same completed roster every tick keeps the roster reference stable and notifies once", async () => {
+    const frame = { version: 1, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|Druid|Restoration|H|100") };
+    const cells = encodeCells(frame); // not flipped: decodes cleanly on every tick.
+    const img = paint(cells, STRIP.cell);
+    const rgba = grayToRgba(img);
+    const { deps, ticks } = fakeDepsShowing(rgba, img.width, img.height);
+    const capture = createCapture(deps);
+    let notifications = 0;
+    capture.subscribe(() => { notifications++; });
+    await capture.connect();
+    const doTick = ticks[0]!;
+    doTick(); // the roster completes: waiting -> live, a real transition.
+    expect(capture.getState()).toMatchObject({ kind: "live" });
+    const afterFirstTick = notifications;
+    const rosterRef = capture.getRoster();
+    for (let i = 0; i < 20; i++) doTick(); // the exact same frame decodes again and again: nothing changes.
+    expect(notifications).toBe(afterFirstTick); // no extra notifications
+    expect(capture.getRoster()).toBe(rosterRef); // same object reference, not merely equal content
+  });
+});
+
 // --- One scan per tick (review round 1, finding 2): a marker row that is present but never decodes
 // must read as a CRC failure (eventually the "scale" error), not as an absent marker (which would only
 // ever read as the "fullscreen" error after MARKER_TIMEOUT_MS) — derived from the single `accept`-gated

@@ -36,6 +36,22 @@ describe("panelView", () => {
     expect(v.countLine).toBe("showing 1 of 3");
     expect(v.hiddenCount).toBe(2);
   });
+  // Review round 1, finding 5: the player's own "self" row is grouped with "party", not with the applicants.
+  test("the 'self' kind is grouped into party, not into applicants", () => {
+    const withSelf = {
+      seq: 1,
+      at: 0,
+      players: parseRoster(
+        "a|Applicant-Realm|Druid|Restoration|H|100\n" +
+        "p|Mate-Realm|Paladin|Protection|T|200\n" +
+        "s|Me-Realm|Warrior|Fury|D|300\n",
+      ),
+    };
+    const v = panelView(tEn, { roster: withSelf, verdicts: new Map(), settings, now: 0 });
+    expect(v.applicants.map((r) => r.player.name)).toEqual(["Applicant"]);
+    expect(v.party.map((r) => r.player.name)).toEqual(["Mate", "Me"]);
+    expect(v.countLine).toBe("showing 1 of 1"); // "self" and "party" never count toward the applicant total
+  });
 });
 
 describe("autoQueue", () => {

@@ -21,6 +21,12 @@ describe("parseRoster", () => {
   test("skips malformed lines instead of throwing", () => {
     expect(parseRoster("a|broken\n\nx|Nope-Realm|Druid|Feral|D|0\na|Ok-Realm|Druid|Feral|D|12\n").map((p) => p.name)).toEqual(["Ok"]);
   });
+  // Review round 1, finding 5: the addon emits `s` for the player's own line, `p` for the rest of the
+  // group — `self` behaves like `party` everywhere that separates applicants from the group.
+  test("reads the 's' line as kind 'self'", () => {
+    const players = parseRoster("s|Muleyoxo-Hyjal|Monk|Windwalker|D|3240\n");
+    expect(players).toEqual([{ kind: "self", name: "Muleyoxo", realm: "Hyjal", character: "Muleyoxo-Hyjal", className: "Monk", spec: "Windwalker", role: "dps", score: 3240, index: 0 }]);
+  });
 });
 
 describe("RosterAssembler", () => {

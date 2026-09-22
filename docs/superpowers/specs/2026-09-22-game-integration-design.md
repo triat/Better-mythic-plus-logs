@@ -22,7 +22,8 @@ applying and what bmpl already knows about them — and can vet any of them in o
 | Who captures | **The browser**, via `getDisplayMedia` on the WoW window. No desktop client to build, sign, distribute or update. The strip format is the interface, so a native client could replace the capture later without touching the addon or the site. |
 | What the addon exposes | Group Finder applicants **and the current party** — name-realm, class, spec, role, declared Raider.IO score. Nothing else (no target, no mouseover). |
 | When the strip is drawn | **Only while the Group Finder is in play**: the Group Finder window is open, or the player has an active listing (`C_LFGList.GetActiveEntryInfo()`). Hidden the rest of the time, so the checkerboard never sits on screen during a run. |
-| What the site does with it | A **Live panel** listing the roster with the bmpl verdict when it is already cached (0 WCL points), and a **Check** button per row that runs the normal lookup. Plus an opt-in **auto-lookup** switch. |
+| What the site does with it | A **Live panel** listing the roster with the bmpl verdict when it is already cached (0 WCL points), and a **Check** button per row that runs the normal lookup. Plus an opt-in **auto-lookup** switch. Canvas variant **A** (full-width band with columns), chosen 2026-09-22. |
+| Sorting and filtering | A recruiting queue can hold 15+ applicants, so the band's head row carries **role toggles** (Tank / Heal / DPS), a **sort menu** (arrival · verdict · Raider.IO score · role · class) and a **class filter**. They apply to applicants only, never to the party, and the count reads "showing 3 of 14". The choices are remembered per user like the region. |
 | Who may auto-lookup | Members with their own WCL client (hosted) and local mode. Everyone else sees the switch disabled with a link to the own-client guide. No quota carve-out, no per-hour cap to maintain. |
 
 ## Non-goals
@@ -102,7 +103,7 @@ in game: the chip then reads "waiting for the Group Finder" and the panel keeps 
 it are sent") → the browser's window picker → chip on, showing the number of players detected.
 Closing the tab or revoking the share turns the chip grey with "reconnect".
 
-**The Live panel.** A collapsible band under the header, shown while a roster is fresh (< 10 s):
+**The Live panel.** A collapsible band under the header (canvas variant A), shown while a roster is fresh (< 10 s). Its head row holds the title, the count ("showing 3 of 14 · updated 1 s ago"), the role toggles, the sort menu, the class filter and the auto-lookup switch:
 
 - One row per player: class-tinted icon (existing tokens), name-realm, role, declared RIO score,
   then **either** the cached bmpl verdict (the history chip's pill plus its age, "vetted 12 min ago")
@@ -110,6 +111,13 @@ Closing the tab or revoking the share turns the chip grey with "reconnect".
 - Applicants first, party members under a quiet separator.
 - A player who leaves the queue fades out after 5 s (no flicker on the game's own refreshes).
 - Clicking a row runs the normal lookup in a new bmpl tab — the existing flow, unchanged.
+
+**Sorting and filtering.** Pure functions over the decoded roster, in `web/src/lib/live/roster.ts`:
+
+- `sortApplicants(list, key)` with `key` in `arrival | verdict | score | role | class`. **Arrival is the default** (newest applicant first — the queue is a stream). `verdict` orders INVITE → MAYBE → PASS → not vetted, breaking ties on the cached score then on arrival; `score` uses the declared Raider.IO score descending; `role` uses Tank → Heal → DPS then arrival; `class` is alphabetical on the WCL class name then arrival. Sorting never reorders the party block.
+- `filterApplicants(list, { roles, classes })` — `roles` is a subset of the three roles (empty = none shown, all three = the default), `classes` a set of class names (empty = every class). The party block ignores both.
+- Both are remembered per user the way the region is (`Settings.liveSort`, `Settings.liveRoles`, `Settings.liveClasses`; `localStorage` locally, `user_settings` hosted) so a reconnect does not reset the view.
+- The count line always states the filtered total against the real one ("showing 3 of 14"), so a filter can never silently hide an applicant.
 
 **Auto-lookup.** A switch in the panel, "evaluate new applicants automatically". Enabled only with
 an own WCL client (hosted) or in local mode; otherwise disabled with a link to the own-client guide
@@ -157,6 +165,7 @@ Auto-lookup has no route of its own: it calls `POST /api/lookup`, so the quota g
 
 ## Testing
 
+- `web/src/lib/live/roster.test.ts` — every sort key (including tie-breaks and the party block staying put), both filters, the empty-role case, and the "showing N of M" line.
 - `web/src/lib/live/*.test.ts` — pure: `encodeStrip` → `decodeStrip` round-trip; noise; half-pixel
   offsets; 0.8× and 1.25× scaling; a corrupted chunk dropped; a truncated roster never surfacing;
   `assembleRoster` sequence handling (stale `rosterSeq` ignored, chunks out of order, a player

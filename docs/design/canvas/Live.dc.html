@@ -108,6 +108,10 @@
     .sw.off-disabled { color: #6e7681; }
     .lchip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; background: transparent; white-space: nowrap; }
     .lchip .nm { font-weight: 600; }
+    .rolefilter { display: inline-flex; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; height: 24px; }
+    .rolefilter .rf { display: flex; align-items: center; padding: 0 9px; font-size: 12px; color: #6e7681; border-right: 1px solid #21262d; background: #0b0f14; }
+    .rolefilter .rf:last-child { border-right: 0; }
+    .rolefilter .rf.on { color: #e6edf3; background: #161b22; }
   </style>
 
   <div class="label" style="margin: 18px 24px 8px;">Live A — full-width band under the header: one row per player, applicants then party, cached verdict or a Check button</div>
@@ -124,7 +128,10 @@
   <div class="live">
     <div class="live-head">
       <span class="section-title">Group Finder</span>
-      <span class="muted">3 applicants · updated 1 s ago</span>
+      <span class="muted">showing 3 of 14 · updated 1 s ago</span>
+      <span class="rolefilter"><span class="rf on">Tank</span><span class="rf on">Heal</span><span class="rf on">DPS</span></span>
+      <span class="chip chip-on">Sort · verdict <span class="faint">▾</span></span>
+      <span class="chip">Class · all <span class="faint">▾</span></span>
       <span style="flex: 1;"></span>
       <span class="sw on"><i><b></b></i>Evaluate new applicants automatically</span>
       <span class="faint">▾</span>
@@ -171,7 +178,7 @@
       <span class="faint" style="font-size: 12px;">vetted 5 min ago</span>
     </div>
   </div>
-  <div class="note" style="margin: 10px 24px 0;">The band replaces nothing: the search bar, tabs and every existing flow stay where they are. A click on a row opens the usual lookup tab. Cached verdicts cost 0 pts — they come from your own history or from another member's lookup younger than 6 h.</div>
+  <div class="note" style="margin: 10px 24px 0;">Role toggles, a sort menu (arrival · verdict · Raider.IO score · role · class) and a class filter live in the band's own head row; they filter the applicants only, never your group, and the count reads "showing 3 of 14". Choices are remembered like the region. The band replaces nothing: the search bar, tabs and every existing flow stay where they are. A click on a row opens the usual lookup tab. Cached verdicts cost 0 pts — they come from your own history or from another member's lookup younger than 6 h.</div>
 
   <div class="label" style="margin: 26px 24px 8px;">Live B — the roster as chips, in the tab strip's language: denser, one line, no columns</div>
   <div class="top">

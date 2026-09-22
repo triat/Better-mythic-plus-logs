@@ -148,3 +148,13 @@ distclean: clean
 # empirical audit of the shipped defensives table against top runs (~350 WCL pts for all specs)
 audit-defensives *flags:
     bun scripts/audit-defensives.ts {{flags}}
+
+# regenerate the addon's golden vectors from today's codec — run after any codec.ts change
+live-vectors:
+    bun scripts/live-vectors.ts > addon/bmpl/tests/vectors.txt
+
+# zip the in-game addon for distribution (dist/bmpl-addon.zip)
+addon-zip:
+    rm -f dist/bmpl-addon.zip
+    mkdir -p dist
+    cd addon && zip -r ../dist/bmpl-addon.zip bmpl -x '*/tests/*'

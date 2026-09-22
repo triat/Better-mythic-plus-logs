@@ -5,7 +5,7 @@ node_modules/
 !.env.hosted.example
 dist/
 bun.lockb
-bmpl
+/bmpl
 bmpl.exe
 *.log
 .DS_Store

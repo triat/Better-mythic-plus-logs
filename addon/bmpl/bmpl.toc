@@ -1,0 +1,11 @@
+## Interface: 110200
+## Title: bmpl
+## Notes: Draws a small black-and-white pixel strip, top-left, only while the Group Finder is in play. The bmpl browser tab reads it to show applicants and your party with class, role and score. Sends nothing, receives nothing, stores nothing. /bmpl show|hide|selftest
+## Author: bmpl
+## Version: 1.0.0
+## IconTexture: Interface\Icons\INV_Misc_Map_01
+
+encode.lua
+strip.lua
+roster.lua
+main.lua

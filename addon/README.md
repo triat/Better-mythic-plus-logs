@@ -12,8 +12,8 @@ screen.
 
 ## Install
 
-1. Download `bmpl-addon.zip` (built from this repo with `just addon-zip`, or from a release) and
-   unzip it.
+1. Build `bmpl-addon.zip` from this repo with `just addon-zip` (it lands in `dist/`) and unzip it —
+   no release carries the zip yet. Copying `addon/bmpl/` out of a checkout works just as well.
 2. Copy the `bmpl` folder into your WoW installation's `Interface/AddOns/` directory, e.g.
    `World of Warcraft/_retail_/Interface/AddOns/bmpl`.
 3. `/reload` or restart the game, and make sure **bmpl** is ticked on the AddOns list at the character
@@ -34,8 +34,10 @@ screen.
   pending applicants (oldest first).
 - `/bmpl show` forces the strip on regardless of the Group Finder state, for lining things up or
   troubleshooting. `/bmpl hide` releases that override back to the automatic rule above.
-- `/bmpl selftest` re-encodes three known rosters and checks the output byte-for-byte against the same
-  golden vectors the bmpl repo's own test suite checks — prints `OK`, or the first mismatch.
+- `/bmpl selftest` re-encodes three known rosters and checks, byte for byte, both the frames and the
+  40x16 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
+  also verifies that the copy built into the addon still matches `addon/bmpl/tests/vectors.txt`) —
+  prints `OK`, or the first mismatch.
 
 ## Connecting the browser
 

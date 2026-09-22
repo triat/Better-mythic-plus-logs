@@ -246,7 +246,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/health` | public | Health check for the reverse proxy / uptime monitor |
 | GET | `/api/status` | public | Whether credentials are set, hosted config flags (open signup, guild gate, own WCL clients, operator) |
 | GET | `/api/docs?lang=` | public | The documentation registry (`lang=fr` for French, anything else English) plus the effective evaluation config, for `/help` |
-| POST | `/api/live/cached` | user | Names → the verdicts bmpl already has (the Live panel's only server call): `{ level, players: [{ character, region? }] }`, up to 40 players; never touches WCL, 0 pts |
+| POST | `/api/live/cached` | user | Names → the verdicts bmpl already has (the Live panel's only server call): `{ level, players: [{ character, region? }] }`, up to 40 players; never touches WCL, 0 pts. A pure read: it goes through the history store's `peek`, so it never reorders, copies or evicts a member's own history, and an applicant's name is never persisted |
 | POST | `/api/setup` | local mode only | Write `WCL_CLIENT_ID`/`WCL_CLIENT_SECRET` to `.env` |
 | POST | `/api/watch/start` | local mode only | Start clipboard watch |
 | POST | `/api/watch/stop` | local mode only | Stop clipboard watch |

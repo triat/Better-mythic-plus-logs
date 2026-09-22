@@ -120,7 +120,7 @@ Closing the tab or revoking the share turns the chip grey with "reconnect".
 
 **Sorting and filtering.** Pure functions over the decoded roster, in `web/src/lib/live/roster.ts`:
 
-- `sortApplicants(list, key)` with `key` in `arrival | verdict | score | role | class`. **Arrival is the default** (newest applicant first — the queue is a stream). `verdict` orders INVITE → MAYBE → PASS → not vetted, breaking ties on the cached score then on arrival; `score` uses the declared Raider.IO score descending; `role` uses Tank → Heal → DPS then arrival; `class` is alphabetical on the WCL class name then arrival. Sorting never reorders the party block.
+- `sortApplicants(list, key)` with `key` in `arrival | verdict | score | role | class`. **Arrival is the default** (newest applicant first — the queue is a stream). `verdict` orders INVITE → MAYBE → PASS → INSUFFICIENT (a lookup that ran but found too little data) → not vetted, breaking ties on the cached score then on arrival; `score` uses the declared Raider.IO score descending; `role` uses Tank → Heal → DPS then arrival; `class` is alphabetical on the WCL class name then arrival. Sorting never reorders the party block.
 - `filterApplicants(list, { roles, classes })` — `roles` is a subset of the three roles (empty = none shown, all three = the default), `classes` a set of class names (empty = every class). The party block ignores both.
 - Both are remembered per user the way the region is (`Settings.liveSort`, `Settings.liveRoles`, `Settings.liveClasses`; `localStorage` locally, `user_settings` hosted) so a reconnect does not reset the view.
 - The count line always states the filtered total against the real one ("showing 3 of 14"), so a filter can never silently hide an applicant.

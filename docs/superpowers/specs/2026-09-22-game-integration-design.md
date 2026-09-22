@@ -38,7 +38,7 @@ Publishing the addon on CurseForge/Wago (a later, purely distributive step).
 WoW (addon "bmpl")                 browser tab (bmpl site)                     server
 ──────────────────                 ───────────────────────                     ──────
 C_LFGList applicants ┐             getDisplayMedia(WoW window)                 POST /api/live/cached
-party1..4            ┴→ encode → pixel strip ──capture @2 Hz──→ decode → roster ──→ cached verdicts (0 pts)
+party1..4            ┴→ encode → pixel strip ──capture @10 Hz─→ decode → roster ──→ cached verdicts (0 pts)
                         (Lua)                                    (pure TS)      ←──
                                                                  Live panel ──click──→ POST /api/lookup (existing)
 ```
@@ -63,27 +63,32 @@ Frozen and tested on both sides; a version byte allows a later change.
 can exist. It hides on every other screen, including during a run, so the checkerboard is never in
 the way. `/bmpl show` forces it on for troubleshooting (until `/reload` or `/bmpl hide`).
 
-**Physical.** Cells of 6×6 *physical* pixels (the addon divides by `UIParent:GetEffectiveScale()`),
-**black or white only** — 1 bit per cell. Luminance survives the browser's video pipeline (4:2:0
-chroma subsampling) where colours would not. The strip sits at the very top-left of the game screen,
-above everything (`FULLSCREEN_DIALOG` strata). The first three cells of the first row and of the
-first column form the marker `■□■`, so the decoder locates the origin and the true cell size
-whatever the resolution, window size or browser zoom. 16 rows × 320 columns on a 1920-wide window
-≈ 640 bytes per frame.
+**Physical.** A grid of **40 columns × 16 rows** of 6×6 *physical* pixels (the addon divides by
+`UIParent:GetEffectiveScale()`) — 240 × 96 px in the very top-left corner, above everything
+(`FULLSCREEN_DIALOG` strata). Cells are **black or white only**, 1 bit each: luminance survives the
+browser's video pipeline (4:2:0 chroma subsampling) where colours would not. Row 0 and column 0 are
+the marker: alternating white/black starting white, cell (0,0) always white. The decoder finds the
+origin and the true cell size from the marker's run lengths, so resolution, window size and browser
+scaling do not matter. The remaining 39 × 15 = 585 cells carry 73 bytes per frame, MSB first,
+row-major.
+
+**Rate.** The addon redraws at **10 Hz** and the browser samples the video at the same rate. One
+frame is 73 bytes, so a 20-applicant roster (~900 B, 15 chunks) completes in about 1.5 s; a
+5-applicant roster in under half a second.
 
 **Logical.** Each frame carries: `magic "bmpl"` (4 B) · `version` (1 B) · `rosterSeq` (2 B) ·
-`chunkIndex`/`chunkCount` (1 B each) · `length` (2 B) · `crc16` (2 B) · payload. The roster is
-compact UTF-8 text, one line per player:
+`chunkIndex`/`chunkCount` (1 B each) · `length` (1 B) · `crc16` (2 B) = 12 bytes of header, then up
+to 61 bytes of payload. The roster is compact UTF-8 text, one line per player:
 
 ```
-a|Biwaadrood-Nerzhul|Druid|Restoration|HEALER|3412
-p|Tom-Hyjal|Warrior|Fury|DAMAGER|2890
+a|Biwaadrood-Nerzhul|Druid|Restoration|H|3412
+p|Tom-Hyjal|Warrior|Fury|D|2890
 ```
 
-(`a` = applicant, `p` = party member; the score is the declared Raider.IO score, `0` when unknown.)
-Split across chunks when it does not fit in one frame. At 2 Hz a 20-applicant roster completes in
-~1 s. An unchanged roster keeps its `rosterSeq` and the decoder does no work. A frame whose CRC
-fails is dropped whole — partial data never reaches the UI.
+(`a` = applicant, `p` = party member; role is `T` / `H` / `D`; the score is the declared Raider.IO
+score, `0` when unknown; applicants are listed in arrival order, oldest first.) The text is split
+across as many chunks as needed. An unchanged roster keeps its `rosterSeq` and the decoder does no
+work. A frame whose CRC fails is dropped whole — partial data never reaches the UI.
 
 **Realm names.** `C_LFGList.GetApplicantMemberInfo` returns a bare name for same-realm applicants;
 the addon appends the player's own realm, exactly as the clipboard flow resolves it today

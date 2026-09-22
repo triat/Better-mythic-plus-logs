@@ -85,7 +85,8 @@ a|Biwaadrood-Nerzhul|Druid|Restoration|H|3412
 p|Tom-Hyjal|Warrior|Fury|D|2890
 ```
 
-(`a` = applicant, `p` = party member; role is `T` / `H` / `D`; the score is the declared Raider.IO
+(`a` = applicant, `p` = party member, `s` = the player themself — `s` behaves as a party member
+everywhere and is the only row the panel labels "you"; role is `T` / `H` / `D`; the score is the declared Raider.IO
 score, `0` when unknown; applicants are listed in arrival order, oldest first.) The text is split
 across as many chunks as needed. An unchanged roster keeps its `rosterSeq` and the decoder does no
 work. A frame whose CRC fails is dropped whole — partial data never reaches the UI.

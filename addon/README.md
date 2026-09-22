@@ -30,9 +30,16 @@ screen.
 - Close the Group Finder with no active posting — the strip disappears. It **never** draws during a
   run.
 - It redraws 10 times a second with your current roster: yourself, your party, and the Group Finder's
-  pending applicants (oldest first).
+  pending applicants (oldest first). An application that is withdrawn, declined or timed out leaves
+  the strip immediately — only live applications are drawn.
+- The strip is **160 × 64 pixels** (40 × 16 cells of 4 px). `/bmpl cell <3-10>` resizes it for the
+  session — the browser derives the cell size from the strip itself, so nothing needs reconfiguring
+  on that side; below 3 px the capture stops resolving the cells reliably.
 - `/bmpl show` forces the strip on regardless of the Group Finder state, for lining things up or
   troubleshooting. `/bmpl hide` releases that override back to the automatic rule above.
+- `/bmpl dump` prints what the Group Finder API actually returns for each pending application, and
+  the exact roster text the strip carries — the first thing to run when someone is missing from the
+  panel or will not go away.
 - `/bmpl selftest` re-encodes three known rosters and checks, byte for byte, both the frames and the
   40x16 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
   also verifies that the copy built into the addon still matches `addon/bmpl/tests/vectors.txt`) —

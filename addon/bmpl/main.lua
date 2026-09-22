@@ -181,6 +181,46 @@ local function selftest()
   print("OK")
 end
 
+-- /bmpl dump — print what the LFG API actually returns, so a roster that looks wrong on screen can be
+-- diagnosed from the chat frame instead of guessed at. Reads only; prints nothing that is not already
+-- visible in the Group Finder window.
+local function dump()
+  if not C_LFGList or not C_LFGList.GetApplicants then
+    print("bmpl dump: C_LFGList.GetApplicants is missing")
+    return
+  end
+  local ok, ids = pcall(C_LFGList.GetApplicants)
+  if not ok or not ids then
+    print("bmpl dump: GetApplicants failed: " .. tostring(ids))
+    return
+  end
+  print(string.format("bmpl dump: %d application(s)", #ids))
+  for _, id in ipairs(ids) do
+    local infoOk, a, b, c, d, e, f, g = pcall(C_LFGList.GetApplicantInfo, id)
+    if infoOk then
+      print(string.format("  id=%s → 1=%s 2=%s 3=%s 4=%s 5=%s 6=%s 7=%s",
+        tostring(id), tostring(a), tostring(b), tostring(c), tostring(d), tostring(e), tostring(f), tostring(g)))
+    else
+      print(string.format("  id=%s → GetApplicantInfo failed: %s", tostring(id), tostring(a)))
+    end
+    for i = 1, 5 do
+      local memberOk, name, classToken, _lc, _lvl, _ilvl, _hl, tank, healer, damage, _ar, _rel, score =
+        pcall(C_LFGList.GetApplicantMemberInfo, id, i)
+      if memberOk and name then
+        print(string.format("    member %d: %s (%s) T=%s H=%s D=%s score=%s",
+          i, tostring(name), tostring(classToken), tostring(tank), tostring(healer), tostring(damage), tostring(score)))
+      elseif not memberOk then
+        print(string.format("    member %d: call failed: %s", i, tostring(name)))
+      else
+        print(string.format("    member %d: nil", i))
+      end
+    end
+  end
+  local text = Roster.BuildText and Roster.BuildText() or ""
+  print("bmpl dump: roster text the strip carries —")
+  for line in tostring(text):gmatch("[^\n]+") do print("  " .. line) end
+end
+
 SLASH_BMPL1 = "/bmpl"
 SlashCmdList.BMPL = function(msg)
   msg = (msg or ""):lower():match("^%s*(.-)%s*$")
@@ -193,7 +233,17 @@ SlashCmdList.BMPL = function(msg)
     print("bmpl: back to automatic (Group Finder open, or an active posting)")
   elseif msg == "selftest" then
     selftest()
+  elseif msg == "dump" then
+    dump()
+  elseif msg:match("^cell%s") or msg == "cell" then
+    local applied = Strip.SetCell(msg:match("^cell%s+(%d+)$"))
+    if applied then
+      print(string.format("bmpl: cell size %d px (strip is %dx%d px) — /reload restores the default",
+        applied, 40 * applied, 16 * applied))
+    else
+      print(string.format("bmpl: /bmpl cell <3-10> — currently %d px", Strip.Cell()))
+    end
   else
-    print("bmpl: /bmpl show | hide | selftest")
+    print("bmpl: /bmpl show | hide | selftest | dump | cell <3-10>")
   end
 end

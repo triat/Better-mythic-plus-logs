@@ -63,8 +63,11 @@ Frozen and tested on both sides; a version byte allows a later change.
 can exist. It hides on every other screen, including during a run, so the checkerboard is never in
 the way. `/bmpl show` forces it on for troubleshooting (until `/reload` or `/bmpl hide`).
 
-**Physical.** A grid of **40 columns × 16 rows** of 6×6 *physical* pixels (the addon divides by
-`UIParent:GetEffectiveScale()`) — 240 × 96 px in the very top-left corner, above everything
+**Physical.** A grid of **40 columns × 16 rows** of square *physical* pixels (the addon divides by
+`UIParent:GetEffectiveScale()`) — **4 px per cell by default, 160 × 64 px** in the very top-left
+corner, above everything. The cell size is the addon's choice alone (`/bmpl cell 3`–`10` for the
+session): the decoder derives it from the marker's run lengths, so nothing in the browser changes
+when it moves. Below 3 px the video pipeline stops resolving the cells reliably.
 (`FULLSCREEN_DIALOG` strata). Cells are **black or white only**, 1 bit each: luminance survives the
 browser's video pipeline (4:2:0 chroma subsampling) where colours would not. Row 0 and column 0 are
 the marker: alternating white/black starting white, cell (0,0) always white. The decoder finds the

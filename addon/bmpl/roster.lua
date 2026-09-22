@@ -208,6 +208,10 @@ end
 -- order C_LFGList.GetApplicants() itself returns them in).
 -- ---------------------------------------------------------------------------------------------
 
+-- The application states that still belong on the strip. Anything else the API reports (cancelled,
+-- declined, timedout, inviteaccepted, inviteedeclined, failed) is a finished application.
+Roster.LIVE_STATUS = { applied = true, invited = true }
+
 function Roster.ApplicantLines()
   local lines = {}
   if not C_LFGList or not C_LFGList.GetApplicants or not C_LFGList.GetApplicantMemberInfo then
@@ -218,15 +222,22 @@ function Roster.ApplicantLines()
 
   for _, applicantID in ipairs(applicantIDs) do
     local numMembers = 1
+    local status = nil
     if C_LFGList.GetApplicantInfo then
       -- C_LFGList.GetApplicantInfo(applicantID) returns, in order:
       --   id, status, pendingStatus, numMembers, isNew, comment, displayOrderID
       -- `numMembers` is the FOURTH return value, not the second (the second is `status`, a string):
       -- reading the wrong one made the guard below fall back to 1 and silently drop every member but
       -- the first of a duo or trio application — routine in Mythic+ recruiting.
-      local infoOk, _id, _status, _pendingStatus, n = pcall(C_LFGList.GetApplicantInfo, applicantID)
+      local infoOk, _id, applicantStatus, _pendingStatus, n = pcall(C_LFGList.GetApplicantInfo, applicantID)
       if infoOk and type(n) == "number" and n > 0 then numMembers = n end
+      if infoOk and type(applicantStatus) == "string" then status = applicantStatus end
     end
+    -- An application the game still lists but that is no longer pending (withdrawn, declined, timed
+    -- out, already invited and accepted) must leave the strip at once, or the panel keeps showing
+    -- someone who is gone. Only "applied" and "invited" are live; an unknown status is kept, so a
+    -- future value cannot silently hide real applicants.
+    if status and not Roster.LIVE_STATUS[status] then numMembers = 0 end
     for memberIdx = 1, numMembers do
       local memberOk, name, classToken, _localizedClass, _level, _itemLevel, _honorLevel,
         tank, healer, damage, _assignedRole, _relationship, dungeonScore =

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { CRC_FAIL_WINDOW, MARKER_TIMEOUT_MS, createCapture, liveState } from "./useWowCapture.ts";
+import { CAPTURE_HZ, CRC_FAIL_WINDOW, MARKER_TIMEOUT_MS, createCapture, liveState } from "./useWowCapture.ts";
 import type { CaptureCanvas, CaptureDeps, CaptureStream, CaptureTrack, CaptureVideo } from "./useWowCapture.ts";
 import { STRIP, decodeCells, encodeCells } from "./codec.ts";
 import type { Gray } from "./scan.ts";
@@ -175,7 +175,10 @@ describe("createCapture: publish only on a real transition", () => {
     expect(capture.getState()).toMatchObject({ kind: "live" });
     const afterFirstTick = notifications;
     const rosterRef = capture.getRoster();
-    for (let i = 0; i < 20; i++) doTick(); // the exact same frame decodes again and again: nothing changes.
+    // 200 ticks = 20 s of wall clock, well past ROSTER_STALE_MS: the exact same frame decodes again and
+    // again and the roster must stay live (C1) on the very same object (publish-on-change).
+    for (let i = 0; i < 200; i++) doTick();
+    expect(capture.getState()).toMatchObject({ kind: "live" });
     expect(notifications).toBe(afterFirstTick); // no extra notifications
     expect(capture.getRoster()).toBe(rosterRef); // same object reference, not merely equal content
   });
@@ -210,11 +213,16 @@ function grayToRgba(img: Gray): Uint8ClampedArray {
   return out;
 }
 
+/**
+ * A clock that advances one capture period per tick, like the real loop: a frozen clock hid C1 (the
+ * panel blanking 10 s into a stable queue) from every task review, so no fake here stands still.
+ */
 function fakeDepsShowing(rgba: Uint8ClampedArray, w: number, h: number) {
   const tracks: ReturnType<typeof fakeTrack>[] = [];
   const ticks: Array<() => void> = [];
   const activeIds = new Set<number>();
   let nextId = 1;
+  let clock = 0;
   const deps: CaptureDeps = {
     getDisplayMedia: async () => {
       const track = fakeTrack();
@@ -235,8 +243,8 @@ function fakeDepsShowing(rgba: Uint8ClampedArray, w: number, h: number) {
       height: 0,
       getContext: () => ({ drawImage: () => {}, getImageData: () => ({ data: rgba }) }),
     }),
-    now: () => 0,
-    setInterval: (fn) => { const id = nextId++; activeIds.add(id); ticks.push(fn); return id; },
+    now: () => clock,
+    setInterval: (fn) => { const id = nextId++; activeIds.add(id); ticks.push(() => { clock += 1000 / CAPTURE_HZ; fn(); }); return id; },
     clearInterval: (id) => { activeIds.delete(id); },
   };
   return { deps, ticks, activeIds };

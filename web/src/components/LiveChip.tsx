@@ -32,11 +32,15 @@ export function LiveChip({ state, connect }: { state: LiveState; connect: () => 
   // Only "off", "reconnect" (pick the window again) and "error" (show the fix) need a click; "waiting"
   // and "live" are a plain status dot — nothing in the dialog would help once capture is already running.
   const interactive = state.kind === "off" || state.kind === "reconnect" || state.kind === "error";
+  // The spec's error table: "an explicit message, never a silent failure" — so `error` has its own
+  // caption rather than reusing the neutral "waiting" one (the dot colour and the chip becoming
+  // clickable were the only signals before). The specific fix still shows in the dialog on click.
   const label =
     state.kind === "live" ? t("live.chip.on", { count: state.players }) :
     state.kind === "reconnect" ? t("live.chip.reconnect") :
     state.kind === "off" ? t("live.chip.off") :
-    t("live.chip.waiting"); // "waiting" and "error" share the neutral label; the error's fix shows in the dialog.
+    state.kind === "error" ? t("live.chip.error") :
+    t("live.chip.waiting");
   const dotClass = state.kind === "live" ? "live-dot" : state.kind === "reconnect" || state.kind === "error" ? "live-dot warn" : "live-dot grey";
   const chipClass = "live-chip" + (state.kind === "live" ? " on" : state.kind === "reconnect" ? " err" : "");
 

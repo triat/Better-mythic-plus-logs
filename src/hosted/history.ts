@@ -164,6 +164,15 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
           // copying an auto-resolved row must not inherit that row's "auto" badge.
           return other ? record(r, { ...asRecord(other), targetAutoDetected: r.level === null }, other.fetchedAt) : null;
         },
+        // Same two lookups as `cached` (own row, then another member's fresh one) with neither write:
+        // no `touch` on an own hit, no `record` copy of the shared one — so a caller that only asks
+        // "do you already know this?" cannot reorder or evict the member's own history.
+        peek(r) {
+          const key = resolveKey(r);
+          const own = key === null ? null : getOne.get(userId, key);
+          if (own) return toEntry(own);
+          return shared(r);
+        },
         record: (r, rec) => record(r, rec, now()),
         get(key) {
           const row = getOne.get(userId, key);

@@ -77,8 +77,20 @@ export function LivePanel(p: Props) {
     ) : (
       <span />
     );
+    // The applicant and party lists render as siblings, so keying on the character alone collides for
+    // someone present in both (a party member who also has a pending application). `index` is the
+    // player's position in the strip — unique across the whole roster and stable across re-sorts.
+    // The row is a click target, so it also needs a keyboard path: focusable, Enter/Space activate it.
+    const select = () => p.onSelect(r.player.character);
     return (
-      <div key={r.player.character} className={"live-row" + (i % 2 === 1 ? " alt" : "")} onClick={() => p.onSelect(r.player.character)}>
+      <div
+        key={`${r.player.kind}:${r.player.index}`}
+        className={"live-row" + (i % 2 === 1 ? " alt" : "")}
+        role="button"
+        tabIndex={0}
+        onClick={select}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }}
+      >
         <span className="cls" style={{ background: classColor(r.player.className) }} />
         <span><span className="nm">{r.player.name}</span><span className="faint">-{r.player.realm}</span></span>
         <span className="muted">{t(`live.role.${r.player.role}`)}</span>

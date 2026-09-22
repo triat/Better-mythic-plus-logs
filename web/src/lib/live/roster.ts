@@ -83,7 +83,16 @@ export class RosterAssembler {
       this.chunks = new Map();
       this.count = f.chunkCount;
     }
-    if (this.roster?.seq === f.rosterSeq) return null; // already assembled
+    if (this.roster?.seq === f.rosterSeq) {
+      // Already assembled. Staleness is "how long since a frame of THIS roster was last seen", not
+      // "how long since it was assembled": the addon keeps one `rosterSeq` for as long as the roster
+      // text is unchanged, which is the normal state of an applicant queue (people sit in it for
+      // minutes). Stamping only on completion made `current()` go null 10 s into any stable queue.
+      // The timestamp moves in place so the roster *reference* stays stable — `createCapture`'s
+      // publish-on-change relies on `current()` returning the very same object while nothing changed.
+      this.roster.at = at;
+      return null;
+    }
     this.chunks.set(f.chunkIndex, f.payload);
     if (this.chunks.size < this.count) return null;
     const parts: Uint8Array[] = [];

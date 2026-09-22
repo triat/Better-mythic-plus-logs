@@ -36,7 +36,11 @@ export function liveRoutes(): Route[] {
         // dead-letter fallback for a caller that omits it — cacheKey() embeds region, so a
         // mismatch against the region the entry was actually cached under reads as a silent
         // "not in history" (null), not an error.
-        const entry = history.cached({
+        // `peek`, never `cached`: this route runs automatically on every roster change with up to 40
+        // names. `cached()` writes (recency bump, and hosted it copies another member's entry into the
+        // caller's history, pruning to HISTORY_MAX_PER_USER), which would evict the member's real
+        // lookups and persist applicant names the spec says only live for the request's duration.
+        const entry = history.peek({
           character: p.character,
           level: b.value.level,
           spec: null,

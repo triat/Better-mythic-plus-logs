@@ -62,6 +62,16 @@ export function autoQueue(applicants: readonly RosterPlayer[], verdicts: Map<str
     .map((p) => p.character);
 }
 
+/**
+ * The scope a cached verdict is valid in. `CachedVerdict` is computed against one key level and one
+ * region (`cacheKey()` embeds both server-side), so the moment either changes every entry in the
+ * verdict map is stale: leaving it up would badge an applicant "invite 78" for a level they were never
+ * evaluated at, and `autoQueue` would skip them (`verdicts.has(character)`), silently preventing the
+ * re-vetting the member just asked for. `App.tsx` keeps the last scope and empties the map when this
+ * string changes. `null` — "auto", the level resolved per character server-side — is a scope of its own.
+ */
+export const verdictScope = (level: number | null, region: string): string => `${level ?? "auto"}|${region}`;
+
 // --- Head-row menus (role toggles are plain buttons in the component; sort and class are ChipMenus) ---
 // Shaped like `header.ts`'s `MenuItem` (value/label/hint/on) so the component hands them to the same
 // `ChipMenu` the region and spec chips use, with no adapter mapping.

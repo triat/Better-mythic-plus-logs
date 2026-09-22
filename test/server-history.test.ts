@@ -74,6 +74,20 @@ describe("History — keyed by effective level", () => {
     expect(h.size).toBe(0);
   });
 
+  // I1: `peek` is `cached` with no write — POST /api/live/cached reads through it on every roster change.
+  test("peek returns a hit without reordering, and resolves an auto alias like cached does", () => {
+    const h = new History(5, () => 1000);
+    const a = h.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, targetAutoDetected: false }));
+    const b = h.record(req("B-X", null), entry({ label: "B-X", targetLevel: 20, targetAutoDetected: true }));
+    expect(h.peek(req("A-X", 18))?.key).toBe(a.key);
+    expect(h.peek(req("B-X", null))?.key).toBe(b.key); // auto alias resolved, same as cached()
+    expect(h.list().map((e) => e.label)).toEqual(["B-X", "A-X"]); // LRU order untouched
+    expect(h.peek(req("Nobody-X", 18))).toBeNull();
+    expect(h.peek(req("Nobody-X", null))).toBeNull(); // an unresolved auto request is a plain miss
+    h.cached(req("A-X", 18));
+    expect(h.list().map((e) => e.label)).toEqual(["A-X", "B-X"]); // ... which cached() does move
+  });
+
   test("updateResult replaces the payload in place and keeps the key", () => {
     const h = new History(5);
     const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: { v: 1 } }));

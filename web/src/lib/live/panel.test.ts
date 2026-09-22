@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { tEn } from "../../i18n/t.ts";
 import { parseRoster } from "./roster.ts";
 import type { CachedVerdict } from "./roster.ts";
-import { autoQueue, classMenu, panelView, sortMenu } from "./panel.ts";
+import { autoQueue, classMenu, panelView, sortMenu, verdictScope } from "./panel.ts";
 
 const roster = {
   seq: 1,
@@ -89,5 +89,24 @@ describe("sortMenu / classMenu", () => {
     const items = classMenu(tEn, (name) => name, applicants, ["Druid"]);
     expect(items.find((i) => i.value === "")!.on).toBe(false);
     expect(items.find((i) => i.value === "Druid")!.on).toBe(true);
+  });
+});
+
+// I5: verdicts cached for the previous key level must not survive a change — they would badge a row
+// with a verdict computed against a different key, and `autoQueue` would skip that row for good.
+describe("verdictScope", () => {
+  test("a key-level change, a region change and auto/explicit are each a different scope", () => {
+    expect(verdictScope(18, "eu")).toBe(verdictScope(18, "eu")); // stable: the map is not cleared for nothing
+    expect(verdictScope(18, "eu")).not.toBe(verdictScope(22, "eu"));
+    expect(verdictScope(18, "eu")).not.toBe(verdictScope(18, "us"));
+    expect(verdictScope(null, "eu")).not.toBe(verdictScope(18, "eu"));
+    expect(verdictScope(null, "eu")).toBe(verdictScope(null, "eu"));
+  });
+
+  test("a row kept across a key change would be skipped by autoQueue — which is why the map is emptied", () => {
+    const applicants = roster.players.filter((p) => p.kind === "applicant");
+    const stale = new Map<string, CachedVerdict>([["Biwaadrood-Nerzhul", { verdict: "invite", score: 78, targetLevel: 18, fetchedAt: 0 }]]);
+    expect(autoQueue(applicants, stale, new Set())).not.toContain("Biwaadrood-Nerzhul");
+    expect(autoQueue(applicants, new Map(), new Set())).toContain("Biwaadrood-Nerzhul");
   });
 });

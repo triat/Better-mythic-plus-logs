@@ -11,7 +11,7 @@ import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
-import { autoQueue } from "./lib/live/panel.ts";
+import { autoQueue, verdictScope } from "./lib/live/panel.ts";
 import { useWowCapture } from "./lib/live/useWowCapture.ts";
 import type { Locale } from "./lib/locale.ts";
 import { effectiveRegion, isRegion } from "./lib/regions.ts";
@@ -328,6 +328,23 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const liveAutoAllowed = !status.hosted || (ownClient !== null && ownClient.usable);
   useEffect(() => { if (!liveAutoAllowed) setLiveAuto(false); }, [liveAutoAllowed]);
 
+  // A cached verdict belongs to one (key level, region) pair. When the member moves their key, every
+  // entry in the map is stale: shown, it badges a row with a verdict computed for another level; kept,
+  // `autoQueue` skips that row forever (`verdicts.has`), so an armed auto-lookup never re-vets it.
+  // Emptied during render (React's "adjust state when a prop changes"), not in an effect, so no stale
+  // badge is ever committed to the screen; the `liveCached` effect below then re-queries for the new
+  // scope. `liveAutoInFlight` is deliberately NOT cleared — it is the one-lookup-at-a-time guard, and
+  // dropping it here would let a second `/api/lookup` start while the first is still running. The
+  // in-flight one's result is discarded below instead, by comparing the scope it was dispatched in.
+  const liveScope = verdictScope(yourKey, region);
+  const liveScopeRef = useRef(liveScope);
+  const [liveScopeSeen, setLiveScopeSeen] = useState(liveScope);
+  if (liveScopeSeen !== liveScope) {
+    setLiveScopeSeen(liveScope);
+    setLiveVerdicts(new Map());
+  }
+  liveScopeRef.current = liveScope;
+
   // POST /api/live/cached whenever the roster's *player set* changes (not on every frame — `liveCharKey`
   // is stable across frames that redraw the same roster). 0 WCL pts; region is sent for every player,
   // computed exactly like every other lookup (`effectiveRegion`) — see Task 4's review note in the brief.
@@ -358,6 +375,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     const next = autoQueue(roster.players, liveVerdicts, new Set())[0];
     if (!next) return;
     setLiveAutoInFlight(next);
+    const dispatchedIn = liveScope; // the (key level, region) this lookup is being run for — see above.
     (async () => {
       const r = await api.lookup({ character: next, level: yourKey, spec: null, metric: null, region, refresh: false });
       if (!r.ok) {
@@ -373,11 +391,15 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       touch();
       await loadHistory();
       const ev = r.result.evaluation;
-      setLiveVerdicts((prev) => {
-        const merged = new Map(prev);
-        merged.set(next, { verdict: ev.verdict, score: ev.global, targetLevel: ev.targetLevel, fetchedAt: Date.now() });
-        return merged;
-      });
+      // The key level moved while this was in flight: the result is still a real lookup (it lands in
+      // history like any other), it just no longer belongs in a map scoped to the new level.
+      if (liveScopeRef.current === dispatchedIn) {
+        setLiveVerdicts((prev) => {
+          const merged = new Map(prev);
+          merged.set(next, { verdict: ev.verdict, score: ev.global, targetLevel: ev.targetLevel, fetchedAt: Date.now() });
+          return merged;
+        });
+      }
       setLiveAutoInFlight(null);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps

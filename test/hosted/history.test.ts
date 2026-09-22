@@ -227,6 +227,45 @@ describe("SQLite history — per user", () => {
     }
   });
 
+  // I1: POST /api/live/cached reads through `peek`, which must answer exactly like `cached` while
+  // writing nothing — the route runs automatically on every Group Finder roster change with up to 40
+  // names, so any write there churns (and evicts) the member's real lookups.
+  describe("peek: the non-recording read", () => {
+    test("a peek of another member's fresh entry returns it and leaves the caller's history untouched", () => {
+      const { a, b } = setup();
+      a.record(req("Shared-X", 18), entry({ label: "Shared-X", targetLevel: 18, targetAutoDetected: false, result: { from: "a" } }));
+      const own = b.record(req("Mine-X", 18), entry({ label: "Mine-X", targetLevel: 18, targetAutoDetected: false, result: { from: "b" } }));
+      const before = b.list();
+      const peeked = b.peek(req("Shared-X", 18));
+      expect(peeked?.result).toEqual({ from: "a" }); // the shared-history rule still applies
+      expect(b.size).toBe(1);
+      expect(b.list()).toEqual(before); // size, order and contents unchanged
+      expect(b.get(own.key)).toBeDefined();
+      expect(b.peek(req("Nobody-X", 18))).toBeNull();
+    });
+
+    test("a 40-name roster peeked in one go evicts nothing (a `cached` sweep would have wiped the history)", () => {
+      const { a, b } = setup();
+      const mine = b.record(req("Mine-X", 18), entry({ label: "Mine-X", targetLevel: 18, targetAutoDetected: false }));
+      // A full Group Finder queue: LIVE_CACHED_BODY caps the route at 40 names per call.
+      const names = Array.from({ length: 40 }, (_, i) => `Applicant${i}-X`);
+      for (const n of names) a.record(req(n, 18), entry({ label: n, targetLevel: 18, targetAutoDetected: false }));
+      // `a` is itself capped, so only its newest HISTORY_MAX_PER_USER rows are shared hits; the rest miss.
+      const hits = names.filter((n) => b.peek(req(n, 18)) !== null).length;
+      expect(hits).toBe(HISTORY_MAX_PER_USER);
+      expect(b.size).toBe(1);
+      expect(b.list().map((x) => x.key)).toEqual([mine.key]);
+    });
+
+    test("an own hit is not moved to the newest position", () => {
+      const { b } = setup();
+      const first = b.record(req("First-X", 18), entry({ label: "First-X", targetLevel: 18, targetAutoDetected: false }));
+      const second = b.record(req("Second-X", 18), entry({ label: "Second-X", targetLevel: 18, targetAutoDetected: false }));
+      expect(b.peek(req("First-X", 18))?.key).toBe(first.key);
+      expect(b.list().map((x) => x.key)).toEqual([second.key, first.key]); // newest first, unchanged
+    });
+  });
+
   test("openHosted exposes the repo and deleting a user cascades", () => {
     const { db, hosted, ua } = setup();
     const h = hosted.history.forUser(ua.id, () => 1000);

@@ -54,6 +54,22 @@ describe("RosterAssembler", () => {
     expect(a.current(1_000 + ROSTER_STALE_MS - 1)).not.toBeNull();
     expect(a.current(1_000 + ROSTER_STALE_MS)).toBeNull();
   });
+  // C1: the addon keeps one `rosterSeq` while the roster text is unchanged — the normal state of a
+  // queue. Staleness must measure the last time a frame of this roster was SEEN, not the completion
+  // instant, or the panel blanks 10 s into every stable queue.
+  test("re-seeing the same sequence keeps the roster alive indefinitely, on the same reference", () => {
+    const a = new RosterAssembler();
+    const frames = chunkRoster("a|Solo-Realm|Mage|Frost|D|1\n", 5);
+    for (const f of frames) a.push(f, 0);
+    const first = a.current(0)!;
+    expect(first).not.toBeNull();
+    for (let at = 100; at <= 30_000; at += 100) {
+      expect(a.push(frames[0]!, at)).toBeNull(); // still "already assembled": nothing to re-emit
+      expect(a.current(at)).toBe(first); // same object, so the panel never re-renders for nothing
+    }
+    expect(a.current(30_000)).not.toBeNull();
+    expect(a.current(30_000 + ROSTER_STALE_MS)).toBeNull(); // the strip vanishing still goes stale
+  });
 });
 
 describe("sortApplicants / filterApplicants", () => {

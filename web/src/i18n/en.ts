@@ -93,7 +93,7 @@ export const en = {
     },
   },
   live: {
-    chip: { off: "Live", waiting: "Live · waiting for the Group Finder", on: "Live · {count}", reconnect: "Live · reconnect" },
+    chip: { off: "Live", waiting: "Live · waiting for the Group Finder", on: "Live · {count}", reconnect: "Live · reconnect", error: "Live · cannot read the strip" },
     connect: {
       title: "Connect World of Warcraft",
       // Bold emphasis (canvas: <b class="soft">) on "World of Warcraft" / "The image never leaves your

@@ -90,7 +90,7 @@ export const fr: Mirror<typeof en> = {
     },
   },
   live: {
-    chip: { off: "Live", waiting: "Live · en attente du Group Finder", on: "Live · {count}", reconnect: "Live · reconnexion" },
+    chip: { off: "Live", waiting: "Live · en attente du Group Finder", on: "Live · {count}", reconnect: "Live · reconnexion", error: "Live · bande illisible" },
     connect: {
       title: "Connecter World of Warcraft",
       pick: "Choisis la fenêtre {game} dans le dialogue suivant. bmpl lit une petite bande de pixels que l'addon dessine quand le Group Finder est ouvert.",

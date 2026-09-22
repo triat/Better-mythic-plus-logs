@@ -146,6 +146,33 @@ function Roster.RequestPartyInspects()
   end
 end
 
+-- Cache eviction (main.lua drives both). Without it a party member who respecs mid-session keeps
+-- showing their old spec for the rest of the session, and a GUID that has left the group is never
+-- dropped. The next 10 Hz tick's RequestPartyInspects() re-resolves whatever is missing.
+--   * `unit` given (PLAYER_SPECIALIZATION_CHANGED's unitTarget): drop that one member.
+--   * no `unit` (the event fired without one): drop everything — a respec happened somewhere.
+function Roster.ForgetPartySpecs(unit)
+  if unit then
+    local guid = UnitGUID(unit)
+    if guid then partySpecByGuid[guid] = nil end
+    return
+  end
+  for guid in pairs(partySpecByGuid) do partySpecByGuid[guid] = nil end
+end
+
+-- GROUP_ROSTER_UPDATE: forget anyone who is no longer in the party (a new member arriving with a
+-- recycled table slot must not inherit the previous occupant's spec).
+function Roster.PrunePartySpecs()
+  local present = {}
+  for _, unit in ipairs(partyUnits()) do
+    local guid = UnitGUID(unit)
+    if guid then present[guid] = true end
+  end
+  for guid in pairs(partySpecByGuid) do
+    if not present[guid] then partySpecByGuid[guid] = nil end
+  end
+end
+
 -- INSPECT_READY handler (main.lua forwards the event's GUID argument here).
 function Roster.HandleInspectReady(guid)
   if not guid or not GetInspectSpecialization then return end
@@ -192,7 +219,12 @@ function Roster.ApplicantLines()
   for _, applicantID in ipairs(applicantIDs) do
     local numMembers = 1
     if C_LFGList.GetApplicantInfo then
-      local infoOk, _id, n = pcall(C_LFGList.GetApplicantInfo, applicantID)
+      -- C_LFGList.GetApplicantInfo(applicantID) returns, in order:
+      --   id, status, pendingStatus, numMembers, isNew, comment, displayOrderID
+      -- `numMembers` is the FOURTH return value, not the second (the second is `status`, a string):
+      -- reading the wrong one made the guard below fall back to 1 and silently drop every member but
+      -- the first of a duo or trio application — routine in Mythic+ recruiting.
+      local infoOk, _id, _status, _pendingStatus, n = pcall(C_LFGList.GetApplicantInfo, applicantID)
       if infoOk and type(n) == "number" and n > 0 then numMembers = n end
     end
     for memberIdx = 1, numMembers do

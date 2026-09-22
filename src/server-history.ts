@@ -52,6 +52,13 @@ export interface HistoryStore {
   readonly size: number;
   /** Cache hit (moved to the newest position) or null. */
   cached(r: HistoryRequest): HistoryEntry | null;
+  /**
+   * `cached()` without any write: no recency bump, and (hosted) no copy of another member's entry into
+   * the caller's own history. For readers that answer a question rather than serve a lookup —
+   * `POST /api/live/cached` runs on every Group Finder roster change, with up to 40 names, and must not
+   * churn or evict the member's real lookups (nor persist an applicant's name; see `docs/hosted.md`).
+   */
+  peek(r: HistoryRequest): HistoryEntry | null;
   /** Store a fresh result; returns the entry (its key uses the effective level). */
   record(r: HistoryRequest, rec: HistoryRecord): HistoryEntry;
   get(key: string): HistoryEntry | undefined;
@@ -92,6 +99,12 @@ export class History implements HistoryStore {
     this.entries.delete(key!);
     this.entries.set(key!, entry);
     return entry;
+  }
+
+  /** Cache lookup with no write at all: the insertion order (the LRU the tab strip shows) is untouched. */
+  peek(r: HistoryRequest): HistoryEntry | null {
+    const key = this.resolveKey(r);
+    return (key === null ? undefined : this.entries.get(key)) ?? null;
   }
 
   /** Store a fresh result; returns the entry (its key uses the effective level). */

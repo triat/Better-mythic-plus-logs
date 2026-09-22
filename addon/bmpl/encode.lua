@@ -172,3 +172,22 @@ function Encode.toHex(bytes, len)
   for i = 1, len do parts[i] = string.format("%02x", bytes[i]) end
   return table.concat(parts)
 end
+
+-- The 640 cells of a matrix packed MSB first into 80 bytes, as lower-case hex — exactly
+-- bitsToBytes(encodeCells(f)) in codec.ts, and the form addon/bmpl/tests/vectors.txt's `cells` records
+-- take. This is what lets /bmpl selftest check the marker + bit LAYOUT, not just the frame bytes.
+function Encode.cellsToHex(cells)
+  local total = STRIP.cols * STRIP.rows
+  local bytes = {}
+  local n = 0
+  for i = 1, total, 8 do
+    local byte = 0
+    for b = 0, 7 do
+      local cell = cells[i + b]
+      byte = byte * 2 + ((cell and cell ~= 0) and 1 or 0)
+    end
+    n = n + 1
+    bytes[n] = byte
+  end
+  return Encode.toHex(bytes, n)
+end

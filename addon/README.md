@@ -18,11 +18,10 @@ screen.
    `World of Warcraft/_retail_/Interface/AddOns/bmpl`.
 3. `/reload` or restart the game, and make sure **bmpl** is ticked on the AddOns list at the character
    select screen.
-4. If the game warns the addon is out of date, tick "Load out of date AddOns" in AddOns → Options —
-   the addon draws pixels and reads a handful of long-stable roster APIs; it doesn't touch anything
-   patch-specific enough to actually break across a minor version bump. (`bmpl.toc`'s `## Interface`
-   line was set from the version current when this addon shipped; bump it to match your own client if
-   you'd rather not use that checkbox.)
+4. `bmpl.toc`'s `## Interface` line is `120100`. If a later patch marks the addon out of date, either
+   set that line to what `/dump select(4, GetBuildInfo())` prints in your client, or tick "Load out of
+   date AddOns" in AddOns → Options — the addon draws pixels and reads a handful of long-stable roster
+   APIs, so it does not break across a version bump.
 
 ## What it does
 

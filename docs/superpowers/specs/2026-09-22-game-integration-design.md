@@ -21,6 +21,7 @@ applying and what bmpl already knows about them — and can vet any of them in o
 | How data leaves the game | A **pixel strip** drawn by a bmpl addon and read from the browser's screen capture of the WoW window. An addon cannot do network I/O, cannot write a file on demand (SavedVariables are flushed on `/reload` or logout only) and cannot write the clipboard; the screen is the only real-time output channel. This is the technique Archon-style overlays use. |
 | Who captures | **The browser**, via `getDisplayMedia` on the WoW window. No desktop client to build, sign, distribute or update. The strip format is the interface, so a native client could replace the capture later without touching the addon or the site. |
 | What the addon exposes | Group Finder applicants **and the current party** — name-realm, class, spec, role, declared Raider.IO score. Nothing else (no target, no mouseover). |
+| When the strip is drawn | **Only while the Group Finder is in play**: the Group Finder window is open, or the player has an active listing (`C_LFGList.GetActiveEntryInfo()`). Hidden the rest of the time, so the checkerboard never sits on screen during a run. |
 | What the site does with it | A **Live panel** listing the roster with the bmpl verdict when it is already cached (0 WCL points), and a **Check** button per row that runs the normal lookup. Plus an opt-in **auto-lookup** switch. |
 | Who may auto-lookup | Members with their own WCL client (hosted) and local mode. Everyone else sees the switch disabled with a link to the own-client guide. No quota carve-out, no per-hour cap to maintain. |
 
@@ -44,8 +45,8 @@ party1..4            ┴→ encode → pixel strip ──capture @2 Hz──→ 
 Three units, one shared contract (the strip format):
 
 - **Addon** (`addon/bmpl/`, Lua): reads applicants and party, draws the strip in the top-left corner,
-  redraws on `LFG_LIST_APPLICANT_LIST_UPDATED` and `GROUP_ROSTER_UPDATE`. Receives nothing, stores
-  nothing, sends nothing.
+  redraws on `LFG_LIST_APPLICANT_LIST_UPDATED` and `GROUP_ROSTER_UPDATE`, and shows or hides it on
+  the visibility rule below. Receives nothing, stores nothing, sends nothing.
 - **Front**: `web/src/lib/live/` — `decodeStrip` (pixels → frame), `assembleRoster` (frames → roster),
   `encodeStrip` (the TS reference encoder, used by the tests and by the golden vectors). One thin
   hook `useWowCapture` holds the two browser-API lines (`getDisplayMedia`, `drawImage`) and nothing else.
@@ -55,6 +56,11 @@ Three units, one shared contract (the strip format):
 ## The strip format (the interface)
 
 Frozen and tested on both sides; a version byte allows a later change.
+
+**When it is on screen.** The strip is shown only while the Group Finder is open (`PVEFrame` /
+`LFGListFrame` visible) **or** the player has an active listing — the two states in which applicants
+can exist. It hides on every other screen, including during a run, so the checkerboard is never in
+the way. `/bmpl show` forces it on for troubleshooting (until `/reload` or `/bmpl hide`).
 
 **Physical.** Cells of 6×6 *physical* pixels (the addon divides by `UIParent:GetEffectiveScale()`),
 **black or white only** — 1 bit per cell. Luminance survives the browser's video pipeline (4:2:0
@@ -89,7 +95,9 @@ No marker found for 5 s → an explicit message, never a silent failure.
 
 Mocked on the Claude Design canvas as 2 variants before implementation (`docs/agents/workflow.md`).
 
-**Connecting.** A **Live** chip in the header. Off → click → a short dialog states what happens
+**Connecting.** A **Live** chip in the header. The capture keeps running while the strip is hidden
+in game: the chip then reads "waiting for the Group Finder" and the panel keeps the last roster for
+10 s before collapsing to that same line. Off → click → a short dialog states what happens
 ("pick the World of Warcraft window; the image never leaves your browser, only the names read from
 it are sent") → the browser's window picker → chip on, showing the number of players detected.
 Closing the tab or revoking the share turns the chip grey with "reconnect".
@@ -139,7 +147,8 @@ Auto-lookup has no route of its own: it calls `POST /api/lookup`, so the quota g
 
 | Situation | What the user sees |
 |---|---|
-| No marker for 5 s | "Switch WoW to windowed fullscreen — exclusive fullscreen cannot be captured." |
+| No marker for 5 s, Group Finder open | "Switch WoW to windowed fullscreen — exclusive fullscreen cannot be captured." |
+| No marker, nothing else wrong | "Waiting for the Group Finder — the strip only shows while you are listed or browsing." (Not an error: the normal idle state.) |
 | > 50 % of frames fail CRC over 5 s | "Increase your UI scale or the window size so the strip stays readable." |
 | Share stopped or tab lost the stream | Grey chip, "reconnect". |
 | Browser without window capture | A clear message instead of a dead button. |
@@ -151,12 +160,14 @@ Auto-lookup has no route of its own: it calls `POST /api/lookup`, so the quota g
 - `web/src/lib/live/*.test.ts` — pure: `encodeStrip` → `decodeStrip` round-trip; noise; half-pixel
   offsets; 0.8× and 1.25× scaling; a corrupted chunk dropped; a truncated roster never surfacing;
   `assembleRoster` sequence handling (stale `rosterSeq` ignored, chunks out of order, a player
-  leaving the queue).
+  leaving the queue, and the strip disappearing → the roster goes stale after 10 s rather than
+  reporting an error).
 - Golden vectors committed under `addon/bmpl/tests/vectors.txt` (roster → expected bit matrix),
   produced by the TS reference encoder. The addon ships a `/bmpl selftest` slash command that
   checks its own encoder against them in-game. The Lua side has no automated CI test — the plan
-  carries an explicit manual in-game checklist (applicant appears, party member appears, `/reload`,
-  UI scale change, windowed fullscreen toggle).
+  carries an explicit manual in-game checklist (strip appears when the Group Finder opens and hides
+  when it closes, applicant appears, party member appears, `/reload`, UI scale change, windowed
+  fullscreen toggle, `/bmpl show`).
 - `test/server-live.test.ts` — cached hit from own history, hit from another member's fresh entry,
   miss → `null`, cap of 40, unauthenticated refusal, and the 0-point assertion.
 - `useWowCapture` is kept thin enough that its logic is the pure functions above; it is exercised by

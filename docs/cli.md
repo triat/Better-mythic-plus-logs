@@ -1,6 +1,81 @@
 # bmpl — command line reference
 
-Detailed reference; the README has the short version.
+Detailed reference for running bmpl yourself. The README is the user-facing page for the hosted
+service at bmpl.riat.dev and deliberately covers none of this.
+
+## Install and set up
+
+### Requirements
+
+- [Bun](https://bun.sh/) ≥ 1.3 (pinned in `.tool-versions`)
+- A Warcraft Logs v2 API client — free, see below
+- `just` (optional but recommended) — https://github.com/casey/just
+- Building from source also needs the web front: `just web-install` once, then `just build` (Bun runs
+  Vite, Node is not required)
+
+### Getting Warcraft Logs API credentials
+
+`bmpl` uses Warcraft Logs' v2 API, which requires a Client ID + Secret (~30 seconds to create):
+
+1. Log in at https://www.warcraftlogs.com/ (any free account works).
+2. Go to https://www.warcraftlogs.com/api/clients/ (avatar → **Clients**).
+3. Click **Create Client**, name it anything, set **Redirect URLs** to `http://localhost` (required
+   but unused — this is a server-to-server client), leave **Public Client?** unchecked.
+4. Submit, then copy the **Client ID** and **Client Secret** into `.env` as `WCL_CLIENT_ID` and
+   `WCL_CLIENT_SECRET`.
+
+Keep the secret private; if it leaks, delete the client on the same page and create a new one. Rate
+limit is **3600 points per hour** per client, roughly 360 cached lookups. On a hosted instance every
+member can add their own client under Settings — the same steps, written up on the instance's
+`/help#wcl-client` page, which the quota messages link to.
+
+### Setup
+
+```bash
+git clone git@github.com:triat/Better-mythic-plus-logs.git
+cd Better-mythic-plus-logs
+bun install
+
+cp .env.example .env
+# edit .env and paste your WCL_CLIENT_ID + WCL_CLIENT_SECRET
+
+just ping
+# ✓ auth ok
+#   budget: 3600.00 / 3600 pts remaining (resets in 60m)
+```
+
+Any WCL region works: `bmpl` defaults to EU, override with `BMPL_REGION` in `.env` or `--region` on
+`lookup`/`mplus`/`analyze`/`watch`. Then `bmpl serve` opens the web UI at `http://localhost:3000` —
+first run lands on a setup page that writes `.env` for you, no manual editing required.
+
+### The commands, in one list
+
+- `bmpl lookup <Name-Realm>` (alias `l`) — vet one player, `--level`/`--spec`/`--metric`/`--region`/`--json`/`--no-stats`
+- `bmpl analyze <Name-Realm>` — deep-dive defensive cooldowns, `--run`/`--all`/`--yes`/`--json`/`--region`
+- `bmpl watch` — clipboard watcher, hands-free vetting while alt-tabbed into the game, `--region`
+- `bmpl evaluate <payload.json>` — replay the scoring model on a saved lookup, 0 API cost
+- `bmpl defensives <Class> <Spec>` — print the effective defensives table, or `--check` to validate an override
+- `bmpl serve` — the web UI (`--hosted` for multi-user mode, `--port`/`--host`/`--no-open`)
+
+### What a lookup costs
+
+- `lookup`, fully uncached: ~100 pts per character; already cached: ~10 pts
+- `lookup --no-stats`: ~10 pts (Raider.IO is still fetched, free)
+- `analyze`: ~3 pts per run, once ever — cached forever after
+- 3600 pts/hr per client → ~36 fully-uncached lookups/hr, or ~360/hr once cached
+
+Details: [scoring.md#api-cost](scoring.md#api-cost).
+
+### Keeping your credentials safe
+
+- `watch` reads every copied value while running — passwords, tokens, chat messages. Only run it when
+  actively vetting; Ctrl+C when done.
+- `.env` is git-ignored. Never commit it; rotate the secret if it leaks.
+- Don't share your `.env` with others — every lookup they run eats your 3600 pts/hr budget. Have them
+  register their own client.
+- Prefer sharing the source over shipping a compiled `.exe`, which is opaque to the recipient.
+- Hosted mode adds its own rate-limiting, origin checks and security headers and binds `127.0.0.1` —
+  only the reverse proxy owns 80/443. Details: [hosted.md#hardening](hosted.md#hardening).
 
 ## Usage
 

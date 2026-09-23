@@ -1,11 +1,12 @@
 # bmpl — deep-dive: defensive cooldowns
 
-Detailed reference; the README has the short version.
+Detailed reference for running bmpl yourself; the Help page of any instance (`/help#deep-dive`)
+has the user-facing version.
 
 ## Deep-dive: defensive cooldowns
 
-`bmpl analyze` goes one level deeper than the run signals in
-[What you get](../README.md#what-you-get): it fetches
+`bmpl analyze` goes one level deeper than the per-run signals that feed the verdict
+([scoring.md](scoring.md#verdict-and-axes)): it fetches
 the raw cast/buff/event data for one run and measures, per defensive
 cooldown, **usage vs. capacity** (casts vs. how many times the cooldown could
 have come up in the fight) and, for every death, **whether a defensive was

@@ -50,7 +50,7 @@ DNS `A` record `bmpl.<domain>` pointing at it, live before bootstrap (Caddy
 needs it to obtain the certificate); an S3-compatible bucket (Backblaze B2,
 Hetzner Object Storage, …) with an application key that can read and write
 it; a Discord application (see [Login](../docs/hosted.md#login)); a Warcraft Logs API client
-(see [the README](../README.md#getting-warcraft-logs-api-credentials)). On your machine: this repo,
+(see [docs/cli.md](../docs/cli.md#getting-warcraft-logs-api-credentials)). On your machine: this repo,
 Bun, `just`, and an SSH key that opens `root@<vps>` (bootstrap and
 administration) — the same key or a dedicated one goes to `deploy@<vps>` for
 the `deploy-*` recipes.

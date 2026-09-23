@@ -8,10 +8,10 @@ const roster = {
   seq: 1,
   at: 0,
   players: parseRoster(
-    "a|Biwaadrood-Nerzhul|Druid|Restoration|H|3412\n" +
-    "a|Tankadin-Hyjal|Paladin|Protection|T|2890\n" +
-    "a|Sombrelame-Dalaran|DemonHunter|Havoc|D|3105\n" +
-    "p|Muleyoxo-Hyjal|Monk|Windwalker|D|3240\n",
+    "a|Biwaadrood-Nerzhul|2|H|3412\n" +
+    "a|Tankadin-Hyjal|6|T|2890\n" +
+    "a|Sombrelame-Dalaran|12|D|3105\n" +
+    "p|Muleyoxo-Hyjal|5|D|3240\n",
   ),
 };
 const verdicts = new Map<string, CachedVerdict>([
@@ -42,9 +42,9 @@ describe("panelView", () => {
       seq: 1,
       at: 0,
       players: parseRoster(
-        "a|Applicant-Realm|Druid|Restoration|H|100\n" +
-        "p|Mate-Realm|Paladin|Protection|T|200\n" +
-        "s|Me-Realm|Warrior|Fury|D|300\n",
+        "a|Applicant-Realm|2|H|100\n" +
+        "p|Mate-Realm|6|T|200\n" +
+        "s|Me-Realm|11|D|300\n",
       ),
     };
     const v = panelView(tEn, { roster: withSelf, verdicts: new Map(), settings, now: 0 });

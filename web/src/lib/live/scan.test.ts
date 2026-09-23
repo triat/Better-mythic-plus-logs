@@ -7,7 +7,7 @@ import type { Gray } from "./scan.ts";
 const DARK = 70;
 const LIGHT = 185;
 
-const FRAME = { version: 1, rosterSeq: 42, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Biwaadrood-Nerzhul|Druid|Restoration|H|3412") };
+const FRAME = { version: 2, rosterSeq: 42, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Bee-Nz|2|H|3412") };
 
 /** Paint the cell matrix into a grey image at `scale` px per cell, offset by (ox, oy). */
 function paint(cells: Uint8Array, scale: number, ox: number, oy: number, w = 600, h = 300, noise = 0): Gray {
@@ -73,6 +73,21 @@ describe("findStrip / readCells", () => {
     }
   });
 
+  // The addon's default cell (`STRIP.cell`, 3 px): below `SMALL_CELL` (5) `sample()` must read the centre
+  // pixel alone rather than the 3×3 average, which at this size would blur a cell with its neighbours.
+  // Covers the native size plus an offset and a scaled capture, same as the >=5px case above; the
+  // scale stays >=3 (the addon's own minimum, `/bmpl cell 3`-`10`) since a capture never draws smaller.
+  test("reads a 3px strip with centre-pixel sampling, with an offset and a scaled capture", () => {
+    for (const [scale, ox, oy] of [[STRIP.cell, 0, 0], [STRIP.cell, 5, 4], [3.75, 6, 3]] as const) {
+      expect(scale).toBeLessThan(5); // sanity: this really exercises the centre-pixel path, not the 3x3 average.
+      const img = paint(cells, scale, ox, oy, 300, 150, 0);
+      const geom = findStrip(img);
+      expect(geom, `scale ${scale} offset ${ox},${oy}`).not.toBeNull();
+      expect(geom!.cell, `scale ${scale}`).toBeGreaterThanOrEqual(3);
+      expect([...readCells(img, geom!)], `scale ${scale}`).toEqual([...cells]);
+    }
+  });
+
   test("survives sensor noise that genuinely approaches the light/dark thresholds", () => {
     const scale = 6;
     const ox = 4;
@@ -124,8 +139,8 @@ describe("findStrip / readCells", () => {
   });
 
   test("rejects a strip that overflows the image instead of misreading its edge cells", () => {
-    // 40x16 cells at 6px is 240x96; this image is 6px too small in both dimensions.
-    const img = paint(cells, 6, 0, 0, 234, 90);
+    // 24x10 cells at 6px is 144x60; this image is 6px too small in both dimensions.
+    const img = paint(cells, 6, 0, 0, 138, 54);
     expect(findStrip(img)).toBeNull();
   });
 

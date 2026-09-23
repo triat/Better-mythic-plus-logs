@@ -66,7 +66,7 @@ export function findStrip(img: Gray, accept: (cells: Uint8Array) => boolean = ()
     // Verify the marker column: cell (0,0) light, then alternating down the strip.
     let ok = true;
     for (let r = 0; r < STRIP.rows && ok; r++) {
-      const v = sample(img, x0, y0 + r * cell);
+      const v = sample(img, x0, y0 + r * cell, cell);
       ok = r % 2 === 0 ? v >= LIGHT : v <= DARK;
     }
     if (!ok) continue;
@@ -76,8 +76,22 @@ export function findStrip(img: Gray, accept: (cells: Uint8Array) => boolean = ()
   return null;
 }
 
-/** Average of the central 3×3 pixels of a cell — robust to compression ringing at the edges. */
-function sample(img: Gray, cx: number, cy: number): number {
+/** Below this cell size the 3×3 average blurs a cell with its neighbours, so `sample` reads the centre
+ * pixel alone instead (spec: "at 3 px a cell is sampled at its centre pixel alone"). */
+const SMALL_CELL = 5;
+
+/**
+ * A cell's sampled luminance at (cx, cy). From `SMALL_CELL` px up, the central 3×3 pixels are averaged
+ * (robust to compression ringing at the edges); below it, a 3×3 box can spill into the next cell, so
+ * only the centre pixel is read.
+ */
+function sample(img: Gray, cx: number, cy: number, cell: number): number {
+  if (cell < SMALL_CELL) {
+    const x = Math.round(cx);
+    const y = Math.round(cy);
+    if (x < 0 || y < 0 || x >= img.width || y >= img.height) return 0;
+    return img.data[y * img.width + x]!;
+  }
   let sum = 0;
   let n = 0;
   for (let dy = -1; dy <= 1; dy++) {
@@ -92,12 +106,12 @@ function sample(img: Gray, cx: number, cy: number): number {
   return n === 0 ? 0 : sum / n;
 }
 
-/** The 40×16 matrix read at `geom`; 1 = white. Values between the thresholds fall to the nearer side. */
+/** The 24×10 matrix read at `geom`; 1 = white. Values between the thresholds fall to the nearer side. */
 export function readCells(img: Gray, geom: StripGeometry): Uint8Array {
   const cells = new Uint8Array(STRIP.cols * STRIP.rows);
   for (let y = 0; y < STRIP.rows; y++) {
     for (let x = 0; x < STRIP.cols; x++) {
-      cells[y * STRIP.cols + x] = sample(img, geom.x + x * geom.cell, geom.y + y * geom.cell) >= 128 ? 1 : 0;
+      cells[y * STRIP.cols + x] = sample(img, geom.x + x * geom.cell, geom.y + y * geom.cell, geom.cell) >= 128 ? 1 : 0;
     }
   }
   return cells;

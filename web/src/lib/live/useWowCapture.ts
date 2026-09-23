@@ -10,7 +10,7 @@ import { findStrip, toGray } from "./scan.ts";
 import { RosterAssembler } from "./roster.ts";
 import type { Roster } from "./roster.ts";
 
-export const CAPTURE_HZ = 10;
+export const CAPTURE_HZ = 20;
 export const MARKER_TIMEOUT_MS = 5_000;
 /** A window of frames: `crcTotal` never grows past it, so the ratio below is always over a bounded, recent sample. */
 export const CRC_FAIL_WINDOW = 50;

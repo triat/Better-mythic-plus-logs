@@ -161,7 +161,7 @@ describe("createCapture: publish only on a real transition", () => {
   });
 
   test("re-decoding the same completed roster every tick keeps the roster reference stable and notifies once", async () => {
-    const frame = { version: 1, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|Druid|Restoration|H|100") };
+    const frame = { version: 2, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|2|H|100") };
     const cells = encodeCells(frame); // not flipped: decodes cleanly on every tick.
     const img = paint(cells, STRIP.cell);
     const rgba = grayToRgba(img);
@@ -252,7 +252,7 @@ function fakeDepsShowing(rgba: Uint8ClampedArray, w: number, h: number) {
 
 describe("createCapture: CRC bookkeeping from a single scan", () => {
   test("a marker that is on screen but never decodes trips the scale error, not the marker timeout", async () => {
-    const frame = { version: 1, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|Druid|Restoration|H|100") };
+    const frame = { version: 2, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|2|H|100") };
     const cells = encodeCells(frame);
     cells[STRIP.cols + 1] = cells[STRIP.cols + 1]! ^ 1; // flip one data bit: marker intact, CRC now fails.
     expect(decodeCells(cells)).toBeNull(); // sanity: this really is undecodable.

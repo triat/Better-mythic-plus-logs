@@ -1,4 +1,7 @@
-// Frames → roster, then the view's ordering and filtering. Pure.
+// Frames → roster, then the view's ordering and filtering. Pure, except for `CLASS_NAMES` — the one
+// module `web/` may import from `src/` at runtime (see AGENTS.md) — used to turn the strip's class
+// index back into the spacing-free WCL class name the rest of the front already uses.
+import { CLASS_NAMES } from "@shared/wow/classes.ts";
 import type { LiveFrame } from "./codec.ts";
 
 export type LiveRole = "tank" | "healer" | "dps";
@@ -25,7 +28,6 @@ export interface RosterPlayer {
   /** `Name-Realm`, the form every bmpl lookup takes. */
   character: string;
   className: string;
-  spec: string;
   role: LiveRole;
   /** Declared Raider.IO score, 0 when the game did not give one. */
   score: number;
@@ -46,13 +48,20 @@ export interface CachedVerdict {
 const ROLE_OF: Record<string, LiveRole> = { T: "tank", H: "healer", D: "dps" };
 const NAME_REALM = /^[^|]{1,24}-[^|]{1,32}$/;
 
+/** `classIndex` (1-13, `src/wow/classes.ts`) → the spacing-free WCL class name the rest of the front
+ * uses, e.g. "Death Knight" → "DeathKnight" (`src/deepdive/table.ts`'s `specKey` does the same strip). */
+const CLASS_NAME_BY_INDEX: Record<number, string> = Object.fromEntries(
+  Object.entries(CLASS_NAMES).map(([id, name]) => [Number(id), name.replace(/\s+/g, "")]),
+);
+
 export function parseRoster(text: string): RosterPlayer[] {
   const players: RosterPlayer[] = [];
   for (const line of text.split("\n")) {
     const parts = line.split("|");
-    if (parts.length !== 6) continue;
-    const [kind, character, className, spec, role, score] = parts as [string, string, string, string, string, string];
-    if ((kind !== "a" && kind !== "p" && kind !== "s") || !NAME_REALM.test(character) || !ROLE_OF[role] || !className || !spec) continue;
+    if (parts.length !== 5) continue;
+    const [kind, character, classIndexRaw, role, score] = parts as [string, string, string, string, string];
+    const className = CLASS_NAME_BY_INDEX[Number(classIndexRaw)];
+    if ((kind !== "a" && kind !== "p" && kind !== "s") || !NAME_REALM.test(character) || !ROLE_OF[role] || !className) continue;
     const dash = character.lastIndexOf("-");
     players.push({
       kind: kind === "a" ? "applicant" : kind === "p" ? "party" : "self",
@@ -60,7 +69,6 @@ export function parseRoster(text: string): RosterPlayer[] {
       realm: character.slice(dash + 1),
       character,
       className,
-      spec,
       role: ROLE_OF[role]!,
       score: Number.isFinite(Number(score)) ? Math.max(0, Math.trunc(Number(score))) : 0,
       index: players.length,

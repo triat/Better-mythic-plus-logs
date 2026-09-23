@@ -1,29 +1,38 @@
 // The strip contract, shared with the Lua addon (addon/bmpl/encode.lua) and pinned by
 // addon/bmpl/tests/vectors.txt. Pure: no DOM, no timers, no I/O.
+//
+// v2 (2026-09-23): 72x30 px at the addon's default 3 px cell (24x10 cells), ~9% of v1's area. The
+// 7-byte header packs `magic|version` into one byte (high nibble 0xB, low nibble the version) and
+// drops rosterSeq to 1 byte (wraps at 256) — see docs/superpowers/specs/2026-09-22-game-integration-design.md,
+// "The strip format" section, for the byte-exact layout.
 
 export const STRIP = {
-  cols: 40,
-  rows: 16,
-  /** Physical pixels per cell, as the addon draws them. */
-  cell: 6,
-  /** Cells outside the marker row and column. */
-  dataCells: 39 * 15,
-  /** Max frame size: header (12) + max payload (61) = 73 bytes = 584 bits ≤ 585 data cells. A frame with a shorter payload is smaller than this. */
-  headerBytes: 12,
-  frameBytes: 73,
-  payloadMax: 61,
-  version: 1,
+  cols: 24,
+  rows: 10,
+  /** Physical pixels per cell, as the addon draws by default; `/bmpl cell 3`-`10` overrides it per
+   * session — the decoder never reads this constant, it derives the real cell size from the marker. */
+  cell: 3,
+  /** Cells outside the marker row and column: 23 x 9 = 207, carrying 25 bytes (200 bits) per frame. */
+  dataCells: 23 * 9,
+  /** `magic|version` (1) + rosterSeq (1) + chunkIndex (1) + chunkCount (1) + length (1) + crc16 (2). */
+  headerBytes: 7,
+  /** header (7) + max payload (18) = 25 bytes = 200 bits ≤ 207 data cells. */
+  frameBytes: 25,
+  payloadMax: 18,
+  version: 2,
 } as const;
 
 export interface LiveFrame {
   version: number;
+  /** Wraps at 256 — one byte on the wire. */
   rosterSeq: number;
   chunkIndex: number;
   chunkCount: number;
   payload: Uint8Array;
 }
 
-const MAGIC = [0x62, 0x6d, 0x70, 0x6c]; // "bmpl"
+/** High nibble of byte 0: identifies the strip protocol regardless of version. */
+const MAGIC_NIBBLE = 0xb;
 
 /** CRC-16/CCITT-FALSE: poly 0x1021, init 0xFFFF, no reflection, no final xor. */
 export function crc16(bytes: Uint8Array): number {
@@ -39,35 +48,34 @@ export function encodeFrame(f: LiveFrame): Uint8Array {
   if (f.payload.length > STRIP.payloadMax) throw new Error(`payload of ${f.payload.length} bytes exceeds ${STRIP.payloadMax}`);
   // Sized to the real payload, never padded to STRIP.frameBytes: the CRC below must cover exactly what is sent.
   const out = new Uint8Array(STRIP.headerBytes + f.payload.length);
-  out.set(MAGIC, 0);
-  out[4] = f.version;
-  out[5] = f.rosterSeq & 0xff;
-  out[6] = (f.rosterSeq >> 8) & 0xff;
-  out[7] = f.chunkIndex;
-  out[8] = f.chunkCount;
-  out[9] = f.payload.length;
-  const crcInput = new Uint8Array(10 + f.payload.length);
-  crcInput.set(out.subarray(0, 10), 0);
-  crcInput.set(f.payload, 10);
+  out[0] = (MAGIC_NIBBLE << 4) | (f.version & 0xf);
+  out[1] = f.rosterSeq & 0xff;
+  out[2] = f.chunkIndex & 0xff;
+  out[3] = f.chunkCount & 0xff;
+  out[4] = f.payload.length;
+  const crcInput = new Uint8Array(5 + f.payload.length);
+  crcInput.set(out.subarray(0, 5), 0);
+  crcInput.set(f.payload, 5);
   const crc = crc16(crcInput);
-  out[10] = crc & 0xff;
-  out[11] = (crc >> 8) & 0xff;
+  out[5] = crc & 0xff;
+  out[6] = (crc >> 8) & 0xff;
   out.set(f.payload, STRIP.headerBytes);
   return out;
 }
 
 export function decodeFrame(bytes: Uint8Array): LiveFrame | null {
   if (bytes.length < STRIP.headerBytes) return null;
-  for (let i = 0; i < MAGIC.length; i++) if (bytes[i] !== MAGIC[i]) return null;
-  if (bytes[4] !== STRIP.version) return null;
-  const length = bytes[9]!;
+  if (bytes[0]! >> 4 !== MAGIC_NIBBLE) return null;
+  const version = bytes[0]! & 0xf;
+  if (version !== STRIP.version) return null;
+  const length = bytes[4]!;
   if (length > STRIP.payloadMax || bytes.length < STRIP.headerBytes + length) return null;
   const payload = bytes.slice(STRIP.headerBytes, STRIP.headerBytes + length);
-  const crcInput = new Uint8Array(10 + length);
-  crcInput.set(bytes.subarray(0, 10), 0);
-  crcInput.set(payload, 10);
-  if (crc16(crcInput) !== (bytes[10]! | (bytes[11]! << 8))) return null;
-  return { version: bytes[4]!, rosterSeq: bytes[5]! | (bytes[6]! << 8), chunkIndex: bytes[7]!, chunkCount: bytes[8]!, payload };
+  const crcInput = new Uint8Array(5 + length);
+  crcInput.set(bytes.subarray(0, 5), 0);
+  crcInput.set(payload, 5);
+  if (crc16(crcInput) !== (bytes[5]! | (bytes[6]! << 8))) return null;
+  return { version, rosterSeq: bytes[1]!, chunkIndex: bytes[2]!, chunkCount: bytes[3]!, payload };
 }
 
 /** MSB first; `count` bits, zero-padded when the buffer runs out. */
@@ -86,7 +94,7 @@ export function bitsToBytes(bits: Uint8Array): Uint8Array {
   return out;
 }
 
-/** The full 40×16 matrix (1 = white): marker row, marker column, then the frame's bits row-major. */
+/** The full 24×10 matrix (1 = white): marker row, marker column, then the frame's bits row-major. */
 export function encodeCells(f: LiveFrame): Uint8Array {
   const cells = new Uint8Array(STRIP.cols * STRIP.rows);
   for (let x = 0; x < STRIP.cols; x++) cells[x] = x % 2 === 0 ? 1 : 0;
@@ -114,7 +122,7 @@ export function chunkRoster(text: string, rosterSeq: number): LiveFrame[] {
   for (let i = 0; i < count; i++) {
     frames.push({
       version: STRIP.version,
-      rosterSeq: rosterSeq & 0xffff,
+      rosterSeq: rosterSeq & 0xff,
       chunkIndex: i,
       chunkCount: count,
       payload: data.slice(i * STRIP.payloadMax, (i + 1) * STRIP.payloadMax),

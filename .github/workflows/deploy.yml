@@ -17,6 +17,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # `contents: write` is for attaching the addon zip to the release below; nothing else writes.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -54,3 +57,14 @@ jobs:
           out=$(curl -fsS --max-time 15 "${{ vars.BMPL_PUBLIC_URL }}/api/health")
           echo "$out"
           echo "$out" | jq -e --arg v "$(jq -r .version package.json)" '.ok and .version == $v' >/dev/null
+
+      # The in-game addon has to match the strip format the deployed front decodes (an addon one
+      # format behind decodes as nothing at all), so it is attached to the release that shipped that
+      # front, from the same commit, rather than built by hand. --clobber so a re-run replaces it.
+      - name: Attach the addon to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          just addon-zip
+          gh release upload "${{ github.event.release.tag_name }}" dist/bmpl-addon.zip --clobber

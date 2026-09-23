@@ -207,7 +207,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
     title: "The in-game addon",
     why: "The Live panel reads a small strip of pixels the bmpl addon draws in-game, through a screen share — there is no server round trip and the addon has no network code of its own. Install it once and every applicant and party member you see in the Group Finder shows up here automatically, with class, role and score.",
     install: [
-      "Build `dist/bmpl-addon.zip` from the repo with `just addon-zip` (no release carries it yet), or copy `addon/bmpl/` straight out of a checkout.",
+      "Download `bmpl-addon.zip` from the latest release at https://github.com/triat/Better-mythic-plus-logs/releases/latest and unzip it. Take the one from the release matching this instance, not an older copy: an addon a format behind draws a strip the browser cannot read at all.",
       "Copy the `bmpl` folder into `World of Warcraft/_retail_/Interface/AddOns/`.",
       "`/reload`, and tick bmpl on the AddOns list if it isn't already.",
     ],

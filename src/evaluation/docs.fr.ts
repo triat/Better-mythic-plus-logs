@@ -146,7 +146,7 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
     title: "L'addon en jeu",
     why: "Le panneau Live lit une petite bande de pixels que l'addon bmpl dessine en jeu, via un partage d'écran — pas d'aller-retour serveur, l'addon n'a aucun code réseau à lui. Installe-le une fois et chaque candidat et membre de groupe que tu vois dans le Group Finder apparaît ici automatiquement, avec classe, rôle et score.",
     install: [
-      "Construis `dist/bmpl-addon.zip` depuis le repo avec `just addon-zip` (aucune release ne le contient pour l'instant), ou copie `addon/bmpl/` directement depuis un checkout.",
+      "Télécharge `bmpl-addon.zip` depuis la dernière release sur https://github.com/triat/Better-mythic-plus-logs/releases/latest et décompresse-le. Prends bien celui de la release qui correspond à cette instance, pas une copie plus ancienne : un addon en retard d'un format dessine une bande que le navigateur ne sait pas lire.",
       "Copie le dossier `bmpl` dans `World of Warcraft/_retail_/Interface/AddOns/`.",
       "`/reload`, et coche bmpl dans la liste des AddOns si ce n'est pas déjà fait.",
     ],

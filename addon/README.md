@@ -13,8 +13,11 @@ screen.
 
 ## Install
 
-1. Build `bmpl-addon.zip` from this repo with `just addon-zip` (it lands in `dist/`) and unzip it —
-   no release carries the zip yet. Copying `addon/bmpl/` out of a checkout works just as well.
+1. Download `bmpl-addon.zip` from the [latest release](https://github.com/triat/Better-mythic-plus-logs/releases/latest)
+   and unzip it — the deploy workflow attaches it to every release, built from that release's own
+   commit. Take the one matching the bmpl instance you use: the addon and the web UI share a pixel
+   format, and an addon a version behind draws a strip the browser rejects outright (the Live chip
+   just stays grey). `just addon-zip` from a checkout produces the same file.
 2. Copy the `bmpl` folder into your WoW installation's `Interface/AddOns/` directory, e.g.
    `World of Warcraft/_retail_/Interface/AddOns/bmpl`.
 3. `/reload` or restart the game, and make sure **bmpl** is ticked on the AddOns list at the character

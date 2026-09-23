@@ -233,11 +233,26 @@ local function dump()
       elseif type(m2) == "table" then
         print(string.format("    member %d: info table:", i))
         dumpTable("        ", m2)
-      else
+      elseif true then
         print(string.format("    member %d: %s %s %s %s %s %s %s %s %s %s %s %s %s %s", i,
           chatSafe(m2), chatSafe(m3), chatSafe(m4), chatSafe(m5), chatSafe(m6), chatSafe(m7),
           chatSafe(m8), chatSafe(m9), chatSafe(m10), chatSafe(m11), chatSafe(m12), chatSafe(m13),
           chatSafe(m14), chatSafe(m15)))
+      end
+      -- Where the Mythic+ rating actually lives on this client: the positional dungeonScore reads 0
+      -- for everyone, so print whatever the stats API exposes for the same member.
+      if C_LFGList.GetApplicantMemberStats then
+        local statsOk, stats = pcall(C_LFGList.GetApplicantMemberStats, id, i)
+        if statsOk and type(stats) == "table" then
+          local n = 0
+          for _ in pairs(stats) do n = n + 1 end
+          if n > 0 then
+            print(string.format("      stats(%d):", i))
+            dumpTable("        ", stats)
+          end
+        elseif statsOk and stats ~= nil then
+          print(string.format("      stats(%d) = %s", i, chatSafe(stats)))
+        end
       end
     end
   end

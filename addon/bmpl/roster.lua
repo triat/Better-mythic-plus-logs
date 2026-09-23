@@ -221,8 +221,9 @@ local function applicantInfo(applicantID)
   local ok, a, b, _c, d = pcall(C_LFGList.GetApplicantInfo, applicantID)
   if not ok then return nil, nil end
   if type(a) == "table" then
+    -- A live client names it `applicationStatus`; the older documentation says `status`.
     local n = a.numMembers
-    local status = a.status
+    local status = a.applicationStatus or a.status
     return type(n) == "number" and n or nil, type(status) == "string" and status or nil
   end
   return type(d) == "number" and d or nil, type(b) == "string" and b or nil

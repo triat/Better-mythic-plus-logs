@@ -62,23 +62,24 @@ local sinceLast = 0
 driver:SetScript("OnUpdate", function(_, delta)
   sinceLast = sinceLast + delta
   if sinceLast < UPDATE_INTERVAL then return end
-  sinceLast = 0
+  -- Subtract rather than zero: zeroing quantises the redraw to the game's frame period, which at 60 fps
+  -- and a 0.05 s interval costs a third of the rate (~15 Hz instead of 20).
+  sinceLast = sinceLast - UPDATE_INTERVAL
+  if sinceLast > UPDATE_INTERVAL then sinceLast = 0 end -- after a long hitch, do not try to catch up.
   tick()
 end)
 
+-- Only display events are registered, and they all mean the same thing: re-derive the cell's physical
+-- size (PLAYER_ENTERING_WORLD because the effective UI scale at addon load is not always the final
+-- one). The roster events — LFG_LIST_APPLICANT_LIST_UPDATED, LFG_LIST_ACTIVE_ENTRY_UPDATE,
+-- GROUP_ROSTER_UPDATE — need no handler at all: the 20 Hz tick rebuilds the roster text every time and
+-- only re-chunks it when the text differs, so a handler would have nothing left to do.
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
-events:RegisterEvent("LFG_LIST_APPLICANT_LIST_UPDATED")
-events:RegisterEvent("LFG_LIST_ACTIVE_ENTRY_UPDATE")
-events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("UI_SCALE_CHANGED")
 events:RegisterEvent("DISPLAY_SIZE_CHANGED")
-events:SetScript("OnEvent", function(_, event, ...)
-  if event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
-    Strip.Rescale()
-  end
-  -- Every other registered event just means "the roster might have changed"; the next 20 Hz tick
-  -- picks it up on its own via rebuildRoster()'s text diff, so there is nothing else to do here.
+events:SetScript("OnEvent", function()
+  Strip.Rescale()
 end)
 
 -- ---------------------------------------------------------------------------------------------
@@ -309,7 +310,7 @@ SlashCmdList.BMPL = function(msg)
     local applied = Strip.SetCell(msg:match("^cell%s+(%d+)$"))
     if applied then
       print(string.format("bmpl: cell size %d px (strip is %dx%d px) — /reload restores the default",
-        applied, 24 * applied, 10 * applied))
+        applied, Encode.STRIP.cols * applied, Encode.STRIP.rows * applied))
     else
       print(string.format("bmpl: /bmpl cell <3-10> — currently %d px", Strip.Cell()))
     end

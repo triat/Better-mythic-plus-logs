@@ -12,8 +12,11 @@ import type { Roster } from "./roster.ts";
 
 export const CAPTURE_HZ = 20;
 export const MARKER_TIMEOUT_MS = 5_000;
-/** A window of frames: `crcTotal` never grows past it, so the ratio below is always over a bounded, recent sample. */
-export const CRC_FAIL_WINDOW = 50;
+/** A window of frames: `crcTotal` never grows past it, so the ratio below is always over a bounded, recent
+ * sample. Expressed in frames but specified in seconds (spec: "> 50 % of frames fail CRC over 5 s"), so it
+ * follows `CAPTURE_HZ` — at 20 Hz a fixed 50 would have halved the window to 2.5 s and turned a brief
+ * occlusion (a tooltip, a dragged frame) into the "increase your UI scale" error. */
+export const CRC_FAIL_WINDOW = CAPTURE_HZ * 5;
 export const CRC_FAIL_RATIO = 0.5;
 
 /** The addon only ever draws in the corner; cropping keeps the canvas small regardless of the shared window's size. */
@@ -175,7 +178,7 @@ export function createCapture(deps: CaptureDeps): Capture {
     const nextState: LiveState = next.kind === "live" ? { kind: "live", players: current!.players.length } : next;
     const stateChanged = !sameLiveState(state, nextState);
     roster = current;
-    // Review round 1, finding 1: at CAPTURE_HZ (10/s) this ran unconditionally, so every tick re-rendered
+    // Review round 1, finding 1: at CAPTURE_HZ this ran unconditionally, so every tick re-rendered
     // the whole `Main` tree while connected. Notify only on a real transition.
     if (!rosterChanged && !stateChanged) return;
     state = nextState;

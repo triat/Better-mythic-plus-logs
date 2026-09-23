@@ -38,7 +38,7 @@ Publishing the addon on CurseForge/Wago (a later, purely distributive step).
 WoW (addon "bmpl")                 browser tab (bmpl site)                     server
 ──────────────────                 ───────────────────────                     ──────
 C_LFGList applicants ┐             getDisplayMedia(WoW window)                 POST /api/live/cached
-party1..4            ┴→ encode → pixel strip ──capture @10 Hz─→ decode → roster ──→ cached verdicts (0 pts)
+party1..4            ┴→ encode → pixel strip ──capture @20 Hz─→ decode → roster ──→ cached verdicts (0 pts)
                         (Lua)                                    (pure TS)      ←──
                                                                  Live panel ──click──→ POST /api/lookup (existing)
 ```

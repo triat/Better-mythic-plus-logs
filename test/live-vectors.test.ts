@@ -1,13 +1,13 @@
 // The addon's golden vectors (Task 8): `scripts/live-vectors.ts` generates
 // `addon/bmpl/tests/vectors.txt` from today's codec; this test proves the committed file still
-// matches. The Lua encoder (`addon/bmpl/encode.lua`) is checked against the same file in game via
-// `/bmpl selftest`, never by this test — bun never runs Lua. What this test CAN do, and does below,
-// is prove that the Lua copy of those vectors (`SELFTEST_VECTORS` in `addon/bmpl/main.lua`) still
-// says the same thing as the .txt, so the in-game check can never drift into testing stale
-// expectations (final review, Important 5).
+// matches. The Lua side is checked twice more below: `SELFTEST_VECTORS` in `addon/bmpl/main.lua` must
+// be a faithful copy of the .txt (so /bmpl selftest can never drift into testing stale expectations —
+// final review, Important 5), and, where `luajit` is installed, `addon/bmpl/encode.lua` itself is run
+// against the same file.
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { bitsToBytes, chunkRoster, encodeCells, encodeFrame } from "../web/src/lib/live/codec.ts";
+import { CLASS_NAMES } from "../src/wow/classes.ts";
 
 const hex = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
 
@@ -75,5 +75,33 @@ describe("addon golden vectors", () => {
     expect(seqs).toEqual(frames.map((v) => v.seq));
     expect(luaFrames).toEqual(frames.flatMap((v) => v.frames));
     expect(luaCells).toEqual(cells.map((v) => v.cells));
+  });
+
+  // The vectors above pin the codec, not the Lua encoder that has to agree with it byte for byte.
+  // `luajit` runs `addon/bmpl/encode.lua` (pure Lua, no WoW API) against the same file — the only
+  // automated check the addon's own code gets. Skipped where luajit is absent rather than failing:
+  // it is a dev-machine tool, not a dependency of the product.
+  const luajit = Bun.which("luajit");
+  test.skipIf(!luajit)("addon/bmpl/encode.lua encodes the same vectors (luajit)", async () => {
+    const run = Bun.spawnSync([luajit!, "addon/bmpl/tests/harness.lua"]);
+    const out = new TextDecoder().decode(run.stdout) + new TextDecoder().decode(run.stderr);
+    expect(out.trim(), out).toStartWith("OK ");
+    expect(run.exitCode).toBe(0);
+  });
+
+  // The class field of a roster line is a Warcraft Logs class index, produced in Lua from Blizzard's
+  // class token. Nothing else pins that table: the vectors carry indices written by
+  // `scripts/live-vectors.ts`, which never goes through `CLASS_TOKEN_TO_INDEX`, so a one-off there
+  // would mislabel every row in the panel with the whole suite green.
+  test("roster.lua's class table matches CLASS_NAMES", () => {
+    const lua = readFileSync("addon/bmpl/roster.lua", "utf8");
+    const table = lua.slice(lua.indexOf("local CLASS_TOKEN_TO_INDEX = {"));
+    const got = Object.fromEntries(
+      [...table.slice(0, table.indexOf("}")).matchAll(/^\s*([A-Z]+) = (\d+),$/gm)].map((m) => [m[1]!, Number(m[2])]),
+    );
+    const want = Object.fromEntries(
+      Object.entries(CLASS_NAMES).map(([id, name]) => [name.toUpperCase().replaceAll(" ", ""), Number(id)]),
+    );
+    expect(got).toEqual(want);
   });
 });

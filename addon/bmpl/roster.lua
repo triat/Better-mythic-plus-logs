@@ -24,9 +24,9 @@ local Roster = {}
 ns.Roster = Roster
 
 -- Blizzard's class file token (locale-independent, e.g. "DEATHKNIGHT") -> Warcraft Logs' class index
--- (src/wow/classes.ts / src/signals/kick-cooldowns.ts, the source of truth — NOT UnitClass()'s own
--- numeric id, which numbers Warrior 1 and Death Knight 6). An unknown token drops the line rather
--- than guessing.
+-- (CLASS_NAMES in src/wow/classes.ts, the source of truth, pinned by test/live-vectors.test.ts — NOT
+-- UnitClass()'s own numeric id, which numbers Warrior 1 and Death Knight 6). An unknown token drops
+-- the line rather than guessing.
 local CLASS_TOKEN_TO_INDEX = {
   DEATHKNIGHT = 1,
   DRUID = 2,

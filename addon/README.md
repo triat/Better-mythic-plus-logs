@@ -33,8 +33,10 @@ screen.
   pending applicants (oldest first). An application that is withdrawn, declined or timed out leaves
   the strip immediately — only live applications are drawn.
 - The strip is **72 × 30 pixels** (24 × 10 cells of 3 px). `/bmpl cell <3-10>` resizes it for the
-  session — the browser derives the cell size from the strip itself, so nothing needs reconfiguring
-  on that side; below 3 px the capture stops resolving the cells reliably.
+  session (it resets on `/reload`) — the browser derives the cell size from the strip itself, so
+  nothing needs reconfiguring on that side; below 3 px the capture stops resolving the cells reliably.
+  If the web UI says "Increase your UI scale or the window size", `/bmpl cell 4` is the quicker cure:
+  3 px leaves no headroom if your capture is being rescaled anywhere along the way.
 - `/bmpl show` forces the strip on regardless of the Group Finder state, for lining things up or
   troubleshooting. `/bmpl hide` releases that override back to the automatic rule above.
 - `/bmpl dump` prints what the Group Finder API actually returns for each pending application, and
@@ -42,8 +44,9 @@ screen.
   panel or will not go away.
 - `/bmpl selftest` re-encodes three known rosters and checks, byte for byte, both the frames and the
   24x10 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
-  also verifies that the copy built into the addon still matches `addon/bmpl/tests/vectors.txt`) —
-  prints `OK`, or the first mismatch.
+  verifies both that the copy built into the addon matches `addon/bmpl/tests/vectors.txt` and, where
+  `luajit` is installed, that `encode.lua` itself still encodes them) — prints `OK`, or the first
+  mismatch.
 
 ## Connecting the browser
 

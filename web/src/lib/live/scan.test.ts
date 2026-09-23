@@ -88,6 +88,28 @@ describe("findStrip / readCells", () => {
     }
   });
 
+  // Pins the OTHER side of scan.ts's sampling branch: at >= 5 px the 3x3 average must actually be
+  // averaging. One inverted pixel exactly on each cell's sample point (a single hot/dead pixel, a
+  // compression artefact) is outvoted 8-to-1 by its neighbours; centre-pixel sampling would read every
+  // cell inverted. Without this, forcing SMALL_CELL high enough to disable the average left the whole
+  // suite green (final review, Minor 7).
+  test("the 3x3 average outvotes a single corrupted pixel at the cell's sample point", () => {
+    const scale = 6;
+    const img = paint(cells, scale, 0, 0, 300, 150, 0);
+    // findStrip samples at start + cell / 2 = +3 within each cell.
+    for (let y = 0; y < STRIP.rows; y++) {
+      for (let x = 0; x < STRIP.cols; x++) {
+        const px = x * scale + scale / 2;
+        const py = y * scale + scale / 2;
+        img.data[py * img.width + px] = cells[y * STRIP.cols + x] ? 0 : 255;
+      }
+    }
+    // Read at the exact geometry findStrip would return (origin + cell / 2), so the assertion is about
+    // sampling alone: findStrip is free to pick another marker row whose sample points miss the
+    // corrupted pixels, which would hide the difference between the two branches.
+    expect([...readCells(img, { x: scale / 2, y: scale / 2, cell: scale })]).toEqual([...cells]);
+  });
+
   test("survives sensor noise that genuinely approaches the light/dark thresholds", () => {
     const scale = 6;
     const ox = 4;

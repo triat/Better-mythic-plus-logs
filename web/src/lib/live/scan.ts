@@ -87,8 +87,11 @@ const SMALL_CELL = 5;
  */
 function sample(img: Gray, cx: number, cy: number, cell: number): number {
   if (cell < SMALL_CELL) {
-    const x = Math.round(cx);
-    const y = Math.round(cy);
+    // `floor`, not `round`: `findStrip` puts the sample point at `start + cell / 2`, which at cell = 3 is
+    // `start + 1.5` — rounding lands on the cell's LAST pixel (2 of 0,1,2), exactly the boundary a
+    // subsampled capture bleeds across. Flooring reads the true centre pixel the spec calls for.
+    const x = Math.floor(cx);
+    const y = Math.floor(cy);
     if (x < 0 || y < 0 || x >= img.width || y >= img.height) return 0;
     return img.data[y * img.width + x]!;
   }

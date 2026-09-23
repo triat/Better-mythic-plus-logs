@@ -1,23 +1,17 @@
 -- addon/bmpl/roster.lua
 --
--- Builds the roster text line (kind|Name-Realm|Class|Spec|Role|score) the browser's
+-- Builds the roster text line (kind|Name-Realm|classIndex|Role|score) the browser's
 -- web/src/lib/live/roster.ts parses, for the player themself ("s"), the player's party ("p") and the
 -- current Group Finder applicants ("a"). Reads only; never writes SavedVariables, never talks to the
 -- network — the addon "sends nothing, receives nothing, stores nothing" per addon/README.md.
 --
--- KNOWN LIMITATIONS (read before trusting a spec label in game — see the manual checklist):
---   * Spec names come straight from the client's own API strings (whitespace stripped, e.g. "Beast
---     Mastery" -> "BeastMastery") rather than a hardcoded table, so any current or future spec name
---     the game reports is passed through unchanged — but only on an ENGLISH client. A non-English
---     client will report a localized spec name that will not match Warcraft Logs' English keys.
---     Class names are locale-safe (UnitClassBase() returns the same file token in every locale).
---   * Blizzard's public LFG applicant API (C_LFGList.GetApplicantMemberInfo) exposes an applicant's
---     class and role but not their exact talent spec (the stock Group Finder UI doesn't show it
---     either). For an applicant, and for a party member before their inspect completes, the spec is a
---     best-effort default: the class's tank spec when the role is Tank, its healer spec when Healer
---     (both unique per class), and the class's first damage spec when the role is Damage (ambiguous —
---     a Fire Mage applicant may show as its class's default DPS spec instead). A party member's real
---     spec replaces the guess automatically once NotifyInspect()/INSPECT_READY resolves it.
+-- v2 drops the spec field entirely (the panel never showed it, and the Group Finder does not expose
+-- an applicant's exact spec before you invite them anyway, so it was a guess costing a fifth of the
+-- payload). The class field is now the addon's own **class index** — Warcraft Logs' numbering
+-- (src/wow/classes.ts), not WoW's own UnitClass()/GetClassInfo() ordering — so every line carries a
+-- number, never a class name.
+--
+-- KNOWN LIMITATIONS (read before trusting a roster line in game — see the manual checklist):
 --   * The exact return signature of C_LFGList.GetApplicantInfo/GetApplicantMemberInfo used below is
 --     transcribed from Blizzard's public Lua API documentation and has not been exercised against a
 --     live client by this change (this repo's tests never touch WoW — see AGENTS.md). Every call into
@@ -29,38 +23,27 @@ local ADDON_NAME, ns = ...
 local Roster = {}
 ns.Roster = Roster
 
--- Blizzard's class file token (locale-independent, e.g. "DEATHKNIGHT") -> Warcraft Logs' spacing-free
--- class name. Mirrors src/wow/classes.ts / src/signals/kick-cooldowns.ts (the source of truth).
-local CLASS_TOKEN_TO_WCL = {
-  WARRIOR = "Warrior", PALADIN = "Paladin", HUNTER = "Hunter", ROGUE = "Rogue", PRIEST = "Priest",
-  DEATHKNIGHT = "DeathKnight", SHAMAN = "Shaman", MAGE = "Mage", WARLOCK = "Warlock", MONK = "Monk",
-  DRUID = "Druid", DEMONHUNTER = "DemonHunter", EVOKER = "Evoker",
+-- Blizzard's class file token (locale-independent, e.g. "DEATHKNIGHT") -> Warcraft Logs' class index
+-- (src/wow/classes.ts / src/signals/kick-cooldowns.ts, the source of truth — NOT UnitClass()'s own
+-- numeric id, which numbers Warrior 1 and Death Knight 6). An unknown token drops the line rather
+-- than guessing.
+local CLASS_TOKEN_TO_INDEX = {
+  DEATHKNIGHT = 1,
+  DRUID = 2,
+  HUNTER = 3,
+  MAGE = 4,
+  MONK = 5,
+  PALADIN = 6,
+  PRIEST = 7,
+  ROGUE = 8,
+  SHAMAN = 9,
+  WARLOCK = 10,
+  WARRIOR = 11,
+  DEMONHUNTER = 12,
+  EVOKER = 13,
 }
 
 local ROLE_TOKEN_TO_CODE = { TANK = "T", HEALER = "H", DAMAGER = "D" }
-
--- One tank spec and one healer spec per class (unique given the role) plus a best-effort damage-spec
--- default — see the "KNOWN LIMITATIONS" note above. Keys are Blizzard class file tokens.
-local DEFAULT_SPEC = {
-  DEATHKNIGHT = { T = "Blood", D = "Frost" },
-  DEMONHUNTER = { T = "Vengeance", D = "Havoc" },
-  DRUID = { T = "Guardian", H = "Restoration", D = "Balance" },
-  EVOKER = { H = "Preservation", D = "Devastation" },
-  HUNTER = { D = "BeastMastery" },
-  MAGE = { D = "Fire" },
-  MONK = { T = "Brewmaster", H = "Mistweaver", D = "Windwalker" },
-  PALADIN = { T = "Protection", H = "Holy", D = "Retribution" },
-  PRIEST = { H = "Holy", D = "Shadow" },
-  ROGUE = { D = "Assassination" },
-  SHAMAN = { H = "Restoration", D = "Elemental" },
-  WARLOCK = { D = "Affliction" },
-  WARRIOR = { T = "Protection", D = "Arms" },
-}
-
-local function specGuess(classToken, roleCode)
-  local byRole = DEFAULT_SPEC[classToken]
-  return byRole and byRole[roleCode] or nil
-end
 
 -- The player's own realm, appended whenever the game gives us a bare name (same-realm applicants and
 -- party members usually come back that way).
@@ -79,13 +62,14 @@ local function withRealm(name)
 end
 
 -- One roster line, or nil when a required field is missing (roster.ts's parser drops a malformed
--- line anyway; this just avoids sending one).
-local function rosterLine(kind, nameRealm, classToken, spec, roleCode, score)
-  local wclClass = classToken and CLASS_TOKEN_TO_WCL[classToken]
-  if not nameRealm or not wclClass or not spec or spec == "" or not roleCode then return nil end
+-- line anyway; this just avoids sending one) — including an unrecognized class token, which is
+-- dropped rather than guessed at.
+local function rosterLine(kind, nameRealm, classToken, roleCode, score)
+  local classIndex = classToken and CLASS_TOKEN_TO_INDEX[classToken]
+  if not nameRealm or not classIndex or not roleCode then return nil end
   local n = tonumber(score) or 0
   if n < 0 then n = 0 end
-  return string.format("%s|%s|%s|%s|%s|%d", kind, nameRealm, wclClass, spec, roleCode, math.floor(n))
+  return string.format("%s|%s|%d|%s|%d", kind, nameRealm, classIndex, roleCode, math.floor(n))
 end
 
 -- ---------------------------------------------------------------------------------------------
@@ -97,31 +81,18 @@ local function selfLine()
   local classToken = select(2, UnitClass("player"))
   local roleCode = ROLE_TOKEN_TO_CODE[UnitGroupRolesAssigned("player")]
 
-  local spec
-  if GetSpecialization then
-    local specIndex = GetSpecialization()
-    if specIndex then
-      local _, name = GetSpecializationInfo(specIndex)
-      if name then spec = (name:gsub("%s+", "")) end
-    end
-  end
-  if not spec then spec = specGuess(classToken, roleCode) end
-
   local score = 0
   if C_ChallengeMode and C_ChallengeMode.GetOverallDungeonScore then
     local ok, s = pcall(C_ChallengeMode.GetOverallDungeonScore)
     if ok and type(s) == "number" then score = s end
   end
 
-  return rosterLine("s", nameRealm, classToken, spec, roleCode, score)
+  return rosterLine("s", nameRealm, classToken, roleCode, score)
 end
 
 -- ---------------------------------------------------------------------------------------------
--- The party ("p") — up to 4 other members of a 5-man Mythic+ group. Spec is resolved via
--- NotifyInspect()/INSPECT_READY (real data) and falls back to specGuess() until that completes.
+-- The party ("p") — up to 4 other members of a 5-man Mythic+ group.
 -- ---------------------------------------------------------------------------------------------
-
-local partySpecByGuid = {}
 
 local function partyUnits()
   local units = {}
@@ -134,70 +105,13 @@ local function partyUnits()
   return units
 end
 
--- Call periodically (main.lua's 10 Hz tick) while grouped: asks the client to inspect any party
--- member whose spec we don't have cached yet. Cheap to call every tick — NotifyInspect() is a no-op
--- when nothing changed and the client throttles inspect requests on its own.
-function Roster.RequestPartyInspects()
-  for _, unit in ipairs(partyUnits()) do
-    local guid = UnitGUID(unit)
-    if guid and not partySpecByGuid[guid] then
-      pcall(NotifyInspect, unit)
-    end
-  end
-end
-
--- Cache eviction (main.lua drives both). Without it a party member who respecs mid-session keeps
--- showing their old spec for the rest of the session, and a GUID that has left the group is never
--- dropped. The next 10 Hz tick's RequestPartyInspects() re-resolves whatever is missing.
---   * `unit` given (PLAYER_SPECIALIZATION_CHANGED's unitTarget): drop that one member.
---   * no `unit` (the event fired without one): drop everything — a respec happened somewhere.
-function Roster.ForgetPartySpecs(unit)
-  if unit then
-    local guid = UnitGUID(unit)
-    if guid then partySpecByGuid[guid] = nil end
-    return
-  end
-  for guid in pairs(partySpecByGuid) do partySpecByGuid[guid] = nil end
-end
-
--- GROUP_ROSTER_UPDATE: forget anyone who is no longer in the party (a new member arriving with a
--- recycled table slot must not inherit the previous occupant's spec).
-function Roster.PrunePartySpecs()
-  local present = {}
-  for _, unit in ipairs(partyUnits()) do
-    local guid = UnitGUID(unit)
-    if guid then present[guid] = true end
-  end
-  for guid in pairs(partySpecByGuid) do
-    if not present[guid] then partySpecByGuid[guid] = nil end
-  end
-end
-
--- INSPECT_READY handler (main.lua forwards the event's GUID argument here).
-function Roster.HandleInspectReady(guid)
-  if not guid or not GetInspectSpecialization then return end
-  for _, unit in ipairs(partyUnits()) do
-    if UnitGUID(unit) == guid then
-      local ok, specID = pcall(GetInspectSpecialization, unit)
-      if ok and specID and specID > 0 and GetSpecializationInfoByID then
-        local infoOk, _id, name = pcall(GetSpecializationInfoByID, specID)
-        if infoOk and name then partySpecByGuid[guid] = (name:gsub("%s+", "")) end
-      end
-      return
-    end
-  end
-end
-
 function Roster.PartyLines()
   local lines = {}
   for _, unit in ipairs(partyUnits()) do
     local name = UnitName(unit)
     local classToken = select(2, UnitClass(unit))
-    local guid = UnitGUID(unit)
     local roleCode = ROLE_TOKEN_TO_CODE[UnitGroupRolesAssigned(unit)]
-    local spec = guid and partySpecByGuid[guid]
-    if not spec then spec = specGuess(classToken, roleCode) end
-    local line = rosterLine("p", withRealm(name), classToken, spec, roleCode, 0)
+    local line = rosterLine("p", withRealm(name), classToken, roleCode, 0)
     if line then table.insert(lines, line) end
   end
   return lines
@@ -278,8 +192,7 @@ function Roster.ApplicantLines()
         if m.tank then roleCode = "T"
         elseif m.healer then roleCode = "H"
         elseif m.damage then roleCode = "D" end
-        local spec = m.classToken and roleCode and specGuess(m.classToken, roleCode)
-        local line = rosterLine("a", withRealm(m.name), m.classToken, spec, roleCode, m.score)
+        local line = rosterLine("a", withRealm(m.name), m.classToken, roleCode, m.score)
         if line then table.insert(lines, line) end
       end
     end

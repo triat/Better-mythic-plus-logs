@@ -205,7 +205,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
   },
   liveAddon: {
     title: "The in-game addon",
-    why: "The Live panel reads a small strip of pixels the bmpl addon draws in-game, through a screen share — there is no server round trip and the addon has no network code of its own. Install it once and every applicant and party member you see in the Group Finder shows up here automatically, with class, role and score. A tank or healer applicant's spec is exact; a DPS applicant's spec is a best-effort guess, since Blizzard's Group Finder does not expose it before you invite them.",
+    why: "The Live panel reads a small strip of pixels the bmpl addon draws in-game, through a screen share — there is no server round trip and the addon has no network code of its own. Install it once and every applicant and party member you see in the Group Finder shows up here automatically, with class, role and score.",
     install: [
       "Build `dist/bmpl-addon.zip` from the repo with `just addon-zip` (no release carries it yet), or copy `addon/bmpl/` straight out of a checkout.",
       "Copy the `bmpl` folder into `World of Warcraft/_retail_/Interface/AddOns/`.",

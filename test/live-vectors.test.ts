@@ -54,14 +54,7 @@ describe("addon golden vectors", () => {
 
   // `SELFTEST_VECTORS` is a hand-copied snapshot (the WoW addon sandbox has no filesystem access, so
   // the addon cannot read vectors.txt at runtime). Parsed as text — no Lua runtime in CI.
-  //
-  // ported in the next commit: the strip format v2 change (24x10 grid, 7-byte header, class-index
-  // roster line — docs/superpowers/specs/2026-09-22-game-integration-design.md) regenerated
-  // vectors.txt above, but addon/bmpl/main.lua's SELFTEST_VECTORS is out of scope for this task (the
-  // Lua port is a separate task, written against these regenerated vectors) and still holds the v1
-  // snapshot. Skipped rather than left red so `bun test` stays green; un-skip once the Lua port
-  // updates SELFTEST_VECTORS to match.
-  test.skip("main.lua's SELFTEST_VECTORS is a faithful copy of vectors.txt", () => {
+  test("main.lua's SELFTEST_VECTORS is a faithful copy of vectors.txt", () => {
     const { frames, cells } = readVectors();
     const lua = readFileSync("addon/bmpl/main.lua", "utf8");
     const table = lua.slice(lua.indexOf("local SELFTEST_VECTORS = {"), lua.indexOf("local function selftest()"));
@@ -70,8 +63,13 @@ describe("addon golden vectors", () => {
     const texts = [...table.matchAll(/^\s*text = "(.*)",$/gm)].map((m) => m[1]!);
     const seqs = [...table.matchAll(/^\s*seq = (\d+),$/gm)].map((m) => Number(m[1]));
     const luaCells = [...table.matchAll(/^\s*cells = "([0-9a-f]+)",$/gm)].map((m) => m[1]!);
-    // Every hex literal that is not a cell matrix is a frame, in file order.
-    const luaFrames = [...table.matchAll(/"([0-9a-f]{24,})"/g)].map((m) => m[1]!).filter((h) => !luaCells.includes(h));
+    // Every hex literal that is not a cell matrix is a frame, in file order. The minimum bound is the
+    // header alone (7 bytes = 14 hex chars): v1's 12-byte header always produced frames of at least 24
+    // hex chars, but v2's 18-byte payload cap means a roster's last chunk can be much shorter (as low
+    // as a lone header-and-a-few-bytes frame) — a 24-char floor silently dropped that short frame from
+    // this match, so the bound is set to the real minimum instead. `luaCells` is still excluded by
+    // value below, not by length, so lowering this cannot accidentally start counting a cells matrix.
+    const luaFrames = [...table.matchAll(/"([0-9a-f]{14,})"/g)].map((m) => m[1]!).filter((h) => !luaCells.includes(h));
 
     expect(texts).toEqual(frames.map((v) => v.text.replaceAll("\n", "\\n")));
     expect(seqs).toEqual(frames.map((v) => v.seq));

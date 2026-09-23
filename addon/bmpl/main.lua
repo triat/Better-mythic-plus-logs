@@ -1,13 +1,13 @@
 -- addon/bmpl/main.lua
 --
--- Wires the pieces together: the 10 Hz redraw loop, the visibility rule (Group Finder only, never
+-- Wires the pieces together: the 20 Hz redraw loop, the visibility rule (Group Finder only, never
 -- during a run), and the /bmpl slash commands. The addon sends nothing, receives nothing, stores
 -- nothing — see addon/README.md.
 
 local ADDON_NAME, ns = ...
 local Encode, Strip, Roster = ns.Encode, ns.Strip, ns.Roster
 
-local UPDATE_INTERVAL = 0.1 -- 10 Hz
+local UPDATE_INTERVAL = 0.05 -- 20 Hz
 
 -- true once /bmpl show is used, until /bmpl hide releases it back to the automatic rule below.
 local forcedOn = false
@@ -32,20 +32,19 @@ local function rebuildRoster()
   local text = Roster.BuildText()
   if text == roster.text then return end
   roster.text = text
-  roster.seq = (roster.seq + 1) % 65536
+  roster.seq = (roster.seq + 1) % 256
   local ok, frames = pcall(Encode.chunkRoster, text, roster.seq)
   roster.frames = ok and frames or {}
   roster.cursor = 0
 end
 
--- One 10 Hz tick: rebuild the roster text (a no-op when nothing changed), keep asking the client to
--- inspect any un-resolved party member, and paint the next frame — cycling through every chunk of a
--- multi-frame roster so the browser's scanner (also 10 Hz) can assemble the whole thing over a few
--- ticks; a single-frame roster (the common case) just redraws itself every tick.
+-- One 20 Hz tick: rebuild the roster text (a no-op when nothing changed) and paint the next frame —
+-- cycling through every chunk of a multi-frame roster so the browser's scanner (also 20 Hz) can
+-- assemble the whole thing over a few ticks; a single-frame roster (the common case) just redraws
+-- itself every tick.
 local function tick()
   if shouldShow() then
     rebuildRoster()
-    Roster.RequestPartyInspects()
     Strip.Show()
     local frames = roster.frames
     if #frames > 0 then
@@ -72,21 +71,13 @@ events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("LFG_LIST_APPLICANT_LIST_UPDATED")
 events:RegisterEvent("LFG_LIST_ACTIVE_ENTRY_UPDATE")
 events:RegisterEvent("GROUP_ROSTER_UPDATE")
-events:RegisterEvent("INSPECT_READY")
-events:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 events:RegisterEvent("UI_SCALE_CHANGED")
 events:RegisterEvent("DISPLAY_SIZE_CHANGED")
 events:SetScript("OnEvent", function(_, event, ...)
-  if event == "INSPECT_READY" then
-    Roster.HandleInspectReady(...)
-  elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
-    Roster.ForgetPartySpecs(...) -- the event's unitTarget, or nil: drop that member's cached spec (or all of them)
-  elseif event == "GROUP_ROSTER_UPDATE" then
-    Roster.PrunePartySpecs() -- ... and forget whoever left, so a recycled slot never inherits a spec
-  elseif event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
+  if event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
     Strip.Rescale()
   end
-  -- Every other registered event just means "the roster might have changed"; the next 10 Hz tick
+  -- Every other registered event just means "the roster might have changed"; the next 20 Hz tick
   -- picks it up on its own via rebuildRoster()'s text diff, so there is nothing else to do here.
 end)
 
@@ -99,44 +90,73 @@ end)
 -- the WoW addon sandbox), so this is a hand-copied snapshot. If codec.ts's framing ever changes,
 -- regenerate vectors.txt and copy the new lines in here too: `test/live-vectors.test.ts` reads this
 -- table out of main.lua and fails when it drifts from the .txt, so the copy cannot go stale silently.
--- `frames` pins the frame BYTES; `cells` pins the 40x16 LAYOUT of the first frame (marker row, marker
+-- `frames` pins the frame BYTES; `cells` pins the 24x10 LAYOUT of the first frame (marker row, marker
 -- column, row-major MSB-first bits) — the part of Encode that only /bmpl selftest can check.
 local SELFTEST_VECTORS = {
   {
-    text = "a|Applicantone-Area52|DeathKnight|Blood|T|1520\n",
+    text = "a|Applicantone-Area52|1|T|1520\n",
     seq = 1,
-    frames = { "626d706c01010000012fc3b3617c4170706c6963616e746f6e652d4172656135327c44656174684b6e696768747c426c6f6f647c547c313532300a" },
-    cells = "aaaaaaaaaa3136b83600c04000004b78766c2f88970706c6961b0b73a37bb994b505c94ac26a64f8c46561746825b734b3b49d1f109b1b6dec8f8a8fc313532300500000000080000000000000000000",
+    frames = {
+      "b201000212ad66617c4170706c6963616e746f6e652d417265",
+      "b20101020d5b2d6135327c317c547c313532300a",
+    },
+    cells = "aaaaaa5900808084ab2ccc2fc4170703634b8d85b968dedce52d41393280",
   },
   {
-    text = "a|Applicanttwo-Area52|Priest|Holy|H|1480\na|Applicantthree-Stormrage|Mage|Frost|D|1610\na|Applicantfour-Illidan|Rogue|Assassination|D|0\np|Partymember-Area52|Warrior|Protection|T|1550\n",
+    text = "a|Applicanttwo-Area52|7|H|1480\na|Applicantthree-Stormrage|4|D|1610\na|Applicantfour-Illidan|8|D|0\np|Partymember-Area52|11|T|1550\n",
     seq = 2,
     frames = {
-      "626d706c01020000033da54d617c4170706c6963616e7474776f2d4172656135327c5072696573747c486f6c797c487c313438300a617c4170706c6963616e7474687265652d53746f",
-      "626d706c01020001033d2090726d726167657c4d6167657c46726f73747c447c313631300a617c4170706c6963616e74666f75722d496c6c6964616e7c526f6775657c417373617373",
-      "626d706c01020002033b5381696e6174696f6e7c447c300a707c50617274796d656d6265722d4172656135327c57617272696f727c50726f74656374696f6e7c547c313535300a",
+      "b202000812866e617c4170706c6963616e7474776f2d417265",
+      "b202010812ac0a6135327c377c487c313438300a617c417070",
+      "b202020812a2636c6963616e7474687265652d53746f726d72",
+      "b202030812ac356167657c347c447c313631300a617c417070",
+      "b202040812d86f6c6963616e74666f75722d496c6c6964616e",
+      "b2020508121d207c387c447c300a707c50617274796d656d62",
+      "b202060812282c65722d4172656135327c31317c547c313535",
+      "b202070802b1c0300a",
     },
-    cells = "aaaaaaaaaa3136b83600c0800000cf34a9ac2f88970706c6961b0b73a3a3ddbcb505c94ac26a64f8d0726965733a3e2437b69e5f121f0c268706014c97c4170706634b1b0b73d1d1a1c9954a5aa6e8de",
+    cells = "aaaaaa5901008204a14dcc2fc4170703634b8d85b968e8eeef2d41393280",
   },
   {
-    text = "a|Applicant01-Area52|Mage|Frost|T|1000\na|Applicant02-Area52|Priest|Holy|H|1010\na|Applicant03-Area52|Mage|Frost|D|1020\na|Applicant04-Area52|Priest|Holy|T|1030\na|Applicant05-Area52|Mage|Frost|H|1040\na|Applicant06-Area52|Priest|Holy|D|1050\na|Applicant07-Area52|Mage|Frost|T|1060\na|Applicant08-Area52|Priest|Holy|H|1070\na|Applicant09-Area52|Mage|Frost|D|1080\na|Applicant10-Area52|Priest|Holy|T|1090\na|Applicant11-Area52|Mage|Frost|H|1100\na|Applicant12-Area52|Priest|Holy|D|1110\na|Applicant13-Area52|Mage|Frost|T|1120\na|Applicant14-Area52|Priest|Holy|H|1130\na|Applicant15-Area52|Mage|Frost|D|1140\na|Applicant16-Area52|Priest|Holy|T|1150\na|Applicant17-Area52|Mage|Frost|H|1160\na|Applicant18-Area52|Priest|Holy|D|1170\na|Applicant19-Area52|Mage|Frost|T|1180\na|Applicant20-Area52|Priest|Holy|H|1190\n",
-    seq = 65535,
+    text = "a|Applicant01-Area52|4|T|1000\na|Applicant02-Area52|7|H|1010\na|Applicant03-Area52|4|D|1020\na|Applicant04-Area52|7|T|1030\na|Applicant05-Area52|4|H|1040\na|Applicant06-Area52|7|D|1050\na|Applicant07-Area52|4|T|1060\na|Applicant08-Area52|7|H|1070\na|Applicant09-Area52|4|D|1080\na|Applicant10-Area52|7|T|1090\na|Applicant11-Area52|4|H|1100\na|Applicant12-Area52|7|D|1110\na|Applicant13-Area52|4|T|1120\na|Applicant14-Area52|7|H|1130\na|Applicant15-Area52|4|D|1140\na|Applicant16-Area52|7|T|1150\na|Applicant17-Area52|4|H|1160\na|Applicant18-Area52|7|D|1170\na|Applicant19-Area52|4|T|1180\na|Applicant20-Area52|7|H|1190\n",
+    seq = 255,
     frames = {
-      "626d706c01ffff000d3d067c617c4170706c6963616e7430312d4172656135327c4d6167657c46726f73747c547c313030300a617c4170706c6963616e7430322d4172656135327c50",
-      "626d706c01ffff010d3da0ea72696573747c486f6c797c487c313031300a617c4170706c6963616e7430332d4172656135327c4d6167657c46726f73747c447c313032300a617c4170",
-      "626d706c01ffff020d3d9225706c6963616e7430342d4172656135327c5072696573747c486f6c797c547c313033300a617c4170706c6963616e7430352d4172656135327c4d616765",
-      "626d706c01ffff030d3dcfca7c46726f73747c487c313034300a617c4170706c6963616e7430362d4172656135327c5072696573747c486f6c797c447c313035300a617c4170706c69",
-      "626d706c01ffff040d3dc77c63616e7430372d4172656135327c4d6167657c46726f73747c547c313036300a617c4170706c6963616e7430382d4172656135327c5072696573747c48",
-      "626d706c01ffff050d3d39526f6c797c487c313037300a617c4170706c6963616e7430392d4172656135327c4d6167657c46726f73747c447c313038300a617c4170706c6963616e74",
-      "626d706c01ffff060d3d927c31302d4172656135327c5072696573747c486f6c797c547c313039300a617c4170706c6963616e7431312d4172656135327c4d6167657c46726f73747c",
-      "626d706c01ffff070d3d6a2e487c313130300a617c4170706c6963616e7431322d4172656135327c5072696573747c486f6c797c447c313131300a617c4170706c6963616e7431332d",
-      "626d706c01ffff080d3d74db4172656135327c4d6167657c46726f73747c547c313132300a617c4170706c6963616e7431342d4172656135327c5072696573747c486f6c797c487c31",
-      "626d706c01ffff090d3d3d143133300a617c4170706c6963616e7431352d4172656135327c4d6167657c46726f73747c447c313134300a617c4170706c6963616e7431362d41726561",
-      "626d706c01ffff0a0d3d71c035327c5072696573747c486f6c797c547c313135300a617c4170706c6963616e7431372d4172656135327c4d6167657c46726f73747c487c313136300a",
-      "626d706c01ffff0b0d3d234c617c4170706c6963616e7431382d4172656135327c5072696573747c486f6c797c447c313137300a617c4170706c6963616e7431392d4172656135327c",
-      "626d706c01ffff0c0d3ac73a4d6167657c46726f73747c547c313138300a617c4170706c6963616e7432302d4172656135327c5072696573747c486f6c797c487c313139300a",
+      "b2ff002212a4bc617c4170706c6963616e7430312d41726561",
+      "b2ff012212a26735327c347c547c313030300a617c4170706c",
+      "b2ff02221255c76963616e7430322d4172656135327c377c48",
+      "b2ff03221213d87c313031300a617c4170706c6963616e7430",
+      "b2ff042212ce2d332d4172656135327c347c447c313032300a",
+      "b2ff052212e84d617c4170706c6963616e7430342d41726561",
+      "b2ff06221243a035327c377c547c313033300a617c4170706c",
+      "b2ff07221203246963616e7430352d4172656135327c347c48",
+      "b2ff082212104c7c313034300a617c4170706c6963616e7430",
+      "b2ff092212b7f8362d4172656135327c377c447c313035300a",
+      "b2ff0a2212fe45617c4170706c6963616e7430372d41726561",
+      "b2ff0b2212914935327c347c547c313036300a617c4170706c",
+      "b2ff0c221217c96963616e7430382d4172656135327c377c48",
+      "b2ff0d2212781d7c313037300a617c4170706c6963616e7430",
+      "b2ff0e2212989f392d4172656135327c347c447c313038300a",
+      "b2ff0f22129387617c4170706c6963616e7431302d41726561",
+      "b2ff102212601d35327c377c547c313039300a617c4170706c",
+      "b2ff1122120f3e6963616e7431312d4172656135327c347c48",
+      "b2ff122212d1957c313130300a617c4170706c6963616e7431",
+      "b2ff1322121258322d4172656135327c377c447c313131300a",
+      "b2ff142212f366617c4170706c6963616e7431332d41726561",
+      "b2ff152212f62735327c347c547c313132300a617c4170706c",
+      "b2ff1622127e606963616e7431342d4172656135327c377c48",
+      "b2ff172212b9c47c313133300a617c4170706c6963616e7431",
+      "b2ff1822123ecf352d4172656135327c347c447c313134300a",
+      "b2ff192212c958617c4170706c6963616e7431362d41726561",
+      "b2ff1a22128eb335327c377c547c313135300a617c4170706c",
+      "b2ff1b22128a416963616e7431372d4172656135327c347c48",
+      "b2ff1c2212ba507c313136300a617c4170706c6963616e7431",
+      "b2ff1d22129ef8382d4172656135327c377c447c313137300a",
+      "b2ff1e22124a94617c4170706c6963616e7431392d41726561",
+      "b2ff1f2212d5bc35327c347c547c313138300a617c4170706c",
+      "b2ff2022120ffd6963616e7432302d4172656135327c377c48",
+      "b2ff212206173b7c313139300a",
     },
-    cells = "aaaaaaaaaa3136b83600ffffc0034f20cf8c2f88970706c6961b0b73a181c4b505c995426a64f89ae167657c463937b9ba3e951f0c4c0c06014c2f88970706c6961b0b73a181c8b505c995426a64f8a0",
+    cells = "aaaaaa597f808884a9178c2fc4170703634b8d85b9686062ad417232b080",
   },
 }
 
@@ -289,7 +309,7 @@ SlashCmdList.BMPL = function(msg)
     local applied = Strip.SetCell(msg:match("^cell%s+(%d+)$"))
     if applied then
       print(string.format("bmpl: cell size %d px (strip is %dx%d px) — /reload restores the default",
-        applied, 40 * applied, 16 * applied))
+        applied, 24 * applied, 10 * applied))
     else
       print(string.format("bmpl: /bmpl cell <3-10> — currently %d px", Strip.Cell()))
     end

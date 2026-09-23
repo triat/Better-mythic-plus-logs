@@ -1,6 +1,6 @@
 # bmpl — the in-game addon
 
-A small World of Warcraft addon that draws a 40×16 grid of black-and-white pixels in the corner of
+A small World of Warcraft addon that draws a 24×10 grid of black-and-white pixels in the corner of
 the screen, top-left, only while the Group Finder is in play. bmpl's web UI reads that strip through a
 screen share (`getDisplayMedia`) and turns it into a live view of your Group Finder applicants and
 party — class, role, current score — with no addon-side network code at all.
@@ -29,10 +29,10 @@ screen.
   `FULLSCREEN_DIALOG` strata (above most UI, so a full-screen panel doesn't hide it).
 - Close the Group Finder with no active posting — the strip disappears. It **never** draws during a
   run.
-- It redraws 10 times a second with your current roster: yourself, your party, and the Group Finder's
+- It redraws 20 times a second with your current roster: yourself, your party, and the Group Finder's
   pending applicants (oldest first). An application that is withdrawn, declined or timed out leaves
   the strip immediately — only live applications are drawn.
-- The strip is **160 × 64 pixels** (40 × 16 cells of 4 px). `/bmpl cell <3-10>` resizes it for the
+- The strip is **72 × 30 pixels** (24 × 10 cells of 3 px). `/bmpl cell <3-10>` resizes it for the
   session — the browser derives the cell size from the strip itself, so nothing needs reconfiguring
   on that side; below 3 px the capture stops resolving the cells reliably.
 - `/bmpl show` forces the strip on regardless of the Group Finder state, for lining things up or
@@ -41,7 +41,7 @@ screen.
   the exact roster text the strip carries — the first thing to run when someone is missing from the
   panel or will not go away.
 - `/bmpl selftest` re-encodes three known rosters and checks, byte for byte, both the frames and the
-  40x16 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
+  24x10 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
   also verifies that the copy built into the addon still matches `addon/bmpl/tests/vectors.txt`) —
   prints `OK`, or the first mismatch.
 
@@ -55,11 +55,7 @@ bmpl instance.
 
 ## Known limits
 
-- Class names are read from a locale-independent game API and always match Warcraft Logs' naming.
-  Spec names are read from the game's own (English) display strings — a non-English client will not
-  match.
-- Blizzard's Group Finder applicant API does not expose an applicant's exact talent spec before you
-  invite them (only their class and role). Where the exact spec isn't available — an applicant, or a
-  party member before their inspect completes — the addon shows a reasonable default for that class
-  and role rather than leaving the row blank; your party's real specs appear a moment after you group
-  up, once the client's own inspect finishes.
+- Classes are read from a locale-independent game API and sent as Warcraft Logs' own class index
+  (not WoW's), so they always match regardless of your client's language. Spec is not carried at all:
+  the panel never showed it, and Blizzard's Group Finder does not expose an applicant's exact talent
+  spec before you invite them anyway.

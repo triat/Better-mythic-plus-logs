@@ -144,7 +144,7 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
   },
   liveAddon: {
     title: "L'addon en jeu",
-    why: "Le panneau Live lit une petite bande de pixels que l'addon bmpl dessine en jeu, via un partage d'écran — pas d'aller-retour serveur, l'addon n'a aucun code réseau à lui. Installe-le une fois et chaque candidat et membre de groupe que tu vois dans le Group Finder apparaît ici automatiquement, avec classe, rôle et score. Le spec d'un candidat tank ou heal est exact ; le spec d'un candidat DPS est une estimation au mieux, parce que le Group Finder de Blizzard ne l'expose pas avant que tu l'invites.",
+    why: "Le panneau Live lit une petite bande de pixels que l'addon bmpl dessine en jeu, via un partage d'écran — pas d'aller-retour serveur, l'addon n'a aucun code réseau à lui. Installe-le une fois et chaque candidat et membre de groupe que tu vois dans le Group Finder apparaît ici automatiquement, avec classe, rôle et score.",
     install: [
       "Construis `dist/bmpl-addon.zip` depuis le repo avec `just addon-zip` (aucune release ne le contient pour l'instant), ou copie `addon/bmpl/` directement depuis un checkout.",
       "Copie le dossier `bmpl` dans `World of Warcraft/_retail_/Interface/AddOns/`.",

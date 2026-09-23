@@ -12,7 +12,7 @@ season, death by death, kick by kick — and answers that one question.
 [![latest release](https://img.shields.io/github/v/release/triat/Better-mythic-plus-logs?label=release&color=2ea043)](https://github.com/triat/Better-mythic-plus-logs/releases/latest)
 [![in-game addon](https://img.shields.io/badge/in--game%20addon-download-5865F2)](https://github.com/triat/Better-mythic-plus-logs/releases/latest/download/bmpl-addon.zip)
 
-<img src="docs/images/verdict.png" alt="bmpl's verdict for a character: INVITE 72, the six axes with their evidence, and the radar" width="820">
+<img src="docs/images/verdict.png" alt="bmpl's verdict for a character: INVITE 78, the six axes with their evidence lines, and the radar" width="860">
 
 </div>
 
@@ -46,7 +46,7 @@ run per dungeon, not their one lucky +20.
 Underneath the verdict, every run is there on its own line — what killed them, how much avoidable
 damage they ate, how many interrupts they landed against how many they could have:
 
-<img src="docs/images/runs.png" alt="Per-run detail: deaths, damage taken versus peers, avoidable damage, interrupts, dispels and consumables for each dungeon" width="900">
+<img src="docs/images/runs.png" alt="Per-run detail: deaths, damage taken versus peers, avoidable damage, interrupts, dispels and consumables for each dungeon" width="860">
 
 Every number has a **?** next to it that opens the [Help page](https://bmpl.riat.dev/help), which
 explains that number with the thresholds your instance actually uses.

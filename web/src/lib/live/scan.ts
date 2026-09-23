@@ -1,8 +1,17 @@
 // Pixels → cells. Pure: it takes plain typed arrays, so every case is testable without a browser.
+//
+// Nothing here assumes the strip is drawn in pure black and white. The addon paints two *greys* by
+// default (`/bmpl contrast`, addon/bmpl/strip.lua) so the strip reads as a faint patch rather than a
+// flashing checkerboard, which means fixed luminance thresholds cannot work: the levels are the
+// addon's choice and the capture pipeline shifts them further. Both thresholds are therefore derived
+// from the image itself — a local light/dark envelope to find the marker, then the marker's own two
+// levels to read the cells. All the scanner requires is that the two levels stay `MIN_AMPLITUDE`
+// apart once captured.
 import { STRIP } from "./codec.ts";
 
 export interface Gray { width: number; height: number; data: Uint8Array }
-export interface StripGeometry { x: number; y: number; cell: number }
+/** `threshold` is the cell-reading midpoint measured on this strip's own marker, not a constant. */
+export interface StripGeometry { x: number; y: number; cell: number; threshold: number }
 
 /** Only the top-left quarter of the captured frame is searched — the addon draws in the corner. */
 export const SCAN_REGION = { w: 0.5, h: 0.5 } as const;
@@ -16,68 +25,162 @@ export function toGray(rgba: Uint8ClampedArray, width: number, height: number): 
   return { width, height, data };
 }
 
-const DARK = 70;
-const LIGHT = 185;
+/**
+ * The smallest light-to-dark distance, in luma, still read as a strip. Below it a region counts as
+ * flat: it keeps a gradient or a noisy texture from passing for the marker, and it is the contrast
+ * floor the addon's dim palette has to clear once the capture has compressed it.
+ */
+export const MIN_AMPLITUDE = 45;
+/** Dead zone around the local midpoint, as a fraction of the local amplitude: the pixels straddling
+ * two cells land here and end a run rather than extending the wrong one. */
+const MARGIN = 0.15;
+/**
+ * Width of the blocks the local light/dark envelope is measured over. Every block is read on its own,
+ * with no neighbour merging: the envelope has to stay LOCAL, because the strip is drawn over whatever
+ * the game renders behind it and a bright neighbour would otherwise drag the midpoint above the dim
+ * palette's light level. 24 px always spans a full light+dark pair for any cell size the addon can
+ * draw (`/bmpl cell` caps at 10, so a period of at most 20 px) while staying under a third of the
+ * strip's width, so the blocks in the middle of the strip are always clean.
+ */
+const BLOCK = 24;
+
+/**
+ * Fills `lo`/`hi` with the darkest and lightest luma of each pixel's block on row `y`. Block-wise
+ * rather than a true sliding window: same O(n) and a fraction of the code. A block that straddles the
+ * strip's edge is polluted by the background — that is what `extendLeft` below exists for.
+ */
+function rowLevels(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8Array): void {
+  const row = y * img.width;
+  for (let start = 0; start < maxX; start += BLOCK) {
+    const end = Math.min(maxX, start + BLOCK);
+    let l = 255;
+    let h = 0;
+    for (let x = start; x < end; x++) {
+      const v = img.data[row + x]!;
+      if (v < l) l = v;
+      if (v > h) h = v;
+    }
+    for (let x = start; x < end; x++) { lo[x] = l; hi[x] = h; }
+  }
+}
 
 /** Run lengths of the alternating light/dark marker on one row, starting at the first light pixel. */
-function markerRun(img: Gray, y: number, maxX: number): { x: number; cell: number } | null {
+function markerRun(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8Array): { x: number; cell: number } | null {
+  const row = y * img.width;
+  // A pixel is light (1), dark (-1) or neither (0: too close to the local midpoint, or in a region
+  // with no contrast at all). 0 always ends the run in progress.
+  const level = (x: number): number => {
+    const amp = hi[x]! - lo[x]!;
+    if (amp < MIN_AMPLITUDE) return 0;
+    const v = img.data[row + x]!;
+    const mid = (hi[x]! + lo[x]!) / 2;
+    const margin = amp * MARGIN;
+    if (v >= mid + margin) return 1;
+    if (v <= mid - margin) return -1;
+    return 0;
+  };
+
   let x = 0;
   while (x < maxX) {
-    while (x < maxX && img.data[y * img.width + x]! < LIGHT) x++;
+    while (x < maxX && level(x) !== 1) x++;
     const start = x;
     const runs: number[] = [];
-    let want = LIGHT;
+    let want = 1;
     while (x < maxX && runs.length < 9) {
       const from = x;
-      while (x < maxX && (want === LIGHT ? img.data[y * img.width + x]! >= LIGHT : img.data[y * img.width + x]! <= DARK)) x++;
+      while (x < maxX && level(x) === want) x++;
       if (x === from) break;
       runs.push(x - from);
-      want = want === LIGHT ? DARK : LIGHT;
+      want = -want;
     }
     if (runs.length >= 8) {
       const cell = runs.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
       if (cell >= 3 && runs.slice(0, 8).every((r) => Math.abs(r - cell) <= Math.max(1, cell * 0.34))) return { x: start, cell };
     }
-    if (x === start) x++;
+    // Resume just after the rejected start, NOT after the runs it consumed: the run that fails is
+    // usually a partial cell where the local envelope changes (the strip's own first cells, clipped by
+    // a block that also saw the background), and skipping past it would skip the real marker with it.
+    x = start + 1;
   }
   return null;
 }
 
 /**
- * The marker row and column give the origin and the cell size; null when no strip is on screen.
- * Keeps scanning candidate rows until `accept` (default: anything) is satisfied by the cells read at
- * that geometry — a lone row that merely looks like a marker (e.g. a decoy checkerboard) is skipped
- * rather than returned, so a caller that can validate a decode (Task 6's `decodeCells(cells) !== null`)
- * finds the real strip even when it sits below something that structurally mimics the marker.
+ * The reading threshold for a strip at (x0, y0, cell), measured on its own marker: row 0 and column 0
+ * alternate light/dark from a known phase, so between them they carry one sample of each level per
+ * cell. Returns null when the two levels are not `MIN_AMPLITUDE` apart, or when a marker cell falls on
+ * the wrong side of the midpoint — which doubles as the marker-column check the scanner needs anyway.
+ */
+function markerThreshold(img: Gray, x0: number, y0: number, cell: number): number | null {
+  let lightSum = 0;
+  let lightN = 0;
+  let darkSum = 0;
+  let darkN = 0;
+  const add = (v: number, light: boolean) => {
+    if (light) { lightSum += v; lightN++; } else { darkSum += v; darkN++; }
+  };
+  for (let c = 0; c < STRIP.cols; c++) add(sample(img, x0 + c * cell, y0, cell), c % 2 === 0);
+  for (let r = 1; r < STRIP.rows; r++) add(sample(img, x0, y0 + r * cell, cell), r % 2 === 0);
+  const light = lightSum / lightN;
+  const dark = darkSum / darkN;
+  if (light - dark < MIN_AMPLITUDE) return null;
+  const threshold = (light + dark) / 2;
+  // Every marker cell must individually land on its own side, or this is not a marker.
+  for (let c = 0; c < STRIP.cols; c++) {
+    const v = sample(img, x0 + c * cell, y0, cell);
+    if (c % 2 === 0 ? v < threshold : v >= threshold) return null;
+  }
+  for (let r = 1; r < STRIP.rows; r++) {
+    const v = sample(img, x0, y0 + r * cell, cell);
+    if (r % 2 === 0 ? v < threshold : v >= threshold) return null;
+  }
+  return threshold;
+}
+
+/**
+ * How many cells to the left of the first detected light run the origin is looked for. The 8 runs that
+ * establish the geometry need not be the strip's first 8: a block whose envelope straddles the strip's
+ * left edge can swallow the leading cells, and taking that later run as cell (0,0) would put every
+ * sample a whole number of cells off. Each candidate origin is validated by `markerThreshold`, which
+ * checks the marker row AND column, so a wrong shift is rejected rather than guessed at.
+ */
+const MAX_ORIGIN_SHIFT = 8;
+
+/**
+ * The marker row and column give the origin, the cell size and the reading threshold; null when no
+ * strip is on screen. Keeps scanning candidate rows until `accept` (default: anything) is satisfied by
+ * the cells read at that geometry — a lone row that merely looks like a marker (e.g. a decoy
+ * checkerboard) is skipped rather than returned, so a caller that can validate a decode (Task 6's
+ * `decodeCells(cells) !== null`) finds the real strip even when it sits below something that
+ * structurally mimics the marker.
  */
 export function findStrip(img: Gray, accept: (cells: Uint8Array) => boolean = () => true): StripGeometry | null {
   const maxY = Math.floor(img.height * SCAN_REGION.h);
   const maxX = Math.floor(img.width * SCAN_REGION.w);
+  const lo = new Uint8Array(maxX);
+  const hi = new Uint8Array(maxX);
   for (let y = 0; y < maxY; y++) {
-    const row = markerRun(img, y, maxX);
+    rowLevels(img, y, maxX, lo, hi);
+    const row = markerRun(img, y, maxX, lo, hi);
     if (!row) continue;
     const cell = row.cell;
-    const x0 = row.x + cell / 2;
     const y0 = y + cell / 2;
-    // The whole strip, sampled at cell centres, must lie inside the image.
-    const lastX = x0 + (STRIP.cols - 1) * cell;
-    const lastY = y0 + (STRIP.rows - 1) * cell;
-    if (lastX >= img.width || lastY >= img.height) continue;
-    // Verify the marker column: cell (0,0) light, then alternating down the strip.
-    let ok = true;
-    for (let r = 0; r < STRIP.rows && ok; r++) {
-      const v = sample(img, x0, y0 + r * cell, cell);
-      ok = r % 2 === 0 ? v >= LIGHT : v <= DARK;
+    if (y0 + (STRIP.rows - 1) * cell >= img.height) continue;
+    for (let shift = 0; shift <= MAX_ORIGIN_SHIFT; shift++) {
+      const x0 = row.x + cell / 2 - shift * cell;
+      // The whole strip, sampled at cell centres, must lie inside the image.
+      if (x0 < 0 || x0 + (STRIP.cols - 1) * cell >= img.width) continue;
+      const threshold = markerThreshold(img, x0, y0, cell);
+      if (threshold === null) continue;
+      const geom = { x: x0, y: y0, cell, threshold };
+      if (accept(readCells(img, geom))) return geom;
     }
-    if (!ok) continue;
-    const geom = { x: x0, y: y0, cell };
-    if (accept(readCells(img, geom))) return geom;
   }
   return null;
 }
 
 /** Below this cell size the 3×3 average blurs a cell with its neighbours, so `sample` reads the centre
- * pixel alone instead (spec: "at 3 px a cell is sampled at its centre pixel alone"). */
+ * pixel alone (spec: "at 3 px a cell is sampled at its centre pixel alone"). */
 const SMALL_CELL = 5;
 
 /**
@@ -109,12 +212,12 @@ function sample(img: Gray, cx: number, cy: number, cell: number): number {
   return n === 0 ? 0 : sum / n;
 }
 
-/** The 24×10 matrix read at `geom`; 1 = white. Values between the thresholds fall to the nearer side. */
+/** The 24×10 matrix read at `geom`; 1 = light. The threshold is the strip's own, from its marker. */
 export function readCells(img: Gray, geom: StripGeometry): Uint8Array {
   const cells = new Uint8Array(STRIP.cols * STRIP.rows);
   for (let y = 0; y < STRIP.rows; y++) {
     for (let x = 0; x < STRIP.cols; x++) {
-      cells[y * STRIP.cols + x] = sample(img, geom.x + x * geom.cell, geom.y + y * geom.cell, geom.cell) >= 128 ? 1 : 0;
+      cells[y * STRIP.cols + x] = sample(img, geom.x + x * geom.cell, geom.y + y * geom.cell, geom.cell) >= geom.threshold ? 1 : 0;
     }
   }
   return cells;

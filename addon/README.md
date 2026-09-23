@@ -1,9 +1,10 @@
 # bmpl — the in-game addon
 
-A small World of Warcraft addon that draws a 24×10 grid of black-and-white pixels in the corner of
-the screen, top-left, only while the Group Finder is in play. bmpl's web UI reads that strip through a
-screen share (`getDisplayMedia`) and turns it into a live view of your Group Finder applicants and
-party — class, role, current score — with no addon-side network code at all.
+A small World of Warcraft addon that draws a 24×10 grid of grey pixels in the corner of the screen,
+top-left, only while the Group Finder is in play — and leaves it **motionless** as soon as your roster
+stops changing. bmpl's web UI reads that strip through a screen share (`getDisplayMedia`) and turns it
+into a live view of your Group Finder applicants and party — class, role, current score — with no
+addon-side network code at all.
 
 **The addon sends nothing, receives nothing, and stores nothing.** It draws pixels; that's the whole
 addon. No SavedVariables, no `/dump`-able state, no outbound requests of any kind — everything bmpl
@@ -29,9 +30,16 @@ screen.
   `FULLSCREEN_DIALOG` strata (above most UI, so a full-screen panel doesn't hide it).
 - Close the Group Finder with no active posting — the strip disappears. It **never** draws during a
   run.
-- It redraws 20 times a second with your current roster: yourself, your party, and the Group Finder's
-  pending applicants (oldest first). An application that is withdrawn, declined or timed out leaves
-  the strip immediately — only live applications are drawn.
+- It carries your current roster: yourself, your party, and the Group Finder's pending applicants
+  (oldest first). An application that is withdrawn, declined or timed out leaves the strip
+  immediately — only live applications are drawn.
+- **It only moves when your roster changes.** A change is transmitted over 3 quick passes (20 frames a
+  second, so a fraction of a second), then the strip goes completely still until the next change; it
+  wakes for one pass every 5 seconds so a browser that connects mid-queue still fills up. In a stable
+  queue the strip is motionless well over 95 % of the time.
+- **It is drawn in two greys, not black and white** (`/bmpl contrast full` switches back). The browser
+  measures the strip's own levels instead of assuming any, so a faint patch reads exactly as well as a
+  stark one — as long as the two greys survive the capture 45 luma apart.
 - The strip is **72 × 30 pixels** (24 × 10 cells of 3 px). `/bmpl cell <3-10>` resizes it for the
   session (it resets on `/reload`) — the browser derives the cell size from the strip itself, so
   nothing needs reconfiguring on that side; below 3 px the capture stops resolving the cells reliably.
@@ -39,6 +47,8 @@ screen.
   3 px leaves no headroom if your capture is being rescaled anywhere along the way.
 - `/bmpl show` forces the strip on regardless of the Group Finder state, for lining things up or
   troubleshooting. `/bmpl hide` releases that override back to the automatic rule above.
+- `/bmpl contrast full` paints black and white instead of the two greys, for the session — the thing
+  to try first if the browser sees no strip at all. `/bmpl contrast dim` goes back.
 - `/bmpl dump` prints what the Group Finder API actually returns for each pending application, and
   the exact roster text the strip carries — the first thing to run when someone is missing from the
   panel or will not go away.

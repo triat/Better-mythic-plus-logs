@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { STRIP, decodeCells, encodeCells } from "./codec.ts";
-import { findStrip, readCells, toGray } from "./scan.ts";
+import { MIN_AMPLITUDE, findStrip, readCells, toGray } from "./scan.ts";
 import type { Gray } from "./scan.ts";
 
 // Mirrors scan.ts's private thresholds, for tests that assert noise genuinely approaches them.
@@ -9,12 +9,18 @@ const LIGHT = 185;
 
 const FRAME = { version: 2, rosterSeq: 42, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Bee-Nz|2|H|3412") };
 
+/** The two luma levels addon/bmpl/strip.lua's dim palette produces (0.10 / 0.45 of full white). */
+const DIM = { light: 115, dark: 26 };
+
 /** Paint the cell matrix into a grey image at `scale` px per cell, offset by (ox, oy). */
-function paint(cells: Uint8Array, scale: number, ox: number, oy: number, w = 600, h = 300, noise = 0): Gray {
-  const data = new Uint8Array(w * h).fill(28); // the app's near-black background
+function paint(
+  cells: Uint8Array, scale: number, ox: number, oy: number, w = 600, h = 300, noise = 0,
+  levels: { light: number; dark: number } = { light: 255, dark: 0 }, bg = 28,
+): Gray {
+  const data = new Uint8Array(w * h).fill(bg); // the app's near-black background
   for (let y = 0; y < STRIP.rows; y++) {
     for (let x = 0; x < STRIP.cols; x++) {
-      const v = cells[y * STRIP.cols + x] ? 255 : 0;
+      const v = cells[y * STRIP.cols + x] ? levels.light : levels.dark;
       for (let dy = 0; dy < scale; dy++) {
         for (let dx = 0; dx < scale; dx++) {
           const px = Math.round(ox + x * scale + dx);
@@ -107,7 +113,7 @@ describe("findStrip / readCells", () => {
     // Read at the exact geometry findStrip would return (origin + cell / 2), so the assertion is about
     // sampling alone: findStrip is free to pick another marker row whose sample points miss the
     // corrupted pixels, which would hide the difference between the two branches.
-    expect([...readCells(img, { x: scale / 2, y: scale / 2, cell: scale })]).toEqual([...cells]);
+    expect([...readCells(img, { x: scale / 2, y: scale / 2, cell: scale, threshold: 128 })]).toEqual([...cells]);
   });
 
   test("survives sensor noise that genuinely approaches the light/dark thresholds", () => {
@@ -148,6 +154,49 @@ describe("findStrip / readCells", () => {
     const geom = findStrip(img);
     expect(geom).not.toBeNull();
     expect([...readCells(img, geom!)]).toEqual([...cells]);
+  });
+
+  // The addon paints two greys by default, not black and white (lever 2 of the "make it discreet"
+  // change): nothing in the scanner may assume a fixed luminance any more.
+  test("reads a dim strip (two greys, not black and white)", () => {
+    for (const [ox, oy] of [[0, 0], [7, 5]] as const) {
+      const img = paint(cells, 3, ox, oy, 300, 150, 0, DIM);
+      const geom = findStrip(img);
+      expect(geom, `offset ${ox},${oy}`).not.toBeNull();
+      // The threshold must come from the strip, not from a constant: 128 would read every cell dark.
+      expect(geom!.threshold).toBeGreaterThan(DIM.dark);
+      expect(geom!.threshold).toBeLessThan(DIM.light);
+      expect([...readCells(img, geom!)], `offset ${ox},${oy}`).toEqual([...cells]);
+    }
+  });
+
+  // The real case the local envelope exists for: the strip is drawn OVER the game, so the pixels
+  // around it can be far brighter than its own light level. A single midpoint for the whole row (or a
+  // window wide enough to reach the background) would read every cell of the strip as dark.
+  test("reads a dim strip over a background brighter than its light level", () => {
+    for (const ox of [0, 10, 37]) {
+      const img = paint(cells, 3, ox, 6, 300, 150, 0, DIM, 210);
+      const geom = findStrip(img);
+      expect(geom, `offset ${ox}`).not.toBeNull();
+      expect([...readCells(img, geom!)], `offset ${ox}`).toEqual([...cells]);
+    }
+  });
+
+  // Below MIN_AMPLITUDE the scanner must decline rather than return cells it cannot trust: the capture
+  // hook then reports "no strip" (and the CRC window, "increase your UI scale"), which is a state the
+  // member can act on — /bmpl contrast full.
+  test("refuses a strip whose two levels are closer than MIN_AMPLITUDE", () => {
+    const faint = { light: 120, dark: 120 - (MIN_AMPLITUDE - 10) };
+    const img = paint(cells, 3, 4, 4, 300, 150, 0, faint);
+    expect(findStrip(img)).toBeNull();
+  });
+
+  test("returns null on a smooth gradient, which has contrast but no alternation", () => {
+    const w = 400;
+    const h = 200;
+    const data = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) data[y * w + x] = Math.round((x / w) * 255);
+    expect(findStrip({ width: w, height: h, data })).toBeNull();
   });
 
   test("returns null on a frame with no strip (a screenshot of the game)", () => {

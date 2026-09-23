@@ -1,6 +1,6 @@
 -- addon/bmpl/strip.lua
 --
--- Owns the 24x10 grid of black/white textures the browser scanner reads. One frame at the
+-- Owns the 24x10 grid of two-tone textures the browser scanner reads. One frame at the
 -- FULLSCREEN_DIALOG strata, anchored TOPLEFT of UIParent; the frame is counter-scaled by
 -- `1 / UIParent:GetEffectiveScale()` so a texture sized to STRIP.cell logical units always renders as
 -- STRIP.cell *physical* pixels, whatever the player's UI scale or window resolution — see
@@ -19,6 +19,19 @@ ns.Strip = Strip
 local cellPx = 3
 local MIN_CELL, MAX_CELL = 3, 10
 
+-- The two levels the cells are painted with. "dim" is the default: pure black and white is what makes
+-- a small patch impossible to ignore, and the scanner does not need it — web/src/lib/live/scan.ts
+-- derives its reading threshold from the strip's own marker, so any pair of levels works as long as
+-- they stay MIN_AMPLITUDE (45 luma) apart after the capture has compressed them. 0.10 / 0.45 is ~26
+-- and ~115 luma, an 89-luma gap: half the screen's contrast range spare, and a patch that reads as a
+-- slightly textured grey square. /bmpl contrast full restores black and white if a capture ever fails
+-- to resolve the dim one.
+local PALETTE = {
+  dim = { dark = 0.10, light = 0.45 },
+  full = { dark = 0, light = 1 },
+}
+local contrast = "dim"
+
 local frame = CreateFrame("Frame", "BmplStripFrame", UIParent)
 frame:SetFrameStrata("FULLSCREEN_DIALOG")
 frame:SetToplevel(true)
@@ -34,7 +47,7 @@ for y = 0, STRIP.rows - 1 do
     local tex = frame:CreateTexture(nil, "OVERLAY")
     tex:SetSize(cellPx, cellPx)
     tex:SetPoint("TOPLEFT", frame, "TOPLEFT", x * cellPx, -(y * cellPx))
-    tex:SetColorTexture(0, 0, 0, 1)
+    tex:SetColorTexture(PALETTE[contrast].dark, PALETTE[contrast].dark, PALETTE[contrast].dark, 1)
     textures[Encode.cellIndex(x, y)] = tex
   end
 end
@@ -72,6 +85,19 @@ function Strip.Cell()
   return cellPx
 end
 
+-- Switch palette. Returns the name actually applied, or nil when `name` is not a palette. The strip
+-- is not repainted here: the next tick that repaints picks the new levels up, and /bmpl contrast
+-- forces that tick by invalidating the roster text.
+function Strip.SetContrast(name)
+  if not name or not PALETTE[name] then return nil end
+  contrast = name
+  return contrast
+end
+
+function Strip.Contrast()
+  return contrast
+end
+
 function Strip.Show()
   frame:Show()
 end
@@ -84,15 +110,13 @@ function Strip.IsShown()
   return frame:IsShown() and true or false
 end
 
--- `cells`: the flat 24x10 table Encode.encodeCells() returns (1 = white, 0/nil = black).
+-- `cells`: the flat 24x10 table Encode.encodeCells() returns (1 = light, 0/nil = dark).
 function Strip.Paint(cells)
+  local p = PALETTE[contrast]
   for i = 1, STRIP.cols * STRIP.rows do
     local tex = textures[i]
-    if cells[i] == 1 then
-      tex:SetColorTexture(1, 1, 1, 1)
-    else
-      tex:SetColorTexture(0, 0, 0, 1)
-    end
+    local v = cells[i] == 1 and p.light or p.dark
+    tex:SetColorTexture(v, v, v, 1)
   end
 end
 

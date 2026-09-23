@@ -113,7 +113,7 @@ export const en = {
       fullscreen: "Switch WoW to windowed fullscreen",
       fullscreenSub: "Exclusive fullscreen cannot be captured. The Group Finder is open but bmpl sees no strip.",
       scale: "Increase your UI scale or the window size",
-      scaleSub: "The strip is readable but too small: more than half the frames fail their checksum. In game, /bmpl cell 4 draws it bigger.",
+      scaleSub: "The strip is readable but too small: more than half the frames fail their checksum. In game, /bmpl cell 4 draws it bigger and /bmpl contrast full makes it starker.",
       unsupported: "This browser cannot share a single window — try Chrome, Edge or Firefox on desktop.",
     },
     panel: {

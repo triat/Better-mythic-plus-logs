@@ -67,15 +67,31 @@ the way. `/bmpl show` forces it on for troubleshooting (until `/reload` or `/bmp
 `UIParent:GetEffectiveScale()`) — **3 px per cell by default, 72 × 30 px** in the very top-left
 corner, above everything (`FULLSCREEN_DIALOG` strata). The cell size is the addon's choice alone
 (`/bmpl cell 3`–`10` for the session): the decoder derives it from the marker's run lengths, so
-nothing in the browser changes when it moves. Cells are **black or white only**, 1 bit each:
+nothing in the browser changes when it moves. Cells carry 1 bit each, as **two greys**, never colour:
 luminance survives the browser's video pipeline (4:2:0 chroma subsampling) where colours would not.
-Row 0 and column 0 are the marker: alternating white/black starting white, cell (0,0) white. The
+The two levels are the addon's choice — `dim`, the default, paints 0.10 and 0.45 of white (≈ 26 and
+≈ 115 luma) so the strip reads as a faint grey patch; `/bmpl contrast full` restores black and white.
+The decoder never assumes a level: it finds the marker on *local* contrast and then reads the cells
+against the midpoint measured on that strip's own marker. The one requirement is that the two levels
+stay **45 luma apart** (`MIN_AMPLITUDE`) once captured; below that the scanner declines the strip
+rather than returning cells it cannot trust.
+Row 0 and column 0 are the marker: alternating light/dark starting light, cell (0,0) light. The
 remaining 23 × 9 = 207 cells carry 25 bytes per frame, MSB first, row-major. At 3 px a cell is
 sampled at its centre pixel alone — the 3 × 3 average only applies from 5 px up, where it helps.
 
-**Rate.** The addon redraws at **20 Hz** and the browser samples the video at the same rate. One
-frame carries 18 payload bytes, so a 20-applicant roster (~600 B, 34 chunks) completes in about
-1.7 s; a 5-applicant roster in under half a second.
+**Rate.** The browser samples the video at **20 Hz**, and the addon cycles its chunks at the same
+rate — but only while there is something new to say. One frame carries 18 payload bytes, so a
+20-applicant roster (~600 B, 34 chunks) completes in about 1.7 s; a 5-applicant roster in under half
+a second.
+
+**Cadence (`addon/bmpl/cadence.lua`).** A roster change starts **3 complete passes** over its chunks,
+after which the addon **stops repainting altogether** and the strip stands still. This is what makes
+it tolerable to look at: a motionless patch is far easier to ignore than a flickering one, and the
+browser loses nothing — `RosterAssembler.push` re-stamps a roster's freshness on any frame of a
+`rosterSeq` it has already assembled, so the single frame left on screen keeps the panel alive
+indefinitely. One catch-up pass every **5 s** (`HEARTBEAT_S`) covers the browser that connects while
+the strip is still, which is therefore the worst-case delay before the panel fills. In a stable queue
+the strip moves for well under 5 % of the time.
 
 **Logical.** A 72 × 30 px strip cannot afford a 12-byte header, so the frame header is **7 bytes**:
 `magic|version` (1 B — high nibble `0xB`, low nibble the format version, currently `2`) ·

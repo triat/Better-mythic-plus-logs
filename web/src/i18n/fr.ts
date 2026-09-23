@@ -107,7 +107,7 @@ export const fr: Mirror<typeof en> = {
       fullscreen: "Passe WoW en fenêtré plein écran",
       fullscreenSub: "Le plein écran exclusif ne peut pas être capturé. Le Group Finder est ouvert mais bmpl ne voit aucune bande.",
       scale: "Augmente ton échelle d'UI ou la taille de la fenêtre",
-      scaleSub: "La bande est lisible mais trop petite : plus de la moitié des trames ratent leur checksum. Dans le jeu, /bmpl cell 4 l'agrandit.",
+      scaleSub: "La bande est lisible mais trop petite : plus de la moitié des trames ratent leur checksum. Dans le jeu, /bmpl cell 4 l'agrandit et /bmpl contrast full la rend plus franche.",
       unsupported: "Ce navigateur ne sait pas partager une seule fenêtre — essaie Chrome, Edge ou Firefox sur desktop.",
     },
     panel: {

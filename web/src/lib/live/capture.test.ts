@@ -189,14 +189,18 @@ describe("createCapture: publish only on a real transition", () => {
 // ever read as the "fullscreen" error after MARKER_TIMEOUT_MS) — derived from the single `accept`-gated
 // `findStrip` call, with no second, unguarded scan.
 
-/** Paints the cell matrix into a grey image at `scale` px/cell, mirroring scan.test.ts's own fixture. */
+/**
+ * Paints the cell matrix at `scale` px/cell in the addon's DEFAULT palette — the two greys
+ * addon/bmpl/strip.lua draws (0.10 / 0.45 of white), not black and white, so these end-to-end capture
+ * tests run against what a member's screen actually carries.
+ */
 function paint(cells: Uint8Array, scale: number): Gray {
   const w = 600;
   const h = 300;
   const data = new Uint8Array(w * h).fill(28);
   for (let y = 0; y < STRIP.rows; y++) {
     for (let x = 0; x < STRIP.cols; x++) {
-      const v = cells[y * STRIP.cols + x] ? 255 : 0;
+      const v = cells[y * STRIP.cols + x] ? 115 : 26;
       for (let dy = 0; dy < scale; dy++) for (let dx = 0; dx < scale; dx++) data[(y * scale + dy) * w + (x * scale + dx)] = v;
     }
   }

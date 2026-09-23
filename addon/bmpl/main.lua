@@ -5,14 +5,15 @@
 -- nothing — see addon/README.md.
 
 local ADDON_NAME, ns = ...
-local Encode, Strip, Roster = ns.Encode, ns.Strip, ns.Roster
+local Encode, Strip, Roster, Cadence = ns.Encode, ns.Strip, ns.Roster, ns.Cadence
 
 local UPDATE_INTERVAL = 0.05 -- 20 Hz
 
 -- true once /bmpl show is used, until /bmpl hide releases it back to the automatic rule below.
 local forcedOn = false
 
-local roster = { text = "", seq = 0, frames = {}, cursor = 0 }
+local roster = { text = "", seq = 0, frames = {} }
+local cadence = Cadence.new()
 
 -- Visible only while the Group Finder is in play: its window is open, or the player has an active
 -- Group Finder posting (so it keeps drawing while they alt-tab to the browser to review applicants
@@ -28,45 +29,48 @@ local function shouldShow()
   return false
 end
 
+-- Returns true on the tick where the roster text actually changed — Cadence.step's `changed`.
 local function rebuildRoster()
   local text = Roster.BuildText()
-  if text == roster.text then return end
+  if text == roster.text then return false end
   roster.text = text
   roster.seq = (roster.seq + 1) % 256
   local ok, frames = pcall(Encode.chunkRoster, text, roster.seq)
   roster.frames = ok and frames or {}
-  roster.cursor = 0
+  return true
 end
 
--- One 20 Hz tick: rebuild the roster text (a no-op when nothing changed) and paint the next frame —
--- cycling through every chunk of a multi-frame roster so the browser's scanner (also 20 Hz) can
--- assemble the whole thing over a few ticks; a single-frame roster (the common case) just redraws
--- itself every tick.
-local function tick()
+-- One 20 Hz tick: rebuild the roster text (a no-op when nothing changed), then ask Cadence whether to
+-- repaint at all. It cycles the chunks for a few passes after a change and then leaves the strip
+-- motionless, which is the whole point: a still patch is far easier to ignore than a flickering one,
+-- and the browser keeps the roster alive off the frame that is already on screen.
+local function tick(dt)
   if shouldShow() then
-    rebuildRoster()
+    local changed = rebuildRoster()
     Strip.Show()
-    local frames = roster.frames
-    if #frames > 0 then
-      roster.cursor = (roster.cursor % #frames) + 1
-      Strip.Paint(Encode.encodeCells(frames[roster.cursor]))
-    end
+    local index = Cadence.step(cadence, dt, #roster.frames, changed)
+    if index then Strip.Paint(Encode.encodeCells(roster.frames[index])) end
   else
     Strip.Hide()
-    roster.text, roster.frames, roster.cursor = "", {}, 0
+    roster.text, roster.frames = "", {}
+    cadence = Cadence.new()
   end
 end
 
 local driver = CreateFrame("Frame")
 local sinceLast = 0
+local sinceTick = 0
 driver:SetScript("OnUpdate", function(_, delta)
   sinceLast = sinceLast + delta
+  sinceTick = sinceTick + delta
   if sinceLast < UPDATE_INTERVAL then return end
   -- Subtract rather than zero: zeroing quantises the redraw to the game's frame period, which at 60 fps
   -- and a 0.05 s interval costs a third of the rate (~15 Hz instead of 20).
   sinceLast = sinceLast - UPDATE_INTERVAL
   if sinceLast > UPDATE_INTERVAL then sinceLast = 0 end -- after a long hitch, do not try to catch up.
-  tick()
+  local dt = sinceTick -- real elapsed time, so the cadence's heartbeat stays honest across hitches.
+  sinceTick = 0
+  tick(dt)
 end)
 
 -- Only display events are registered, and they all mean the same thing: re-derive the cell's physical
@@ -314,7 +318,17 @@ SlashCmdList.BMPL = function(msg)
     else
       print(string.format("bmpl: /bmpl cell <3-10> — currently %d px", Strip.Cell()))
     end
+  elseif msg:match("^contrast%s") or msg == "contrast" then
+    local applied = Strip.SetContrast(msg:match("^contrast%s+(%a+)$"))
+    if applied then
+      -- Force the next tick to re-chunk and repaint, so the new levels appear at once instead of
+      -- waiting for the roster to change or for the cadence's heartbeat.
+      roster.text = ""
+      print(string.format("bmpl: contrast %s — /reload restores the default (dim)", applied))
+    else
+      print(string.format("bmpl: /bmpl contrast dim|full — currently %s", Strip.Contrast()))
+    end
   else
-    print("bmpl: /bmpl show | hide | selftest | dump | cell <3-10>")
+    print("bmpl: /bmpl show | hide | selftest | dump | cell <3-10> | contrast dim|full")
   end
 end

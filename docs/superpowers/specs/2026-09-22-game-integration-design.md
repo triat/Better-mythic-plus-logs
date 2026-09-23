@@ -63,34 +63,39 @@ Frozen and tested on both sides; a version byte allows a later change.
 can exist. It hides on every other screen, including during a run, so the checkerboard is never in
 the way. `/bmpl show` forces it on for troubleshooting (until `/reload` or `/bmpl hide`).
 
-**Physical.** A grid of **40 columns × 16 rows** of square *physical* pixels (the addon divides by
-`UIParent:GetEffectiveScale()`) — **4 px per cell by default, 160 × 64 px** in the very top-left
-corner, above everything. The cell size is the addon's choice alone (`/bmpl cell 3`–`10` for the
-session): the decoder derives it from the marker's run lengths, so nothing in the browser changes
-when it moves. Below 3 px the video pipeline stops resolving the cells reliably.
-(`FULLSCREEN_DIALOG` strata). Cells are **black or white only**, 1 bit each: luminance survives the
-browser's video pipeline (4:2:0 chroma subsampling) where colours would not. Row 0 and column 0 are
-the marker: alternating white/black starting white, cell (0,0) always white. The decoder finds the
-origin and the true cell size from the marker's run lengths, so resolution, window size and browser
-scaling do not matter. The remaining 39 × 15 = 585 cells carry 73 bytes per frame, MSB first,
-row-major.
+**Physical.** A grid of **24 columns × 10 rows** of square *physical* pixels (the addon divides by
+`UIParent:GetEffectiveScale()`) — **3 px per cell by default, 72 × 30 px** in the very top-left
+corner, above everything (`FULLSCREEN_DIALOG` strata). The cell size is the addon's choice alone
+(`/bmpl cell 3`–`10` for the session): the decoder derives it from the marker's run lengths, so
+nothing in the browser changes when it moves. Cells are **black or white only**, 1 bit each:
+luminance survives the browser's video pipeline (4:2:0 chroma subsampling) where colours would not.
+Row 0 and column 0 are the marker: alternating white/black starting white, cell (0,0) white. The
+remaining 23 × 9 = 207 cells carry 25 bytes per frame, MSB first, row-major. At 3 px a cell is
+sampled at its centre pixel alone — the 3 × 3 average only applies from 5 px up, where it helps.
 
-**Rate.** The addon redraws at **10 Hz** and the browser samples the video at the same rate. One
-frame is 73 bytes, so a 20-applicant roster (~900 B, 15 chunks) completes in about 1.5 s; a
-5-applicant roster in under half a second.
+**Rate.** The addon redraws at **20 Hz** and the browser samples the video at the same rate. One
+frame carries 18 payload bytes, so a 20-applicant roster (~600 B, 34 chunks) completes in about
+1.7 s; a 5-applicant roster in under half a second.
 
-**Logical.** Each frame carries: `magic "bmpl"` (4 B) · `version` (1 B) · `rosterSeq` (2 B) ·
-`chunkIndex`/`chunkCount` (1 B each) · `length` (1 B) · `crc16` (2 B) = 12 bytes of header, then up
-to 61 bytes of payload. The roster is compact UTF-8 text, one line per player:
+**Logical.** A 72 × 30 px strip cannot afford a 12-byte header, so the frame header is **7 bytes**:
+`magic|version` (1 B — high nibble `0xB`, low nibble the format version, currently `2`) ·
+`rosterSeq` (1 B, wraps at 256) · `chunkIndex` (1 B) · `chunkCount` (1 B) · `length` (1 B) ·
+`crc16` (2 B, little-endian, CRC-16/CCITT-FALSE over the 5 header bytes before it followed by the
+payload). Payload ≤ **18 bytes**; a frame is exactly `7 + payload length` bytes, never padded. The
+roster is compact UTF-8 text, one line per player:
 
 ```
-a|Biwaadrood-Nerzhul|Druid|Restoration|H|3412
-p|Tom-Hyjal|Warrior|Fury|D|2890
+a|Biwaadrood-Nerzhul|3|H|3412
+p|Tom-Hyjal|11|D|2890
 ```
 
 (`a` = applicant, `p` = party member, `s` = the player themself — `s` behaves as a party member
-everywhere and is the only row the panel labels "you"; role is `T` / `H` / `D`; the score is the declared Raider.IO
-score, `0` when unknown; applicants are listed in arrival order, oldest first.) The text is split
+everywhere and is the only row the panel labels "you"; the third field is the **class index** into
+the shared list in `src/wow/classes.ts` — the one module `web/` may import at runtime — not a class
+name; role is `T` / `H` / `D`; the score is the declared Raider.IO score, `0` when unknown;
+applicants are listed in arrival order, oldest first.) **The spec is not carried**: the panel never
+showed it, and for a DPS applicant the Group Finder does not expose it before an invite, so it was
+a guess costing a fifth of the payload. The text is split
 across as many chunks as needed. An unchanged roster keeps its `rosterSeq` and the decoder does no
 work. A frame whose CRC fails is dropped whole — partial data never reaches the UI.
 

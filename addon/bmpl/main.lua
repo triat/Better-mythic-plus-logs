@@ -12,7 +12,14 @@ local UPDATE_INTERVAL = 0.05 -- 20 Hz
 -- true once /bmpl show is used, until /bmpl hide releases it back to the automatic rule below.
 local forcedOn = false
 
-local roster = { text = "", seq = 0, frames = {} }
+-- `text = nil` is the "nothing has been chunked yet" state, and it matters: Roster.BuildText() can
+-- legitimately return "" (a solo player with no role assigned and no applicants), and with "" as the
+-- initial value that empty roster would compare equal, leave `frames` empty, and leave whatever was
+-- last painted on screen. The browser re-stamps a roster's freshness on any frame of a seq it already
+-- holds, so a stale frame left up is a stale roster shown forever. nil can never compare equal, so the
+-- first tick after every show always chunks and repaints — including the empty roster, which is a
+-- legal one-frame payload the browser decodes as "nobody".
+local roster = { text = nil, seq = 0, frames = {} }
 local cadence = Cadence.new()
 
 -- Visible only while the Group Finder is in play: its window is open, or the player has an active
@@ -52,7 +59,7 @@ local function tick(dt)
     if index then Strip.Paint(Encode.encodeCells(roster.frames[index])) end
   else
     Strip.Hide()
-    roster.text, roster.frames = "", {}
+    roster.text, roster.frames = nil, {}
     cadence = Cadence.new()
   end
 end
@@ -322,8 +329,9 @@ SlashCmdList.BMPL = function(msg)
     local applied = Strip.SetContrast(msg:match("^contrast%s+(%a+)$"))
     if applied then
       -- Force the next tick to re-chunk and repaint, so the new levels appear at once instead of
-      -- waiting for the roster to change or for the cadence's heartbeat.
-      roster.text = ""
+      -- waiting for the roster to change or for the cadence's heartbeat. nil, not "": an empty roster
+      -- text is a real value that would compare equal and repaint nothing.
+      roster.text = nil
       print(string.format("bmpl: contrast %s — /reload restores the default (dim)", applied))
     else
       print(string.format("bmpl: /bmpl contrast dim|full — currently %s", Strip.Contrast()))

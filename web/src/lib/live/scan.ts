@@ -47,7 +47,8 @@ const BLOCK = 24;
 /**
  * Fills `lo`/`hi` with the darkest and lightest luma of each pixel's block on row `y`. Block-wise
  * rather than a true sliding window: same O(n) and a fraction of the code. A block that straddles the
- * strip's edge is polluted by the background — that is what `extendLeft` below exists for.
+ * strip's edge IS polluted by the background, which is why neither the origin nor the cell size read
+ * off the first candidate run can be trusted — see `MAX_ORIGIN_SHIFT` and `findStrip`'s retry loop.
  */
 function rowLevels(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8Array): void {
   const row = y * img.width;
@@ -64,8 +65,14 @@ function rowLevels(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8
   }
 }
 
-/** Run lengths of the alternating light/dark marker on one row, starting at the first light pixel. */
-function markerRun(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8Array): { x: number; cell: number } | null {
+/**
+ * The first candidate marker at or after `from` on row `y`: a light-first run of 8 alternating runs of
+ * equal length. Null when the row has none. `from` makes the row resumable, which `findStrip` needs —
+ * a background pixel fused onto the strip's first cell inflates the measured cell size (3.125 rather
+ * than 3), and no origin shift repairs a wrong cell size; the fix is to look further right on the same
+ * row, where the runs are whole.
+ */
+function markerRun(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8Array, from: number): { x: number; cell: number } | null {
   const row = y * img.width;
   // A pixel is light (1), dark (-1) or neither (0: too close to the local midpoint, or in a region
   // with no contrast at all). 0 always ends the run in progress.
@@ -80,27 +87,38 @@ function markerRun(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8
     return 0;
   };
 
-  let x = 0;
+  let x = from;
   while (x < maxX) {
     while (x < maxX && level(x) !== 1) x++;
     const start = x;
+    if (start >= maxX) break;
+    // A run shorter than 2 px cannot be the first cell of a strip (`cell >= 3` and every run within
+    // 34 % of it), so measure it and move on without walking 9 runs — this is what keeps a row of
+    // single-pixel alternation (game textures, dithering, text) linear instead of quadratic.
+    let head = 0;
+    while (start + head < maxX && level(start + head) === 1) head++;
+    if (head < 2) { x = start + head; continue; }
+
+    x = start;
     const runs: number[] = [];
     let want = 1;
     while (x < maxX && runs.length < 9) {
-      const from = x;
+      const runFrom = x;
       while (x < maxX && level(x) === want) x++;
-      if (x === from) break;
-      runs.push(x - from);
+      if (x === runFrom) break;
+      runs.push(x - runFrom);
       want = -want;
     }
     if (runs.length >= 8) {
       const cell = runs.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
       if (cell >= 3 && runs.slice(0, 8).every((r) => Math.abs(r - cell) <= Math.max(1, cell * 0.34))) return { x: start, cell };
     }
-    // Resume just after the rejected start, NOT after the runs it consumed: the run that fails is
-    // usually a partial cell where the local envelope changes (the strip's own first cells, clipped by
-    // a block that also saw the background), and skipping past it would skip the real marker with it.
-    x = start + 1;
+    // Resume after this candidate's FIRST run, not after every run it consumed: the run that fails is
+    // often a partial cell where the local envelope changes (the strip's own first cells, clipped by a
+    // block that also saw the background), and skipping the whole window would skip the real marker
+    // with it. Advancing by one pixel instead would re-walk 9 runs per pixel — 20 to 100x the cost of
+    // a frame on ordinary bright content, well past the 50 ms tick period.
+    x = start + runs[0]!;
   }
   return null;
 }
@@ -147,6 +165,14 @@ function markerThreshold(img: Gray, x0: number, y0: number, cell: number): numbe
 const MAX_ORIGIN_SHIFT = 8;
 
 /**
+ * How many candidate markers are tried per row before moving on. The first one is not always the
+ * strip: where the background fuses onto the strip's leading cells the first candidate carries a
+ * corrupted cell size, and only a later, whole-celled one reads correctly. Bounded because each retry
+ * re-scans the rest of the row, and a row of the capture is walked 20 times a second.
+ */
+const MAX_CANDIDATES_PER_ROW = 6;
+
+/**
  * The marker row and column give the origin, the cell size and the reading threshold; null when no
  * strip is on screen. Keeps scanning candidate rows until `accept` (default: anything) is satisfied by
  * the cells read at that geometry — a lone row that merely looks like a marker (e.g. a decoy
@@ -161,19 +187,23 @@ export function findStrip(img: Gray, accept: (cells: Uint8Array) => boolean = ()
   const hi = new Uint8Array(maxX);
   for (let y = 0; y < maxY; y++) {
     rowLevels(img, y, maxX, lo, hi);
-    const row = markerRun(img, y, maxX, lo, hi);
-    if (!row) continue;
-    const cell = row.cell;
-    const y0 = y + cell / 2;
-    if (y0 + (STRIP.rows - 1) * cell >= img.height) continue;
-    for (let shift = 0; shift <= MAX_ORIGIN_SHIFT; shift++) {
-      const x0 = row.x + cell / 2 - shift * cell;
-      // The whole strip, sampled at cell centres, must lie inside the image.
-      if (x0 < 0 || x0 + (STRIP.cols - 1) * cell >= img.width) continue;
-      const threshold = markerThreshold(img, x0, y0, cell);
-      if (threshold === null) continue;
-      const geom = { x: x0, y: y0, cell, threshold };
-      if (accept(readCells(img, geom))) return geom;
+    let from = 0;
+    for (let candidate = 0; candidate < MAX_CANDIDATES_PER_ROW; candidate++) {
+      const row = markerRun(img, y, maxX, lo, hi, from);
+      if (!row) break;
+      from = row.x + 1;
+      const cell = row.cell;
+      const y0 = y + cell / 2;
+      if (y0 + (STRIP.rows - 1) * cell >= img.height) continue;
+      for (let shift = 0; shift <= MAX_ORIGIN_SHIFT; shift++) {
+        const x0 = row.x + cell / 2 - shift * cell;
+        // The whole strip, sampled at cell centres, must lie inside the image.
+        if (x0 < 0 || x0 + (STRIP.cols - 1) * cell >= img.width) continue;
+        const threshold = markerThreshold(img, x0, y0, cell);
+        if (threshold === null) continue;
+        const geom = { x: x0, y: y0, cell, threshold };
+        if (accept(readCells(img, geom))) return geom;
+      }
     }
   }
   return null;

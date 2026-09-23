@@ -35,8 +35,10 @@ screen.
   immediately — only live applications are drawn.
 - **It only moves when your roster changes.** A change is transmitted over 3 quick passes (20 frames a
   second, so a fraction of a second), then the strip goes completely still until the next change; it
-  wakes for one pass every 5 seconds so a browser that connects mid-queue still fills up. In a stable
-  queue the strip is motionless well over 95 % of the time.
+  wakes for one pass every 5 seconds so a browser that connects mid-queue still fills up. That wake-up
+  costs one frame per chunk out of every 100, so the strip is still ~96 % of the time with a party of
+  two, ~91 % with five applicants, and ~66 % with a full 20-applicant queue — the bigger the roster,
+  the more there is to send.
 - **It is drawn in two greys, not black and white** (`/bmpl contrast full` switches back). The browser
   measures the strip's own levels instead of assuming any, so a faint patch reads exactly as well as a
   stark one — as long as the two greys survive the capture 45 luma apart.

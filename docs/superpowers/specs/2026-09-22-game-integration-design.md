@@ -74,7 +74,10 @@ The two levels are the addon's choice — `dim`, the default, paints 0.10 and 0.
 The decoder never assumes a level: it finds the marker on *local* contrast and then reads the cells
 against the midpoint measured on that strip's own marker. The one requirement is that the two levels
 stay **45 luma apart** (`MIN_AMPLITUDE`) once captured; below that the scanner declines the strip
-rather than returning cells it cannot trust.
+rather than returning cells it cannot trust. The other standing requirement is that the capture be
+**pixel-exact**: a half-pixel offset or a fractional rescale (×0.9, ×1.25) smears every cell boundary
+into the dead zone around the local midpoint and no marker is found at all — which is what the
+"windowed fullscreen, no browser zoom" instruction in the connect dialog is really protecting.
 Row 0 and column 0 are the marker: alternating light/dark starting light, cell (0,0) light. The
 remaining 23 × 9 = 207 cells carry 25 bytes per frame, MSB first, row-major. At 3 px a cell is
 sampled at its centre pixel alone — the 3 × 3 average only applies from 5 px up, where it helps.
@@ -90,8 +93,18 @@ it tolerable to look at: a motionless patch is far easier to ignore than a flick
 browser loses nothing — `RosterAssembler.push` re-stamps a roster's freshness on any frame of a
 `rosterSeq` it has already assembled, so the single frame left on screen keeps the panel alive
 indefinitely. One catch-up pass every **5 s** (`HEARTBEAT_S`) covers the browser that connects while
-the strip is still, which is therefore the worst-case delay before the panel fills. In a stable queue
-the strip moves for well under 5 % of the time.
+the strip is still.
+
+The duty cycle is therefore one pass per 100 ticks, i.e. **as many percent as the roster has chunks**:
+4 % for a party of two (58 B, 4 chunks), ~9 % for five applicants (~150 B, 9 chunks), 34 % for the
+20-applicant queue above. Small rosters — the common case — are almost always still; a full queue is
+not, and that is the price of getting 600 B across at 18 B a frame.
+
+The 5 s is the worst-case delay before a late-connecting browser fills **only if no capture frame is
+lost**. A chunk missed during a catch-up pass waits for the next one, so a 15 fps video track against
+the 20 Hz painter roughly doubles it. While that is pending, a roster that changed shows nothing: the
+previous roster stops being re-stamped as soon as the sequence number moves, and `ROSTER_STALE_MS`
+(10 s) then empties the panel.
 
 **Logical.** A 72 × 30 px strip cannot afford a 12-byte header, so the frame header is **7 bytes**:
 `magic|version` (1 B — high nibble `0xB`, low nibble the format version, currently `2`) ·

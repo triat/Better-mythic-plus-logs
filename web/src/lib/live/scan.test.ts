@@ -182,6 +182,28 @@ describe("findStrip / readCells", () => {
     }
   });
 
+  // A background whose luma sits between the strip's two levels fuses onto the strip's leading cells
+  // through the edge block's envelope, which inflates the MEASURED CELL SIZE (3.125 instead of 3) — and
+  // no origin shift repairs a wrong cell size. The row has to stay resumable: the next candidate
+  // further right has whole cells. Without that, every mid-grey background between 85 and 160 broke
+  // detection outright with the dim palette (442 of these 336 cases failed before the retry loop).
+  test("decodes over any flat background, at any offset and cell size", () => {
+    const failures: string[] = [];
+    for (const levels of [DIM, { light: 255, dark: 0 }]) {
+      for (const scale of [3, 5, 10]) {
+        for (const ox of [0, 1, 7, 37]) {
+          for (const bg of [0, 40, 100, 140, 200, 245, 255]) {
+            const img = paint(cells, scale, ox, 6, 600, 300, 0, levels, bg);
+            const geom = findStrip(img, (c) => decodeCells(c) !== null);
+            const ok = geom !== null && [...readCells(img, geom)].join() === [...cells].join();
+            if (!ok) failures.push(`light=${levels.light} cell=${scale} ox=${ox} bg=${bg}`);
+          }
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
   // Below MIN_AMPLITUDE the scanner must decline rather than return cells it cannot trust: the capture
   // hook then reports "no strip" (and the CRC window, "increase your UI scale"), which is a state the
   // member can act on — /bmpl contrast full.

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { CAPTURE_HZ, CRC_FAIL_WINDOW, MARKER_TIMEOUT_MS, createCapture, liveState } from "./useWowCapture.ts";
 import type { CaptureCanvas, CaptureDeps, CaptureStream, CaptureTrack, CaptureVideo } from "./useWowCapture.ts";
-import { STRIP, decodeCells, encodeCells } from "./codec.ts";
+import { STRIP, chunkRoster, decodeCells, encodeCells } from "./codec.ts";
 import type { Gray } from "./scan.ts";
 
 const base = { connected: true, lastFrameAt: 1_000, lastMarkerAt: 1_000, rosterAt: 1_000, crcFails: 0, crcTotal: 20, now: 1_000 };
@@ -161,22 +161,28 @@ describe("createCapture: publish only on a real transition", () => {
   });
 
   test("re-decoding the same completed roster every tick keeps the roster reference stable and notifies once", async () => {
-    const frame = { version: 2, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|2|H|100") };
-    const cells = encodeCells(frame); // not flipped: decodes cleanly on every tick.
-    const img = paint(cells, STRIP.cell);
-    const rgba = grayToRgba(img);
-    const { deps, ticks } = fakeDepsShowing(rgba, img.width, img.height);
+    // A roster line is 2 chunks at v3's 9 payload bytes, so the strip has to show them in turn before
+    // the roster completes — exactly what the addon's cadence does after a change, before it parks on
+    // the last chunk. `show` repaints the shared pixel buffer the fake canvas hands back.
+    const chunks = chunkRoster("a|Foo-Bar|2|H|100\n", 1);
+    expect(chunks.length).toBeGreaterThan(1);
+    const first = paint(encodeCells(chunks[0]!), STRIP.cell);
+    const rgba = grayToRgba(first);
+    const show = (index: number) => rgba.set(grayToRgba(paint(encodeCells(chunks[index]!), STRIP.cell)));
+    const { deps, ticks } = fakeDepsShowing(rgba, first.width, first.height);
     const capture = createCapture(deps);
     let notifications = 0;
     capture.subscribe(() => { notifications++; });
     await capture.connect();
     const doTick = ticks[0]!;
-    doTick(); // the roster completes: waiting -> live, a real transition.
+    for (let i = 0; i < chunks.length; i++) { show(i); doTick(); } // the roster completes on the last chunk.
+    show(chunks.length - 1); // the addon parks on the frame it painted last.
     expect(capture.getState()).toMatchObject({ kind: "live" });
     const afterFirstTick = notifications;
     const rosterRef = capture.getRoster();
-    // 200 ticks = 20 s of wall clock, well past ROSTER_STALE_MS: the exact same frame decodes again and
-    // again and the roster must stay live (C1) on the very same object (publish-on-change).
+    // 200 ticks = 20 s of wall clock, well past ROSTER_STALE_MS: the one parked frame decodes again and
+    // again and the roster must stay live (C1) on the very same object (publish-on-change). This is the
+    // property addon/bmpl/cadence.lua leans on when it stops repainting.
     for (let i = 0; i < 200; i++) doTick();
     expect(capture.getState()).toMatchObject({ kind: "live" });
     expect(notifications).toBe(afterFirstTick); // no extra notifications
@@ -256,7 +262,7 @@ function fakeDepsShowing(rgba: Uint8ClampedArray, w: number, h: number) {
 
 describe("createCapture: CRC bookkeeping from a single scan", () => {
   test("a marker that is on screen but never decodes trips the scale error, not the marker timeout", async () => {
-    const frame = { version: 2, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar|2|H|100") };
+    const frame = { version: STRIP.version, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Foo-Bar") };
     const cells = encodeCells(frame);
     cells[STRIP.cols + 1] = cells[STRIP.cols + 1]! ^ 1; // flip one data bit: marker intact, CRC now fails.
     expect(decodeCells(cells)).toBeNull(); // sanity: this really is undecodable.

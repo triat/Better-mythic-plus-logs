@@ -1,6 +1,6 @@
 # bmpl — the in-game addon
 
-A small World of Warcraft addon that draws a 24×10 grid of grey pixels in the corner of the screen,
+A small World of Warcraft addon that draws a 16×10 grid of grey pixels in the corner of the screen,
 top-left, only while the Group Finder is in play — and leaves it **motionless** as soon as your roster
 stops changing. bmpl's web UI reads that strip through a screen share (`getDisplayMedia`) and turns it
 into a live view of your Group Finder applicants and party — class, role, current score — with no
@@ -36,13 +36,13 @@ screen.
 - **It only moves when your roster changes.** A change is transmitted over 3 quick passes (20 frames a
   second, so a fraction of a second), then the strip goes completely still until the next change; it
   wakes for one pass every 5 seconds so a browser that connects mid-queue still fills up. That wake-up
-  costs one frame per chunk out of every 100, so the strip is still ~96 % of the time with a party of
-  two, ~91 % with five applicants, and ~66 % with a full 20-applicant queue — the bigger the roster,
-  the more there is to send.
+  costs one frame per chunk out of every 100, so the strip is still ~93 % of the time with a party of
+  two, ~83 % with five applicants, and ~33 % with a full 20-applicant queue — the bigger the roster,
+  the more there is to send through a 48 px strip.
 - **It is drawn in two greys, not black and white** (`/bmpl contrast full` switches back). The browser
   measures the strip's own levels instead of assuming any, so a faint patch reads exactly as well as a
   stark one — as long as the two greys survive the capture 45 luma apart.
-- The strip is **72 × 30 pixels** (24 × 10 cells of 3 px). `/bmpl cell <3-10>` resizes it for the
+- The strip is **48 × 30 pixels** (16 × 10 cells of 3 px). `/bmpl cell <3-10>` resizes it for the
   session (it resets on `/reload`) — the browser derives the cell size from the strip itself, so
   nothing needs reconfiguring on that side; below 3 px the capture stops resolving the cells reliably.
   If the web UI says "Increase your UI scale or the window size", `/bmpl cell 4` is the quicker cure:
@@ -55,7 +55,7 @@ screen.
   the exact roster text the strip carries — the first thing to run when someone is missing from the
   panel or will not go away.
 - `/bmpl selftest` re-encodes three known rosters and checks, byte for byte, both the frames and the
-  24x10 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
+  16x10 cell matrix against the same golden vectors the bmpl repo's own test suite checks (`bun test`
   verifies both that the copy built into the addon matches `addon/bmpl/tests/vectors.txt` and, where
   `luajit` is installed, that `encode.lua` itself still encodes them) — prints `OK`, or the first
   mismatch.

@@ -7,7 +7,7 @@ import type { Gray } from "./scan.ts";
 const DARK = 70;
 const LIGHT = 185;
 
-const FRAME = { version: 2, rosterSeq: 42, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("a|Bee-Nz|2|H|3412") };
+const FRAME = { version: STRIP.version, rosterSeq: 42, chunkIndex: 0, chunkCount: 2, payload: new TextEncoder().encode("a|Bee-Nz|") };
 
 /** The two luma levels addon/bmpl/strip.lua's dim palette produces (0.10 / 0.45 of full white). */
 const DIM = { light: 115, dark: 26 };
@@ -232,7 +232,7 @@ describe("findStrip / readCells", () => {
   });
 
   test("rejects a strip that overflows the image instead of misreading its edge cells", () => {
-    // 24x10 cells at 6px is 144x60; this image is 6px too small in both dimensions.
+    // 16x10 cells at 6px is 96x60; this image is 6px too small in both dimensions.
     const img = paint(cells, 6, 0, 0, 138, 54);
     expect(findStrip(img)).toBeNull();
   });

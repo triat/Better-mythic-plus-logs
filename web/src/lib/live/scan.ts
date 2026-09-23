@@ -35,18 +35,28 @@ export const MIN_AMPLITUDE = 45;
  * two cells land here and end a run rather than extending the wrong one. */
 const MARGIN = 0.15;
 /**
- * Width of the blocks the local light/dark envelope is measured over. Every block is read on its own,
- * with no neighbour merging: the envelope has to stay LOCAL, because the strip is drawn over whatever
- * the game renders behind it and a bright neighbour would otherwise drag the midpoint above the dim
- * palette's light level. 24 px always spans a full light+dark pair for any cell size the addon can
- * draw (`/bmpl cell` caps at 10, so a period of at most 20 px) while staying under a third of the
- * strip's width, so the blocks in the middle of the strip are always clean.
+ * Width of the windows the local light/dark envelope is measured over. Every window is read on its
+ * own, with no neighbour merging and no overlap: the envelope has to stay LOCAL, because the strip is
+ * drawn over whatever the game renders behind it and a bright neighbour would otherwise drag the
+ * midpoint above the dim palette's own light level. 24 px always spans a full light+dark pair of the
+ * marker row for any cell size the addon can draw (`/bmpl cell` caps at 10, so a period of at most
+ * 20 px) — and the marker row is the only row this envelope is ever used on, so it always alternates.
  */
 const BLOCK = 24;
 
 /**
- * Fills `lo`/`hi` with the darkest and lightest luma of each pixel's block on row `y`. Block-wise
- * rather than a true sliding window: same O(n) and a fraction of the code. A block that straddles the
+ * The number of equal alternating runs that makes a marker candidate. One clean window is 8 cells at
+ * the default 3 px, and the window straddling the strip's left edge eats into that, so demanding 8
+ * whole runs would need two clean windows — more than the 48 px v3 strip has to spare. 6 is what a
+ * single clean window reliably yields; every candidate is still gated by `markerThreshold` (the whole
+ * marker row AND column) and then by the caller's CRC check, so a looser signature costs candidates,
+ * never correctness.
+ */
+const MARKER_RUNS = 6;
+
+/**
+ * Fills `lo`/`hi` with the darkest and lightest luma of each pixel's window on row `y`. Window-wise
+ * rather than a true sliding window: same O(n) and a fraction of the code. A window that straddles the
  * strip's edge IS polluted by the background, which is why neither the origin nor the cell size read
  * off the first candidate run can be trusted — see `MAX_ORIGIN_SHIFT` and `findStrip`'s retry loop.
  */
@@ -93,7 +103,7 @@ function markerRun(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8
     const start = x;
     if (start >= maxX) break;
     // A run shorter than 2 px cannot be the first cell of a strip (`cell >= 3` and every run within
-    // 34 % of it), so measure it and move on without walking 9 runs — this is what keeps a row of
+    // 34 % of it), so measure it and move on without walking the window — this is what keeps a row of
     // single-pixel alternation (game textures, dithering, text) linear instead of quadratic.
     let head = 0;
     while (start + head < maxX && level(start + head) === 1) head++;
@@ -102,21 +112,22 @@ function markerRun(img: Gray, y: number, maxX: number, lo: Uint8Array, hi: Uint8
     x = start;
     const runs: number[] = [];
     let want = 1;
-    while (x < maxX && runs.length < 9) {
+    while (x < maxX && runs.length < MARKER_RUNS + 1) {
       const runFrom = x;
       while (x < maxX && level(x) === want) x++;
       if (x === runFrom) break;
       runs.push(x - runFrom);
       want = -want;
     }
-    if (runs.length >= 8) {
-      const cell = runs.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
-      if (cell >= 3 && runs.slice(0, 8).every((r) => Math.abs(r - cell) <= Math.max(1, cell * 0.34))) return { x: start, cell };
+    if (runs.length >= MARKER_RUNS) {
+      const head = runs.slice(0, MARKER_RUNS);
+      const cell = head.reduce((a, b) => a + b, 0) / MARKER_RUNS;
+      if (cell >= 3 && head.every((r) => Math.abs(r - cell) <= Math.max(1, cell * 0.34))) return { x: start, cell };
     }
     // Resume after this candidate's FIRST run, not after every run it consumed: the run that fails is
     // often a partial cell where the local envelope changes (the strip's own first cells, clipped by a
     // block that also saw the background), and skipping the whole window would skip the real marker
-    // with it. Advancing by one pixel instead would re-walk 9 runs per pixel — 20 to 100x the cost of
+    // with it. Advancing by one pixel instead would re-walk every run per pixel — 20 to 100x the cost of
     // a frame on ordinary bright content, well past the 50 ms tick period.
     x = start + runs[0]!;
   }

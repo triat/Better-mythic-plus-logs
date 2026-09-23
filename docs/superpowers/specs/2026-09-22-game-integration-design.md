@@ -63,8 +63,8 @@ Frozen and tested on both sides; a version byte allows a later change.
 can exist. It hides on every other screen, including during a run, so the checkerboard is never in
 the way. `/bmpl show` forces it on for troubleshooting (until `/reload` or `/bmpl hide`).
 
-**Physical.** A grid of **24 columns × 10 rows** of square *physical* pixels (the addon divides by
-`UIParent:GetEffectiveScale()`) — **3 px per cell by default, 72 × 30 px** in the very top-left
+**Physical.** A grid of **16 columns × 10 rows** of square *physical* pixels (the addon divides by
+`UIParent:GetEffectiveScale()`) — **3 px per cell by default, 48 × 30 px** in the very top-left
 corner, above everything (`FULLSCREEN_DIALOG` strata). The cell size is the addon's choice alone
 (`/bmpl cell 3`–`10` for the session): the decoder derives it from the marker's run lengths, so
 nothing in the browser changes when it moves. Cells carry 1 bit each, as **two greys**, never colour:
@@ -79,13 +79,15 @@ rather than returning cells it cannot trust. The other standing requirement is t
 into the dead zone around the local midpoint and no marker is found at all — which is what the
 "windowed fullscreen, no browser zoom" instruction in the connect dialog is really protecting.
 Row 0 and column 0 are the marker: alternating light/dark starting light, cell (0,0) light. The
-remaining 23 × 9 = 207 cells carry 25 bytes per frame, MSB first, row-major. At 3 px a cell is
+remaining 15 × 9 = 135 cells carry 16 bytes per frame, MSB first, row-major. At 3 px a cell is
 sampled at its centre pixel alone — the 3 × 3 average only applies from 5 px up, where it helps.
 
 **Rate.** The browser samples the video at **20 Hz**, and the addon cycles its chunks at the same
-rate — but only while there is something new to say. One frame carries 18 payload bytes, so a
-20-applicant roster (~600 B, 34 chunks) completes in about 1.7 s; a 5-applicant roster in under half
-a second.
+rate — but only while there is something new to say. One frame carries 9 payload bytes, so a
+20-applicant roster (~600 B, 67 chunks) takes about 3.4 s per pass; five applicants (~150 B,
+17 chunks) 0.85 s; a party of two (58 B, 7 chunks) a third of a second. Halving the grid's width
+halved the payload: v3 buys a third of the screen area back and pays for it in transmission time,
+which the cadence below is what makes affordable.
 
 **Cadence (`addon/bmpl/cadence.lua`).** A roster change starts **3 complete passes** over its chunks,
 after which the addon **stops repainting altogether** and the strip stands still. This is what makes
@@ -96,9 +98,11 @@ indefinitely. One catch-up pass every **5 s** (`HEARTBEAT_S`) covers the browser
 the strip is still.
 
 The duty cycle is therefore one pass per 100 ticks, i.e. **as many percent as the roster has chunks**:
-4 % for a party of two (58 B, 4 chunks), ~9 % for five applicants (~150 B, 9 chunks), 34 % for the
-20-applicant queue above. Small rosters — the common case — are almost always still; a full queue is
-not, and that is the price of getting 600 B across at 18 B a frame.
+7 % for a party of two, 17 % for five applicants, 67 % for the 20-applicant queue above. Small
+rosters — the common case — are almost always still; a full queue is not, and that is the price of
+getting 600 B across at 9 B a frame. The post-change burst scales the same way: 3 passes is 1 s for a
+party, 10 s for a full queue. A deployment that lives in 20-applicant queues would be better served by
+the v2 grid (24 × 10, 18 B a frame) than by v3.
 
 The 5 s is the worst-case delay before a late-connecting browser fills **only if no capture frame is
 lost**. A chunk missed during a catch-up pass waits for the next one, so a 15 fps video track against
@@ -106,11 +110,11 @@ the 20 Hz painter roughly doubles it. While that is pending, a roster that chang
 previous roster stops being re-stamped as soon as the sequence number moves, and `ROSTER_STALE_MS`
 (10 s) then empties the panel.
 
-**Logical.** A 72 × 30 px strip cannot afford a 12-byte header, so the frame header is **7 bytes**:
+**Logical.** A 48 × 30 px strip cannot afford a 12-byte header, so the frame header is **7 bytes**:
 `magic|version` (1 B — high nibble `0xB`, low nibble the format version, currently `2`) ·
 `rosterSeq` (1 B, wraps at 256) · `chunkIndex` (1 B) · `chunkCount` (1 B) · `length` (1 B) ·
 `crc16` (2 B, little-endian, CRC-16/CCITT-FALSE over the 5 header bytes before it followed by the
-payload). Payload ≤ **18 bytes**; a frame is exactly `7 + payload length` bytes, never padded. The
+payload). Payload ≤ **9 bytes**; a frame is exactly `7 + payload length` bytes, never padded. The
 roster is compact UTF-8 text, one line per player:
 
 ```

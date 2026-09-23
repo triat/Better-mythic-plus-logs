@@ -23,7 +23,9 @@ describe("bits", () => {
 });
 
 describe("frames", () => {
-  const frame = { version: 2, rosterSeq: 200, chunkIndex: 2, chunkCount: 5, payload: new TextEncoder().encode("a|Tom-Hyjal|2|D|0") };
+  // 9 bytes, the v3 maximum: no roster line fits in one frame any more (the shortest is ~11 bytes),
+  // so a frame's payload is a slice of the roster text, not a line.
+  const frame = { version: STRIP.version, rosterSeq: 200, chunkIndex: 2, chunkCount: 5, payload: new TextEncoder().encode("a|Tom-Hy|") };
 
   test("encode → decode round-trip", () => {
     expect(decodeFrame(encodeFrame(frame))).toEqual(frame);
@@ -31,7 +33,7 @@ describe("frames", () => {
   test("rejects a wrong magic, a wrong version, a bad CRC and a short buffer", () => {
     const good = encodeFrame(frame);
     const badMagic = Uint8Array.from(good); badMagic[0] ^= 0xf0; // flips the high (magic) nibble
-    const badVersion = Uint8Array.from(good); badVersion[0] = (badVersion[0]! & 0xf0) | 0x1; // magic intact, version 1
+    const badVersion = Uint8Array.from(good); badVersion[0] = (badVersion[0]! & 0xf0) | 0x2; // magic intact, the previous version
     const badCrc = Uint8Array.from(good); badCrc[good.length - 1] ^= 0x01;
     expect(decodeFrame(badMagic)).toBeNull();
     expect(decodeFrame(badVersion)).toBeNull();
@@ -50,12 +52,12 @@ describe("frames", () => {
 });
 
 describe("cells", () => {
-  const frame = { version: 2, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("p|Tom-Hy|11|D|289") };
+  const frame = { version: STRIP.version, rosterSeq: 1, chunkIndex: 0, chunkCount: 1, payload: new TextEncoder().encode("p|Tom-Hy|") };
 
-  test("the matrix is 24x10, marker included, and decodes back", () => {
+  test("the matrix is 16x10, marker included, and decodes back", () => {
     const cells = encodeCells(frame);
     expect(cells.length).toBe(STRIP.cols * STRIP.rows);
-    expect(cells[0]).toBe(1);                                  // origin white
+    expect(cells[0]).toBe(1);                                  // origin light
     expect([...cells.slice(0, 4)]).toEqual([1, 0, 1, 0]);      // marker row
     expect([cells[STRIP.cols], cells[STRIP.cols * 2]]).toEqual([0, 1]); // marker column
     expect(decodeCells(cells)).toEqual(frame);
@@ -68,10 +70,13 @@ describe("cells", () => {
 });
 
 describe("chunkRoster", () => {
-  test("one chunk for a short roster, several for a long one, all decodable", () => {
-    const short = chunkRoster("a|Tom-Hyjal|2|D|0\n", 7);
+  test("one chunk for a payload that fits, several for a roster line, all decodable", () => {
+    const short = chunkRoster("a|Tom-Hy|", 7);
     expect(short.length).toBe(1);
     expect(short[0]).toMatchObject({ rosterSeq: 7, chunkIndex: 0, chunkCount: 1 });
+
+    // A single roster line is already two frames at 9 payload bytes — the v3 grid's real cost.
+    expect(chunkRoster("a|Tom-Hyjal|2|D|0\n", 7).length).toBe(2);
 
     const long = chunkRoster(Array.from({ length: 20 }, (_, i) => `a|Name${i}-Nerzhul|2|H|${3000 + i}`).join("\n") + "\n", 8);
     expect(long.length).toBeGreaterThan(5);

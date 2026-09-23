@@ -1,25 +1,27 @@
 // The strip contract, shared with the Lua addon (addon/bmpl/encode.lua) and pinned by
 // addon/bmpl/tests/vectors.txt. Pure: no DOM, no timers, no I/O.
 //
-// v2 (2026-09-23): 72x30 px at the addon's default 3 px cell (24x10 cells), ~9% of v1's area. The
-// 7-byte header packs `magic|version` into one byte (high nibble 0xB, low nibble the version) and
-// drops rosterSeq to 1 byte (wraps at 256) — see docs/superpowers/specs/2026-09-22-game-integration-design.md,
-// "The strip format" section, for the byte-exact layout.
+// v3 (2026-09-23): 48x30 px at the addon's default 3 px cell (16x10 cells), a third less area than
+// v2's 24x10 and ~6% of v1's. Only the grid changed: the 7-byte header is v2's, byte for byte (high
+// nibble 0xB, low nibble the version; rosterSeq wraps at 256). The narrower grid costs payload —
+// 9 bytes a frame instead of 18 — which is affordable because the addon no longer transmits
+// continuously (addon/bmpl/cadence.lua). See docs/superpowers/specs/2026-09-22-game-integration-design.md,
+// "The strip format", for the byte-exact layout.
 
 export const STRIP = {
-  cols: 24,
+  cols: 16,
   rows: 10,
   /** Physical pixels per cell, as the addon draws by default; `/bmpl cell 3`-`10` overrides it per
    * session — the decoder never reads this constant, it derives the real cell size from the marker. */
   cell: 3,
-  /** Cells outside the marker row and column: 23 x 9 = 207, carrying 25 bytes (200 bits) per frame. */
-  dataCells: 23 * 9,
+  /** Cells outside the marker row and column: 15 x 9 = 135, carrying 16 bytes (128 bits) per frame. */
+  dataCells: 15 * 9,
   /** `magic|version` (1) + rosterSeq (1) + chunkIndex (1) + chunkCount (1) + length (1) + crc16 (2). */
   headerBytes: 7,
-  /** header (7) + max payload (18) = 25 bytes = 200 bits ≤ 207 data cells. */
-  frameBytes: 25,
-  payloadMax: 18,
-  version: 2,
+  /** header (7) + max payload (9) = 16 bytes = 128 bits ≤ 135 data cells. */
+  frameBytes: 16,
+  payloadMax: 9,
+  version: 3,
 } as const;
 
 export interface LiveFrame {
@@ -94,7 +96,7 @@ export function bitsToBytes(bits: Uint8Array): Uint8Array {
   return out;
 }
 
-/** The full 24×10 matrix (1 = white): marker row, marker column, then the frame's bits row-major. */
+/** The full 16×10 matrix (1 = light): marker row, marker column, then the frame's bits row-major. */
 export function encodeCells(f: LiveFrame): Uint8Array {
   const cells = new Uint8Array(STRIP.cols * STRIP.rows);
   for (let x = 0; x < STRIP.cols; x++) cells[x] = x % 2 === 0 ? 1 : 0;

@@ -1,6 +1,6 @@
 -- addon/bmpl/strip.lua
 --
--- Owns the 24x10 grid of two-tone textures the browser scanner reads. One frame at the
+-- Owns the 16x10 grid of two-tone textures the browser scanner reads. One frame at the
 -- FULLSCREEN_DIALOG strata, anchored TOPLEFT of UIParent; the frame is counter-scaled by
 -- `1 / UIParent:GetEffectiveScale()` so a texture sized to STRIP.cell logical units always renders as
 -- STRIP.cell *physical* pixels, whatever the player's UI scale or window resolution — see
@@ -15,7 +15,7 @@ ns.Strip = Strip
 
 -- Physical pixels per cell. The browser derives the real cell size from the marker's run lengths, so
 -- this is the addon's choice alone: smaller means a less intrusive strip, larger means a more robust
--- read. 3 is the default (72x30 px on screen); /bmpl cell <n> changes it for the session.
+-- read. 3 is the default (48x30 px on screen); /bmpl cell <n> changes it for the session.
 local cellPx = 3
 local MIN_CELL, MAX_CELL = 3, 10
 
@@ -110,7 +110,7 @@ function Strip.IsShown()
   return frame:IsShown() and true or false
 end
 
--- `cells`: the flat 24x10 table Encode.encodeCells() returns (1 = light, 0/nil = dark).
+-- `cells`: the flat 16x10 table Encode.encodeCells() returns (1 = light, 0/nil = dark).
 function Strip.Paint(cells)
   local p = PALETTE[contrast]
   for i = 1, STRIP.cols * STRIP.rows do

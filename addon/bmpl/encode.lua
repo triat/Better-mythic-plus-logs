@@ -16,13 +16,13 @@ ns.Encode = Encode
 
 -- Same shape and values as STRIP in codec.ts.
 local STRIP = {
-  cols = 24,
+  cols = 16,
   rows = 10,
   cell = 3,
-  dataCells = 23 * 9,
+  dataCells = 15 * 9,
   headerBytes = 7,
-  payloadMax = 18,
-  version = 2,
+  payloadMax = 9,
+  version = 3,
 }
 Encode.STRIP = STRIP
 
@@ -30,7 +30,7 @@ Encode.STRIP = STRIP
 -- codec.ts). Byte 0 is `(0xB << 4) | version`, one byte — not a 4-byte ASCII magic like v1.
 local MAGIC_NIBBLE = 0xb
 
--- Flat, 1-indexed cell index for the 24x10 grid: idx(x, y) with x, y 0-indexed (x: 0..23, y: 0..9).
+-- Flat, 1-indexed cell index for the 16x10 grid: idx(x, y) with x, y 0-indexed (x: 0..15, y: 0..9).
 -- Shared with strip.lua so the encoder's bit layout and the painter's texture grid always agree.
 local function cellIndex(x, y)
   return y * STRIP.cols + x + 1
@@ -118,7 +118,7 @@ function Encode.encodeFrame(frame)
   return out, STRIP.headerBytes + payloadLen
 end
 
--- The full 24x10 matrix (1 = white), 1-indexed via cellIndex(): marker row, marker column, then the
+-- The full 16x10 matrix (1 = light), 1-indexed via cellIndex(): marker row, marker column, then the
 -- frame's bits row-major, MSB first — exactly encodeCells() in codec.ts.
 function Encode.encodeCells(frame)
   local bytes, byteLen = Encode.encodeFrame(frame)

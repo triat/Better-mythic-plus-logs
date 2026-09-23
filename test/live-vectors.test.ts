@@ -6,7 +6,7 @@
 // against the same file.
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { bitsToBytes, chunkRoster, encodeCells, encodeFrame } from "../web/src/lib/live/codec.ts";
+import { STRIP, bitsToBytes, chunkRoster, encodeCells, encodeFrame } from "../web/src/lib/live/codec.ts";
 import { CLASS_NAMES } from "../src/wow/classes.ts";
 
 const hex = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -39,7 +39,7 @@ describe("addon golden vectors", () => {
 
   // The frame bytes say nothing about the marker row/column or the MSB-first row-major bit placement:
   // flip a sign in the addon's `cellIndex` and every frame vector stays green while nothing decodes in
-  // game. These records pin the 24×10 matrix itself, and `/bmpl selftest` checks the same 60 hex chars.
+  // game. These records pin the 16×10 matrix itself, and `/bmpl selftest` checks the same hex string.
   test("every committed cell matrix matches today's codec", () => {
     const { frames, cells } = readVectors();
     expect(cells.length).toBe(frames.length); // one matrix per roster
@@ -47,7 +47,7 @@ describe("addon golden vectors", () => {
       const vector = frames.find((f) => f.seq === v.seq);
       expect(vector, `no frame vector for rosterSeq ${v.seq}`).toBeDefined();
       const frame = chunkRoster(vector!.text, vector!.seq)[v.chunkIndex]!;
-      expect(v.cells.length).toBe(2 * 30); // 240 cells, 8 per byte
+      expect(v.cells.length).toBe((STRIP.cols * STRIP.rows) / 4); // 8 cells per byte, 2 hex chars per byte
       expect(hex(bitsToBytes(encodeCells(frame))), `cells for rosterSeq ${v.seq}`).toBe(v.cells);
     }
   });

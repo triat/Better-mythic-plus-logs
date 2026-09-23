@@ -193,11 +193,21 @@ end
 -- Print an info table's own fields; the live client returns one where the documentation promises
 -- multiple values, and the field names are what we have to read.
 local function dumpTable(prefix, t)
+  -- Keep the original keys: a stats table is keyed by number, and indexing it with tostring(k)
+  -- printed nil for every entry.
   local keys = {}
-  for k in pairs(t) do keys[#keys + 1] = tostring(k) end
-  table.sort(keys)
+  for k in pairs(t) do keys[#keys + 1] = k end
+  table.sort(keys, function(x, y) return tostring(x) < tostring(y) end)
   for _, k in ipairs(keys) do
-    print(string.format("%s%s = %s", prefix, k, chatSafe(t[k])))
+    local v = t[k]
+    if type(v) == "table" then
+      print(string.format("%s%s = table:", prefix, tostring(k)))
+      for k2, v2 in pairs(v) do
+        print(string.format("%s  %s = %s", prefix, tostring(k2), chatSafe(v2)))
+      end
+    else
+      print(string.format("%s%s = %s", prefix, tostring(k), chatSafe(v)))
+    end
   end
 end
 

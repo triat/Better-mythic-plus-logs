@@ -212,6 +212,46 @@ end
 -- declined, timedout, inviteaccepted, inviteedeclined, failed) is a finished application.
 Roster.LIVE_STATUS = { applied = true, invited = true }
 
+-- `C_LFGList.GetApplicantInfo` has two shapes in the wild: the documented multiple returns
+-- (id, status, pendingStatus, numMembers, …) and a single info table (what a live Midnight client
+-- returns — `1=table:` with every other value nil). Read both, and fall back to probing the members
+-- themselves so an application is never truncated just because a field moved.
+local function applicantInfo(applicantID)
+  if not C_LFGList.GetApplicantInfo then return nil, nil end
+  local ok, a, b, _c, d = pcall(C_LFGList.GetApplicantInfo, applicantID)
+  if not ok then return nil, nil end
+  if type(a) == "table" then
+    local n = a.numMembers
+    local status = a.status
+    return type(n) == "number" and n or nil, type(status) == "string" and status or nil
+  end
+  return type(d) == "number" and d or nil, type(b) == "string" and b or nil
+end
+
+-- One member of an application. Same story: multiple returns on some clients, an info table on
+-- others. Returns nil when there is no member at that index.
+local MAX_MEMBERS = 5
+local function memberInfo(applicantID, memberIdx)
+  local ok, a, classToken, _localizedClass, _level, _itemLevel, _honorLevel,
+    tank, healer, damage, _assignedRole, _relationship, dungeonScore =
+    pcall(C_LFGList.GetApplicantMemberInfo, applicantID, memberIdx)
+  if not ok or a == nil then return nil end
+  if type(a) == "table" then
+    return {
+      name = a.name,
+      classToken = a.classFilename or a.className or a.class,
+      tank = a.tank, healer = a.healer, damage = a.damage,
+      score = a.dungeonScore or a.mythicPlusRating or a.rating,
+    }
+  end
+  return {
+    name = a,
+    classToken = classToken,
+    tank = tank, healer = healer, damage = damage,
+    score = dungeonScore,
+  }
+end
+
 function Roster.ApplicantLines()
   local lines = {}
   if not C_LFGList or not C_LFGList.GetApplicants or not C_LFGList.GetApplicantMemberInfo then
@@ -221,34 +261,24 @@ function Roster.ApplicantLines()
   if not ok or not applicantIDs then return lines end
 
   for _, applicantID in ipairs(applicantIDs) do
-    local numMembers = 1
-    local status = nil
-    if C_LFGList.GetApplicantInfo then
-      -- C_LFGList.GetApplicantInfo(applicantID) returns, in order:
-      --   id, status, pendingStatus, numMembers, isNew, comment, displayOrderID
-      -- `numMembers` is the FOURTH return value, not the second (the second is `status`, a string):
-      -- reading the wrong one made the guard below fall back to 1 and silently drop every member but
-      -- the first of a duo or trio application — routine in Mythic+ recruiting.
-      local infoOk, _id, applicantStatus, _pendingStatus, n = pcall(C_LFGList.GetApplicantInfo, applicantID)
-      if infoOk and type(n) == "number" and n > 0 then numMembers = n end
-      if infoOk and type(applicantStatus) == "string" then status = applicantStatus end
-    end
+    local numMembers, status = applicantInfo(applicantID)
     -- An application the game still lists but that is no longer pending (withdrawn, declined, timed
     -- out, already invited and accepted) must leave the strip at once, or the panel keeps showing
     -- someone who is gone. Only "applied" and "invited" are live; an unknown status is kept, so a
     -- future value cannot silently hide real applicants.
-    if status and not Roster.LIVE_STATUS[status] then numMembers = 0 end
-    for memberIdx = 1, numMembers do
-      local memberOk, name, classToken, _localizedClass, _level, _itemLevel, _honorLevel,
-        tank, healer, damage, _assignedRole, _relationship, dungeonScore =
-        pcall(C_LFGList.GetApplicantMemberInfo, applicantID, memberIdx)
-      if memberOk and name then
+    local live = not status or Roster.LIVE_STATUS[status]
+    if live then
+      -- No usable count: walk the members until the game stops giving us one.
+      local last = numMembers or MAX_MEMBERS
+      for memberIdx = 1, math.min(last, MAX_MEMBERS) do
+        local m = memberInfo(applicantID, memberIdx)
+        if not m or not m.name then break end
         local roleCode
-        if tank then roleCode = "T"
-        elseif healer then roleCode = "H"
-        elseif damage then roleCode = "D" end
-        local spec = classToken and roleCode and specGuess(classToken, roleCode)
-        local line = rosterLine("a", withRealm(name), classToken, spec, roleCode, dungeonScore)
+        if m.tank then roleCode = "T"
+        elseif m.healer then roleCode = "H"
+        elseif m.damage then roleCode = "D" end
+        local spec = m.classToken and roleCode and specGuess(m.classToken, roleCode)
+        local line = rosterLine("a", withRealm(m.name), m.classToken, spec, roleCode, m.score)
         if line then table.insert(lines, line) end
       end
     end

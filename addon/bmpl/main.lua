@@ -184,6 +184,23 @@ end
 -- /bmpl dump — print what the LFG API actually returns, so a roster that looks wrong on screen can be
 -- diagnosed from the chat frame instead of guessed at. Reads only; prints nothing that is not already
 -- visible in the Group Finder window.
+-- The chat frame interprets "|" escapes (|c, |r, |n, |T…), so a raw roster line prints mangled —
+-- "|R" vanishes, "|N" becomes a line break. Double every pipe before printing.
+local function chatSafe(text)
+  return (tostring(text):gsub("|", "||"))
+end
+
+-- Print an info table's own fields; the live client returns one where the documentation promises
+-- multiple values, and the field names are what we have to read.
+local function dumpTable(prefix, t)
+  local keys = {}
+  for k in pairs(t) do keys[#keys + 1] = tostring(k) end
+  table.sort(keys)
+  for _, k in ipairs(keys) do
+    print(string.format("%s%s = %s", prefix, k, chatSafe(t[k])))
+  end
+end
+
 local function dump()
   if not C_LFGList or not C_LFGList.GetApplicants then
     print("bmpl dump: C_LFGList.GetApplicants is missing")
@@ -197,28 +214,36 @@ local function dump()
   print(string.format("bmpl dump: %d application(s)", #ids))
   for _, id in ipairs(ids) do
     local infoOk, a, b, c, d, e, f, g = pcall(C_LFGList.GetApplicantInfo, id)
-    if infoOk then
-      print(string.format("  id=%s → 1=%s 2=%s 3=%s 4=%s 5=%s 6=%s 7=%s",
-        tostring(id), tostring(a), tostring(b), tostring(c), tostring(d), tostring(e), tostring(f), tostring(g)))
+    if not infoOk then
+      print(string.format("  id=%s → GetApplicantInfo failed: %s", tostring(id), chatSafe(a)))
+    elseif type(a) == "table" then
+      print(string.format("  id=%s → info table:", tostring(id)))
+      dumpTable("      ", a)
     else
-      print(string.format("  id=%s → GetApplicantInfo failed: %s", tostring(id), tostring(a)))
+      print(string.format("  id=%s → 1=%s 2=%s 3=%s 4=%s 5=%s 6=%s 7=%s", tostring(id),
+        chatSafe(a), chatSafe(b), chatSafe(c), chatSafe(d), chatSafe(e), chatSafe(f), chatSafe(g)))
     end
-    for i = 1, 5 do
-      local memberOk, name, classToken, _lc, _lvl, _ilvl, _hl, tank, healer, damage, _ar, _rel, score =
+    for i = 1, 3 do
+      local memberOk, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 =
         pcall(C_LFGList.GetApplicantMemberInfo, id, i)
-      if memberOk and name then
-        print(string.format("    member %d: %s (%s) T=%s H=%s D=%s score=%s",
-          i, tostring(name), tostring(classToken), tostring(tank), tostring(healer), tostring(damage), tostring(score)))
-      elseif not memberOk then
-        print(string.format("    member %d: call failed: %s", i, tostring(name)))
-      else
+      if not memberOk then
+        print(string.format("    member %d: call failed: %s", i, chatSafe(m2)))
+      elseif m2 == nil then
         print(string.format("    member %d: nil", i))
+      elseif type(m2) == "table" then
+        print(string.format("    member %d: info table:", i))
+        dumpTable("        ", m2)
+      else
+        print(string.format("    member %d: %s %s %s %s %s %s %s %s %s %s %s %s %s %s", i,
+          chatSafe(m2), chatSafe(m3), chatSafe(m4), chatSafe(m5), chatSafe(m6), chatSafe(m7),
+          chatSafe(m8), chatSafe(m9), chatSafe(m10), chatSafe(m11), chatSafe(m12), chatSafe(m13),
+          chatSafe(m14), chatSafe(m15)))
       end
     end
   end
   local text = Roster.BuildText and Roster.BuildText() or ""
   print("bmpl dump: roster text the strip carries —")
-  for line in tostring(text):gmatch("[^\n]+") do print("  " .. line) end
+  for line in tostring(text):gmatch("[^\n]+") do print("  " .. chatSafe(line)) end
 end
 
 SLASH_BMPL1 = "/bmpl"

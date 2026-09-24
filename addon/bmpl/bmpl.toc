@@ -2,7 +2,7 @@
 ## Title: bmpl
 ## Notes: Draws a small two-tone pixel strip, top-left, only while the Group Finder is in play, and leaves it motionless once your roster stops changing. The bmpl browser tab reads it to show applicants and your party with class, role and score. Sends nothing, receives nothing, stores nothing. /bmpl show|hide|selftest
 ## Author: bmpl
-## Version: 1.0.0
+## Version: 1.0.1
 ## X-License: AGPL-3.0-or-later
 ## IconTexture: Interface\Icons\INV_Misc_Map_01
 

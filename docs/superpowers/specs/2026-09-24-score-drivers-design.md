@@ -71,8 +71,8 @@ The result lists the signals used and the score reached. If three are not enough
 **Output.** `Evaluation` gains:
 
 ```ts
-drivers?: { source: string; impact: number; value: number; reference: number }[]; // |impact| ≥ 1, sorted by impact ascending (costs first)
-nextVerdict?: { verdict: "maybe" | "invite"; sources: string[]; score: number; reachable: boolean } | null;
+drivers?: { source: string; impact: number; value: number; reference: number; label: string }[]; // |impact| ≥ 1, costs first; label = the English evidence line (CLI)
+nextVerdict?: { verdict: "maybe" | "invite"; threshold: number; sources: string[]; score: number; reachable: boolean } | null;
 ```
 
 Optional in the type so evaluations saved before this change (history, `--json` files) still load;

@@ -1,7 +1,9 @@
 # Scoring calibration study — design
 
 Status: approved 2026-09-24 (protocol agreed in chat; the user set the scope and the budget window).
-Collection done (1,081 characters); results below; the recommended change awaits the user's decision.
+Collection done (1,081 characters); results below. The user approved the recommended change (global
+percentile curve per role, thresholds 70/30): `default-config.json` version 2, curves from
+`scripts/calibration/fit-global.ts`.
 
 ## Goal
 

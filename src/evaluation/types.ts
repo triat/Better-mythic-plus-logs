@@ -30,6 +30,7 @@ export interface Evaluation {
   role: Role;
   targetLevel: number;
   axes: AxisScore[];
+  /** The weighted mean of the axes through the role's `globalCurve`, rounded: a percentile among real players. */
   global: number | null;
   verdict: Verdict;
   runsUsed: number;
@@ -50,6 +51,12 @@ export interface EvaluationConfig {
   expectedIlvl: Record<string, CurvePoints>; // keyed by Raider.IO season slug
   axes: Record<AxisKey, AxisConfig>;
   axisWeights: Record<Role, Record<AxisKey, number>>;
+  /**
+   * Per role, the weighted mean of the axes → its percentile among real players of that role
+   * (docs/superpowers/specs/2026-09-24-scoring-calibration-design.md). Monotone, so it never reorders
+   * two players; `[[0, 0], [100, 100]]` turns it off.
+   */
+  globalCurve: Record<Role, CurvePoints>;
   verdict: { invite: number; maybe: number; minRuns: number };
   confidence: { high: number; medium: number; consistencyMinRuns: number; deepdiveMinRuns: number };
 }

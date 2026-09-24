@@ -18,12 +18,25 @@ describe("default config", () => {
     const cfg = validateConfig(DEFAULT_CONFIG);
     for (const k of AXIS_KEYS) expect(Object.keys(cfg.axes[k].subSignals).length).toBeGreaterThan(0);
     expect(cfg.axisWeights.tank.experience).toBe(2.5);
-    expect(cfg.verdict).toEqual({ invite: 70, maybe: 45, minRuns: 3 });
+    expect(cfg.verdict).toEqual({ invite: 70, maybe: 30, minRuns: 3 });
+    for (const role of ["dps", "healer", "tank"] as const) {
+      expect(cfg.globalCurve[role][0]).toEqual([0, 0]);
+      expect(cfg.globalCurve[role].at(-1)).toEqual([100, 100]);
+    }
     expect(cfg.expectedIlvl["season-mn-2"]).toBeDefined();
   });
 });
 
 describe("validateConfig", () => {
+  test("globalCurve: every role required, y within 0..100 and never decreasing", () => {
+    const missing = structuredClone(DEFAULT_CONFIG) as unknown as Record<string, Record<string, unknown>>;
+    delete missing.globalCurve!.tank;
+    expect(() => validateConfig(missing)).toThrow(/globalCurve\.tank: missing/);
+    const falling = deepMerge(DEFAULT_CONFIG, { globalCurve: { dps: [[0, 0], [50, 60], [70, 40], [100, 100]] } });
+    expect(() => validateConfig(falling)).toThrow(/globalCurve\.dps: y must not decrease/);
+    const tooHigh = deepMerge(DEFAULT_CONFIG, { globalCurve: { healer: [[0, 0], [100, 120]] } });
+    expect(() => validateConfig(tooHigh)).toThrow(/globalCurve\.healer\[1\]/);
+  });
   test("rejects a non-monotonic curve, naming the path", () => {
     const bad = deepMerge(DEFAULT_CONFIG, { axes: { survival: { subSignals: { wipeDeaths: { curve: [[0, 100], [0, 70]] } } } } });
     expect(() => validateConfig(bad)).toThrow(/axes\.survival\.subSignals\.wipeDeaths\.curve/);
@@ -79,7 +92,7 @@ describe("loadConfig", () => {
     const r = await loadConfig(p);
     expect(r.warning).toBeUndefined();
     expect(r.config.verdict.invite).toBe(75);
-    expect(r.config.verdict.maybe).toBe(45);
+    expect(r.config.verdict.maybe).toBe(30);
     expect(r.config.axes.utility.subSignals.dispels.curve).toEqual([[0, 30], [10, 100]]);
     expect(r.config.axes.utility.subSignals.dispels.weights.healer).toBe(3);
   });

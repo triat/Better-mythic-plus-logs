@@ -21,8 +21,8 @@ describe("globalScore / verdictFor", () => {
   test("thresholds at the boundaries and insufficient", () => {
     expect(verdictFor(70, 3, cfg)).toBe("invite");
     expect(verdictFor(69.99, 3, cfg)).toBe("maybe");
-    expect(verdictFor(45, 3, cfg)).toBe("maybe");
-    expect(verdictFor(44.99, 3, cfg)).toBe("pass");
+    expect(verdictFor(30, 3, cfg)).toBe("maybe");
+    expect(verdictFor(29.99, 3, cfg)).toBe("pass");
     expect(verdictFor(90, 2, cfg)).toBe("insufficient");
     expect(verdictFor(null, 9, cfg)).toBe("insufficient");
   });
@@ -72,8 +72,31 @@ describe("evaluate", () => {
     const bad = () => runWith({ deaths: deaths(3, 1), avoidableDamage: { total: 0, perMinute: 150, peer: { median: 100, count: 4 }, spellCount: 10 } }, { parsePercent: 10, keyLevel: 10 });
     const p = payloadWith(Array.from({ length: 6 }, bad), { targetLevel: 16 });
     expect(evaluate(p, cfg).verdict).toBe("pass");
-    const lenient = validateConfig(deepMerge(DEFAULT_CONFIG, { verdict: { invite: 20, maybe: 10 } }));
+    const identity = { dps: [[0, 0], [100, 100]], healer: [[0, 0], [100, 100]], tank: [[0, 0], [100, 100]] };
+    const lenient = validateConfig(deepMerge(DEFAULT_CONFIG, { verdict: { invite: 20, maybe: 10 }, globalCurve: identity }));
     expect(evaluate(p, lenient).verdict).toBe("invite");
+  });
+
+  test("the global is the weighted mean through the role's globalCurve, rounded", () => {
+    const p = payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 });
+    const identity = { dps: [[0, 0], [100, 100]], healer: [[0, 0], [100, 100]], tank: [[0, 0], [100, 100]] };
+    const plain = evaluate(p, validateConfig(deepMerge(DEFAULT_CONFIG, { globalCurve: identity })));
+    const raw = globalScore(plain.axes, "dps", cfg)!;
+    expect(plain.global).toBe(Math.round(raw));
+    // A curve that halves every raw score: same axes, halved global, verdict read on the halved value.
+    const half = validateConfig(deepMerge(DEFAULT_CONFIG, { globalCurve: { ...identity, dps: [[0, 0], [100, 50]] } }));
+    const e = evaluate(p, half);
+    expect(e.axes).toEqual(plain.axes);
+    expect(e.global).toBe(Math.round(raw / 2));
+    expect(e.verdict).toBe(verdictFor(e.global, e.runsUsed, half));
+  });
+
+  test("the default curve places a median player of the calibration population near 50", () => {
+    for (const role of ["dps", "healer", "tank"] as const) {
+      const median = cfg.globalCurve[role].find(([, y]) => y === 50)!;
+      expect(median).toBeDefined();
+      expect(median[0]).toBeGreaterThan(70); // today's raw weighted mean of a median player sits in the mid-70s
+    }
   });
 
   test("fewer than minRuns runs with signals → insufficient, axes still scored", () => {

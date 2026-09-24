@@ -52,7 +52,7 @@ const checkWeights = (v: unknown, path: string): Record<Role, number> => {
 /** Structural + semantic validation. Throws with the offending path in the message. */
 export function validateConfig(obj: unknown): EvaluationConfig {
   if (!isObj(obj)) return fail("config", "must be an object");
-  expectKeys(obj, ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "verdict", "confidence"], "config");
+  expectKeys(obj, ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "globalCurve", "verdict", "confidence"], "config");
   if (typeof obj.version !== "string") fail("version", "must be a string");
   const levelScale = checkCurve(obj.levelScale, "levelScale", 0, 10);
 
@@ -97,6 +97,16 @@ export function validateConfig(obj: unknown): EvaluationConfig {
     axisWeights[r] = out;
   }
 
+  if (!isObj(obj.globalCurve)) fail("globalCurve", "must be an object");
+  expectKeys(obj.globalCurve as Record<string, unknown>, ROLES, "globalCurve");
+  const globalCurve = {} as EvaluationConfig["globalCurve"];
+  for (const r of ROLES) {
+    const c = checkCurve((obj.globalCurve as Record<string, unknown>)[r], `globalCurve.${r}`, 0, 100);
+    // A falling segment would rank a better raw score below a worse one.
+    for (let i = 1; i < c.length; i++) if (c[i]![1] < c[i - 1]![1]) fail(`globalCurve.${r}`, `y must not decrease (at index ${i})`);
+    globalCurve[r] = c;
+  }
+
   if (!isObj(obj.verdict)) fail("verdict", "must be an object");
   expectKeys(obj.verdict as Record<string, unknown>, ["invite", "maybe", "minRuns"], "verdict");
   const vd = obj.verdict as Record<string, unknown>;
@@ -113,7 +123,7 @@ export function validateConfig(obj: unknown): EvaluationConfig {
     deepdiveMinRuns: checkNumber(cf.deepdiveMinRuns, "confidence.deepdiveMinRuns"),
   };
 
-  return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, verdict, confidence };
+  return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, globalCurve, verdict, confidence };
 }
 
 const canonical = (v: unknown): string => {

@@ -1,5 +1,6 @@
 import { scoreAllAxes } from "./axes/index.ts";
 import { configVersion } from "./config.ts";
+import { curve } from "./curve.ts";
 import { collectInputs, type EvalPayload } from "./inputs.ts";
 import type { AxisScore, Evaluation, EvaluationConfig, Role, Verdict } from "./types.ts";
 
@@ -27,8 +28,9 @@ export function evaluate(payload: EvalPayload, cfg: EvaluationConfig): Evaluatio
   const inputs = collectInputs(payload, cfg);
   const axes = scoreAllAxes(inputs, cfg);
   const rawGlobal = globalScore(axes, inputs.role, cfg);
-  // Rounded once here so the verdict threshold and every rendered global (CLI, web) agree.
-  const global = rawGlobal === null ? null : Math.round(rawGlobal);
+  // Mapped onto the role's percentile, then rounded once here so the verdict threshold and every
+  // rendered global (CLI, web) agree.
+  const global = rawGlobal === null ? null : Math.round(curve(rawGlobal, cfg.globalCurve[inputs.role]));
   return {
     role: inputs.role,
     targetLevel: inputs.targetLevel,

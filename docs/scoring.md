@@ -36,6 +36,18 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   median key level vs. target, recent activity (runs in the last 7 days),
   plus a small bonus — never a penalty — for a strong previous-season score.
 
+The **global score** is a percentile. The weighted mean of the axes (the
+role's `axisWeights`) goes through the role's `globalCurve`, fitted on 1,081
+EU characters logging +15 to +20 keys in September 2026 (see the
+[calibration study](superpowers/specs/2026-09-24-scoring-calibration-design.md)):
+50 is the typical player of that population, 70 (INVITE) the top 30 %, and
+below 30 (PASS) the bottom quarter or so. The curve only spreads the scale —
+it never changes who ranks above whom. It describes one season and one
+population, so it is refitted when the season changes. If you change the
+weights or curves in `evaluation.json`, set `globalCurve` too (to
+`[[0, 0], [100, 100]]` per role to turn it off), or the percentiles no
+longer mean what they say.
+
 Every axis lists its **evidence**: the specific sub-signals that moved the
 score, in plain language. **Timed vs. depleted is deliberately not scored**
 — it's shown in the run list as context, but a depleted key on an otherwise

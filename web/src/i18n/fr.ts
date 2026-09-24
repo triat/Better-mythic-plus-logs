@@ -262,6 +262,17 @@ export const fr: Mirror<typeof en> = {
       prevSeasonBonus: "saison précédente {value}",
     },
   },
+  drivers: {
+    title: "Ce qui fait ce score",
+    costs: "coûte des points",
+    earns: "rapporte des points",
+    avg: "moy. {value}",
+    unit: { perRun: "{value} / run", vsPeers: "{value} % vs pairs", pct: "{value} %", plain: "{value}" },
+    path: {
+      reach: "Pour passer {verdict} ({threshold}) : ramener {list} au niveau du joueur moyen → {score}",
+      out: "Pour passer {verdict} ({threshold}) : hors de portée en corrigeant {count, plural, one {# signal} other {# signaux}}",
+    },
+  },
   tiles: {
     median: "{metric} médian", medianParse: "Parse médian", timed: "Timed (affichés)", avgDeaths: "Morts moy.", inWipes: "{n} en wipe",
     dtps: "Δ DTPS vs pairs", avoidable: "Évitable vs pairs", kicks: "Kicks vs pairs", ilvl: "ilvl", rioRecent: "RIO récents timed",

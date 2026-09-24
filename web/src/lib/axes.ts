@@ -64,6 +64,11 @@ const VALUE_FORMAT: Record<EvidenceSource, ValueFormat> = {
 
 const isKnownSource = (s: string): s is EvidenceSource => s in VALUE_FORMAT;
 
+/** `VALUE_FORMAT[source](locale, v)` for a known source; an unknown source (future-proofing) falls back to `String(v)`. */
+export function formatEvidenceValue(locale: Locale, source: string, v: number): string {
+  return isKnownSource(source) ? VALUE_FORMAT[source](locale, v) : String(v);
+}
+
 /**
  * The evidence line in the UI language, rebuilt from `value` / `extra` (message `evidence.<source>`). An unknown
  * source — or a payload saved before `value` existed — falls back to the server's English `label`.

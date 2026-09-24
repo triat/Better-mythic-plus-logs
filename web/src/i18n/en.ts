@@ -268,6 +268,17 @@ export const en = {
       prevSeasonBonus: "previous season {value}",
     },
   } satisfies EvidenceMessages,
+  drivers: {
+    title: "What makes this score",
+    costs: "costs points",
+    earns: "earns points",
+    avg: "avg {value}",
+    unit: { perRun: "{value} / run", vsPeers: "{value}% vs peers", pct: "{value}%", plain: "{value}" },
+    path: {
+      reach: "To reach {verdict} ({threshold}): bring {list} to the average player's level → {score}",
+      out: "To reach {verdict} ({threshold}): out of reach by fixing {count, plural, one {# signal} other {# signals}}",
+    },
+  },
   tiles: {
     median: "Median {metric}", medianParse: "Median parse", timed: "Timed (shown)", avgDeaths: "Avg deaths", inWipes: "{n} in wipes",
     dtps: "Δ DTPS vs peers", avoidable: "Avoidable vs peers", kicks: "Kicks vs peers", ilvl: "ilvl", rioRecent: "RIO recent timed",

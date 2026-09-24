@@ -67,4 +67,11 @@ web/src/lib/          pure tested view models      web/src/components/   thin Re
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: sub-projects 1–4 (signals, evaluation, web front, deep-dive) are shipped. Sub-project 5 (hosted multi-user service) is filed as GitHub issues #1–#11; #2–#11 (hosted skeleton, Discord login, per-user state, WCL budget / per-member quotas, shared defensives table, hosted front, admin page, hardening, VPS deployment, open signup / own WCL clients / bans / privacy) are shipped — sub-project 5 is complete.
+Current state and roadmap: everything specified so far is shipped and live on bmpl.riat.dev.
+Sub-projects 1–4 (signals, evaluation, web front, deep-dive); sub-project 5, the hosted multi-user
+service, as GitHub issues #1–#11 (hosted skeleton, Discord login, per-user state, WCL budget /
+per-member quotas, shared defensives table, hosted front, admin page, hardening, VPS deployment, open
+signup / own WCL clients / bans / privacy); and sub-project 6, the game integration, shipped in v0.4.0
+— the `addon/` tree, `web/src/lib/live/`, `POST /api/live/cached`, spec
+`docs/superpowers/specs/2026-09-22-game-integration-design.md`. The hosted instance runs with open
+sign-up since 2026-09-24. Unscheduled ideas live as GitHub issues #12–#15.

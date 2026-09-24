@@ -37,4 +37,15 @@ Anything the user will see is mocked first on the Claude Design canvas (`docs/ag
 
 ## Roadmap pointer
 
-Sub-projects 1–4 shipped (signals, evaluation model, web front, run deep-dive). Next: sub-project 5, hosted multi-user service — fully specified in GitHub issue #1 and its sub-issues; #2–#10 (hosted skeleton, Discord login, per-user state, WCL budget/quotas, shared defensives table, hosted front, admin page, hardening, VPS deployment) are shipped; next is #11 (phase 2), keeping local mode green. Known follow-ups not yet scheduled: user validation of `defensives.json` cooldowns per spec; choice-node ("either/or") entries and talent-aware cooldowns via `combatantinfo`; absolute per-level references for peer signals; evaluation `expectedIlvl` values unvalidated against real profiles.
+Sub-projects 1–6 are shipped: signals, evaluation model, web front, run deep-dive, the hosted
+multi-user service (GitHub issue #1 and its sub-issues #2–#11), and the game integration — the in-game
+addon, the Live panel and the pixel strip, released as v0.4.0. Production runs 0.4.0 with open
+sign-up. **Nothing is currently scheduled**; the next piece of work is whatever the user picks.
+
+Open GitHub issues, none of them planned: #12 talent-aware interrupt cooldowns, #13 browser
+end-to-end tests for the web front, #14 an off-VPS backup copy of `bmpl.db`, #15 an Overwolf app
+instead of the pixel strip. Known follow-ups with no issue: user validation of `defensives.json`
+cooldowns per spec; choice-node ("either/or") entries and talent-aware cooldowns via `combatantinfo`;
+absolute per-level references for peer signals; evaluation `expectedIlvl` values unvalidated against
+real profiles; the README's addon section has no screenshot (the Live panel needs a live capture from
+the user's own game).

@@ -19,6 +19,9 @@ describe("parseRoster", () => {
     expect(players[3]!.kind).toBe("party");
     expect(players[2]!.className).toBe("DemonHunter");
   });
+  test("a realm with a dash keeps it: names never hold one, so the first dash splits", () => {
+    expect(parseRoster("p|Name-Azjol-Nerub|2|D|0\n")[0]).toMatchObject({ name: "Name", realm: "Azjol-Nerub" });
+  });
   test("skips malformed lines instead of throwing", () => {
     expect(parseRoster("a|broken\n\nx|Nope-Realm|2|D|0\na|Ok-Realm|2|D|12\n").map((p) => p.name)).toEqual(["Ok"]);
   });

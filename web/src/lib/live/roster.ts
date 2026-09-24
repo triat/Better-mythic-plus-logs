@@ -62,7 +62,8 @@ export function parseRoster(text: string): RosterPlayer[] {
     const [kind, character, classIndexRaw, role, score] = parts as [string, string, string, string, string];
     const className = CLASS_NAME_BY_INDEX[Number(classIndexRaw)];
     if ((kind !== "a" && kind !== "p" && kind !== "s") || !NAME_REALM.test(character) || !ROLE_OF[role] || !className) continue;
-    const dash = character.lastIndexOf("-");
+    // A character name never holds a dash; a realm can ("Azjol-Nerub"), so split on the first one.
+    const dash = character.indexOf("-");
     players.push({
       kind: kind === "a" ? "applicant" : kind === "p" ? "party" : "self",
       name: character.slice(0, dash),

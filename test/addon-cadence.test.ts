@@ -1,4 +1,5 @@
-// `addon/bmpl/cadence.lua` decides when the strip is repainted — the rule that keeps it motionless
+// The addon's pure-Lua harnesses, run by `luajit`: `addon/bmpl/cadence.lua` decides when the strip is repainted —
+// and `roster.lua` builds the roster line against a stubbed WoW API. First, the cadence: the rule that keeps it motionless
 // while the roster is unchanged. It is pure Lua with no WoW API, so `luajit` can run it against
 // `addon/bmpl/tests/cadence.lua` here; the harness prints "OK <n>" or the first failed assertion.
 // Skipped where luajit is absent: it is a dev-machine tool, not a dependency of the product.
@@ -9,6 +10,14 @@ describe("addon cadence", () => {
   const luajit = Bun.which("luajit");
   test.skipIf(!luajit)("addon/bmpl/cadence.lua matches its harness (luajit)", () => {
     const run = Bun.spawnSync([luajit!, "addon/bmpl/tests/cadence.lua"]);
+    const out = new TextDecoder().decode(run.stdout) + new TextDecoder().decode(run.stderr);
+    expect(out.trim(), out).toStartWith("OK ");
+    expect(run.exitCode).toBe(0);
+  });
+
+  // roster.lua against a stubbed WoW API: a cross-realm party member must keep their own realm.
+  test.skipIf(!luajit)("addon/bmpl/roster.lua matches its harness (luajit)", () => {
+    const run = Bun.spawnSync([luajit!, "addon/bmpl/tests/roster.lua"]);
     const out = new TextDecoder().decode(run.stdout) + new TextDecoder().decode(run.stderr);
     expect(out.trim(), out).toStartWith("OK ");
     expect(run.exitCode).toBe(0);

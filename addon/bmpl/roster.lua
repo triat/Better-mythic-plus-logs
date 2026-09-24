@@ -53,10 +53,14 @@ local function ownRealm()
   return GetRealmName and GetRealmName() or nil
 end
 
-local function withRealm(name)
+-- `realm` is the second value of UnitName(unit): set for a member from another realm, nil or "" for one
+-- from the player's own realm. Dropping it would file a cross-realm party member under the player's
+-- realm, and the lookup would then fail as "Character not found".
+local function withRealm(name, realm)
   if not name or name == "" then return nil end
   if name:find("-", 1, true) then return name end
-  local realm = ownRealm()
+  if realm and realm ~= "" then return name .. "-" .. realm end
+  realm = ownRealm()
   if not realm or realm == "" then return nil end
   return name .. "-" .. realm
 end
@@ -108,10 +112,10 @@ end
 function Roster.PartyLines()
   local lines = {}
   for _, unit in ipairs(partyUnits()) do
-    local name = UnitName(unit)
+    local name, realm = UnitName(unit)
     local classToken = select(2, UnitClass(unit))
     local roleCode = ROLE_TOKEN_TO_CODE[UnitGroupRolesAssigned(unit)]
-    local line = rosterLine("p", withRealm(name), classToken, roleCode, 0)
+    local line = rosterLine("p", withRealm(name, realm), classToken, roleCode, 0)
     if line then table.insert(lines, line) end
   end
   return lines

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Score drivers — edge cases</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif}
+a{color:#58a6ff;text-decoration:none}a:hover{color:#79b8ff}
+</style>
+</helmet>
+<div style="width: 900px; height: 1040px; box-sizing: border-box; padding: 24px; background: #0d1117; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 16px"><div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681">Very low score: the next verdict is MAYBE</span>
+<div style="display: flex"><div style="display: inline-flex; align-items: baseline; gap: 10px; border-radius: 8px; padding: 8px 14px; border: 1px solid #7a1f1f; background: #2e0a0a; color: #f85149">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: .04em">PASS</span>
+<span style="font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">4</span>
+<span style="font-size: 12px; color: #8b949e">high confidence</span>
+<a href="#help" aria-label="Help" style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; line-height: 1">?</a>
+</div></div>
+<div style="background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e">What makes this score</span><a href="#help" aria-label="Help" style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; line-height: 1">?</a><span style="font-size: 11px; color: #6e7681">points vs the average player of the role</span></div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #f85149; font-weight: 700">−4</span>
+<span style="color: #e6edf3">Parse at target</span>
+<span style="color: #c9d1d9">2 <span style="color: #6e7681">· average player 57</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #f85149; font-weight: 700">−3</span>
+<span style="color: #e6edf3">Median parse</span>
+<span style="color: #c9d1d9">32 <span style="color: #6e7681">· average player 59</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #f85149; font-weight: 700">−2</span>
+<span style="color: #e6edf3">Individual deaths</span>
+<span style="color: #c9d1d9">1.4 / run <span style="color: #6e7681">· average player 0.7</span></span>
+</div>
+
+
+<div style="font-size: 12px; color: #8b949e; border-top: 1px solid #21262d; padding-top: 8px">To reach <b style="color: #e3b341">MAYBE</b> (30): out of reach by fixing three signals — the score is at the floor of the scale, where one signal moves it little.</div>
+</div>
+</div><div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681">INVITE: no path, strengths first</span>
+<div style="display: flex"><div style="display: inline-flex; align-items: baseline; gap: 10px; border-radius: 8px; padding: 8px 14px; border: 1px solid #1f6f3a; background: #0a2e1a; color: #56d364">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: .04em">INVITE</span>
+<span style="font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">82</span>
+<span style="font-size: 12px; color: #8b949e">high confidence</span>
+<a href="#help" aria-label="Help" style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; line-height: 1">?</a>
+</div></div>
+<div style="background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e">What makes this score</span><a href="#help" aria-label="Help" style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; line-height: 1">?</a><span style="font-size: 11px; color: #6e7681">points vs the average player of the role</span></div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #f85149; font-weight: 700">−3</span>
+<span style="color: #e6edf3">Dispels</span>
+<span style="color: #c9d1d9">13 / run <span style="color: #6e7681">· average player 18</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #f85149; font-weight: 700">−2</span>
+<span style="color: #e6edf3">Item level vs target</span>
+<span style="color: #c9d1d9">+1 <span style="color: #6e7681">· average player +5</span></span>
+</div>
+<div style="height: 1px; background: #21262d; margin: 2px 0"></div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #56d364; font-weight: 600">+7</span>
+<span style="color: #e6edf3">Median parse</span>
+<span style="color: #c9d1d9">85 <span style="color: #6e7681">· average player 62</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #56d364; font-weight: 600">+4</span>
+<span style="color: #e6edf3">Potions</span>
+<span style="color: #c9d1d9">4.2 / run <span style="color: #6e7681">· average player 1.6</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 40px 170px minmax(0, 1fr); column-gap: 10px; align-items: baseline; font-size: 13px">
+<span style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: right; color: #56d364; font-weight: 600">+4</span>
+<span style="color: #e6edf3">Dungeons at target</span>
+<span style="color: #c9d1d9">100% <span style="color: #6e7681">· average player 63%</span></span>
+</div>
+
+</div>
+</div><div style="background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681">Saved before this change</span>
+<div style="display: flex"><div style="display: inline-flex; align-items: baseline; gap: 10px; border-radius: 8px; padding: 8px 14px; border: 1px solid #7a6a1f; background: #2e2a0a; color: #e3b341">
+<span style="font-size: 20px; font-weight: 800; letter-spacing: .04em">MAYBE</span>
+<span style="font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">58</span>
+<span style="font-size: 12px; color: #8b949e">high confidence</span>
+<a href="#help" aria-label="Help" style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; color: #6e7681; font-size: 10px; line-height: 1">?</a>
+</div></div>
+<div style="font-size: 12px; color: #6e7681">No block: evaluations saved before the change carry no drivers. Re-evaluating the character shows it.</div>
+</div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

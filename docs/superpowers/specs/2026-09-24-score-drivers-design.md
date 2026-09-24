@@ -1,6 +1,8 @@
 # Score drivers — "what makes this score" — design
 
-Status: approved in chat 2026-09-24 (audience, reference and design agreed); canvas next.
+Status: approved in chat 2026-09-24 (audience, reference and design agreed). Canvas: variant **B, diverging
+bars**, chosen by the user — https://claude.ai/artifact/1LvjXFkGnHbQrhwu972UE3, sources in
+`docs/design/canvas/ScoreDriversBars.dc.html` and `ScoreDriversEdgeCases.dc.html`.
 
 ## Problem
 
@@ -78,23 +80,28 @@ the front shows nothing when they are absent. The cost is a handful of extra `sc
 evaluation (one per sub-signal with a reference, ≤ 16, plus ≤ 3 for the path) — pure arithmetic,
 no I/O, no WCL.
 
-## Display — design canvas first
+## Display
 
-A block **"What makes this score"** under the verdict badge in `VerdictHero`, above the axis rows:
+A block **"What makes this score"** under the verdict badge in `VerdictHero`, above the axis rows,
+drawn as **diverging bars** (canvas variant B):
 
-- the 3 to 5 largest impacts, costs first then strengths, each as
-  `−9  Deaths: 0.9/run (average player 0.4)` — tone colours from `tokens.css`, the sub-signal's
-  title from the docs registry, the values formatted like the evidence lines (`VALUE_FORMAT`);
-- one closing line: *"To reach INVITE (70): bring deaths and interrupts to the average player's
-  level."* — or *"Out of reach by fixing three signals"*;
-- a `HelpLink` to a new Help anchor that explains the average player and the "what if" reading.
+- a header row: the title with its `HelpLink`, then "costs points" and "earns points" on either side of a
+  1 px centre line;
+- one row per driver, the 3 largest costs then the 2 largest strengths (at most 5, `|impact| ≥ 1`):
+  the sub-signal's title (150 px column), a red bar growing left from the centre or a green bar growing
+  right, 6 px per point, capped at the 150 px half-width, the signed impact in mono at the bar's outer
+  end, then `1.6 / run · avg 0.7` in the evidence colours — values formatted like the evidence lines
+  (`VALUE_FORMAT`), titles from the docs registry;
+- a closing line under a `--border-soft` rule: *"To reach INVITE (70): bring individual deaths and
+  median parse to the average player's level → 72"*, or *"… out of reach by fixing three signals"*;
+  none for INVITE;
+- colours, radii and type from `tokens.css` (`--inset` panel, `--red` / `--green` bars, `--faint`
+  captions); no block at all when `drivers` is absent (an evaluation saved earlier).
 
 The axis rows stay underneath, unchanged, as the detail. All strings in `web/src/i18n/en.ts` and
-`fr.ts`. The view model (which drivers to show, the sentence) lives in `web/src/lib/`, pure and
-tested; the component stays thin. The CLI verdict block (`src/format-mplus.ts`) prints the same
-list in plain text.
-
-Mocked first on the Claude Design canvas (`docs/agents/web-front.md`), 2–3 variants; the user picks.
+`fr.ts`. The view model (which drivers to show, bar widths, the sentence) lives in `web/src/lib/`,
+pure and tested; the component stays thin. The CLI verdict block (`src/format-mplus.ts`) prints the
+same drivers as plain lines (`−19 individual deaths 1.6/run (avg 0.7)`) and the path sentence.
 
 ## Tests
 

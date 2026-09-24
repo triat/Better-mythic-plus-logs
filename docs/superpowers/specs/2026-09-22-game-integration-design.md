@@ -90,25 +90,29 @@ halved the payload: v3 buys a third of the screen area back and pays for it in t
 which the cadence below is what makes affordable.
 
 **Cadence (`addon/bmpl/cadence.lua`).** A roster change starts **3 complete passes** over its chunks,
-after which the addon **stops repainting altogether** and the strip stands still. This is what makes
-it tolerable to look at: a motionless patch is far easier to ignore than a flickering one, and the
-browser loses nothing — `RosterAssembler.push` re-stamps a roster's freshness on any frame of a
-`rosterSeq` it has already assembled, so the single frame left on screen keeps the panel alive
-indefinitely. One catch-up pass every **5 s** (`HEARTBEAT_S`) covers the browser that connects while
-the strip is still.
+each chunk held on screen for **4 ticks** (`HOLD_TICKS`, 200 ms), after which the addon **stops
+repainting altogether** and the strip stands still. This is what makes it tolerable to look at: a
+motionless patch is far easier to ignore than a flickering one, and the browser loses nothing —
+`RosterAssembler.push` re-stamps a roster's freshness on any frame of a `rosterSeq` it has already
+assembled, so the single frame left on screen keeps the panel alive indefinitely. One catch-up pass
+every **5 s** (`HEARTBEAT_S`) covers the browser that connects while the strip is still.
 
-The duty cycle is therefore one pass per 100 ticks, i.e. **as many percent as the roster has chunks**:
-7 % for a party of two, 17 % for five applicants, 67 % for the 20-applicant queue above. Small
-rosters — the common case — are almost always still; a full queue is not, and that is the price of
-getting 600 B across at 9 B a frame. The post-change burst scales the same way: 3 passes is 1 s for a
-party, 10 s for a full queue. A deployment that lives in 20-applicant queues would be better served by
-the v2 grid (24 × 10, 18 B a frame) than by v3.
+The hold is what makes the catch-up pass work. The first version painted each chunk for one 50 ms tick:
+the browser samples at ~20 Hz as well, but not in phase with the game, and Chrome drops captured frames
+freely (the game window in the background, a busy GPU). A capture that missed a chunk once tended to miss
+it on every pass — the two clocks barely drift — so a browser that connected while the strip was still
+could sit on "waiting for the Group Finder" indefinitely, one chunk short, until the roster changed
+(seen in game on 2026-09-24). Held 200 ms, every chunk is sampled by any capture of 5 fps or more
+(`addon/bmpl/tests/cadence.lua`, case 6).
 
-The 5 s is the worst-case delay before a late-connecting browser fills **only if no capture frame is
-lost**. A chunk missed during a catch-up pass waits for the next one, so a 15 fps video track against
-the 20 Hz painter roughly doubles it. While that is pending, a roster that changed shows nothing: the
-previous roster stops being re-stamped as soon as the sequence number moves, and `ROSTER_STALE_MS`
-(10 s) then empties the panel.
+The price is motion. A pass lasts 0.2 s per chunk, so the duty cycle is the pass length over the 5 s
+heartbeat: about a quarter of the time for a party of two (7 chunks, 1.4 s a pass), most of the time for
+five applicants (17 chunks, 3.4 s), and continuous for a 20-applicant queue (67 chunks, 13.4 s a pass).
+The post-change burst is 4 s for a party of two and 40 s for a full queue. Small rosters — the common
+case — stay mostly still; a deployment that lives in 20-applicant queues would be better served by the
+v2 grid (24 × 10, 18 B a frame) than by v3. While a changed roster is still being transmitted, the panel
+shows nothing new: the previous roster stops being re-stamped as soon as the sequence number moves, and
+`ROSTER_STALE_MS` (10 s) then empties the panel.
 
 **Logical.** A 48 × 30 px strip cannot afford a 12-byte header, so the frame header is **7 bytes**:
 `magic|version` (1 B — high nibble `0xB`, low nibble the format version, currently `2`) ·

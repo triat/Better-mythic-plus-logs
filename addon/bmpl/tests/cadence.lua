@@ -32,14 +32,28 @@ local function concat(t)
   return table.concat(parts, ",")
 end
 
--- 1. A change is followed by exactly PASSES_AFTER_CHANGE complete passes, in order, then silence.
+local HOLD = Cadence.HOLD_TICKS
+
+-- The paint record of `passes` passes over `frames` chunks: each chunk painted once, then held (0) for
+-- HOLD - 1 ticks.
+local function passes(n, frames)
+  local out = {}
+  for i = 0, n * frames - 1 do
+    out[#out + 1] = i % frames + 1
+    for _ = 2, HOLD do out[#out + 1] = 0 end
+  end
+  return out
+end
+
+-- 1. A change is followed by exactly PASSES_AFTER_CHANGE complete passes, in order, each chunk held
+--    HOLD_TICKS, then silence.
 do
   local state = Cadence.new()
   local frames = 4
-  local painted = run(state, 20, frames, true)
-  local want = {}
-  for i = 1, Cadence.PASSES_AFTER_CHANGE * frames do want[i] = (i - 1) % frames + 1 end
-  for i = Cadence.PASSES_AFTER_CHANGE * frames + 1, 20 do want[i] = 0 end
+  local busy = Cadence.PASSES_AFTER_CHANGE * frames * HOLD
+  local painted = run(state, busy + 10, frames, true)
+  local want = passes(Cadence.PASSES_AFTER_CHANGE, frames)
+  for i = busy + 1, busy + 10 do want[i] = 0 end
   check(concat(painted) == concat(want), "after a change: got " .. concat(painted) .. ", want " .. concat(want))
 end
 
@@ -47,7 +61,7 @@ end
 do
   local state = Cadence.new()
   local frames = 3
-  run(state, Cadence.PASSES_AFTER_CHANGE * frames, frames, true) -- burn the post-change passes
+  run(state, Cadence.PASSES_AFTER_CHANGE * frames * HOLD, frames, true) -- burn the post-change passes
   -- Count the still ticks before the heartbeat fires. Summing 0.05 in floating point lands on either
   -- side of HEARTBEAT_S, so the expected count is checked with a one-tick tolerance rather than exactly.
   local silent = 0
@@ -61,18 +75,21 @@ do
   check(first == 1, "the heartbeat must start a pass at chunk 1, got " .. tostring(first))
   check(math.abs(silent - want) <= 1, silent .. " still ticks before the heartbeat, expected ~" .. want)
   local rest = {}
-  for i = 1, frames - 1 do rest[i] = Cadence.step(state, TICK, frames, false) end
-  check(concat(rest) == "2,3", "rest of the heartbeat pass: got " .. concat(rest))
+  for i = 1, frames * HOLD - 1 do rest[i] = Cadence.step(state, TICK, frames, false) or 0 end
+  local pass = passes(1, frames)
+  table.remove(pass, 1)
+  check(concat(rest) == concat(pass), "rest of the heartbeat pass: got " .. concat(rest))
   check(Cadence.step(state, TICK, frames, false) == nil, "the heartbeat pass did not stop after one pass")
 end
 
--- 3. A change during the still window restarts the cycling at once, from chunk 1.
+-- 3. A change during the still window restarts the cycling at once, from chunk 1 — even mid-hold.
 do
   local state = Cadence.new()
   local frames = 2
-  run(state, Cadence.PASSES_AFTER_CHANGE * frames, frames, true)
+  run(state, Cadence.PASSES_AFTER_CHANGE * frames * HOLD, frames, true)
   check(Cadence.step(state, TICK, frames, false) == nil, "expected stillness before the change")
   check(Cadence.step(state, TICK, frames, true) == 1, "a change must repaint chunk 1 on the same tick")
+  check(Cadence.step(state, TICK, frames, true) == 1, "a change mid-hold must repaint at once too")
 end
 
 -- 4. No frames (roster empty / strip hidden): never paints, and the heartbeat does not build up.
@@ -87,11 +104,32 @@ end
 -- 5. A single-chunk roster parks too (the common case: the strip is then wholly motionless).
 do
   local state = Cadence.new()
-  local painted = run(state, 10, 1, true)
-  local want = {}
-  for i = 1, Cadence.PASSES_AFTER_CHANGE do want[i] = 1 end
-  for i = Cadence.PASSES_AFTER_CHANGE + 1, 10 do want[i] = 0 end
+  local busy = Cadence.PASSES_AFTER_CHANGE * HOLD
+  local painted = run(state, busy + 5, 1, true)
+  local want = passes(Cadence.PASSES_AFTER_CHANGE, 1)
+  for i = busy + 1, busy + 5 do want[i] = 0 end
   check(concat(painted) == concat(want), "single chunk: got " .. concat(painted))
+end
+
+-- 6. The bug HOLD_TICKS fixes: a browser that samples at 5 fps, at any phase against the game's
+--    ticks, sees every chunk of ONE heartbeat pass. With one tick per chunk it saw only one in four.
+do
+  local frames = 4
+  for phase = 0, 3 do
+    local state = Cadence.new()
+    run(state, Cadence.PASSES_AFTER_CHANGE * frames * HOLD, frames, true)
+    local onScreen, seen, n, tick = nil, {}, 0, 0
+    while n < frames and tick < 400 do
+      tick = tick + 1
+      onScreen = Cadence.step(state, TICK, frames, false) or onScreen
+      -- 5 fps = one sample every 4 ticks, starting `phase` ticks in.
+      if (tick + phase) % 4 == 0 and onScreen and not seen[onScreen] then
+        seen[onScreen] = true
+        n = n + 1
+      end
+    end
+    check(n == frames, "phase " .. phase .. ": a 5 fps capture saw " .. n .. " of " .. frames .. " chunks")
+  end
 end
 
 print("OK " .. checked)

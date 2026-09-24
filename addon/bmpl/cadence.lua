@@ -18,28 +18,41 @@ ns.Cadence = Cadence
 
 -- How many complete passes over the roster's chunks follow a change. One pass would be enough if
 -- every frame reached the browser; three covers dropped frames, a scanner that is out of phase, and
--- the capture being paused for a moment. At 20 Hz a 4-chunk roster is 0.6 s of motion.
+-- the capture being paused for a moment. At 20 Hz a 4-chunk roster is 2.4 s of motion (HOLD_TICKS).
 Cadence.PASSES_AFTER_CHANGE = 3
+-- Ticks each chunk stays on screen. The browser samples the strip at ~20 Hz too, but not in phase with
+-- the game, and Chrome drops captured frames freely (window in the background, a busy GPU): a chunk
+-- shown for a single 50 ms tick can be missed on every pass, and a browser that connected while the
+-- strip was still then waits on "waiting for the Group Finder" forever, one chunk short. Four ticks
+-- (200 ms) is seen by any capture of 5 fps or more.
+Cadence.HOLD_TICKS = 4
 -- Seconds of stillness between catch-up passes. This is the worst case for a browser that connects
 -- while the roster is unchanged: it sees the panel fill within this delay.
 Cadence.HEARTBEAT_S = 5
 
 function Cadence.new()
-  return { remaining = 0, cursor = 0, since = 0 }
+  return { remaining = 0, cursor = 0, since = 0, hold = 0 }
 end
 
 -- One tick. `dt` is the seconds since the previous call, `frameCount` the number of chunks the current
 -- roster encodes to, `changed` true on the tick where the roster text became different.
--- Returns the 1-based chunk index to paint, or nil to leave the strip exactly as it is.
+-- Returns the 1-based chunk index to paint, or nil to leave the strip exactly as it is (still, or
+-- holding the chunk painted HOLD_TICKS - 1 ticks ago or less).
 function Cadence.step(state, dt, frameCount, changed)
   if frameCount <= 0 then
-    state.remaining, state.cursor, state.since = 0, 0, 0
+    state.remaining, state.cursor, state.since, state.hold = 0, 0, 0, 0
     return nil
   end
   if changed then
     state.remaining = Cadence.PASSES_AFTER_CHANGE * frameCount
     state.cursor = 0
     state.since = 0
+    state.hold = 0
+  end
+  -- The chunk painted on an earlier tick stays up: nothing to repaint.
+  if state.hold > 0 then
+    state.hold = state.hold - 1
+    return nil
   end
   if state.remaining <= 0 then
     state.since = state.since + (dt or 0)
@@ -50,5 +63,6 @@ function Cadence.step(state, dt, frameCount, changed)
   end
   state.remaining = state.remaining - 1
   state.cursor = (state.cursor % frameCount) + 1
+  state.hold = Cadence.HOLD_TICKS - 1
   return state.cursor
 end

@@ -23,12 +23,13 @@ describe("addon cadence", () => {
     expect(run.exitCode).toBe(0);
   });
 
-  // The two knobs the spec states in seconds. Read from the source rather than duplicated, so the
+  // The knobs the spec states. Read from the source rather than duplicated, so the
   // test fails when the file changes rather than quietly asserting yesterday's numbers.
   test("the cadence constants still match the spec", () => {
     const lua = readFileSync("addon/bmpl/cadence.lua", "utf8");
     expect(lua).toContain("Cadence.PASSES_AFTER_CHANGE = 3");
     expect(lua).toContain("Cadence.HEARTBEAT_S = 5");
+    expect(lua).toContain("Cadence.HOLD_TICKS = 4");
   });
 
   // cadence.lua must load before main.lua, which reads ns.Cadence at file scope.

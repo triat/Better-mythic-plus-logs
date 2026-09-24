@@ -2,7 +2,7 @@
 
 Status: approved in chat 2026-09-24 (audience, reference and design agreed). Canvas: variant **B, diverging
 bars**, chosen by the user — https://claude.ai/artifact/1LvjXFkGnHbQrhwu972UE3, sources in
-`docs/design/canvas/ScoreDriversBars.dc.html` and `ScoreDriversEdgeCases.dc.html`.
+`docs/design/canvas/ScoreDriversBars.dc.html` and `ScoreDriversEdgeCases.dc.html`. Implemented 2026-09-24.
 
 ## Problem
 

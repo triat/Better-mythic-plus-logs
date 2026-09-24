@@ -10,6 +10,7 @@ import { AxisLegend } from "./AxisLegend.tsx";
 import { AxisRows } from "./AxisRows.tsx";
 import { HelpLink } from "./HelpLink.tsx";
 import { Radar } from "./Radar.tsx";
+import { ScoreDrivers } from "./ScoreDrivers.tsx";
 
 export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void }) {
   const { t, locale } = useT();
@@ -50,6 +51,7 @@ export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPa
           {payload.metricAutoSelected && payload.alternateMetricHasData && t("verdict.metricAuto", { other })}
           {payload.specFilter && <> · <span className="tone-warn">{t("verdict.filter", { spec: payload.specFilter })}</span></>}
         </div>
+        <ScoreDrivers evaluation={payload.evaluation} />
         <AxisRows rows={rows} />
       </div>
       <div className="radar-wrap">

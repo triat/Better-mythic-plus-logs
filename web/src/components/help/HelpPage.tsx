@@ -104,6 +104,7 @@ function Verdict({ t, data }: SectionProps) {
       <p className="help-p">{v.summary}</p>
       <p className="help-p">{v.role}</p>
       <p className="help-p">{v.global}</p>
+      <p className="help-p" id="drivers">{v.drivers}</p>
       <p className="help-p">
         {v.thresholds}{" "}
         <Around

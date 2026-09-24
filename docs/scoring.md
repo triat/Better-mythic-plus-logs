@@ -48,6 +48,13 @@ weights or curves in `evaluation.json`, set `globalCurve` too (to
 `[[0, 0], [100, 100]]` per role to turn it off), or the percentiles no
 longer mean what they say.
 
+**What makes this score.** Under the badge, bars show the signals that cost
+or earn the most points of the global score against the role's average player
+(the calibration median, `reference` in `default-config.json`, refitted with
+`globalCurve`), and the fewest signals — three at most — that would reach the
+next verdict at that level. Each effect is "this signal alone at the average
+player's level"; they do not add up exactly to the score.
+
 Every axis lists its **evidence**: the specific sub-signals that moved the
 score, in plain language. **Timed vs. depleted is deliberately not scored**
 — it's shown in the run list as context, but a depleted key on an otherwise

@@ -449,3 +449,22 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .faq q::before, .faq q::after { content: ""; }
 .faq .help-p { margin-top: 2px; }
 @media (max-width: 900px) { .help-toc { display: none; } }
+
+/* Score drivers — canvas variant B (docs/design/canvas/ScoreDriversBars.dc.html) */
+.drivers { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; }
+.drivers-row { display: grid; grid-template-columns: 150px 150px 1px 150px minmax(0, 1fr); align-items: center; font-size: 13px; min-height: 22px; }
+.drivers-title { display: flex; align-items: center; gap: 6px; }
+.drivers-caption { font-size: 11px; color: var(--faint); }
+.drivers-caption.cost { text-align: right; padding-right: 8px; }
+.drivers-caption.earn { padding-left: 8px; }
+.drivers-side { display: flex; align-items: center; gap: 6px; }
+.drivers-side.cost { justify-content: flex-end; }
+.drivers-axis { width: 1px; height: 22px; background: var(--border); }
+.drivers-bar { height: 10px; }
+.drivers-side.cost .drivers-bar { background: var(--red); border-radius: 2px 0 0 2px; }
+.drivers-side.earn .drivers-bar { background: var(--green); border-radius: 0 2px 2px 0; }
+.drivers-impact { font-family: var(--mono); font-size: 12px; }
+.drivers-value { font-size: 12px; color: var(--text-soft); padding-left: 12px; }
+.drivers-path { font-size: 12px; color: var(--muted); border-top: 1px solid var(--border-soft); padding-top: 8px; margin-top: 4px; }
+.drivers-path b { color: var(--text); font-weight: 600; }
+.drivers-path .badge-invite, .drivers-path .badge-maybe { background: none; border: 0; }

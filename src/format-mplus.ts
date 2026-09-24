@@ -1,6 +1,7 @@
 import pc from "picocolors";
 import type { RunDefensives } from "./deepdive/types.ts";
 import type { AxisKey, Evaluation } from "./evaluation/types.ts";
+import { EVALUATION_DOCS } from "./evaluation/docs.ts";
 import { isRanked, type LookupResult, type MPlusData, type MPlusRun } from "./mplus.ts";
 import type { Metric } from "./roles.ts";
 import {
@@ -221,6 +222,26 @@ export const renderEvaluation = (ev: Evaluation): string => {
       return `${d >= 0 ? pc.green(tag) : pc.red(tag)} ${e.label}`;
     });
     lines.push(`  ${AXIS_LABEL[a.key].padEnd(12)} ${ev2.join(`  ${dim("·")}  `)}`);
+  }
+  const title = (source: string): string => {
+    const [axis, id] = source.split(".") as [AxisKey, string];
+    return (EVALUATION_DOCS.axes[axis]?.subSignals[id]?.title ?? source).toLowerCase();
+  };
+  const num = (v: number) => { const s = String(Math.round(v * 10) / 10); return s.startsWith("-") ? `−${s.slice(1)}` : s; };
+  if (ev.drivers?.length) {
+    const shown = [...ev.drivers.filter((d) => d.impact < 0).slice(0, 3), ...ev.drivers.filter((d) => d.impact > 0).reverse().slice(0, 2)];
+    const parts = shown.map((d) => {
+      const tag = `${d.impact > 0 ? "+" : "−"}${Math.abs(d.impact)}`;
+      return `${d.impact > 0 ? pc.green(tag) : pc.red(tag)} ${d.label} ${dim(`(avg ${num(d.reference)})`)}`;
+    });
+    lines.push(`  ${"Drivers".padEnd(12)} ${parts.join(`  ${dim("·")}  `)}`);
+  }
+  const nv = ev.nextVerdict;
+  if (nv) {
+    const head = `To reach ${nv.verdict.toUpperCase()} (${nv.threshold}):`;
+    lines.push(`  ${dim(nv.reachable
+      ? `${head} ${nv.sources.map(title).join(", ")} at the average player's level → ${nv.score}`
+      : `${head} out of reach by fixing ${nv.sources.length} signal${nv.sources.length === 1 ? "" : "s"}`)}`);
   }
   return lines.join("\n");
 };

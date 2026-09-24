@@ -121,6 +121,21 @@ describe("renderEvaluation", () => {
     const out2 = strip(renderEvaluation(evalFixture({ verdict: "insufficient", runsUsed: 0, global: null })));
     expect(out2).toContain("INSUFFICIENT DATA (0 runs)");
   });
+  test("drivers and the path to the next verdict", () => {
+    const out = strip(renderEvaluation(evalFixture({
+      verdict: "maybe", global: 47,
+      drivers: [
+        { source: "survival.individualDeaths", impact: -19, value: 1.6, reference: 0.7, label: "1.6 individual deaths/run" },
+        { source: "survival.avoidableVsPeers", impact: 6, value: -29, reference: -3, label: "avoidable −29% vs peers" },
+      ],
+      nextVerdict: { verdict: "invite", threshold: 70, sources: ["survival.individualDeaths"], score: 72, reachable: true },
+    })));
+    expect(out).toContain("Drivers      −19 1.6 individual deaths/run (avg 0.7)  ·  +6 avoidable −29% vs peers (avg −3)");
+    expect(out).toContain("To reach INVITE (70): individual deaths at the average player's level → 72");
+  });
+  test("no drivers line for an evaluation saved before drivers existed", () => {
+    expect(strip(renderEvaluation(evalFixture()))).not.toContain("Drivers");
+  });
 });
 
 describe("renderDeepdiveLine", () => {

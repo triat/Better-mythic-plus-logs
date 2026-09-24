@@ -64,7 +64,13 @@ Classic filter). For each of the 40 specs × 8 dungeons:
   and the payload is saved to `.calibration/payloads/` (git-ignored: third-party characters). Raw WCL
   results land in the SQLite cache like any lookup's, so re-reading them is free.
 - A budget governor reads `rateLimitData` on every response and pauses under reserve + 250 pts until the
-  hour resets. WCL also answers HTTP 429 to bursts: all workers pause 30 s and the candidate is retried.
+  hour resets.
+- **Paced, not burst.** WCL also rate-limits **per IP address**, independently of the point budget
+  (`429 Too many requests from this IP address`). The first run spent the whole hour's budget in a
+  3-minute burst (~160 lookups, ~10 requests/s) and got the IP blocked for a while; retrying every 30 s
+  kept it blocked. The collector now starts one lookup every 16 s on a single worker — at ~90 points per
+  new character and 18,000 points/h, that uses the budget across the hour at about 1 request/s — and a
+  429 backs off exponentially from 1 to 10 minutes.
 - Resumable; deadline flag `--until 12:50`.
 - **No deep-dive** in the sample (~16,000 extra points for signals production users rarely have). The
   defensive-cooldown curves stay out of scope.
@@ -96,6 +102,11 @@ different key. Measured per role and level band:
   user approves it.**
 
 ## Known limits
+
+- **Realm slugs.** About 5 % of lookups fail as "Character not found" on realms whose name bmpl does not
+  turn into WCL's slug: `Ревущий фьорд` (sent as `ревущий-фьорд`) and `Azjol-Nerub` (sent as
+  `azjol-nerub`, Blizzard's slug is `azjolnerub`). The sample loses those realms; production has the same
+  bug for any member looking those players up — reported separately, not fixed by this study.
 
 - WCL only sees players who log. The worst players, who don't, stay invisible.
 - The percentile is WCL's own run-score order inside a level band (mostly time), a proxy for the

@@ -3,6 +3,11 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
+/* Page column (canvas "Wide screens", B + C): header, tabs and content share one centred column; the bars' borders
+   still run edge to edge. The result page gets the wider column (C); every other page the narrow one (B).
+   `--gutter` is the side padding that centres a `--col` wide column inside a full-width bar. */
+:root { --col: 1200px; --gutter: max(24px, calc((100% - var(--col)) / 2)); }
+:root:has(.content-result) { --col: 1640px; }
 body { font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; min-width: 960px; }
 a { color: var(--link); text-decoration: none; }
 a:hover { color: #79b8ff; }
@@ -56,7 +61,7 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .radar-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 
 /* header */
-.top { border-bottom: 1px solid var(--border-soft); padding: 12px 24px; display: flex; flex-direction: column; gap: 10px; }
+.top { border-bottom: 1px solid var(--border-soft); padding: 12px var(--gutter); display: flex; flex-direction: column; gap: 10px; }
 .top-row { display: flex; align-items: center; gap: 16px; }
 .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; color: var(--text); }
 .brand:hover { color: var(--text); }
@@ -157,7 +162,7 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .hero-search .stepper { height: 48px; }
 
 /* tabs: compact chips that wrap; toolbar on its own row */
-.tabs { display: flex; flex-direction: column; gap: 8px; padding: 10px 24px; border-bottom: 1px solid var(--border-soft); }
+.tabs { display: flex; flex-direction: column; gap: 8px; padding: 10px var(--gutter); border-bottom: 1px solid var(--border-soft); }
 .tab-strip { display: flex; flex-wrap: wrap; gap: 6px; }
 .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border-soft); border-radius: 8px; padding: 5px 6px 5px 8px; cursor: pointer; background: transparent; font-size: 13px; white-space: nowrap; }
 .tab:hover { border-color: var(--border); }
@@ -173,8 +178,15 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .tab-meta { font-size: 12px; }
 
 /* content */
-.content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
-.content-home { max-width: none; }
+.content { display: flex; flex-direction: column; gap: 16px; padding: 20px var(--gutter); }
+/* The result page on a wide screen (C): the runs on the left, the signal tiles and Raider.IO beside them. */
+.detail-rest { display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 1700px) {
+  .detail-rest { display: grid; grid-template-columns: minmax(0, 1fr) 560px; grid-template-areas: "runs tiles" "runs rio"; grid-template-rows: auto 1fr; align-items: start; }
+  .detail-tiles { grid-area: tiles; }
+  .detail-runs { grid-area: runs; }
+  .detail-rio { grid-area: rio; }
+}
 .home { text-align: center; padding-top: 8px; }
 .stopped { max-width: 500px; margin: 4rem auto; text-align: center; }
 .toast { position: fixed; right: 24px; bottom: 24px; display: flex; gap: 12px; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
@@ -343,9 +355,9 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 
 /* --- hosted: admin page (components/admin/*) --- */
 .text-soft { color: var(--text-soft); }
-.admin-title { display: flex; align-items: baseline; gap: 12px; padding: 14px 24px 0; }
+.admin-title { display: flex; align-items: baseline; gap: 12px; padding: 14px var(--gutter) 0; }
 .admin-title h1 { font-size: 18px; font-weight: 700; margin: 0; }
-.admin-nav { display: flex; gap: 14px; padding: 10px 24px; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+.admin-nav { display: flex; gap: 14px; padding: 10px var(--gutter); border-bottom: 1px solid var(--border-soft); font-size: 13px; }
 .admin-nav a { color: var(--muted); } .admin-nav a:hover { color: var(--text); }
 .admin-section { display: flex; flex-direction: column; gap: 6px; }
 .admin-section-head { display: flex; align-items: center; gap: 10px; }
@@ -415,7 +427,7 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .privacy li { margin: 4px 0; }
 
 /* --- help page (components/help/*; canvas "HelpA" + "HelpDetails") --- */
-.help-layout { display: flex; gap: 24px; padding: 16px 24px; align-items: flex-start; }
+.help-layout { display: flex; gap: 24px; padding: 16px var(--gutter); align-items: flex-start; }
 .help-toc { position: sticky; top: 12px; width: 220px; flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 .help-toc a { color: var(--muted); padding: 4px 10px; border-radius: var(--radius); }
 .help-toc a:hover { color: var(--text); }

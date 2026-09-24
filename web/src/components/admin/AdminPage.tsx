@@ -59,7 +59,7 @@ export function AdminPage({ me }: { me: MeUser }) {
           {t("admin.page.nav.audit")}{data.errors24h > 0 && <span className="chip" style={{ marginLeft: 4, color: "var(--red)" }}>{t("admin.page.errors", { n: data.errors24h })}</span>}
         </a>
       </nav>
-      <main className="content content-home">
+      <main className="content">
         <Gauge usage={data.usage} users={data.users} />
         <Queue pending={data.pending} decided={data.decided} onDecide={(id, d, note) => act(api.admin.decide(id, d, note))} />
         <Users

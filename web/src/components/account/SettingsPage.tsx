@@ -37,7 +37,7 @@ export function SettingsPage({ me, status, quota, ownClient, onOwnClientChange, 
         <h1>{t("account.title")}</h1>
         <span className="muted" style={{ fontSize: 12 }}>{t("account.sub")}</span>
       </div>
-      <main className="content content-home">
+      <main className="content">
         <WclClientCard enabled={status.wclClients} client={ownClient} limitPerUser={quota?.limit ?? null} onChange={onOwnClientChange} onError={setToast} />
         <AccountCard me={me} onDeleted={onDeleted} onError={setToast} />
       </main>

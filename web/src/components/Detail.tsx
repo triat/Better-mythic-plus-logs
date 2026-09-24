@@ -29,9 +29,12 @@ export function Detail({ payload, hint, onReevaluate, deepdive }: DetailProps) {
   return (
     <>
       <VerdictHero payload={payload} hint={hint} onReevaluate={onReevaluate} />
-      <SignalTiles payload={payload} />
-      <DungeonRuns payload={payload} deepdive={deepdive} />
-      <RioSection payload={payload} />
+      {/* Stacked, or side by side on a wide screen: see .detail-rest in app.css. */}
+      <div className="detail-rest">
+        <div className="detail-tiles"><SignalTiles payload={payload} /></div>
+        <div className="detail-runs"><DungeonRuns payload={payload} deepdive={deepdive} /></div>
+        <div className="detail-rio"><RioSection payload={payload} /></div>
+      </div>
     </>
   );
 }

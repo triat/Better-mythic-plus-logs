@@ -514,7 +514,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
             onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
             onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} region={status.region}
           />
-          <main className={"content" + (empty ? " content-home" : "")}>
+          <main className={"content" + (empty ? "" : " content-result")}>
             {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
             {!empty && !showCompare && activePayload && (
               <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />

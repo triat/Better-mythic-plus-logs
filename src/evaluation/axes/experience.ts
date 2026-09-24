@@ -1,16 +1,17 @@
 import { clamp, signed } from "../curve.ts";
 import { scoreAxis } from "../axis.ts";
+import type { Override } from "../axis.ts";
 import type { EvalInputs } from "../inputs.ts";
 import type { AxisScore, EvaluationConfig, Evidence } from "../types.ts";
 
-export function scoreExperience(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
+export function scoreExperience(i: EvalInputs, cfg: EvaluationConfig, override?: Override): AxisScore {
   const e = i.experience;
   const result = scoreAxis("experience", [
     { id: "coverage", value: e.coverage, label: (r) => `${(r * 100).toFixed(0)}% dungeons covered` },
     { id: "atTarget", value: e.atTarget, label: (r) => `${(r * 100).toFixed(0)}% dungeons at/above target` },
     { id: "medianVsTarget", value: e.medianVsTarget, label: (r) => `median key ${signed(r)} vs target` },
     { id: "activity", value: e.activity, label: (r) => `${r} runs in last 7 days` },
-  ], i.role, cfg, i.runsUsed);
+  ], i.role, cfg, i.runsUsed, override);
 
   if (e.prevSeasonAll === null || result.score === null) return result;
 

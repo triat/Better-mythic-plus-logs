@@ -57,6 +57,11 @@ export interface EvaluationConfig {
    * two players; `[[0, 0], [100, 100]]` turns it off.
    */
   globalCurve: Record<Role, CurvePoints>;
+  /**
+   * Per role, the calibration population's median ("the average player") of each sub-signal: `x` the curve
+   * input, `value` the display value (`Evidence.value`). Feeds the score drivers; a source may be absent.
+   */
+  reference: Record<Role, Record<string, { x: number; value: number }>>;
   verdict: { invite: number; maybe: number; minRuns: number };
   confidence: { high: number; medium: number; consistencyMinRuns: number; deepdiveMinRuns: number };
 }

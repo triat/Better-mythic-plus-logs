@@ -1,10 +1,11 @@
 import { scoreAxis } from "../axis.ts";
+import type { Override } from "../axis.ts";
 import { signed } from "../curve.ts";
 import type { EvalInputs } from "../inputs.ts";
 import type { AxisScore, EvaluationConfig } from "../types.ts";
 
 /** Level scaling is applied per run (in inputs.ts) using each run's own key level, not the target. */
-export function scoreSurvival(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
+export function scoreSurvival(i: EvalInputs, cfg: EvaluationConfig, override?: Override): AxisScore {
   const s = i.survival;
   return scoreAxis("survival", [
     { id: "individualDeaths", value: s.individualDeathsScaled, raw: s.individualDeaths ?? undefined, label: (r) => `${r.toFixed(1)} individual deaths/run` },
@@ -20,5 +21,5 @@ export function scoreSurvival(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
       id: "avoidableDeaths", value: s.avoidableDeathShare, extra: { count: s.avoidableDeathsCount, total: s.countedDeathsCount },
       label: () => `${s.avoidableDeathsCount}/${s.countedDeathsCount} deaths with a defensive available`,
     },
-  ], i.role, cfg, i.runsUsed);
+  ], i.role, cfg, i.runsUsed, override);
 }

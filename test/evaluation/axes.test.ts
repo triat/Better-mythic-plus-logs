@@ -222,3 +222,19 @@ describe("scoreAllAxes", () => {
     expect(axes.map((a) => a.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
   });
 });
+
+describe("scoreAxis override", () => {
+  const subs = [
+    { id: "individualDeaths", value: 2, label: (r: number) => `${r}` },
+    { id: "wipeDeaths", value: 1, label: (r: number) => `${r}` },
+  ];
+  test("replaces only the named sub-signal's curve input", () => {
+    const base = scoreAxis("survival", subs, "dps", cfg, 6);
+    const over = scoreAxis("survival", subs, "dps", cfg, 6, { "survival.individualDeaths": 0 });
+    const get = (a: typeof base, s: string) => a.evidence.find((e) => e.source === s)!;
+    expect(get(over, "survival.individualDeaths").delta).toBeGreaterThan(get(base, "survival.individualDeaths").delta);
+    expect(get(over, "survival.wipeDeaths").delta).toBeCloseTo(get(base, "survival.wipeDeaths").delta, 6);
+    expect(get(over, "survival.individualDeaths").value).toBe(2); // the evidence still reports the actual value
+    expect(over.score!).toBeGreaterThan(base.score!);
+  });
+});

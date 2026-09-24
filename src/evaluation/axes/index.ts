@@ -1,3 +1,4 @@
+import type { Override } from "../axis.ts";
 import type { EvalInputs } from "../inputs.ts";
 import type { AxisScore, EvaluationConfig } from "../types.ts";
 import { scoreConsistency } from "./consistency.ts";
@@ -7,9 +8,9 @@ import { scoreSurvival } from "./survival.ts";
 import { scoreThroughput } from "./throughput.ts";
 import { scoreUtility } from "./utility.ts";
 
-export const scoreAllAxes = (i: EvalInputs, cfg: EvaluationConfig): AxisScore[] => [
-  scoreSurvival(i, cfg), scoreUtility(i, cfg), scoreThroughput(i, cfg),
-  scoreConsistency(i, cfg), scorePreparation(i, cfg), scoreExperience(i, cfg),
+export const scoreAllAxes = (i: EvalInputs, cfg: EvaluationConfig, override?: Override): AxisScore[] => [
+  scoreSurvival(i, cfg, override), scoreUtility(i, cfg, override), scoreThroughput(i, cfg, override),
+  scoreConsistency(i, cfg, override), scorePreparation(i, cfg, override), scoreExperience(i, cfg, override),
 ];
 
 /** Every `source` an evidence entry can carry: the config's sub-signals plus the previous-season bonus. The web

@@ -59,6 +59,20 @@ describe("validateConfig", () => {
     expect(validateConfig(DEFAULT_CONFIG).confidence.deepdiveMinRuns).toBe(2);
     expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { confidence: { deepdiveMinRuns: "x" } }))).toThrow(/deepdiveMinRuns/);
   });
+  test("reference: every role, known sources, finite x and value", () => {
+    const cfg = validateConfig(DEFAULT_CONFIG);
+    for (const role of ["dps", "healer", "tank"] as const) {
+      expect(cfg.reference[role]["survival.individualDeaths"]).toBeDefined();
+      expect(cfg.reference[role]["survival.defensiveUsage"]).toBeUndefined(); // no deep-dive in the calibration sample
+    }
+    const unknown = deepMerge(DEFAULT_CONFIG, { reference: { dps: { "survival.nope": { x: 1, value: 1 } } } });
+    expect(() => validateConfig(unknown)).toThrow(/reference\.dps\.survival\.nope: unknown source/);
+    const missing = structuredClone(DEFAULT_CONFIG) as unknown as Record<string, Record<string, unknown>>;
+    delete missing.reference!.healer;
+    expect(() => validateConfig(missing)).toThrow(/reference\.healer: missing/);
+    const nan = deepMerge(DEFAULT_CONFIG, { reference: { tank: { "utility.dispels": { x: "a", value: 1 } } } });
+    expect(() => validateConfig(nan)).toThrow(/reference\.tank\.utility\.dispels\.x/);
+  });
 });
 
 describe("deepMerge", () => {

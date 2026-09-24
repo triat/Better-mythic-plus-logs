@@ -52,7 +52,7 @@ const checkWeights = (v: unknown, path: string): Record<Role, number> => {
 /** Structural + semantic validation. Throws with the offending path in the message. */
 export function validateConfig(obj: unknown): EvaluationConfig {
   if (!isObj(obj)) return fail("config", "must be an object");
-  expectKeys(obj, ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "globalCurve", "verdict", "confidence"], "config");
+  expectKeys(obj, ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "globalCurve", "reference", "verdict", "confidence"], "config");
   if (typeof obj.version !== "string") fail("version", "must be a string");
   const levelScale = checkCurve(obj.levelScale, "levelScale", 0, 10);
 
@@ -107,6 +107,25 @@ export function validateConfig(obj: unknown): EvaluationConfig {
     globalCurve[r] = c;
   }
 
+  if (!isObj(obj.reference)) fail("reference", "must be an object");
+  expectKeys(obj.reference as Record<string, unknown>, ROLES, "reference");
+  const known = new Set(AXIS_KEYS.flatMap((k) => Object.keys(defaultAxes[k].subSignals).map((id) => `${k}.${id}`)));
+  const finite = (v: unknown, path: string): number =>
+    typeof v === "number" && Number.isFinite(v) ? v : fail(path, "must be a finite number");
+  const reference = {} as EvaluationConfig["reference"];
+  for (const r of ROLES) {
+    const byRole = (obj.reference as Record<string, unknown>)[r];
+    if (!isObj(byRole)) fail(`reference.${r}`, "must be an object");
+    reference[r] = {};
+    for (const [src, ref] of Object.entries(byRole as Record<string, unknown>)) {
+      const p = `reference.${r}.${src}`;
+      if (!known.has(src)) fail(p, "unknown source");
+      if (!isObj(ref)) fail(p, "must be an object");
+      expectKeys(ref as Record<string, unknown>, ["x", "value"], p);
+      reference[r][src] = { x: finite((ref as Record<string, unknown>).x, `${p}.x`), value: finite((ref as Record<string, unknown>).value, `${p}.value`) };
+    }
+  }
+
   if (!isObj(obj.verdict)) fail("verdict", "must be an object");
   expectKeys(obj.verdict as Record<string, unknown>, ["invite", "maybe", "minRuns"], "verdict");
   const vd = obj.verdict as Record<string, unknown>;
@@ -123,7 +142,7 @@ export function validateConfig(obj: unknown): EvaluationConfig {
     deepdiveMinRuns: checkNumber(cf.deepdiveMinRuns, "confidence.deepdiveMinRuns"),
   };
 
-  return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, globalCurve, verdict, confidence };
+  return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, globalCurve, reference, verdict, confidence };
 }
 
 const canonical = (v: unknown): string => {

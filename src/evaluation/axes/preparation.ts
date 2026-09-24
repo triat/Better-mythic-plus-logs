@@ -1,9 +1,10 @@
 import { curve, signed } from "../curve.ts";
 import { scoreAxis } from "../axis.ts";
+import type { Override } from "../axis.ts";
 import type { EvalInputs } from "../inputs.ts";
 import type { AxisScore, EvaluationConfig } from "../types.ts";
 
-export function scorePreparation(i: EvalInputs, cfg: EvaluationConfig): AxisScore {
+export function scorePreparation(i: EvalInputs, cfg: EvaluationConfig, override?: Override): AxisScore {
   const p = i.preparation;
   // Object key order in expectedIlvl follows deep-merge order: defaults first, then the user's
   // override keys appended last — so the last key is the newest known season.
@@ -15,5 +16,5 @@ export function scorePreparation(i: EvalInputs, cfg: EvaluationConfig): AxisScor
     { id: "potions", value: p.potions, label: (r) => `${r.toFixed(1)} potions/run` },
     { id: "healthstones", value: p.healthstones, label: (r) => `${r.toFixed(1)} healthstones/run` },
     { id: "ilvlVsLevel", value: ilvlVsLevel, label: (r) => `ilvl ${signed(r)} vs expected` },
-  ], i.role, cfg, i.runsUsed);
+  ], i.role, cfg, i.runsUsed, override);
 }

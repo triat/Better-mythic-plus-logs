@@ -1,20 +1,11 @@
 import { scoreAllAxes } from "./axes/index.ts";
 import { configVersion } from "./config.ts";
-import { curve } from "./curve.ts";
+import { scoreDrivers } from "./drivers.ts";
+import { finalGlobal } from "./global.ts";
 import { collectInputs, type EvalPayload } from "./inputs.ts";
-import type { AxisScore, Evaluation, EvaluationConfig, Role, Verdict } from "./types.ts";
+import type { Evaluation, EvaluationConfig, Verdict } from "./types.ts";
 
-export function globalScore(axes: AxisScore[], role: Role, cfg: EvaluationConfig): number | null {
-  let num = 0;
-  let den = 0;
-  for (const a of axes) {
-    if (a.score === null) continue;
-    const w = cfg.axisWeights[role][a.key];
-    num += w * a.score;
-    den += w;
-  }
-  return den > 0 ? num / den : null;
-}
+export { globalScore, finalGlobal } from "./global.ts";
 
 export function verdictFor(global: number | null, runsUsed: number, cfg: EvaluationConfig): Verdict {
   if (global === null || runsUsed < cfg.verdict.minRuns) return "insufficient";
@@ -27,16 +18,21 @@ export function verdictFor(global: number | null, runsUsed: number, cfg: Evaluat
 export function evaluate(payload: EvalPayload, cfg: EvaluationConfig): Evaluation {
   const inputs = collectInputs(payload, cfg);
   const axes = scoreAllAxes(inputs, cfg);
-  const rawGlobal = globalScore(axes, inputs.role, cfg);
   // Mapped onto the role's percentile, then rounded once here so the verdict threshold and every
   // rendered global (CLI, web) agree.
-  const global = rawGlobal === null ? null : Math.round(curve(rawGlobal, cfg.globalCurve[inputs.role]));
+  const global = finalGlobal(axes, inputs.role, cfg);
+  const verdict = verdictFor(global, inputs.runsUsed, cfg);
+  const { drivers, nextVerdict } = global === null || verdict === "insufficient"
+    ? { drivers: [], nextVerdict: null }
+    : scoreDrivers(inputs, axes, global, verdict, cfg);
   return {
     role: inputs.role,
     targetLevel: inputs.targetLevel,
     axes,
     global,
-    verdict: verdictFor(global, inputs.runsUsed, cfg),
+    verdict,
+    drivers,
+    nextVerdict,
     runsUsed: inputs.runsUsed,
     analyzedRuns: inputs.analyzedRuns,
     configVersion: configVersion(cfg),

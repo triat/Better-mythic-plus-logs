@@ -26,6 +26,28 @@ export interface AxisScore {
   evidence: Evidence[];
 }
 
+/** A sub-signal's effect on the badge, compared against the role's average player (`cfg.reference`). */
+export interface Driver {
+  source: string; // "<axis>.<subSignalId>"
+  /** Badge points vs. the average player: negative costs points, positive earns them. */
+  impact: number;
+  /** The player's raw value behind `label` (unscaled where one exists), unrounded. */
+  value: number;
+  /** The role's average player's value for this source (`cfg.reference[role][source].value`). */
+  reference: number;
+  /** The English evidence line, for the CLI. */
+  label: string;
+}
+
+/** The nearest higher verdict and the shortest path of driver sources that would reach it. */
+export interface NextVerdict {
+  verdict: "maybe" | "invite";
+  threshold: number;
+  sources: string[];
+  score: number;
+  reachable: boolean;
+}
+
 export interface Evaluation {
   role: Role;
   targetLevel: number;
@@ -36,6 +58,10 @@ export interface Evaluation {
   runsUsed: number;
   analyzedRuns: number;
   configVersion: string;
+  /** Sub-signals' impact on the badge vs. the average player, costs first; empty when there is no verdict path (INSUFFICIENT DATA). */
+  drivers?: Driver[];
+  /** The shortest path of driver sources to the next verdict up; null for INVITE or INSUFFICIENT DATA. */
+  nextVerdict?: NextVerdict | null;
 }
 
 export interface SubSignalConfig {

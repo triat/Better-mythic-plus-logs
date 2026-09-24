@@ -189,7 +189,7 @@ function olderHalf(s: Sample): { payload: Sample["payload"]; newer: Run[] } | nu
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 
 function predictive(test: Sample[], base: EvaluationConfig, c: Candidate): string[] {
-  const lines = ["", "## Does the score predict the next runs? (held-out, split by date)", "", "Each character's runs are split by date. The score is computed from the older half only; the outcomes are measured on the newer half, which the score never saw. Spearman correlation, sign flipped so that higher = the score correctly expected fewer deaths / less avoidable damage. The last column is the naive baseline: the older half's own value of that outcome."];
+  const lines: string[] = [];
   const rows: { cur: number; cand: number; deathsA: number; deathsB: number; avoidA: number; avoidB: number }[] = [];
   for (const s of test) {
     const split = olderHalf(s);
@@ -221,7 +221,8 @@ function predictive(test: Sample[], base: EvaluationConfig, c: Candidate): strin
   }
   const hitD = flagged.filter((x) => x.hit).map((x) => x.d);
   const okD = flagged.filter((x) => !x.hit).map((x) => x.d);
-  lines.push("", "## Do the disqualifiers catch the right people? (held-out)", "", `Flagged on the older runs (${c.caps.map((cap) => `${cap.source} worse than ${cap.limit}`).join("; ")}), then individual deaths per run measured on the newer runs.`, "", "| Group | n | deaths per run in the newer runs (mean) | median |", "|---|---|---|---|", `| flagged by a disqualifier | ${hitD.length} | ${fmt(mean(hitD))} | ${fmt(quantile(hitD, 0.5))} |`, `| everyone else | ${okD.length} | ${fmt(mean(okD))} | ${fmt(quantile(okD, 0.5))} |`, "", "| Outcome in the newer runs | current | candidate | older-half value alone | n |", "|---|---|---|---|---|");
+  lines.push("", "## Do the disqualifiers catch the right people? (held-out)", "", `Flagged on the older runs (${c.caps.map((cap) => `${cap.source} worse than ${cap.limit}`).join("; ")}), then individual deaths per run measured on the newer runs.`, "", "| Group | n | deaths per run in the newer runs (mean) | median |", "|---|---|---|---|", `| flagged by a disqualifier | ${hitD.length} | ${fmt(mean(hitD))} | ${fmt(quantile(hitD, 0.5))} |`, `| everyone else | ${okD.length} | ${fmt(mean(okD))} | ${fmt(quantile(okD, 0.5))} |`);
+  lines.push("", "## Does the score predict the next runs? (held-out, split by date)", "", "Each character's runs are split by date. The score is computed from the older half only; the outcomes are measured on the newer half, which the score never saw. Spearman correlation, sign flipped so that higher = the score correctly expected fewer deaths / less avoidable damage. The last column is the naive baseline: the older half's own value of that outcome.", "", "| Outcome in the newer runs | current | candidate | older-half value alone | n |", "|---|---|---|---|---|");
   for (const [label, a, b] of [["deaths per run", "deathsA", "deathsB"], ["avoidable damage vs peers", "avoidA", "avoidB"]] as const) {
     const r = rows.filter((x) => Number.isFinite(x[b]) && Number.isFinite(x[a]));
     if (r.length < 10) continue;

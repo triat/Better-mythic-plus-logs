@@ -1,7 +1,7 @@
 # Scoring calibration study — design
 
 Status: approved 2026-09-24 (protocol agreed in chat; the user set the scope and the budget window).
-Collection running.
+Collection done (1,081 characters); results below; the recommended change awaits the user's decision.
 
 ## Goal
 
@@ -101,6 +101,42 @@ different key. Measured per role and level band:
 - A candidate `default-config.json` with its `version` bumped. **Not merged into production until the
   user approves it.**
 
+## Results (2026-09-24, 1,081 characters, 0 names kept in the repo)
+
+Collected 07:47–12:50 with `performLookup` (~87 pts each, 54 skips: renamed characters and the realm-slug
+bug below). Fit half 552, held-out half 529; every number here is on the held-out half.
+
+**The rubric is too narrow, not too generous in order.** Today's global score ranks players well
+against WCL's own ladder (Spearman 0.67 dps, 0.54 healer, 0.67 tank), but squeezes them: p5–p95 is
+60–89, 79 % INVITE, 0 % PASS, and the worst fifth of each band still scores 64–74.
+
+| Candidate | p5 / p25 / median / p75 / p95 | INVITE / MAYBE / PASS | ranks like WCL (dps / healer / tank) |
+|---|---|---|---|
+| today | 60 / 71 / 76 / 81 / 89 | 79 / 20 / 0 % | 0.67 / 0.54 / 0.67 |
+| percentile curves on every sub-signal + global percentile | 8 / 28 / 51 / 74 / 95 | 30 / 42 / 27 % | 0.64 / 0.50 / 0.62 |
+| **today's rubric + one global percentile curve per role** | ~5 / 29 / 51 / 73 / 96 | ~30 / 45 / 25 % | **0.67 / 0.54 / 0.67** |
+
+The last row — `scripts/calibration/global-only.ts` — spreads the score as much as refitting every
+curve, and keeps today's ranking exactly (a monotone mapping cannot reorder anyone). The score then
+reads as "percentile among EU players logging +15 to +20 in that role". It is the recommended change:
+one `CurvePoints` per role in `default-config.json` applied to the global score, with thresholds 70/30.
+
+**Rejected on the data:**
+
+- *Survival weighted up* (×1.5 to ×3, with or without Experience halved): the global score's power to
+  predict a player's later deaths rises from ~0.00 to at most 0.09, while the WCL ranking drops to
+  0.43–0.53. Not worth it.
+- *Disqualifiers* (worst 5 % on individual deaths or avoidable damage caps the verdict at MAYBE):
+  flagged players die exactly as often in their later runs as everyone else (0.44 vs 0.44 per run,
+  n = 52). No cap.
+- *Sub-signal reweighting by split-half reliability* (wipe deaths 0.37, a tank's own deaths 0.12,
+  Consistency 0.2–0.5, against 0.7–0.9 for potions, healthstones, kicks, parse at target): changes
+  nothing measurable on the global. Consistency already weighs 0.
+
+**What no global score does:** predict who dies next. A player's own past death rate predicts their
+later death rate (0.47), a player's past avoidable damage predicts their later one (0.42); every
+global blend is at ≤ 0.1. Those two signals are better shown on their own than averaged in.
+
 ## Known limits
 
 - **Realm slugs.** About 5 % of lookups fail as "Character not found" on realms whose name bmpl does not
@@ -108,6 +144,10 @@ different key. Measured per role and level band:
   `azjol-nerub`, Blizzard's slug is `azjolnerub`). The sample loses those realms; production has the same
   bug for any member looking those players up — reported separately, not fixed by this study.
 
+- The percentile curves describe one season and one population (EU, +15 to +20, loggers); they must be
+  refitted each season, and an applicant far below +15 is compared with a stronger population.
+- Axis scores keep today's curves: with the recommended change the global spreads while the axis
+  cards still read 60–90.
 - WCL only sees players who log. The worst players, who don't, stay invisible.
 - The percentile is WCL's own run-score order inside a level band (mostly time), a proxy for the
   performance ladder used only to stratify the sample; the analysis runs on the real signals.

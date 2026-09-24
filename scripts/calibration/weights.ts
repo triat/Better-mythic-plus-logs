@@ -32,6 +32,9 @@ const VARIANTS: Record<string, Variant> = {
   "survival ×2, experience ×0.5": { axes: { survival: 2, experience: 0.5 } },
   "survival ×3, experience ×0.5, preparation ×0.5": { axes: { survival: 3, experience: 0.5, preparation: 0.5 } },
   "S×2 E×0.5 + reliability": { axes: { survival: 2, experience: 0.5 }, subs: RELIABILITY },
+  "reliability only": { subs: RELIABILITY },
+  "survival ×1.5 + reliability": { axes: { survival: 1.5 }, subs: RELIABILITY },
+  "S×1.5 E×0.75 + reliability": { axes: { survival: 1.5, experience: 0.75 }, subs: RELIABILITY },
   "S×2 E×0.5 + reliability + avoidable ×1.5": { axes: { survival: 2, experience: 0.5 }, subs: { ...RELIABILITY, "survival.avoidableVsPeers": { dps: 1.5, healer: 1.5, tank: 1.5 } } },
 };
 

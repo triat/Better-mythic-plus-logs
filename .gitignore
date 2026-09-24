@@ -19,3 +19,6 @@ web/dist/
 web/node_modules/
 .superpowers/
 .claude/settings.local.json
+
+# Scoring-calibration study data (scripts/calibration/): WCL payloads of third-party characters.
+/.calibration/

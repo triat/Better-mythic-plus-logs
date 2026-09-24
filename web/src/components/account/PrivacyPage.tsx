@@ -8,7 +8,7 @@ export function PrivacyPage({ operator, guildRequired }: Props) {
   const { t } = useT();
   return (
     <>
-      <header className="top"><div className="top-row"><div className="brand">bmpl</div></div></header>
+      <header className="top"><div className="top-row"><a className="brand" href="/">bmpl</a></div></header>
       <main className="privacy">
         <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.back")}</a>
         <h1>{t("privacy.title")}</h1>

@@ -13,6 +13,17 @@ export function anchorOf(source: string): Anchor {
   return source.includes(".") ? source : `axis-${source}`;
 }
 
+/** The element id a `location.hash` points at ("#drivers" → "drivers"), decoded; null for an empty or malformed hash. */
+export function hashAnchor(hash: string): Anchor | null {
+  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+}
+
 export interface TocEntry { anchor: Anchor; label: string; sub?: boolean }
 
 /** what, verdict, axes (+ six sub entries, titled by the registry), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), live-addon, reading, faq. */

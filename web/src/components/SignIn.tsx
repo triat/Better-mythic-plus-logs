@@ -22,7 +22,7 @@ export function SignIn({ notice, loginFailed, note }: Props) {
   };
   return (
     <>
-      <header className="top"><div className="top-row"><div className="brand">bmpl</div></div></header>
+      <header className="top"><div className="top-row"><a className="brand" href="/">bmpl</a></div></header>
       <main className="signin">
         <h1>{t("signin.tagline")}</h1>
         <p className="muted">{t("signin.sub")}</p>

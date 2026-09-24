@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api.ts";
 import type { StatusInfo } from "../../lib/hostedMode.ts";
 import type { DocsResponse, TextBlock } from "../../types.ts";
-import { axisIsInformational, curveTable, faqEntries, fmtThresholds, toc } from "../../lib/help.ts";
+import { axisIsInformational, curveTable, faqEntries, fmtThresholds, hashAnchor, toc } from "../../lib/help.ts";
 import { AXIS_ORDER } from "../../lib/verdict.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
 import { useT } from "../../locale.tsx";
@@ -40,10 +40,19 @@ export function HelpPage({ status, bare = false }: Props) {
     api.docs(locale).then((r) => { if (!alive) return; if (r.ok) setData(r); else setToast(r.error); });
     return () => { alive = false; };
   }, [locale]);
+  // The page is empty until /api/docs answers, so the browser's own jump to /help#anchor found nothing to scroll
+  // to. Once the sections exist, jump to the hash's target — once per page load, not on every language switch.
+  const jumped = useRef(false);
+  useEffect(() => {
+    if (!data || jumped.current) return;
+    jumped.current = true;
+    const id = hashAnchor(location.hash);
+    if (id) document.getElementById(id)?.scrollIntoView();
+  }, [data]);
   const entries = useMemo(() => (data ? toc(t, data.docs, status.hosted) : []), [t, data, status.hosted]);
   return (
     <>
-      {bare && <header className="top"><div className="top-row"><div className="brand">bmpl</div></div></header>}
+      {bare && <header className="top"><div className="top-row"><a className="brand" href="/">bmpl</a></div></header>}
       <div className="admin-title">
         <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.backToLookups")}</a>
         <h1>{t("help.title")}</h1>

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { anchorOf, axisIsInformational, axisNote, budgetPill, curvePath, curveTable, faqEntries, fmtThresholds, linkSegments, roleWeights, toc } from "./help.ts";
+import { anchorOf, axisIsInformational, hashAnchor, axisNote, budgetPill, curvePath, curveTable, faqEntries, fmtThresholds, linkSegments, roleWeights, toc } from "./help.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -22,6 +22,17 @@ describe("anchorOf", () => {
     expect(anchorOf("survival.individualDeaths")).toBe("survival.individualDeaths");
     expect(anchorOf("survival")).toBe("axis-survival");
     expect(anchorOf("experience.prevSeasonBonus")).toBe("experience.prevSeasonBonus");
+  });
+});
+
+describe("hashAnchor", () => {
+  test("the id a hash points at, decoded; null when there is none or it is malformed", () => {
+    expect(hashAnchor("#drivers")).toBe("drivers");
+    expect(hashAnchor("#survival.individualDeaths")).toBe("survival.individualDeaths");
+    expect(hashAnchor("#live%2Daddon")).toBe("live-addon");
+    expect(hashAnchor("")).toBeNull();
+    expect(hashAnchor("#")).toBeNull();
+    expect(hashAnchor("#%E0%A4%A")).toBeNull();
   });
 });
 

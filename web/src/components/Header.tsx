@@ -116,7 +116,7 @@ export function Header(p: Props) {
   return (
     <header className={"top" + (p.hero ? " top-hero" : "")}>
       <div className="top-row">
-        <div className="brand">bmpl</div>
+        <a className="brand" href="/">bmpl</a>
         {showSearch && !p.hero && search}
         <div className="grow" />
         <LiveChip state={p.live.state} connect={p.live.connect} />

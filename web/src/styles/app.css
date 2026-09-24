@@ -58,7 +58,8 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 /* header */
 .top { border-bottom: 1px solid var(--border-soft); padding: 12px 24px; display: flex; flex-direction: column; gap: 10px; }
 .top-row { display: flex; align-items: center; gap: 16px; }
-.brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+.brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; color: var(--text); }
+.brand:hover { color: var(--text); }
 .grow { flex: 1; }
 .search { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 760px; }
 .top-row .search { flex: 1 1 auto; min-width: 720px; max-width: 980px; }

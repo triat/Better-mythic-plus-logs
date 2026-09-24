@@ -2,6 +2,7 @@
   "name": "bmpl",
   "version": "0.4.0",
   "description": "Better Mythic+ Logs — Warcraft Logs M+ character analyzer",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "bmpl": "./src/cli.ts"

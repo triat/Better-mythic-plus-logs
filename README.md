@@ -113,3 +113,6 @@ same source. If you want your own — for a guild, or offline — start here:
 
 Bun ≥ 1.3, TypeScript, React. Avoidable-damage classification courtesy of
 [postmortem](https://github.com/Sharpened-Banana/postmortem).
+
+[MIT](LICENSE) — use it, change it, host your own. World of Warcraft is a trademark of Blizzard
+Entertainment; bmpl is not affiliated with Blizzard, Warcraft Logs or Raider.IO.

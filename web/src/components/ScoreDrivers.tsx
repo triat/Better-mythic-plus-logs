@@ -10,9 +10,10 @@ import { HelpLink } from "./HelpLink.tsx";
 export function ScoreDrivers({ evaluation }: { evaluation: Evaluation }) {
   const { t, locale } = useT();
   const { docs } = useDocs();
+  if (!docs) return null; // no raw source-key flash while GET /api/docs is still in flight
   const titleOf = (source: string): string => {
     const [axis, id] = source.split(".") as [AxisKey, string];
-    return docs?.docs.axes[axis]?.subSignals[id]?.title ?? source;
+    return docs.docs.axes[axis]?.subSignals[id]?.title ?? source;
   };
   const v = driversView(t, locale, evaluation, titleOf);
   if (!v) return null;

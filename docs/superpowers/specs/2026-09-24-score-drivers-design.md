@@ -66,7 +66,8 @@ than forcing a sum.
 input by its reference, recompute, and repeat with the next most negative — up to **3 signals** —
 until the global reaches the next threshold (`verdict.maybe` from PASS, `verdict.invite` from MAYBE).
 The result lists the signals used and the score reached. If three are not enough, the result says so
-(`reachable: false`). No path for INVITE or INSUFFICIENT DATA.
+(`reachable: false`). No path for INVITE or INSUFFICIENT DATA. No costs (nothing with a negative
+impact) also means no path: `nextVerdict` is `null`.
 
 **Output.** `Evaluation` gains:
 

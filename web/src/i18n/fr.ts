@@ -267,7 +267,7 @@ export const fr: Mirror<typeof en> = {
     costs: "coûte des points",
     earns: "rapporte des points",
     avg: "moy. {value}",
-    unit: { perRun: "{value} / run", vsPeers: "{value} % vs pairs", pct: "{value} %", plain: "{value}" },
+    unit: { perRun: "{value} / run", vsPeers: "{value} % vs pairs", pct: "{value} %", plain: "{value}", ptsVsPeers: "{value} pts vs pairs", pts: "{value} pts" },
     path: {
       reach: "Pour passer {verdict} ({threshold}) : ramener {list} au niveau du joueur moyen → {score}",
       out: "Pour passer {verdict} ({threshold}) : hors de portée en corrigeant {count, plural, one {# signal} other {# signaux}}",

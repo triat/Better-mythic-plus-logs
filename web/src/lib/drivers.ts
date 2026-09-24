@@ -10,16 +10,18 @@ export const BAR_MAX_PX = 150;
 const MAX_COSTS = 3;
 const MAX_EARNS = 2;
 
-type Unit = "perRun" | "vsPeers" | "pct" | "plain";
-/** How each source reads with its unit; the reference drops "/ run" and "vs peers" to stay short. */
+type Unit = "perRun" | "vsPeers" | "pct" | "plain" | "ptsVsPeers" | "pts";
+/** How each source reads with its unit; the reference drops "/ run" and "vs peers" to stay short.
+ * `utility.kicksVsPeers` is percentage *points* vs peers, not a percentage, so it gets its own unit
+ * rather than `vsPeers` (which is a true percentage, for `survival.avoidableVsPeers`/`dtpsVsPeers`). */
 const UNIT: Record<string, Unit> = {
   "survival.individualDeaths": "perRun", "survival.wipeDeaths": "perRun", "survival.groupDeaths": "perRun",
-  "survival.avoidableVsPeers": "vsPeers", "survival.dtpsVsPeers": "vsPeers", "utility.kicksVsPeers": "vsPeers",
+  "survival.avoidableVsPeers": "vsPeers", "survival.dtpsVsPeers": "vsPeers", "utility.kicksVsPeers": "ptsVsPeers",
   "utility.kicksAbsolute": "pct", "utility.dispels": "perRun",
   "preparation.potions": "perRun", "preparation.healthstones": "perRun",
   "experience.coverage": "pct", "experience.atTarget": "pct",
 };
-const REF_UNIT: Record<Unit, Unit> = { perRun: "plain", vsPeers: "pct", pct: "pct", plain: "plain" };
+const REF_UNIT: Record<Unit, Unit> = { perRun: "plain", vsPeers: "pct", pct: "pct", plain: "plain", ptsVsPeers: "pts", pts: "pts" };
 
 export interface DriverRow { source: string; title: string; impact: string; tone: "good" | "bad"; barPx: number; value: string; reference: string }
 export interface DriversPath { message: string; verdict: string; verdictCls: "badge-maybe" | "badge-invite"; threshold: string; list: string; score: string }

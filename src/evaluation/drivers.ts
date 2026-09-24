@@ -1,6 +1,6 @@
 // Score drivers: for each sub-signal, how many badge points the player gains or loses against the role's average
-// player (the calibration median, `cfg.reference`), and the fewest signals to bring to that level to reach the next
-// verdict. Spec: docs/superpowers/specs/2026-09-24-score-drivers-design.md.
+// player (the calibration median, `cfg.reference`), and the largest costs, up to three, that together would bring
+// the player to the next verdict if brought to that level. Spec: docs/superpowers/specs/2026-09-24-score-drivers-design.md.
 import { scoreAllAxes } from "./axes/index.ts";
 import type { Override } from "./axis.ts";
 import { finalGlobal } from "./global.ts";
@@ -25,11 +25,13 @@ export function scoreDrivers(inputs: EvalInputs, axes: AxisScore[], global: numb
 
   const target = verdict === "pass" ? "maybe" : verdict === "maybe" ? "invite" : null;
   if (!target) return { drivers, nextVerdict: null };
+  const costs = drivers.filter((x) => x.impact < 0).slice(0, PATH_MAX);
+  if (costs.length === 0) return { drivers, nextVerdict: null }; // nothing costs points: no path to report
   const threshold = cfg.verdict[target];
   const override: Record<string, number> = {};
   const sources: string[] = [];
   let score = global;
-  for (const d of drivers.filter((x) => x.impact < 0).slice(0, PATH_MAX)) {
+  for (const d of costs) {
     override[d.source] = ref[d.source]!.x;
     sources.push(d.source);
     score = globalWith(override);

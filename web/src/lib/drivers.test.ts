@@ -5,7 +5,7 @@ import { makeT, tEn } from "../i18n/t.ts";
 import { BAR_MAX_PX, driversView } from "./drivers.ts";
 
 const tFr = makeT(fr, "fr");
-const titles: Record<string, string> = { "survival.individualDeaths": "Individual deaths", "throughput.medianParse": "Median parse", "throughput.parseAtTarget": "Parse at target", "survival.avoidableVsPeers": "Avoidable damage", "experience.atTarget": "Dungeons at target", "utility.dispels": "Dispels" };
+const titles: Record<string, string> = { "survival.individualDeaths": "Individual deaths", "throughput.medianParse": "Median parse", "throughput.parseAtTarget": "Parse at target", "survival.avoidableVsPeers": "Avoidable damage", "experience.atTarget": "Dungeons at target", "utility.dispels": "Dispels", "utility.kicksVsPeers": "Kicks" };
 const titleOf = (s: string) => titles[s] ?? s;
 const ev = (over: Partial<Evaluation>): Evaluation => ({
   role: "dps", targetLevel: 16, axes: [], global: 47, verdict: "maybe", runsUsed: 8, analyzedRuns: 0, configVersion: "x",
@@ -33,6 +33,10 @@ describe("driversView", () => {
   test("bars cap at the half width", () => {
     const big = ev({ drivers: [{ source: "survival.individualDeaths", impact: -40, value: 3, reference: 0.7, label: "" }] });
     expect(driversView(tEn, "en", big, titleOf)!.rows[0]!.barPx).toBe(BAR_MAX_PX);
+  });
+  test("kicksVsPeers reads in points, not percent (it's percentage points, not a percentage)", () => {
+    const v = driversView(tEn, "en", ev({ drivers: [{ source: "utility.kicksVsPeers", impact: -3, value: -1, reference: 0.7, label: "" }] }), titleOf)!;
+    expect(v.rows[0]).toMatchObject({ value: "−1 pts vs peers", reference: "avg +1 pts" });
   });
   test("the path sentence, reachable and not", () => {
     const p = driversView(tEn, "en", ev({}), titleOf)!.path!;

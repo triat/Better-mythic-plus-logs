@@ -66,4 +66,32 @@ describe("score drivers", () => {
     expect(few.drivers).toEqual([]);
     expect(few.nextVerdict).toBeNull();
   });
+
+  test("no path when nothing costs points, even with a non-INVITE verdict", () => {
+    // A player at or above the average player on every measured signal (no wasted potions/
+    // healthstones/dispels/kicks, avoidable damage below peers, no deaths, high parse) — so
+    // `drivers` holds only earns, never a cost. Push the invite bar out of reach so this top
+    // performance still lands on MAYBE rather than INVITE (which already has no path).
+    const strongRun = (parse: number) => runWith({
+      deaths: deaths(0),
+      consumables: { potions: 5, healthstones: 2 },
+      avoidableDamage: { total: 0, perMinute: 50, peer: { median: 100, count: 4 }, spellCount: 10 },
+      interrupts: { count: 5, kickCooldownS: 20, capacity: 5, usage: 1, peer: { median: 0.5, count: 4 } },
+      dispels: { count: 3, available: true },
+    }, { parsePercent: parse, keyLevel: 16 });
+    const strong = payloadWith(Array.from({ length: 8 }, () => strongRun(90)), { targetLevel: 16 });
+    const hard = validateConfig(deepMerge(DEFAULT_CONFIG, { verdict: { invite: 100 } }));
+    const e = evaluate(strong, hard);
+    expect(e.verdict).toBe("maybe");
+    expect(e.drivers!.some((d) => d.impact < 0)).toBe(false);
+    expect(e.nextVerdict).toBeNull();
+  });
+
+  test("a player at the reference scores 0 on that signal", () => {
+    // individualDeaths' curve input is deaths × the run's level-scale factor; 0 deaths scales to
+    // 0 regardless of key level, so pinning the reference's x at 0 too makes the override a no-op.
+    const atRef = validateConfig(deepMerge(DEFAULT_CONFIG, { reference: { dps: { "survival.individualDeaths": { x: 0, value: 0 } } } }));
+    const ds = evaluate(payload(0, 30), atRef).drivers!;
+    expect(ds.some((d) => d.source === "survival.individualDeaths")).toBe(false);
+  });
 });

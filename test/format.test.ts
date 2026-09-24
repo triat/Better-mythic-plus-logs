@@ -130,8 +130,32 @@ describe("renderEvaluation", () => {
       ],
       nextVerdict: { verdict: "invite", threshold: 70, sources: ["survival.individualDeaths"], score: 72, reachable: true },
     })));
-    expect(out).toContain("Drivers      −19 1.6 individual deaths/run (avg 0.7)  ·  +6 avoidable −29% vs peers (avg −3)");
+    // survival.avoidableVsPeers is a %-vs-peers source: its reference is signed and carries "%", not the bare decimal.
+    expect(out).toContain("Drivers      −19 1.6 individual deaths/run (avg 0.7)  ·  +6 avoidable −29% vs peers (avg −3%)");
     expect(out).toContain("To reach INVITE (70): individual deaths at the average player's level → 72");
+  });
+  test("a ratio source's reference reads in the evidence's own unit, not the raw stored fraction", () => {
+    const out = strip(renderEvaluation(evalFixture({
+      verdict: "maybe", global: 47,
+      drivers: [
+        { source: "experience.atTarget", impact: 4, value: 1, reference: 0.625, label: "100% dungeons at/above target" },
+      ],
+      nextVerdict: null,
+    })));
+    expect(out).toContain("+4 100% dungeons at/above target (avg 63%)");
+    expect(out).not.toContain("avg 0.6");
+  });
+  test("out of reach: three sources, no score reached", () => {
+    const out = strip(renderEvaluation(evalFixture({
+      verdict: "pass", global: 20,
+      drivers: [
+        { source: "survival.individualDeaths", impact: -19, value: 3, reference: 0.7, label: "3.0 individual deaths/run" },
+        { source: "throughput.medianParse", impact: -13, value: 30, reference: 58.5, label: "median parse 30%" },
+        { source: "utility.dispels", impact: -2, value: 0, reference: 2, label: "0.0 dispels/run" },
+      ],
+      nextVerdict: { verdict: "maybe", threshold: 30, sources: ["survival.individualDeaths", "throughput.medianParse", "utility.dispels"], score: 20, reachable: false },
+    })));
+    expect(out).toContain("To reach MAYBE (30): out of reach by fixing 3 signals");
   });
   test("no drivers line for an evaluation saved before drivers existed", () => {
     expect(strip(renderEvaluation(evalFixture()))).not.toContain("Drivers");

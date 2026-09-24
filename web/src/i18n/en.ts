@@ -273,7 +273,7 @@ export const en = {
     costs: "costs points",
     earns: "earns points",
     avg: "avg {value}",
-    unit: { perRun: "{value} / run", vsPeers: "{value}% vs peers", pct: "{value}%", plain: "{value}" },
+    unit: { perRun: "{value} / run", vsPeers: "{value}% vs peers", pct: "{value}%", plain: "{value}", ptsVsPeers: "{value} pts vs peers", pts: "{value} pts" },
     path: {
       reach: "To reach {verdict} ({threshold}): bring {list} to the average player's level → {score}",
       out: "To reach {verdict} ({threshold}): out of reach by fixing {count, plural, one {# signal} other {# signals}}",

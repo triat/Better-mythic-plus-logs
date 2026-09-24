@@ -200,6 +200,26 @@ const AXIS_LABEL: Record<AxisKey, string> = {
 };
 const CONF_RANK = { low: 0, medium: 1, high: 2 } as const;
 
+/** How a driver's `reference` reads in its own unit — mirrors the evidence label's rounding
+ * (`web/src/lib/axes.ts`'s `VALUE_FORMAT`), since `reference` is stored on the same raw scale as
+ * `value`: a ratio (0–1) needs ×100, a %-vs-peers or pts-vs-peers value needs its sign and suffix. */
+const refRatioPct = (v: number): string => `${Math.round(v * 100)}%`;
+const refSignedPct = (v: number): string => `${v >= 0 ? "+" : "−"}${Math.abs(Math.round(v))}%`;
+const refSignedPts = (v: number): string => `${v >= 0 ? "+" : "−"}${Math.abs(Math.round(v))} pts`;
+const refInt = (v: number): string => String(Math.round(v));
+const refDecimal = (v: number): string => { const s = String(Math.round(v * 10) / 10); return s.startsWith("-") ? `−${s.slice(1)}` : s; };
+const REF_FORMAT: Partial<Record<string, (v: number) => string>> = {
+  "experience.coverage": refRatioPct,
+  "experience.atTarget": refRatioPct,
+  "utility.kicksAbsolute": refRatioPct,
+  "survival.avoidableVsPeers": refSignedPct,
+  "survival.dtpsVsPeers": refSignedPct,
+  "utility.kicksVsPeers": refSignedPts,
+  "throughput.medianParse": refInt,
+  "throughput.parseAtTarget": refInt,
+};
+const formatRef = (source: string, v: number): string => (REF_FORMAT[source] ?? refDecimal)(v);
+
 export const renderEvaluation = (ev: Evaluation): string => {
   const runs = `${ev.runsUsed} run${ev.runsUsed === 1 ? "" : "s"}`;
   const g = ev.global === null ? null : Math.round(ev.global);
@@ -227,12 +247,11 @@ export const renderEvaluation = (ev: Evaluation): string => {
     const [axis, id] = source.split(".") as [AxisKey, string];
     return (EVALUATION_DOCS.axes[axis]?.subSignals[id]?.title ?? source).toLowerCase();
   };
-  const num = (v: number) => { const s = String(Math.round(v * 10) / 10); return s.startsWith("-") ? `−${s.slice(1)}` : s; };
   if (ev.drivers?.length) {
     const shown = [...ev.drivers.filter((d) => d.impact < 0).slice(0, 3), ...ev.drivers.filter((d) => d.impact > 0).reverse().slice(0, 2)];
     const parts = shown.map((d) => {
       const tag = `${d.impact > 0 ? "+" : "−"}${Math.abs(d.impact)}`;
-      return `${d.impact > 0 ? pc.green(tag) : pc.red(tag)} ${d.label} ${dim(`(avg ${num(d.reference)})`)}`;
+      return `${d.impact > 0 ? pc.green(tag) : pc.red(tag)} ${d.label} ${dim(`(avg ${formatRef(d.source, d.reference)})`)}`;
     });
     lines.push(`  ${"Drivers".padEnd(12)} ${parts.join(`  ${dim("·")}  `)}`);
   }

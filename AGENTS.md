@@ -74,4 +74,4 @@ per-member quotas, shared defensives table, hosted front, admin page, hardening,
 signup / own WCL clients / bans / privacy); and sub-project 6, the game integration, shipped in v0.4.0
 — the `addon/` tree, `web/src/lib/live/`, `POST /api/live/cached`, spec
 `docs/superpowers/specs/2026-09-22-game-integration-design.md`. The hosted instance runs with open
-sign-up since 2026-09-24. Unscheduled ideas live as GitHub issues #12–#15.
+sign-up since 2026-09-24. Unscheduled ideas live as GitHub issues #12–#17.

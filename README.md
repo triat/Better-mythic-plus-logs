@@ -31,9 +31,9 @@ The score comes from six axes:
 | 🛡️ | **Survival** | Do they die, and to what. Deaths, damage taken compared to other players of the same spec, and damage from things they were supposed to dodge |
 | 🧰 | **Utility** | Interrupts — measured against what their spec could physically have cast, not a flat count — and dispels |
 | ⚔️ | **Throughput** | Their damage or healing, as a percentile against everyone else playing that spec at that key level |
-| 📉 | **Consistency** | Whether they play the same way every run, or had one good night |
+| 📉 | **Consistency** | Whether they play the same way every run, or had one good night — shown, not counted in the score |
 | 🎒 | **Preparation** | Item level for the key you are asking about, and whether they bring consumables |
-| 🗺️ | **Experience** | How much of the season they have actually done at that level, and how recently |
+| 🗺️ | **Experience** | How much of the season they have actually done at that level, and how recently — shown, not counted in the score |
 
 Healers are read on healing, everyone else on damage, automatically. If you do not say which key level
 you are vetting for, bmpl works it out from the level they actually play — the median of their best

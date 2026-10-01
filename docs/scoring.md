@@ -35,6 +35,12 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
 - **Experience** — dungeon coverage, share of dungeons at/above target,
   median key level vs. target, recent activity (runs in the last 7 days),
   plus a small bonus — never a penalty — for a strong previous-season score.
+  **Informational only** since config version 4: it rewarded volume over
+  quality (a player with every dungeon timed at +18 scored below one with a
+  handful of average +19s), and on the calibration sample dropping it from
+  the global left the ranking against WCL's ladder unchanged. Raise
+  `axisWeights.<role>.experience` in `evaluation.json` to count it again (and
+  refit `globalCurve`).
 
 The **global score** is a percentile. The weighted mean of the axes (the
 role's `axisWeights`) goes through the role's `globalCurve`, fitted on 1,081

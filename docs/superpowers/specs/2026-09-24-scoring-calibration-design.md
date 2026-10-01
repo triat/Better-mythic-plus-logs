@@ -155,3 +155,11 @@ global blend is at ≤ 0.1. Those two signals are better shown on their own than
   performance ladder used only to stratify the sample; the analysis runs on the real signals.
 - Where a +16 band also runs past the 8 head pages, its end is only known from the pages sampled
   deeper, which slightly compresses that band's percentiles.
+
+## Follow-up — Experience out of the global (config version 4, 2026-10-01)
+
+The user saw Experience reward volume over quality: a player with every dungeon timed at +18 scored below one
+with several average +19s. On the held-out half (`scripts/calibration/weights.ts`, variant "experience ×0"),
+weighting Experience 0 for every role kept the ranking against WCL's ladder at 0.54 and nudged the prediction of
+later deaths from 0.06 to 0.10. Experience is now informational like Consistency (still scored and shown, weight 0)
+and `globalCurve` was refitted on the same 1,081 characters; the `reference` medians are unchanged.

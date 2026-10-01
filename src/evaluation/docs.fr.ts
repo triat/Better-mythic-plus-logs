@@ -78,7 +78,7 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
     },
     experience: {
       title: "Expérience",
-      summary: "Quelle part de la saison le joueur a faite au niveau que tu demandes, et depuis combien de temps.",
+      summary: "Quelle part de la saison le joueur a faite au niveau que tu demandes, et depuis combien de temps. Informatif sauf si l'opérateur lui donne un poids d'axe : voir le tableau des poids sous Le verdict.",
       why: "Un joueur qui a timed chaque donjon à ton niveau a déjà résolu les problèmes que tu vas rencontrer.",
       subSignals: {
         coverage: { title: "Couverture des donjons", what: "Part des donjons de la saison où le joueur a un run.", source: "Classements Warcraft Logs (meilleur run par donjon).", how: "Donjons avec au moins un run / donjons de la saison.", why: "Huit donjons en +15 battent un seul en +20 quand le groupe a besoin des huit.", naWhen: "Quand la saison n'a aucun donjon listé (jamais en pratique).", unit: "part des donjons (0–1)", scaledByLevel: false },

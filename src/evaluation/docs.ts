@@ -139,7 +139,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
     },
     experience: {
       title: "Experience",
-      summary: "How much of the season the player has done at the level you are asking for, and how recently.",
+      summary: "How much of the season the player has done at the level you are asking for, and how recently. Informational unless the operator gives it an axis weight: see the weights table under The verdict.",
       why: "A player who has timed every dungeon at your level has already solved the problems you are about to meet.",
       subSignals: {
         coverage: { title: "Dungeon coverage", what: "Share of the season's dungeons the player has a run in.", source: "Warcraft Logs rankings (best run per dungeon).", how: "Dungeons with at least one run / dungeons in the season.", why: "Eight dungeons at +15 beat one at +20 when the group needs all eight.", naWhen: "When the season has no dungeons listed (never in practice).", unit: "share of dungeons (0–1)", scaledByLevel: false },

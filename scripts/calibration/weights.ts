@@ -27,6 +27,8 @@ const RELIABILITY: Variant["subs"] = {
 };
 const VARIANTS: Record<string, Variant> = {
   "today's weights": {},
+  "experience ×0 (informational)": { axes: { experience: 0 } },
+  "experience ×0.5": { axes: { experience: 0.5 } },
   "survival ×2": { axes: { survival: 2 } },
   "survival ×3": { axes: { survival: 3 } },
   "survival ×2, experience ×0.5": { axes: { survival: 2, experience: 0.5 } },

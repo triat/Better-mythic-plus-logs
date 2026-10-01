@@ -17,7 +17,7 @@ describe("default config", () => {
   test("validates and has every axis, role and threshold", () => {
     const cfg = validateConfig(DEFAULT_CONFIG);
     for (const k of AXIS_KEYS) expect(Object.keys(cfg.axes[k].subSignals).length).toBeGreaterThan(0);
-    expect(cfg.axisWeights.tank.experience).toBe(2.5);
+    expect(cfg.axisWeights.tank.experience).toBe(0); // informational since config version 4
     expect(cfg.verdict).toEqual({ invite: 70, maybe: 30, minRuns: 3 });
     for (const role of ["dps", "healer", "tank"] as const) {
       expect(cfg.globalCurve[role][0]).toEqual([0, 0]);

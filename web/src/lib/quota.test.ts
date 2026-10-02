@@ -47,8 +47,19 @@ describe("quotaTooltip / quotaFromFailure / budgetFromFailure", () => {
     expect(quotaOrBudgetMessage(tEn, { code: null, error: "Network error" })).toBe("Network error");
     expect(quotaOrBudgetMessage(tEn, { code: "quota", error: "no numbers" })).toBe("no numbers");
   });
+  test("a quota refusal that says what the action needs: not enough left, or more than a whole hour's quota", () => {
+    const short = { code: "quota" as const, quota: { used: 60.4, limit: 100, resetInS: 1300, needed: 90 }, error: "server text" };
+    expect(quotaOrBudgetMessage(tEn, short)).toBe("This needs about 90 pts and 39 of your 100 are left this hour — resets in 22 min");
+    expect(quotaOrBudgetMessage(tFr, short)).toBe("Il faut environ 90 pts et il t'en reste 39 sur 100 cette heure — reset dans 22 min");
+    const tooBig = { code: "quota" as const, quota: { used: 12, limit: 100, resetInS: 1300, needed: 110 }, error: "server text" };
+    expect(quotaOrBudgetMessage(tEn, tooBig)).toBe("This needs about 110 pts, more than your hourly quota of 100 — resets in 22 min");
+    expect(quotaOrBudgetMessage(tFr, tooBig)).toBe("Il faut environ 110 pts, plus que ton quota horaire de 100 — reset dans 22 min");
+    const spent = { code: "quota" as const, quota: { used: 107, limit: 100, resetInS: 1300, needed: 20 }, error: "server text" };
+    expect(quotaOrBudgetMessage(tEn, spent)).toBe("Hourly quota reached (107/100 pts) — resets in 22 min");
+  });
   test("only an `error: \"quota\"` body carries the member's numbers", () => {
     expect(quotaFromFailure({ ok: false, error: "quota", message: "x", used: 300, limit: 300, resetInS: 120 })).toEqual({ used: 300, limit: 300, resetInS: 120 });
+    expect(quotaFromFailure({ ok: false, error: "quota", message: "x", used: 60, limit: 100, resetInS: 120, needed: 90 })).toEqual({ used: 60, limit: 100, resetInS: 120, needed: 90 });
     expect(quotaFromFailure({ ok: false, error: "budget", message: "x", used: 3500, limit: 3600, resetInS: 120 })).toBeNull();
     expect(quotaFromFailure({ ok: false, error: "quota", message: "x" })).toBeNull();
     expect(quotaFromFailure(null)).toBeNull();

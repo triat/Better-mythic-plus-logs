@@ -202,7 +202,7 @@ describe("quota on the hosted routes", () => {
     const res = await fetch(h("/api/lookup"), as(a, { method: "POST", body: JSON.stringify({ character: "Nobodyhere-Silvermoon", level: 15 }) }));
     expect(res.status).toBe(429);
     const body = await res.json();
-    expect(body).toEqual({ ok: false, error: "quota", message: body.message, used: 300, limit: 300, resetInS: body.resetInS });
+    expect(body).toEqual({ ok: false, error: "quota", message: body.message, used: 300, limit: 300, resetInS: body.resetInS, needed: 20 });
     expect(body.message).toContain("Hourly quota reached");
     expect(typeof body.resetInS).toBe("number");
   });

@@ -16,7 +16,8 @@ import type { GqlFn } from "../signals/enrich.ts";
 import type { RateLimit } from "./client.ts";
 
 /** Estimated cost of one WCL step, checked before spending (WCL only reports after). */
-export const ESTIMATE_RANKINGS = 10;
+// Rankings measured 12–19 pts on the hosted instance (2026-10-02); 10 under-reserved them.
+export const ESTIMATE_RANKINGS = 20;
 export const ESTIMATE_RUN = 10;
 export const ESTIMATE_DEEPDIVE = 3;
 

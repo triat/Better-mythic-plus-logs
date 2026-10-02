@@ -42,7 +42,8 @@ export interface MeUser {
   role: "member" | "admin";
 }
 /** The member's share of the shared Warcraft Logs budget (hosted mode only). */
-export interface QuotaInfo { used: number; limit: number | null; resetInS: number }
+/** `needed`: on a quota refusal only, what the refused action was estimated to cost. */
+export interface QuotaInfo { used: number; limit: number | null; resetInS: number; needed?: number }
 export type MeResult =
   | { kind: "ok"; user: MeUser; quota: QuotaInfo | null; ownClient: OwnClientView | null }
   | { kind: "unauthorized" }

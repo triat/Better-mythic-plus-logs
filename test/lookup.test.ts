@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { buildLookupPayload, performLookup, specsSeen } from "../src/lookup.ts";
+import { buildLookupPayload, performLookup, RecentRankings, specsSeen } from "../src/lookup.ts";
 import type { MPlusData, MPlusRun } from "../src/mplus.ts";
 import { openStore } from "../src/signals/store.ts";
 import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../src/wcl/meter.ts";
@@ -62,11 +62,45 @@ describe("performLookup — quota reservations", () => {
   test("a refusal before enrichment fails the lookup without fetching any run", async () => {
     const x = await fixture();
     let n = 0;
-    const o = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, reserve: () => (++n === 2 ? REFUSED : null) });
+    const o = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent: new RecentRankings(), reserve: () => (++n === 2 ? REFUSED : null) });
     expect(o.ok).toBe(false);
     if (!o.ok) expect(o.status).toBe(429);
     expect(x.fetches()).toBe(1);
     expect(x.gqlCalls).toEqual([]);
+    x.store.close();
+  });
+  test("a retry after an enrichment refusal reuses the rankings already paid for, without reserving them again", async () => {
+    const x = await fixture();
+    const recent = new RecentRankings();
+    const estimates: number[] = [];
+    let refuse = true;
+    const reserve = (e: number) => { estimates.push(e); return e === ESTIMATE_RUN && refuse ? REFUSED : null; };
+    const first = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    expect(first.ok).toBe(false);
+    const second = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    expect(second.ok).toBe(false);
+    expect(x.fetches()).toBe(1); // the rankings were paid once
+    expect(estimates).toEqual([ESTIMATE_RANKINGS, ESTIMATE_RUN, ESTIMATE_RUN]);
+    refuse = false;
+    const third = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    expect(third.ok).toBe(true);
+    expect(x.fetches()).toBe(1);
+    // A completed lookup drops the kept rankings: the next one fetches fresh ones.
+    await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    expect(x.fetches()).toBe(2);
+    x.store.close();
+  });
+  test("kept rankings expire, and Refresh never uses them", async () => {
+    const x = await fixture();
+    let t = 1_000_000;
+    const recent = new RecentRankings(() => t);
+    const reserve = (e: number) => (e === ESTIMATE_RUN ? REFUSED : null);
+    await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    await performLookup({ ...opts(x.name), refresh: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    expect(x.fetches()).toBe(2);
+    t += RecentRankings.TTL_MS + 1;
+    await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, recent, reserve });
+    expect(x.fetches()).toBe(3);
     x.store.close();
   });
   test("no second reservation when every displayed run is cached; none at all without a gate", async () => {

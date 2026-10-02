@@ -151,6 +151,8 @@ export const en = {
   },
   errors: {
     quota: "Hourly quota reached ({used}/{limit} pts) — resets in {min} min",
+    quotaShort: "This needs about {needed} pts and {left} of your {limit} are left this hour — resets in {min} min",
+    quotaTooLarge: "This needs about {needed} pts, more than your hourly quota of {limit} — resets in {min} min",
     budget: "The shared WCL budget is nearly exhausted ({left} pts left) — resets in {min} min",
     ownClientAction: "Use your own client →",
   },

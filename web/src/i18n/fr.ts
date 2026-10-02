@@ -145,6 +145,8 @@ export const fr: Mirror<typeof en> = {
   },
   errors: {
     quota: "Quota horaire atteint ({used}/{limit} pts) — reset dans {min} min",
+    quotaShort: "Il faut environ {needed} pts et il t'en reste {left} sur {limit} cette heure — reset dans {min} min",
+    quotaTooLarge: "Il faut environ {needed} pts, plus que ton quota horaire de {limit} — reset dans {min} min",
     budget: "Le budget WCL partagé est presque épuisé ({left} pts restants) — reset dans {min} min",
     ownClientAction: "Utiliser ton propre client →",
   },

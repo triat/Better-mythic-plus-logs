@@ -36,7 +36,16 @@ export interface QuotaFailure { code: "quota" | "budget" | null; quota?: QuotaIn
  */
 export function quotaOrBudgetMessage(t: T, r: QuotaFailure): string {
   const min = (s: number) => Math.max(1, Math.ceil(s / 60));
-  if (r.code === "quota" && r.quota) return t("errors.quota", { used: Math.round(r.quota.used), limit: Math.round(r.quota.limit ?? 0), min: min(r.quota.resetInS) });
+  if (r.code === "quota" && r.quota) {
+    const q = r.quota;
+    const limit = Math.round(q.limit ?? 0);
+    const left = Math.max(0, Math.floor(limit - q.used));
+    // Same three cases as the server's message (src/hosted/quota.ts): more than a whole hour's quota, not enough
+    // left, or the quota simply spent.
+    if (q.needed !== undefined && q.needed > limit) return t("errors.quotaTooLarge", { needed: q.needed, limit, min: min(q.resetInS) });
+    if (q.needed !== undefined && left >= 1) return t("errors.quotaShort", { needed: q.needed, left, limit, min: min(q.resetInS) });
+    return t("errors.quota", { used: Math.round(q.used), limit, min: min(q.resetInS) });
+  }
   if (r.code === "budget" && r.budget) return t("errors.budget", { left: Math.round(Math.max(0, (r.budget.limit ?? 0) - r.budget.used)), min: min(r.budget.resetInS) });
   return r.error;
 }
@@ -46,7 +55,7 @@ export function quotaFromFailure(data: unknown): QuotaInfo | null {
   if (!data || typeof data !== "object") return null;
   const o = data as Record<string, unknown>;
   if (o.error !== "quota" || typeof o.used !== "number" || typeof o.limit !== "number" || typeof o.resetInS !== "number") return null;
-  return { used: o.used, limit: o.limit, resetInS: o.resetInS };
+  return { used: o.used, limit: o.limit, resetInS: o.resetInS, ...(typeof o.needed === "number" ? { needed: o.needed } : {}) };
 }
 
 /** The sibling of `quotaFromFailure` for the shared client's own budget refusal (`error: "budget"`). */

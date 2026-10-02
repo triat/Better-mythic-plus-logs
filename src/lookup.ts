@@ -39,6 +39,37 @@ export interface LookupOptions {
   refresh?: boolean;
 }
 
+/**
+ * Rankings a lookup paid for but could not use, because the quota then refused the run enrichment. Rankings are
+ * otherwise fetched at every lookup, so without this a member retrying a refused lookup paid for them again each
+ * time and never got further. Kept in memory for `TTL_MS`, dropped by the lookup that finally completes; Refresh
+ * never reads them.
+ */
+export class RecentRankings {
+  static readonly TTL_MS = 15 * 60_000;
+  static readonly MAX = 200;
+  private readonly kept = new Map<string, { data: MPlusData; at: number }>();
+  constructor(private readonly now: () => number = Date.now) {}
+
+  static key(o: LookupOptions): string {
+    return [o.region, realmToSlug(o.realm), o.name.toLowerCase(), o.metric ?? "", o.spec ?? ""].join("|");
+  }
+  get(key: string): MPlusData | null {
+    const hit = this.kept.get(key);
+    if (!hit) return null;
+    if (this.now() - hit.at > RecentRankings.TTL_MS) { this.kept.delete(key); return null; }
+    return hit.data;
+  }
+  keep(key: string, data: MPlusData): void {
+    this.kept.delete(key);
+    this.kept.set(key, { data, at: this.now() });
+    if (this.kept.size > RecentRankings.MAX) this.kept.delete(this.kept.keys().next().value!);
+  }
+  drop(key: string): void { this.kept.delete(key); }
+}
+
+const recentRankings = new RecentRankings();
+
 /** One spec the character has indexed runs on this season (before any spec filter). */
 export interface SpecSeen {
   spec: string;
@@ -82,18 +113,26 @@ interface Deps {
   fetchMplus?: typeof fetchMplusData;
   /** Hosted quota gate: consulted with an estimate before each WCL step; absent locally. */
   reserve?: Reserve;
+  /** Rankings kept after an enrichment refusal (tests pass their own). */
+  recent?: RecentRankings;
 }
 
 /** The whole lookup: rankings → analysis → (WCL enrichment ‖ Raider.IO). */
 export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promise<LookupOutcome> {
   const store = deps.store ?? (await getStore());
-  const refusedRankings = deps.reserve?.(ESTIMATE_RANKINGS);
-  if (refusedRankings) return { ok: false, status: 429, error: refusedRankings.message, quota: refusedRankings };
-  let data = await (deps.fetchMplus ?? fetchMplusData)(opts.name, opts.realm, {
-    region: opts.region,
-    metric: opts.metric,
-    specFilter: opts.spec,
-  });
+  const recent = deps.recent ?? recentRankings;
+  const recentKey = RecentRankings.key(opts);
+  let fetched = opts.refresh ? null : recent.get(recentKey);
+  if (!fetched) {
+    const refusedRankings = deps.reserve?.(ESTIMATE_RANKINGS);
+    if (refusedRankings) return { ok: false, status: 429, error: refusedRankings.message, quota: refusedRankings };
+    fetched = await (deps.fetchMplus ?? fetchMplusData)(opts.name, opts.realm, {
+      region: opts.region,
+      metric: opts.metric,
+      specFilter: opts.spec,
+    });
+  }
+  let data = fetched;
   const seen = specsSeen(data.runs);
 
   if (opts.spec) {
@@ -127,8 +166,12 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
   if (opts.enrich && deps.reserve) {
     const uncached = new Set(shown.filter((r) => !store.getWclRun(r.reportCode, r.fightID)).map((r) => `${r.reportCode}:${r.fightID}`)).size;
     const refusedRuns = uncached > 0 ? deps.reserve(uncached * ESTIMATE_RUN) : null;
-    if (refusedRuns) return { ok: false, status: 429, error: refusedRuns.message, quota: refusedRuns };
+    if (refusedRuns) {
+      recent.keep(recentKey, fetched);
+      return { ok: false, status: 429, error: refusedRuns.message, quota: refusedRuns };
+    }
   }
+  recent.drop(recentKey);
 
   const [, rioRes] = await Promise.all([
     opts.enrich

@@ -87,11 +87,12 @@ Every point spent is measured from the `rateLimitData` WCL returns and charged
 to the member whose request spent it. Each member may spend
 `BMPL_POINTS_PER_USER_HOUR` points per calendar hour (default 300; admins are
 exempt); a lookup or an analysis that would exceed it is refused with
-`429 { error: "quota", message, used, limit, resetInS }` before the step that
-would exceed it: a refusal before the rankings query or before an analysis
-spends nothing; a lookup refused before its run enrichment has already paid
-the rankings query (about 10 pts), which is why the first check blocks as soon
-as fewer than 10 pts are left. Cached data — a tab in your history, a run
+`429 { error: "quota", message, used, limit, resetInS, needed }` before the step that
+would exceed it, the message saying what the step needs (`needed`) against what is left: a
+refusal before the rankings query or before an analysis spends nothing; a lookup refused before its
+run enrichment has already paid the rankings query (about 20 pts), and keeps those rankings for 15
+minutes so that trying again does not pay them twice. A fresh lookup of a character with eight or
+nine uncached runs costs roughly 110–120 pts, so a quota under that can never complete one. Cached data — a tab in your history, a run
 already in the cache, an analysis already done — never counts. Whatever the quotas say, the client is
 not knowingly driven below 100 points left (the floor is checked against the last `rateLimitData`
 seen and the estimates, so it is best effort) (`429 { error: "budget", … }`), so cached lookups keep
@@ -105,7 +106,7 @@ exceeds what is left; a 429 shows the server's message as a toast and refreshes 
 `rateLimitData`, the last 24 hourly totals) — the admin page shows it as a
 gauge (this hour vs the client's limit, reset countdown, top consumers, the
 last 24 h per hour). Estimates before spending:
-rankings ≈ 10 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attribution
+rankings ≈ 20 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attribution
 is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
 

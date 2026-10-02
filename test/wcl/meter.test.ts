@@ -14,7 +14,7 @@ function setup(start = 1_000_000) {
 
 describe("PointsMeter", () => {
   test("estimates are the documented constants", () => {
-    expect([ESTIMATE_RANKINGS, ESTIMATE_RUN, ESTIMATE_DEEPDIVE]).toEqual([10, 10, 3]);
+    expect([ESTIMATE_RANKINGS, ESTIMATE_RUN, ESTIMATE_DEEPDIVE]).toEqual([20, 10, 3]);
   });
 
   test("the first observation primes; later deltas are charged to the running request and its user", async () => {

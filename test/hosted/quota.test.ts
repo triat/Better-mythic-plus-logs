@@ -55,9 +55,17 @@ describe("QuotaGate", () => {
     hosted.usage.add(member.id, now(), 295);
     expect(gate.reserve(member, 5)).toBeNull();
     const r = gate.reserve(member, 6)!;
-    expect(r).toEqual({ error: "quota", message: r.message, used: 295, limit: 300, resetInS: resetInS(now()) });
-    expect(r.message).toBe("Hourly quota reached (295/300 pts) — resets in 50 min");
+    expect(r).toEqual({ error: "quota", message: r.message, used: 295, limit: 300, resetInS: resetInS(now()), needed: 6 });
+    expect(r.message).toBe("This needs about 6 pts and 5 of your 300 are left this hour — resets in 50 min");
     expect(hosted.usage.used(member.id, now())).toBe(295);
+  });
+  test("the refusal says what is missing: quota spent, not enough left, or more than a whole hour's quota", () => {
+    const { gate, hosted, member, now } = setup(100);
+    expect(gate.reserve(member, 110)!.message).toBe("This needs about 110 pts, more than your hourly quota of 100 — resets in 50 min");
+    hosted.usage.add(member.id, now(), 60);
+    expect(gate.reserve(member, 90)!.message).toBe("This needs about 90 pts and 40 of your 100 are left this hour — resets in 50 min");
+    hosted.usage.add(member.id, now(), 45);
+    expect(gate.reserve(member, 10)!.message).toBe("Hourly quota reached (105/100 pts) — resets in 50 min");
   });
   test("admins have no quota", () => {
     const { gate, hosted, admin, now } = setup();

@@ -8,7 +8,11 @@ import type { HostedDb, Role } from "./db.ts";
 export const POINTS_FLOOR = 100;
 
 export interface Quota { used: number; limit: number | null; resetInS: number }
-export interface QuotaRefusal { error: "quota" | "budget"; message: string; used: number; limit: number; resetInS: number }
+export interface QuotaRefusal {
+  error: "quota" | "budget"; message: string; used: number; limit: number; resetInS: number;
+  /** Quota refusals only: the estimate that did not fit, so the member knows what the action needs. */
+  needed?: number;
+}
 export interface QuotaUser { id: number; role: Role }
 export type Reserve = (estimate: number) => QuotaRefusal | null;
 
@@ -32,7 +36,17 @@ export class QuotaGate {
       const used = this.deps.usage.used(user.id, at);
       if (used + estimate > this.deps.limit) {
         const r = resetInS(at);
-        return { error: "quota", message: `Hourly quota reached (${Math.round(used)}/${this.deps.limit} pts) — resets in ${minutes(r)}`, used, limit: this.deps.limit, resetInS: r };
+        const limit = this.deps.limit;
+        const left = Math.max(0, Math.floor(limit - used));
+        const needed = Math.ceil(estimate);
+        // Three different situations, three different ways out: wait for the hour, wait for enough of it, or
+        // nothing waiting can fix (the action costs more than a whole hour's quota).
+        const message = needed > limit
+          ? `This needs about ${needed} pts, more than your hourly quota of ${limit} — resets in ${minutes(r)}`
+          : left < 1
+            ? `Hourly quota reached (${Math.round(used)}/${limit} pts) — resets in ${minutes(r)}`
+            : `This needs about ${needed} pts and ${left} of your ${limit} are left this hour — resets in ${minutes(r)}`;
+        return { error: "quota", message, used, limit, resetInS: r, needed };
       }
     }
     const snap = this.deps.meter.snapshot();

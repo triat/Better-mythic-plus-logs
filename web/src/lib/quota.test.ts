@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { budgetFromFailure, canAfford, pointsLeft, quotaFromFailure, quotaLabel, quotaOrBudgetMessage, quotaTooltip } from "./quota.ts";
+import { budgetFromFailure, canAfford, notFoundFromFailure, pointsLeft, quotaFromFailure, quotaLabel, quotaOrBudgetMessage, quotaTooltip } from "./quota.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -47,6 +47,11 @@ describe("quotaTooltip / quotaFromFailure / budgetFromFailure", () => {
     expect(quotaOrBudgetMessage(tEn, { code: null, error: "Network error" })).toBe("Network error");
     expect(quotaOrBudgetMessage(tEn, { code: "quota", error: "no numbers" })).toBe("no numbers");
   });
+  test("a character WCL does not know: its name and region, and what to check, in both languages", () => {
+    const nf = { code: "not_found" as const, notFound: { character: "Noshiidk-Dreanor", region: "eu" }, error: "server text" };
+    expect(quotaOrBudgetMessage(tEn, nf)).toBe("Noshiidk-Dreanor was not found on Warcraft Logs (EU). Check the spelling of the name and the realm, and the region.");
+    expect(quotaOrBudgetMessage(tFr, nf)).toBe("Noshiidk-Dreanor est introuvable sur Warcraft Logs (EU). Vérifie l'orthographe du nom et du royaume, ainsi que la région.");
+  });
   test("a quota refusal that says what the action needs: not enough left, or more than a whole hour's quota", () => {
     const short = { code: "quota" as const, quota: { used: 60.4, limit: 100, resetInS: 1300, needed: 90 }, error: "server text" };
     expect(quotaOrBudgetMessage(tEn, short)).toBe("This needs about 90 pts and 39 of your 100 are left this hour — resets in 22 min");
@@ -64,6 +69,11 @@ describe("quotaTooltip / quotaFromFailure / budgetFromFailure", () => {
     expect(quotaFromFailure({ ok: false, error: "quota", message: "x" })).toBeNull();
     expect(quotaFromFailure(null)).toBeNull();
     expect(quotaFromFailure("nope")).toBeNull();
+  });
+  test("only an `error: \"not_found\"` body carries the character that was not found", () => {
+    expect(notFoundFromFailure({ ok: false, error: "not_found", message: "x", character: "A-B", region: "eu" })).toEqual({ character: "A-B", region: "eu" });
+    expect(notFoundFromFailure({ ok: false, error: "quota", message: "x" })).toBeNull();
+    expect(notFoundFromFailure(null)).toBeNull();
   });
   test("only an `error: \"budget\"` body carries the shared client's numbers", () => {
     expect(budgetFromFailure({ ok: false, error: "budget", message: "x", used: 3500, limit: 3600, resetInS: 120 })).toEqual({ used: 3500, limit: 3600, resetInS: 120 });

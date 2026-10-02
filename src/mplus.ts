@@ -223,6 +223,14 @@ export interface FetchOptions {
   zone?: CurrentMplusZone;
 }
 
+/** WCL has no character of that name on that realm and region: a typo, a rename, or a realm slug bmpl gets wrong. */
+export class CharacterNotFoundError extends Error {
+  constructor(characterName: string, realm: string, slug: string, region: Region) {
+    super(`Character not found: ${characterName}-${realm} (slug: ${slug}, region: ${region})`);
+    this.name = "CharacterNotFoundError";
+  }
+}
+
 export async function fetchMplusData(
   name: string,
   realm: string,
@@ -233,9 +241,7 @@ export async function fetchMplusData(
 
   const probed = await probe(name, realm, opts.region, activeZone);
   if (!probed.character) {
-    throw new Error(
-      `Character not found: ${name}-${realm} (slug: ${serverSlug}, region: ${opts.region})`,
-    );
+    throw new CharacterNotFoundError(name, realm, serverSlug, opts.region);
   }
 
   // Decide metric.

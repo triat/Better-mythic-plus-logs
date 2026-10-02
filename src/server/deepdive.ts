@@ -56,12 +56,14 @@ export async function refreshLocalHistory(): Promise<void> {
  * through as `WCL: <public message>` (the observer already logged it), anything else 5xx becomes
  * "Internal error". Local mode keeps the message as is.
  */
-export function failureBody(r: { status: number; error: string; quota?: QuotaRefusal; wcl?: string }, runtime: HostedRuntime | null): Record<string, unknown> {
+export function failureBody(r: { status: number; error: string; quota?: QuotaRefusal; wcl?: string; notFound?: { character: string; region: string } }, runtime: HostedRuntime | null): Record<string, unknown> {
   if (runtime) {
     if (r.quota) runtime.audit.record("quota_refused", { detail: { used: r.quota.used, limit: r.quota.limit, resetInS: r.quota.resetInS, error: r.quota.error } });
     else if (r.status >= 500 && !r.wcl) runtime.audit.record("server_error", { detail: { message: clip(r.error) } });
   }
   if (r.quota) return { ok: false, ...r.quota };
+  // Same shape as a quota refusal: `error` is the code the front reads, `message` the English fallback.
+  if (r.notFound) return { ok: false, error: "not_found", message: r.error, ...r.notFound };
   const error = !runtime ? r.error : r.wcl ? `WCL: ${r.wcl}` : r.status >= 500 ? "Internal error" : r.error;
   return { ok: false, error };
 }

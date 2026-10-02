@@ -1,6 +1,6 @@
 // "N pts left this hour": the member's share of the shared Warcraft Logs budget (hosted mode).
 import type { T } from "../i18n/t.ts";
-import type { QuotaInfo } from "../api.ts";
+import type { NotFoundInfo, QuotaInfo } from "../api.ts";
 
 export function pointsLeft(q: QuotaInfo | null): number | null {
   if (!q || q.limit === null) return null;
@@ -27,11 +27,11 @@ export function quotaTooltip(t: T, q: QuotaInfo | null): string {
     : t("header.quota.tooltipNoReset");
 }
 
-/** A refused call as `api.ts` returns it: the 429 kind (null for anything else), the numbers it carried, the server's English message. */
-export interface QuotaFailure { code: "quota" | "budget" | null; quota?: QuotaInfo; budget?: QuotaInfo; error: string }
+/** A failed call as `api.ts` returns it: the coded kind (null for anything else), the details it carried, the server's English message. */
+export interface QuotaFailure { code: "quota" | "budget" | "not_found" | null; quota?: QuotaInfo; budget?: QuotaInfo; notFound?: NotFoundInfo; error: string }
 
 /**
- * A quota/budget 429's dictionary message; falls back to the server's English text for any other failure.
+ * A quota/budget 429's or a not-found 404's dictionary message; falls back to the server's English text for any other failure.
  * Points are REALs on the wire (the meter estimates fractions): rounded here as the server did in its own message.
  */
 export function quotaOrBudgetMessage(t: T, r: QuotaFailure): string {
@@ -46,6 +46,7 @@ export function quotaOrBudgetMessage(t: T, r: QuotaFailure): string {
     if (q.needed !== undefined && left >= 1) return t("errors.quotaShort", { needed: q.needed, left, limit, min: min(q.resetInS) });
     return t("errors.quota", { used: Math.round(q.used), limit, min: min(q.resetInS) });
   }
+  if (r.code === "not_found" && r.notFound) return t("errors.notFound", { character: r.notFound.character, region: r.notFound.region.toUpperCase() });
   if (r.code === "budget" && r.budget) return t("errors.budget", { left: Math.round(Math.max(0, (r.budget.limit ?? 0) - r.budget.used)), min: min(r.budget.resetInS) });
   return r.error;
 }
@@ -56,6 +57,14 @@ export function quotaFromFailure(data: unknown): QuotaInfo | null {
   const o = data as Record<string, unknown>;
   if (o.error !== "quota" || typeof o.used !== "number" || typeof o.limit !== "number" || typeof o.resetInS !== "number") return null;
   return { used: o.used, limit: o.limit, resetInS: o.resetInS, ...(typeof o.needed === "number" ? { needed: o.needed } : {}) };
+}
+
+/** A lookup's 404 for a character Warcraft Logs does not know (`error: "not_found"`). */
+export function notFoundFromFailure(data: unknown): NotFoundInfo | null {
+  if (!data || typeof data !== "object") return null;
+  const o = data as Record<string, unknown>;
+  if (o.error !== "not_found" || typeof o.character !== "string" || typeof o.region !== "string") return null;
+  return { character: o.character, region: o.region };
 }
 
 /** The sibling of `quotaFromFailure` for the shared client's own budget refusal (`error: "budget"`). */

@@ -6,6 +6,7 @@ import type { HostedRuntime } from "../src/hosted/runtime.ts";
 import type { LookupOptions, LookupOutcome } from "../src/lookup.ts";
 import { History } from "../src/server-history.ts";
 import { failureBody } from "../src/server/deepdive.ts";
+import { CharacterNotFoundError } from "../src/mplus.ts";
 import { runLookupWithCache } from "../src/server/lookup.ts";
 import { WclError } from "../src/wcl/client.ts";
 import { payloadWith } from "./evaluation/helpers.ts";
@@ -124,6 +125,14 @@ describe("region", () => {
 });
 
 describe("failures", () => {
+  test("a character WCL does not know is a 404 that names it and its region, not a 500", async () => {
+    const r = await runLookupWithCache(opts(), new History(5), { performLookup: async () => { throw new CharacterNotFoundError("Muleyoxo", "Silvermoon", "silvermoon", "eu"); } });
+    expect(r).toEqual({ ok: false, status: 404, error: "Character not found: Muleyoxo-Silvermoon (EU)", notFound: { character: "Muleyoxo-Silvermoon", region: "eu" } });
+    const db = openHosted(new Database(":memory:"));
+    const runtime = { audit: new AuditLog(db.audit) } as unknown as HostedRuntime;
+    expect(failureBody(r as Parameters<typeof failureBody>[0], runtime)).toEqual({ ok: false, error: "not_found", message: "Character not found: Muleyoxo-Silvermoon (EU)", character: "Muleyoxo-Silvermoon", region: "eu" });
+    expect(db.audit.list({ actions: null, before: null, limit: 10 })).toEqual([]); // nobody's fault: no server_error row
+  });
   test("a WclError thrown by the lookup is a 502 carrying the public message; any other throw is a 500 without it", async () => {
     const wcl = await runLookupWithCache(opts(), new History(5), { performLookup: async () => { throw new WclError("http", 503, "HTTP 503: <html>maintenance</html>"); } });
     expect(wcl).toEqual({ ok: false, status: 502, error: "WCL HTTP 503: <html>maintenance</html>", wcl: "HTTP 503: <html>maintenance</html>" });

@@ -4,6 +4,7 @@ import type { RequestContext } from "../hosted/auth.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { QuotaRefusal, Reserve } from "../hosted/quota.ts";
 import { buildLookupPayload, performLookup } from "../lookup.ts";
+import { CharacterNotFoundError } from "../mplus.ts";
 import type { LookupOutcome, LookupPayload } from "../lookup.ts";
 import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
@@ -31,7 +32,12 @@ export const historyOf = (ctx: RequestContext): HistoryStore => {
   return ctx.history;
 };
 
-export interface LookupError { ok: false; error: string; status: number; quota?: QuotaRefusal; /** The WCL error's public message when the failure came from WCL (safe to show in hosted mode). */ wcl?: string }
+export interface LookupError {
+  ok: false; error: string; status: number; quota?: QuotaRefusal;
+  /** The WCL error's public message when the failure came from WCL (safe to show in hosted mode). */ wcl?: string;
+  /** WCL knows no such character: what was asked for, so the front can say it in the UI language. */
+  notFound?: { character: string; region: Region };
+}
 export interface LookupSuccess {
   ok: true;
   key: string;
@@ -124,6 +130,9 @@ export async function runLookupWithCache(opts: {
     return { ok: true, key: entry.key, result: payload, fromCache: false, joined, request };
   } catch (e) {
     if (e instanceof WclError) return { ok: false, status: 502, error: e.message, wcl: e.publicMessage };
+    if (e instanceof CharacterNotFoundError) {
+      return { ok: false, status: 404, error: `Character not found: ${requestCharacter} (${region.toUpperCase()})`, notFound: { character: requestCharacter, region } };
+    }
     return {
       ok: false,
       status: 500,

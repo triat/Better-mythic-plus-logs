@@ -24,14 +24,16 @@ import type {
 } from "./types.ts";
 import type { Locale } from "./lib/locale.ts";
 import type { Settings } from "./lib/settings.ts";
-import { budgetFromFailure, quotaFromFailure } from "./lib/quota.ts";
+import { budgetFromFailure, notFoundFromFailure, quotaFromFailure } from "./lib/quota.ts";
 
 /**
  * `code` distinguishes the two 429 refusals when the caller wants the dictionary-driven wording
  * (`errors.quota` / `errors.budget`): `quota` also carries the member's own numbers (and updates the header's
  * quota line), `budget` carries the shared client's numbers for the toast only.
  */
-export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; code: "quota" | "budget" | null; quota?: QuotaInfo; budget?: QuotaInfo };
+export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; code: "quota" | "budget" | "not_found" | null; quota?: QuotaInfo; budget?: QuotaInfo; notFound?: NotFoundInfo };
+/** A lookup of a character Warcraft Logs does not know: what was asked for. */
+export interface NotFoundInfo { character: string; region: string }
 
 export interface MeUser {
   id: number;
@@ -61,12 +63,14 @@ async function call<T>(path: string, init?: RequestInit): Promise<ApiResult<T>> 
   if (!res.ok || data.ok === false) {
     const quota = quotaFromFailure(data);
     const budget = budgetFromFailure(data);
+    const notFound = notFoundFromFailure(data);
     return {
       ok: false,
       error: data.message ?? data.error ?? `HTTP ${res.status}`,
-      code: quota ? "quota" : budget ? "budget" : null,
+      code: quota ? "quota" : budget ? "budget" : notFound ? "not_found" : null,
       ...(quota ? { quota } : {}),
       ...(budget ? { budget } : {}),
+      ...(notFound ? { notFound } : {}),
     };
   }
   return { ...data, ok: true } as ApiResult<T>;

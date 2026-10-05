@@ -489,7 +489,7 @@ export const en = {
       revokeConfirm: "Revoke {name}'s sessions? {count, plural, one {# session ends} other {# sessions end}} now.",
       revoke: "Revoke", revokeSessions: "Revoke sessions",
       banConfirm: "Ban {name}? Their sessions end now, they cannot sign in again (open signup or invite), their data stays until they delete it or you do.",
-      ban: "Ban", unban: "Unban", ownClient: "own client",
+      ban: "Ban", unban: "Unban", ownClientPts: "{pts} · own client",
     },
     invites: {
       title: "Invites", sub: "{n} · a Discord id may sign in once it is listed here (admins from the env are implicit)",

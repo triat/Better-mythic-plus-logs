@@ -1,12 +1,16 @@
 // A member's own WCL client (issue #11 Task 2): stores an encrypted secret, runs the verification
 // PING through `runWithWclClient`, and keeps the last-seen rate-limit snapshot in memory (own-client
-// requests never touch `PointsMeter`, so it is not visible anywhere else). Disabled instance-wide
-// when `BMPL_ENCRYPTION_KEY` is not set.
+// requests never touch the shared `PointsMeter`, so it is not visible anywhere else). Each member's
+// client also gets its own `PointsMeter`, whose deltas land in `usage_hourly_own`: reporting for the
+// admin page only, never read by the quota gate. Disabled instance-wide when `BMPL_ENCRYPTION_KEY`
+// is not set.
 import { PING_QUERY } from "../wcl/queries.ts";
 import { forgetToken } from "../wcl/auth.ts";
 import type { WclCredentials } from "../wcl/auth.ts";
 import { WclError, gql, runWithWclClient } from "../wcl/client.ts";
 import type { RateLimit } from "../wcl/client.ts";
+import { PointsMeter } from "../wcl/meter.ts";
+import type { UsageSink } from "../wcl/meter.ts";
 import type { RateLimitData } from "../wcl/types.ts";
 import { decrypt, encrypt } from "./crypto.ts";
 import { clip } from "./audit.ts";
@@ -46,9 +50,11 @@ export const verifyWithPing: Verify = async (creds) => {
 export class UserWclClients {
   private readonly snapshots = new Map<number, OwnClientSnapshot>();
   private readonly warned = new Set<number>();
+  /** One meter per member's client: each client has its own WCL hourly window. */
+  private readonly meters = new Map<number, PointsMeter>();
 
   constructor(
-    private readonly deps: { repo: HostedDb["wclClients"]; key: Uint8Array | null; verify: Verify; now?: () => number },
+    private readonly deps: { repo: HostedDb["wclClients"]; key: Uint8Array | null; verify: Verify; usage?: UsageSink; now?: () => number },
   ) {}
 
   private now(): number { return (this.deps.now ?? Date.now)(); }
@@ -91,6 +97,8 @@ export class UserWclClients {
     // call (e.g. a lookup right after saving) still goes through a fresh token — harmless, but explicit.
     forgetToken(creds.clientId);
     this.warned.delete(userId);
+    // A new client is a new WCL window: its PING primes a fresh meter.
+    this.meters.delete(userId);
     this.observe(userId, outcome.rateLimit);
     return { ok: true, client: (await this.view(userId))! };
   }
@@ -117,6 +125,7 @@ export class UserWclClients {
 
   remove(userId: number): boolean {
     this.snapshots.delete(userId);
+    this.meters.delete(userId);
     this.warned.delete(userId);
     const row = this.deps.repo.get(userId);
     if (row) forgetToken(row.clientId);
@@ -136,15 +145,35 @@ export class UserWclClients {
     return { clientId: row.clientId, clientSecret };
   }
 
+  /**
+   * Runs `fn` authenticated as the member's own client: its `rateLimitData` updates the snapshot and
+   * the member's own meter, which charges the deltas to `usage_hourly_own` (never `usage_hourly`).
+   */
+  run<T>(userId: number, creds: WclCredentials, fn: () => Promise<T>): Promise<T> {
+    return this.meterOf(userId).run(userId, () => runWithWclClient({ creds, onRateLimit: (rl) => this.observe(userId, rl) }, fn));
+  }
+
+  /** Outside `run` (the save/verify PING), the observation only moves the meter's baseline. */
   observe(userId: number, rl: RateLimit): void {
     this.snapshots.set(userId, { ...rl, observedAt: this.now() });
+    this.meterOf(userId).observe(rl);
   }
 
   /** Drops the snapshot + forgetToken(client id) — for DELETE /api/me. */
   forget(userId: number): void {
     this.snapshots.delete(userId);
+    this.meters.delete(userId);
     const row = this.deps.repo.get(userId);
     if (row) forgetToken(row.clientId);
+  }
+
+  private meterOf(userId: number): PointsMeter {
+    let m = this.meters.get(userId);
+    if (!m) {
+      m = new PointsMeter({ usage: this.deps.usage ?? { add() {} }, now: () => this.now() });
+      this.meters.set(userId, m);
+    }
+    return m;
   }
 
   private warnUndecryptable(userId: number): void {

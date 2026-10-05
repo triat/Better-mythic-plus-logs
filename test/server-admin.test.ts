@@ -146,11 +146,15 @@ describe("users: points, sessions, revoke", () => {
     const now = Date.now();
     db.usage.add(member.user.id, now - 5 * 3600_000, 40);
     db.usage.add(member.user.id, now, 7.5);
+    db.usageOwn.add(member.user.id, now - 5 * 3600_000, 100);
+    db.usageOwn.add(member.user.id, now, 3);
     const r = await (await fetch(u("/api/admin/users"), { headers: { cookie: admin.cookie } })).json();
     const tom = r.users.find((x: { username: string }) => x.username === "tom");
     const thisHour = db.usage.byUser(now).find((x) => x.userId === member.user.id)?.points ?? 0; // the usage test above added 12.5 too
     expect(tom.pointsHour).toBe(thisHour);
     expect(tom.points24h).toBe(thisHour + 40);
+    expect(tom.ownPointsHour).toBe(3); // own-client spend: reported apart, never in the quota columns
+    expect(tom.ownPoints24h).toBe(103);
     expect(tom.sessions).toBe(1);
     expect(tom.configAdmin).toBe(false);
     expect(r.users.find((x: { username: string }) => x.username === "boss").configAdmin).toBe(true);

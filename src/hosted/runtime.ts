@@ -61,7 +61,7 @@ export function createHostedRuntime(
       security: new RateLimiter(rateLimits.security),
       signup: new RateLimiter(rateLimits.signup),
     },
-    wclClients: new UserWclClients({ repo: hostedDb.wclClients, key: config.encryptionKey, verify: hooks.verifyWclClient ?? verifyWithPing }),
+    wclClients: new UserWclClients({ repo: hostedDb.wclClients, key: config.encryptionKey, verify: hooks.verifyWclClient ?? verifyWithPing, usage: hostedDb.usageOwn }),
   };
   // Every WCL response of this process now feeds the meter, every WCL failure the audit log (the CLI
   // and local mode never install either).

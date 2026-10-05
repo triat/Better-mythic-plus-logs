@@ -222,7 +222,13 @@ ssh <vps> systemctl restart bmpl
 The 100-point floor that protects the shared client for everyone else is
 not configurable. A member who adds their own WCL client (see
 [docs/hosted.md](hosted.md#your-own-warcraft-logs-client)) never touches
-this budget at all — their row on the admin Users page shows "own client".
+this budget at all — their row on the admin Users page shows the points
+they spent through their own client this hour, labelled "own client" (the
+24 h column adds both clients). That spend is measured the same way as the
+shared one, from their client's own `rateLimitData`, but stored apart
+(`usage_hourly_own`) and never counted against a quota. It is an estimate:
+points the member spends with the same client outside bmpl during the hour
+land on their next bmpl request, unless they exceed 100 pts at once.
 To see refusals, open the admin page's Audit section filtered to **Quota**
 (`GET /api/admin/audit?kind=quota` is the same rows, for scripting).
 

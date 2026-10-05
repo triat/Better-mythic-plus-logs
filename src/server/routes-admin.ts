@@ -21,7 +21,8 @@ import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 import { INVITE_BODY, NOTE_BODY, ROLE_BODY, parseBody } from "./validate.ts";
 
-interface AdminUserExtra { pointsHour: number; points24h: number; sessions: number; configAdmin: boolean; ownClient: boolean }
+/** `pointsHour`/`points24h` count the shared client (the quota); `ownPoints*` a member's own WCL client (reporting only). */
+interface AdminUserExtra { pointsHour: number; points24h: number; ownPointsHour: number; ownPoints24h: number; sessions: number; configAdmin: boolean; ownClient: boolean }
 
 const adminUser = (u: UserRow, extra: AdminUserExtra) => ({
   id: u.id, discordId: u.discordId, username: u.username, globalName: u.globalName,
@@ -46,6 +47,8 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
   const userExtra = (u: UserRow, at: number): AdminUserExtra => ({
     pointsHour: rt.db.usage.byUser(at).find((r) => r.userId === u.id)?.points ?? 0,
     points24h: rt.db.usage.byUserSince(at - 24 * HOUR_MS).find((r) => r.userId === u.id)?.points ?? 0,
+    ownPointsHour: rt.db.usageOwn.used(u.id, at),
+    ownPoints24h: rt.db.usageOwn.byUserSince(at - 24 * HOUR_MS).find((r) => r.userId === u.id)?.points ?? 0,
     sessions: rt.db.sessions.countForUser(u.id, at),
     configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
     ownClient: rt.wclClients.has(u.id),
@@ -141,8 +144,11 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const at = ctx.now;
       const hour = new Map(rt.db.usage.byUser(at).map((r) => [r.userId, r.points]));
       const day = new Map(rt.db.usage.byUserSince(at - 24 * HOUR_MS).map((r) => [r.userId, r.points]));
+      const ownHour = new Map(rt.db.usageOwn.byUser(at).map((r) => [r.userId, r.points]));
+      const ownDay = new Map(rt.db.usageOwn.byUserSince(at - 24 * HOUR_MS).map((r) => [r.userId, r.points]));
       const users = rt.db.users.list().map((u) => adminUser(u, {
         pointsHour: hour.get(u.id) ?? 0, points24h: day.get(u.id) ?? 0,
+        ownPointsHour: ownHour.get(u.id) ?? 0, ownPoints24h: ownDay.get(u.id) ?? 0,
         sessions: rt.db.sessions.countForUser(u.id, at), configAdmin: rt.config.adminDiscordIds.includes(u.discordId),
         ownClient: rt.wclClients.has(u.id),
       }));

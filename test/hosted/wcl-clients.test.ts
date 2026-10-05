@@ -5,13 +5,14 @@ import { UserWclClients, verifyWithPing } from "../../src/hosted/wcl-clients.ts"
 import type { Verify } from "../../src/hosted/wcl-clients.ts";
 import { decrypt } from "../../src/hosted/crypto.ts";
 import { getAccessToken, resetAuthCache } from "../../src/wcl/auth.ts";
+import { currentWclClient } from "../../src/wcl/client.ts";
 import { TEST_ENCRYPTION_KEY } from "./helpers.ts";
 
 const RL = { limitPerHour: 3600, pointsSpentThisHour: 1412, pointsResetIn: 2280 };
 const setup = (key: Uint8Array | null, verify: Verify = async () => ({ ok: true, rateLimit: RL })) => {
   const db = openHosted(new Database(":memory:"));
   const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
-  return { db, u, svc: new UserWclClients({ repo: db.wclClients, key, verify, now: () => 5000 }) };
+  return { db, u, svc: new UserWclClients({ repo: db.wclClients, key, verify, usage: db.usageOwn, now: () => 5000 }) };
 };
 
 describe("UserWclClients", () => {
@@ -112,5 +113,21 @@ describe("UserWclClients", () => {
     expect(svc.has(u.id)).toBe(false);
     expect(db.wclClients.get(u.id)).toBeNull();
     expect(svc.remove(u.id)).toBe(false);
+  });
+  test("run: the member's own-client deltas go to usage_hourly_own, never usage_hourly; a PING only moves the baseline", async () => {
+    const { db, u, svc } = setup(TEST_ENCRYPTION_KEY);
+    const creds = { clientId: "abc", clientSecret: "s" };
+    await svc.save(u.id, creds); // PING at 1412 primes the meter
+    expect(db.usageOwn.used(u.id, 5000)).toBe(0);
+    await svc.run(u.id, creds, async () => {
+      const scope = currentWclClient()!;
+      expect(scope.creds).toEqual(creds);
+      scope.onRateLimit!({ ...RL, pointsSpentThisHour: 1424.5 });
+    });
+    expect(db.usageOwn.used(u.id, 5000)).toBe(12.5);
+    expect((await svc.view(u.id))!.snapshot!.pointsSpentThisHour).toBe(1424.5);
+    svc.observe(u.id, { ...RL, pointsSpentThisHour: 1450 }); // outside run (verify PING): nobody is charged
+    expect(db.usageOwn.used(u.id, 5000)).toBe(12.5);
+    expect(db.usage.used(u.id, 5000)).toBe(0);
   });
 });

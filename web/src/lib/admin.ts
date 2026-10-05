@@ -116,7 +116,7 @@ export interface UserRowModel {
   lastSeen: string; pointsHour: string; pointsHourTone: "" | "tone-warn" | "tone-bad"; points24h: string; discordId: string; sessions: number; canRevoke: boolean;
   /** Issue #11: a banned row is dimmed and shows the red "banned" chip; `ban` is the button to offer (null on yourself and config admins). */
   banned: boolean; ban: "ban" | "unban" | null;
-  /** "pts · hour" cell: a member with their own WCL client spends nothing from the shared budget. */
+  /** "pts · hour" cell: a member with their own WCL client spends nothing from the shared budget, so it shows their own-client points, labelled. */
   pointsCell: string;
 }
 /** `selfId` is the signed-in admin: no toggle, no revoke, no ban on yourself; env admins have no toggle and cannot be banned either; a ban already ended the sessions (no revoke). */
@@ -129,8 +129,8 @@ export function userRow(t: T, u: AdminUser, now = Date.now(), selfId: number, li
     id: u.id, name, handle: `@${u.username}`, initials: initialsOf(name), avatarUrl: u.avatarUrl, role: u.role, roleNote: u.configAdmin ? "env" : null,
     toggle: self || u.configAdmin ? null : u.role === "admin" ? "make member" : "make admin",
     lastSeen: fmtAge(t, u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
-    points24h: fmtPts(u.points24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self && !banned,
-    banned, ban: self || u.configAdmin ? null : banned ? "unban" : "ban", pointsCell: u.ownClient ? t("admin.users.ownClient") : pointsHour,
+    points24h: fmtPts(u.points24h + u.ownPoints24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self && !banned,
+    banned, ban: self || u.configAdmin ? null : banned ? "unban" : "ban", pointsCell: u.ownClient ? t("admin.users.ownClientPts", { pts: fmtPts(u.ownPointsHour) }) : pointsHour,
   };
 }
 

@@ -483,7 +483,7 @@ export const fr: Mirror<typeof en> = {
       revokeConfirm: "Révoquer les sessions de {name} ? {count, plural, one {# session se termine} other {# sessions se terminent}} maintenant.",
       revoke: "Révoquer", revokeSessions: "Révoquer les sessions",
       banConfirm: "Bannir {name} ? Ses sessions se terminent maintenant, il ne peut plus se connecter (inscription ouverte ou invitation), ses données restent jusqu'à ce qu'il les supprime ou que tu le fasses.",
-      ban: "Bannir", unban: "Débannir", ownClient: "client perso",
+      ban: "Bannir", unban: "Débannir", ownClientPts: "{pts} · client perso",
     },
     invites: {
       title: "Invitations", sub: "{n} · un id Discord peut se connecter une fois listé ici (les admins de l'env sont implicites)",

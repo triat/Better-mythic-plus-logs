@@ -72,6 +72,13 @@ CREATE TABLE IF NOT EXISTS usage_hourly (
   PRIMARY KEY (user_id, hour_start)
 );
 CREATE INDEX IF NOT EXISTS usage_hourly_hour ON usage_hourly(hour_start);
+CREATE TABLE IF NOT EXISTS usage_hourly_own (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  hour_start INTEGER NOT NULL,
+  points     REAL    NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, hour_start)
+);
+CREATE INDEX IF NOT EXISTS usage_hourly_own_hour ON usage_hourly_own(hour_start);
 CREATE TABLE IF NOT EXISTS defensives_shared (
   key         TEXT    NOT NULL,
   id          INTEGER NOT NULL,

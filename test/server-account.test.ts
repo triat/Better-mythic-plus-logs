@@ -105,7 +105,7 @@ describe("GET/PUT/DELETE /api/me/wcl-client", () => {
 });
 
 describe("lookups through the member's own client", () => {
-  test("a member with a client runs outside the quota gate and inside the WCL scope; nothing is charged to usage_hourly", async () => {
+  test("a member with a client runs outside the quota gate and inside the WCL scope; its spend goes to usage_hourly_own, never usage_hourly", async () => {
     resetAuthCache();
     await fetch(u("/api/me/wcl-client"), json("PUT", { clientId: "own-id", clientSecret: "own-secret" }, member.cookie));
     db.usage.add(member.user.id, Date.now(), 300); // quota exhausted for the shared client
@@ -118,7 +118,8 @@ describe("lookups through the member's own client", () => {
       if (url.startsWith("http://localhost")) return realFetch(input, init);
       if (url.endsWith("/oauth/token")) return Response.json({ access_token: `tok-${h.get("authorization")}`, expires_in: 3600, token_type: "bearer" });
       auths.push(h.get("authorization")!);
-      return Response.json({ data: { rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: 50, pointsResetIn: 100 }, worldData: { zones: [] }, characterData: { character: null } } });
+      // The save PING primed the member's meter at 1412: this response is an 18-pt delta on their own client.
+      return Response.json({ data: { rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: 1430, pointsResetIn: 100 }, worldData: { zones: [] }, characterData: { character: null } } });
     }) as unknown as typeof fetch;
     try {
       const r = await fetch(u("/api/lookup"), json("POST", { character: "Nobody-Hyjal" }, member.cookie));
@@ -126,8 +127,9 @@ describe("lookups through the member's own client", () => {
       expect(auths.length).toBeGreaterThan(0);
       expect(auths.every((a) => a === `Bearer tok-Basic ${btoa("own-id:own-secret")}`)).toBe(true);
       expect(db.usage.used(member.user.id, Date.now())).toBe(300); // unchanged
+      expect(db.usageOwn.used(member.user.id, Date.now())).toBe(18);
       const me = await (await fetch(u("/api/me"), { headers: { cookie: member.cookie } })).json();
-      expect(me.ownClient.snapshot.pointsSpentThisHour).toBe(50);
+      expect(me.ownClient.snapshot.pointsSpentThisHour).toBe(1430);
     } finally {
       globalThis.fetch = realFetch;
       await fetch(u("/api/me/wcl-client"), { method: "DELETE", headers: { cookie: member.cookie } });

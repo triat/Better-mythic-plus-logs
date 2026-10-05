@@ -34,6 +34,34 @@ export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** A session is only re-stamped when it has consumed at least this much of its TTL (avoids a write per request). */
 export const SESSION_REFRESH_MS = 60 * 60 * 1000;
 
+export interface UsageRepo {
+  /** Adds `points` to the user's bucket of `at`. */
+  add(userId: number, at: number, points: number): void;
+  used(userId: number, at: number): number;
+  /** Every user's points in the bucket of `at`, largest first. */
+  byUser(at: number): Array<{ userId: number; points: number }>;
+  /** Every user's points from the bucket of `sinceAt` on, largest first. */
+  byUserSince(sinceAt: number): Array<{ userId: number; points: number }>;
+  /** Per-bucket totals from the bucket of `sinceAt` on, ascending. */
+  totals(sinceAt: number): Array<{ hourStart: number; points: number }>;
+}
+
+/** The hourly usage queries over `table` (`usage_hourly` or `usage_hourly_own`, same columns). */
+function openUsage(db: Database, table: "usage_hourly" | "usage_hourly_own"): UsageRepo {
+  const add = db.query(`INSERT INTO ${table} (user_id, hour_start, points) VALUES (?, ?, ?) ON CONFLICT(user_id, hour_start) DO UPDATE SET points = points + excluded.points`);
+  const used = db.query<{ points: number } | null, [number, number]>(`SELECT points FROM ${table} WHERE user_id = ? AND hour_start = ?`);
+  const byUser = db.query<{ user_id: number; points: number }, [number]>(`SELECT user_id, points FROM ${table} WHERE hour_start = ? ORDER BY points DESC, user_id`);
+  const byUserSince = db.query<{ user_id: number; points: number }, [number]>(`SELECT user_id, SUM(points) AS points FROM ${table} WHERE hour_start >= ? GROUP BY user_id ORDER BY points DESC, user_id`);
+  const totals = db.query<{ hour_start: number; points: number }, [number]>(`SELECT hour_start, SUM(points) AS points FROM ${table} WHERE hour_start >= ? GROUP BY hour_start ORDER BY hour_start`);
+  return {
+    add(userId, at, points) { add.run(userId, hourStart(at), points); },
+    used: (userId, at) => used.get(userId, hourStart(at))?.points ?? 0,
+    byUser: (at) => byUser.all(hourStart(at)).map((r) => ({ userId: r.user_id, points: r.points })),
+    byUserSince: (sinceAt) => byUserSince.all(hourStart(sinceAt)).map((r) => ({ userId: r.user_id, points: r.points })),
+    totals: (sinceAt) => totals.all(hourStart(sinceAt)).map((r) => ({ hourStart: r.hour_start, points: r.points })),
+  };
+}
+
 export interface HostedDb {
   users: {
     upsertFromDiscord(identity: DiscordIdentity, role: Role | null, now: number): UserRow;
@@ -67,17 +95,10 @@ export interface HostedDb {
     /** Merges `patch` over the stored (or default) row and returns the result. */
     update(userId: number, patch: Partial<UserSettings>, now: number): UserSettings;
   };
-  usage: {
-    /** Adds `points` to the user's bucket of `at`. */
-    add(userId: number, at: number, points: number): void;
-    used(userId: number, at: number): number;
-    /** Every user's points in the bucket of `at`, largest first. */
-    byUser(at: number): Array<{ userId: number; points: number }>;
-    /** Every user's points from the bucket of `sinceAt` on, largest first. */
-    byUserSince(sinceAt: number): Array<{ userId: number; points: number }>;
-    /** Per-bucket totals from the bucket of `sinceAt` on, ascending. */
-    totals(sinceAt: number): Array<{ hourStart: number; points: number }>;
-  };
+  /** Points spent through the shared client (`usage_hourly`): what the quota gate counts. */
+  usage: UsageRepo;
+  /** Points spent through a member's own WCL client (`usage_hourly_own`): reporting only, never a quota. */
+  usageOwn: UsageRepo;
   history: UserHistoryRepo;
   defensives: DefensivesRepo;
   wclClients: {
@@ -195,12 +216,6 @@ export function openHosted(db: Database): HostedDb {
       : { ...DEFAULT_USER_SETTINGS, liveRoles: [...DEFAULT_LIVE.liveRoles], liveClasses: [] };
   };
 
-  const usageAdd = db.query("INSERT INTO usage_hourly (user_id, hour_start, points) VALUES (?, ?, ?) ON CONFLICT(user_id, hour_start) DO UPDATE SET points = points + excluded.points");
-  const usageUsed = db.query<{ points: number } | null, [number, number]>("SELECT points FROM usage_hourly WHERE user_id = ? AND hour_start = ?");
-  const usageByUser = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, points FROM usage_hourly WHERE hour_start = ? ORDER BY points DESC, user_id");
-  const usageByUserSince = db.query<{ user_id: number; points: number }, [number]>("SELECT user_id, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY user_id ORDER BY points DESC, user_id");
-  const usageTotals = db.query<{ hour_start: number; points: number }, [number]>("SELECT hour_start, SUM(points) AS points FROM usage_hourly WHERE hour_start >= ? GROUP BY hour_start ORDER BY hour_start");
-
   const auditInsert = db.query<{ id: number }, [number, number | null, string, string | null, string | null, string | null]>("INSERT INTO audit_log (at, user_id, action, target, detail, ip) VALUES (?, ?, ?, ?, ?, ?) RETURNING id");
   const AUDIT_SELECT = "SELECT a.id, a.at, a.user_id, u.username, a.action, a.target, a.detail, a.ip FROM audit_log a LEFT JOIN users u ON u.id = a.user_id";
   const auditCounts = db.query<{ action: AuditAction; n: number }, [number]>("SELECT action, COUNT(*) AS n FROM audit_log WHERE at >= ? GROUP BY action");
@@ -277,13 +292,8 @@ export function openHosted(db: Database): HostedDb {
         return next;
       },
     },
-    usage: {
-      add(userId, at, points) { usageAdd.run(userId, hourStart(at), points); },
-      used: (userId, at) => usageUsed.get(userId, hourStart(at))?.points ?? 0,
-      byUser: (at) => usageByUser.all(hourStart(at)).map((r) => ({ userId: r.user_id, points: r.points })),
-      byUserSince: (sinceAt) => usageByUserSince.all(hourStart(sinceAt)).map((r) => ({ userId: r.user_id, points: r.points })),
-      totals: (sinceAt) => usageTotals.all(hourStart(sinceAt)).map((r) => ({ hourStart: r.hour_start, points: r.points })),
-    },
+    usage: openUsage(db, "usage_hourly"),
+    usageOwn: openUsage(db, "usage_hourly_own"),
     history: openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, config.region),
     defensives: openDefensives(db),
     wclClients: {

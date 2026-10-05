@@ -271,6 +271,6 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/usage` | admin | WCL budget gauge: this hour per member, the shared client's last `rateLimitData`, last 24 hourly totals |
 | GET | `/api/admin/proposals` | admin | Pending/approved/rejected defensives proposals (`status`) |
 | POST | `/api/admin/proposals/:id/approve\|reject` | admin | Decide a defensives proposal |
-| GET | `/api/admin/users` | admin | List users with usage, session count and admin/own-client flags |
+| GET | `/api/admin/users` | admin | List users with usage (shared client: `pointsHour`/`points24h`; own client: `ownPointsHour`/`ownPoints24h`), session count and admin/own-client flags |
 | POST | `/api/admin/users/:id/sessions/revoke\|ban\|unban\|role` | admin | Revoke sessions, ban/unban, or change a user's role |
 | GET | `/api/admin/instance` | admin | Version, uptime, database size, last backup, effective environment (secrets masked) |

@@ -11,14 +11,13 @@ import type { QuotaRefusal } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { LookupPayload } from "../lookup.ts";
 import { getStore } from "../signals/store.ts";
-import { runWithWclClient } from "../wcl/client.ts";
 import { jsonResponse } from "./http.ts";
 import { getLocalHistory } from "./local-history.ts";
 import { DEEPDIVE_BODY, DEFENSIVES_BODY, parseBody } from "./validate.ts";
 
 /** The WCL scope a lookup/deep-dive runs in (issue #11 Task 3): a member's own client when they have
  * one saved, the shared/env client otherwise. `own` tells the caller whether to skip the shared
- * quota gate and charge nothing to `usage_hourly`. */
+ * quota gate and charge nothing to `usage_hourly` (an own client's spend goes to `usage_hourly_own`). */
 export interface WclScope { run<T>(fn: () => Promise<T>): Promise<T>; own: boolean }
 
 export async function wclScopeFor(runtime: HostedRuntime | null, user: SessionUser | null): Promise<WclScope> {
@@ -26,7 +25,7 @@ export async function wclScopeFor(runtime: HostedRuntime | null, user: SessionUs
   if (!creds) return { run: (fn) => fn(), own: false };
   const rt = runtime!;
   const userId = user!.id;
-  return { own: true, run: (fn) => runWithWclClient({ creds, onRateLimit: (rl) => rt.wclClients.observe(userId, rl) }, fn) };
+  return { own: true, run: (fn) => rt.wclClients.run(userId, creds, fn) };
 }
 
 /** The tables a request analyses with: the member's own layer (shared ⊕ their pending proposals) when hosted, the file otherwise. */

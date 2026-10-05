@@ -107,6 +107,8 @@ export interface AdminUser {
   id: number; discordId: string; username: string; globalName: string | null; avatarUrl: string; role: "member" | "admin";
   createdAt: number; lastSeenAt: number; pointsHour: number; points24h: number; sessions: number; configAdmin: boolean;
   bannedAt: number | null; ownClient: boolean;
+  /** Points spent through the member's own WCL client (outside the quota), this hour and over 24 h. */
+  ownPointsHour: number; ownPoints24h: number;
 }
 /** GET /api/admin/invites row. */
 export interface AdminInvite { discordId: string; invitedBy: string; createdAt: number; note: string | null; user: { id: number; username: string } | null }

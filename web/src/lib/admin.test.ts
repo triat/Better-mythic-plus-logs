@@ -16,8 +16,8 @@ const usage: AdminUsage = {
   hours: [{ hourStart: NOW - (NOW % H) - 2 * H, points: 3170 }, { hourStart: NOW - (NOW % H), points: 1412 }],
 };
 const users: AdminUser[] = [
-  { id: 1, discordId: "11", username: "muleyoxo", globalName: "Muleyoxo", avatarUrl: "a", role: "admin", createdAt: 0, lastSeenAt: NOW - 10_000, pointsHour: 181, points24h: 2340, sessions: 2, configAdmin: true, bannedAt: null, ownClient: false },
-  { id: 2, discordId: "22", username: "tom", globalName: null, avatarUrl: "b", role: "member", createdAt: 0, lastSeenAt: NOW - 2 * H, pointsHour: 252, points24h: 1118, sessions: 1, configAdmin: false, bannedAt: null, ownClient: false },
+  { id: 1, discordId: "11", username: "muleyoxo", globalName: "Muleyoxo", avatarUrl: "a", role: "admin", createdAt: 0, lastSeenAt: NOW - 10_000, pointsHour: 181, points24h: 2340, sessions: 2, configAdmin: true, bannedAt: null, ownClient: false, ownPointsHour: 0, ownPoints24h: 0 },
+  { id: 2, discordId: "22", username: "tom", globalName: null, avatarUrl: "b", role: "member", createdAt: 0, lastSeenAt: NOW - 2 * H, pointsHour: 252, points24h: 1118, sessions: 1, configAdmin: false, bannedAt: null, ownClient: false, ownPointsHour: 0, ownPoints24h: 0 },
 ];
 
 describe("gauge", () => {
@@ -110,12 +110,13 @@ describe("users, invites, instance", () => {
     expect(userRow(tEn, { ...users[1]!, pointsHour: 300 }, NOW, 1).pointsHourTone).toBe("tone-bad");
   });
   test("banned rows and own-client cells", () => {
-    const base = { id: 3, discordId: "333333333333333333", username: "bob", globalName: null, avatarUrl: "", role: "member" as const, createdAt: 0, lastSeenAt: NOW, pointsHour: 12, points24h: 40, sessions: 1, configAdmin: false, bannedAt: null, ownClient: true };
+    const base = { id: 3, discordId: "333333333333333333", username: "bob", globalName: null, avatarUrl: "", role: "member" as const, createdAt: 0, lastSeenAt: NOW, pointsHour: 12, points24h: 40, sessions: 1, configAdmin: false, bannedAt: null, ownClient: true, ownPointsHour: 34, ownPoints24h: 1200 };
     const r = userRow(tEn, base, NOW, 1, 300);
-    expect(r.pointsCell).toBe("own client");
+    expect(r.pointsCell).toBe("34 · own client");
+    expect(r.points24h).toBe("1\u202f240");
     expect(r.ban).toBe("ban");
     expect(r.banned).toBe(false);
-    const b = userRow(tEn, { ...base, ownClient: false, bannedAt: NOW - 1000 }, NOW, 1, 300);
+    const b = userRow(tEn, { ...base, ownClient: false, ownPoints24h: 0, bannedAt: NOW - 1000 }, NOW, 1, 300);
     expect(b.pointsCell).toBe("12");
     expect(b.ban).toBe("unban");
     expect(b.banned).toBe(true);
@@ -125,8 +126,8 @@ describe("users, invites, instance", () => {
     expect(userRow(tEn, { ...base, configAdmin: true }, NOW, 1, 300).ban).toBeNull();
   });
   test("French user row: own client, last seen", () => {
-    const base = { id: 3, discordId: "333333333333333333", username: "bob", globalName: null, avatarUrl: "", role: "member" as const, createdAt: 0, lastSeenAt: NOW - 3 * H, pointsHour: 12, points24h: 40, sessions: 1, configAdmin: false, bannedAt: null, ownClient: true };
-    expect(userRow(tFr, base, NOW, 1, 300)).toMatchObject({ pointsCell: "client perso", lastSeen: "il y a 3 h", toggle: "make admin" });
+    const base = { id: 3, discordId: "333333333333333333", username: "bob", globalName: null, avatarUrl: "", role: "member" as const, createdAt: 0, lastSeenAt: NOW - 3 * H, pointsHour: 12, points24h: 40, sessions: 1, configAdmin: false, bannedAt: null, ownClient: true, ownPointsHour: 34, ownPoints24h: 1200 };
+    expect(userRow(tFr, base, NOW, 1, 300)).toMatchObject({ pointsCell: "34 · client perso", lastSeen: "il y a 3 h", toggle: "make admin" });
   });
   test("invite row: note or dash, added by admin id or CLI, status chip", () => {
     const base: AdminInvite = { discordId: "22", invitedBy: "admin:1", createdAt: NOW - 6 * 24 * H, note: "guild mate", user: { id: 2, username: "tom" } };

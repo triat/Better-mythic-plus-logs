@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
-import { analyzeLookup, inferTargetLevel, isRanked, type MPlusRun } from "../src/mplus.ts";
+import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { analyzeLookup, fetchMplusData, inferTargetLevel, isRanked, type MPlusRun } from "../src/mplus.ts";
+import { resetAuthCache } from "../src/wcl/auth.ts";
 
 let seq = 0;
 const run = (encounterID: number, keyLevel: number, parsePercent: number): MPlusRun => ({
@@ -34,5 +35,41 @@ describe("isRanked / analyzeLookup parse handling", () => {
   test("all runs unranked → medianParse 0", () => {
     const r = analyzeLookup([run(1, 21, 0)], 21, [{ id: 1, name: "a" }]);
     expect(r.perDungeon.medianParse).toBe(0);
+  });
+});
+
+describe("fetchMplusData with a partial WCL zone answer", () => {
+  // Never reaches WCL: fetch is replaced and the env pinned/restored (same pattern as test/wcl/client-scope.test.ts).
+  const realFetch = globalThis.fetch;
+  const savedEnv = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+  let zone: unknown;
+  beforeEach(() => {
+    resetAuthCache();
+    process.env.WCL_CLIENT_ID = "bmpl-test";
+    process.env.WCL_CLIENT_SECRET = "bmpl-test";
+    globalThis.fetch = (async (input: string | URL | Request) => {
+      if (String(input).endsWith("/oauth/token")) return Response.json({ access_token: "t", expires_in: 3600, token_type: "bearer" });
+      return Response.json({ data: { characterData: { character: { id: 1, name: "Greylog", classID: 1, dps: zone, hps: null } } } });
+    }) as unknown as typeof fetch;
+  });
+  afterEach(() => { globalThis.fetch = realFetch; resetAuthCache(); });
+  afterAll(() => {
+    if (savedEnv.id === undefined) delete process.env.WCL_CLIENT_ID; else process.env.WCL_CLIENT_ID = savedEnv.id;
+    if (savedEnv.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = savedEnv.secret;
+  });
+  const fetchIt = () => fetchMplusData("Greylog", "Outland", { region: "eu", metric: "dps", zone: { id: 1, name: "Mythic+", partition: 1 } });
+
+  // Regression: production 2026-10-03, "undefined is not an object (evaluating 'zoneJson?.rankings.map')".
+  test("a zone object without `rankings` is an empty result, not a TypeError", async () => {
+    zone = { zone: 1, partition: 1, allStars: [] };
+    const data = await fetchIt();
+    expect(data.runs).toEqual([]);
+    expect(data.seasonDungeons).toEqual([]);
+    expect(data.character.name).toBe("Greylog");
+  });
+  test("a null zone is still an empty result", async () => {
+    zone = null;
+    const data = await fetchIt();
+    expect(data.runs).toEqual([]);
   });
 });

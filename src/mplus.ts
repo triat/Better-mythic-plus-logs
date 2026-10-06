@@ -272,13 +272,13 @@ export async function fetchMplusData(
 
   const identity = toIdentity(probed.character, zoneJson);
 
-  const seasonDungeons: SeasonDungeon[] =
-    zoneJson?.rankings.map((r) => ({
-      id: r.encounter.id,
-      name: r.encounter.name,
-    })) ?? [];
+  // WCL can answer with a zone object that has no `rankings` (seen in production on 2026-10-03).
+  const seasonDungeons: SeasonDungeon[] = (zoneJson?.rankings ?? []).map((r) => ({
+    id: r.encounter.id,
+    name: r.encounter.name,
+  }));
 
-  if (!zoneJson || zoneJson.rankings.length === 0) {
+  if (seasonDungeons.length === 0) {
     return {
       zoneID: activeZone.id,
       zoneName: activeZone.name,

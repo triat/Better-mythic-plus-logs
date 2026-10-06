@@ -274,3 +274,6 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/users` | admin | List users with usage (shared client: `pointsHour`/`points24h`; own client: `ownPointsHour`/`ownPoints24h`), session count and admin/own-client flags |
 | POST | `/api/admin/users/:id/sessions/revoke\|ban\|unban\|role` | admin | Revoke sessions, ban/unban, or change a user's role |
 | GET | `/api/admin/instance` | admin | Version, uptime, database size, last backup, effective environment (secrets masked) |
+| GET | `/api/ops/status` | ops token | Version, uptime, last backup, effective environment (secrets masked), shared meter snapshot |
+| GET | `/api/ops/errors` | ops token | `wcl_error` / `server_error` audit rows (`since`, `before`, `limit`), without IP, Discord id or username |
+| GET | `/api/ops/logs` | ops token | The last 500 uncaught errors of this process, with their stack (`since`, `limit`) |

@@ -11,6 +11,7 @@ import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
 import { QuotaGate } from "./quota.ts";
 import { DEFAULT_RATE_LIMITS, RateLimiter } from "./ratelimit.ts";
 import type { RateLimits } from "./ratelimit.ts";
+import { ErrorRing } from "./error-ring.ts";
 import { UserWclClients, verifyWithPing } from "./wcl-clients.ts";
 import type { Verify } from "./wcl-clients.ts";
 
@@ -27,6 +28,8 @@ export interface HostedRuntime {
   limits: { auth: RateLimiter; lookup: RateLimiter; deepdive: RateLimiter; security: RateLimiter; signup: RateLimiter };
   /** A member's own WCL client (issue #11 Task 2): encrypted secret storage, verification, own-client rate-limit snapshot. */
   wclClients: UserWclClients;
+  /** The last uncaught server errors with their stack, for the read-only `/api/ops/logs`. */
+  errors: ErrorRing;
 }
 
 const PURGE_INTERVAL_MS = 60 * 60 * 1000;
@@ -62,6 +65,7 @@ export function createHostedRuntime(
       signup: new RateLimiter(rateLimits.signup),
     },
     wclClients: new UserWclClients({ repo: hostedDb.wclClients, key: config.encryptionKey, verify: hooks.verifyWclClient ?? verifyWithPing, usage: hostedDb.usageOwn }),
+    errors: new ErrorRing(),
   };
   // Every WCL response of this process now feeds the meter, every WCL failure the audit log (the CLI
   // and local mode never install either).

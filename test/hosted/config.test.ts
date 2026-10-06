@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_OPERATOR, HOSTED_ENV_VARS, resolveMode, validateHostedEnv, weakSecret } from "../../src/hosted/config.ts";
+import { BOOTSTRAP_OPS, DEFAULT_OPERATOR, HOSTED_ENV_VARS, resolveMode, sha256Hex, validateHostedEnv, weakSecret } from "../../src/hosted/config.ts";
 
 const FULL: Record<string, string> = {
   BMPL_BASE_URL: "https://bmpl.example.com",
@@ -151,5 +151,32 @@ describe("phase 2 optional variables", () => {
       "BMPL_ENCRYPTION_KEY: base64 of 32 random bytes — generate one with `openssl rand -base64 32`",
       "BMPL_OPERATOR: at most 80 characters",
     ]);
+  });
+});
+
+describe("BMPL_OPS_TOKEN", () => {
+  const TOKEN = "Zq8vN3kP0rT6wY1bC4eH7jL2mQ5sU9xA"; // 32 bytes, not a placeholder
+  const ops = (env: Record<string, string>) => {
+    const r = validateHostedEnv({ ...FULL, ...env });
+    if (!r.ok) throw new Error(JSON.stringify(r));
+    return r.config.opsTokenSha256;
+  };
+  test("unset: no ops routes, except the bootstrap hash on bmpl.riat.dev itself", () => {
+    expect(ops({})).toBeNull();
+    expect(ops({ BMPL_BASE_URL: "https://bmpl.riat.dev" })).toBe(BOOTSTRAP_OPS.sha256);
+    expect(ops({ BMPL_BASE_URL: "https://bmpl.riat.dev.evil.example" })).toBeNull();
+  });
+  test("set: its SHA-256, never the token; `off` disables the bootstrap too", () => {
+    expect(ops({ BMPL_OPS_TOKEN: TOKEN })).toBe(sha256Hex(TOKEN));
+    expect(ops({ BMPL_OPS_TOKEN: TOKEN, BMPL_BASE_URL: "https://bmpl.riat.dev" })).toBe(sha256Hex(TOKEN));
+    expect(ops({ BMPL_OPS_TOKEN: "off", BMPL_BASE_URL: "https://bmpl.riat.dev" })).toBeNull();
+    expect(JSON.stringify(validateHostedEnv({ ...FULL, BMPL_OPS_TOKEN: TOKEN }))).not.toContain(TOKEN);
+  });
+  test("a short or placeholder token refuses to start", () => {
+    const short = validateHostedEnv({ ...FULL, BMPL_OPS_TOKEN: "short" });
+    expect(short.ok).toBe(false);
+    if (!short.ok) expect(short.invalid[0]).toContain("BMPL_OPS_TOKEN: at least 32 bytes");
+    const weak = validateHostedEnv({ ...FULL, BMPL_OPS_TOKEN: "changeme-changeme-changeme-changeme" });
+    expect(weak.ok).toBe(false);
   });
 });

@@ -13,6 +13,7 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   discordGuildId: null,
   encryptionKey: null,
   operator: "the admin of this instance",
+  opsTokenSha256: null,
 };
 
 export const TEST_ENCRYPTION_KEY = new Uint8Array(32).map((_, i) => i);

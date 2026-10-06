@@ -12,7 +12,7 @@ export type AuditAction =
   | "invite_add" | "invite_remove" | "role_change" | "sessions_revoke" | "proposal_approve" | "proposal_reject"
   | "user_ban" | "user_unban"
   | "quota_refused"
-  | "rate_limited" | "origin_rejected"
+  | "rate_limited" | "origin_rejected" | "ops_denied"
   | "wcl_error" | "server_error";
 export type AuditKind = "login" | "admin" | "quota" | "security" | "error";
 
@@ -36,6 +36,7 @@ export const ACTION_KIND: Record<AuditAction, AuditKind> = {
   quota_refused: "quota",
   rate_limited: "security",
   origin_rejected: "security",
+  ops_denied: "security",
   wcl_error: "error",
   server_error: "error",
 };

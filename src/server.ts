@@ -15,6 +15,7 @@ import { findRoute } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { adminRoutes } from "./server/routes-admin.ts";
 import { authRoutes } from "./server/routes-auth.ts";
+import { opsRoutes } from "./server/routes-ops.ts";
 import { userRoutes } from "./server/routes-user.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
@@ -105,7 +106,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   }
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint, runtime }),
-    ...(runtime ? [...authRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime)] : localRoutes()),
+    ...(runtime ? [...authRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime), ...opsRoutes(runtime)] : localRoutes()),
   ];
 
   const respond = async (req: Request, url: URL, peerIp: string | null): Promise<Response> => {
@@ -161,6 +162,8 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     } catch (e) {
       console.error(e);
       // The message stays in the log (clipped) and in stderr; the client only ever sees "Internal error".
+      // The stack goes to the in-memory ring that `/api/ops/logs` reads.
+      runtime?.errors.push(e, scope?.target ?? `${req.method} ${url.pathname}`);
       runtime?.audit.record("server_error", { ...(scope ?? { userId: null, ip: clientIp(req, hosted, peerIp), target: `${req.method} ${url.pathname}` }), detail: { message: clip(String(e instanceof Error ? e.message : e)) } });
       return jsonResponse({ ok: false, error: "Internal error" }, 500);
     }
@@ -181,6 +184,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     // ever reach Bun's default HTML debug page, especially in hosted mode.
     error(e) {
       console.error(e);
+      runtime?.errors.push(e, null);
       const res = jsonResponse({ ok: false, error: "Internal error" }, 500);
       return hosted ? withSecurityHeaders(res) : res;
     },

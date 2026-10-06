@@ -174,6 +174,7 @@ export const AUDIT_KIND_OF: Record<AuditAction, AuditKind> = {
   quota_refused: "quota",
   rate_limited: "security",
   origin_rejected: "security",
+  ops_denied: "security",
   wcl_error: "error",
   server_error: "error",
 };
@@ -247,6 +248,7 @@ export function auditDetail(t: T, action: AuditAction, detail: Record<string, un
     case "wcl_client_set":
     case "wcl_client_remove":
     case "user_unban":
+    case "ops_denied":
       return "";
   }
 }

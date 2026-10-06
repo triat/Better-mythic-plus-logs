@@ -1,5 +1,6 @@
 // Hosted-mode configuration: pure functions over an env record so the CLI can validate
 // before starting the server and tests never touch process.env.
+import { createHash } from "node:crypto";
 
 export type Mode = "local" | "hosted";
 
@@ -30,12 +31,28 @@ export interface HostedConfig {
   encryptionKey: Uint8Array | null;
   /** Shown to members who cannot get in (e.g. "ask Muleyoxo on Discord"). */
   operator: string;
+  /** SHA-256 (hex) of the bearer token that opens the read-only `/api/ops/*` routes; null = they answer 404. */
+  opsTokenSha256: string | null;
 }
 
 export const MIN_SESSION_SECRET_BYTES = 32;
 export const DEFAULT_POINTS_PER_USER_HOUR = 300;
 export const ENCRYPTION_KEY_BYTES = 32;
 export const DEFAULT_OPERATOR = "the admin of this instance";
+export const MIN_OPS_TOKEN_BYTES = 32;
+
+/**
+ * Bootstrap ops token for bmpl.riat.dev only, while its operator cannot edit the VPS `.env`: the
+ * SHA-256 of a token held in the operator's agent environment (the token itself is not in the repo).
+ * Used only when `BMPL_BASE_URL` is exactly this origin and `BMPL_OPS_TOKEN` is unset, so a
+ * self-hosted instance never accepts it. Remove once `BMPL_OPS_TOKEN` is set on that VPS.
+ */
+export const BOOTSTRAP_OPS = {
+  origin: "https://bmpl.riat.dev",
+  sha256: "203c828e65e3badb9f92783e98cdeca730b0d728d5e522cf4157e2dc4ff092dc",
+} as const;
+
+export const sha256Hex = (s: string): string => createHash("sha256").update(s, "utf8").digest("hex");
 
 type Env = Record<string, string | undefined>;
 
@@ -105,6 +122,15 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
   if (keyBytes !== null && keyBytes.length !== ENCRYPTION_KEY_BYTES) invalid.push("BMPL_ENCRYPTION_KEY: base64 of 32 random bytes — generate one with `openssl rand -base64 32`");
   const operator = read(env, "BMPL_OPERATOR");
   if (operator.length > 80) invalid.push("BMPL_OPERATOR: at most 80 characters");
+  // `off` disables the ops routes outright, bootstrap token included.
+  const opsToken = read(env, "BMPL_OPS_TOKEN");
+  if (opsToken !== "" && opsToken !== "off") {
+    if (Buffer.byteLength(opsToken, "utf8") < MIN_OPS_TOKEN_BYTES) invalid.push(`BMPL_OPS_TOKEN: at least ${MIN_OPS_TOKEN_BYTES} bytes, or "off" — generate one with \`openssl rand -base64 48\``);
+    else if (weakSecret(opsToken)) invalid.push(`BMPL_OPS_TOKEN: ${weakSecret(opsToken)} — generate one with \`openssl rand -base64 48\``);
+  }
+  const opsTokenSha256 = opsToken === "off" ? null
+    : opsToken !== "" ? sha256Hex(opsToken)
+    : baseUrl === BOOTSTRAP_OPS.origin ? BOOTSTRAP_OPS.sha256 : null;
 
   if (missing.length > 0 || invalid.length > 0) return { ok: false, missing, invalid };
   return {
@@ -120,6 +146,7 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
       discordGuildId: rawGuild || null,
       encryptionKey: keyBytes ? new Uint8Array(keyBytes) : null,
       operator: operator || DEFAULT_OPERATOR,
+      opsTokenSha256,
     },
   };
 }

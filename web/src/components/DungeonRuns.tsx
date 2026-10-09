@@ -8,6 +8,7 @@ import { useT } from "../locale.tsx";
 import type { DeepdiveActions } from "./Detail.tsx";
 import { HelpLink } from "./HelpLink.tsx";
 import { RunDeepDive } from "./RunDeepDive.tsx";
+import { track } from "../usage.ts";
 
 export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; deepdive: DeepdiveActions }) {
   const { t } = useT();
@@ -21,7 +22,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
   return (
     <section className="card section">
       <div className="section-row">
-        <button type="button" className="section-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <button type="button" className="section-head" onClick={() => { track("runs_toggle"); setOpen((o) => !o); }} aria-expanded={open}>
           <span className={"chev" + (open ? " open" : "")}>›</span>
           <span className="section-title">{t("runs.best")}</span>
         </button>
@@ -45,7 +46,7 @@ export function DungeonRuns({ payload, deepdive }: { payload: LookupPayload; dee
           {rows.map((r) => (
             <RunRow
               key={r.key} r={r} payload={payload} deepdive={deepdive}
-              expanded={openRow === r.key} onToggle={() => setOpenRow(openRow === r.key ? null : r.key)}
+              expanded={openRow === r.key} onToggle={() => { if (openRow !== r.key) track("deepdive_panel_open"); setOpenRow(openRow === r.key ? null : r.key); }}
             />
           ))}
           {missing.length > 0 && <div className="faint" style={{ fontSize: 12, padding: "4px 10px" }}>{t("runs.missing", { list: missing.join(", ") })}</div>}
@@ -103,7 +104,7 @@ function RunRow({ r, payload, deepdive, expanded, onToggle }: {
             {t("runs.analyzed")} <span className={"chev" + (expanded ? " open" : "")}>›</span>
           </button>
         )}
-        <a href={r.url} target="_blank" rel="noopener" title={t("runs.openLog")}>↗</a>
+        <a href={r.url} target="_blank" rel="noopener" title={t("runs.openLog")} onClick={() => track("external_log")}>↗</a>
       </div>
       {expanded && a && (
         <RunDeepDive

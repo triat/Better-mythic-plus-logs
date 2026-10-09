@@ -12,6 +12,7 @@ import { useT } from "../locale.tsx";
 import { ChipMenu } from "./ChipMenu.tsx";
 import { LiveChip } from "./LiveChip.tsx";
 import { UserMenu } from "./UserMenu.tsx";
+import { track } from "../usage.ts";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -57,6 +58,7 @@ export function Header(p: Props) {
   const set = (patch: Partial<LookupForm>) => p.onChange({ ...p.form, ...patch });
   const pickSpec = (v: string) => {
     if (v === OTHER_SPEC) { setOpen((o) => !o); return; }   // "Other…" toggles the free-text row
+    track("spec_pick");
     set({ spec: v });
     setOpen(false);
   };
@@ -108,7 +110,7 @@ export function Header(p: Props) {
       <label>{t("header.spec.title")}
         <input value={p.form.spec} placeholder={t("header.specPlaceholder")} onChange={(e) => set({ spec: e.target.value })} /></label>
       <label>{t("header.metric.title")}
-        <select value={p.form.metric} onChange={(e) => set({ metric: e.target.value as LookupForm["metric"] })}>
+        <select value={p.form.metric} onChange={(e) => { track("metric_pick"); set({ metric: e.target.value as LookupForm["metric"] }); }}>
           <option value="">{t("header.metric.auto")}</option><option value="dps">{t("header.metric.dps")}</option><option value="hps">{t("header.metric.hps")}</option>
         </select></label>
     </div>

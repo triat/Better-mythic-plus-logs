@@ -2,13 +2,14 @@ import type { AxisRowModel } from "../lib/axes.ts";
 import { confidenceColor } from "../lib/verdict.ts";
 import { useT } from "../locale.tsx";
 import { useSettings } from "../settings.tsx";
+import { track } from "../usage.ts";
 
 /** "How the verdict is built": one line per axis with its weight; open by default, remembered per browser (local) or per account (hosted). */
 export function AxisLegend({ rows }: { rows: AxisRowModel[] }) {
   const { t } = useT();
   const { settings, update } = useSettings();
   const open = settings.legendOpen;
-  const toggle = () => update({ legendOpen: !open });
+  const toggle = () => { track("legend_toggle"); update({ legendOpen: !open }); };
   return (
     <div className="legend">
       <button type="button" className="section-head" onClick={toggle} aria-expanded={open}>

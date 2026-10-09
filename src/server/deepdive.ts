@@ -79,6 +79,7 @@ export async function handleDeepdive(req: Request, ctx: RequestContext, runtime:
   const r = await scope.run(() => runDeepdive({ reportCode: body.reportCode, fightID: body.fightID, character: body.character, force: !!body.force }, { store, tables, reserve: scope.own ? undefined : (runtime && user ? runtime.quota.for(user) : undefined) }));
   if (!r.ok) return jsonResponse(failureBody(r, runtime), r.status);
   if (!ctx.hosted) await refreshLocalHistory();
+  runtime?.track(ctx.user?.id ?? null, body.force ? "deepdive_reanalyze" : "deepdive");
   // Hosted: the measured charge of this request replaces the PING-delta estimate; a member's own
   // client charges nothing to the shared meter/usage.
   const accounting = runtime && user

@@ -119,6 +119,16 @@ CREATE TABLE IF NOT EXISTS user_wcl_clients (
   verified_at INTEGER,
   updated_at  INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS usage_events (
+  day     INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event   TEXT    NOT NULL,
+  n       INTEGER NOT NULL,
+  last_at INTEGER NOT NULL,
+  PRIMARY KEY (event, day, user_id)
+);
+CREATE INDEX IF NOT EXISTS usage_events_day ON usage_events(day);
+CREATE INDEX IF NOT EXISTS usage_events_user ON usage_events(user_id);
 `;
 
 /** Columns added to `users` after its first release; migrated in place on an older database. */

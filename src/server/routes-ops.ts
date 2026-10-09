@@ -1,7 +1,7 @@
 // Read-only ops routes for the operator's tooling (an agent diagnosing production errors): a static
 // bearer token (`BMPL_OPS_TOKEN`, compared by SHA-256), no cookie, GET only. Spec:
 // docs/superpowers/specs/2026-10-05-ops-read-access-design.md. Responses never carry an IP, a
-// Discord id or a username: a user is an opaque `user#<id>`.
+// Discord id or a username: a user is an opaque `user#<id>`; `/api/ops/features` names no user at all.
 import { timingSafeEqual } from "node:crypto";
 import { dirname } from "node:path";
 import pkg from "../../package.json";
@@ -9,6 +9,7 @@ import { actionsOf } from "../hosted/audit.ts";
 import { sha256Hex } from "../hosted/config.ts";
 import { describeConfig, lastBackupAt } from "../hosted/instance.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
+import { parseUsageQuery } from "../hosted/usage-events.ts";
 import { resolveEnvPath } from "../setup.ts";
 import { jsonResponse } from "./http.ts";
 import { AUDIT_MAX_LIMIT } from "./routes-admin.ts";
@@ -61,6 +62,12 @@ export function opsRoutes(rt: HostedRuntime): Route[] {
         ok: true, now: ctx.now, version: pkg.version as string, uptimeS: Math.round(process.uptime()),
         lastBackupAt: lastBackupAt(dirname(await resolveEnvPath())), env, meter: rt.meter.snapshot(),
       });
+    }), "public"),
+    // Feature usage without `top`: aggregate counts only, no member is named (decision 8 of the usage spec).
+    route("GET", "/api/ops/features", guarded((_req, url, ctx) => {
+      const q = parseUsageQuery(url.searchParams);
+      if (!q.ok) return jsonResponse({ ok: false, error: q.error }, 400);
+      return jsonResponse({ ok: true, ...rt.db.features.report({ now: ctx.now, days: q.days, includeAdmins: q.includeAdmins, withTop: false }) });
     }), "public"),
     route("GET", "/api/ops/errors", guarded((_req, url) => {
       const p = paging(url);

@@ -14,6 +14,7 @@ import { avatarUrl } from "../hosted/discord.ts";
 import { describeConfig, lastBackupAt } from "../hosted/instance.ts";
 import { resetInS } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
+import { parseUsageQuery } from "../hosted/usage-events.ts";
 import { resolveEnvPath } from "../setup.ts";
 import { getStore } from "../signals/store.ts";
 import { jsonResponse } from "./http.ts";
@@ -114,6 +115,12 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
         }),
         hours: rt.db.usage.totals(at - 24 * HOUR_MS),
       });
+    }, "admin"),
+    // Feature usage (spec 2026-10-09): every catalogue entry with members, uses, a daily series and the top 5 members.
+    route("GET", "/api/admin/features", (_req, url, ctx) => {
+      const q = parseUsageQuery(url.searchParams);
+      if (!q.ok) return jsonResponse({ ok: false, error: q.error }, 400);
+      return jsonResponse({ ok: true, ...rt.db.features.report({ now: ctx.now, days: q.days, includeAdmins: q.includeAdmins, withTop: true }) });
     }, "admin"),
     // Moderation of members' defensives corrections (issue #6); the admin page (#8) is the client.
     route("GET", "/api/admin/proposals", (_req, url) => {

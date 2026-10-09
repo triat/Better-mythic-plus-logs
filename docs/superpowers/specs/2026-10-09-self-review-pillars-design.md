@@ -3,6 +3,8 @@
 Status: approved 2026-10-09 (sync needs the member's own WCL client; points to work on against both
 references). Canvas page "self-review": variants A + C chosen 2026-10-09 (decision 4). Open
 question 1 settled 2026-10-09; the other WCL-dependent items are tracked in GitHub issue #24.
+Amended 2026-10-09: a personal page (decision 8), manual characters until Battle.net linking
+(decision 1), the phase-1 numbers (section "Numbers"), open question 2.
 
 ## Goal
 
@@ -52,9 +54,14 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
 ## Decisions
 
 1. **"Me" is one or more characters linked to the account.** Hosted: `user_settings.characters`
-   (up to 5 `{ name, realm, region }`), set from the result page ("This is me") or Settings. Local
-   mode: the same list in `localStorage`. The home page opens on the member's main character when one
-   is set.
+   (up to 5 `{ name, realm, region, source }`), local mode: the same list in `localStorage`. In phase 1
+   every entry is `source: "manual"`, added from the result page ("This is me") or the personal page
+   (decision 8); a manual entry proves nothing, so nothing is restricted on it. Linking a Battle.net
+   account (`wow.profile` scope, `GET /profile/user/wow`) imports the account's characters as
+   `source: "bnet"` and is its own step with its own spec (user's choice, 2026-10-09); once it ships,
+   hosted members can no longer add characters by hand (local mode, which has no account, keeps the
+   manual list). The first character of the list is the main one: the header links to it, and the home
+   page offers to open it (from history at 0 pts; never an automatic lookup, which would spend points).
 
 2. **A season of runs per character.** A new table keeps every run WCL's rankings return for a
    character this season (`character_runs`: region, character, encounter, report code, fight id,
@@ -86,10 +93,13 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    - **Runs:** today's run list, every run of the season once synced, each run opening its detail
      (today's row and deep-dive, plus the killing hits and avoidable abilities).
 
-5. **Trend by game week.** Runs are bucketed by the region's weekly reset (Wednesday in EU, Tuesday in
-   US; the exact UTC hours are to be confirmed against Blizzard before coding, not taken from memory). A pillar's weekly value is the median of its per-run scores; the
-   trend compares the last two weeks with the four before. Fewer than 3 runs in a window: "not enough
-   runs" instead of an arrow.
+5. **Trend by game week.** Runs are bucketed by the region's weekly reset. Boundaries, from Raider.IO's
+   `GET /api/v1/periods` (Blizzard's Mythic+ periods as Raider.IO serves them; captured 2026-10-09, not
+   a Blizzard page): US Tuesday 15:00 UTC, EU Wednesday 04:00 UTC, KR and TW Wednesday 23:00 UTC. They
+   are taken as fixed in UTC; a daylight-saving shift on Blizzard's side would misplace the runs of
+   one hour, accepted. A pillar's weekly value is the median of its per-run scores; the trend compares
+   the last two weeks with the four before. Fewer than 3 runs in a window: "not enough runs" instead of
+   an arrow.
 
 6. **Simple first, detail on demand.** Every number opens what it is made of, down to the run, the
    timestamp and the Warcraft Logs link. Wording stays template-based and short; the help page explains
@@ -97,6 +107,11 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
 
 7. **Same engine for others.** Looking up a candidate shows the same three tabs. The verdict
    (INVITE / MAYBE / PASS) stays where it is, computed exactly as today.
+
+8. **A personal page** (user's idea, 2026-10-09): one page that gathers the member's characters, their
+   season state (runs found, analysed, last sync) and the sync itself, and opens each character's
+   result tabs. It replaces the scattered "My character" chip as the entry point; the result page keeps
+   the "This is me" toggle. Its layout goes through the canvas before any code.
 
 ## Phases
 
@@ -121,6 +136,24 @@ read (0 pts) ──► character_runs + wcl_run_raw ──► per-run signals �
                      └──► Runs: every run + its details
 ```
 
+## Numbers (phase 1)
+
+Proposed with the phase-1 plan (2026-10-09), to be confirmed by the user with it; tests assert them
+literally.
+
+- **Overview window:** the last 4 game weeks (current one included). Needs at least 3 analysed runs;
+  below that the Overview uses the lookup's own evaluation (the verdict's runs) and says so.
+- **Own past:** the 4 game weeks before the Overview window, same 3-run floor; "better" or "worse"
+  when a sub-signal's curve score moved by more than 3 points, "same" otherwise.
+- **Trend arrow:** median per-run pillar score of the last 2 game weeks vs the 4 before, 3 runs
+  minimum on each side; within ±3 points it reads "same".
+- **Weekly bars:** the last 8 game weeks.
+- **Score colours** (pillar cards and dungeon cells, read off the canvas): 75 and above good, 55–74
+  neutral, 45–54 warning, below 45 bad, `null` n/a.
+- **Sync:** batches of 10 runs, newest first, one request each; a batch refuses to start under
+  `MIN_BUDGET_POINTS` (20) + 10 × `ESTIMATE_RUN` left on the client; a run whose report WCL does not
+  return is not retried for 24 h.
+
 ## Data notes (verified 2026-10-09, issue #24 § 3)
 
 Checked on 26 real runs (all eight dungeons, 15 timed, 11 depleted), 0 new query type:
@@ -139,7 +172,9 @@ Checked on 26 real runs (all eight dungeons, 15 timed, 11 depleted), 0 new query
   once, with `spellsBegun`, `spellsCompleted`, `spellsInterrupted` and per-player `details[]` (whose
   sum is exactly `spellsInterrupted`). `spellsCompleted` has no player attribution: group context
   only, and a spell nobody ever kicked does not appear (the view says "among spells your group
-  kicked at least once").
+  kicked at least once"). Channelled spells can report `spellsBegun: 0` with completions and
+  interrupts (fixture: Mending Void, 0 begun, 25 completed, 17 interrupted), so a spell's attempts are
+  `max(spellsBegun, spellsCompleted + spellsInterrupted)`.
 - **Timed or not.** Rankings' `medal: "none"` matches `keystoneBonus = 0` (26 of 26 runs), so the
   season store knows a run's result before its report is fetched.
 - **Cost.** Enriching one run cost 7.3 to 7.9 pts (26 runs, 197 pts); `ESTIMATE_RUN = 10` stays the
@@ -175,6 +210,11 @@ Checked on 26 real runs (all eight dungeons, 15 timed, 11 depleted), 0 new query
    and a DPS or tank run's from `dps`. Order: key level, then amount, not time. Cost measured: 12 pts
    (probe) + 9 pts (eight dungeons) = 21 pts, in line with `ESTIMATE_RANKINGS`. Limit: a run that was
    not logged, or not ranked, is absent (non-goal above); the views state the count they rest on.
+2. **What a non-owner sees.** With Battle.net linking, bmpl will know which characters a member owns.
+   Whether the sync and the self-review views (trends, points to work on) become owner-only, while
+   others keep today's vetting view, is decided with the Battle.net spec. Phase 1 has no proof of
+   ownership, so decisions 3 and 7 stand as written.
+
 Settled 2026-10-09: sync needs the member's own WCL client (decision 3); points to work on show
 both references (decision 4).
 

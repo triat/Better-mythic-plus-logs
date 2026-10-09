@@ -60,7 +60,7 @@ src/lookup.ts         rankings → analysis → enrich (WCL ‖ Raider.IO) → p
 src/wcl/              OAuth2 + gql() + queries + meter     src/signals/          per-run signals, peers, RIO, SQLite store
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
-src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, cookie/state/Discord helpers, auth gate
+src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, feature-usage counters, cookie/state/Discord helpers, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
 addon/bmpl/            in-game addon: draws the Live panel's pixel strip, mirrors web/src/lib/live/codec.ts — addon/README.md

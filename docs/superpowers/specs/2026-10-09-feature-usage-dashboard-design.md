@@ -1,6 +1,6 @@
 # Feature usage tracking and admin dashboard — design
 
-Status: draft 2026-10-09, awaiting review (canvas variants on the "usage" page of the design canvas).
+Status: approved 2026-10-09 with variants A + B combined (a Table / Categories switch, Table by default); implemented 2026-10-09.
 
 ## Goal
 
@@ -96,8 +96,10 @@ panel or reads the help page.
    without seeing who.
 
 9. **Dashboard.** A new "Usage" section on the admin page, anchored `#usage` in the sub-nav, between
-   Budget and Proposals. Layout and wording come from the variant chosen on the canvas (page "usage":
-   A table with sparklines, B cards by category, C feature × day heatmap, plus shared details).
+   Budget and Proposals. Chosen on the canvas (page "usage"): A (table with sparklines) and B (cards
+   by category), both behind one Table / Categories switch in the section header, Table by default,
+   the choice kept per browser (`localStorage`). C (heatmap) was not retained. A row (A) or a line (B)
+   opens the feature's top 5 members.
 
 10. **Privacy.** `/privacy` and `docs/hosted.md` gain one line: "Which features you use: a count per
     feature and day, kept 90 days, deleted with your account." `DELETE /api/me` already cascades.

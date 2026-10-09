@@ -146,3 +146,17 @@ describe("performLookup — region and specsSeen", () => {
     x.store.close();
   });
 });
+
+describe("performLookup — season store", () => {
+  test("records every ranked run, before the spec filter, without another WCL call", async () => {
+    const x = await fixture();
+    const o = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus });
+    expect(o.ok).toBe(true);
+    const key = { region: "eu", realm: "hyjal", name: x.name };
+    expect(x.store.seasonRuns(key, 1).map((r) => r.reportCode).sort()).toEqual([x.data.runs[0]!.reportCode, "OTHERCODE"].sort());
+    expect(x.fetches()).toBe(1);
+    await performLookup({ ...opts(x.name), refresh: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus });
+    expect(x.store.seasonRuns(key, 1)).toHaveLength(2);
+    x.store.close();
+  });
+});

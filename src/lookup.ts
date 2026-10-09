@@ -133,6 +133,8 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     });
   }
   let data = fetched;
+  // The rankings list every ranked run of the season (issue #24 § 1): keep them for the season views, 0 extra pts.
+  store.upsertSeasonRuns({ region: opts.region, realm: realmToSlug(opts.realm), name: data.character.name }, data.zoneID, data.metric, data.runs);
   const seen = specsSeen(data.runs);
 
   if (opts.spec) {

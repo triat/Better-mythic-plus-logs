@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { DEFAULT_CONFIG } from "../../src/evaluation/config.ts";
 import { EVALUATION_DOCS, EVALUATION_DOCS_BY_LOCALE } from "../../src/evaluation/docs.ts";
 import { EVALUATION_DOCS_FR } from "../../src/evaluation/docs.fr.ts";
-import { AXIS_KEYS } from "../../src/evaluation/types.ts";
+import { AXIS_KEYS, PILLAR_KEYS } from "../../src/evaluation/types.ts";
 import { LOCALES } from "../../src/hosted/locale.ts";
 
 const nonEmpty = (o: object, path: string) => {
@@ -49,6 +49,13 @@ describe("EVALUATION_DOCS_BY_LOCALE", () => {
       }
     }
   });
+});
+
+test("every pillar has prose in both languages", () => {
+  for (const docs of [EVALUATION_DOCS, EVALUATION_DOCS_FR]) {
+    expect(Object.keys(docs.pillars.items).sort()).toEqual([...PILLAR_KEYS].sort());
+    nonEmpty(docs.pillars, "pillars");
+  }
 });
 
 for (const locale of LOCALES) {

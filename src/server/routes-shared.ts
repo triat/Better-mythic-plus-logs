@@ -7,7 +7,8 @@ import { SHIPPED } from "../deepdive/table.ts";
 import { configVersion, getEvalConfig } from "../evaluation/config.ts";
 import type { EvaluationDocs } from "../evaluation/docs.ts";
 import { EVALUATION_DOCS_BY_LOCALE } from "../evaluation/docs.ts";
-import type { CurvePoints, EvaluationConfig } from "../evaluation/types.ts";
+import { PILLAR_SOURCES } from "../evaluation/pillars.ts";
+import type { CurvePoints, EvaluationConfig, PillarKey } from "../evaluation/types.ts";
 import { lastBackupAt } from "../hosted/instance.ts";
 import { isLocale } from "../hosted/locale.ts";
 import type { Locale } from "../hosted/locale.ts";
@@ -44,6 +45,8 @@ export interface DocsResponse {
   hosted: boolean;
   /** The numbers of the "own WCL client" guide: the per-member hourly quota (null locally) and what one WCL client gets. */
   quota: { pointsPerUserHour: number | null; wclPointsPerHour: number };
+  /** The sub-signals each self-review pillar groups ("axis.subSignal"), for the /help pillars section. */
+  pillarSources: Record<PillarKey, readonly string[]>;
 }
 
 /** What Warcraft Logs grants one API client per hour (rateLimitData.limitPerHour); shown by the /help guide. */
@@ -67,6 +70,7 @@ export function docsResponse(cfg: EvaluationConfig, hosted: boolean, pointsPerUs
     season: Object.keys(cfg.expectedIlvl).at(-1) ?? null,
     hosted,
     quota: { pointsPerUserHour, wclPointsPerHour: WCL_POINTS_PER_HOUR },
+    pillarSources: PILLAR_SOURCES,
   };
 }
 

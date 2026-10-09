@@ -1,6 +1,6 @@
 import type { Locale } from "../hosted/locale.ts";
 import { EVALUATION_DOCS_FR } from "./docs.fr.ts";
-import type { AxisKey } from "./types.ts";
+import type { AxisKey, PillarKey } from "./types.ts";
 
 export interface SubSignalDoc {
   title: string; what: string; source: string; how: string; why: string; naWhen: string;
@@ -62,6 +62,7 @@ export interface EvaluationDocs {
   faq: FaqEntry[];
   wclClient: WclClientDoc;
   liveAddon: LiveAddonDoc;
+  pillars: { intro: string; items: Record<PillarKey, { title: string; what: string }> };
 }
 
 export const EVALUATION_DOCS: EvaluationDocs = {
@@ -217,6 +218,16 @@ export const EVALUATION_DOCS: EvaluationDocs = {
       "Open the Group Finder in-game, or have an active posting — the strip appears top-left and this panel fills in within a couple of seconds.",
     ],
     sends: "The addon sends nothing, receives nothing and stores nothing — it only draws pixels. The browser reads them locally; only the player names it recognizes are sent to bmpl, to check against evaluations it already has.",
+  },
+  pillars: {
+    intro: "The same sub-signals, grouped by what a player can work on: five pillars. A pillar's score is the weighted mean of its sub-signals, with the same curves and weights as the axes, so it never changes the verdict. Preparation, consistency and experience stay beside the pillars as context.",
+    items: {
+      damage: { title: "Damage", what: "Your parse: the median over the runs, and at the key level asked for." },
+      survival: { title: "Survival", what: "Deaths outside wipes, deaths in wipes, teammates' deaths for a healer, and, once runs are analysed, the defensives you used and the deaths you could have prevented. A death's last three hits are listed in its run." },
+      avoidable: { title: "Avoidable damage", what: "Damage from the season's avoidable mechanics and damage taken overall, against the other players of the same runs. The abilities that hit you most are listed per dungeon." },
+      interrupts: { title: "Interrupts", what: "The share of your kick's cooldown you use, against the group and on its own. The enemy casts that went through are shown as group context, among the spells your group kicked at least once." },
+      control: { title: "Control", what: "Dispels and purges per run, for a kit that has one; n/a otherwise, never 0. Crowd control (stuns, incapacitates, knock-backs) comes in a later phase." },
+    },
   },
 };
 

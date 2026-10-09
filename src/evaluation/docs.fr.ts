@@ -157,4 +157,14 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
     ],
     sends: "L'addon n'envoie rien, ne reçoit rien et ne stocke rien — il ne fait que dessiner des pixels. Le navigateur les lit localement ; seuls les noms de joueurs qu'il y reconnaît sont envoyés à bmpl, pour vérifier ce qu'il sait déjà.",
   },
+  pillars: {
+    intro: "Les mêmes sous-signaux, regroupés selon ce qu'un joueur peut travailler : cinq piliers. Le score d'un pilier est la moyenne pondérée de ses sous-signaux, avec les mêmes courbes et les mêmes poids que les axes : il ne change jamais le verdict. Préparation, régularité et expérience restent à côté des piliers, comme contexte.",
+    items: {
+      damage: { title: "Dégâts", what: "Ton parse : la médiane des runs, et celle au niveau de clé demandé." },
+      survival: { title: "Survie", what: "Les morts hors wipe, les morts en wipe, les morts des coéquipiers pour un soigneur et, une fois les runs analysés, les défensifs utilisés et les morts évitables. Les trois derniers coups de chaque mort sont listés dans son run." },
+      avoidable: { title: "Dégâts évitables", what: "Les dégâts des mécaniques évitables de la saison et les dégâts subis au total, face aux autres joueurs des mêmes runs. Les capacités qui te touchent le plus sont listées par donjon." },
+      interrupts: { title: "Interruptions", what: "La part du temps de recharge de ton interruption que tu utilises, face au groupe et en valeur absolue. Les sorts ennemis passés sont montrés comme contexte du groupe, parmi les sorts que ton groupe a interrompus au moins une fois." },
+      control: { title: "Contrôle", what: "Les dispels et purges par run, pour un kit qui en a ; n/a sinon, jamais 0. Le contrôle des foules (étourdissements, incapacités, repoussements) viendra dans une phase suivante." },
+    },
+  },
 };

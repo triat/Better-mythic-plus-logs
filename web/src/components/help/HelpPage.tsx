@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api.ts";
 import type { StatusInfo } from "../../lib/hostedMode.ts";
-import type { DocsResponse, TextBlock } from "../../types.ts";
+import type { AxisKey, DocsResponse, TextBlock } from "../../types.ts";
 import { axisIsInformational, curveTable, faqEntries, fmtThresholds, hashAnchor, toc } from "../../lib/help.ts";
+import { PILLAR_ORDER } from "../../lib/self.ts";
 import { AXIS_ORDER } from "../../lib/verdict.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
 import { useT } from "../../locale.tsx";
@@ -67,6 +68,7 @@ export function HelpPage({ status, bare = false }: Props) {
             <Verdict t={t} data={data} />
             <Axes t={t} />
             {AXIS_ORDER.map((key) => <AxisSection key={key} axisKey={key} doc={data.docs.axes[key]} config={data.config} />)}
+            <Pillars t={t} data={data} />
             <LevelScale t={t} data={data} />
             <ExpectedIlvl t={t} data={data} />
             <Runs t={t} data={data} />
@@ -162,6 +164,25 @@ function Axes({ t }: { t: T }) {
     <section className="card help-card" id="axes">
       <h2>{t("help.toc.axes")}</h2>
       <p className="help-p">{t("help.axesIntro")}</p>
+    </section>
+  );
+}
+
+function Pillars({ t, data }: SectionProps) {
+  const title = (source: string): string => {
+    const [axis, id] = source.split(".") as [AxisKey, string];
+    return data.docs.axes[axis]?.subSignals[id]?.title ?? source;
+  };
+  return (
+    <section className="card help-card" id="pillars">
+      <h2>{t("help.toc.pillars")}</h2>
+      <p className="help-p">{data.docs.pillars.intro}</p>
+      {PILLAR_ORDER.map((k) => (
+        <div key={k} className="help-p">
+          <b>{data.docs.pillars.items[k].title}</b> · {data.docs.pillars.items[k].what}
+          <div className="faint" style={{ fontSize: 12 }}>{data.pillarSources[k].map(title).join(" · ")}</div>
+        </div>
+      ))}
     </section>
   );
 }

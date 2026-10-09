@@ -26,7 +26,7 @@ export interface HostedRuntime {
   meter: PointsMeter;
   quota: QuotaGate;
   audit: AuditLog;
-  /** In-app rate limits (issue #9): `/auth/*` per IP; `lookup` covers `POST /api/lookup`, `PUT /api/me/wcl-client` and `POST /api/me/wcl-client/verify` per user, `deepdive` `POST /api/deepdive` per user; `security` throttles the `origin_rejected` audit rows per IP; `signup` throttles brand-new accounts admitted through open signup (not invited, not a config admin), per IP; `usage` `POST /api/usage/events` per user. */
+  /** In-app rate limits (issue #9): `/auth/*` per IP; `lookup` covers `POST /api/lookup`, `PUT /api/me/wcl-client` and `POST /api/me/wcl-client/verify` per user, `deepdive` `POST /api/deepdive` and `POST /api/season/sync` per user; `security` throttles the `origin_rejected` audit rows per IP; `signup` throttles brand-new accounts admitted through open signup (not invited, not a config admin), per IP; `usage` `POST /api/usage/events` per user. */
   limits: { auth: RateLimiter; lookup: RateLimiter; deepdive: RateLimiter; security: RateLimiter; signup: RateLimiter; usage: RateLimiter };
   /** A member's own WCL client (issue #11 Task 2): encrypted secret storage, verification, own-client rate-limit snapshot. */
   wclClients: UserWclClients;

@@ -17,6 +17,7 @@ import type { LookupPayload } from "../lookup.ts";
 import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, tablesOf, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse } from "./http.ts";
 import { handleLookup, historyOf, historySummary } from "./lookup.ts";
+import { handleSeasonGet, handleSeasonSync } from "./season.ts";
 import { liveRoutes } from "./routes-live.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
@@ -107,6 +108,8 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
     route("POST", "/api/lookup", (req, _url, rc) => handleLookup(req, rc, ctx.runtime)),
     route("POST", "/api/deepdive", (req, _url, rc) => handleDeepdive(req, rc, ctx.runtime)),
+    route("GET", "/api/season", (_req, url, rc) => handleSeasonGet(url, rc, ctx.runtime)),
+    route("POST", "/api/season/sync", (req, _url, rc) => handleSeasonSync(req, rc, ctx.runtime)),
     route("GET", "/api/defensives", (_req, url, rc) => handleDefensivesGet(url, rc, ctx.runtime)),
     route("POST", "/api/defensives", (req, _url, rc) => handleDefensivesPost(req, rc, ctx.runtime)),
     route("GET", "/api/history", (_req, _url, rc) => jsonResponse({ ok: true, items: historyOf(rc).list().map(historySummary) })),

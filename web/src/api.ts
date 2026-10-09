@@ -19,6 +19,8 @@ import type {
   OwnClientView,
   Region,
   RunDefensives,
+  SeasonView,
+  SyncState,
   UiEvent,
   UsagePeriod,
   UsageReport,
@@ -112,6 +114,10 @@ export const api = {
   quit: () => call<Record<never, never>>("/api/quit", post()),
   deepdive: (req: DeepdiveRequest) =>
     call<{ result: RunDefensives; fromCache: boolean; pointsSpent: number | null; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/deepdive", post(req)),
+  season: (q: { name: string; realm: string; region: Region; level: number | null }) =>
+    call<{ season: SeasonView | null }>(`/api/season?${new URLSearchParams({ name: q.name, realm: q.realm, region: q.region, ...(q.level !== null ? { level: String(q.level) } : {}) })}`),
+  seasonSync: (body: { name: string; realm: string; region: Region; refresh?: boolean }) =>
+    call<{ fetched: number; failed: number; state: SyncState; pointsSpent: number; ownClient?: OwnClientView | null }>("/api/season/sync", post(body)),
   defensives: (className: string, spec: string) =>
     call<DefensivesResponse>(`/api/defensives?class=${encodeURIComponent(className)}&spec=${encodeURIComponent(spec)}`),
   patchDefensives: (body: DefensivesPatch) => call<DefensivesPatchResult>("/api/defensives", post(body)),

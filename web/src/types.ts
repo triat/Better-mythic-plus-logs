@@ -19,6 +19,11 @@ export type { UiEvent, UsageCategory, UsageEvent, UsageSource } from "@shared/ho
 export type { FeatureTopUser, FeatureUsage, UsagePeriod, UsageReport } from "@shared/hosted/usage-events.ts";
 export type { OwnClientView, OwnClientSnapshot } from "@shared/hosted/wcl-clients.ts";
 export type { AxisKey, AxisScore, Confidence, CurvePoints, Driver, Evaluation, Evidence, NextVerdict, Verdict } from "@shared/evaluation/types.ts";
+export type { PillarKey, PillarScore } from "@shared/evaluation/types.ts";
+export type { DungeonDetails, DungeonRow, PillarRecord, PillarTrend, SeasonRunView, SeasonView, WindowView, WorkOnRow } from "@shared/self/season.ts";
+export type { SyncState } from "@shared/self/sync.ts";
+export type { CharacterSource, MyCharacter } from "@shared/self/characters.ts";
+export type { AbilityDamage, EnemyCast, KillingHit } from "@shared/signals/types.ts";
 export type { Role } from "@shared/evaluation/types.ts";
 export type { EvidenceSource } from "@shared/evaluation/axes/index.ts";
 export type { EvaluationDocs, AxisDoc, SubSignalDoc, ExtraDoc, FaqEntry, SourceDoc, TextBlock } from "@shared/evaluation/docs.ts";

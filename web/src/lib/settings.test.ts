@@ -83,3 +83,20 @@ test("Live settings round-trip through local storage, with defaults on junk", ()
   store.setItem("bmpl.liveClasses", '"not an array"');
   expect(readLocalSettings(store)).toMatchObject({ liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] });
 });
+
+describe("characters", () => {
+  const me = { name: "Biwaasham", realm: "hyjal", region: "eu", source: "manual" } as const;
+  test("local round trip under bmpl.characters; garbage reads as []", () => {
+    const m = new Map<string, string>();
+    const store = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) };
+    writeLocalSettings(store, { characters: [me] });
+    expect(m.get("bmpl.characters")).toBe(JSON.stringify([me]));
+    expect(readLocalSettings(store).characters).toEqual([me]);
+    m.set("bmpl.characters", "[{\"name\":1}]");
+    expect(readLocalSettings(store).characters).toEqual([]);
+  });
+  test("server settings: characters parsed, invalid ones dropped", () => {
+    expect(parseServerSettings({ characters: [me, { name: "x" }] }).characters).toEqual([me]);
+    expect(parseServerSettings({}).characters).toEqual([]);
+  });
+});

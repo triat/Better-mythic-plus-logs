@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { QUERY_VERSION, RIO_TTL_MS, openStore, openStoreOrMemory } from "../../src/signals/store.ts";
+import type { MPlusRun } from "../../src/mplus.ts";
 import { loadWclFixture } from "../fixtures.ts";
 
 describe("store", () => {
@@ -60,6 +61,39 @@ describe("store", () => {
     const s = openStoreOrMemory("/nonexistent-dir-xyz/bmpl.db");
     s.putWclRun("A", 1, { code: "A" });
     expect(s.getWclRun("A", 1)?.code).toBe("A");
+    s.close();
+  });
+});
+
+describe("season store (character_runs)", () => {
+  const key = { region: "eu", realm: "draenor", name: "Noshiidk" };
+  const run = (code: string, startTime: number, over: Partial<MPlusRun> = {}): MPlusRun => ({
+    encounterID: 12923, encounterName: "Voidscar Arena", keyLevel: 18, amount: 1000, parsePercent: 50, spec: "Frost",
+    affixes: [9, 10], reportCode: code, fightID: 1, startTime, score: 400, timed: true, durationMs: 1_700_000, ...over,
+  });
+
+  test("upsert, newest first, idempotent, case-insensitive key", () => {
+    const s = openStore(":memory:");
+    s.upsertSeasonRuns(key, 55, "dps", [run("A", 1000), run("B", 3000), run("C", 2000, { timed: false })], 10);
+    s.upsertSeasonRuns({ region: "EU", realm: "Draenor", name: "noshiidk" }, 55, "dps", [run("B", 3000, { parsePercent: 70 })], 20);
+    const rows = s.seasonRuns(key, 55);
+    expect(rows.map((r) => r.reportCode)).toEqual(["B", "C", "A"]);
+    expect(rows[0]).toMatchObject({ parse: 70, discoveredAt: 10, seenAt: 20, timed: true, durationMs: 1_700_000, affixes: [9, 10], failedAt: null });
+    expect(rows[1]!.timed).toBe(false);
+    expect(s.latestSeasonZone(key)).toBe(55);
+    expect(s.latestSeasonZone({ ...key, name: "Other" })).toBeNull();
+    expect(s.seasonRuns(key, 54)).toEqual([]);
+    s.close();
+  });
+
+  test("a failed fetch is remembered; hasWclRun reads the raw cache only", () => {
+    const s = openStore(":memory:");
+    s.upsertSeasonRuns(key, 55, "dps", [run("A", 1000)], 10);
+    s.markSeasonRunFailed(key, "A", 1, 99);
+    expect(s.seasonRuns(key, 55)[0]!.failedAt).toBe(99);
+    expect(s.hasWclRun("A", 1)).toBe(false);
+    s.putWclRun("A", 1, { code: "A" });
+    expect(s.hasWclRun("A", 1)).toBe(true);
     s.close();
   });
 });

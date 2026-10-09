@@ -9,6 +9,7 @@ import { Gauge } from "./Gauge.tsx";
 import { Instance } from "./Instance.tsx";
 import { Invites } from "./Invites.tsx";
 import { Queue } from "./Queue.tsx";
+import { Usage } from "./Usage.tsx";
 import { Users } from "./Users.tsx";
 
 export interface AdminData { usage: AdminUsage | null; users: AdminUser[]; invites: AdminInvite[]; pending: AdminProposal[]; decided: AdminProposal[]; instance: AdminInstance | null; errors24h: number }
@@ -51,6 +52,7 @@ export function AdminPage({ me }: { me: MeUser }) {
       </div>
       <nav className="admin-nav">
         <a href="#budget">{t("admin.page.nav.budget")}</a>
+        <a href="#usage">{t("admin.page.nav.usage")}</a>
         <a href="#proposals">{t("admin.page.nav.proposals")}{data.pending.length > 0 && <span className="chip chip-warn" style={{ marginLeft: 4 }}>{data.pending.length}</span>}</a>
         <a href="#users">{t("admin.page.nav.users")}</a>
         <a href="#invites">{t("admin.page.nav.invites")}</a>
@@ -61,6 +63,7 @@ export function AdminPage({ me }: { me: MeUser }) {
       </nav>
       <main className="content">
         <Gauge usage={data.usage} users={data.users} />
+        <Usage />
         <Queue pending={data.pending} decided={data.decided} onDecide={(id, d, note) => act(api.admin.decide(id, d, note))} />
         <Users
           users={data.users} selfId={me.id} limitPerUser={data.usage?.limitPerUser ?? 300}

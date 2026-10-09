@@ -348,7 +348,7 @@ export const fr: Mirror<typeof en> = {
     title: "Paramètres", sub: "ton client Warcraft Logs, ton compte",
     card: "Compte", signedInAs: "connecté avec Discord en tant que ",
     stored: "Ce que bmpl stocke sur toi : ton id, ton nom d'utilisateur et ton avatar Discord, ton historique de recherches (20 onglets), tes paramètres, ton usage WCL horaire, "
-      + "tes propositions de defensives et, si tu en as ajouté un, ton client WCL (secret chiffré). "
+      + "les fonctionnalités que tu utilises (un compteur par fonctionnalité et par jour, 90 jours), tes propositions de defensives et, si tu en as ajouté un, ton client WCL (secret chiffré). "
       + "Les runs et classements récupérés sur Warcraft Logs sont des données publiques et restent dans le cache partagé.",
     deleteConfirm: "Supprimer ton compte ? Tape {word} pour confirmer.", delete: "Supprimer", deleteMine: "Supprimer mon compte",
     deleteNote: "Supprime tout ce qui précède et te déconnecte. Les corrections approuvées que tu as proposées restent dans la table partagée, sans ton nom.",
@@ -377,6 +377,8 @@ export const fr: Mirror<typeof en> = {
     historyLine: "{history} (les 20 onglets), tes paramètres (ta key, la légende), ton usage WCL horaire, tes propositions de defensives et les notes de l'admin dessus.",
     client: "Ton client Warcraft Logs",
     clientLine: "{client}, si tu en as ajouté un : l'id du client en clair, le secret chiffré avec une clé que seul ce serveur détient. Vérifié une fois à l'enregistrement ; utilisé pour tes recherches uniquement.",
+    features: "Les fonctionnalités que tu utilises",
+    featuresLine: "{features} : un compteur par fonctionnalité et par jour (recherches, deep-dives, ouverture de la comparaison, page d'aide…), gardé 90 jours, pour savoir ce qui sert et ce qui ne sert pas.",
     sessions: "Sessions",
     sessionsLine: "{sessions} : un id aléatoire dans un cookie, ton IP et ton navigateur à la connexion, pendant 30 jours.",
     audit: "Journal d'audit",
@@ -441,7 +443,7 @@ export const fr: Mirror<typeof en> = {
   admin: {
     page: {
       title: "Admin", sub: "invitations, membres, propositions, budget, instance",
-      nav: { budget: "Budget", proposals: "Propositions", users: "Membres", invites: "Invitations", instance: "Instance", audit: "Audit" },
+      nav: { budget: "Budget", usage: "Usage", proposals: "Propositions", users: "Membres", invites: "Invitations", instance: "Instance", audit: "Audit" },
       errors: "{n} erreurs", requestFailed: "Requête échouée",
     },
     forbidden: {
@@ -500,6 +502,24 @@ export const fr: Mirror<typeof en> = {
       wcl: "rateLimitData {age} · {pts} pts/h", noCall: "aucun appel WCL observé pour l'instant",
       neverBackup: "jamais (pas encore de fichier last-backup)",
       uptimeLessMin: "moins d'une minute", uptimeDays: "{d} j {h} h", uptimeHours: "{h} h {m} min", uptimeMinutes: "{m} min",
+    },
+    usage: {
+      title: "Usage des fonctionnalités", sub: "par membre et par jour · événements API + interface · gardé 90 jours · 0 pt WCL",
+      period: "{n} j", includeAdmins: "Inclure les admins",
+      view: { table: "Tableau", categories: "Catégories" },
+      kpi: {
+        today: "Actifs aujourd'hui", d7: "Actifs 7 j", d30: "Actifs 30 j", lookups: "Lookups / membre actif", unused: "Fonctionnalités inutilisées",
+        ofMembers: "sur {n} membres", pctMembers: "{pct} % des membres", lookupsSub: "{days} j · récupérés + en cache", ofCatalogue: "sur {n} au catalogue",
+      },
+      head: { feature: "fonctionnalité", category: "catégorie", source: "source", share: "part des membres actifs", members: "membres", uses: "usages", last: "dernier usage", trend: "{days} derniers jours" },
+      category: { all: "Tout", lookup: "Lookup", result: "Résultat", deepdive: "Deep-dive", history: "Historique & comparaison", live: "Live", help: "Aide", account: "Compte", admin: "Admin" },
+      source: { api: "API", ui: "UI" },
+      never: "jamais", notUsed: "Pas utilisées depuis {days} jours · {n}", unused: "inutilisée",
+      cardSub: "{count, plural, one {# fonctionnalité} other {# fonctionnalités}}", cardUnused: " · {n} inutilisée(s)", lineValue: "{users} · {pct} %",
+      foot: "Clique une ligne pour voir ses membres les plus actifs. Les événements API sont comptés par le serveur ; les événements d'interface sont envoyés par la page et peuvent se perdre quand un onglet se ferme.",
+      topTitle: "Membres les plus actifs · {event} · {days} j", topTotal: "{count, plural, one {# membre} other {# membres}} au total", adminsHidden: " · admins masqués",
+      empty: "Aucun usage enregistré ces {days} derniers jours.",
+      dayTitle: "{day} · {n}",
     },
     audit: {
       title: "Journal d'audit", sub: "connexions, actions admin, refus de quota, rejets de sécurité, erreurs WCL · gardé 90 jours",

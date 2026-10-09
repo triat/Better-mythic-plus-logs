@@ -354,7 +354,7 @@ export const en = {
     title: "Settings", sub: "your Warcraft Logs client, your account",
     card: "Account", signedInAs: "signed in with Discord as ",
     stored: "What bmpl stores about you: your Discord id, username and avatar, your lookup history (20 tabs), your settings, your hourly WCL usage, "
-      + "your defensives proposals and, if you added one, your WCL client (secret encrypted). "
+      + "which features you use (a count per feature and day, 90 days), your defensives proposals and, if you added one, your WCL client (secret encrypted). "
       + "Runs and rankings fetched from Warcraft Logs are public data and are kept in the shared cache.",
     deleteConfirm: "Delete your account? Type {word} to confirm.", delete: "Delete", deleteMine: "Delete my account",
     deleteNote: "Removes everything above and signs you out. Approved corrections you contributed stay in the shared table, without your name.",
@@ -383,6 +383,8 @@ export const en = {
     historyLine: "{history} (the 20 tabs), your settings (your key, legend), your hourly WCL usage, your defensives proposals and the admin's notes on them.",
     client: "Your Warcraft Logs client",
     clientLine: "{client}, if you added one: the client id in clear, the secret encrypted with a key that only this server holds. Verified once on save; used for your lookups only.",
+    features: "Which features you use",
+    featuresLine: "{features}: a count per feature and day (lookups, deep-dives, opening Compare, the help page…), kept 90 days, to see what is used and what is not.",
     sessions: "Sessions",
     sessionsLine: "{sessions}: a random id in a cookie, your IP and browser at sign-in, for 30 days.",
     audit: "Audit log",
@@ -447,7 +449,7 @@ export const en = {
   admin: {
     page: {
       title: "Admin", sub: "invites, users, proposals, budget, instance",
-      nav: { budget: "Budget", proposals: "Proposals", users: "Users", invites: "Invites", instance: "Instance", audit: "Audit" },
+      nav: { budget: "Budget", usage: "Usage", proposals: "Proposals", users: "Users", invites: "Invites", instance: "Instance", audit: "Audit" },
       errors: "{n} errors", requestFailed: "Request failed",
     },
     forbidden: {
@@ -506,6 +508,24 @@ export const en = {
       wcl: "rateLimitData {age} · {pts} pts/h", noCall: "no WCL call observed yet",
       neverBackup: "never (no last-backup file yet)",
       uptimeLessMin: "less than a minute", uptimeDays: "{d} d {h} h", uptimeHours: "{h} h {m} min", uptimeMinutes: "{m} min",
+    },
+    usage: {
+      title: "Feature usage", sub: "per member and day · API + interface events · kept 90 days · 0 WCL pts",
+      period: "{n} d", includeAdmins: "Include admins",
+      view: { table: "Table", categories: "Categories" },
+      kpi: {
+        today: "Active today", d7: "Active 7 d", d30: "Active 30 d", lookups: "Lookups / active member", unused: "Unused features",
+        ofMembers: "of {n} members", pctMembers: "{pct} % of members", lookupsSub: "{days} d · fetched + cached", ofCatalogue: "of {n} in the catalogue",
+      },
+      head: { feature: "feature", category: "category", source: "source", share: "share of active members", members: "members", uses: "uses", last: "last used", trend: "last {days} days" },
+      category: { all: "All", lookup: "Lookup", result: "Result", deepdive: "Deep-dive", history: "History & compare", live: "Live", help: "Help", account: "Account", admin: "Admin" },
+      source: { api: "API", ui: "UI" },
+      never: "never", notUsed: "Not used in {days} days · {n}", unused: "unused",
+      cardSub: "{count, plural, one {# feature} other {# features}}", cardUnused: " · {n} unused", lineValue: "{users} · {pct} %",
+      foot: "Click a row for its top members. API events are counted by the server; interface events are sent by the page and can be lost when a tab closes.",
+      topTitle: "Top members · {event} · {days} d", topTotal: "{count, plural, one {# member} other {# members}} in total", adminsHidden: " · admins hidden",
+      empty: "No usage recorded in the last {days} days.",
+      dayTitle: "{day} · {n}",
     },
     audit: {
       title: "Audit log", sub: "logins, admin actions, quota refusals, security rejections, WCL errors · kept 90 days",

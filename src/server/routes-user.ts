@@ -8,6 +8,7 @@ import type { WclCredentials } from "../wcl/auth.ts";
 import type { Locale } from "../hosted/locale.ts";
 import type { LiveRole, LiveSort } from "../hosted/live.ts";
 import type { Region } from "../wow/regions.ts";
+import type { MyCharacter } from "../self/characters.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
@@ -16,7 +17,7 @@ import { USAGE_BATCH_MAX_COUNT, USAGE_BATCH_MAX_NAMES, isUiEvent } from "../host
 import type { UiEvent } from "../hosted/usage-catalog.ts";
 
 /** The "Nothing to update" rule on an already-validated (SETTINGS_BODY) patch. */
-export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null; liveSort?: LiveSort; liveRoles?: LiveRole[]; liveClasses?: string[] }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
+export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null; liveSort?: LiveSort; liveRoles?: LiveRole[]; liveClasses?: string[]; characters?: MyCharacter[] }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
   const patch: Partial<UserSettings> = {};
   if ("yourKey" in value) patch.yourKey = value.yourKey!;
   if ("legendOpen" in value) patch.legendOpen = value.legendOpen!;
@@ -25,7 +26,8 @@ export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?
   if ("liveSort" in value) patch.liveSort = value.liveSort!;
   if ("liveRoles" in value) patch.liveRoles = value.liveRoles!;
   if ("liveClasses" in value) patch.liveClasses = value.liveClasses!;
-  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region`, `locale`, `liveSort`, `liveRoles` and/or `liveClasses`" };
+  if ("characters" in value) patch.characters = value.characters!;
+  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region`, `locale`, `liveSort`, `liveRoles`, `liveClasses` and/or `characters`" };
   return { ok: true, patch };
 }
 

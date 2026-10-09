@@ -5,6 +5,7 @@ import { KEY_MAX, KEY_MIN } from "../hosted/settings-limits.ts"; // moved out of
 import { REGIONS } from "../wow/regions.ts";
 import { LOCALES } from "../hosted/locale.ts";
 import { LIVE_ROLES, LIVE_SORTS } from "../hosted/live.ts";
+import { MAX_CHARACTERS } from "../self/characters.ts";
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 export interface Schema<T> { parse(v: unknown, path: string): Result<T> }
@@ -109,6 +110,13 @@ export const SEASON_SYNC_BODY = obj({
 });
 export const DEEPDIVE_BODY = obj({ reportCode: str({ min: 1, max: 32, pattern: /^[A-Za-z0-9]+$/ }), fightID: int({ min: 1, max: 100_000 }), character: str({ min: 1, max: 64, trim: true }), force: opt(bool()) });
 export const DEFENSIVES_BODY = obj({ className: str({ min: 1, max: 32, trim: true }), spec: str({ min: 1, max: 32, trim: true }), patch: obj({ id: int({ min: 1 }), name: opt(str({ min: 1, max: 64 })), cooldownS: opt(num({ min: 0 })), durationS: opt(num({ min: 0 })), kind: opt(oneOf(["major", "immunity", "minor"] as const)), ignore: opt(bool()) }) });
+/** A "this is me" entry the member adds by hand; `bnet` entries come only from the Battle.net import. */
+const MY_CHARACTER = obj({
+  name: str({ min: 2, max: 32, trim: true, pattern: WOW_NAME }),
+  realm: str({ min: 2, max: 32, trim: true, pattern: WOW_REALM }),
+  region: oneOf(REGIONS),
+  source: oneOf(["manual"] as const),
+});
 export const SETTINGS_BODY = obj({
   yourKey: opt(nullable(int({ min: KEY_MIN, max: KEY_MAX }))),
   legendOpen: opt(bool()),
@@ -117,6 +125,7 @@ export const SETTINGS_BODY = obj({
   liveSort: opt(oneOf(LIVE_SORTS)),
   liveRoles: opt(arr(oneOf(LIVE_ROLES), { max: 3 })),
   liveClasses: opt(arr(str({ min: 1, max: 20 }), { max: 13 })),
+  characters: opt(arr(MY_CHARACTER, { max: MAX_CHARACTERS })),
 });
 export const INVITE_BODY = obj({ discordId: str({ pattern: DISCORD_ID }), note: opt(nullable(str({ max: 200, trim: true }))) });
 export const NOTE_BODY = obj({ note: opt(nullable(str({ max: 500, trim: true }))) });

@@ -14,13 +14,13 @@ function setup() {
 describe("user settings repository", () => {
   test("defaults before any write", () => {
     const { s, ua } = setup();
-    expect(s.get(ua.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] });
-    expect(DEFAULT_USER_SETTINGS).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] });
+    expect(s.get(ua.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] });
+    expect(DEFAULT_USER_SETTINGS).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] });
   });
 
   test("update merges a partial patch and returns the whole row; users are independent", () => {
     const { s, ua, ub, db } = setup();
-    const liveDefaults = { liveSort: DEFAULT_USER_SETTINGS.liveSort, liveRoles: [...DEFAULT_USER_SETTINGS.liveRoles], liveClasses: [...DEFAULT_USER_SETTINGS.liveClasses] };
+    const liveDefaults = { liveSort: DEFAULT_USER_SETTINGS.liveSort, liveRoles: [...DEFAULT_USER_SETTINGS.liveRoles], liveClasses: [...DEFAULT_USER_SETTINGS.liveClasses], characters: [] };
     expect(s.update(ua.id, { yourKey: 18 }, 1000)).toEqual({ yourKey: 18, legendOpen: true, region: null, locale: null, ...liveDefaults });
     expect(s.update(ua.id, { legendOpen: false }, 2000)).toEqual({ yourKey: 18, legendOpen: false, region: null, locale: null, ...liveDefaults });
     expect(s.update(ua.id, { yourKey: null }, 3000)).toEqual({ yourKey: null, legendOpen: false, region: null, locale: null, ...liveDefaults });
@@ -62,5 +62,12 @@ describe("user settings repository", () => {
     expect(SETTINGS_BODY.parse({ liveSort: "nope" }, "").ok).toBe(false);
     expect(SETTINGS_BODY.parse({ liveRoles: ["tank", "wizard"] }, "").ok).toBe(false);
     expect(SETTINGS_BODY.parse({ liveSort: "role", liveRoles: [], liveClasses: [] }, "").ok).toBe(true);
+  });
+
+  test("characters: stored, read back, defaults to []", () => {
+    const { s, ua } = setup();
+    const chars = [{ name: "Biwaasham", realm: "hyjal", region: "eu" as const, source: "manual" as const }];
+    expect(s.update(ua.id, { characters: chars }, 1).characters).toEqual(chars);
+    expect(s.get(ua.id).characters).toEqual(chars);
   });
 });

@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   live_sort    TEXT,
   live_roles   TEXT,
   live_classes TEXT,
+  characters   TEXT,
   updated_at   INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS usage_hourly (
@@ -140,6 +141,7 @@ const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [
   ["live_sort", "TEXT"],
   ["live_roles", "TEXT"],
   ["live_classes", "TEXT"],
+  ["characters", "TEXT"],
 ];
 
 function migrateColumns(db: Database, table: string, columns: ReadonlyArray<readonly [string, string]>): void {

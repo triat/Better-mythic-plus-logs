@@ -135,11 +135,11 @@ describe("/api/settings (hosted)", () => {
   test("401 without a session; defaults for a fresh user", async () => {
     expect((await fetch(h("/api/settings"))).status).toBe(401);
     expect((await fetch(h("/api/settings"), { method: "PUT", body: "{}" })).status).toBe(401);
-    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] } });
+    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] } });
   });
 
   test("PUT merges partial patches per user", async () => {
-    const liveDefaults = { liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] };
+    const liveDefaults = { liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] };
     expect(await (await put(a, { yourKey: 22 })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: true, region: null, locale: null, ...liveDefaults } });
     expect(await (await put(a, { legendOpen: false })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null, ...liveDefaults } });
     expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null, ...liveDefaults } });
@@ -213,5 +213,16 @@ describe("quota on the hosted routes", () => {
     // 404 rather than a 429.
     const res = await fetch(h("/api/deepdive"), as(a, { method: "POST", body: JSON.stringify({ reportCode: "NOPE", fightID: 1, character: "X" }) }));
     expect(res.status).toBe(404);
+  });
+});
+
+describe("PUT /api/settings — characters", () => {
+  test("manual entries are stored; a bnet entry or a sixth character is refused", async () => {
+    const c = (name: string, source = "manual") => ({ name, realm: "hyjal", region: "eu", source });
+    const put = (characters: unknown[]) => fetch(h("/api/settings"), as(a, { method: "PUT", body: JSON.stringify({ characters }) }));
+    expect((await put([c("Biwaasham")])).status).toBe(200);
+    expect((await (await fetch(h("/api/settings"), as(a))).json()).settings.characters).toEqual([c("Biwaasham")]);
+    expect((await put([c("Biwaasham", "bnet")])).status).toBe(400);
+    expect((await put(["Aa", "Bb", "Cc", "Dd", "Ee", "Ff"].map((n) => c(n)))).status).toBe(400);
   });
 });

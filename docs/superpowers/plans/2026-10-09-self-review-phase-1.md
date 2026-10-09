@@ -519,7 +519,7 @@ describe("game weeks", () => {
     expect(weekOf("us", Date.parse("2026-10-06T14:59:59Z"))).toBe(-1);
     expect(weekOf("us", Date.parse("2026-10-06T15:00:00Z"))).toBe(0);
     expect(weekOf("eu", Date.parse("2026-10-14T04:00:00Z"))).toBe(1);
-    expect(weekOf("eu", Date.parse("2026-08-19T07:30:52Z"))).toBe(-8);
+    expect(weekOf("eu", Date.parse("2026-08-19T07:30:52Z"))).toBe(-7);
   });
 });
 ```

@@ -179,14 +179,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 
 /* content */
 .content { display: flex; flex-direction: column; gap: 16px; padding: 20px var(--gutter); }
-/* The result page on a wide screen (C): the runs on the left, the signal tiles and Raider.IO beside them. */
-.detail-rest { display: flex; flex-direction: column; gap: 16px; }
-@media (min-width: 1700px) {
-  .detail-rest { display: grid; grid-template-columns: minmax(0, 1fr) 560px; grid-template-areas: "runs tiles" "runs rio"; grid-template-rows: auto 1fr; align-items: start; }
-  .detail-tiles { grid-area: tiles; }
-  .detail-runs { grid-area: runs; }
-  .detail-rio { grid-area: rio; }
-}
 .home { text-align: center; padding-top: 8px; }
 .stopped { max-width: 500px; margin: 4rem auto; text-align: center; }
 .toast { position: fixed; right: 24px; bottom: 24px; display: flex; gap: 12px; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,.5); }

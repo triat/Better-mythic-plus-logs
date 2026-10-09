@@ -1,10 +1,16 @@
+import { useState } from "react";
 import type { LookupPayload, OverrideEntry } from "../types.ts";
 import type { ReevalHint } from "../lib/keyLevel.ts";
 import type { ProposalMode } from "../lib/hostedMode.ts";
-import { DungeonRuns } from "./DungeonRuns.tsx";
-import { RioSection } from "./RioSection.tsx";
-import { SignalTiles } from "./SignalTiles.tsx";
-import { VerdictHero } from "./VerdictHero.tsx";
+import { RESULT_TABS, type ResultTab } from "../lib/self.ts";
+import { useT } from "../locale.tsx";
+import { track } from "../usage.ts";
+import { seasonWho, useSeason } from "../useSeason.ts";
+import { DungeonsTab } from "./self/DungeonsTab.tsx";
+import { Overview } from "./self/Overview.tsx";
+import { ResultHead, type SelfActions } from "./self/ResultHead.tsx";
+import { RunsTab } from "./self/RunsTab.tsx";
+import { SyncCard } from "./self/SyncCard.tsx";
 
 /** Deep-dive callbacks owned by App (they touch the payload cache). */
 export interface DeepdiveActions {
@@ -23,18 +29,37 @@ export interface DeepdiveActions {
   mode: ProposalMode;
 }
 
-export interface DetailProps { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; deepdive: DeepdiveActions }
+export interface DetailProps { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; deepdive: DeepdiveActions; self: SelfActions }
 
-export function Detail({ payload, hint, onReevaluate, deepdive }: DetailProps) {
+/** The result page: header, three tabs (canvas "self-review", variants A + C). */
+export function Detail({ payload, hint, onReevaluate, deepdive, self }: DetailProps) {
+  const { t } = useT();
+  const [tab, setTab] = useState<ResultTab>("overview");
+  const [runsOf, setRunsOf] = useState<number | null>(null);
+  const season = useSeason(seasonWho(payload), self, payload);
+  const pick = (next: ResultTab) => {
+    if (next === "dungeons") track("self_tab_dungeons");
+    if (next === "runs") track("self_tab_runs");
+    setTab(next);
+  };
   return (
     <>
-      <VerdictHero payload={payload} hint={hint} onReevaluate={onReevaluate} />
-      {/* Stacked, or side by side on a wide screen: see .detail-rest in app.css. */}
-      <div className="detail-rest">
-        <div className="detail-tiles"><SignalTiles payload={payload} /></div>
-        <div className="detail-runs"><DungeonRuns payload={payload} deepdive={deepdive} /></div>
-        <div className="detail-rio"><RioSection payload={payload} /></div>
+      <ResultHead payload={payload} season={season} self={self} />
+      {season.syncOpen && <SyncCard season={season} self={self} />}
+      <div className="rtabs" role="tablist">
+        {RESULT_TABS.map((k) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={"rtab" + (tab === k ? " on" : "")} onClick={() => pick(k)}>
+            {t(`self.tabs.${k}`)}
+          </button>
+        ))}
       </div>
+      {tab === "overview" && <Overview payload={payload} season={season.view} hint={hint} onReevaluate={onReevaluate} />}
+      {tab === "dungeons" && (
+        <DungeonsTab payload={payload} season={season.view} loading={season.loading} onRuns={(id) => { setRunsOf(id); pick("runs"); }} />
+      )}
+      {tab === "runs" && (
+        <RunsTab payload={payload} season={season.view} deepdive={deepdive} encounterID={runsOf} onClearFilter={() => setRunsOf(null)} />
+      )}
     </>
   );
 }

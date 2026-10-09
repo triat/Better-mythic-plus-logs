@@ -30,6 +30,7 @@ import { HelpPage } from "./components/help/HelpPage.tsx";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
+import type { SelfActions } from "./components/self/ResultHead.tsx";
 import { EMPTY_FORM, Header } from "./components/Header.tsx";
 import type { LookupForm } from "./components/Header.tsx";
 import { Home } from "./components/Home.tsx";
@@ -467,6 +468,13 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     quotaTooltip: quotaTooltip(t, quota),
     mode: proposalMode(status, me),
   };
+  const selfActions: SelfActions = {
+    hosted: status.hosted,
+    ownClient,
+    setOwnClient,
+    characters: settings.characters,
+    setCharacters: (characters) => updateSettings({ characters }),
+  };
 
   if (stopped) return <main className="stopped"><h2>{t("header.stopped")}</h2><p className="muted">{t("header.stoppedSub")}</p></main>;
 
@@ -527,7 +535,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           <main className={"content" + (empty ? "" : " content-result")}>
             {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
             {!empty && !showCompare && activePayload && (
-              <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} />
+              <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
             )}
             {!empty && !showCompare && !activePayload && activeKey && <Loading inline />}
             {showCompare && (

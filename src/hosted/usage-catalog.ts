@@ -57,6 +57,7 @@ export const USAGE_CATALOG = {
   settings_save: { category: "account", source: "api" },
   page_settings: { category: "account", source: "ui" },
   page_privacy: { category: "account", source: "ui" },
+  page_me: { category: "account", source: "ui" },
   locale_switch: { category: "account", source: "ui" },
   toast_own_client: { category: "account", source: "ui" },
   // Admin

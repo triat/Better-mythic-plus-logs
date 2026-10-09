@@ -53,6 +53,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
           </div>
           <div className="menu-sep" />
           <a className="menu-item" href="/help" role="menuitem">{t("common.help")}</a>
+          <a className="menu-item" href="/me" role="menuitem">{t("header.me")}</a>
           <a className="menu-item" href="/settings" role="menuitem">{t("common.settings")}</a>
           {m.isAdmin && <a className="menu-item" href="/admin" role="menuitem">{t("common.admin")}{pending && <span className="faint">· {pending}</span>}</a>}
           <button type="button" className="menu-item" role="menuitem" onClick={onSignOut}>{t("common.signOut")}</button>

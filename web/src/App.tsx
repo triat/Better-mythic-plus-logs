@@ -6,6 +6,8 @@ import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClien
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
+import { realmName } from "./lib/format.ts";
+import { historyKeyFor, lookupQuery } from "./lib/me.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
@@ -35,6 +37,7 @@ import { EMPTY_FORM, Header } from "./components/Header.tsx";
 import type { LookupForm } from "./components/Header.tsx";
 import { Home } from "./components/Home.tsx";
 import { LivePanel } from "./components/LivePanel.tsx";
+import { MePage } from "./components/me/MePage.tsx";
 import { Setup } from "./components/Setup.tsx";
 import { SignIn } from "./components/SignIn.tsx";
 import { Tabs } from "./components/Tabs.tsx";
@@ -47,9 +50,9 @@ type Screen =
   | { kind: "signin"; status: StatusInfo }
   | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null; quota: QuotaInfo | null; ownClient: OwnClientView | null };
 
-// No router: /admin, /settings, /privacy and /help are full navigations resolved once from the pathname.
+// No router: /admin, /settings, /privacy, /help and /me are full navigations resolved once from the pathname.
 const page = pageOf(location.pathname);
-const PAGE_EVENT = { admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help" } as const;
+const PAGE_EVENT = { admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me" } as const;
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
@@ -225,9 +228,24 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     }
   }, [fetchPayload]);
 
-  // Boot: history → most recent tab.
+  // Boot: history → ?open=<key> when it names a tab, else the main character's tab, else the most recent one (0 pts).
+  // ?q= only fills the search field (and ?region= the chip): a URL never starts a lookup by itself.
   useEffect(() => {
-    loadHistory().then((items) => { if (items.length > 0) void showTab(items[0]!.key); });
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q");
+    const r = params.get("region");
+    if (q) setForm((f) => ({ ...f, character: q }));
+    if (r && isRegion(r)) updateSettings({ region: r });
+    if (params.has("open") || q) history.replaceState({}, "", location.pathname);
+    loadHistory().then((items) => {
+      if (page !== "main" || items.length === 0) return;
+      const want = params.get("open");
+      const main = settings.characters[0];
+      const key = (want && items.some((i) => i.key === want) ? want : null) ?? (main ? historyKeyFor(items, main) : null) ?? items[0]!.key;
+      void showTab(key);
+    });
+    // Once per page load: the URL and the main character are read at boot only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadHistory, showTab]);
 
   // Self-heal: whenever the cache was cleared (e.g. by a reload that raced a tab switch),
@@ -476,6 +494,16 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     setCharacters: (characters) => updateSettings({ characters }),
   };
 
+  // The home card (empty history only): the main character, looked up on its button only.
+  const mainChar = settings.characters[0] ?? null;
+  const homeMain = mainChar
+    ? {
+        name: mainChar.name,
+        detail: `${realmName(mainChar.realm)} · ${mainChar.region.toUpperCase()}`,
+        onLookUp: () => void runLookup({ character: lookupQuery(mainChar), level: yourKey, spec: null, metric: null, region: mainChar.region }, false),
+      }
+    : null;
+
   if (stopped) return <main className="stopped"><h2>{t("header.stopped")}</h2><p className="muted">{t("header.stoppedSub")}</p></main>;
 
   const empty = tabs.length === 0;
@@ -497,6 +525,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && isMainPage} search={isMainPage} controls={controls}
         menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
         live={{ state: live.state, connect: () => { track("live_connect"); return live.connect(); } }}
+        meCount={settings.characters.length}
       />
       {isMainPage && live.roster && (
         <LivePanel
@@ -520,6 +549,14 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           : <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.settingsHosted")} />
       )}
       {page === "help" && <HelpPage status={status} />}
+      {page === "me" && (
+        <main className="content">
+          <MePage
+            self={selfActions} history={tabs} region={region} instanceRegion={status.region}
+            onRegionChange={(r) => { track("region_change"); updateSettings({ region: r }); }}
+          />
+        </main>
+      )}
       {page === "privacy" && (
         // Hosted visitors never reach here (App renders the bare page before Main).
         <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.privacyHosted")} />
@@ -533,7 +570,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
             onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} region={status.region}
           />
           <main className={"content" + (empty ? "" : " content-result")}>
-            {empty && <Home envPath={controls.envPath ? status.envPath : null} />}
+            {empty && <Home envPath={controls.envPath ? status.envPath : null} main={homeMain} />}
             {!empty && !showCompare && activePayload && (
               <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
             )}

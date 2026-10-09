@@ -74,6 +74,7 @@ describe("deniedNotice / signInNote / pageOf / accountAccess", () => {
     expect(pageOf("/settings")).toBe("settings");
     expect(pageOf("/privacy")).toBe("privacy");
     expect(pageOf("/help")).toBe("help");
+    expect(pageOf("/me")).toBe("me");
     expect(pageOf("/other")).toBe("main");
   });
   test("accountAccess", () => {

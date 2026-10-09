@@ -121,6 +121,30 @@ read (0 pts) ──► character_runs + wcl_run_raw ──► per-run signals �
                      └──► Runs: every run + its details
 ```
 
+## Data notes (verified 2026-10-09, issue #24 § 3)
+
+Checked on 26 real runs (all eight dungeons, 15 timed, 11 depleted), 0 new query type:
+
+- **Avoidable abilities.** The avoidable DamageTaken table has one entry per player hit, each with
+  `abilities[]` (`guid`, `name`, `total`) sorted by total and **capped at five**. Below five the sum
+  equals `total`; at five it can fall short, so a view shows the remainder as "other avoidable
+  damage" (`total − Σ abilities`), never drops it.
+- **Killing hits.** A Deaths entry's `events[]` holds up to three events, newest first (`damage` or
+  `instakill`, with `ability`, `amount`, `overkill`, `sourceIsFriendly`); `events[0]` is the killing
+  blow (`killingBlow` agrees in 197 of 202 deaths). `damage.abilities` is something else: the damage
+  of the death window summed by ability (top five), useful as "what wore them down". Today's
+  `DeathEvent.cause` reads `damage.abilities[0]`, which is not the killing blow in 30 % of deaths;
+  phase 1 adds the killing hits beside it and does not change `cause`.
+- **Casts that went through.** The Interrupts table lists only enemy spells interrupted at least
+  once, with `spellsBegun`, `spellsCompleted`, `spellsInterrupted` and per-player `details[]` (whose
+  sum is exactly `spellsInterrupted`). `spellsCompleted` has no player attribution: group context
+  only, and a spell nobody ever kicked does not appear (the view says "among spells your group
+  kicked at least once").
+- **Timed or not.** Rankings' `medal: "none"` matches `keystoneBonus = 0` (26 of 26 runs), so the
+  season store knows a run's result before its report is fetched.
+- **Cost.** Enriching one run cost 7.3 to 7.9 pts (26 runs, 197 pts); `ESTIMATE_RUN = 10` stays the
+  pre-spend estimate.
+
 ## Error handling
 
 - A sync interrupted by a quota refusal or a WCL error keeps what it fetched and resumes from there.

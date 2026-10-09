@@ -2,7 +2,7 @@
 // 4 and 5, section "Numbers"): every stored run of a character, its cached raw report re-parsed and re-scored on each
 // read, 0 WCL pts. Pure: the caller hands in the rows, a raw-report reader and a deep-dive reader.
 import type { RunDefensives } from "../deepdive/types.ts";
-import { evaluate } from "../evaluation/evaluate.ts";
+import { evaluate, globalScore } from "../evaluation/evaluate.ts";
 import type { EvalPayload } from "../evaluation/inputs.ts";
 import { pillarOf } from "../evaluation/pillars.ts";
 import { PILLAR_KEYS, type Evaluation, type EvaluationConfig, type PillarKey, type PillarScore } from "../evaluation/types.ts";
@@ -57,7 +57,9 @@ export interface SeasonRunView {
   pillars: PillarRecord | null;
 }
 
-export interface WindowView { runs: number; pillars: PillarScore[]; global: number | null }
+/** `overall` is the weighted mean of the axes before the percentile curve (`globalScore`), on the pillars' 0–100
+ * scale; the badge's own global stays on the result page. */
+export interface WindowView { runs: number; pillars: PillarScore[]; overall: number | null }
 
 export interface PillarTrend {
   key: PillarKey;
@@ -100,7 +102,7 @@ export interface DungeonRow {
   runs: number;
   analysed: number;
   pillars: PillarRecord;
-  /** The badge score of the dungeon's analysed runs. */
+  /** The dungeon's weighted mean of the axes, uncurved (see `WindowView.overall`). */
   overall: number | null;
   best: { level: number; timed: boolean | null } | null;
   details: DungeonDetails;
@@ -228,6 +230,10 @@ export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
 interface Item { run: MPlusRun; view: SeasonRunView }
 
 export function seasonView(input: SeasonInput, cfg: EvaluationConfig): SeasonView {
+  const overallOf = (ev: Evaluation): number | null => {
+    const raw = globalScore(ev.axes, ev.role, cfg);
+    return raw === null ? null : Math.round(raw);
+  };
   const { character, now } = input;
   const currentWeek = weekOf(character.region, now);
   const metric: Metric = input.rows[0]?.metric ?? "dps";
@@ -262,7 +268,7 @@ export function seasonView(input: SeasonInput, cfg: EvaluationConfig): SeasonVie
   const windowOf = (list: Item[]): { view: WindowView; ev: Evaluation } | null => {
     if (list.length < MIN_WINDOW_RUNS) return null;
     const ev = evalOf(list, input.targetLevel);
-    return { ev, view: { runs: list.length, pillars: ev.pillars ?? [], global: ev.global } };
+    return { ev, view: { runs: list.length, pillars: ev.pillars ?? [], overall: overallOf(ev) } };
   };
   const recent = windowOf(inWeeks(currentWeek - RECENT_WEEKS + 1, currentWeek));
   const past = windowOf(inWeeks(currentWeek - RECENT_WEEKS - PAST_WEEKS + 1, currentWeek - RECENT_WEEKS));
@@ -305,7 +311,7 @@ export function seasonView(input: SeasonInput, cfg: EvaluationConfig): SeasonVie
       runs: list.length,
       analysed: withSig.length,
       pillars: record(ev?.pillars),
-      overall: ev?.global ?? null,
+      overall: ev ? overallOf(ev) : null,
       best: best ? { level: best.view.keyLevel, timed: best.view.timed } : null,
       details: dungeonDetails(withSig.map((i) => i.view.signals!)),
     };

@@ -337,6 +337,7 @@ export const fr: Mirror<typeof en> = {
       down: "↘ {delta}",
       same: "→ stable",
       notEnough: "pas assez de runs pour une tendance ({count} récemment)",
+      few: "trop peu de runs",
     },
     pillar: {
       na: "n/a",

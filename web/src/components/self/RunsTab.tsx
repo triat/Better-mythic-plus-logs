@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import type { LookupPayload, SeasonView } from "../../types.ts";
 import { costText } from "../../lib/deepdive.ts";
+import { STALE_DAYS } from "../../lib/format.ts";
 import { rowOf } from "../../lib/runs.ts";
 import { runDetail, runOf } from "../../lib/self.ts";
 import { useT } from "../../locale.tsx";
@@ -47,7 +48,7 @@ export function RunsTab({ payload, season, deepdive, encounterID, onClearFilter 
                 <div className="mono">{r.amount} <span className="muted" style={{ fontSize: 11 }}>{r.metric}</span></div>
                 <div className={"mono " + r.parseCls} style={{ fontWeight: 600 }}>{r.parse}</div>
                 <div className="muted">{r.spec}</div>
-                <div className={r.stale ? "tone-warn" : "muted"}>{r.age}</div>
+                <div className={r.stale ? "tone-warn" : "muted"} title={r.stale ? t("runs.olderThan", { days: STALE_DAYS }) : undefined}>{r.age}{r.stale ? t("runs.stale") : ""}</div>
                 {v.signals ? (
                   <button type="button" className={"btn btn-sm" + (expanded ? " active" : "")} aria-expanded={expanded} onClick={() => setOpen(expanded ? null : v.key)}>
                     {expanded ? t("self.runs.hide") : t("self.runs.details")}

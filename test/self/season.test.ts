@@ -107,3 +107,13 @@ describe("seasonView — a hand-typed name in another case", () => {
   });
 });
 
+describe("seasonView — overall", () => {
+  test("is the uncurved weighted mean of the axes, on the pillars' scale", async () => {
+    const v = seasonView(await input(), cfg);
+    const scores = v.season!.pillars.map((p) => p.score).filter((x): x is number => x !== null);
+    expect(v.season!.overall).not.toBeNull();
+    expect(v.season!.overall!).toBeGreaterThanOrEqual(Math.min(...scores) - 25);
+    expect(v.dungeons[0]!.overall).toBe(v.season!.overall);
+  });
+});
+

@@ -128,9 +128,11 @@ export function seasonHeader(t: T, season: SeasonView): { cells: GridCell[]; ove
     cells: PILLAR_ORDER.map((key) => {
       const s = pillars.find((p) => p.key === key)?.score ?? null;
       const tr = trendView(t, season.trends.find((x) => x.key === key));
-      return { text: scoreText(t, s), band: scoreBand(s), trend: key === "control" && s === null ? t("self.pillar.controlNote") : tr.text };
+      // The grid's cells are narrow: "too few runs" instead of the cards' longer sentence.
+      const trend = key === "control" && s === null ? t("self.pillar.controlNote") : tr.cls === "faint" ? t("self.trend.few") : tr.text;
+      return { text: scoreText(t, s), band: scoreBand(s), trend };
     }),
-    overall: { text: scoreText(t, season.season?.global ?? null), band: scoreBand(season.season?.global ?? null) },
+    overall: { text: scoreText(t, season.season?.overall ?? null), band: scoreBand(season.season?.overall ?? null) },
     runs: String(season.state.runs),
   };
 }

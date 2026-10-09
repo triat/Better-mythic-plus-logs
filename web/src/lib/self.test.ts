@@ -3,7 +3,7 @@ import type { DungeonRow, Evaluation, LookupPayload, MyCharacter, SeasonRunView,
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  dungeonPanel, isMe, meChip, pillarCards, runDetail, scoreBand, syncCard, toggleMe, trendView, workOnRows,
+  dungeonPanel, isMe, meChip, pillarCards, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
 } from "./self.ts";
 
 const tFr = makeT(fr, "fr");
@@ -59,7 +59,7 @@ describe("pillarCards", () => {
     expect(c[4]!.sentence).toBe("No dispel or purge for this spec: n/a, not 0.");
   });
   test("from the 4-week window when there is one", () => {
-    const s = season({ recent: { runs: 38, global: 60, pillars: [{ key: "damage", score: 70, evidence: [] }] } });
+    const s = season({ recent: { runs: 38, overall: 60, pillars: [{ key: "damage", score: 70, evidence: [] }] } });
     expect(pillarCards(tEn, "en", ev(), s)[0]!.score).toBe("70");
   });
 });
@@ -71,7 +71,7 @@ describe("workOnRows", () => {
   });
   test("the window's rows with the own-past column", () => {
     const s = season({
-      recent: { runs: 38, global: 60, pillars: [] },
+      recent: { runs: 38, overall: 60, pillars: [] },
       workOn: [{ source: "survival.individualDeaths", pillar: "survival", impact: -9, value: 1.4, reference: 0.7, label: "", past: { value: 0.2, change: "worse" } }],
     });
     expect(workOnRows(tEn, "en", ev(), s, titleOf)[0]!.past).toEqual({ text: "worse (0.2 before)", cls: "tone-bad" });
@@ -150,3 +150,16 @@ describe("me", () => {
     expect(meChip(tEn, [c("Muleyoxo")], p)).toEqual({ label: "This is me ✓", on: true, disabled: false });
   });
 });
+
+describe("seasonHeader", () => {
+  test("short trend text in the grid's narrow cells; overall on the pillars' scale", () => {
+    const s = season({ season: { runs: 40, overall: 62, pillars: [{ key: "survival", score: 41, evidence: [] }] },
+      trends: [{ key: "damage", delta: null, direction: null, recentRuns: 2, weekly: [] }, { key: "survival", delta: -9, direction: "down", recentRuns: 6, weekly: [] }] });
+    const h = seasonHeader(tEn, s);
+    expect(h.cells[0]!.trend).toBe("too few runs");
+    expect(h.cells[1]!.trend).toBe("↘ −9");
+    expect(h.overall).toEqual({ text: "62", band: "mid" });
+    expect(seasonHeader(tFr, s).cells[0]!.trend).toBe("trop peu de runs");
+  });
+});
+

@@ -343,6 +343,7 @@ export const en = {
       down: "↘ {delta}",
       same: "→ same",
       notEnough: "not enough runs for a trend ({count} recently)",
+      few: "too few runs",
     },
     pillar: {
       na: "n/a",

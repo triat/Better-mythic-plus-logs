@@ -25,7 +25,8 @@ export const displayedRuns = (result: LookupResult): MPlusRun[] => {
   return [...new Map(all.map((r) => [runKey(r), r])).values()];
 };
 
-async function fetchRaw(run: MPlusRun, gql: GqlFn): Promise<RawRunReport | null> {
+/** One run's raw report (~10 pts): the summary tables, plus the avoidable table when the dungeon has a list. */
+export async function fetchRunReport(run: MPlusRun, gql: GqlFn): Promise<RawRunReport | null> {
   const ids = avoidableSpellIdsFor(run.encounterID);
   const variables: Record<string, unknown> = { code: run.reportCode, fightID: run.fightID };
   let query = REPORT_RUN_SUMMARY_QUERY;
@@ -61,7 +62,7 @@ export async function enrichRuns(
       try {
         let raw = store.getWclRun(first.reportCode, first.fightID);
         if (!raw) {
-          raw = await fetchRaw(first, gql);
+          raw = await fetchRunReport(first, gql);
           if (raw) store.putWclRun(first.reportCode, first.fightID, raw);
         }
         const signals = parseRunSignals(raw, characterName, {

@@ -48,6 +48,10 @@ damage they ate, how many interrupts they landed against how many they could hav
 
 <img src="docs/images/runs.png" alt="Per-run detail: deaths, damage taken versus peers, avoidable damage, interrupts, dispels and consumables for each dungeon" width="860">
 
+A result has three tabs — Overview, Dungeons, Runs — and a **Sync season** button that fetches the rest of the
+season's logs (on your own Warcraft Logs client) for five pillars, weekly trends and the points to work
+on; mark the characters you play to follow them on [My characters](https://bmpl.riat.dev/me).
+
 Every number has a **?** next to it that opens the [Help page](https://bmpl.riat.dev/help), which
 explains that number with the thresholds your instance actually uses.
 
@@ -77,7 +81,8 @@ the Help page walks you through it.
 ## What bmpl knows about you
 
 - **Your Discord identity** — id, name, avatar. That is what signing in gives it, and all it takes.
-- **The characters you looked up**, so your history is there when you come back.
+- **The characters you looked up**, so your history is there when you come back, and the ones you
+  mark as yours.
 - **Nothing else.** No email, no password, no game account, no combat data of your own.
 
 The people you vet are never stored as people — their runs are cached the way any Warcraft Logs

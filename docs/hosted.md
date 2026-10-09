@@ -69,7 +69,8 @@ admin unbans them.
 
 Each member has their own lookup history (20 tabs, kept
 in `bmpl.db` across restarts), their own "your key", legend preference,
-region and UI language (`GET/PUT /api/settings`), and their own live-event stream. A member's
+region, UI language and "My characters" — up to five characters they play, followed on `/me`
+(`GET/PUT /api/settings`) — and their own live-event stream. A member's
 saved region defaults to `null` (the instance's `BMPL_REGION`) until they pick
 one; a pasted Raider.IO URL's own region wins for that one lookup without
 changing the saved preference. Two members looking
@@ -92,7 +93,8 @@ would exceed it, the message saying what the step needs (`needed`) against what 
 refusal before the rankings query or before an analysis spends nothing; a lookup refused before its
 run enrichment has already paid the rankings query (about 20 pts), and keeps those rankings for 15
 minutes so that trying again does not pay them twice. A fresh lookup of a character with eight or
-nine uncached runs costs roughly 110–120 pts, so a quota under that can never complete one. Cached data — a tab in your history, a run
+nine uncached runs costs about 80–90 pts, but its checks reserve the estimates (20 + 10 per run), so
+a quota under about 110 pts can never complete one. Cached data — a tab in your history, a run
 already in the cache, an analysis already done — never counts. Whatever the quotas say, the client is
 not knowingly driven below 100 points left (the floor is checked against the last `rateLimitData`
 seen and the estimates, so it is best effort) (`429 { error: "budget", … }`), so cached lookups keep
@@ -106,7 +108,8 @@ exceeds what is left; a 429 shows the server's message as a toast and refreshes 
 `rateLimitData`, the last 24 hourly totals) — the admin page shows it as a
 gauge (this hour vs the client's limit, reset countdown, top consumers, the
 last 24 h per hour). Estimates before spending:
-rankings ≈ 20 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts. Attribution
+rankings ≈ 20 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts (measured 2026-10-09: rankings 21,
+a run 7.3–7.9). Attribution
 is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
 
@@ -125,7 +128,10 @@ API and never logged — the card only ever shows the abbreviated client id
 through *their* client instead of the shared one: it does not count against
 `BMPL_POINTS_PER_USER_HOUR`, does not touch the shared budget shown on
 `/api/admin/usage`, and the user menu shows "Your WCL client · 1 412 / 3 600
-pts" instead of the shared quota line. Without `BMPL_ENCRYPTION_KEY` the
+pts" instead of the shared quota line. A season sync (**Sync season** on a result page, the
+sync button on `/me`, `POST /api/season/sync`) runs only this way: without an own client it is
+refused (`403 { error: "own_client_required" }`) before any WCL call, and the page links to Settings.
+Without `BMPL_ENCRYPTION_KEY` the
 feature is off instance-wide (`GET /api/status` → `wclClients: false`, the
 settings card reads "This instance does not store WCL clients"); losing the
 key after members have saved clients makes those rows undecryptable: their
@@ -273,6 +279,8 @@ are registered in both modes; the local-only routes
 | GET | `/api/health` | public | Health check for the reverse proxy / uptime monitor |
 | GET | `/api/status` | public | Whether credentials are set, hosted config flags (open signup, guild gate, own WCL clients, operator) |
 | GET | `/api/docs?lang=` | public | The documentation registry (`lang=fr` for French, anything else English) plus the effective evaluation config, for `/help` |
+| GET | `/api/season?name=&realm=&region=[&level=]` | user | A character's season from the runs its lookups recorded and the cached run logs: per-run pillars, the last 4 game weeks, trends, points to work on, the dungeon grid and the sync state (`season: null` before any lookup); 0 pts |
+| POST | `/api/season/sync` | user | One sync batch for a character, body `{ name, realm, region, refresh? }`: the rankings when `refresh` (or nothing is stored), then up to 10 uncached run logs, newest first; returns `{ fetched, failed, state, pointsSpent }`. Hosted: only on the member's own WCL client (403 `own_client_required` otherwise), rate-limited with the analyses (60/min); 402 when the client has too few points left |
 | POST | `/api/live/cached` | user | Names → the verdicts bmpl already has (the Live panel's only server call): `{ level, players: [{ character, region? }] }`, up to 40 players; never touches WCL, 0 pts. A pure read: it goes through the history store's `peek`, so it never reorders, copies or evicts a member's own history, and an applicant's name is never persisted |
 | POST | `/api/setup` | local mode only | Write `WCL_CLIENT_ID`/`WCL_CLIENT_SECRET` to `.env` |
 | POST | `/api/watch/start` | local mode only | Start clipboard watch |
@@ -284,8 +292,8 @@ are registered in both modes; the local-only routes
 | POST | `/auth/logout` | public | End the caller's session |
 | GET | `/api/me` | user | The signed-in member, their quota status and own WCL client (if any) |
 | DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, feature-usage counters, proposals, own WCL client) |
-| GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region, UI language) |
-| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale?, liveSort?, liveRoles?, liveClasses? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser, `liveSort` one of the Live panel's sort orders (`arrival`/`verdict`/`score`/`role`/`class`), `liveRoles` up to 3 of `tank`/`healer`/`dps` and `liveClasses` up to 13 class names — both empty/full means "no filter" |
+| GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region, UI language, Live panel filters, "My characters") |
+| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale?, liveSort?, liveRoles?, liveClasses?, characters? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser, `liveSort` one of the Live panel's sort orders (`arrival`/`verdict`/`score`/`role`/`class`), `liveRoles` up to 3 of `tank`/`healer`/`dps` and `liveClasses` up to 13 class names — both empty/full means "no filter", `characters` "My characters": up to 5 `{ name, realm, region, source: "manual" }` (`realm` the Warcraft Logs slug, the first one is the main; any other `source` is refused) |
 | GET | `/api/me/wcl-client` | user | The caller's own WCL client, if set |
 | PUT | `/api/me/wcl-client` | user | Save the caller's own WCL client (verified with a 0-pt PING first) |
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |

@@ -4,7 +4,9 @@ Status: approved 2026-10-09 (sync needs the member's own WCL client; points to w
 references). Canvas page "self-review": variants A + C chosen 2026-10-09 (decision 4). Open
 question 1 settled 2026-10-09; the other WCL-dependent items are tracked in GitHub issue #24.
 Amended 2026-10-09: a personal page (decision 8), manual characters until Battle.net linking
-(decision 1), the phase-1 numbers (section "Numbers"), open question 2.
+(decision 1), the phase-1 numbers (section "Numbers"), open question 2. Phase 1 implemented
+2026-10-09 (plan `docs/superpowers/plans/2026-10-09-self-review-phase-1.md`, commits from
+`19c89ec`; the personal page is canvas page "me", variant C).
 
 ## Goal
 

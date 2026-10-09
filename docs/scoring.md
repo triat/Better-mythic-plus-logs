@@ -102,16 +102,31 @@ bmpl evaluate saved.json --json   # structured output
 
 ## API cost
 
+Measured 2026-10-09: the rankings query costs 21 pts, one run's `report.table`
+enrichment 7.3–7.9 pts. Before spending, bmpl checks against its estimates
+(`ESTIMATE_RANKINGS` 20, `ESTIMATE_RUN` 10, `src/wcl/meter.ts`).
+
 - Auth: 0 pts (OAuth2 token is cached in memory)
-- `lookup` with stats enrichment (default), fully uncached: ~100 pts per
-  character (≈10 pts per displayed run's `report.table` queries, up to 9
-  displayed runs, + ~10 pts for the rankings query). Raider.IO enrichment is
+- `lookup` with stats enrichment (default), fully uncached: ~90 pts per
+  character (≈8 pts per displayed run's `report.table` queries, up to 9
+  displayed runs, + ~20 pts for the rankings query). Raider.IO enrichment is
   a separate, free API and doesn't count against this budget.
-- `lookup` where the displayed runs are already cached in `bmpl.db`: ~10 pts
+- `lookup` where the displayed runs are already cached in `bmpl.db`: ~20 pts
   (just the rankings query — per-run enrichment is a cache hit)
-- `lookup --no-stats`: ~10 pts per character (rankings query only; Raider.IO
+- `lookup --no-stats`: ~20 pts per character (rankings query only; Raider.IO
   is still fetched)
-- `mplus`: ~10 pts per character (no enrichment; unchanged)
+- A `lookup` (CLI or web) also records every ranked run of the season the
+  rankings listed (the self-review's season store), at no extra cost — unless
+  the metric was forced (`--metric`), so stored parses stay on the
+  auto-selected one.
+- `mplus`: ~20 pts per character (no enrichment; unchanged)
 - `analyze`: ~3 pts per run, once ever (cached forever); re-opening tabs or
   correcting the table costs 0
-- 3600 pts/hr → ~36 fully-uncached lookups/hr, or ~360/hr once runs are cached
+- Season sync (the web UI's **Sync season**, `POST /api/season/sync`): the
+  rankings (~20 pts, on the first batch) plus ~8 pts per run whose log is not
+  cached yet, in batches of 10 runs, newest first; the estimate (20 + 10 per
+  pending run) is shown before anything is spent. A batch refuses to start
+  under 20 + 10 per run of the batch left on the client, the rankings under
+  20 + 20. On a hosted instance it runs only on the member's own Warcraft Logs
+  client. Opening the season views costs 0.
+- 3600 pts/hr → ~40 fully-uncached lookups/hr, or ~170/hr once runs are cached

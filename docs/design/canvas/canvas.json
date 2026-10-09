@@ -27,6 +27,10 @@
     {
       "id": "usage",
       "name": "Usage — feature tracking dashboard"
+    },
+    {
+      "id": "self-review",
+      "name": "Self-review — pillars, dungeons, runs"
     }
   ],
   "artboards": [
@@ -344,6 +348,42 @@
       "h": 720,
       "title": "Usage — details (top members, empty, privacy line)",
       "page": "usage"
+    },
+    {
+      "file": "SelfTabs.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1220,
+      "title": "Self-review A — tabs (Overview + Dungeons tab)",
+      "page": "self-review"
+    },
+    {
+      "file": "SelfOnePage.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1560,
+      "title": "Self-review B — one page",
+      "page": "self-review"
+    },
+    {
+      "file": "SelfDungeonFirst.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 700,
+      "title": "Self-review C — dungeon-first",
+      "page": "self-review"
+    },
+    {
+      "file": "SelfDetails.dc.html",
+      "x": 3120,
+      "y": 820,
+      "w": 1440,
+      "h": 740,
+      "title": "Self-review — details (sync, not enough runs, run detail, this is me)",
+      "page": "self-review"
     }
   ],
   "annotations": [

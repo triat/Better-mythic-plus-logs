@@ -1,7 +1,7 @@
 # Self-review: five pillars, three views, a season of runs — design
 
-Status: draft 2026-10-09, awaiting review. Visual variants follow on the design canvas once the
-decisions below are settled.
+Status: approved 2026-10-09 (sync needs the member's own WCL client; points to work on against both
+references). Visual variants on the design canvas, page "self-review". Open question 1 still open.
 
 ## Goal
 
@@ -61,17 +61,22 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    in `wcl_run_raw`, cached forever as today; per-run signals are recomputed from them on read (pure,
    0 pts). Kept for the season; revisited if size or speed becomes a problem.
 
-3. **Sync is explicit and shows its cost.** "Sync my season" fetches the rankings (~20 pts) and
-   enriches every run not yet cached (~10 pts each), newest first, then the view reads everything from
-   the cache. The button states the estimate before spending ("142 runs, 118 not cached, ~1 200 pts").
-   A normal lookup of another player keeps today's cost (best run per dungeon); "Load full season" is
-   the same explicit sync for anyone.
+3. **Sync is explicit, shows its cost and needs the member's own WCL client** (user's choice,
+   2026-10-09). "Sync my season" fetches the rankings (~20 pts) and enriches every run not yet cached
+   (~10 pts each), newest first, then the view reads everything from the cache. The button states the
+   estimate before spending ("142 runs, 118 not cached, ~1 200 pts"). It runs through the member's own
+   client (`runWithWclClient`), so it never touches the shared budget or the hourly quota; without an
+   own client the button is replaced by the guide to add one. Local mode uses the CLI's own
+   credentials. A normal lookup of another player keeps today's cost (best run per dungeon); "Load full
+   season" is the same explicit sync for anyone, under the same rule.
 
 4. **Three views on one page.** The result page gets three tabs, the same for the member and for
    anyone looked up:
    - **Overview:** the five pillars, each with a score, a trend arrow and one sentence; above them,
-     the two or three points to work on first (the pillar sub-signals that cost the most against the
-     average player, the "What makes this score" logic already shipped).
+     the two or three points to work on first, against two references shown side by side (user's
+     choice, 2026-10-09): the average player (the calibration median, the "What makes this score"
+     logic already shipped) and the player's own past (their median of the four previous weeks).
+     The average player leads the ranking; the own-past column says "better / same / worse".
    - **Dungeons:** a grid dungeon × pillar (score per cell, coloured), sorted by the worst dungeon;
      a dungeon opens its detail: the abilities that hit the player there, what killed them, the casts
      that went through, the runs.
@@ -135,12 +140,8 @@ read (0 pts) ──► character_runs + wcl_run_raw ──► per-run signals �
    season or only the best per key level is not stated anywhere in the repo. One real query settles it
    (~20 pts); it needs WCL credentials in the environment. If only the best per level comes back, the
    season history is partial and the views must say so.
-2. **Sync and the member quota.** A member's quota is 300 pts per hour; a season of ~150 runs costs
-   ~1 500 pts. Either the sync runs in hourly slices within the quota (resumable), or it gets its own
-   allowance from the instance budget, or it requires the member's own WCL client.
-3. **Points to work on.** Phase 1 ranks them against the calibration median (the average player). The
-   member's own past (their median of the previous four weeks) is the other reference; both can be
-   shown, which one leads is a choice.
+Settled 2026-10-09: sync needs the member's own WCL client (decision 3); points to work on show
+both references (decision 4).
 
 ## Out of scope
 

@@ -120,4 +120,5 @@ export const WATCH_BODY = obj({ level: opt(nullable(int({ min: 2, max: 50 }))), 
 /** A `Name-Realm` as the addon emits it; the same shape parseNameRealm() accepts. */
 const CHARACTER = /^[^|\s]{1,24}-[^|\s]{1,32}$/;
 export const LIVE_PLAYER = obj({ character: str({ min: 3, max: 60, trim: true, pattern: CHARACTER }), region: opt(oneOf(REGIONS)) });
+export const USAGE_EVENTS_BODY = obj({ events: any() });
 export const LIVE_CACHED_BODY = obj({ level: nullable(int({ min: KEY_MIN, max: KEY_MAX })), players: arr(LIVE_PLAYER, { min: 1, max: 40 }) });

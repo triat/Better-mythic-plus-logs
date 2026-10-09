@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditRow } from "../types.ts";
+import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditRow, FeatureUsage, UsageReport } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { AUDIT_KIND_OF, auditChips, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
+import { AUDIT_KIND_OF, USAGE_CATEGORY_ORDER, auditChips, usageCards, usageChips, usageIsEmpty, usageKpis, usageRow, usageTable, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
 import { fmtPts } from "./format.ts";
 
 const tFr = makeT(fr, "fr");
@@ -195,5 +195,69 @@ describe("audit rows", () => {
     expect(auditChips(tFr).map((c) => c.label)).toEqual(["Tout", "Connexions", "Admin", "Quota", "Sécurité", "Erreurs"]);
     expect(auditShowing(tEn, 10, 1280)).toBe("showing 10 of 1 280 · newest first");
     expect(auditShowing(tFr, 10, 1280)).toBe("10 affichées sur 1 280 · plus récentes d'abord");
+  });
+});
+
+describe("feature usage", () => {
+  const D = 86_400_000;
+  const feat = (event: string, category: FeatureUsage["category"], users: number, uses: number, extra: Partial<FeatureUsage> = {}): FeatureUsage => ({
+    event: event as FeatureUsage["event"], category, source: "ui", uses, users, share: users / 4, lastAt: uses > 0 ? NOW - 2 * H : null,
+    daily: [0, 0, 0, 0, 0, 0, uses], top: [], ...extra,
+  });
+  const report: UsageReport = {
+    days: 7, includeAdmins: false, from: NOW - 6 * D, members: 10,
+    active: { today: 2, d7: 4, d30: 6, period: 4 }, dailyActive: [0, 0, 0, 0, 0, 0, 2],
+    features: [
+      feat("lookup", "lookup", 4, 30, { source: "api", daily: [10, 0, 0, 0, 0, 5, 15], top: [{ userId: 2, username: "tom", uses: 20, lastAt: NOW - 30 * 60_000 }] }),
+      feat("lookup_cached", "lookup", 3, 10, { source: "api" }),
+      feat("axis_expand", "result", 1, 1),
+      feat("compare_open", "history", 0, 0),
+      feat("metric_pick", "lookup", 0, 0),
+    ],
+  };
+  test("kpis: active members, lookups per active member, unused count", () => {
+    expect(usageKpis(tEn, report, ).map((k) => [k.key, k.value, k.sub, k.warn])).toEqual([
+      ["today", "2", "of 10 members", false],
+      ["d7", "4", "40 % of members", false],
+      ["d30", "6", "60 % of members", false],
+      ["lookups", "10", "7 d · fetched + cached", false],
+      ["unused", "2", "of 5 in the catalogue", true],
+    ]);
+    expect(usageKpis(tEn, { ...report, active: { ...report.active, period: 0 } })[3]!.value).toBe("—");
+  });
+  test("chips: all plus the categories present, in catalogue order", () => {
+    expect(usageChips(tEn, report)).toEqual([
+      { key: "all", label: "All", count: 5 }, { key: "lookup", label: "Lookup", count: 3 },
+      { key: "result", label: "Result", count: 1 }, { key: "history", label: "History & compare", count: 1 },
+    ]);
+    expect(USAGE_CATEGORY_ORDER[0]).toBe("lookup");
+  });
+  test("a row: share, counts, last use, sparkline scaled to its own peak, top members", () => {
+    const r = usageRow(tEn, report, report.features[0]!, NOW);
+    expect(r).toMatchObject({ event: "lookup", category: "Lookup", source: "API", sharePct: 100, users: "4", uses: "30", last: "2h ago", unused: false });
+    expect(r.spark.map((b) => b.pct)).toEqual([67, 0, 0, 0, 0, 33, 100]);
+    expect(r.spark[6]!.title).toBe(`${new Date(NOW).toISOString().slice(5, 10)} · 15`);
+    expect(r.top).toEqual([{ userId: 2, name: "tom", initials: "T", uses: "20", last: "30 min ago" }]);
+    expect(r.topTitle).toBe("Top members · lookup · 7 d");
+    expect(r.topTotal).toBe("4 members in total · admins hidden");
+    expect(usageRow(tEn, report, report.features[3]!, NOW)).toMatchObject({ last: "never", unused: true, sharePct: 0 });
+  });
+  test("table: used rows then unused, filtered by category", () => {
+    const all = usageTable(tEn, report, "all", NOW);
+    expect(all.used.map((r) => r.event)).toEqual(["lookup", "lookup_cached", "axis_expand"]);
+    expect(all.unused.map((r) => r.event)).toEqual(["compare_open", "metric_pick"]);
+    expect(usageTable(tEn, report, "lookup", NOW).unused.map((r) => r.event)).toEqual(["metric_pick"]);
+  });
+  test("cards: one per category present, unused flagged and last", () => {
+    const cards = usageCards(tEn, report, NOW);
+    expect(cards.map((c) => [c.key, c.sub])).toEqual([["lookup", "3 features · 1 unused"], ["result", "1 feature"], ["history", "1 feature · 1 unused"]]);
+    expect(cards[0]!.lines.map((l) => [l.row.event, l.value])).toEqual([["lookup", "4 · 100 %"], ["lookup_cached", "3 · 75 %"], ["metric_pick", "unused"]]);
+  });
+  test("French wording and the empty state", () => {
+    expect(usageKpis(tFr, report)[0]!.sub).toBe("sur 10 membres");
+    expect(usageCards(tFr, report, NOW)[0]!.sub).toBe("3 fonctionnalités · 1 inutilisée(s)");
+    expect(usageRow(tFr, report, report.features[0]!, NOW).topTotal).toBe("4 membres au total · admins masqués");
+    expect(usageIsEmpty(report)).toBe(false);
+    expect(usageIsEmpty({ ...report, features: report.features.map((f) => ({ ...f, uses: 0 })) })).toBe(true);
   });
 });

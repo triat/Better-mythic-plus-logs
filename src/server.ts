@@ -11,6 +11,7 @@ import type { RateLimiter, RateLimits } from "./hosted/ratelimit.ts";
 import { createHostedRuntime } from "./hosted/runtime.ts";
 import type { HostedRuntime } from "./hosted/runtime.ts";
 import type { Verify } from "./hosted/wcl-clients.ts";
+import type { ApiEvent } from "./hosted/usage-catalog.ts";
 import { findRoute } from "./server/routes.ts";
 import type { Route } from "./server/routes.ts";
 import { adminRoutes } from "./server/routes-admin.ts";
@@ -77,7 +78,27 @@ function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: nu
   if (req.method === "POST" && url.pathname === "/api/deepdive") return { limiter: runtime.limits.deepdive, key };
   if (req.method === "PUT" && url.pathname === "/api/me/wcl-client") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/me/wcl-client/verify") return { limiter: runtime.limits.lookup, key };
+  if (req.method === "POST" && url.pathname === "/api/usage/events") return { limiter: runtime.limits.usage, key };
   return null;
+}
+
+/**
+ * The feature-usage event a successful (status < 400) request counts as, for routes whose event does
+ * not depend on the response body. `POST /api/lookup` and `POST /api/deepdive` record their own event
+ * (cached, refresh, re-analyze), in their handlers.
+ */
+export function apiEventFor(method: string, path: string): ApiEvent | null {
+  if (path.startsWith("/api/history/")) return method === "GET" ? "history_open" : method === "DELETE" ? "history_close" : null;
+  switch (`${method} ${path}`) {
+    case "DELETE /api/history": return "history_clear";
+    case "POST /api/live/cached": return "live_roster";
+    case "POST /api/defensives": return "defensives_correction";
+    case "PUT /api/settings": return "settings_save";
+    case "PUT /api/me/wcl-client": return "wcl_client_set";
+    case "POST /api/me/wcl-client/verify": return "wcl_client_verify";
+    case "DELETE /api/me/wcl-client": return "wcl_client_remove";
+    default: return null;
+  }
 }
 
 /** Test hook: the runtime of the last hosted `runServer` in this process (null before / in local mode). */
@@ -158,7 +179,10 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       // every audit row recorded inside it carries the user, ip and target of this request.
       scope = { userId: ctx.user?.id ?? null, ip, target };
       const rt = runtime;
-      return await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))));
+      const res = await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))));
+      const event = res.status < 400 ? apiEventFor(req.method, url.pathname) : null;
+      if (event) rt.track(ctx.user?.id ?? null, event);
+      return res;
     } catch (e) {
       console.error(e);
       // The message stays in the log (clipped) and in stderr; the client only ever sees "Internal error".

@@ -4,6 +4,7 @@ import type { MenuModel } from "../lib/session.ts";
 import { pendingText } from "../lib/session.ts";
 import { useT } from "../locale.tsx";
 import { Avatar } from "./Avatar.tsx";
+import { track } from "../usage.ts";
 
 interface Props { m: MenuModel; pendingProposals: number | null; onOpen: () => void; onSignOut: () => void }
 
@@ -46,7 +47,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut }: Props) {
             <span className="faint">{t("common.locale.title")}</span>
             <span className="seg" title={t("common.locale.hint")}>
               {LOCALES.map((l) => (
-                <button key={l} type="button" className={"seg-item" + (l === locale ? " on" : "")} onClick={() => setLocale(l)} aria-pressed={l === locale}>{LOCALE_LABELS[l]}</button>
+                <button key={l} type="button" className={"seg-item" + (l === locale ? " on" : "")} onClick={() => { if (l !== locale) track("locale_switch"); setLocale(l); }} aria-pressed={l === locale}>{LOCALE_LABELS[l]}</button>
               ))}
             </span>
           </div>

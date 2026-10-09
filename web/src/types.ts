@@ -15,6 +15,8 @@ export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 export type { DefensiveSpell } from "@shared/deepdive/types.ts";
 export type { EnvRow } from "@shared/hosted/instance.ts";
 export type { AuditAction, AuditKind, AuditRow } from "@shared/hosted/audit.ts";
+export type { UiEvent, UsageCategory, UsageEvent, UsageSource } from "@shared/hosted/usage-catalog.ts";
+export type { FeatureTopUser, FeatureUsage, UsagePeriod, UsageReport } from "@shared/hosted/usage-events.ts";
 export type { OwnClientView, OwnClientSnapshot } from "@shared/hosted/wcl-clients.ts";
 export type { AxisKey, AxisScore, Confidence, CurvePoints, Driver, Evaluation, Evidence, NextVerdict, Verdict } from "@shared/evaluation/types.ts";
 export type { Role } from "@shared/evaluation/types.ts";

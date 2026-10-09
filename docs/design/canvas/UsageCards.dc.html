@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .row-audit { grid-template-columns: 74px 130px 150px 220px 1fr; }
+    .row-audit > span:last-child { white-space: normal; }
+    .dot-error { background: #f85149; } .dot-admin { background: #58a6ff; } .dot-login { background: #56d364; } .dot-quota { background: #e3b341; } .dot-sec { background: #ffa657; }
+    .kind { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .day { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; padding: 8px 0 2px; }
+    .tl { display: grid; grid-template-columns: 56px 12px 1fr; gap: 0 10px; align-items: baseline; font-size: 13px; padding: 3px 0; }
+    .tl .t { color: #6e7681; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  
+    .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .kpi { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
+    .kpi .v { font-size: 22px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .row-feat { grid-template-columns: 210px 140px 56px 190px 70px 70px 110px 1fr; }
+    .src { font-size: 10px; font-weight: 700; letter-spacing: .06em; color: #6e7681; border: 1px solid #21262d; border-radius: 4px; padding: 0 4px; }
+    .spark { display: inline-flex; align-items: flex-end; gap: 1px; height: 18px; }
+    .spark > i { display: block; width: 3px; background: #58a6ff; }
+    .spark > i.z { background: #21262d; height: 2px !important; }
+    .unused { opacity: .55; }
+    .cat { display: flex; flex-direction: column; gap: 6px; }
+    .feat-line { display: grid; grid-template-columns: 150px 1fr 70px; gap: 10px; align-items: center; font-size: 13px; }
+    .hm { display: grid; gap: 2px; font-size: 12px; align-items: center; }
+    .hm > i { display: block; height: 16px; border-radius: 2px; }
+    .seg { display: inline-flex; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+    .seg > span { padding: 2px 10px; font-size: 12px; color: #8b949e; }
+    .seg > span.on { background: #21262d; color: #e6edf3; }
+    .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8b949e; }
+    .toggle i { width: 26px; height: 14px; border-radius: 7px; background: #30363d; display: inline-block; position: relative; }
+    .toggle i::after { content: ""; position: absolute; left: 2px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #8b949e; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1100px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="content content-wide" style="gap: 26px;">
+    <div><div class="label" style="margin-bottom: 8px;">B · CARDS BY CATEGORY — one card per area of the product, bars = share of active members; unused features flagged in yellow inside their card</div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span class="section-title">Feature usage</span><span class="muted" style="font-size: 12px;">per member and day · API + interface events · kept 90 days · 0 WCL pts</span><div style="flex: 1;"></div><span class="seg"><span>7 d</span><span class="on">30 d</span><span>90 d</span></span><span class="toggle"><i></i>Include admins</span></div>
+    <div class="kpis">
+      <div class="kpi"><span class="caps">Active today</span><span class="v">9</span><span class="faint" style="font-size: 12px;">of 31 members</span></div>
+      <div class="kpi"><span class="caps">Active 7 d</span><span class="v">17</span><span class="faint" style="font-size: 12px;">55 % of members</span></div>
+      <div class="kpi"><span class="caps">Active 30 d</span><span class="v">24</span><span class="faint" style="font-size: 12px;">77 % of members</span></div>
+      <div class="kpi"><span class="caps">Lookups / active member</span><span class="v">91</span><span class="faint" style="font-size: 12px;">30 d · fetched + cached</span></div>
+      <div class="kpi"><span class="caps">Unused features</span><span class="v" style="color: #e3b341;">4</span><span class="faint" style="font-size: 12px;">of 40 in the catalogue</span></div>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px;">
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">Lookup</span><span class="faint" style="font-size: 12px;">6 features · <span style="color: #e3b341;">1 unused</span></span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">lookup</span><span class="bar"><span style="width: 96%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">23 · 96 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">lookup_cached</span><span class="bar"><span style="width: 88%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">21 · 88 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">key_level_change</span><span class="bar"><span style="width: 67%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">16 · 67 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">lookup_refresh</span><span class="bar"><span style="width: 50%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">12 · 50 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">reevaluate</span><span class="bar"><span style="width: 8%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">2 · 8 %</span></div>
+      <div class="feat-line unused"><span class="mono" style="font-size: 12px;">metric_pick</span><span class="bar"><span style="width: 0%; background: #30363d;"></span></span><span class="mono" style="font-size: 12px; text-align: right;"><span style="color: #e3b341;">unused</span></span></div>
+    </div>
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">History & compare</span><span class="faint" style="font-size: 12px;">3 features · <span style="color: #e3b341;">1 unused</span></span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">history_open</span><span class="bar"><span style="width: 79%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">19 · 79 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">compare_open</span><span class="bar"><span style="width: 25%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">6 · 25 %</span></div>
+      <div class="feat-line unused"><span class="mono" style="font-size: 12px;">history_clear</span><span class="bar"><span style="width: 0%; background: #30363d;"></span></span><span class="mono" style="font-size: 12px; text-align: right;"><span style="color: #e3b341;">unused</span></span></div>
+    </div>
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">Result</span><span class="faint" style="font-size: 12px;">4 features</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">axis_expand</span><span class="bar"><span style="width: 71%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">17 · 71 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">legend_toggle</span><span class="bar"><span style="width: 38%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">9 · 38 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">external_log</span><span class="bar"><span style="width: 33%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">8 · 33 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">rio_toggle</span><span class="bar"><span style="width: 29%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">7 · 29 %</span></div>
+    </div>
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">Deep-dive</span><span class="faint" style="font-size: 12px;">4 features · <span style="color: #e3b341;">2 unused</span></span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">deepdive</span><span class="bar"><span style="width: 38%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">9 · 38 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">defensives_correction</span><span class="bar"><span style="width: 13%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">3 · 13 %</span></div>
+      <div class="feat-line unused"><span class="mono" style="font-size: 12px;">analyze_all</span><span class="bar"><span style="width: 0%; background: #30363d;"></span></span><span class="mono" style="font-size: 12px; text-align: right;"><span style="color: #e3b341;">unused</span></span></div>
+      <div class="feat-line unused"><span class="mono" style="font-size: 12px;">deepdive_reanalyze</span><span class="bar"><span style="width: 0%; background: #30363d;"></span></span><span class="mono" style="font-size: 12px; text-align: right;"><span style="color: #e3b341;">unused</span></span></div>
+    </div>
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">Live</span><span class="faint" style="font-size: 12px;">3 features</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">live_roster</span><span class="bar"><span style="width: 17%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">4 · 17 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">live_check</span><span class="bar"><span style="width: 13%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">3 · 13 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">live_auto_toggle</span><span class="bar"><span style="width: 4%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">1 · 4 %</span></div>
+    </div>
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">Help</span><span class="faint" style="font-size: 12px;">2 features</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">page_help</span><span class="bar"><span style="width: 54%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">13 · 54 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">help_link</span><span class="bar"><span style="width: 46%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">11 · 46 %</span></div>
+    </div>
+    <div class="card cat"><div style="display: flex; align-items: baseline; gap: 8px;"><span class="section-title">Account</span><span class="faint" style="font-size: 12px;">2 features</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">wcl_client_set</span><span class="bar"><span style="width: 21%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">5 · 21 %</span></div>
+      <div class="feat-line"><span class="mono" style="font-size: 12px;">page_privacy</span><span class="bar"><span style="width: 13%; background: #58a6ff;"></span></span><span class="mono" style="font-size: 12px; text-align: right;">3 · 13 %</span></div>
+    </div>
+  </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

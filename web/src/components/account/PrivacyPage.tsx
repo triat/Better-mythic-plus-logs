@@ -26,6 +26,7 @@ export function PrivacyPage({ operator, guildRequired }: Props) {
           </li>
           <li><Around message={t("privacy.historyLine")} params={{ history: <b>{t("privacy.history")}</b> }} /></li>
           <li><Around message={t("privacy.clientLine")} params={{ client: <b>{t("privacy.client")}</b> }} /></li>
+          <li><Around message={t("privacy.featuresLine")} params={{ features: <b>{t("privacy.features")}</b> }} /></li>
           <li><Around message={t("privacy.sessionsLine")} params={{ sessions: <b>{t("privacy.sessions")}</b> }} /></li>
           <li><Around message={t("privacy.auditLine")} params={{ audit: <b>{t("privacy.audit")}</b> }} /></li>
         </ul>

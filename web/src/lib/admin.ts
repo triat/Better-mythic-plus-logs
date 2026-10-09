@@ -1,5 +1,5 @@
 // Admin page view models (issue #8): budget gauge, proposal queue, users, invites, instance; audit log rows (issue #9). Pure; tested.
-import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditAction, AuditKind, AuditRow, OverrideEntry } from "../types.ts";
+import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditAction, AuditKind, AuditRow, FeatureUsage, OverrideEntry, UsageCategory, UsageReport } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import { patchText } from "./deepdive.ts";
 import { fmtAge, fmtPts } from "./format.ts";
@@ -261,3 +261,86 @@ export function auditRow(t: T, r: AuditRow, now = Date.now()): AuditRowModel {
 }
 
 export const auditShowing = (t: T, shown: number, total: number): string => t("admin.audit.showing", { shown, total: fmtPts(total) });
+
+// --- Feature usage (spec 2026-10-09-feature-usage-dashboard-design.md; canvas "usage", A table + B cards) ---
+
+/** The categories in catalogue order (the front's copy of `USAGE_CATEGORIES`: runtime values cannot come from src/). */
+export const USAGE_CATEGORY_ORDER: readonly UsageCategory[] = ["lookup", "result", "deepdive", "history", "live", "help", "account", "admin"];
+export type UsageView = "table" | "categories";
+const DAY = 86_400_000;
+const pctOf = (share: number): number => Math.round(share * 100);
+
+export interface UsageKpi { key: string; label: string; value: string; sub: string; warn: boolean }
+export function usageKpis(t: T, r: UsageReport): UsageKpi[] {
+  const pctMembers = (n: number) => t("admin.usage.kpi.pctMembers", { pct: r.members > 0 ? Math.round((n / r.members) * 100) : 0 });
+  const lookups = r.features.filter((f) => f.event === "lookup" || f.event === "lookup_cached" || f.event === "lookup_refresh").reduce((s, f) => s + f.uses, 0);
+  const unused = r.features.filter((f) => f.uses === 0).length;
+  return [
+    { key: "today", label: t("admin.usage.kpi.today"), value: fmtPts(r.active.today), sub: t("admin.usage.kpi.ofMembers", { n: fmtPts(r.members) }), warn: false },
+    { key: "d7", label: t("admin.usage.kpi.d7"), value: fmtPts(r.active.d7), sub: pctMembers(r.active.d7), warn: false },
+    { key: "d30", label: t("admin.usage.kpi.d30"), value: fmtPts(r.active.d30), sub: pctMembers(r.active.d30), warn: false },
+    { key: "lookups", label: t("admin.usage.kpi.lookups"), value: r.active.period > 0 ? fmtPts(Math.round(lookups / r.active.period)) : "—", sub: t("admin.usage.kpi.lookupsSub", { days: r.days }), warn: false },
+    { key: "unused", label: t("admin.usage.kpi.unused"), value: String(unused), sub: t("admin.usage.kpi.ofCatalogue", { n: r.features.length }), warn: unused > 0 },
+  ];
+}
+
+export interface UsageChip { key: UsageCategory | "all"; label: string; count: number }
+/** "All" plus one chip per category that has catalogue entries, with how many it holds. */
+export function usageChips(t: T, r: UsageReport): UsageChip[] {
+  return [
+    { key: "all", label: t("admin.usage.category.all"), count: r.features.length },
+    ...USAGE_CATEGORY_ORDER.map((c) => ({ key: c, label: t(`admin.usage.category.${c}`), count: r.features.filter((f) => f.category === c).length })).filter((c) => c.count > 0),
+  ];
+}
+
+export interface SparkBar { pct: number; title: string }
+export interface UsageTopRow { userId: number; name: string; initials: string; uses: string; last: string }
+export interface UsageRowModel {
+  event: string; category: string; source: string; sharePct: number; users: string; uses: string; last: string; unused: boolean;
+  spark: SparkBar[]; top: UsageTopRow[]; topTitle: string; topTotal: string;
+}
+const dayLabel = (ms: number): string => new Date(ms).toISOString().slice(5, 10);
+
+export function usageRow(t: T, r: UsageReport, f: FeatureUsage, now = Date.now()): UsageRowModel {
+  const max = Math.max(0, ...f.daily);
+  return {
+    event: f.event,
+    category: t(`admin.usage.category.${f.category}`),
+    source: t(`admin.usage.source.${f.source}`),
+    sharePct: pctOf(f.share),
+    users: fmtPts(f.users),
+    uses: fmtPts(f.uses),
+    last: f.lastAt === null ? t("admin.usage.never") : fmtShortAge(t, f.lastAt, now),
+    unused: f.uses === 0,
+    // 0 = an empty day (drawn as a flat tick); otherwise at least 8 % so a small day stays visible.
+    spark: f.daily.map((n, i) => ({ pct: n === 0 || max === 0 ? 0 : Math.max(8, Math.round((n / max) * 100)), title: t("admin.usage.dayTitle", { day: dayLabel(r.from + i * DAY), n: fmtPts(n) }) })),
+    top: f.top.map((u) => ({ userId: u.userId, name: u.username, initials: initialsOf(u.username), uses: fmtPts(u.uses), last: fmtShortAge(t, u.lastAt, now) })),
+    topTitle: t("admin.usage.topTitle", { event: f.event, days: r.days }),
+    topTotal: t("admin.usage.topTotal", { count: f.users }) + (r.includeAdmins ? "" : t("admin.usage.adminsHidden")),
+  };
+}
+
+/** Variant A: the table rows of one category (or all), used ones (most members first, as the server sorts) then the unused ones. */
+export function usageTable(t: T, r: UsageReport, category: UsageCategory | "all", now = Date.now()): { used: UsageRowModel[]; unused: UsageRowModel[] } {
+  const rows = r.features.filter((f) => category === "all" || f.category === category).map((f) => usageRow(t, r, f, now));
+  return { used: rows.filter((x) => !x.unused), unused: rows.filter((x) => x.unused) };
+}
+
+export interface UsageCardModel { key: UsageCategory; title: string; sub: string; lines: Array<{ row: UsageRowModel; value: string }> }
+/** Variant B: one card per category, lines most members first, unused ones last and flagged. */
+export function usageCards(t: T, r: UsageReport, now = Date.now()): UsageCardModel[] {
+  return USAGE_CATEGORY_ORDER.map((c) => {
+    const fs = r.features.filter((f) => f.category === c);
+    const unused = fs.filter((f) => f.uses === 0).length;
+    const rows = [...fs.filter((f) => f.uses > 0), ...fs.filter((f) => f.uses === 0)].map((f) => usageRow(t, r, f, now));
+    return {
+      key: c,
+      title: t(`admin.usage.category.${c}`),
+      sub: t("admin.usage.cardSub", { count: fs.length }) + (unused > 0 ? t("admin.usage.cardUnused", { n: unused }) : ""),
+      lines: rows.map((row) => ({ row, value: row.unused ? t("admin.usage.unused") : t("admin.usage.lineValue", { users: row.users, pct: row.sharePct }) })),
+    };
+  }).filter((c) => c.lines.length > 0);
+}
+
+/** Nothing recorded at all over the period (the first days after the release). */
+export const usageIsEmpty = (r: UsageReport): boolean => r.features.every((f) => f.uses === 0);

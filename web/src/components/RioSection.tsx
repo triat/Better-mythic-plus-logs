@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { LookupPayload } from "../types.ts";
 import { fmtAge, fmtDuration, rioHref } from "../lib/format.ts";
 import { useT } from "../locale.tsx";
+import { track } from "../usage.ts";
 
 export function RioSection({ payload }: { payload: LookupPayload }) {
   const { t } = useT();
@@ -15,7 +16,7 @@ export function RioSection({ payload }: { payload: LookupPayload }) {
   return (
     <section className="card section">
       <div className="section-head">
-        <button type="button" className="section-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <button type="button" className="section-head" onClick={() => { track("rio_toggle"); setOpen((o) => !o); }} aria-expanded={open}>
           <span className={"chev" + (open ? " open" : "")}>›</span>
           <span className="section-title">{t("rio.title")}</span>
           <span className="muted">
@@ -25,7 +26,7 @@ export function RioSection({ payload }: { payload: LookupPayload }) {
           </span>
         </button>
         <div className="grow" />
-        {profile ? <a href={profile} target="_blank" rel="noopener" style={{ fontSize: 12 }}>{t("rio.profile")} ↗</a> : <span className="faint">{t("rio.profile")}</span>}
+        {profile ? <a href={profile} target="_blank" rel="noopener" style={{ fontSize: 12 }} onClick={() => track("external_rio")}>{t("rio.profile")} ↗</a> : <span className="faint">{t("rio.profile")}</span>}
       </div>
       {open && (
         <div className="runs">
@@ -39,7 +40,7 @@ export function RioSection({ payload }: { payload: LookupPayload }) {
                 <span className={r.chests > 0 ? "tone-good" : "tone-bad"}>{r.chests > 0 ? t("rio.timed", { chests: r.chests }) : t("rio.depleted")}</span>
                 <span className="muted mono">{fmtDuration(r.clearMs)} / {fmtDuration(r.parMs)}</span>
                 <span className="muted">{fmtAge(t, r.completedAt)}</span>
-                {href ? <a href={href} target="_blank" rel="noopener" title={t("rio.open")}>↗</a> : <span />}
+                {href ? <a href={href} target="_blank" rel="noopener" title={t("rio.open")} onClick={() => track("external_rio")}>↗</a> : <span />}
               </div>
             );
           })}

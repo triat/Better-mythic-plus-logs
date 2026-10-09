@@ -158,6 +158,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
     region: body.region ?? config.region,
   }, historyOf(ctx), { reserve: scope.own ? undefined : (runtime && user ? runtime.quota.for(user) : undefined), tables }));
   if (!result.ok) return jsonResponse(failureBody(result, runtime), result.status);
+  runtime?.track(ctx.user?.id ?? null, result.fromCache ? "lookup_cached" : body.refresh ? "lookup_refresh" : "lookup");
   // Hosted: always attach on read against the member's own tables (a joiner never sees the starter's pending layer).
   const payload = ctx.hosted ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
   // A member's own client charges nothing to the shared meter/usage (issue #11 Task 3).

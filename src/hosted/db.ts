@@ -15,6 +15,8 @@ import type { UserHistoryRepo } from "./history.ts";
 import { openDefensives } from "./defensives.ts";
 import type { DefensivesRepo } from "./defensives.ts";
 import { AUDIT_KINDS, actionsOf } from "./audit.ts";
+import { openUsageEvents } from "./usage-events.ts";
+import type { UsageEventsRepo } from "./usage-events.ts";
 import type { AuditAction, AuditKind, AuditRow } from "./audit.ts";
 
 export type Role = "member" | "admin";
@@ -101,6 +103,8 @@ export interface HostedDb {
   usageOwn: UsageRepo;
   history: UserHistoryRepo;
   defensives: DefensivesRepo;
+  /** Feature-usage counters per member and UTC day (`usage_events`), for the admin page's Usage section. */
+  features: UsageEventsRepo;
   wclClients: {
     get(userId: number): WclClientRow | null;
     /** Upserts the row; a re-put resets `verifiedAt` to what is passed. */
@@ -296,6 +300,7 @@ export function openHosted(db: Database): HostedDb {
     usageOwn: openUsage(db, "usage_hourly_own"),
     history: openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, config.region),
     defensives: openDefensives(db),
+    features: openUsageEvents(db),
     wclClients: {
       get: (userId) => { const r = wclClientGet.get(userId); return r ? wclClient(r) : null; },
       put(row) {

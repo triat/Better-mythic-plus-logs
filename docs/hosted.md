@@ -139,7 +139,8 @@ rate-limited like a lookup (30/min per member).
 `/privacy` (linked from the sign-in page
 and the user menu, readable signed out) lists exactly what a row in `bmpl.db`
 can hold about a member: Discord id/username/avatar, lookup history, settings,
-hourly WCL usage, defensives proposals, an own WCL client if added, and the
+hourly WCL usage, which features they use (a count per feature and day, 90
+days), defensives proposals, an own WCL client if added, and the
 30-day session and 90-day audit rows. Settings → **Delete my account** (typing
 the word "delete" to confirm) calls `DELETE /api/me`, which records the
 deletion in the audit log, deletes the user row (cascading to sessions,
@@ -151,6 +152,31 @@ proposed it; if the deleted account had itself approved or decided other
 members' proposals as an admin, those rows keep the correction but lose the
 admin's name. The audit log keeps the member's Discord id, the username they
 had at deletion and their IP for up to 90 days, unlinked from any account.
+
+## Feature usage
+
+The admin page's **Usage** section (between Budget and Proposals) shows which
+features members use and which nobody touches: active members today, over 7
+and 30 days, lookups per active member, the count of unused features, then
+either a table (share of active members, members, uses, last use, a daily
+sparkline; click a row for its top 5 members) or one card per category. The
+period is 7, 30 or 90 days; admins are left out unless "Include admins" is on;
+the Table / Categories choice is remembered per browser.
+
+Counts live in `usage_events` (one row per event, UTC day and member, kept 90
+days, deleted with the account). The catalogue is closed
+(`src/hosted/usage-catalog.ts`): **API events** (`lookup`, `lookup_cached`,
+`lookup_refresh`, `deepdive`, `deepdive_reanalyze`, `defensives_correction`,
+`history_open`/`close`/`clear`, `live_roster`, `wcl_client_set`/`verify`/`remove`,
+`settings_save`) are counted by the server after a successful request;
+**interface events** (page views, `axis_expand`, `compare_open`, `help_link`,
+the Live panel's actions…) are counted in the page and sent in batches to
+`POST /api/usage/events` (at most 40 names, each count 1..50, 30 requests per
+minute per member; unknown names are dropped). Interface counts can be lost
+when a tab closes; API counts cannot. `history_open` includes the tab the page
+restores at load and the payloads Compare fetches. Local mode and the CLI count
+nothing. `GET /api/admin/features?days=7|30|90&admins=0|1` returns the report;
+`GET /api/ops/features` the same counts without naming any member.
 
 ## Shared defensives table
 
@@ -257,17 +283,19 @@ are registered in both modes; the local-only routes
 | GET | `/auth/discord/callback` | public | Discord OAuth callback: admits, checks the guild gate, creates the session |
 | POST | `/auth/logout` | public | End the caller's session |
 | GET | `/api/me` | user | The signed-in member, their quota status and own WCL client (if any) |
-| DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, proposals, own WCL client) |
+| DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, feature-usage counters, proposals, own WCL client) |
 | GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region, UI language) |
 | PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale?, liveSort?, liveRoles?, liveClasses? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser, `liveSort` one of the Live panel's sort orders (`arrival`/`verdict`/`score`/`role`/`class`), `liveRoles` up to 3 of `tank`/`healer`/`dps` and `liveClasses` up to 13 class names — both empty/full means "no filter" |
 | GET | `/api/me/wcl-client` | user | The caller's own WCL client, if set |
 | PUT | `/api/me/wcl-client` | user | Save the caller's own WCL client (verified with a 0-pt PING first) |
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |
 | DELETE | `/api/me/wcl-client` | user | Remove the caller's own WCL client |
+| POST | `/api/usage/events` | user | Batched interface events `{ events: { name: count } }` for the feature-usage counters (catalogue names only) |
 | GET | `/api/admin/invites` | admin | List invites |
 | POST | `/api/admin/invites` | admin | Add an invite (Discord id + optional note) |
 | DELETE | `/api/admin/invites/:discordId` | admin | Remove an invite (also revokes that user's sessions) |
 | GET | `/api/admin/audit` | admin | Paged audit log (`kind`, `before`, `limit`) |
+| GET | `/api/admin/features` | admin | Feature usage: active members, every catalogue event with members, uses, last use, a daily series and the top 5 members (`days` 7/30/90, `admins` 0/1) |
 | GET | `/api/admin/usage` | admin | WCL budget gauge: this hour per member, the shared client's last `rateLimitData`, last 24 hourly totals |
 | GET | `/api/admin/proposals` | admin | Pending/approved/rejected defensives proposals (`status`) |
 | POST | `/api/admin/proposals/:id/approve\|reject` | admin | Decide a defensives proposal |
@@ -276,4 +304,5 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/instance` | admin | Version, uptime, database size, last backup, effective environment (secrets masked) |
 | GET | `/api/ops/status` | ops token | Version, uptime, last backup, effective environment (secrets masked), shared meter snapshot |
 | GET | `/api/ops/errors` | ops token | `wcl_error` / `server_error` audit rows (`since`, `before`, `limit`), without IP, Discord id or username |
+| GET | `/api/ops/features` | ops token | Feature usage, same counts as `/api/admin/features` without any member (`days`, `admins`) |
 | GET | `/api/ops/logs` | ops token | The last 500 uncaught errors of this process, with their stack (`since`, `limit`) |

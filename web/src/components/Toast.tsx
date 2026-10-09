@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useT } from "../locale.tsx";
+import { track } from "../usage.ts";
 
 export interface ToastAction { label: string; href: string }
 interface Props { message: string | null; action?: ToastAction | null; onClose: () => void }
@@ -16,7 +17,7 @@ export function Toast({ message, action = null, onClose }: Props) {
   return (
     <div className="toast err" role="alert">
       <span>✗ {message}</span>
-      {action && <a className="toast-action" href={action.href}>{action.label}</a>}
+      {action && <a className="toast-action" href={action.href} onClick={() => track("toast_own_client")}>{action.label}</a>}
       <button className="toast-close" onClick={onClose} aria-label={t("common.dismiss")}>×</button>
     </div>
   );

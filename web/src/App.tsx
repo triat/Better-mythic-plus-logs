@@ -21,6 +21,7 @@ import { DocsProvider } from "./docs.tsx";
 import { LocaleProvider, useT } from "./locale.tsx";
 import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
+import { startUsageTracking, track } from "./usage.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
@@ -47,6 +48,7 @@ type Screen =
 
 // No router: /admin, /settings, /privacy and /help are full navigations resolved once from the pathname.
 const page = pageOf(location.pathname);
+const PAGE_EVENT = { admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help" } as const;
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
@@ -61,6 +63,9 @@ export function App() {
           }
         : LOCAL_STATUS;
       const me = status.hosted ? await api.me() : null;
+      // Feature usage (hosted, signed in only): on for the page's lifetime; a full navigation starts it again.
+      startUsageTracking(status.hosted && me?.kind === "ok");
+      if (page !== "main") track(PAGE_EVENT[page]);
       const kind = bootScreen(status, me, location.pathname);
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
@@ -147,7 +152,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
   const { settings, update: updateSettings } = useSettings();
   const yourKey = settings.yourKey;
-  const onKeyChange = (v: number | null) => updateSettings({ yourKey: v });
+  const onKeyChange = (v: number | null) => { track("key_level_change"); updateSettings({ yourKey: v }); };
   // The region: the saved choice, else the instance default. Not part of the form — it is a setting like "your key".
   const region = effectiveRegion(settings.region, status.region);
   const regionRef = useRef(region);
@@ -271,6 +276,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const reevaluate = async () => {
     const tab = tabs.find((x) => x.key === activeKey);
     if (!tab) return;
+    track("reevaluate");
     const oldKey = tab.key;
     await runLookup({ ...tab.request, level: yourKey }, false);
     // runLookup activated the new key; the old entry is redundant now.
@@ -316,6 +322,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
 
   const activeTab = tabs.find((x) => x.key === activeKey) ?? null;
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
+  // One `page_main_result` per result shown (a tab switch, a lookup, the boot tab), once its payload is in.
+  const resultShown = activeKey !== null && activePayload !== null;
+  useEffect(() => { if (resultShown) track("page_main_result"); }, [activeKey, resultShown]);
 
   // --- Live panel (game-integration Task 7): a single `useWowCapture()` here, shared by the header's
   // Live chip and the panel below (two hook instances would each open their own screen capture). ---
@@ -405,7 +414,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveAuto, liveAutoAllowed, live.roster, liveVerdicts, liveAutoInFlight, yourKey, region]);
 
-  const onLiveSelect = (character: string) => void runLookup({ character, level: yourKey, spec: null, metric: null, region }, false);
+  const onLiveSelect = (character: string) => { track("live_check"); void runLookup({ character, level: yourKey, spec: null, metric: null, region }, false); };
 
   // --- run deep-dive ---
   const [analyzing, setAnalyzing] = useState<string | null>(null);
@@ -435,6 +444,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
 
   const analyzeAll = useCallback(async () => {
     if (!activePayload) return;
+    track("analyze_all");
     const todo = unanalyzedRuns(activePayload);
     for (let i = 0; i < todo.length; i++) {
       setProgress(t("runs.analyzing", { done: i + 1, total: todo.length }));
@@ -473,22 +483,22 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     <>
       <Header
         form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
-        region={region} instanceRegion={status.region} onRegionChange={(r) => updateSettings({ region: r })} payload={activePayload}
+        region={region} instanceRegion={status.region} onRegionChange={(r) => { track("region_change"); updateSettings({ region: r }); }} payload={activePayload}
         onLookup={onLookup} busy={busy}
         watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
         sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && isMainPage} search={isMainPage} controls={controls}
         menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
-        live={{ state: live.state, connect: live.connect }}
+        live={{ state: live.state, connect: () => { track("live_connect"); return live.connect(); } }}
       />
       {isMainPage && live.roster && (
         <LivePanel
           roster={live.roster} verdicts={liveVerdicts}
           sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
-          onSortChange={(v: LiveSort) => updateSettings({ liveSort: v })}
-          onRolesChange={(v: LiveRole[]) => updateSettings({ liveRoles: v })}
-          onClassesChange={(v: string[]) => updateSettings({ liveClasses: v })}
+          onSortChange={(v: LiveSort) => { track("live_filter"); updateSettings({ liveSort: v }); }}
+          onRolesChange={(v: LiveRole[]) => { track("live_filter"); updateSettings({ liveRoles: v }); }}
+          onClassesChange={(v: string[]) => { track("live_filter"); updateSettings({ liveClasses: v }); }}
           onSelect={onLiveSelect}
-          auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={setLiveAuto}
+          auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={(v: boolean) => { track("live_auto_toggle"); setLiveAuto(v); }}
           queued={liveAutoInFlight ? new Set([liveAutoInFlight]) : new Set<string>()}
           now={Date.now()}
         />
@@ -511,7 +521,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           <Tabs
             items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
             onSelectTab={(k) => void showTab(k)} onToggle={(k) => setSelected((s) => toggleSelection(s, k))}
-            onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => setCompareOpen(true)}
+            onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => { track("compare_open"); setCompareOpen(true); }}
             onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} region={status.region}
           />
           <main className={"content" + (empty ? "" : " content-result")}>

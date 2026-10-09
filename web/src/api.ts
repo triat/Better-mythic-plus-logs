@@ -19,6 +19,9 @@ import type {
   OwnClientView,
   Region,
   RunDefensives,
+  UiEvent,
+  UsagePeriod,
+  UsageReport,
   WatchOpts,
   WatchStatus,
 } from "./types.ts";
@@ -124,6 +127,7 @@ export const api = {
     proposals: (status: "pending" | "approved" | "rejected") => call<{ proposals: AdminProposal[] }>(`/api/admin/proposals?status=${status}`),
     decide: (id: number, decision: "approve" | "reject", note: string | null) => call<{ proposal: AdminProposal }>(`/api/admin/proposals/${id}/${decision}`, post({ note })),
     usage: () => call<AdminUsage>("/api/admin/usage"),
+    features: (days: UsagePeriod, includeAdmins: boolean) => call<UsageReport>(`/api/admin/features?days=${days}&admins=${includeAdmins ? 1 : 0}`),
     instance: () => call<AdminInstance>("/api/admin/instance"),
     audit: (o: { kind: AuditKind | "all"; before?: number | null; limit?: number }) =>
       call<AdminAudit>(`/api/admin/audit?kind=${o.kind}${o.before ? `&before=${o.before}` : ""}&limit=${o.limit ?? 50}`),
@@ -155,4 +159,7 @@ export const api = {
     return { kind: "ok", user: data.user, quota: data.quota ?? null, ownClient: data.ownClient ?? null };
   },
   logout: () => call<Record<never, never>>("/auth/logout", post()),
+  /** Batched interface events (hosted, signed in); `keepalive` lets the request outlive a page being hidden. */
+  usage: (events: Partial<Record<UiEvent, number>>, keepalive = false) =>
+    call<{ recorded: number; dropped: number }>("/api/usage/events", { ...post({ events }), keepalive }),
 };

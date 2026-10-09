@@ -23,6 +23,10 @@
     {
       "id": "hosted",
       "name": "Hosted — sign-in, user menu, proposals"
+    },
+    {
+      "id": "usage",
+      "name": "Usage — feature tracking dashboard"
     }
   ],
   "artboards": [
@@ -304,6 +308,42 @@
       "h": 1760,
       "title": "Live — Group Finder roster in the site (A band / B chips), chip states, connect dialog, the in-game strip",
       "page": "hosted"
+    },
+    {
+      "file": "UsageTable.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1700,
+      "title": "Usage A — one table with sparklines",
+      "page": "usage"
+    },
+    {
+      "file": "UsageCards.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 780,
+      "title": "Usage B — cards by category",
+      "page": "usage"
+    },
+    {
+      "file": "UsageHeatmap.dc.html",
+      "x": 1560,
+      "y": 900,
+      "w": 1440,
+      "h": 780,
+      "title": "Usage C — feature × day heatmap",
+      "page": "usage"
+    },
+    {
+      "file": "UsageDetails.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 720,
+      "title": "Usage — details (top members, empty, privacy line)",
+      "page": "usage"
     }
   ],
   "annotations": [

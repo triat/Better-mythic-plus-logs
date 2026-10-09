@@ -4,6 +4,7 @@ import { anchorOf } from "../lib/help.ts";
 import { confidenceColor } from "../lib/verdict.ts";
 import { useT } from "../locale.tsx";
 import { HelpLink } from "./HelpLink.tsx";
+import { track } from "../usage.ts";
 
 export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
   const { t } = useT();
@@ -17,7 +18,7 @@ export function AxisRows({ rows }: { rows: AxisRowModel[] }) {
           <div
             key={r.key}
             className={"axis inset" + (na ? " axis-na" : "") + (expanded ? " axis-open" : "")}
-            onClick={() => setOpen(expanded ? null : r.key)}
+            onClick={() => { if (!expanded) track("axis_expand"); setOpen(expanded ? null : r.key); }}
             role="button"
             aria-expanded={expanded}
             title={expanded ? undefined : t("verdict.axisClick")}

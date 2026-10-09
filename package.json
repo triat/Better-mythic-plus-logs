@@ -1,6 +1,6 @@
 {
   "name": "bmpl",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Better Mythic+ Logs — Warcraft Logs M+ character analyzer",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -15,7 +15,7 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "1.3.4",
     "typescript": "^5.5.0"
   },
   "dependencies": {

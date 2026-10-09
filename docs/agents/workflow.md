@@ -23,6 +23,7 @@ Anything the user will see is mocked first on the Claude Design canvas (`docs/ag
 - Branch: `main`, committed in place. Never rewrite history, never force-push, push only when the user says so ("commit et push").
 - Conventional, imperative subjects scoped by area: `feat(web): …`, `fix(deepdive): …`, `feat(server): …`, `docs: …`, `test: …`. One logical change per commit; a plan task is typically one commit.
 - Commit messages end, after a blank line, with the attribution trailers the session provides (`Co-Authored-By: Claude … <noreply@anthropic.com>` and `Claude-Session: …`).
+- Both lockfiles are committed: `bun.lock` at the root and `web/bun.lock`. Generate them with the Bun version of `.tool-versions` (the one the deploy workflow pins), never by hand; `bun install --frozen-lockfile` in the workflow then refuses a `package.json` that drifted from its lockfile. `bun.lockb` (the old binary format) stays ignored.
 - Stage explicitly (`git add <paths>`), never `git add -A` or `git add .`: the root holds untracked user files (`biwaasham.json`, `defensives.json`, `evaluation.json`, `.env`, `bmpl.db*`) that must never enter the repo.
 - Issues: GitHub `triat/Better-mythic-plus-logs`, `gh` CLI authenticated as `triat`. Sub-project 5 is issue #1 (parent) → #2–#11 (sub-issues, labels `hosted`, `phase 2`); use `gh issue create --parent N` for new sub-issues.
 

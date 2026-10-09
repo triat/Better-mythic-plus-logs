@@ -135,7 +135,8 @@ export interface SeasonInput {
   /** Newest first (`Store.seasonRuns`). */
   rows: SeasonRow[];
   report: (code: string, fightID: number) => RawRunReport | null;
-  analysis: (code: string, fightID: number) => RunDefensives | null;
+  /** `name` is the player's name as the raw report spells it (see `nameInReport`). */
+  analysis: (code: string, fightID: number, name: string) => RunDefensives | null;
   state: SyncState;
 }
 
@@ -162,6 +163,15 @@ export function payloadOf(runs: MPlusRun[], analyses: RunDefensives[], targetLev
     summary: signalSummary(runs, null),
     deepdive: analyses,
   };
+}
+
+/**
+ * The player's name as the report spells it: a hand-added character may be typed in another case, and the report
+ * tables match names exactly, so a miss would read as a run with no death, no damage and no kick.
+ */
+export function nameInReport(report: RawRunReport, name: string): string {
+  const lower = name.toLocaleLowerCase();
+  return report.summary?.data?.composition?.find((p) => p.name.toLocaleLowerCase() === lower)?.name ?? name;
 }
 
 export function trendOf(recent: number[], before: number[]): { delta: number | null; direction: PillarTrend["direction"] } {
@@ -228,9 +238,10 @@ export function seasonView(input: SeasonInput, cfg: EvaluationConfig): SeasonVie
   const items = input.rows.map((row): Item => {
     const raw = input.report(row.reportCode, row.fightID);
     const run = rowToRun(row);
-    const signals = raw ? parseRunSignals(raw, character.name, { keyLevel: row.keyLevel, affixes: row.affixes, encounterID: row.encounterID }) : null;
+    const name = raw ? nameInReport(raw, character.name) : character.name;
+    const signals = raw ? parseRunSignals(raw, name, { keyLevel: row.keyLevel, affixes: row.affixes, encounterID: row.encounterID }) : null;
     if (signals) run.signals = signals;
-    const analysis = signals ? input.analysis(row.reportCode, row.fightID) : null;
+    const analysis = signals ? input.analysis(row.reportCode, row.fightID, name) : null;
     const view: SeasonRunView = {
       key: `${row.reportCode}:${row.fightID}`, reportCode: row.reportCode, fightID: row.fightID, encounterID: row.encounterID,
       encounterName: row.encounterName, keyLevel: row.keyLevel, startTime: row.startTime, durationMs: row.durationMs, timed: row.timed,

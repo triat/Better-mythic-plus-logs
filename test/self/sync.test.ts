@@ -95,3 +95,22 @@ describe("runSeasonSync", () => {
     expect(fetches).toBe(1);
   });
 });
+
+describe("runSeasonSync — budget and counter", () => {
+  const data = { zoneID: 55, metric: "dps", runs: [run(1)] } as unknown as MPlusData;
+  test("refuses the rankings under 20 + 20 pts left, before any spend", async () => {
+    const store = openStore(":memory:");
+    let fetches = 0;
+    const out = await runSeasonSync({ name: "Noshiidk", realm: "Draenor", region: "eu", refresh: true },
+      { store, gql: fakeGql({ spent: [3600 - 39] }).gql, fetchMplus: async () => { fetches++; return data; }, now: NOW });
+    expect(out.ok).toBe(false);
+    expect(fetches).toBe(0);
+  });
+  test("a counter that went down means WCL's hour turned: what it shows now was spent", async () => {
+    const store = openStore(":memory:");
+    const out = await runSeasonSync({ name: "Noshiidk", realm: "Draenor", region: "eu", refresh: true },
+      { store, gql: fakeGql({ spent: [3000, 3000, 15] }).gql, fetchMplus: async () => data, now: NOW });
+    expect(out.ok && out.pointsSpent).toBe(15);
+  });
+});
+

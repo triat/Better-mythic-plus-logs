@@ -226,3 +226,12 @@ describe("PUT /api/settings — characters", () => {
     expect((await put(["Aa", "Bb", "Cc", "Dd", "Ee", "Ff"].map((n) => c(n)))).status).toBe(400);
   });
 });
+
+describe("PUT /api/settings — duplicate characters", () => {
+  test("are dropped before storing, so the answer matches a later GET", async () => {
+    const c = (name: string) => ({ name, realm: "hyjal", region: "eu", source: "manual" });
+    const r = await fetch(h("/api/settings"), as(a, { method: "PUT", body: JSON.stringify({ characters: [c("Biwaasham"), c("biwaasham")] }) }));
+    expect((await r.json()).settings.characters).toEqual([c("Biwaasham")]);
+  });
+});
+

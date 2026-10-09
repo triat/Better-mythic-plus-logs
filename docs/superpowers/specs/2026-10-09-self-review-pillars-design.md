@@ -152,8 +152,11 @@ Confirmed by the user with the phase-1 plan, 2026-10-09; tests assert them liter
 - **Score colours** (pillar cards and dungeon cells, read off the canvas): 75 and above good, 55–74
   neutral, 45–54 warning, below 45 bad, `null` n/a.
 - **Sync:** batches of 10 runs, newest first, one request each; a batch refuses to start under
-  `MIN_BUDGET_POINTS` (20) + 10 × `ESTIMATE_RUN` left on the client; a run whose report WCL does not
-  return is not retried for 24 h.
+  `MIN_BUDGET_POINTS` (20) + `ESTIMATE_RUN` (10) per run of the batch left on the client, and the
+  rankings under 20 + `ESTIMATE_RANKINGS` (20); a run whose report WCL does not return is not retried
+  for 24 h.
+- **Stored metric:** only a lookup whose metric was auto-selected writes the season store, so a metric
+  forced by the request (HPS on a DPS) never rewrites the stored parses.
 
 ## Data notes (verified 2026-10-09, issue #24 § 3)
 

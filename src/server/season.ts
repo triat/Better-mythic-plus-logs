@@ -41,7 +41,7 @@ export async function handleSeasonGet(url: URL, ctx: RequestContext, runtime: Ho
     now: ctx.now,
     rows,
     report: (code, fightID) => store.getWclRun(code, fightID),
-    analysis: (code, fightID) => analyzeCached(store, tables, { reportCode: code, fightID }, name),
+    analysis: (code, fightID, player) => analyzeCached(store, tables, { reportCode: code, fightID }, player),
     state: syncState(store, rows, ctx.now),
   }, cfg);
   return jsonResponse({ ok: true, season });

@@ -94,3 +94,16 @@ describe("seasonView", () => {
     ]);
   });
 });
+
+describe("seasonView — a hand-typed name in another case", () => {
+  test("is matched to the report's spelling, so the run keeps its deaths", async () => {
+    const lower = await input();
+    lower.character = { ...lower.character, name: "muleyoxo" };
+    const seen: string[] = [];
+    lower.analysis = ((_c: string, _f: number, name: string) => { seen.push(name); return null; }) as typeof lower.analysis;
+    const v = seasonView(lower, cfg);
+    expect(v.runs[1]!.signals!.deaths.count).toBe(1);
+    expect(seen[0]).toBe("Muleyoxo");
+  });
+});
+

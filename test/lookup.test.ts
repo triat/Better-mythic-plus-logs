@@ -160,3 +160,15 @@ describe("performLookup — season store", () => {
     x.store.close();
   });
 });
+
+describe("performLookup — season store and a forced metric", () => {
+  test("a metric the request forced does not rewrite the stored season", async () => {
+    const x = await fixture();
+    const fetchMplus = async () => ({ ...x.data, metricAutoSelected: false });
+    const o = await performLookup({ ...opts(x.name), metric: "dps" }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus });
+    expect(o.ok).toBe(true);
+    expect(x.store.seasonRuns({ region: "eu", realm: "hyjal", name: x.name }, 1)).toEqual([]);
+    x.store.close();
+  });
+});
+

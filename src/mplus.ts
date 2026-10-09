@@ -98,7 +98,7 @@ interface EncounterRank {
   affixes: number[];
   score: number;
   duration: number;
-  medal: string;
+  medal?: string;
   startTime: number;
   report: { code: string; fightID: number; startTime: number };
 }
@@ -344,7 +344,7 @@ export async function fetchMplusData(
         fightID: r.report.fightID,
         startTime: r.startTime,
         score: r.score,
-        timed: r.medal !== "none",
+        ...(r.medal === undefined ? {} : { timed: r.medal !== "none" }),
         durationMs: r.duration,
       });
     }

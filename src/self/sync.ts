@@ -104,9 +104,13 @@ export async function runSeasonSync(req: SeasonSyncRequest, deps: SeasonSyncDeps
   const now = deps.now ?? Date.now();
   const key: CharacterKey = { region: req.region, realm: realmToSlug(req.realm), name: req.name };
   const spent = async (): Promise<number> => (await gql<RateLimitData>(PING_QUERY)).rateLimitData.pointsSpentThisHour;
-  const before = await spent();
+  const ping = await gql<RateLimitData>(PING_QUERY);
+  const before = ping.rateLimitData.pointsSpentThisHour;
   let zoneID = deps.store.latestSeasonZone(key);
   if (req.refresh || zoneID === null) {
+    // The rankings come first and cost ~20 pts: refused before spending, like a batch.
+    const left = ping.rateLimitData.limitPerHour - before;
+    if (left < MIN_BUDGET_POINTS + ESTIMATE_RANKINGS) return { ok: false, status: 402, error: new BudgetLowError(left).message };
     const data = await (deps.fetchMplus ?? fetchMplusData)(req.name, req.realm, { region: req.region });
     deps.store.upsertSeasonRuns(key, data.zoneID, data.metric, data.runs, now);
     zoneID = data.zoneID;
@@ -119,6 +123,7 @@ export async function runSeasonSync(req: SeasonSyncRequest, deps: SeasonSyncDeps
     fetched: out.fetched,
     failed: out.failed,
     state: syncState(deps.store, deps.store.seasonRuns(key, zoneID), now),
-    pointsSpent: Math.max(0, Math.round((after - before) * 10) / 10),
+    // A lower counter means WCL's hour turned during the request: what it reports now was all spent since.
+    pointsSpent: Math.round((after >= before ? after - before : after) * 10) / 10,
   };
 }

@@ -8,7 +8,7 @@ import type { WclCredentials } from "../wcl/auth.ts";
 import type { Locale } from "../hosted/locale.ts";
 import type { LiveRole, LiveSort } from "../hosted/live.ts";
 import type { Region } from "../wow/regions.ts";
-import type { MyCharacter } from "../self/characters.ts";
+import { parseCharacters, type MyCharacter } from "../self/characters.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
@@ -26,7 +26,8 @@ export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?
   if ("liveSort" in value) patch.liveSort = value.liveSort!;
   if ("liveRoles" in value) patch.liveRoles = value.liveRoles!;
   if ("liveClasses" in value) patch.liveClasses = value.liveClasses!;
-  if ("characters" in value) patch.characters = value.characters!;
+  // Same cleaning as a read (duplicates dropped, first kept), so the PUT answer is what a GET will return.
+  if ("characters" in value) patch.characters = parseCharacters(JSON.stringify(value.characters));
   if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region`, `locale`, `liveSort`, `liveRoles`, `liveClasses` and/or `characters`" };
   return { ok: true, patch };
 }

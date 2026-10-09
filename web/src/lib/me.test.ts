@@ -64,3 +64,10 @@ describe("season figures", () => {
     expect(rowCells(null).every((x) => x.band === "na")).toBe(true);
   });
 });
+
+describe("mainPillars without a season", () => {
+  test("no trend text in any tile", () => {
+    expect(mainPillars(tEn, null).map((p) => [p.score, p.trend.text])).toEqual([["n/a", ""], ["n/a", ""], ["n/a", ""], ["n/a", ""], ["n/a", ""]]);
+  });
+});
+

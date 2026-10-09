@@ -88,7 +88,8 @@ export const mainPillars = (t: T, season: SeasonView | null): MainPillar[] =>
       title: t(`self.pillars.${key}`),
       score: s === null ? t("self.pillar.na") : String(s),
       band: scoreBand(s),
-      trend: key === "control" && s === null ? { text: t("self.pillar.controlNote"), cls: "faint" } : trendView(t, season?.trends.find((x) => x.key === key)),
+      // No stored season yet: no trend line at all, rather than five "not enough runs (0)".
+      trend: !season ? { text: "", cls: "faint" } : key === "control" && s === null ? { text: t("self.pillar.controlNote"), cls: "faint" } : trendView(t, season?.trends.find((x) => x.key === key)),
     };
   });
 

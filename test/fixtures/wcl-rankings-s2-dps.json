@@ -1,0 +1,4230 @@
+{
+ "character": "Noshiidk",
+ "realm": "draenor",
+ "region": "eu",
+ "metric": "dps",
+ "capturedAt": "2026-10-09T16:04:33.516Z",
+ "zone": {
+  "id": 55,
+  "name": "Mythic+ Season 2",
+  "partition": 1
+ },
+ "zoneRankings": {
+  "bestPerformanceAverage": 99.42127788100086,
+  "medianPerformanceAverage": 95.28359908359411,
+  "difficulty": 10,
+  "metric": "dps",
+  "partition": 1,
+  "zone": 55,
+  "size": 5,
+  "allStars": [
+   {
+    "partition": 1,
+    "spec": "Frost",
+    "points": 932.719,
+    "possiblePoints": 960,
+    "rank": 79,
+    "regionRank": 40,
+    "serverRank": 7,
+    "rankPercent": 99.82381640766172,
+    "total": 44272,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day."
+   },
+   {
+    "partition": 1,
+    "spec": "Unholy",
+    "points": 107.279,
+    "possiblePoints": 960,
+    "rank": 40085,
+    "regionRank": 14730,
+    "serverRank": 858,
+    "rankPercent": 36.51065177793617,
+    "total": 63135,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day."
+   }
+  ],
+  "rankings": [
+   {
+    "encounter": {
+     "id": 12993,
+     "name": "Altar of Fangs"
+    },
+    "rankPercent": 99.4191,
+    "medianPercent": 97.0008,
+    "lockedIn": true,
+    "totalKills": 14,
+    "fastestKill": -378238871,
+    "allStars": {
+     "points": 116.58,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 225,
+     "regionRank": 97,
+     "serverRank": 9,
+     "rankPercent": 99.3106631789506,
+     "total": 32495
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380398336.18478,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 94224486,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380398336.18478,
+     "ilvl": 19,
+     "fight_metadata": 993801,
+     "score": 470.8098125,
+     "leaderboard": 0,
+     "speed": -758238871,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 12825,
+     "name": "Den of Nalorakk"
+    },
+    "rankPercent": 98.9992,
+    "medianPercent": 97.0019,
+    "lockedIn": true,
+    "totalKills": 11,
+    "fastestKill": -378290426,
+    "allStars": {
+     "points": 115.95,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 353,
+     "regionRank": 158,
+     "serverRank": 17,
+     "rankPercent": 98.68705706825811,
+     "total": 26810
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380307053.05546,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 93696877,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380307053.05546,
+     "ilvl": 19,
+     "fight_metadata": 993802,
+     "score": 474.1098828125,
+     "leaderboard": 0,
+     "speed": -758290426,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 61762,
+     "name": "Kings' Rest"
+    },
+    "rankPercent": 99.5001,
+    "medianPercent": 97,
+    "lockedIn": true,
+    "totalKills": 13,
+    "fastestKill": -378261538,
+    "allStars": {
+     "points": 116.7,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 176,
+     "regionRank": 76,
+     "serverRank": 8,
+     "rankPercent": 99.43424285529548,
+     "total": 30932
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380286624.63716,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 94821896,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380286624.63716,
+     "ilvl": 19,
+     "fight_metadata": 993803,
+     "score": 473.60204545455,
+     "leaderboard": 0,
+     "speed": -758210188,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 12813,
+     "name": "Murder Row"
+    },
+    "rankPercent": 99.3684,
+    "medianPercent": 94.6993,
+    "lockedIn": true,
+    "totalKills": 14,
+    "fastestKill": -378085118,
+    "allStars": {
+     "points": 116.22,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 371,
+     "regionRank": 154,
+     "serverRank": 17,
+     "rankPercent": 98.95219755323969,
+     "total": 35312
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380324844.21112,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 87046503,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380324844.21112,
+     "ilvl": 19,
+     "fight_metadata": 993804,
+     "score": 472.29996323529,
+     "leaderboard": 0,
+     "speed": -758085118,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 112521,
+     "name": "Ruby Life Pools"
+    },
+    "rankPercent": 99.50023579375679,
+    "medianPercent": 96.70423844039908,
+    "lockedIn": true,
+    "totalKills": 14,
+    "fastestKill": -378345448,
+    "allStars": {
+     "points": 116.56,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 185,
+     "regionRank": 75,
+     "serverRank": 15,
+     "rankPercent": 99.29277011184995,
+     "total": 26017
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380410965.46554,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 85342288,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380410965.46554,
+     "ilvl": 19,
+     "fight_metadata": 993805,
+     "score": 470.56803571429,
+     "leaderboard": 0,
+     "speed": -758345448,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 61877,
+     "name": "Temple of Sethraliss"
+    },
+    "rankPercent": 99.2499,
+    "medianPercent": 84.9947,
+    "lockedIn": true,
+    "totalKills": 12,
+    "fastestKill": -378111227,
+    "allStars": {
+     "points": 116,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 397,
+     "regionRank": 162,
+     "serverRank": 16,
+     "rankPercent": 98.74381423677198,
+     "total": 31524
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380315092.86625,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 83687220,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380315092.86625,
+     "ilvl": 19,
+     "fight_metadata": 993806,
+     "score": 470.60990234375,
+     "leaderboard": 0,
+     "speed": -758111227,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 12859,
+     "name": "The Blinding Vale"
+    },
+    "rankPercent": 99.8331,
+    "medianPercent": 96.8824,
+    "lockedIn": true,
+    "totalKills": 12,
+    "fastestKill": -398211091,
+    "allStars": {
+     "points": 117.92,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 70,
+     "regionRank": 28,
+     "serverRank": 2,
+     "rankPercent": 99.74535926486327,
+     "total": 27097
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 400356930.78503,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 93594336,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 400356930.78503,
+     "ilvl": 20,
+     "fight_metadata": 993807,
+     "score": 485.2310625,
+     "leaderboard": 0,
+     "speed": -798211091,
+     "affixes": 859
+    }
+   },
+   {
+    "encounter": {
+     "id": 12923,
+     "name": "Voidscar Arena"
+    },
+    "rankPercent": 99.50018725425006,
+    "medianPercent": 97.98545422835394,
+    "lockedIn": true,
+    "totalKills": 18,
+    "fastestKill": -378313908,
+    "allStars": {
+     "points": 116.79,
+     "possiblePoints": 120,
+     "partition": 1,
+     "rank": 150,
+     "regionRank": 61,
+     "serverRank": 11,
+     "rankPercent": 99.52003607782503,
+     "total": 31044
+    },
+    "spec": "Frost",
+    "bestSpec": "Frost",
+    "bestAmount": 380365170.39358,
+    "rankTooltip": "Dungeon scores update immediately, while dungeon ranks update once per day.",
+    "bestRank": {
+     "rank_id": 94032880,
+     "class": 1,
+     "spec": 2,
+     "per_second_amount": 380365170.39358,
+     "ilvl": 19,
+     "fight_metadata": 993808,
+     "score": 472.37308333333,
+     "leaderboard": 0,
+     "speed": -758313908,
+     "affixes": 859
+    }
+   }
+  ]
+ },
+ "encounterRankings": {
+  "id": 74700105,
+  "name": "Noshiidk",
+  "classID": 1,
+  "e0": {
+   "bestAmount": 398336.18478000164,
+   "medianPerformance": 52.78880890693138,
+   "averagePerformance": 55.74883243170109,
+   "totalKills": 14,
+   "fastestKill": 1487728,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 39.96242243726786,
+     "historicalPercent": 39.96242243726786,
+     "todayPercent": 36.51298897747467,
+     "rankTotalParses": 204,
+     "historicalTotalParses": 204,
+     "todayTotalParses": 230,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "jctk4KDHYXT1mb76",
+      "startTime": 1791319173094,
+      "fightID": 10
+     },
+     "duration": 1761129,
+     "startTime": 1791322772832,
+     "amount": 398336.18478000164,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 470.8098125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 54.593972306638896,
+     "historicalPercent": 54.593972306638896,
+     "todayPercent": 51.24007846783628,
+     "rankTotalParses": 417,
+     "historicalTotalParses": 417,
+     "todayTotalParses": 644,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "wdM8HhcqaLZ2Bj3D",
+      "startTime": 1790721548554,
+      "fightID": 2
+     },
+     "duration": 1775846,
+     "startTime": 1790721828730,
+     "amount": 373111.59501999617,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 455.50320833333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 76.92888226453994,
+     "historicalPercent": 76.92888226453994,
+     "todayPercent": 74.99335414060035,
+     "rankTotalParses": 623,
+     "historicalTotalParses": 623,
+     "todayTotalParses": 1123,
+     "guild": {
+      "id": 697312,
+      "name": "Strawpoll II",
+      "faction": 0
+     },
+     "report": {
+      "code": "CP9zjaK6YyJR1m8D",
+      "startTime": 1790198720159,
+      "fightID": 1
+     },
+     "duration": 1729802,
+     "startTime": 1790208383759,
+     "amount": 360558.44032001495,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 441.46245833333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 66.64879346377153,
+     "historicalPercent": 66.64879346377153,
+     "todayPercent": 62.4473780336719,
+     "rankTotalParses": 788,
+     "historicalTotalParses": 788,
+     "todayTotalParses": 1123,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "6xdRYKLBgXC1NMma",
+      "startTime": 1790527799692,
+      "fightID": 14
+     },
+     "duration": 1672520,
+     "startTime": 1790536878727,
+     "amount": 349041.5037199855,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 442.65583333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 45.598470669588295,
+     "historicalPercent": 45.598470669588295,
+     "todayPercent": 41.76672449717918,
+     "rankTotalParses": 557,
+     "historicalTotalParses": 557,
+     "todayTotalParses": 1123,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "PDLx4qyCmnB2Ykcz",
+      "startTime": 1789981458015,
+      "fightID": 7
+     },
+     "duration": 1882086,
+     "startTime": 1790013077402,
+     "amount": 331602.9157900214,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 318.29000854492,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 49.767159448961756,
+     "historicalPercent": 49.767159448961756,
+     "todayPercent": 41.54926305839824,
+     "rankTotalParses": 177,
+     "historicalTotalParses": 177,
+     "todayTotalParses": 1123,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "VKTNJjqBCpfwLykH",
+      "startTime": 1789090629767,
+      "fightID": 1
+     },
+     "duration": 1707126,
+     "startTime": 1789090839595,
+     "amount": 331430.6470400095,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 441.934875,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 3.8587113565714253,
+     "historicalPercent": 3.8587113565714253,
+     "todayPercent": 3.9516013200415294,
+     "rankTotalParses": 1772,
+     "historicalTotalParses": 1772,
+     "todayTotalParses": 2387,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "1NgQ3zx8fmXYhCLy",
+      "startTime": 1790853793363,
+      "fightID": 8
+     },
+     "duration": 1770001,
+     "startTime": 1790864781172,
+     "amount": 299121.725399971,
+     "bracketData": 17,
+     "spec": "Unholy",
+     "bestSpec": "Unholy",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 440.62497916667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 65.4495884829128,
+     "historicalPercent": 65.4495884829128,
+     "todayPercent": 51.78296101875419,
+     "rankTotalParses": 435,
+     "historicalTotalParses": 435,
+     "todayTotalParses": 1812,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "3nAfDkJy1M4z8GPC",
+      "startTime": 1788807019711,
+      "fightID": 3
+     },
+     "duration": 1729269,
+     "startTime": 1788814444947,
+     "amount": 285754.7911000252,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 411.4735625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 99.44343416841052,
+     "historicalPercent": 99.44343416841052,
+     "todayPercent": 95.14017572611645,
+     "rankTotalParses": 559,
+     "historicalTotalParses": 559,
+     "todayTotalParses": 2137,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "XV27b6mwvRC8dfPJ",
+      "startTime": 1788741954609,
+      "fightID": 1
+     },
+     "duration": 1487728,
+     "startTime": 1788742334041,
+     "amount": 330404.6391400099,
+     "bracketData": 14,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 401.50566666667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 28.255358605060533,
+     "historicalPercent": 28.255358605060533,
+     "todayPercent": 14.603811153386644,
+     "rankTotalParses": 44,
+     "historicalTotalParses": 44,
+     "todayTotalParses": 2137,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "3XB8xtyPKqC4ngLG",
+      "startTime": 1787661266426,
+      "fightID": 2
+     },
+     "duration": 1755851,
+     "startTime": 1787662203950,
+     "amount": 221170.21224999428,
+     "bracketData": 14,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 395.91977083333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 53.952205622838775,
+     "historicalPercent": 53.952205622838775,
+     "todayPercent": 25.549039739361838,
+     "rankTotalParses": 78,
+     "historicalTotalParses": 78,
+     "todayTotalParses": 2254,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "mWz4nwTQLVv9RcgA",
+      "startTime": 1787480052424,
+      "fightID": 22
+     },
+     "duration": 1748760,
+     "startTime": 1787529980281,
+     "amount": 214402.15009999275,
+     "bracketData": 13,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 381.0675,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 97.55978423694795,
+     "historicalPercent": 97.55978423694795,
+     "todayPercent": 93.94036784585927,
+     "rankTotalParses": 3814,
+     "historicalTotalParses": 3814,
+     "todayTotalParses": 6070,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "PDLx4qyCmnB2Ykcz",
+      "startTime": 1789981458015,
+      "fightID": 9
+     },
+     "duration": 1760685,
+     "startTime": 1790018237840,
+     "amount": 337015.0988999903,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 365.8190625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 46.839458789280904,
+     "historicalPercent": 46.839458789280904,
+     "todayPercent": 17.24414823405555,
+     "rankTotalParses": 187,
+     "historicalTotalParses": 187,
+     "todayTotalParses": 6070,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "Gz8kWKnrPcH6qjw3",
+      "startTime": 1787438009717,
+      "fightID": 7
+     },
+     "duration": 1753563,
+     "startTime": 1787443628028,
+     "amount": 191207.69422000647,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 365.9674375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 51.62541219102399,
+     "historicalPercent": 51.62541219102399,
+     "todayPercent": 39.556169663101144,
+     "rankTotalParses": 122,
+     "historicalTotalParses": 122,
+     "todayTotalParses": 1053,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "Pn6gpvGdVKRzaL7r",
+      "startTime": 1787119776645,
+      "fightID": 48
+     },
+     "duration": 1551489,
+     "startTime": 1787181578652,
+     "amount": 156946.9855799973,
+     "bracketData": 9,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 295.1773125,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e1": {
+   "bestAmount": 307053.0554599762,
+   "medianPerformance": 58.23462422365303,
+   "averagePerformance": 53.18560959310621,
+   "totalKills": 11,
+   "fastestKill": 1665121,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 47.372320991990826,
+     "historicalPercent": 47.372320991990826,
+     "todayPercent": 45.96047793560783,
+     "rankTotalParses": 314,
+     "historicalTotalParses": 314,
+     "todayTotalParses": 363,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "yqkFgJpwMAaN83rj",
+      "startTime": 1791281104070,
+      "fightID": 9
+     },
+     "duration": 1709574,
+     "startTime": 1791294923944,
+     "amount": 307053.0554599762,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 474.1098828125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 46.321590985163915,
+     "historicalPercent": 46.321590985163915,
+     "todayPercent": 45.74392968683904,
+     "rankTotalParses": 335,
+     "historicalTotalParses": 335,
+     "todayTotalParses": 363,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "mnjDZbczgqATw8kv",
+      "startTime": 1791394340044,
+      "fightID": 1
+     },
+     "duration": 1738117,
+     "startTime": 1791405209074,
+     "amount": 306954.45415997505,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 473.55240234375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 33.80618029290167,
+     "historicalPercent": 33.80618029290167,
+     "todayPercent": 29.619329717339646,
+     "rankTotalParses": 333,
+     "historicalTotalParses": 333,
+     "todayTotalParses": 708,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "9WapDLR8QHfXyMAJ",
+      "startTime": 1790182330773,
+      "fightID": 10
+     },
+     "duration": 1757970,
+     "startTime": 1790189829090,
+     "amount": 272335.00479000807,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 458.1646484375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 17.042676561456158,
+     "historicalPercent": 17.042676561456158,
+     "todayPercent": 15.276387383180698,
+     "rankTotalParses": 424,
+     "historicalTotalParses": 424,
+     "todayTotalParses": 708,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "ALfK9xJ7a6cqjTm4",
+      "startTime": 1790533455103,
+      "fightID": 7
+     },
+     "duration": 1849457,
+     "startTime": 1790539822657,
+     "amount": 259700.4726999998,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 456.37779296875,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 63.87848719584136,
+     "historicalPercent": 63.87848719584136,
+     "todayPercent": 58.84763725974193,
+     "rankTotalParses": 633,
+     "historicalTotalParses": 633,
+     "todayTotalParses": 1069,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "Bth92gLTR6HCVFdz",
+      "startTime": 1790268706397,
+      "fightID": 7
+     },
+     "duration": 1815540,
+     "startTime": 1790276283382,
+     "amount": 271075.3628500104,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 442.040234375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 61.8789373069647,
+     "historicalPercent": 61.8789373069647,
+     "todayPercent": 53.65851673754013,
+     "rankTotalParses": 195,
+     "historicalTotalParses": 195,
+     "todayTotalParses": 1069,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "AFnyV46jfpBvbrcQ",
+      "startTime": 1789060854248,
+      "fightID": 13
+     },
+     "duration": 1676631,
+     "startTime": 1789076126558,
+     "amount": 267564.59749001265,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 444.75330078125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 79.8330156168541,
+     "historicalPercent": 79.8330156168541,
+     "todayPercent": 73.51611277664537,
+     "rankTotalParses": 728,
+     "historicalTotalParses": 728,
+     "todayTotalParses": 1355,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "HGyzfJc6T9Ln3Ybv",
+      "startTime": 1789916203841,
+      "fightID": 15
+     },
+     "duration": 1738767,
+     "startTime": 1789945124750,
+     "amount": 261695.0224300027,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 428.53970703125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 76.53240652557854,
+     "historicalPercent": 76.53240652557854,
+     "todayPercent": 59.58141106051983,
+     "rankTotalParses": 194,
+     "historicalTotalParses": 194,
+     "todayTotalParses": 1355,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FKG7gRnj3kTDAr8Q",
+      "startTime": 1788637033130,
+      "fightID": 6
+     },
+     "duration": 1665121,
+     "startTime": 1788653593902,
+     "amount": 250192.3406699896,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 429.97810546875,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 99.14147238591117,
+     "historicalPercent": 99.14147238591117,
+     "todayPercent": 98.38653950029158,
+     "rankTotalParses": 1258,
+     "historicalTotalParses": 1258,
+     "todayTotalParses": 1809,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "PDLx4qyCmnB2Ykcz",
+      "startTime": 1789981458015,
+      "fightID": 12
+     },
+     "duration": 1817626,
+     "startTime": 1790028192325,
+     "amount": 273781.8326100111,
+     "bracketData": 13,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 381.9994921875,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 58.23462422365303,
+     "historicalPercent": 58.23462422365303,
+     "todayPercent": 21.382720817848718,
+     "rankTotalParses": 121,
+     "historicalTotalParses": 121,
+     "todayTotalParses": 4750,
+     "guild": {
+      "id": 706458,
+      "name": "scuffd",
+      "faction": 0
+     },
+     "report": {
+      "code": "CyAnBckTMr87fLYh",
+      "startTime": 1787298723055,
+      "fightID": 11
+     },
+     "duration": 2441244,
+     "startTime": 1787320693677,
+     "amount": 154604.43066000938,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 309.82000732422,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 0.9999934378528541,
+     "historicalPercent": 0.9999934378528541,
+     "todayPercent": 3.8951517386524,
+     "rankTotalParses": 41,
+     "historicalTotalParses": 41,
+     "todayTotalParses": 2229,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "DXc1Mk9ZanVpWC67",
+      "startTime": 1787124585446,
+      "fightID": 6
+     },
+     "duration": 2521367,
+     "startTime": 1787133360424,
+     "amount": 95881.74184000492,
+     "bracketData": 11,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "none",
+     "score": 293.25455078125,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e2": {
+   "bestAmount": 286624.6371600032,
+   "medianPerformance": 50,
+   "averagePerformance": 53.974507229751296,
+   "totalKills": 13,
+   "fastestKill": 1703603,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 97.00625961646453,
+     "historicalPercent": 97.00625961646453,
+     "todayPercent": 97.00741554226477,
+     "rankTotalParses": 325,
+     "historicalTotalParses": 325,
+     "todayTotalParses": 362,
+     "guild": {
+      "id": 695940,
+      "name": "Praktikanterne",
+      "faction": 1
+     },
+     "report": {
+      "code": "nH69zTaRKFD1Yvjb",
+      "startTime": 1791353628447,
+      "fightID": 23
+     },
+     "duration": 1789812,
+     "startTime": 1791362738094,
+     "amount": 286624.6371600032,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 473.60204545455,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 69.23424487144297,
+     "historicalPercent": 69.23424487144297,
+     "todayPercent": 69.01542264065208,
+     "rankTotalParses": 341,
+     "historicalTotalParses": 341,
+     "todayTotalParses": 362,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "9TZzkJqraGCwymHP",
+      "startTime": 1791381511672,
+      "fightID": 1
+     },
+     "duration": 1738462,
+     "startTime": 1791381511833,
+     "amount": 257164.0569599867,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 474.57458333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 11.123267076959085,
+     "historicalPercent": 11.123267076959085,
+     "todayPercent": 10.83152984620794,
+     "rankTotalParses": 302,
+     "historicalTotalParses": 302,
+     "todayTotalParses": 362,
+     "guild": {
+      "id": 764339,
+      "name": "Fanaticats",
+      "faction": 1
+     },
+     "report": {
+      "code": "MGrRQFy6Z9Phnv7W",
+      "startTime": 1791199310583,
+      "fightID": 11
+     },
+     "duration": 1857389,
+     "startTime": 1791233512296,
+     "amount": 220777.06725001335,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 472.3221780303,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 45.0034420653783,
+     "historicalPercent": 45.0034420653783,
+     "todayPercent": 38.743068352824324,
+     "rankTotalParses": 391,
+     "historicalTotalParses": 391,
+     "todayTotalParses": 783,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FxcJbPnZ8LWAY37B",
+      "startTime": 1790340569740,
+      "fightID": 17
+     },
+     "duration": 1885392,
+     "startTime": 1790369643908,
+     "amount": 223078.21143001318,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 456.79181818182,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 61.00072054497308,
+     "historicalPercent": 61.00072054497308,
+     "todayPercent": 54.49229861122595,
+     "rankTotalParses": 565,
+     "historicalTotalParses": 565,
+     "todayTotalParses": 1171,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "M24hy1rxFgvkwXL6",
+      "startTime": 1790073685466,
+      "fightID": 16
+     },
+     "duration": 1910497,
+     "startTime": 1790101531668,
+     "amount": 212651.06686997414,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 441.31634469697,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 41.91660148507904,
+     "historicalPercent": 41.91660148507904,
+     "todayPercent": 33.216764404322134,
+     "rankTotalParses": 325,
+     "historicalTotalParses": 325,
+     "todayTotalParses": 1171,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "KbQJZvn39dhyRcw2",
+      "startTime": 1789487972068,
+      "fightID": 2
+     },
+     "duration": 1939643,
+     "startTime": 1789488886578,
+     "amount": 201384.20485001802,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 440.76433712121,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 38.14016841643311,
+     "historicalPercent": 38.14016841643311,
+     "todayPercent": 29.1383731177744,
+     "rankTotalParses": 384,
+     "historicalTotalParses": 384,
+     "todayTotalParses": 1475,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "tVZ3qkzhD2xAXRQH",
+      "startTime": 1789056241214,
+      "fightID": 3
+     },
+     "duration": 1909510,
+     "startTime": 1789062853837,
+     "amount": 182420.24945002794,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 426.33503787879,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 24.670479770491703,
+     "historicalPercent": 24.670479770491703,
+     "todayPercent": 22.132436471439963,
+     "rankTotalParses": 427,
+     "historicalTotalParses": 427,
+     "todayTotalParses": 1475,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "XmVrKfJ8kFDBx4gN",
+      "startTime": 1789122132730,
+      "fightID": 1
+     },
+     "duration": 1808021,
+     "startTime": 1789164116454,
+     "amount": 177779.93158000708,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 428.2571780303,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 73.19106224217636,
+     "historicalPercent": 73.19106224217636,
+     "todayPercent": 54.11453059811131,
+     "rankTotalParses": 312,
+     "historicalTotalParses": 312,
+     "todayTotalParses": 1642,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FKG7gRnj3kTDAr8Q",
+      "startTime": 1788637033130,
+      "fightID": 5
+     },
+     "duration": 1734405,
+     "startTime": 1788651163283,
+     "amount": 184037.84671002626,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 414.65142045455,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 61.22049223900467,
+     "historicalPercent": 61.22049223900467,
+     "todayPercent": 28.362030005515024,
+     "rankTotalParses": 90,
+     "historicalTotalParses": 90,
+     "todayTotalParses": 2018,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "WGhCKYXZxk7pFaVt",
+      "startTime": 1787610306925,
+      "fightID": 3
+     },
+     "duration": 1713931,
+     "startTime": 1787613193006,
+     "amount": 141515.87402001023,
+     "bracketData": 13,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 385.03918560606,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 41.33644199328577,
+     "historicalPercent": 41.33644199328577,
+     "todayPercent": 14.7875606657269,
+     "rankTotalParses": 187,
+     "historicalTotalParses": 187,
+     "todayTotalParses": 5622,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "2qAGKD4FH1TJkfyv",
+      "startTime": 1787398350046,
+      "fightID": 9
+     },
+     "duration": 1978122,
+     "startTime": 1787425469759,
+     "amount": 120746.24891000986,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 365.03556818182,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 87.82541366507812,
+     "historicalPercent": 87.82541366507812,
+     "todayPercent": 61.51123403346665,
+     "rankTotalParses": 1185,
+     "historicalTotalParses": 1185,
+     "todayTotalParses": 8345,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "kKdQW2A7XTLN9bCr",
+      "startTime": 1787506107032,
+      "fightID": 40
+     },
+     "duration": 1840372,
+     "startTime": 1787579657971,
+     "amount": 146527.50786998868,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 322.64446969697,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 50,
+     "historicalPercent": 50,
+     "todayPercent": 26.106800050748276,
+     "rankTotalParses": 103,
+     "historicalTotalParses": 103,
+     "todayTotalParses": 8345,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "DXc1Mk9ZanVpWC67",
+      "startTime": 1787124585446,
+      "fightID": 3
+     },
+     "duration": 1703603,
+     "startTime": 1787127931681,
+     "amount": 112888.39221999049,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 325.23479166667,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e3": {
+   "bestAmount": 324844.2111200094,
+   "medianPerformance": 52.35836245334632,
+   "averagePerformance": 49.75666601140254,
+   "totalKills": 14,
+   "fastestKill": 1166239,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 41.32225958747301,
+     "historicalPercent": 41.32225958747301,
+     "todayPercent": 39.61517884184552,
+     "rankTotalParses": 225,
+     "historicalTotalParses": 225,
+     "todayTotalParses": 370,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "p3FV1TvHyYtbg4Rh",
+      "startTime": 1790878399862,
+      "fightID": 9
+     },
+     "duration": 1914882,
+     "startTime": 1790887849237,
+     "amount": 324844.2111200094,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 472.29996323529,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 27.78620052257808,
+     "historicalPercent": 27.78620052257808,
+     "todayPercent": 25.416965074444782,
+     "rankTotalParses": 323,
+     "historicalTotalParses": 323,
+     "todayTotalParses": 370,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "8k6N4Fyb7Jr1G9TZ",
+      "startTime": 1791359042211,
+      "fightID": 4
+     },
+     "duration": 2003581,
+     "startTime": 1791364920884,
+     "amount": 315128.99625998735,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 470.66946691176,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 21.134178307148147,
+     "historicalPercent": 21.134178307148147,
+     "todayPercent": 20.30371388359706,
+     "rankTotalParses": 303,
+     "historicalTotalParses": 303,
+     "todayTotalParses": 370,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "4P26N9HDWvGMAqcw",
+      "startTime": 1791218700955,
+      "fightID": 9
+     },
+     "duration": 2035410,
+     "startTime": 1791228910821,
+     "amount": 309989.05549001694,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 470.084375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 19.992252510321144,
+     "historicalPercent": 19.992252510321144,
+     "todayPercent": 15.999923928641659,
+     "rankTotalParses": 341,
+     "historicalTotalParses": 341,
+     "todayTotalParses": 719,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "PWgHkzAmRp3Zv4wM",
+      "startTime": 1790185749993,
+      "fightID": 21
+     },
+     "duration": 1800816,
+     "startTime": 1790210895666,
+     "amount": 280560.00822997093,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 459.39676470588,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 58.81591523894306,
+     "historicalPercent": 58.81591523894306,
+     "todayPercent": 46.607415862312685,
+     "rankTotalParses": 178,
+     "historicalTotalParses": 178,
+     "todayTotalParses": 1133,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "dkXgA4MD9JvrKHtV",
+      "startTime": 1789060854248,
+      "fightID": 16
+     },
+     "duration": 2006929,
+     "startTime": 1789083832298,
+     "amount": 282109.7041400075,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 440.60792279412,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 53.46791447929314,
+     "historicalPercent": 53.46791447929314,
+     "todayPercent": 41.63699080259174,
+     "rankTotalParses": 436,
+     "historicalTotalParses": 436,
+     "todayTotalParses": 1860,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "3nAfDkJy1M4z8GPC",
+      "startTime": 1788807019711,
+      "fightID": 9
+     },
+     "duration": 1939106,
+     "startTime": 1788824643305,
+     "amount": 234370.04281002283,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 411.85466911765,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 65.57841320939315,
+     "historicalPercent": 65.57841320939315,
+     "todayPercent": 50.63435660929221,
+     "rankTotalParses": 488,
+     "historicalTotalParses": 488,
+     "todayTotalParses": 2099,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FKG7gRnj3kTDAr8Q",
+      "startTime": 1788637033130,
+      "fightID": 2
+     },
+     "duration": 1680969,
+     "startTime": 1788644090406,
+     "amount": 222891.25736999512,
+     "bracketData": 14,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 401.59983455882,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 45.245240625887504,
+     "historicalPercent": 45.245240625887504,
+     "todayPercent": 17.66768576742718,
+     "rankTotalParses": 93,
+     "historicalTotalParses": 93,
+     "todayTotalParses": 2416,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "jvMf39RFPBxDgaWK",
+      "startTime": 1787570580955,
+      "fightID": 1
+     },
+     "duration": 1993619,
+     "startTime": 1787570737305,
+     "amount": 171970.27217000723,
+     "bracketData": 13,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 380.85259191176,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 77.94005030893081,
+     "historicalPercent": 77.94005030893081,
+     "todayPercent": 27.95854772105675,
+     "rankTotalParses": 266,
+     "historicalTotalParses": 266,
+     "todayTotalParses": 6637,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "nfbwjzC64hdBDAqg",
+      "startTime": 1787482255036,
+      "fightID": 19
+     },
+     "duration": 1575187,
+     "startTime": 1787522933001,
+     "amount": 180074.8553699851,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "silver",
+     "score": 373.54435661765,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 60.6947675981461,
+     "historicalPercent": 60.6947675981461,
+     "todayPercent": 29.7390971067252,
+     "rankTotalParses": 292,
+     "historicalTotalParses": 292,
+     "todayTotalParses": 9751,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "Pn6gpvGdVKRzaL7r",
+      "startTime": 1787119776645,
+      "fightID": 49
+     },
+     "duration": 1530085,
+     "startTime": 1787183563841,
+     "amount": 153990.9085600078,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "silver",
+     "score": 329.3734375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 57.40746964807754,
+     "historicalPercent": 57.40746964807754,
+     "todayPercent": 29.474405323352613,
+     "rankTotalParses": 476,
+     "historicalTotalParses": 476,
+     "todayTotalParses": 9751,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "ntkRv7XDxbYmQLAh",
+      "startTime": 1787292098661,
+      "fightID": 5
+     },
+     "duration": 1429874,
+     "startTime": 1787309489733,
+     "amount": 153618.2405000031,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "silver",
+     "score": 331.21555147059,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 18.845770608936913,
+     "historicalPercent": 18.845770608936913,
+     "todayPercent": 14.924568969893192,
+     "rankTotalParses": 87,
+     "historicalTotalParses": 87,
+     "todayTotalParses": 9751,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "DXc1Mk9ZanVpWC67",
+      "startTime": 1787124585446,
+      "fightID": 7
+     },
+     "duration": 1933913,
+     "startTime": 1787136420374,
+     "amount": 128499.3521899879,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 321.95012867647,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 97.11408108710731,
+     "historicalPercent": 97.11408108710731,
+     "todayPercent": 84.28838314796708,
+     "rankTotalParses": 199,
+     "historicalTotalParses": 199,
+     "todayTotalParses": 1181,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "t3JCWbxv6p8kHAzr",
+      "startTime": 1787216152474,
+      "fightID": 15
+     },
+     "duration": 1166239,
+     "startTime": 1787250722896,
+     "amount": 183244.78459000587,
+     "bracketData": 9,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      10,
+      162
+     ],
+     "medal": "gold",
+     "score": 305,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 51.2488104273995,
+     "historicalPercent": 51.2488104273995,
+     "todayPercent": 45.35655716174694,
+     "rankTotalParses": 42,
+     "historicalTotalParses": 42,
+     "todayTotalParses": 944,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "DXc1Mk9ZanVpWC67",
+      "startTime": 1787124585446,
+      "fightID": 2
+     },
+     "duration": 1435675,
+     "startTime": 1787126036560,
+     "amount": 130640.34542000294,
+     "bracketData": 8,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      10,
+      162
+     ],
+     "medal": "silver",
+     "score": 286.10891544118,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e4": {
+   "bestAmount": 410965.46553999186,
+   "medianPerformance": 78.8200888173618,
+   "averagePerformance": 67.63895221018082,
+   "totalKills": 14,
+   "fastestKill": 1337473,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 85.22073519664507,
+     "historicalPercent": 85.22073519664507,
+     "todayPercent": 84.69085075148672,
+     "rankTotalParses": 184,
+     "historicalTotalParses": 184,
+     "todayTotalParses": 312,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "gQcHq8zBdmKRpC39",
+      "startTime": 1790792956550,
+      "fightID": 22
+     },
+     "duration": 1654552,
+     "startTime": 1790803053645,
+     "amount": 410965.46553999186,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 470.56803571429,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 33.28597904555845,
+     "historicalPercent": 33.28597904555845,
+     "todayPercent": 33.28597904555845,
+     "rankTotalParses": 312,
+     "historicalTotalParses": 312,
+     "todayTotalParses": 312,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "1bvtrfYaCxK8GFA3",
+      "startTime": 1791488479857,
+      "fightID": 6
+     },
+     "duration": 1668078,
+     "startTime": 1791490023228,
+     "amount": 366415.5327900052,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 470.26611607143,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 83.933792866901,
+     "historicalPercent": 83.933792866901,
+     "todayPercent": 79.91374907387112,
+     "rankTotalParses": 361,
+     "historicalTotalParses": 361,
+     "todayTotalParses": 770,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "Q6AFhTZgH7vzNDYw",
+      "startTime": 1790245565593,
+      "fightID": 1
+     },
+     "duration": 1503509,
+     "startTime": 1790245720050,
+     "amount": 366183.517260015,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 458.93953125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 21.492693011800828,
+     "historicalPercent": 21.492693011800828,
+     "todayPercent": 19.362676079412207,
+     "rankTotalParses": 405,
+     "historicalTotalParses": 405,
+     "todayTotalParses": 770,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "rcvYxqnpLjA1dNmQ",
+      "startTime": 1790363037816,
+      "fightID": 4
+     },
+     "duration": 1635013,
+     "startTime": 1790367440593,
+     "amount": 314129.27398997545,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 456.00417410714,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 80.0703456607627,
+     "historicalPercent": 80.0703456607627,
+     "todayPercent": 75.4576380246473,
+     "rankTotalParses": 557,
+     "historicalTotalParses": 557,
+     "todayTotalParses": 1174,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "PDLx4qyCmnB2Ykcz",
+      "startTime": 1789981458015,
+      "fightID": 8
+     },
+     "duration": 1610593,
+     "startTime": 1790015976192,
+     "amount": 330760.63177001476,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 441.54926339286,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 77.5698319739609,
+     "historicalPercent": 77.5698319739609,
+     "todayPercent": 72.81131094264683,
+     "rankTotalParses": 632,
+     "historicalTotalParses": 632,
+     "todayTotalParses": 1174,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "Bp3bqcxzAnhLZ2Va",
+      "startTime": 1790182330773,
+      "fightID": 20
+     },
+     "duration": 1402342,
+     "startTime": 1790201578776,
+     "amount": 327851.0643900037,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 446.19772321429,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 86.50219092332905,
+     "historicalPercent": 86.50219092332905,
+     "todayPercent": 79.76442721007797,
+     "rankTotalParses": 852,
+     "historicalTotalParses": 852,
+     "todayTotalParses": 1557,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "WnGJq3HBVdmjPXFt",
+      "startTime": 1790073685466,
+      "fightID": 5
+     },
+     "duration": 1607552,
+     "startTime": 1790077829532,
+     "amount": 309378.35409998894,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 426.61714285714,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 85.83796735036975,
+     "historicalPercent": 85.83796735036975,
+     "todayPercent": 75.77274808196823,
+     "rankTotalParses": 353,
+     "historicalTotalParses": 353,
+     "todayTotalParses": 1557,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "AFnyV46jfpBvbrcQ",
+      "startTime": 1789060854248,
+      "fightID": 3
+     },
+     "duration": 1516730,
+     "startTime": 1789065072817,
+     "amount": 304494.3057399988,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 428.64441964286,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 83.07980615835233,
+     "historicalPercent": 83.07980615835233,
+     "todayPercent": 73.9309824966062,
+     "rankTotalParses": 366,
+     "historicalTotalParses": 366,
+     "todayTotalParses": 1590,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "YZt83y4hM62kLDHG",
+      "startTime": 1788726589812,
+      "fightID": 28
+     },
+     "duration": 1650700,
+     "startTime": 1788744925025,
+     "amount": 279748.1124699712,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 410.65401785714,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 15.890781844655619,
+     "historicalPercent": 15.890781844655619,
+     "todayPercent": 11.985757139876785,
+     "rankTotalParses": 497,
+     "historicalTotalParses": 497,
+     "todayTotalParses": 1828,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "vBdP1gtL8whWr3KQ",
+      "startTime": 1788697453708,
+      "fightID": 2
+     },
+     "duration": 1668295,
+     "startTime": 1788699400088,
+     "amount": 197257.34429001808,
+     "bracketData": 14,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 395.26127232143,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 89.15691554257788,
+     "historicalPercent": 89.15691554257788,
+     "todayPercent": 73.09645415988746,
+     "rankTotalParses": 85,
+     "historicalTotalParses": 85,
+     "todayTotalParses": 1724,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "3RQdwpKPzgCr7c2M",
+      "startTime": 1787571228921,
+      "fightID": 2
+     },
+     "duration": 1612859,
+     "startTime": 1787574264474,
+     "amount": 245873.4465599954,
+     "bracketData": 13,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 381.49868303571,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 69.97855690415882,
+     "historicalPercent": 69.97855690415882,
+     "todayPercent": 30.961191969233823,
+     "rankTotalParses": 219,
+     "historicalTotalParses": 219,
+     "todayTotalParses": 4523,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "q8jbRFpHTXn46ZWB",
+      "startTime": 1787483006415,
+      "fightID": 3
+     },
+     "duration": 1337473,
+     "startTime": 1787487533118,
+     "amount": 193069.24829000235,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "silver",
+     "score": 372.64569196429,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 67.91364304611346,
+     "historicalPercent": 67.91364304611346,
+     "todayPercent": 29.71663721515482,
+     "rankTotalParses": 219,
+     "historicalTotalParses": 219,
+     "todayTotalParses": 4523,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "tDvK8zmpjrBJkcqb",
+      "startTime": 1787492254947,
+      "fightID": 4
+     },
+     "duration": 1539407,
+     "startTime": 1787499126791,
+     "amount": 191391.15095999837,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 368.13823660714,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 67.01209141734572,
+     "historicalPercent": 67.01209141734572,
+     "todayPercent": 44.82259240881261,
+     "rankTotalParses": 955,
+     "historicalTotalParses": 955,
+     "todayTotalParses": 6353,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "tDvK8zmpjrBJkcqb",
+      "startTime": 1787492254947,
+      "fightID": 6
+     },
+     "duration": 1481225,
+     "startTime": 1787501480951,
+     "amount": 175757.6445299983,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 324.43694196429,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e5": {
+   "bestAmount": 315092.86624997854,
+   "medianPerformance": 61.62089752065144,
+   "averagePerformance": 54.20427752068526,
+   "totalKills": 12,
+   "fastestKill": 1017281,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 22.606014699968465,
+     "historicalPercent": 22.606014699968465,
+     "todayPercent": 19.444871461114527,
+     "rankTotalParses": 195,
+     "historicalTotalParses": 195,
+     "todayTotalParses": 317,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "a4gvdKNpqy7DY2j3",
+      "startTime": 1790686205494,
+      "fightID": 37
+     },
+     "duration": 1888773,
+     "startTime": 1790715188795,
+     "amount": 315092.86624997854,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 470.60990234375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 61.724301193328024,
+     "historicalPercent": 61.724301193328024,
+     "todayPercent": 60.3607200117975,
+     "rankTotalParses": 599,
+     "historicalTotalParses": 599,
+     "todayTotalParses": 724,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FfPgpwD4nk2j3NXM",
+      "startTime": 1791192163227,
+      "fightID": 1
+     },
+     "duration": 1855346,
+     "startTime": 1791192231646,
+     "amount": 317568.7212100029,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 456.2627734375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 61.517493847974855,
+     "historicalPercent": 61.517493847974855,
+     "todayPercent": 60.170071081034315,
+     "rankTotalParses": 599,
+     "historicalTotalParses": 599,
+     "todayTotalParses": 724,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "XVCphv3FWZGa6kNY",
+      "startTime": 1791189245048,
+      "fightID": 2
+     },
+     "duration": 1855346,
+     "startTime": 1791190431086,
+     "amount": 317442.2240999937,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 456.2627734375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 66.4517590365113,
+     "historicalPercent": 66.4517590365113,
+     "todayPercent": 58.491634097525186,
+     "rankTotalParses": 284,
+     "historicalTotalParses": 284,
+     "todayTotalParses": 1407,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "ANMcfZWhCd8pVT9R",
+      "startTime": 1788906783783,
+      "fightID": 1
+     },
+     "duration": 1792682,
+     "startTime": 1788907030644,
+     "amount": 270204.12440001965,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 427.4866796875,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 18.726800925998766,
+     "historicalPercent": 18.726800925998766,
+     "todayPercent": 16.071951441649194,
+     "rankTotalParses": 348,
+     "historicalTotalParses": 348,
+     "todayTotalParses": 1640,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FKG7gRnj3kTDAr8Q",
+      "startTime": 1788637033130,
+      "fightID": 3
+     },
+     "duration": 1760367,
+     "startTime": 1788646398217,
+     "amount": 215158.659619987,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 413.11783203125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 95.56419615621925,
+     "historicalPercent": 95.56419615621925,
+     "todayPercent": 94.7749736463289,
+     "rankTotalParses": 5211,
+     "historicalTotalParses": 5211,
+     "todayTotalParses": 5549,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "4P26N9HDWvGMAqcw",
+      "startTime": 1791218700955,
+      "fightID": 1
+     },
+     "duration": 1385932,
+     "startTime": 1791218999276,
+     "amount": 279256.6677800119,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "silver",
+     "score": 375.431015625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 84.73840221211617,
+     "historicalPercent": 84.73840221211617,
+     "todayPercent": 70.45677671922192,
+     "rankTotalParses": 1738,
+     "historicalTotalParses": 1738,
+     "todayTotalParses": 5549,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "7HWbaZC3MwjDk9G4",
+      "startTime": 1788869478073,
+      "fightID": 1
+     },
+     "duration": 1485875,
+     "startTime": 1788869505741,
+     "amount": 228443.68931999803,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "silver",
+     "score": 373.47900390625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 67.47310354711729,
+     "historicalPercent": 67.47310354711729,
+     "todayPercent": 49.27309864381522,
+     "rankTotalParses": 1609,
+     "historicalTotalParses": 1609,
+     "todayTotalParses": 5549,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "zLRarAbQv6VDynXZ",
+      "startTime": 1788856205430,
+      "fightID": 6
+     },
+     "duration": 1716163,
+     "startTime": 1788867047179,
+     "amount": 203681.96018999815,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 368.98119140625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 28.447827543877843,
+     "historicalPercent": 28.447827543877843,
+     "todayPercent": 19.77362914548712,
+     "rankTotalParses": 206,
+     "historicalTotalParses": 206,
+     "todayTotalParses": 2976,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "t3JCWbxv6p8kHAzr",
+      "startTime": 1787216152474,
+      "fightID": 16
+     },
+     "duration": 1541616,
+     "startTime": 1787252920066,
+     "amount": 148839.36812999845,
+     "bracketData": 11,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 342.3903125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 76.18708021303071,
+     "historicalPercent": 76.18708021303071,
+     "todayPercent": 69.42325668094686,
+     "rankTotalParses": 4234,
+     "historicalTotalParses": 4234,
+     "todayTotalParses": 8833,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "1vRG2qrmYb6pkFJC",
+      "startTime": 1788858239766,
+      "fightID": 3
+     },
+     "duration": 1643253,
+     "startTime": 1788863884880,
+     "amount": 200962.5321600139,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      160
+     ],
+     "medal": "bronze",
+     "score": 325.40521484375,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 27.084344520901702,
+     "historicalPercent": 27.084344520901702,
+     "todayPercent": 21.76360595560218,
+     "rankTotalParses": 448,
+     "historicalTotalParses": 448,
+     "todayTotalParses": 8833,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "ntkRv7XDxbYmQLAh",
+      "startTime": 1787292098661,
+      "fightID": 6
+     },
+     "duration": 1472295,
+     "startTime": 1787311262700,
+     "amount": 141317.4978300035,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "silver",
+     "score": 328.74423828125,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 39.93000635117884,
+     "historicalPercent": 39.93000635117884,
+     "todayPercent": 60.59564444965537,
+     "rankTotalParses": 39,
+     "historicalTotalParses": 39,
+     "todayTotalParses": 397,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "DXc1Mk9ZanVpWC67",
+      "startTime": 1787124585446,
+      "fightID": 1
+     },
+     "duration": 1017281,
+     "startTime": 1787124652193,
+     "amount": 114611.95599000156,
+     "bracketData": 5,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      162,
+      165
+     ],
+     "medal": "gold",
+     "score": 230,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e6": {
+   "bestAmount": 356930.78503000736,
+   "medianPerformance": 42.05503026445262,
+   "averagePerformance": 46.32885027559477,
+   "totalKills": 12,
+   "fastestKill": 1472654,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 11.366897037627659,
+     "historicalPercent": 11.366897037627659,
+     "todayPercent": 10.563356468618615,
+     "rankTotalParses": 56,
+     "historicalTotalParses": 56,
+     "todayTotalParses": 65,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "kc1HdM638JfphGxw",
+      "startTime": 1791285399693,
+      "fightID": 4
+     },
+     "duration": 1788909,
+     "startTime": 1791288634043,
+     "amount": 356930.78503000736,
+     "bracketData": 20,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 485.2310625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 49.17789772704253,
+     "historicalPercent": 49.17789772704253,
+     "todayPercent": 43.67050838489246,
+     "rankTotalParses": 254,
+     "historicalTotalParses": 254,
+     "todayTotalParses": 585,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "yr3C7VghqtnG8RjP",
+      "startTime": 1790098572942,
+      "fightID": 1
+     },
+     "duration": 1715978,
+     "startTime": 1790104588145,
+     "amount": 330263.8593699932,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 456.75045833333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 32.835579004097674,
+     "historicalPercent": 32.835579004097674,
+     "todayPercent": 31.023558752066666,
+     "rankTotalParses": 316,
+     "historicalTotalParses": 316,
+     "todayTotalParses": 585,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "KghaWz6Z9d7YfvxA",
+      "startTime": 1790343388999,
+      "fightID": 12
+     },
+     "duration": 1759868,
+     "startTime": 1790357145923,
+     "amount": 323408.5690100193,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 455.83608333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 87.23981836047619,
+     "historicalPercent": 87.23981836047619,
+     "todayPercent": 82.37874420568849,
+     "rankTotalParses": 504,
+     "historicalTotalParses": 504,
+     "todayTotalParses": 989,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "M24hy1rxFgvkwXL6",
+      "startTime": 1790073685466,
+      "fightID": 10
+     },
+     "duration": 1701148,
+     "startTime": 1790080544787,
+     "amount": 333913.002309978,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 442.05941666667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 41.96098043744475,
+     "historicalPercent": 41.96098043744475,
+     "todayPercent": 38.36186891568264,
+     "rankTotalParses": 163,
+     "historicalTotalParses": 163,
+     "todayTotalParses": 989,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "1wHp8n9a6RFxXQBv",
+      "startTime": 1789174988349,
+      "fightID": 3
+     },
+     "duration": 1689372,
+     "startTime": 1789175692670,
+     "amount": 298637.26950997114,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 442.30475,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 79.75770109111781,
+     "historicalPercent": 79.75770109111781,
+     "todayPercent": 72.75094759588116,
+     "rankTotalParses": 510,
+     "historicalTotalParses": 510,
+     "todayTotalParses": 1373,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "8FayqCH2XrmWpPR1",
+      "startTime": 1789487972068,
+      "fightID": 6
+     },
+     "duration": 1645396,
+     "startTime": 1789505625883,
+     "amount": 298634.93531000614,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 428.22091666667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 19.17391864260709,
+     "historicalPercent": 19.17391864260709,
+     "todayPercent": 15.993043728374108,
+     "rankTotalParses": 279,
+     "historicalTotalParses": 279,
+     "todayTotalParses": 1373,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "vXHbkDGzd9CPxtry",
+      "startTime": 1789001205975,
+      "fightID": 2
+     },
+     "duration": 1771201,
+     "startTime": 1789001875512,
+     "amount": 249517.81023997068,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 425.59997916667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 42.14908009146048,
+     "historicalPercent": 42.14908009146048,
+     "todayPercent": 34.847925591884135,
+     "rankTotalParses": 391,
+     "historicalTotalParses": 391,
+     "todayTotalParses": 1601,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "8fVnBkpvXRmK4qtH",
+      "startTime": 1788699996092,
+      "fightID": 52
+     },
+     "duration": 1493102,
+     "startTime": 1788732482994,
+     "amount": 245271.20089000463,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 416.39370833333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 84.06207432505092,
+     "historicalPercent": 84.06207432505092,
+     "todayPercent": 72.85811998016013,
+     "rankTotalParses": 514,
+     "historicalTotalParses": 514,
+     "todayTotalParses": 1785,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "vBdP1gtL8whWr3KQ",
+      "startTime": 1788697453708,
+      "fightID": 1
+     },
+     "duration": 1755608,
+     "startTime": 1788697513207,
+     "amount": 257750.09618997574,
+     "bracketData": 14,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 395.92483333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 22.804119793200293,
+     "historicalPercent": 22.804119793200293,
+     "todayPercent": 10.383435112859107,
+     "rankTotalParses": 88,
+     "historicalTotalParses": 88,
+     "todayTotalParses": 4550,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "t3JCWbxv6p8kHAzr",
+      "startTime": 1787216152474,
+      "fightID": 23
+     },
+     "duration": 1711141,
+     "startTime": 1787259780238,
+     "amount": 158861.57269999385,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 366.85122916667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 5.210483550624763,
+     "historicalPercent": 5.210483550624763,
+     "todayPercent": 2.6283003570120753,
+     "rankTotalParses": 88,
+     "historicalTotalParses": 88,
+     "todayTotalParses": 4550,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "t3JCWbxv6p8kHAzr",
+      "startTime": 1787216152474,
+      "fightID": 19
+     },
+     "duration": 2406215,
+     "startTime": 1787255124290,
+     "amount": 117553.23331999779,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 307.36999511719,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 80.20765324638711,
+     "historicalPercent": 80.20765324638711,
+     "todayPercent": 55.94281862584297,
+     "rankTotalParses": 313,
+     "historicalTotalParses": 313,
+     "todayTotalParses": 7282,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "nmYNxpK62F7fqJZv",
+      "startTime": 1787216046385,
+      "fightID": 4
+     },
+     "duration": 1472654,
+     "startTime": 1787227164198,
+     "amount": 190756.9134300053,
+     "bracketData": 10,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 326.81970833333,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  },
+  "e7": {
+   "bestAmount": 365170.3935800195,
+   "medianPerformance": 49.979900594457845,
+   "averagePerformance": 53.439691697808264,
+   "totalKills": 18,
+   "fastestKill": 1547993,
+   "difficulty": 10,
+   "metric": "dps",
+   "partition": 1,
+   "zone": 55,
+   "ranks": [
+    {
+     "lockedIn": true,
+     "rankPercent": 79.55709799551829,
+     "historicalPercent": 79.55709799551829,
+     "todayPercent": 78.93176004127122,
+     "rankTotalParses": 225,
+     "historicalTotalParses": 225,
+     "todayTotalParses": 253,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "nb8JqYD4Rdx2y6pP",
+      "startTime": 1791311285753,
+      "fightID": 2
+     },
+     "duration": 1686092,
+     "startTime": 1791312106211,
+     "amount": 365170.3935800195,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 472.37308333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 72.57613286701817,
+     "historicalPercent": 72.57613286701817,
+     "todayPercent": 71.96688165289845,
+     "rankTotalParses": 239,
+     "historicalTotalParses": 239,
+     "todayTotalParses": 253,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "nFCzQjrqx9RKDmda",
+      "startTime": 1791373130174,
+      "fightID": 7
+     },
+     "duration": 1749789,
+     "startTime": 1791379224036,
+     "amount": 356590.8596100211,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 471.0460625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 55.674196699424996,
+     "historicalPercent": 55.674196699424996,
+     "todayPercent": 55.674196699424996,
+     "rankTotalParses": 253,
+     "historicalTotalParses": 253,
+     "todayTotalParses": 253,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FTtHbY2x41g6BCNR",
+      "startTime": 1791535709905,
+      "fightID": 7
+     },
+     "duration": 1922132,
+     "startTime": 1791548947524,
+     "amount": 342841.62237000465,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 317.45999145508,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 47.27316744283129,
+     "historicalPercent": 47.27316744283129,
+     "todayPercent": 44.671500055353434,
+     "rankTotalParses": 196,
+     "historicalTotalParses": 196,
+     "todayTotalParses": 253,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "w8kCZvDTxbPJ9VLt",
+      "startTime": 1791185922180,
+      "fightID": 2
+     },
+     "duration": 1858671,
+     "startTime": 1791186020228,
+     "amount": 334307.5022299886,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 318.7799987793,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 32.82959436302337,
+     "historicalPercent": 32.82959436302337,
+     "todayPercent": 31.355428112515547,
+     "rankTotalParses": 225,
+     "historicalTotalParses": 225,
+     "todayTotalParses": 253,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "j27qGVkgXrWzNBKT",
+      "startTime": 1791296732280,
+      "fightID": 3
+     },
+     "duration": 1811093,
+     "startTime": 1791297967012,
+     "amount": 322370.36348998547,
+     "bracketData": 19,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 319.76998901367,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 86.95652718783909,
+     "historicalPercent": 86.95652718783909,
+     "todayPercent": 84.87159227443745,
+     "rankTotalParses": 355,
+     "historicalTotalParses": 355,
+     "todayTotalParses": 573,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "bGrTCnV96MqXjkJR",
+      "startTime": 1790698501030,
+      "fightID": 12
+     },
+     "duration": 1650104,
+     "startTime": 1790711342933,
+     "amount": 336602.4209499955,
+     "bracketData": 18,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 458.12283333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 83.99014563756765,
+     "historicalPercent": 83.99014563756765,
+     "todayPercent": 83.49131647402525,
+     "rankTotalParses": 851,
+     "historicalTotalParses": 851,
+     "todayTotalParses": 938,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "yqkFgJpwMAaN83rj",
+      "startTime": 1791281104070,
+      "fightID": 2
+     },
+     "duration": 1678844,
+     "startTime": 1791281680945,
+     "amount": 301296.88495999575,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 442.52408333333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 74.32242097271343,
+     "historicalPercent": 74.32242097271343,
+     "todayPercent": 69.3773435892575,
+     "rankTotalParses": 467,
+     "historicalTotalParses": 467,
+     "todayTotalParses": 938,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "jQtXrZ6gNcWnVfvP",
+      "startTime": 1790023347586,
+      "fightID": 4
+     },
+     "duration": 1712285,
+     "startTime": 1790030891237,
+     "amount": 288183.5252299905,
+     "bracketData": 17,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 441.82739583333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 19.73655890574173,
+     "historicalPercent": 19.73655890574173,
+     "todayPercent": 13.655367621548093,
+     "rankTotalParses": 236,
+     "historicalTotalParses": 236,
+     "todayTotalParses": 1378,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "xB1CWdfz3ta6GVFJ",
+      "startTime": 1788831293870,
+      "fightID": 1
+     },
+     "duration": 1741553,
+     "startTime": 1788831374776,
+     "amount": 219086.1085500121,
+     "bracketData": 16,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 426.21764583333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 89.77329566496572,
+     "historicalPercent": 89.77329566496572,
+     "todayPercent": 85.52208947037971,
+     "rankTotalParses": 975,
+     "historicalTotalParses": 975,
+     "todayTotalParses": 1593,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "FphWmjdPGc87NCfA",
+      "startTime": 1790073685466,
+      "fightID": 3
+     },
+     "duration": 1655524,
+     "startTime": 1790075852070,
+     "amount": 264263.7339500189,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 413.00991666667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 83.62581871995837,
+     "historicalPercent": 83.62581871995837,
+     "todayPercent": 75.00960349842042,
+     "rankTotalParses": 370,
+     "historicalTotalParses": 370,
+     "todayTotalParses": 1593,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "aDXQAqx1TvnYgmrJ",
+      "startTime": 1788803809870,
+      "fightID": 4
+     },
+     "duration": 1624322,
+     "startTime": 1788807079799,
+     "amount": 251711.94410002232,
+     "bracketData": 15,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 413.65995833333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 37.04996631751666,
+     "historicalPercent": 37.04996631751666,
+     "todayPercent": 27.261005840495606,
+     "rankTotalParses": 69,
+     "historicalTotalParses": 69,
+     "todayTotalParses": 1912,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "89K7dbLjtaQwCAWz",
+      "startTime": 1787718388005,
+      "fightID": 23
+     },
+     "duration": 1582072,
+     "startTime": 1787749801476,
+     "amount": 197036.68746000528,
+     "bracketData": 14,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 399.54016666667,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 0.9999319630709385,
+     "historicalPercent": 0.9999319630709385,
+     "todayPercent": 0.9999310865004598,
+     "rankTotalParses": 72,
+     "historicalTotalParses": 72,
+     "todayTotalParses": 1980,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "9aBqbM2w76L4xcpz",
+      "startTime": 1787560987012,
+      "fightID": 5
+     },
+     "duration": 2354790,
+     "startTime": 1787568675958,
+     "amount": 99670.49737998843,
+     "bracketData": 13,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 308.44000244141,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 51.5395155038177,
+     "historicalPercent": 51.5395155038177,
+     "todayPercent": 24.038796856797443,
+     "rankTotalParses": 241,
+     "historicalTotalParses": 241,
+     "todayTotalParses": 5605,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "rYHpbhDwxJ89jBVL",
+      "startTime": 1787505884259,
+      "fightID": 1
+     },
+     "duration": 1693266,
+     "startTime": 1787505977492,
+     "amount": 165208.5985200107,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 367.223625,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 47.10350982694685,
+     "historicalPercent": 47.10350982694685,
+     "todayPercent": 22.734835993317326,
+     "rankTotalParses": 123,
+     "historicalTotalParses": 123,
+     "todayTotalParses": 5605,
+     "guild": {
+      "id": null,
+      "name": null,
+      "faction": null
+     },
+     "report": {
+      "code": "r7YbXWc2wL9vgyNa",
+      "startTime": 1787382139246,
+      "fightID": 9
+     },
+     "duration": 1761279,
+     "startTime": 1787399573706,
+     "amount": 163503.4283800125,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "bronze",
+     "score": 365.8066875,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 23.42866495262762,
+     "historicalPercent": 23.42866495262762,
+     "todayPercent": 9.976022480181912,
+     "rankTotalParses": 33,
+     "historicalTotalParses": 33,
+     "todayTotalParses": 5605,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "Pn6gpvGdVKRzaL7r",
+      "startTime": 1787119776645,
+      "fightID": 50
+     },
+     "duration": 2254784,
+     "startTime": 1787185488742,
+     "amount": 141921.44181001186,
+     "bracketData": 12,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      147
+     ],
+     "medal": "none",
+     "score": 310.5299987793,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 48.420285685098,
+     "historicalPercent": 48.420285685098,
+     "todayPercent": 30,
+     "rankTotalParses": 222,
+     "historicalTotalParses": 222,
+     "todayTotalParses": 3031,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "t3JCWbxv6p8kHAzr",
+      "startTime": 1787216152474,
+      "fightID": 22
+     },
+     "duration": 1547993,
+     "startTime": 1787257797253,
+     "amount": 154022.27083998919,
+     "bracketData": 11,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 340.25014583333,
+     "leaderboard": 0,
+     "faction": 0
+    },
+    {
+     "lockedIn": true,
+     "rankPercent": 27.057619854868925,
+     "historicalPercent": 27.057619854868925,
+     "todayPercent": 15.105715754626841,
+     "rankTotalParses": 49,
+     "historicalTotalParses": 49,
+     "todayTotalParses": 3031,
+     "guild": {
+      "id": 13941,
+      "name": "Knockout",
+      "faction": 0
+     },
+     "report": {
+      "code": "DXc1Mk9ZanVpWC67",
+      "startTime": 1787124585446,
+      "fightID": 4
+     },
+     "duration": 1719119,
+     "startTime": 1787130371518,
+     "amount": 132962.23043000698,
+     "bracketData": 11,
+     "spec": "Frost",
+     "bestSpec": "Frost",
+     "class": 1,
+     "affixes": [
+      9,
+      10,
+      162
+     ],
+     "medal": "bronze",
+     "score": 336.68502083333,
+     "leaderboard": 0,
+     "faction": 0
+    }
+   ]
+  }
+ }
+}

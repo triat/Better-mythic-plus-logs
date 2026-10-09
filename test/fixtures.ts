@@ -13,6 +13,11 @@ export type WclFixtureName = keyof typeof WCL_FILES;
 export const loadWclFixture = async (name: WclFixtureName): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, WCL_FILES[name])).text());
 
+// Shape: { character, realm, region, metric, capturedAt, zone, zoneRankings, encounterRankings }.
+// `encounterRankings` is the character object of the multi-encounter query (`e0`…`e7`, byBracket: true).
+export const loadRankingsFixture = async (): Promise<any> =>
+  JSON.parse(await Bun.file(path.join(dir, "wcl-rankings-s2-dps.json")).text());
+
 export const loadRioFixture = async (): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, "rio-profile-muleyoxo.json")).text());
 

@@ -2,7 +2,7 @@
 
 Status: approved 2026-10-09 (sync needs the member's own WCL client; points to work on against both
 references). Canvas page "self-review": variants A + C chosen 2026-10-09 (decision 4). Open
-question 1 still open, tracked with every WCL-dependent item in a GitHub issue.
+question 1 settled 2026-10-09; the other WCL-dependent items are tracked in GitHub issue #24.
 
 ## Goal
 
@@ -139,10 +139,18 @@ read (0 pts) ──► character_runs + wcl_run_raw ──► per-run signals �
 
 ## Open questions
 
-1. **What WCL returns.** Whether `encounterRankings(byBracket: true)` lists every ranked run of the
-   season or only the best per key level is not stated anywhere in the repo. One real query settles it
-   (~20 pts); it needs WCL credentials in the environment. If only the best per level comes back, the
-   season history is partial and the views must say so.
+1. **What WCL returns.** Settled 2026-10-09 (issue #24 § 1, fixture
+   `test/fixtures/wcl-rankings-s2-dps.json`): `encounterRankings(byBracket: true)` lists every ranked
+   run of the season, several per key level, depleted runs included (`medal: "none"`); `ranks.length`
+   equals `totalKills`. Measured on two characters: 108 runs (11 to 18 per dungeon, 7 weeks) and 94
+   runs (8 to 18). All ten of Raider.IO's recent runs of each character were in the list, the depleted
+   ones too. `rank.startTime` is the fight's absolute start in epoch ms (`report.startTime` is the
+   report's); `startTime + duration` matches Raider.IO's `completed_at` within seconds. The list is the
+   same for `metric: dps` and `metric: hps` (checked on one dungeon, 18 runs), every spec included; the
+   metric only changes `amount` and `rankPercent`, so a healer run's parse comes from the `hps` query
+   and a DPS or tank run's from `dps`. Order: key level, then amount, not time. Cost measured: 12 pts
+   (probe) + 9 pts (eight dungeons) = 21 pts, in line with `ESTIMATE_RANKINGS`. Limit: a run that was
+   not logged, or not ranked, is absent (non-goal above); the views state the count they rest on.
 Settled 2026-10-09: sync needs the member's own WCL client (decision 3); points to work on show
 both references (decision 4).
 

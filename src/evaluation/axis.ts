@@ -44,7 +44,7 @@ export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg:
   const evidence: Evidence[] = [];
   for (const { source, w, s, label, value, extra } of contributing) {
     num += w * s;
-    evidence.push({ label, delta: Math.round(((w * (s - 50)) / den) * 10) / 10, source, value, ...(extra ? { extra } : {}) });
+    evidence.push({ label, delta: Math.round(((w * (s - 50)) / den) * 10) / 10, source, value, ...(extra ? { extra } : {}), weight: w, score: s });
   }
   evidence.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
   return { key, score: den > 0 ? Math.round(num / den) : null, confidence: confidenceFor(runsUsed, cfg), evidence };

@@ -1,7 +1,8 @@
 # Self-review: five pillars, three views, a season of runs — design
 
 Status: approved 2026-10-09 (sync needs the member's own WCL client; points to work on against both
-references). Visual variants on the design canvas, page "self-review". Open question 1 still open.
+references). Canvas page "self-review": variants A + C chosen 2026-10-09 (decision 4). Open
+question 1 still open, tracked with every WCL-dependent item in a GitHub issue.
 
 ## Goal
 
@@ -70,16 +71,18 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    credentials. A normal lookup of another player keeps today's cost (best run per dungeon); "Load full
    season" is the same explicit sync for anyone, under the same rule.
 
-4. **Three views on one page.** The result page gets three tabs, the same for the member and for
+4. **Three views on one page** (canvas variants A + C, user's choice 2026-10-09: A's tabs and Overview,
+   C's dungeon-first layout as the Dungeons tab). The result page gets three tabs, the same for the member and for
    anyone looked up:
    - **Overview:** the five pillars, each with a score, a trend arrow and one sentence; above them,
      the two or three points to work on first, against two references shown side by side (user's
      choice, 2026-10-09): the average player (the calibration median, the "What makes this score"
      logic already shipped) and the player's own past (their median of the four previous weeks).
      The average player leads the ranking; the own-past column says "better / same / worse".
-   - **Dungeons:** a grid dungeon × pillar (score per cell, coloured), sorted by the worst dungeon;
-     a dungeon opens its detail: the abilities that hit the player there, what killed them, the casts
-     that went through, the runs.
+   - **Dungeons:** variant C's layout inside A's tab: a grid dungeon × pillar (score per cell,
+     coloured), its header row the season's pillar scores with their trend, rows sorted by the worst
+     dungeon; a dungeon opens its detail in a panel on the right: the abilities that hit the player
+     there, what killed them, the casts that went through, a link to its runs.
    - **Runs:** today's run list, every run of the season once synced, each run opening its detail
      (today's row and deep-dive, plus the killing hits and avoidable abilities).
 

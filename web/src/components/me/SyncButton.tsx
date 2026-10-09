@@ -10,7 +10,14 @@ import type { SelfActions } from "../self/ResultHead.tsx";
  */
 export function SyncButton({ season, self, compact = false }: { season: SeasonState; self: SelfActions; compact?: boolean }) {
   const { t } = useT();
-  if (season.running && season.progress) return <span className="muted" style={{ fontSize: 12 }}>{syncProgress(t, season.progress)}</span>;
+  if (season.running && season.progress) {
+    return (
+      <>
+        <span className="muted" style={{ fontSize: 12 }}>{syncProgress(t, season.progress)}</span>
+        <button type="button" className="btn btn-sm" onClick={season.stop}>{t("self.sync.cancel")}</button>
+      </>
+    );
+  }
   const v = syncCard(t, season.view, self.hosted, self.ownClient);
   if (v.kind === "noClient") return <a href="/settings" style={{ fontSize: 12 }}>{v.link}</a>;
   if (compact && (v.kind === "nothing" || v.kind === "done")) return null;

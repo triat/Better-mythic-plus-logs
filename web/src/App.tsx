@@ -229,14 +229,13 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   }, [fetchPayload]);
 
   // Boot: history → ?open=<key> when it names a tab, else the main character's tab, else the most recent one (0 pts).
-  // ?q= only fills the search field (and ?region= the chip): a URL never starts a lookup by itself.
+  // ?q= only fills the search field (a Raider.IO link carries its own region): a URL never starts a lookup by itself,
+  // and never writes a setting.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const q = params.get("q");
-    const r = params.get("region");
     if (q) setForm((f) => ({ ...f, character: q }));
-    if (r && isRegion(r)) updateSettings({ region: r });
-    if (params.has("open") || q) history.replaceState({}, "", location.pathname);
+    if (location.search) history.replaceState({}, "", location.pathname);
     loadHistory().then((items) => {
       if (page !== "main" || items.length === 0) return;
       const want = params.get("open");
@@ -572,7 +571,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           <main className={"content" + (empty ? "" : " content-result")}>
             {empty && <Home envPath={controls.envPath ? status.envPath : null} main={homeMain} />}
             {!empty && !showCompare && activePayload && (
-              <Detail payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
+              <Detail key={activeKey ?? ""} payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
             )}
             {!empty && !showCompare && !activePayload && activeKey && <Loading inline />}
             {showCompare && (

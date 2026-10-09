@@ -22,10 +22,12 @@ export interface SeasonState {
 }
 
 /**
- * The season of one character (GET /api/season, 0 pts), reloaded when the character or `reloadKey` changes — the
- * result page passes its payload object, which `reloadActive` in App replaces after a deep-dive. The sync loops one batch per request (decision 3) until
- * nothing is pending, a batch fetches nothing, an error, or Cancel; leaving the page stops it, and the next sync
- * resumes from the cache.
+ * The season of one character (GET /api/season, 0 pts). A new character resets the view and stops a running sync;
+ * a new `reloadKey` for the same character (the result page passes its payload, which `reloadActive` in App replaces
+ * after a deep-dive) reloads in place, keeping the current view and any running sync. An answer that arrives for an
+ * earlier character, or after a newer request, is dropped. The sync loops one batch per request (decision 3) until
+ * nothing is pending, a batch fetches nothing, an error, Cancel or a character change; the batch already in flight
+ * still completes, and the next sync resumes from the cache.
  */
 export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown): SeasonState {
   const [view, setView] = useState<SeasonView | null>(null);
@@ -34,24 +36,35 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<SeasonState["progress"]>(null);
   const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
+  const stopSync = useRef(false);
+  const seq = useRef(0);
   const id = `${who.region}|${who.realm}|${who.name}|${who.level ?? ""}`;
+  const idRef = useRef(id);
+  idRef.current = id;
 
   const load = useCallback(async () => {
+    const mine = ++seq.current;
+    const asked = id;
     const r = await api.season(who);
+    if (seq.current !== mine || idRef.current !== asked) return;
     if (r.ok) setView(r.season);
     setLoading(false);
-  }, [id, reloadKey]);
+  }, [id]);
 
+  // Another character: start from an empty view; leaving it (or unmounting) stops its sync.
   useEffect(() => {
-    setLoading(true);
+    stopSync.current = false;
     setView(null);
-    void load();
-    return () => { cancelled.current = true; };
-  }, [load]);
+    setLoading(true);
+    setSyncOpen(false);
+    setError(null);
+    return () => { stopSync.current = true; };
+  }, [id]);
+
+  useEffect(() => { void load(); }, [load, reloadKey]);
 
   const start = useCallback(async () => {
-    cancelled.current = false;
+    stopSync.current = false;
     setRunning(true);
     setError(null);
     let done = 0;
@@ -59,9 +72,10 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
     let total = view?.state.pending ?? 0;
     let refresh = true;
     setProgress({ done, total, pts });
-    while (!cancelled.current) {
+    while (!stopSync.current) {
       const r = await api.seasonSync({ name: who.name, realm: who.realm, region: who.region, refresh });
       refresh = false;
+      if (stopSync.current) break;
       if (!r.ok) { setError(r.error); break; }
       if (r.ownClient !== undefined) self.setOwnClient(r.ownClient);
       done += r.fetched + r.failed;
@@ -79,6 +93,6 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
     view, loading, syncOpen, running, progress, error, start,
     openSync: () => setSyncOpen(true),
     closeSync: () => setSyncOpen(false),
-    stop: () => { cancelled.current = true; },
+    stop: () => { stopSync.current = true; },
   };
 }

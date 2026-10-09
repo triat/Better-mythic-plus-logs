@@ -442,6 +442,7 @@ export const en = {
     duplicate: "Already in your list",
     empty: "Add the characters you play to follow their season: pillars, trends and the points to work on.",
     localNote: "saved in this browser only · sync costs points on the Warcraft Logs client of this bmpl (the .env file)",
+    bnetChip: "Battle.net",
     bnet: "Link your Battle.net account: coming next. It will import your characters and replace adding them by hand.",
     seasonLine: "{runs, plural, one {# run this season} other {# runs this season}}{state}{checked}",
     notAnalysed: " · {n} not analysed",

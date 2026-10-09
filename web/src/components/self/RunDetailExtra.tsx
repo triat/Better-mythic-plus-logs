@@ -22,6 +22,7 @@ export function RunDetailExtra({ d }: { d: RunDetailView }) {
       </div>
       <div>
         <div className="label-caps" style={{ marginBottom: 4 }}>{t("self.detail.casts")}</div>
+        <div className="faint" style={{ fontSize: 12 }}>{t("self.panel.castsNote")}</div>
         {d.casts.map((c) => <div key={c.id} className="ab-row"><SpellLink id={c.id} name={c.name} /><span className="faint">{c.ofText}</span><span /></div>)}
         {d.kicked && <div className="faint" style={{ fontSize: 12 }}>{d.kicked}</div>}
       </div>

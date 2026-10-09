@@ -41,7 +41,7 @@ describe("history", () => {
     const items = [item("k1", "Other-Hyjal"), item("k2", "https://raider.io/characters/eu/argent-dawn/Noshiidk"), item("k3", "noshiidk-Argent Dawn")];
     expect(historyKeyFor(items, c("Noshiidk", "argent-dawn"))).toBe("k2");
     expect(historyKeyFor(items, c("Noshiidk", "argent-dawn", "us"))).toBeNull();
-    expect(lookupQuery(c("Noshiidk", "argent-dawn"))).toBe("Noshiidk-Argent Dawn");
+    expect(lookupQuery(c("Noshiidk", "argent-dawn"))).toBe("https://raider.io/characters/eu/argent-dawn/Noshiidk");
   });
 });
 

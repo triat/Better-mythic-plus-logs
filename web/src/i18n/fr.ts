@@ -436,6 +436,7 @@ export const fr: Mirror<typeof en> = {
     duplicate: "Déjà dans ta liste",
     empty: "Ajoute les personnages que tu joues pour suivre leur saison : piliers, tendances et points à travailler.",
     localNote: "enregistré dans ce navigateur seulement · la synchro dépense des points sur le client Warcraft Logs de ce bmpl (le fichier .env)",
+    bnetChip: "Battle.net",
     bnet: "Lier ton compte Battle.net : bientôt. Cela importera tes personnages et remplacera l'ajout à la main.",
     seasonLine: "{runs, plural, one {# run cette saison} other {# runs cette saison}}{state}{checked}",
     notAnalysed: " · {n} non analysés",

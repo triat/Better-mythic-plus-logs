@@ -1,7 +1,7 @@
 // The personal page (self-review spec, decision 8; canvas MeMainFirst, variant C). Pure: no React, no fetch.
 import type { HistoryItem, MyCharacter, PillarKey, Region, SeasonView } from "../types.ts";
 import type { T } from "../i18n/t.ts";
-import { fmtAge, realmName } from "./format.ts";
+import { fmtAge } from "./format.ts";
 import { isRegion } from "./regions.ts";
 import { MAX_ME, PILLAR_ORDER, scoreBand, trendView, type Band, type TrendView } from "./self.ts";
 
@@ -50,8 +50,9 @@ export function addCharacter(list: MyCharacter[], c: MyCharacter): { ok: true; l
 export const makeMain = (list: MyCharacter[], i: number): MyCharacter[] => [list[i]!, ...list.filter((_, j) => j !== i)];
 export const removeAt = (list: MyCharacter[], i: number): MyCharacter[] => list.filter((_, j) => j !== i);
 
-/** What the search field gets: the display realm, so the server's last-dash split keeps a multi-word realm whole. */
-export const lookupQuery = (c: MyCharacter): string => `${c.name}-${realmName(c.realm)}`;
+/** What the search field gets: a Raider.IO link, which carries the character's own region (the server's rule). */
+export const lookupQuery = (c: MyCharacter): string =>
+  `https://raider.io/characters/${c.region}/${encodeURIComponent(c.realm)}/${encodeURIComponent(c.name)}`;
 
 /** The most recent history tab for the character (history is newest first), by Name-Realm or Raider.IO link. */
 export function historyKeyFor(items: HistoryItem[], c: MyCharacter): string | null {

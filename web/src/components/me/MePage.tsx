@@ -82,7 +82,7 @@ export function MePage({ self, history, region, instanceRegion, onRegionChange }
           : <span className={error ? "tone-bad" : "faint"} style={{ fontSize: 12 }}>{error ?? t("me.addHint")}</span>}
       </div>
       {!self.hosted && <p className="faint" style={{ fontSize: 12, margin: 0 }}>{t("me.localNote")}</p>}
-      {self.hosted && <div className="me-bnet"><span className="chip">Battle.net</span><span>{t("me.bnet")}</span></div>}
+      {self.hosted && <div className="me-bnet"><span className="chip">{t("me.bnetChip")}</span><span>{t("me.bnet")}</span></div>}
     </div>
   );
 }

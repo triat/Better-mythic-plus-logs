@@ -52,7 +52,7 @@ export function MainCard({ c, classID, spec, history, self }: { c: MyCharacter; 
         {key ? (
           <><a className="btn btn-sm btn-primary" href={`/?open=${encodeURIComponent(key)}`}>{t("me.openName", { name: c.name })}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.fromHistory")}</span></>
         ) : (
-          <><a className="btn btn-sm" href={`/?q=${encodeURIComponent(lookupQuery(c))}&region=${c.region}`}>{t("me.lookUp")}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.notInHistory")}</span></>
+          <><a className="btn btn-sm" href={`/?q=${encodeURIComponent(lookupQuery(c))}`}>{t("me.lookUp")}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.notInHistory")}</span></>
         )}
         <SyncButton season={season} self={self} />
       </div>

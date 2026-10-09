@@ -26,7 +26,7 @@ export function OtherRow({ c, classID, spec, history, self, onMakeMain, onRemove
       <div className="me-actions me-actions-end">
         {key
           ? <a className="btn btn-sm btn-primary" href={`/?open=${encodeURIComponent(key)}`} title={t("me.fromHistory")}>{t("me.open")}</a>
-          : <a className="btn btn-sm btn-primary" href={`/?q=${encodeURIComponent(lookupQuery(c))}&region=${c.region}`} title={t("me.notInHistory")}>{t("me.lookUp")}</a>}
+          : <a className="btn btn-sm btn-primary" href={`/?q=${encodeURIComponent(lookupQuery(c))}`} title={t("me.notInHistory")}>{t("me.lookUp")}</a>}
         <SyncButton season={season} self={self} compact />
         <button type="button" className="link-btn me-make-main" onClick={onMakeMain}>{t("me.makeMain")}</button>
         <button type="button" className="icon-btn tone-bad" onClick={onRemove} aria-label={t("me.remove")} title={t("me.remove")}>×</button>

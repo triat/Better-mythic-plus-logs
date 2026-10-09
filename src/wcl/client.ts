@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { config } from "../config.ts";
-import { WclOAuthError, getAccessToken } from "./auth.ts";
+import { WclOAuthError, forgetToken, getAccessToken } from "./auth.ts";
 import type { WclCredentials } from "./auth.ts";
 import type { RateLimitData } from "./types.ts";
 
@@ -73,21 +73,28 @@ export async function gql<T>(
   variables?: Record<string, unknown>,
 ): Promise<T> {
   const scope = currentWclClient();
-  const token = await getAccessToken(scope?.creds).catch((e: unknown) => {
+  const token = (): Promise<string> => getAccessToken(scope?.creds).catch((e: unknown) => {
     // A refused token is a WCL failure like any other (502 + `wcl_error`), not an internal error;
     // missing env credentials stay a plain error (a local setup problem, never a member's).
     if (!(e instanceof WclOAuthError)) throw e;
     const hint = scope ? " — check your client in Settings" : "";
     return fail(new WclError("http", e.status, `OAuth failed: ${e.status} ${e.body}${hint}`));
   });
-  const res = await fetch(config.graphqlUrl, {
+  const post = async (): Promise<Response> => fetch(config.graphqlUrl, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${await token()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ query, variables }),
   });
+  let res = await post();
+  if (res.status === 401) {
+    // WCL stopped accepting a token that is still cached (production 2026-10-08: every lookup failed
+    // with the same rejected token until it expired). Drop it, mint a fresh one, retry exactly once.
+    forgetToken(scope?.creds.clientId ?? config.clientId);
+    res = await post();
+  }
 
   if (!res.ok) {
     return fail(new WclError("http", res.status, `HTTP ${res.status}: ${clipText(await res.text())}`));

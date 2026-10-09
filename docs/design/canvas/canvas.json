@@ -1,38 +1,4 @@
 {
-  "pages": [
-    {
-      "id": "direction-a",
-      "name": "Direction A"
-    },
-    {
-      "id": "iteration-2",
-      "name": "Iteration 2 — key selector & many tabs"
-    },
-    {
-      "id": "explorations",
-      "name": "Explorations"
-    },
-    {
-      "id": "deep-dive",
-      "name": "Deep-dive — defensive cooldowns"
-    },
-    {
-      "id": "axis-explainers",
-      "name": "Axis explainers — what each score measures"
-    },
-    {
-      "id": "hosted",
-      "name": "Hosted — sign-in, user menu, proposals"
-    },
-    {
-      "id": "usage",
-      "name": "Usage — feature tracking dashboard"
-    },
-    {
-      "id": "self-review",
-      "name": "Self-review — pillars, dungeons, runs"
-    }
-  ],
   "artboards": [
     {
       "file": "Home.dc.html",
@@ -384,6 +350,42 @@
       "h": 740,
       "title": "Self-review — details (sync, not enough runs, run detail, this is me)",
       "page": "self-review"
+    },
+    {
+      "file": "MeList.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 820,
+      "title": "Me A — list of cards",
+      "page": "me"
+    },
+    {
+      "file": "MeTable.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 620,
+      "title": "Me B — table",
+      "page": "me"
+    },
+    {
+      "file": "MeMainFirst.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 800,
+      "title": "Me C — main first",
+      "page": "me"
+    },
+    {
+      "file": "MeDetails.dc.html",
+      "x": 0,
+      "y": 940,
+      "w": 1440,
+      "h": 800,
+      "title": "Me — details (empty, full, local mode, entry points)",
+      "page": "me"
     }
   ],
   "annotations": [
@@ -392,116 +394,162 @@
       "x": 0,
       "y": -170,
       "w": 520,
-      "page": "direction-a",
-      "text": "bmpl web redesign — verdict-first, Direction A (retained).\nKeeps the current Primer-dark vocabulary: cards, 6-10px radii, system-ui, green/yellow/red verdict badges.\nAll numbers are sample data shaped like a real lookup (Muleyoxo, Holy Priest, +21). Confidence is per axis (dot next to each label), never global."
+      "text": "bmpl web redesign — verdict-first, Direction A (retained).\nKeeps the current Primer-dark vocabulary: cards, 6-10px radii, system-ui, green/yellow/red verdict badges.\nAll numbers are sample data shaped like a real lookup (Muleyoxo, Holy Priest, +21). Confidence is per axis (dot next to each label), never global.",
+      "page": "direction-a"
     },
     {
       "id": "radar-note",
       "x": 1560,
       "y": 900,
       "w": 380,
-      "page": "direction-a",
-      "text": "Radar: 6 axes on one 0-100 scale, rings at 25/50/75/100. A null axis (Consistency under 5 runs with signals) is a hollow point at the center, labelled n/a — never drawn as 0."
+      "text": "Radar: 6 axes on one 0-100 scale, rings at 25/50/75/100. A null axis (Consistency under 5 runs with signals) is a hollow point at the center, labelled n/a — never drawn as 0.",
+      "page": "direction-a"
     },
     {
       "id": "b-note",
       "x": 0,
       "y": -140,
       "w": 420,
-      "page": "explorations",
-      "text": "Direction B — denser monospace 'command deck'. Shown for contrast during the review; Direction A was chosen. Kept here for reference only."
+      "text": "Direction B — denser monospace 'command deck'. Shown for contrast during the review; Direction A was chosen. Kept here for reference only.",
+      "page": "explorations"
     },
     {
       "id": "iter2-note",
       "x": 1560,
       "y": 0,
       "w": 420,
-      "page": "iteration-2",
-      "text": "Key selector: a global 'Your key' stepper (− +18 + · auto) in the header, remembered between sessions, applied to every new lookup. If the active tab was evaluated for another level, the hero shows a yellow hint 'Your key is +18 — re-evaluate for +18' that replaces the tab (cached data, ~0 pts). Level chip removed from the search box; spec chip stays.\n\nMany profiles: compact chips (name · +level, class colour), × on hover, select circle for compare. Pick A (wrap) or B (scroll)."
+      "text": "Key selector: a global 'Your key' stepper (− +18 + · auto) in the header, remembered between sessions, applied to every new lookup. If the active tab was evaluated for another level, the hero shows a yellow hint 'Your key is +18 — re-evaluate for +18' that replaces the tab (cached data, ~0 pts). Level chip removed from the search box; spec chip stays.\n\nMany profiles: compact chips (name · +level, class colour), × on hover, select circle for compare. Pick A (wrap) or B (scroll).",
+      "page": "iteration-2"
     },
     {
       "id": "dd-note",
       "x": 1560,
       "y": 0,
       "w": 440,
-      "page": "deep-dive",
-      "text": "Sub-project 4 — on-demand deep-dive of a run's personal defensives (~3 WCL pts per run, cached forever).\n\nPer run: Analyze · ~3 pts → Analyzed ✓ (expands the panel). Section header: Analyze all shown (~N pts).\n\nPanel: Usage (casts / possible, %, bar; 'talent?' when casts are seen closer than the table cooldown) · Deaths (time, verdict, top killing hits, what was active / available / on cooldown; wipe deaths dimmed and not counted) · Audit (self-buffs not in the table with + major / + immunity / + minor / Ignore; the table used with Edit cd / Remove). Every correction is saved to defensives.json and re-applied at 0 pts.\n\nSurvival axis gets an 'N runs analyzed' chip once deep-dive evidence exists."
+      "text": "Sub-project 4 — on-demand deep-dive of a run's personal defensives (~3 WCL pts per run, cached forever).\n\nPer run: Analyze · ~3 pts → Analyzed ✓ (expands the panel). Section header: Analyze all shown (~N pts).\n\nPanel: Usage (casts / possible, %, bar; 'talent?' when casts are seen closer than the table cooldown) · Deaths (time, verdict, top killing hits, what was active / available / on cooldown; wipe deaths dimmed and not counted) · Audit (self-buffs not in the table with + major / + immunity / + minor / Ignore; the table used with Edit cd / Remove). Every correction is saved to defensives.json and re-applied at 0 pts.\n\nSurvival axis gets an 'N runs analyzed' chip once deep-dive evidence exists.",
+      "page": "deep-dive"
     },
     {
       "id": "axis-note",
       "x": 1560,
       "y": 0,
       "w": 420,
-      "page": "axis-explainers",
-      "text": "Today the axis descriptions exist but hide behind a native title tooltip and the row expand — nobody sees them.\n\nA · ⓘ icon + popover: always visible, one hover away, keeps rows compact. Best when the user knows to look for an icon.\nB · callout in the expanded row: explanation and evidence read together; the chevron makes the expand affordance obvious. Nothing new to discover, one click.\nC · legend under the radar: the whole model at a glance (colours, weights, one line each), collapsible and remembered. Best for first-time readers; can be combined with A or B.\n\nRecommendation: B + C (rows explain themselves when opened; the legend teaches the model once)."
+      "text": "Today the axis descriptions exist but hide behind a native title tooltip and the row expand — nobody sees them.\n\nA · ⓘ icon + popover: always visible, one hover away, keeps rows compact. Best when the user knows to look for an icon.\nB · callout in the expanded row: explanation and evidence read together; the chevron makes the expand affordance obvious. Nothing new to discover, one click.\nC · legend under the radar: the whole model at a glance (colours, weights, one line each), collapsible and remembered. Best for first-time readers; can be combined with A or B.\n\nRecommendation: B + C (rows explain themselves when opened; the legend teaches the model once).",
+      "page": "axis-explainers"
     },
     {
       "id": "hosted-brief",
       "x": 0,
       "y": -190,
       "w": 560,
-      "page": "hosted",
-      "text": "Issue #7 — hosted mode front. Local mode stays pixel-identical; everything here only renders when /api/status says hosted.\n\nPick one letter per artboard (A/B/C — 'B + C' combos welcome):\n· Sign-in screen (401) and the notice treatment for ?denied=1 (1/2/3).\n· Header: Re-configure / Quit / clipboard watch are gone; user menu with avatar, name, quota, Admin (admins only), Sign out. Quota label refreshes after each lookup / analyze and from 429 bodies.\n· Deep-dive panel: 'Propose …' wording for members, pending / shared / rejected marks.\n\nAll colours are tokens.css values (yellow = pending, link blue = shared, red = rejected/quota). Sample user Muleyoxo, admin, 212 of 300 pts left."
+      "text": "Issue #7 — hosted mode front. Local mode stays pixel-identical; everything here only renders when /api/status says hosted.\n\nPick one letter per artboard (A/B/C — 'B + C' combos welcome):\n· Sign-in screen (401) and the notice treatment for ?denied=1 (1/2/3).\n· Header: Re-configure / Quit / clipboard watch are gone; user menu with avatar, name, quota, Admin (admins only), Sign out. Quota label refreshes after each lookup / analyze and from 429 bodies.\n· Deep-dive panel: 'Propose …' wording for members, pending / shared / rejected marks.\n\nAll colours are tokens.css values (yellow = pending, link blue = shared, red = rejected/quota). Sample user Muleyoxo, admin, 212 of 300 pts left.",
+      "page": "hosted"
     },
     {
       "id": "admin-brief",
       "x": 3120,
       "y": -190,
       "w": 560,
-      "page": "hosted",
-      "text": "Issue #8 — admin page at /admin (the menu's Admin item). Same sections in A / B / C, pick the layout:\n· A tabs — one concern per tab, counts in the tab labels.\n· B one page — everything visible, anchor sub-nav; longest.\n· C dashboard — two columns, compact rows (24 h totals and Discord ids hidden), instance strip below.\n\nShared details on the 4th artboard: member 403 screen, proposal card (current → proposed diff, author, note to the author, Approve / Reject), empty queue, post-decision line, the two confirmations (role change, revoke sessions).\n\nNot in this issue: the WCL error list (needs the audit log, #9) — the budget gauge ships without it; 'last backup' reads the file #10's deploy writes."
+      "text": "Issue #8 — admin page at /admin (the menu's Admin item). Same sections in A / B / C, pick the layout:\n· A tabs — one concern per tab, counts in the tab labels.\n· B one page — everything visible, anchor sub-nav; longest.\n· C dashboard — two columns, compact rows (24 h totals and Discord ids hidden), instance strip below.\n\nShared details on the 4th artboard: member 403 screen, proposal card (current → proposed diff, author, note to the author, Approve / Reject), empty queue, post-decision line, the two confirmations (role change, revoke sessions).\n\nNot in this issue: the WCL error list (needs the audit log, #9) — the budget gauge ships without it; 'last backup' reads the file #10's deploy writes.",
+      "page": "hosted"
     },
     {
       "id": "audit-brief",
       "x": 6240,
       "y": -190,
       "w": 560,
-      "page": "hosted",
-      "text": "Issue #9 — hardening. The only visible change: the audit log on the admin page (logins, admin actions, quota refusals, security rejections, WCL errors). Same data in A / B / C, pick the treatment:\n· A audit table — one section at the bottom, WCL errors are rows, the red chip filters them.\n· B errors next to the gauge — the budget card gets a 'Last WCL errors' column (the issue's wording), the table below has everything else.\n· C activity timeline — sentences grouped by day, same filters.\n\nAll three: a sixth 'Audit' anchor in the sub-nav with the 24 h error count. Rate limits and Origin rejections show as the usual error toast — no new UI."
+      "text": "Issue #9 — hardening. The only visible change: the audit log on the admin page (logins, admin actions, quota refusals, security rejections, WCL errors). Same data in A / B / C, pick the treatment:\n· A audit table — one section at the bottom, WCL errors are rows, the red chip filters them.\n· B errors next to the gauge — the budget card gets a 'Last WCL errors' column (the issue's wording), the table below has everything else.\n· C activity timeline — sentences grouped by day, same filters.\n\nAll three: a sixth 'Audit' anchor in the sub-nav with the 24 h error count. Rate limits and Origin rejections show as the usual error toast — no new UI.",
+      "page": "hosted"
     },
     {
       "id": "phase2-brief",
       "x": 7800,
       "y": -190,
       "w": 1440,
-      "page": "hosted",
-      "text": "Issue #11 — phase 2 (settings, privacy, account deletion). Pick a settings-page layout: A full page at /settings (consistent with /admin), B one compact card, C inside the user menu. Details board: verified WCL client state, typed-word delete confirmation, /privacy page, sign-in wording for open signup and the guild-denied notice, admin Ban/Unban."
+      "text": "Issue #11 — phase 2 (settings, privacy, account deletion). Pick a settings-page layout: A full page at /settings (consistent with /admin), B one compact card, C inside the user menu. Details board: verified WCL client state, typed-word delete confirmation, /privacy page, sign-in wording for open signup and the guild-denied notice, admin Ban/Unban.",
+      "page": "hosted"
     },
     {
       "id": "help-brief",
       "x": 10920,
       "y": -190,
       "w": 1440,
-      "page": "hosted",
-      "text": "Help page (spec 2026-09-19-documentation-and-help-design). Pick a layout: A sidebar TOC + long page, B admin-style anchor nav + accordions, C two-pane reference. Details board: the '?' affordance (a glyph, b 'how?' text, c evidence text as link), verdict hero, header Help link (local + hosted), user menu item, key-level scaling section. Numbers come from the effective evaluation config."
+      "text": "Help page (spec 2026-09-19-documentation-and-help-design). Pick a layout: A sidebar TOC + long page, B admin-style anchor nav + accordions, C two-pane reference. Details board: the '?' affordance (a glyph, b 'how?' text, c evidence text as link), verdict hero, header Help link (local + hosted), user menu item, key-level scaling section. Numbers come from the effective evaluation config.",
+      "page": "hosted"
     },
     {
       "id": "region-brief",
       "x": 14040,
       "y": -190,
       "w": 1440,
-      "page": "hosted",
-      "text": "Region per lookup, remembered per user (setting like Your key). Pick A segmented control / B chip in the search field / C prefix of the search field. Below: the spec picker fed by the loaded character's specs (with run counts), free text before any lookup; tabs show the region only when it is not the instance default."
+      "text": "Region per lookup, remembered per user (setting like Your key). Pick A segmented control / B chip in the search field / C prefix of the search field. Below: the spec picker fed by the loaded character's specs (with run counts), free text before any lookup; tabs show the region only when it is not the instance default.",
+      "page": "hosted"
     },
     {
       "id": "wclguide-brief",
       "x": 16080,
       "y": -170,
       "w": 1440,
-      "page": "hosted",
-      "text": "Guide for members who hit the shared quota: a /help card explaining why and how to create their own Warcraft Logs client (A one column with two step lists / B two columns with a checklist), plus the three places that link to it: the quota toast, the user menu's quota line, the Settings card hint."
+      "text": "Guide for members who hit the shared quota: a /help card explaining why and how to create their own Warcraft Logs client (A one column with two step lists / B two columns with a checklist), plus the three places that link to it: the quota toast, the user menu's quota line, the Settings card hint.",
+      "page": "hosted"
     },
     {
       "id": "locale-brief",
       "x": 18120,
       "y": -170,
       "w": 1440,
-      "page": "hosted",
-      "text": "French locale: where the EN / FR switch lives (A in the user menu / local header, B a chip inside the search field next to the region) and what the page reads like in French — player franglais, second person singular."
+      "text": "French locale: where the EN / FR switch lives (A in the user menu / local header, B a chip inside the search field next to the region) and what the page reads like in French — player franglais, second person singular.",
+      "page": "hosted"
+    },
+    {
+      "id": "me-brief",
+      "x": 0,
+      "y": -190,
+      "w": 1440,
+      "page": "me",
+      "text": "Personal page (self-review spec, decision 8): the member's characters, up to 5, added by hand until Battle.net linking (its own spec). Pick a layout: A list of cards / B table / C main first. All three show the season state, the five pillars of the last 4 weeks, Open (from history at 0 pts, else a lookup with its cost) and Sync (own WCL client when hosted). Details board: empty and full states, inline remove confirmation, local mode, the header link, the user-menu item and the home-page card for the main character, which never starts a lookup by itself."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "axis-explainers"
-  }
+    "page": "me"
+  },
+  "pages": [
+    {
+      "id": "direction-a",
+      "name": "Direction A"
+    },
+    {
+      "id": "iteration-2",
+      "name": "Iteration 2 — key selector & many tabs"
+    },
+    {
+      "id": "explorations",
+      "name": "Explorations"
+    },
+    {
+      "id": "deep-dive",
+      "name": "Deep-dive — defensive cooldowns"
+    },
+    {
+      "id": "axis-explainers",
+      "name": "Axis explainers — what each score measures"
+    },
+    {
+      "id": "hosted",
+      "name": "Hosted — sign-in, user menu, proposals"
+    },
+    {
+      "id": "usage",
+      "name": "Usage — feature tracking dashboard"
+    },
+    {
+      "id": "self-review",
+      "name": "Self-review — pillars, dungeons, runs"
+    },
+    {
+      "id": "me",
+      "name": "Me — my characters (personal page)"
+    }
+  ]
 }

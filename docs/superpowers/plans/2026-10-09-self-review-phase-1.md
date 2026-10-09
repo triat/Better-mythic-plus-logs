@@ -12,6 +12,8 @@
 
 ## Before you start: what the user validates with this plan
 
+Validated by the user on 2026-10-09, as written; Task 19 runs first.
+
 These choices are not in the canvas or were left open by the spec. The plan implements them as written below; the user confirms or changes them before Task 1.
 
 1. **The numbers** in the spec's "Numbers (phase 1)" section (windows, trend band, colour bands, sync batch, retry delay), copied in Global Constraints.

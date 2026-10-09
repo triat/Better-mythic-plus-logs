@@ -111,7 +111,8 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
 8. **A personal page** (user's idea, 2026-10-09): one page that gathers the member's characters, their
    season state (runs found, analysed, last sync) and the sync itself, and opens each character's
    result tabs. It replaces the scattered "My character" chip as the entry point; the result page keeps
-   the "This is me" toggle. Its layout goes through the canvas before any code.
+   the "This is me" toggle. Canvas page "me" (`docs/design/canvas/Me*.dc.html`): variants A list, B table,
+   C main first, published 2026-10-09; the user's choice is pending.
 
 ## Phases
 
@@ -138,8 +139,7 @@ read (0 pts) ──► character_runs + wcl_run_raw ──► per-run signals �
 
 ## Numbers (phase 1)
 
-Proposed with the phase-1 plan (2026-10-09), to be confirmed by the user with it; tests assert them
-literally.
+Confirmed by the user with the phase-1 plan, 2026-10-09; tests assert them literally.
 
 - **Overview window:** the last 4 game weeks (current one included). Needs at least 3 analysed runs;
   below that the Overview uses the lookup's own evaluation (the verdict's runs) and says so.

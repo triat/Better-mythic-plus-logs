@@ -521,7 +521,7 @@ export const en = {
     identityLine: "{identity} — from the \"identify\" scope when you sign in. Nothing else from Discord: no e-mail, no messages, no server list{guild}.",
     identityGuild: " (unless this instance requires membership of one server — then the check reads your server list once at sign-in and keeps nothing)",
     history: "Your lookup history",
-    historyLine: "{history} (the 20 tabs), your settings (your key, legend), your hourly WCL usage, your defensives proposals and the admin's notes on them.",
+    historyLine: "{history} (the 20 tabs), your settings (your key, legend, the characters you marked as yours), your hourly WCL usage, your defensives proposals and the admin's notes on them.",
     client: "Your Warcraft Logs client",
     clientLine: "{client}, if you added one: the client id in clear, the secret encrypted with a key that only this server holds. Verified once on save; used for your lookups only.",
     features: "Which features you use",

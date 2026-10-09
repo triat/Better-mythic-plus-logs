@@ -515,7 +515,7 @@ export const fr: Mirror<typeof en> = {
     identityLine: "{identity} — via le scope « identify » à la connexion. Rien d'autre de Discord : pas d'e-mail, pas de messages, pas de liste de serveurs{guild}.",
     identityGuild: " (sauf si cette instance exige l'appartenance à un serveur — la vérification lit alors ta liste de serveurs une fois à la connexion et ne garde rien)",
     history: "Ton historique de recherches",
-    historyLine: "{history} (les 20 onglets), tes paramètres (ta key, la légende), ton usage WCL horaire, tes propositions de defensives et les notes de l'admin dessus.",
+    historyLine: "{history} (les 20 onglets), tes paramètres (ta key, la légende, les personnages que tu as marqués comme les tiens), ton usage WCL horaire, tes propositions de defensives et les notes de l'admin dessus.",
     client: "Ton client Warcraft Logs",
     clientLine: "{client}, si tu en as ajouté un : l'id du client en clair, le secret chiffré avec une clé que seul ce serveur détient. Vérifié une fois à l'enregistrement ; utilisé pour tes recherches uniquement.",
     features: "Les fonctionnalités que tu utilises",

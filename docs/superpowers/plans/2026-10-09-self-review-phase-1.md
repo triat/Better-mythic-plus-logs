@@ -19,7 +19,7 @@ These choices are not in the canvas or were left open by the spec. The plan impl
 1. **The numbers** in the spec's "Numbers (phase 1)" section (windows, trend band, colour bands, sync batch, retry delay), copied in Global Constraints.
 2. **Where today's verdict block goes.** Canvas A shows the Overview without the radar, the axis rows, the signal tiles and Raider.IO. The plan keeps them: the Overview shows canvas A's content first (work on first, the five pillar cards, the verdict line), then today's `VerdictHero`, `SignalTiles` and `RioSection` unchanged below. Today's "Best run per dungeon" list moves to the Runs tab.
 3. **The Runs tab before a sync** shows today's list (best run per dungeon) and offers the sync; after the season store has runs, it lists every run of the season, newest first.
-4. **The personal page** (spec decision 8) has no canvas yet. Tasks 1 to 18 do not depend on it. Task 19 mocks it on the canvas, the user picks a variant, and Task 20 is written then. This is the only part of the plan written after a later choice, on purpose (the canvas rule in `docs/agents/workflow.md`).
+4. **The personal page** (spec decision 8): mocked in Task 19, variant C ("main first") chosen 2026-10-09, built in Task 20.
 
 ## Global Constraints
 
@@ -2036,8 +2036,8 @@ export type { AbilityDamage, EnemyCast, KillingHit } from "@shared/signals/types
 `web/src/api.ts` (import the new types from `./types.ts`), in the `api` object after `deepdive`:
 
 ```ts
-  season: (q: { name: string; realm: string; region: Region; level: number }) =>
-    call<{ season: SeasonView | null }>(`/api/season?${new URLSearchParams({ name: q.name, realm: q.realm, region: q.region, level: String(q.level) })}`),
+  season: (q: { name: string; realm: string; region: Region; level: number | null }) =>
+    call<{ season: SeasonView | null }>(`/api/season?${new URLSearchParams({ name: q.name, realm: q.realm, region: q.region, ...(q.level !== null ? { level: String(q.level) } : {}) })}`),
   seasonSync: (body: { name: string; realm: string; region: Region; refresh?: boolean }) =>
     call<{ fetched: number; failed: number; state: SyncState; pointsSpent: number; ownClient?: OwnClientView | null }>("/api/season/sync", post(body)),
 ```
@@ -2573,10 +2573,11 @@ export interface WorkOnView {
 const pillarOfSource = (ev: Evaluation, source: string): PillarKey | null =>
   ev.pillars?.find((p) => p.evidence.some((e) => e.source === source))?.key ?? null;
 
-export function workOnRows(t: T, locale: Locale, ev: Evaluation, season: SeasonView | null, titleOf: (source: string) => string): WorkOnView[] {
+/** `ev` is null on the personal page, which has no lookup payload: only the season's window counts there. */
+export function workOnRows(t: T, locale: Locale, ev: Evaluation | null, season: SeasonView | null, titleOf: (source: string) => string): WorkOnView[] {
   const rows: WorkOnRow[] = season?.recent
     ? season.workOn
-    : (ev.drivers ?? []).filter((d) => d.impact < 0).slice(0, 3).map((d) => ({
+    : !ev ? [] : (ev.drivers ?? []).filter((d) => d.impact < 0).slice(0, 3).map((d) => ({
         source: d.source, pillar: pillarOfSource(ev, d.source), impact: d.impact, value: d.value, reference: d.reference, label: d.label, past: null,
       }));
   return rows.map((w, i) => ({
@@ -2835,15 +2836,20 @@ git commit -m "feat(web): self-review styles from the canvas"
 - Create: `web/src/useSeason.ts`, `web/src/components/self/ResultHead.tsx`, `web/src/components/self/SyncCard.tsx`
 
 **Interfaces:**
-- Produces: `SelfActions` (in `ResultHead.tsx`, imported by `Detail.tsx` and `App.tsx`), `useSeason(payload, self): SeasonState`.
+- Produces: `SelfActions` (in `ResultHead.tsx`, imported by `Detail.tsx` and `App.tsx`), `SeasonWho`, `seasonWho(payload)`, `useSeason(who, self, reloadKey?): SeasonState`.
 
 - [ ] **Step 1: `web/src/useSeason.ts`**
 
 ```ts
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
-import type { LookupPayload, SeasonView } from "./types.ts";
+import type { LookupPayload, Region, SeasonView } from "./types.ts";
 import type { SelfActions } from "./components/self/ResultHead.tsx";
+
+/** Whose season: the result page passes the payload's character and target level, the personal page `level: null`. */
+export interface SeasonWho { name: string; realm: string; region: Region; level: number | null }
+export const seasonWho = (p: LookupPayload): SeasonWho =>
+  ({ name: p.character.name, realm: p.character.realmSlug, region: p.character.region, level: p.targetLevel });
 
 export interface SeasonState {
   view: SeasonView | null;
@@ -2859,12 +2865,12 @@ export interface SeasonState {
 }
 
 /**
- * The season of the payload's character (GET /api/season, 0 pts), reloaded whenever the payload object changes —
- * `reloadActive` in App replaces it after a deep-dive. The sync loops one batch per request (decision 3) until
+ * The season of one character (GET /api/season, 0 pts), reloaded when the character or `reloadKey` changes — the
+ * result page passes its payload object, which `reloadActive` in App replaces after a deep-dive. The sync loops one batch per request (decision 3) until
  * nothing is pending, a batch fetches nothing, an error, or Cancel; leaving the page stops it, and the next sync
  * resumes from the cache.
  */
-export function useSeason(payload: LookupPayload, self: SelfActions): SeasonState {
+export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown): SeasonState {
   const [view, setView] = useState<SeasonView | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncOpen, setSyncOpen] = useState(false);
@@ -2872,13 +2878,13 @@ export function useSeason(payload: LookupPayload, self: SelfActions): SeasonStat
   const [progress, setProgress] = useState<SeasonState["progress"]>(null);
   const [error, setError] = useState<string | null>(null);
   const cancelled = useRef(false);
-  const who = { name: payload.character.name, realm: payload.character.realmSlug, region: payload.character.region };
+  const id = `${who.region}|${who.realm}|${who.name}|${who.level ?? ""}`;
 
   const load = useCallback(async () => {
-    const r = await api.season({ ...who, level: payload.targetLevel });
+    const r = await api.season(who);
     if (r.ok) setView(r.season);
     setLoading(false);
-  }, [payload]);
+  }, [id, reloadKey]);
 
   useEffect(() => {
     setLoading(true);
@@ -2897,7 +2903,7 @@ export function useSeason(payload: LookupPayload, self: SelfActions): SeasonStat
     let refresh = true;
     setProgress({ done, total, pts });
     while (!cancelled.current) {
-      const r = await api.seasonSync({ ...who, refresh });
+      const r = await api.seasonSync({ name: who.name, realm: who.realm, region: who.region, refresh });
       refresh = false;
       if (!r.ok) { setError(r.error); break; }
       if (r.ownClient !== undefined) self.setOwnClient(r.ownClient);
@@ -2910,7 +2916,7 @@ export function useSeason(payload: LookupPayload, self: SelfActions): SeasonStat
     }
     setRunning(false);
     setProgress(null);
-  }, [payload, view, load, self]);
+  }, [id, view, load, self]);
 
   return {
     view, loading, syncOpen, running, progress, error, start,
@@ -3390,7 +3396,7 @@ import type { ProposalMode } from "../lib/hostedMode.ts";
 import { RESULT_TABS, type ResultTab } from "../lib/self.ts";
 import { useT } from "../locale.tsx";
 import { track } from "../usage.ts";
-import { useSeason } from "../useSeason.ts";
+import { seasonWho, useSeason } from "../useSeason.ts";
 import { DungeonsTab } from "./self/DungeonsTab.tsx";
 import { Overview } from "./self/Overview.tsx";
 import { ResultHead, type SelfActions } from "./self/ResultHead.tsx";
@@ -3406,7 +3412,7 @@ export function Detail({ payload, hint, onReevaluate, deepdive, self }: DetailPr
   const { t } = useT();
   const [tab, setTab] = useState<ResultTab>("overview");
   const [runsOf, setRunsOf] = useState<number | null>(null);
-  const season = useSeason(payload, self);
+  const season = useSeason(seasonWho(payload), self, payload);
   const pick = (next: ResultTab) => {
     if (next === "dungeons") track("self_tab_dungeons");
     if (next === "runs") track("self_tab_runs");
@@ -3586,16 +3592,578 @@ git commit -m "docs: personal page canvas variants"
 
 ---
 
-### Task 20: The personal page (written once Task 19's choice is made)
+### Task 20: The personal page (canvas variant C, "main first")
 
-What is already fixed, whatever the variant:
-- Route `/me` through `pageOf` (`web/src/lib/hostedMode.ts`), readable in both modes; a header link "My characters" and, hosted, an entry in the user menu.
-- Data: `settings.characters` (Task 9 and 10) for the list; `GET /api/season` per character (0 pts) for the season line and the pillar cells; the history (`GET /api/history`, `api.historyEntry`) to open a character at 0 pts; opening a character absent from history is an explicit lookup click, with its cost stated as the search form does.
-- Adding by hand goes through `toggleMe`'s rules (`MAX_ME = 5`, `source: "manual"`); removing and reordering write `settings.characters`. The first entry is the main character.
-- The home page offers to open the main character (from history at 0 pts); it never starts a lookup by itself.
-- View models in `web/src/lib/me.ts` with `me.test.ts` (English plus one French assertion per prose function); strings under a new `me` section of `en.ts`/`fr.ts`.
+Chosen by the user on 2026-10-09: `docs/design/canvas/MeMainFirst.dc.html` for the page, `MeDetails.dc.html` for the empty and full states, the inline remove confirmation, local mode and the entry points.
 
-This task is written in the same format as Tasks 10–17 (exact code, tests, commands) right after the choice, and appended here before it is executed.
+**Files:**
+- Create: `web/src/lib/me.ts`, `web/src/lib/me.test.ts`, `web/src/components/me/MePage.tsx`, `web/src/components/me/MainCard.tsx`, `web/src/components/me/OtherRow.tsx`, `web/src/components/me/SyncButton.tsx`
+- Modify: `web/src/lib/hostedMode.ts` (`/me`), `web/src/App.tsx` (page, boot, `?open=` / `?q=`), `web/src/components/Header.tsx` (link), `web/src/components/UserMenu.tsx` (item), `web/src/components/Home.tsx` (main card), `web/src/i18n/en.ts`, `web/src/i18n/fr.ts`, `web/src/styles/app.css`, `src/hosted/usage-catalog.ts` (`page_me`)
+- Test: `web/src/lib/me.test.ts`, `web/src/lib/hostedMode.test.ts`
+
+**Interfaces:**
+- Consumes: `Settings.characters` (Task 10), `useSeason` / `SeasonWho` (Task 14), `MAX_ME`, `PILLAR_ORDER`, `scoreBand`, `trendView`, `workOnRows`, `syncCard` (Task 12), `SelfActions` (Task 14).
+- Produces: `Page` gains `"me"`; `slugOf`, `parseEntry`, `addCharacter`, `makeMain`, `removeAt`, `lookupQuery`, `historyKeyFor`, `seasonLine`, `mainPillars`, `rowCells` in `lib/me.ts`.
+
+**Navigation rule (no automatic spending):** pages are full page loads (`pageOf(location.pathname)`). "Open" on `/me` goes to `/?open=<history key>`, which shows that tab from history at 0 pts. "Look up" goes to `/?q=<Name-Realm>&region=<r>`, which only fills the search field and the region chip; the member presses Look up. The boot opens the main character's tab when it is in history, else the most recent tab, as today. The home page (empty history) offers a Look up button for the main character; it runs only on that click.
+
+- [ ] **Step 1: Failing tests**
+
+`web/src/lib/me.test.ts`:
+
+```ts
+import { describe, expect, test } from "bun:test";
+import type { HistoryItem, MyCharacter, SeasonView } from "../types.ts";
+import { fr } from "../i18n/fr.ts";
+import { makeT, tEn } from "../i18n/t.ts";
+import { addCharacter, historyKeyFor, lookupQuery, mainPillars, makeMain, parseEntry, removeAt, rowCells, seasonLine, slugOf } from "./me.ts";
+
+const tFr = makeT(fr, "fr");
+const c = (name: string, realm = "silvermoon", region: MyCharacter["region"] = "eu"): MyCharacter => ({ name, realm, region, source: "manual" });
+
+describe("slugOf (same output as src/util.ts realmToSlug, values captured 2026-10-09)", () => {
+  test("samples", () => {
+    expect(["Silvermoon", "Kel'Thuzad", "Aggra (Português)", "Argent Dawn", "Гордунни", "ArgentDawn", "Pozzo dell'Eternità"].map(slugOf))
+      .toEqual(["silvermoon", "kelthuzad", "aggra-portugues", "argent-dawn", "гордунни", "argent-dawn", "pozzo-delleternita"]);
+  });
+});
+
+describe("parseEntry", () => {
+  test("Name-Realm with the region chip, or a Raider.IO URL with its own region", () => {
+    expect(parseEntry("muleyoxo-Silvermoon", "eu")).toEqual(c("Muleyoxo"));
+    expect(parseEntry("Noshiidk-Argent Dawn", "us")).toEqual(c("Noshiidk", "argent-dawn", "us"));
+    expect(parseEntry("https://raider.io/characters/eu/draenor/Noshiidk", "us")).toEqual(c("Noshiidk", "draenor", "eu"));
+    expect(parseEntry("nope", "eu")).toBeNull();
+    expect(parseEntry("A1-Silvermoon", "eu")).toBeNull();
+  });
+});
+
+describe("list edits", () => {
+  test("add: duplicate, full, ok; make main; remove", () => {
+    expect(addCharacter([c("Muleyoxo")], c("muleyoxo"))).toEqual({ ok: false, error: "duplicate" });
+    expect(addCharacter(["Aa", "Bb", "Cc", "Dd", "Ee"].map((n) => c(n)), c("Ff"))).toEqual({ ok: false, error: "full" });
+    expect(addCharacter([c("Aa")], c("Bb"))).toEqual({ ok: true, list: [c("Aa"), c("Bb")] });
+    expect(makeMain([c("Aa"), c("Bb"), c("Cc")], 2)).toEqual([c("Cc"), c("Aa"), c("Bb")]);
+    expect(removeAt([c("Aa"), c("Bb")], 0)).toEqual([c("Bb")]);
+  });
+});
+
+describe("history", () => {
+  const item = (key: string, character: string, region: MyCharacter["region"] = "eu") =>
+    ({ key, label: character, request: { character, level: null, spec: null, metric: null, region } }) as unknown as HistoryItem;
+  test("the most recent matching tab, by Name-Realm or Raider.IO URL, region included", () => {
+    const items = [item("k1", "Other-Hyjal"), item("k2", "https://raider.io/characters/eu/argent-dawn/Noshiidk"), item("k3", "noshiidk-Argent Dawn")];
+    expect(historyKeyFor(items, c("Noshiidk", "argent-dawn"))).toBe("k2");
+    expect(historyKeyFor(items, c("Noshiidk", "argent-dawn", "us"))).toBeNull();
+    expect(lookupQuery(c("Noshiidk", "argent-dawn"))).toBe("Noshiidk-Argent Dawn");
+  });
+});
+
+describe("season figures", () => {
+  const season = {
+    checkedAt: 0, state: { runs: 142, analysed: 24, pending: 118, failed: 0, estimate: 1200 },
+    recent: { runs: 38, global: 60, pillars: [{ key: "damage", score: 68, evidence: [] }, { key: "survival", score: 41, evidence: [] }] },
+    season: null,
+    trends: [{ key: "damage", delta: 6, direction: "up", recentRuns: 5, weekly: [] }],
+  } as unknown as SeasonView;
+  test("season line", () => {
+    expect(seasonLine(tEn, season, 2 * 3_600_000)).toBe("142 runs this season · 118 not analysed · checked 2h ago");
+    expect(seasonLine(tEn, null)).toBe("No season stored yet: open or look it up once");
+    expect(seasonLine(tFr, { ...season, state: { ...season.state, pending: 0, analysed: 142 } }, 2 * 3_600_000)).toContain("tous analysés");
+  });
+  test("pillars of the main card and cells of a row", () => {
+    expect(mainPillars(tEn, season).slice(0, 2).map((p) => [p.title, p.score, p.band, p.trend.text]))
+      .toEqual([["Damage", "68", "mid", "↗ +6"], ["Survival", "41", "bad", "not enough runs for a trend (0 recently)"]]);
+    expect(rowCells(season).map((x) => x.text)).toEqual(["68", "41", "—", "—", "—"]);
+    expect(rowCells(null).every((x) => x.band === "na")).toBe(true);
+  });
+});
+```
+
+(`fmtAge`'s English output for 2 hours is whatever `common.age` says; if it is not `2h ago`, use its real text in the assertion.)
+
+In `web/src/lib/hostedMode.test.ts`, the `pageOf` test gains `expect(pageOf("/me")).toBe("me");`.
+
+- [ ] **Step 2: Run, expect failure** — `bun test web/src/lib/me.test.ts web/src/lib/hostedMode.test.ts` → FAIL.
+
+- [ ] **Step 3: Strings** — `en.ts`, new section `me`, plus `header.me: "My characters"`, `header.meCount: "My characters · {n}"`:
+
+```ts
+  me: {
+    title: "My characters",
+    sub: "the first one is your main · up to {max} · added by hand until Battle.net linking",
+    count: "{n} of {max}",
+    main: "main",
+    makeMain: "make main",
+    remove: "Remove",
+    keep: "Keep",
+    removeConfirm: "Remove {name} from your characters? Its cached runs stay; only the link to you goes.",
+    others: "other characters",
+    season: "season",
+    open: "Open",
+    openName: "Open {name}",
+    fromHistory: "from history · 0 pts",
+    lookUp: "Look up",
+    notInHistory: "not in history: a lookup spends points",
+    workOnFirst: "work on first",
+    syncCost: "{start} · ~{pts} pts",
+    upToDate: "season up to date",
+    lookupFirst: "look it up once to list its season",
+    addPlaceholder: "Name-Realm or Raider.IO URL",
+    add: "Add",
+    addHint: "or press “This is me” on a result page",
+    full: "{max} of {max} · remove one to add another",
+    invalid: "Use Name-Realm or a Raider.IO character link",
+    duplicate: "Already in your list",
+    empty: "Add the characters you play to follow their season: pillars, trends and the points to work on.",
+    localNote: "saved in this browser only · sync costs points on the Warcraft Logs client of this bmpl (the .env file)",
+    bnet: "Link your Battle.net account: coming next. It will import your characters and replace adding them by hand.",
+    seasonLine: "{runs, plural, one {# run this season} other {# runs this season}}{state}{checked}",
+    notAnalysed: " · {n} not analysed",
+    allAnalysed: " · all analysed",
+    checked: " · checked {age}",
+    noSeason: "No season stored yet: open or look it up once",
+    homeLookUp: "Look up {name}",
+  },
+```
+
+`fr.ts`:
+
+```ts
+  me: {
+    title: "Mes personnages",
+    sub: "le premier est ton principal · {max} au plus · ajoutés à la main jusqu'à la liaison Battle.net",
+    count: "{n} sur {max}",
+    main: "principal",
+    makeMain: "en faire le principal",
+    remove: "Retirer",
+    keep: "Garder",
+    removeConfirm: "Retirer {name} de tes personnages ? Ses runs en cache restent ; seul le lien avec toi disparaît.",
+    others: "autres personnages",
+    season: "saison",
+    open: "Ouvrir",
+    openName: "Ouvrir {name}",
+    fromHistory: "depuis l'historique · 0 pt",
+    lookUp: "Rechercher",
+    notInHistory: "absent de l'historique : une recherche dépense des points",
+    workOnFirst: "à travailler en premier",
+    syncCost: "{start} · ~{pts} pts",
+    upToDate: "saison à jour",
+    lookupFirst: "recherche-le une fois pour lister sa saison",
+    addPlaceholder: "Nom-Royaume ou lien Raider.IO",
+    add: "Ajouter",
+    addHint: "ou appuie sur « C'est moi » sur une page de résultat",
+    full: "{max} sur {max} · retire un personnage pour en ajouter un",
+    invalid: "Utilise Nom-Royaume ou un lien de personnage Raider.IO",
+    duplicate: "Déjà dans ta liste",
+    empty: "Ajoute les personnages que tu joues pour suivre leur saison : piliers, tendances et points à travailler.",
+    localNote: "enregistré dans ce navigateur seulement · la synchro dépense des points sur le client Warcraft Logs de ce bmpl (le fichier .env)",
+    bnet: "Lier ton compte Battle.net : bientôt. Cela importera tes personnages et remplacera l'ajout à la main.",
+    seasonLine: "{runs, plural, one {# run cette saison} other {# runs cette saison}}{state}{checked}",
+    notAnalysed: " · {n} non analysés",
+    allAnalysed: " · tous analysés",
+    checked: " · vérifié {age}",
+    noSeason: "Aucune saison enregistrée : ouvre-le ou recherche-le une fois",
+    homeLookUp: "Rechercher {name}",
+  },
+```
+
+and `header.me: "Mes personnages"`, `header.meCount: "Mes personnages · {n}"`.
+
+- [ ] **Step 4: `web/src/lib/me.ts`**
+
+```ts
+// The personal page (self-review spec, decision 8; canvas MeMainFirst, variant C). Pure: no React, no fetch.
+import type { HistoryItem, MyCharacter, PillarKey, Region, SeasonView } from "../types.ts";
+import type { T } from "../i18n/t.ts";
+import { fmtAge, realmName } from "./format.ts";
+import { isRegion } from "./regions.ts";
+import { MAX_ME, PILLAR_ORDER, scoreBand, trendView, type Band, type TrendView } from "./self.ts";
+
+// The front's copy of src/util.ts realmToSlug (runtime code from src/ cannot be imported here); me.test.ts pins the
+// two on the same samples.
+const stripLatinDiacritics = (s: string): string =>
+  [...s].map((ch) => {
+    const dec = ch.normalize("NFKD");
+    return /^[a-z0-9]/.test(dec) ? dec.replace(/[̀-ͯ]/g, "") : ch;
+  }).join("");
+export const slugOf = (realm: string): string =>
+  stripLatinDiacritics(realm.trim().replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase())
+    .replace(/['‘’ʼ]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+
+const NAME = /^\p{L}{2,32}$/u;
+const RIO = /raider\.io\/characters\/([a-z]{2})\/([^/?#]+)\/([^/?#]+)/i;
+const sameId = (a: MyCharacter, b: MyCharacter): boolean =>
+  a.region === b.region && a.realm.toLowerCase() === b.realm.toLowerCase() && a.name.toLowerCase() === b.name.toLowerCase();
+
+function make(name: string, realm: string, region: Region): MyCharacter | null {
+  const n = name.trim();
+  const slug = slugOf(realm);
+  if (!NAME.test(n) || slug.length < 2 || slug.length > 32) return null;
+  return { name: n[0]!.toLocaleUpperCase() + n.slice(1).toLocaleLowerCase(), realm: slug, region, source: "manual" };
+}
+
+/** "Name-Realm" (the region chip's region) or a Raider.IO character link (its own region). */
+export function parseEntry(raw: string, region: Region): MyCharacter | null {
+  const s = raw.trim();
+  const m = RIO.exec(s);
+  if (m) {
+    const r = m[1]!.toLowerCase();
+    return isRegion(r) ? make(decodeURIComponent(m[3]!), decodeURIComponent(m[2]!), r) : null;
+  }
+  const i = s.lastIndexOf("-");
+  return i <= 0 || i === s.length - 1 ? null : make(s.slice(0, i), s.slice(i + 1), region);
+}
+
+export function addCharacter(list: MyCharacter[], c: MyCharacter): { ok: true; list: MyCharacter[] } | { ok: false; error: "duplicate" | "full" } {
+  if (list.some((x) => sameId(x, c))) return { ok: false, error: "duplicate" };
+  if (list.length >= MAX_ME) return { ok: false, error: "full" };
+  return { ok: true, list: [...list, c] };
+}
+export const makeMain = (list: MyCharacter[], i: number): MyCharacter[] => [list[i]!, ...list.filter((_, j) => j !== i)];
+export const removeAt = (list: MyCharacter[], i: number): MyCharacter[] => list.filter((_, j) => j !== i);
+
+/** What the search field gets: the display realm, so the server's last-dash split keeps a multi-word realm whole. */
+export const lookupQuery = (c: MyCharacter): string => `${c.name}-${realmName(c.realm)}`;
+
+/** The most recent history tab for the character (history is newest first), by Name-Realm or Raider.IO link. */
+export function historyKeyFor(items: HistoryItem[], c: MyCharacter): string | null {
+  for (const it of items) {
+    if (it.request.region !== c.region) continue;
+    const raw = it.request.character.trim();
+    const m = RIO.exec(raw);
+    const found = m ? make(decodeURIComponent(m[3]!), decodeURIComponent(m[2]!), c.region) : parseEntry(raw, c.region);
+    if (found && sameId(found, c)) return it.key;
+  }
+  return null;
+}
+
+export function seasonLine(t: T, season: SeasonView | null, now = Date.now()): string {
+  if (!season) return t("me.noSeason");
+  const s = season.state;
+  return t("me.seasonLine", {
+    runs: s.runs,
+    state: s.pending > 0 ? t("me.notAnalysed", { n: s.pending }) : t("me.allAnalysed"),
+    checked: season.checkedAt !== null ? t("me.checked", { age: fmtAge(t, season.checkedAt, now) }) : "",
+  });
+}
+
+const pillarsOf = (season: SeasonView | null) => season?.recent?.pillars ?? season?.season?.pillars ?? [];
+
+export interface MainPillar { key: PillarKey; title: string; score: string; band: Band; trend: TrendView }
+
+/** The main card's five tiles: the 4-week window when there is one, else the whole season. */
+export const mainPillars = (t: T, season: SeasonView | null): MainPillar[] =>
+  PILLAR_ORDER.map((key) => {
+    const s = pillarsOf(season).find((p) => p.key === key)?.score ?? null;
+    return {
+      key,
+      title: t(`self.pillars.${key}`),
+      score: s === null ? t("self.pillar.na") : String(s),
+      band: scoreBand(s),
+      trend: key === "control" && s === null ? { text: t("self.pillar.controlNote"), cls: "faint" } : trendView(t, season?.trends.find((x) => x.key === key)),
+    };
+  });
+
+/** An other character's five small cells; "—" until a season is stored or a pillar has data. */
+export const rowCells = (season: SeasonView | null): { text: string; band: Band }[] =>
+  PILLAR_ORDER.map((key) => {
+    const s = pillarsOf(season).find((p) => p.key === key)?.score ?? null;
+    return { text: s === null ? "—" : String(s), band: scoreBand(s) };
+  });
+```
+
+The `"—"` is a glyph, not copy.
+
+- [ ] **Step 5: `/me` in the page table** — `web/src/lib/hostedMode.ts`: `Page` gains `| "me"`; `PAGES` gains `"/me": "me"`.
+
+- [ ] **Step 6: Components**
+
+`web/src/components/me/SyncButton.tsx` (the sync, in the card or the row; the estimate is on the button, so pressing it is the confirmation):
+
+```tsx
+import { syncCard, syncProgress } from "../../lib/self.ts";
+import { useT } from "../../locale.tsx";
+import type { SeasonState } from "../../useSeason.ts";
+import type { SelfActions } from "../self/ResultHead.tsx";
+
+export function SyncButton({ season, self }: { season: SeasonState; self: SelfActions }) {
+  const { t } = useT();
+  if (season.running && season.progress) return <span className="muted" style={{ fontSize: 12 }}>{syncProgress(t, season.progress)}</span>;
+  const v = syncCard(t, season.view, self.hosted, self.ownClient);
+  if (v.kind === "noClient") return <a href="/settings" style={{ fontSize: 12 }}>{v.link}</a>;
+  if (v.kind === "nothing") return <span className="faint" style={{ fontSize: 12 }}>{t("me.lookupFirst")}</span>;
+  if (v.kind === "done") return <span className="faint" style={{ fontSize: 12 }}>{t("me.upToDate")}</span>;
+  return (
+    <>
+      <button type="button" className="btn btn-sm" onClick={() => void season.start()}>{t("me.syncCost", { start: v.start, pts: season.view!.state.estimate })}</button>
+      {season.error && <span className="tone-bad" style={{ fontSize: 12 }}>{t("self.sync.stopped", { error: season.error })}</span>}
+    </>
+  );
+}
+```
+
+`web/src/components/me/MainCard.tsx`:
+
+```tsx
+import { classHex } from "@shared/wow/classes.ts";
+import type { AxisKey, HistoryItem, MyCharacter } from "../../types.ts";
+import { realmName } from "../../lib/format.ts";
+import { historyKeyFor, lookupQuery, mainPillars, seasonLine } from "../../lib/me.ts";
+import { workOnRows } from "../../lib/self.ts";
+import { useDocs } from "../../docs.tsx";
+import { useT } from "../../locale.tsx";
+import { useSeason } from "../../useSeason.ts";
+import type { SelfActions } from "../self/ResultHead.tsx";
+import { SyncButton } from "./SyncButton.tsx";
+
+/** Canvas MeMainFirst: the main character as a large card (its pillars, trends, first point to work on). */
+export function MainCard({ c, classID, spec, history, self }: { c: MyCharacter; classID: number | null; spec: string | null; history: HistoryItem[]; self: SelfActions }) {
+  const { t, locale } = useT();
+  const { docs } = useDocs();
+  const season = useSeason({ name: c.name, realm: c.realm, region: c.region, level: null }, self);
+  const key = historyKeyFor(history, c);
+  const titleOf = (source: string): string => {
+    const [axis, id] = source.split(".") as [AxisKey, string];
+    return docs?.docs.axes[axis]?.subSignals[id]?.title ?? source;
+  };
+  const first = workOnRows(t, locale, null, season.view, titleOf)[0] ?? null;
+  return (
+    <section className="card me-main">
+      <div className="me-head">
+        <span className="me-name me-name-big" style={{ color: classID !== null ? classHex(classID) : undefined }}>{c.name}</span>
+        <span className="muted">{realmName(c.realm)} · {c.region.toUpperCase()}{spec ? ` · ${spec}` : ""}</span>
+        <span className="me-main-badge">{t("me.main")}</span>
+        <div className="grow" />
+        <span className="muted" style={{ fontSize: 12 }}>{seasonLine(t, season.view)}</span>
+      </div>
+      <div className="me-tiles">
+        {mainPillars(t, season.view).map((p) => (
+          <div key={p.key} className="inset me-tile">
+            <span className="label-caps">{p.title}</span>
+            <span className={"pillar-score band-" + p.band} style={{ fontSize: 24 }}>{p.score}</span>
+            <span className={"pillar-trend " + p.trend.cls}>{p.trend.text}</span>
+          </div>
+        ))}
+      </div>
+      {first && (
+        <div className="me-work">
+          <span className="label-caps">{t("me.workOnFirst")}</span>
+          <b>{first.title}</b>
+          <span className="faint">{first.pillar && <>· {first.pillar} </>}· {first.detail}</span>
+          <span className="tone-bad">{first.impact}</span>
+          <span className={first.past.cls}>{first.past.text}</span>
+        </div>
+      )}
+      <div className="me-actions">
+        {key ? (
+          <><a className="btn btn-sm btn-primary" href={`/?open=${encodeURIComponent(key)}`}>{t("me.openName", { name: c.name })}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.fromHistory")}</span></>
+        ) : (
+          <><a className="btn btn-sm" href={`/?q=${encodeURIComponent(lookupQuery(c))}&region=${c.region}`}>{t("me.lookUp")}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.notInHistory")}</span></>
+        )}
+        <SyncButton season={season} self={self} />
+      </div>
+    </section>
+  );
+}
+```
+
+`web/src/components/me/OtherRow.tsx`:
+
+```tsx
+import { classHex } from "@shared/wow/classes.ts";
+import type { HistoryItem, MyCharacter } from "../../types.ts";
+import { realmName } from "../../lib/format.ts";
+import { historyKeyFor, lookupQuery, rowCells, seasonLine } from "../../lib/me.ts";
+import { useT } from "../../locale.tsx";
+import { useSeason } from "../../useSeason.ts";
+import type { SelfActions } from "../self/ResultHead.tsx";
+import { SyncButton } from "./SyncButton.tsx";
+
+/** Canvas MeMainFirst, "other characters": one compact row each. */
+export function OtherRow({ c, classID, history, self, onMakeMain, onRemove }: {
+  c: MyCharacter; classID: number | null; history: HistoryItem[]; self: SelfActions; onMakeMain: () => void; onRemove: () => void;
+}) {
+  const { t } = useT();
+  const season = useSeason({ name: c.name, realm: c.realm, region: c.region, level: null }, self);
+  const key = historyKeyFor(history, c);
+  return (
+    <div className="inset me-row">
+      <span><b style={{ color: classID !== null ? classHex(classID) : undefined }}>{c.name}</b> <span className="muted" style={{ fontSize: 12 }}>{realmName(c.realm)} · {c.region.toUpperCase()}</span></span>
+      <span className="pillar-text" style={{ fontSize: 12 }}>{seasonLine(t, season.view)}</span>
+      <div className="me-cells">{rowCells(season.view).map((x, i) => <span key={i} className={"cell cell-" + x.band}>{x.text}</span>)}</div>
+      <div className="me-actions me-actions-end">
+        {key
+          ? <a className="btn btn-sm btn-primary" href={`/?open=${encodeURIComponent(key)}`} title={t("me.fromHistory")}>{t("me.open")}</a>
+          : <a className="btn btn-sm" href={`/?q=${encodeURIComponent(lookupQuery(c))}&region=${c.region}`} title={t("me.notInHistory")}>{t("me.lookUp")}</a>}
+        <SyncButton season={season} self={self} />
+        <button type="button" className="link-btn" onClick={onMakeMain}>{t("me.makeMain")}</button>
+        <button type="button" className="icon-btn tone-bad" onClick={onRemove} aria-label={t("me.remove")}>×</button>
+      </div>
+    </div>
+  );
+}
+```
+
+`web/src/components/me/MePage.tsx`:
+
+```tsx
+import { useEffect, useState } from "react";
+import type { HistoryItem, MyCharacter, Region } from "../../types.ts";
+import { addCharacter, historyKeyFor, makeMain, parseEntry, removeAt } from "../../lib/me.ts";
+import { MAX_ME, PILLAR_ORDER } from "../../lib/self.ts";
+import { useT } from "../../locale.tsx";
+import { track } from "../../usage.ts";
+import type { SelfActions } from "../self/ResultHead.tsx";
+import { MainCard } from "./MainCard.tsx";
+import { OtherRow } from "./OtherRow.tsx";
+
+/** /me — canvas MeMainFirst (variant C) and MeDetails (empty, full, remove confirmation, local mode). */
+export function MePage({ self, history, region }: { self: SelfActions; history: HistoryItem[]; region: Region }) {
+  const { t } = useT();
+  const [entry, setEntry] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<number | null>(null);
+  useEffect(() => { track("page_me"); }, []);
+  const list = self.characters;
+  // The class colour and spec come from the most recent history tab of that character, when there is one.
+  const known = (c: MyCharacter): HistoryItem | null => {
+    const key = historyKeyFor(history, c);
+    return key ? history.find((h) => h.key === key) ?? null : null;
+  };
+  const add = () => {
+    const c = parseEntry(entry, region);
+    if (!c) { setError(t("me.invalid")); return; }
+    const r = addCharacter(list, c);
+    if (!r.ok) { setError(r.error === "full" ? t("me.full", { max: MAX_ME }) : t("me.duplicate")); return; }
+    self.setCharacters(r.list);
+    setEntry("");
+    setError(null);
+  };
+  const full = list.length >= MAX_ME;
+  return (
+    <div className="me-page">
+      <div className="result-head">
+        <h2>{t("me.title")}</h2>
+        <span className="muted">{t("me.sub", { max: MAX_ME })}</span>
+        <div className="grow" />
+        <span className="muted" style={{ fontSize: 12 }}>{t("me.count", { n: list.length, max: MAX_ME })}</span>
+      </div>
+      {list.length === 0 && <p className="pillar-text">{t("me.empty")}</p>}
+      {list[0] && <MainCard c={list[0]} classID={known(list[0])?.charClass ?? null} spec={known(list[0])?.spec ?? null} history={history} self={self} />}
+      {list.length > 1 && (
+        <section className="card me-others">
+          <div className="me-row label-caps" style={{ padding: "2px 12px" }}>
+            <span>{t("me.others")}</span><span>{t("me.season")}</span>
+            <div className="me-cells">{PILLAR_ORDER.map((k) => <span key={k} style={{ textAlign: "center" }}>{t(`self.pillars.${k}`)}</span>)}</div><span />
+          </div>
+          {list.slice(1).map((c, j) => (
+            removing === j + 1 ? (
+              <div key={`${c.region}|${c.realm}|${c.name}`} className="confirm me-confirm">
+                <span>{t("me.removeConfirm", { name: c.name })}</span>
+                <div className="grow" />
+                <button type="button" className="btn btn-sm btn-danger" onClick={() => { self.setCharacters(removeAt(list, j + 1)); setRemoving(null); }}>{t("me.remove")}</button>
+                <button type="button" className="btn btn-sm" onClick={() => setRemoving(null)}>{t("me.keep")}</button>
+              </div>
+            ) : (
+              <OtherRow
+                key={`${c.region}|${c.realm}|${c.name}`} c={c} classID={known(c)?.charClass ?? null} history={history} self={self}
+                onMakeMain={() => self.setCharacters(makeMain(list, j + 1))} onRemove={() => setRemoving(j + 1)}
+              />
+            )
+          ))}
+        </section>
+      )}
+      <div className="me-add">
+        <input id="me-add" className="me-field" value={entry} disabled={full} placeholder={t("me.addPlaceholder")}
+          onChange={(e) => { setEntry(e.target.value); setError(null); }} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
+        <button type="button" className="btn btn-sm btn-primary" disabled={full || entry.trim() === ""} onClick={add}>{t("me.add")}</button>
+        {full ? <span className="chip chip-warn">{t("me.full", { max: MAX_ME })}</span> : <span className="faint" style={{ fontSize: 12 }}>{error ?? t("me.addHint")}</span>}
+      </div>
+      {!self.hosted && <p className="faint" style={{ fontSize: 12 }}>{t("me.localNote")}</p>}
+      {self.hosted && <div className="me-bnet"><span className="chip">Battle.net</span><span>{t("me.bnet")}</span></div>}
+    </div>
+  );
+}
+```
+
+The main character's remove button is not on the main card (canvas C): to remove the main, make another one main first. "Battle.net" is a brand name, not copy. New entries use the region chip's region (`settings.region ?? status.region`, passed by `App`).
+
+- [ ] **Step 7: Styles** — append to `app.css` (values from `MeMainFirst.dc.html`, tokens only):
+
+```css
+/* Personal page (canvas "me", variant C) */
+.me-page { display: flex; flex-direction: column; gap: 14px; }
+.me-main { display: flex; flex-direction: column; gap: 12px; }
+.me-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.me-name { font-size: 16px; font-weight: 700; }
+.me-name-big { font-size: 20px; }
+.me-main-badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--link); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; line-height: 18px; }
+.me-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.me-tile { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; }
+.me-work { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.me-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.me-actions-end { justify-content: flex-end; }
+.me-others { display: flex; flex-direction: column; gap: 4px; }
+.me-row { display: grid; grid-template-columns: 230px 220px 300px minmax(0, 1fr); gap: 14px; align-items: center; padding: 9px 12px; font-size: 13px; }
+.me-cells { display: grid; grid-template-columns: repeat(5, 56px); gap: 4px; }
+.me-cells .cell { padding: 3px 0; font-size: 13px; }
+.me-confirm { padding: 8px 12px; }
+.me-add { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.me-field { height: 32px; width: 360px; max-width: 100%; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--inset); color: var(--text); font-size: 13px; }
+.me-bnet { display: flex; gap: 10px; align-items: center; font-size: 13px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--muted); }
+.icon-btn { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius); background: transparent; cursor: pointer; }
+@media (max-width: 1100px) {
+  .me-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .me-row { grid-template-columns: minmax(0, 1fr); }
+}
+```
+
+If `.confirm` already exists in `app.css` (hosted confirmations), `.me-confirm` only adds the padding; otherwise give `.me-confirm` `display: flex; gap: 8px; align-items: center; border: 1px solid var(--red-border); background: var(--red-bg); border-radius: var(--radius); font-size: 13px;`.
+
+- [ ] **Step 8: Entry points**
+  - `Header.tsx`: before the Help link, `<a className="chip chip-on" href="/me">{p.meCount > 0 ? t("header.meCount", { n: p.meCount }) : t("header.me")}</a>`; `Props` gains `meCount: number` (App passes `settings.characters.length`).
+  - `UserMenu.tsx`: before the Settings item, `<a className="menu-item" href="/me" role="menuitem">{t("header.me")}</a>`.
+  - `Home.tsx`: props gain `main: { name: string; onLookUp: () => void } | null`; under the hint, when `main` is set: `<div className="card me-head" style={{ marginTop: 12 }}><span className="me-name">{main.name}</span><div className="grow" /><button type="button" className="btn btn-sm" onClick={main.onLookUp}>{t("me.homeLookUp", { name: main.name })}</button></div>` (shown only on an empty history, so the main character is never in it here).
+  - `App.tsx`:
+    - render `{page === "me" && <MePage self={selfActions} history={tabs} region={region} />}` next to the other pages (`region` is the effective region `App` already computes for the search chip);
+    - the boot effect becomes:
+
+```tsx
+  // Boot: history → ?open=<key> when it names a tab, else the main character's tab, else the most recent one (0 pts).
+  // ?q= only fills the search field (and ?region= the chip): a URL never starts a lookup by itself.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q");
+    const r = params.get("region");
+    if (q) setForm((f) => ({ ...f, character: q }));
+    if (r && isRegion(r)) updateSettings({ region: r });
+    if (params.has("open") || q) history.replaceState({}, "", location.pathname);
+    loadHistory().then((items) => {
+      if (page !== "main" || items.length === 0) return;
+      const want = params.get("open");
+      const main = settings.characters[0];
+      const key = (want && items.some((i) => i.key === want) ? want : null) ?? (main ? historyKeyFor(items, main) : null) ?? items[0]!.key;
+      void showTab(key);
+    });
+  }, [loadHistory, showTab]);
+```
+
+    (imports: `historyKeyFor`, `lookupQuery` from `./lib/me.ts`, `isRegion` from `./lib/regions.ts`, `MePage`);
+    - `<Home … main={settings.characters[0] ? { name: settings.characters[0].name, onLookUp: () => void runLookup({ character: lookupQuery(settings.characters[0]!), level: yourKey, spec: null, metric: null, region: settings.characters[0]!.region }, false) } : null} />`;
+    - `<Header … meCount={settings.characters.length} />`.
+  - `src/hosted/usage-catalog.ts`, `// Account` group: `page_me: { category: "account", source: "ui" },`.
+
+- [ ] **Step 9: Run** — `bun test`, both typechecks → PASS. Then the live check of Task 17 Step 5 extended to `/me`: add two characters, make the second main, remove one through the confirmation, Open from history (0 pts, the network tab shows no `/api/lookup`), Look up (fills the field only), the home card on an empty history, local mode's note. Screenshots for the user.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add web/src/lib/me.ts web/src/lib/me.test.ts web/src/lib/hostedMode.ts web/src/lib/hostedMode.test.ts web/src/components/me web/src/components/Header.tsx web/src/components/UserMenu.tsx web/src/components/Home.tsx web/src/App.tsx web/src/i18n/en.ts web/src/i18n/fr.ts web/src/styles/app.css src/hosted/usage-catalog.ts
+git commit -m "feat(web): personal page (canvas variant C)"
+```
 
 ---
 

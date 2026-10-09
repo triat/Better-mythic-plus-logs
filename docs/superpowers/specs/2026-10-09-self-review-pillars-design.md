@@ -112,7 +112,8 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    season state (runs found, analysed, last sync) and the sync itself, and opens each character's
    result tabs. It replaces the scattered "My character" chip as the entry point; the result page keeps
    the "This is me" toggle. Canvas page "me" (`docs/design/canvas/Me*.dc.html`): variants A list, B table,
-   C main first, published 2026-10-09; the user's choice is pending.
+   C main first, published 2026-10-09; variant C chosen 2026-10-09 (the main character as a large card with
+   its pillars, trends and first point to work on; the others as compact rows).
 
 ## Phases
 

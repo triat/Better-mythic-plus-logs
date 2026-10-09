@@ -5,12 +5,39 @@ export interface PeerComparison {
   count: number;
 }
 
+/** One of the last hits of a death (the Deaths entry's `events[]`, up to three, newest first). */
+export interface KillingHit {
+  ability: string | null;
+  abilityId: number | null;
+  amount: number;
+  overkill: number;
+  /** Dealt by the player or an ally (a self-damage trinket, a friendly debuff). */
+  friendly: boolean;
+  instakill: boolean;
+}
+
+/** An avoidable ability that hit the player: WCL lists the top five by damage, the rest is `other`. */
+export interface AbilityDamage { id: number; name: string; total: number }
+
+/** An enemy spell the group interrupted at least once (the Interrupts table lists no other). */
+export interface EnemyCast {
+  id: number;
+  name: string;
+  /** max(spellsBegun, spellsCompleted + spellsInterrupted): channels report 0 begun. */
+  attempts: number;
+  completed: number;
+  interrupted: number;
+  /** Interrupts by this player on that spell. */
+  mine: number;
+}
+
 export interface DeathEvent {
   atMs: number;          // ms since fight start
   cause: string | null;  // top ability in the death window
   source: string | null; // top damage source (NPC name)
   overkill: number;
   inWipe: boolean;       // >= 3 group deaths within ±15 s of this one (self included)
+  killingHits?: KillingHit[]; // newest first; absent on payloads saved before 2026-10
 }
 
 export interface RunSignals {
@@ -32,6 +59,7 @@ export interface RunSignals {
     capacity: number | null;      // fightDuration / kickCooldownS
     usage: number | null;         // count / capacity
     peer: PeerComparison | null;  // peers compared on usage
+    enemyCasts?: EnemyCast[];     // absent without an Interrupts table, and on payloads saved before 2026-10
   };
   dispels: { count: number; available: boolean }; // available=false: the kit has no dispel/purge at all
   avoidableDamage: {
@@ -39,6 +67,8 @@ export interface RunSignals {
     perMinute: number;
     peer: PeerComparison | null;  // on perMinute
     spellCount: number;
+    abilities?: AbilityDamage[];  // the player's top five avoidable abilities
+    other?: number;               // total − Σ abilities (WCL's top-five cap)
   } | null;                       // null = no list for this dungeon
   fightDurationMs: number;
   partial?: boolean;              // fights[0] missing: keystone came from ranking data
@@ -107,6 +137,7 @@ export interface RawDeathEvent {
   absorbed?: number;
   overkill?: number;
   sourceID?: number;
+  sourceIsFriendly?: boolean;
 }
 
 export interface RawTableEntry {
@@ -126,6 +157,12 @@ export interface RawTableEntry {
   // Interrupts/Dispels tables: one entry per spell, with per-player details.
   entries?: RawTableEntry[];
   details?: Array<{ name: string; total?: number }>;
+  // DamageTaken entries: per-ability breakdown (top five).
+  abilities?: Array<{ name: string; guid?: number; total?: number }>;
+  // Interrupts table, per enemy spell.
+  spellsBegun?: number;
+  spellsCompleted?: number;
+  spellsInterrupted?: number;
 }
 
 export interface RawTable {

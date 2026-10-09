@@ -4,9 +4,12 @@ import { kickCooldownFor } from "./kick-cooldowns.ts";
 import { peerComparison } from "./peers.ts";
 import type {
   DeathEvent,
+  EnemyCast,
   GroupRole,
+  KillingHit,
   RawRunReport,
   RawTable,
+  RawTableEntry,
   RunSignals,
 } from "./types.ts";
 
@@ -83,6 +86,32 @@ const detailCountsByName = (table: RawTable | null | undefined, players: Player[
 const toValues = (m: Map<string, number | null>) =>
   [...m.entries()].map(([name, value]) => ({ name, value }));
 
+/** The death's last hits as WCL lists them (newest first, at most three). */
+const killingHitsOf = (raw: RawTableEntry): KillingHit[] =>
+  (raw.events ?? []).slice(0, 3).map((e) => ({
+    ability: e.ability?.name ?? null,
+    abilityId: e.ability?.guid ?? null,
+    amount: e.amount ?? 0,
+    overkill: e.overkill ?? 0,
+    friendly: e.sourceIsFriendly === true,
+    instakill: e.type === "instakill",
+  }));
+
+/** One entry per enemy spell the group interrupted at least once, with the player's own share. */
+const enemyCastsOf = (table: RawTable, characterName: string): EnemyCast[] => {
+  const out: EnemyCast[] = [];
+  for (const outer of table.data?.entries ?? []) {
+    for (const spell of outer.entries ?? []) {
+      if (typeof spell.guid !== "number") continue;
+      const completed = spell.spellsCompleted ?? 0;
+      const interrupted = spell.spellsInterrupted ?? 0;
+      const mine = (spell.details ?? []).filter((d) => d.name === characterName).reduce((s, d) => s + (d.total ?? 0), 0);
+      out.push({ id: spell.guid, name: spell.name, attempts: Math.max(spell.spellsBegun ?? 0, completed + interrupted), completed, interrupted, mine });
+    }
+  }
+  return out;
+};
+
 export function parseRunSignals(
   report: RawRunReport | null | undefined,
   characterName: string,
@@ -153,6 +182,7 @@ export function parseRunSignals(
     peer: report.interrupts
       ? peerComparison(toValues(usageByName), characterName, roleByName, NON_HEALERS)
       : null,
+    ...(report.interrupts ? { enemyCasts: enemyCastsOf(report.interrupts, characterName) } : {}),
   };
 
   // --- dispels ---
@@ -170,11 +200,18 @@ export function parseRunSignals(
       [...totals].map(([n, t]): [string, number | null] => [n, minutes > 0 ? t / minutes : null]),
     );
     const mine = totals.get(characterName) ?? 0;
+    const entry = report.avoidable.data?.entries?.find((e) => e.name === characterName);
+    const abilities = (entry?.abilities ?? [])
+      .filter((a) => typeof a.guid === "number" && typeof a.total === "number")
+      .map((a) => ({ id: a.guid!, name: a.name, total: a.total! }));
+    const listed = abilities.reduce((s, a) => s + a.total, 0);
     avoidableDamage = {
       total: mine,
       perMinute: minutes > 0 ? mine / minutes : 0,
       peer: peerComparison(toValues(perMin), characterName, roleByName, EVERYONE),
       spellCount: list.length,
+      abilities,
+      other: Math.max(0, mine - listed),
     };
   }
 
@@ -193,6 +230,7 @@ export function parseRunSignals(
         source: d.raw.damage?.sources?.[0]?.name ?? null,
         overkill: d.raw.overkill ?? 0,
         inWipe: near >= WIPE_MIN_DEATHS,
+        killingHits: killingHitsOf(d.raw),
       };
     });
 

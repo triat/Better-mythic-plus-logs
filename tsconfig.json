@@ -13,8 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "baseUrl": ".",
-    "paths": { "@shared/*": ["src/*"] }
+    "paths": { "@shared/*": ["./src/*"] }
   },
   "include": ["src/**/*", "test/**/*"]
 }

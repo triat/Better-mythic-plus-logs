@@ -87,7 +87,7 @@
   }
  },
  "control": {
-  "tableVersion": "mn-2.0",
+  "tableVersion": "mn-2.1",
   "pets": [
    {
     "id": 13,

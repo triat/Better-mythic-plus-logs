@@ -6,20 +6,20 @@ const CLASS_KEYS = new Set(Object.values(CLASS_NAMES).map((n) => n.replace(/\s+/
 
 describe("crowd-control table", () => {
   test("version and keys", () => {
-    expect(CC_TABLE.version).toBe("mn-2.0");
+    expect(CC_TABLE.version).toBe("mn-2.1");
     for (const key of Object.keys(CC_TABLE.specs)) {
       const [cls, spec] = key.split(":");
       expect(CLASS_KEYS.has(cls!)).toBe(true);
       expect(spec && spec.length > 0).toBe(true);
     }
   });
-  test("every entry is well-formed; knocks are casts, the rest debuffs", () => {
+  test("every entry is well-formed; only a knock may be a cast (a pull that leaves a debuff stays a debuff)", () => {
     for (const entries of Object.values(CC_TABLE.specs)) {
       for (const e of entries) {
         expect(Number.isInteger(e.id) && e.id > 0).toBe(true);
         expect(e.name.length > 0).toBe(true);
         expect(CC_CATEGORIES).toContain(e.category);
-        expect(e.kind).toBe(e.category === "knock" ? "cast" : "debuff");
+        if (e.category !== "knock") expect(e.kind).toBe("debuff");
       }
     }
   });

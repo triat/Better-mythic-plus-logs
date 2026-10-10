@@ -32,7 +32,8 @@ characters; any other character opens the vetting view the result page had befor
    incapacitating roars), disorient (blinds, dragon's breaths), fear, silence, and knock (knock-backs,
    grips, pulls). Roots and slows are left out: they rarely stop a cast in a key, and almost every spec
    applies one by accident. The first five categories are read as debuffs the player (or their pet)
-   applies to an enemy; knocks leave no debuff and are read as casts.
+   applies to an enemy; knocks leave no debuff and are read as casts (amended after the audit, 2026-10-10: a
+   pull that does leave one, Sigil of Chains, is read as its debuff).
 
 2. **A crowd-control table, versioned season data.** `src/signals/control/cc-mn-2.json`, `version:
    "mn-2.0"`, same shape and keys as the other season tables: per `Class:Spec` or `Class:*`, a list of
@@ -137,6 +138,18 @@ Two cached runs of Noshiidk (Frost Death Knight), about 12 pts in total:
   the Risen Ghoul: `masterData.actors(type: "Pet")` gives its `petOwner` (the death knight).
 - **Area control.** 64 applications of one evoker stun in a run is why decision 5 counts uses, not
   applications: one area stun on many enemies is one use.
+
+## Audit (2026-10-10, plan Task 18)
+
+`scripts/audit-control.ts` on the top 2 runs of every spec in Voidscar Arena: 477 pts. Every spec showed at least
+one entry, except Discipline priests (none on 2 runs). Changes the user approved, table `mn-2.1`: Typhoon's cast id
+is 61391 (132469 never seen); Polymorph 460392 and 391622 and Intimidation 1258508 are grouped with their spell
+(`group`, like Blind's area effect 427773); Silence 15487 (Shadow), Sigil of Chains 204843 (a pull read as its
+debuff) and Dominate Mind 205364 added; Asphyxiate 108194 dropped. Entries no sampled run showed are kept (the
+user's choice: better to have the information when it happens). Not counted: roots and slows (Earthbind, Chains of
+Ice, Frost Nova…), and Death Grip's own debuff 51399 (the cast already counts). The candidates' names came from one
+more pass over the reports' `masterData.abilities` (cost not measured exactly: the WCL hour turned during the run;
+estimated 100 to 200 pts).
 
 ## Error handling
 

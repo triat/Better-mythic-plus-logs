@@ -87,7 +87,7 @@
   }
  },
  "control": {
-  "tableVersion": "mn-2.0",
+  "tableVersion": "mn-2.1",
   "pets": [
    {
     "id": 19,
@@ -588,6 +588,15 @@
     "fight": 3
    },
    {
+    "timestamp": 3894492,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 61391,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
     "timestamp": 3913221,
     "type": "cast",
     "sourceID": 92,
@@ -815,6 +824,15 @@
     "sourceID": 89,
     "targetID": -1,
     "abilityGameID": 102793,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4178419,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 61391,
     "fight": 3,
     "sourceMarker": 6
    },
@@ -1368,6 +1386,14 @@
     "targetMarker": 2
    },
    {
+    "timestamp": 4710573,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 61391,
+    "fight": 3
+   },
+   {
     "timestamp": 4723506,
     "type": "applydebuff",
     "sourceID": 89,
@@ -1462,6 +1488,14 @@
     "fight": 3
    },
    {
+    "timestamp": 4788053,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 61391,
+    "fight": 3
+   },
+   {
     "timestamp": 5083487,
     "type": "applydebuff",
     "sourceID": 87,
@@ -1522,6 +1556,22 @@
     "targetID": 152,
     "targetInstance": 17,
     "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 5380211,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 61391,
+    "fight": 3
+   },
+   {
+    "timestamp": 5453719,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 61391,
     "fight": 3
    },
    {

@@ -173,7 +173,7 @@ export function dungeonPanel(t: T, locale: Locale, row: DungeonRow): PanelView {
     other: d.avoidableOther > 0 ? { pct: pct(locale, share(d.avoidableOther)), width: Math.round(share(d.avoidableOther) * 100) } : null,
     killers: d.killers.map((k) => ({ ability: k.ability, deaths: t("self.panel.deaths", { count: k.deaths }) })),
     casts: d.casts.map((c) => ({ id: c.id, name: c.name, ofText: t("self.panel.castOf", { completed: c.completed, attempts: c.attempts }), mine: c.mine > 0 ? t("self.panel.mine", { n: c.mine }) : "" })),
-    control: d.control.map((c) => ({ id: c.id, name: c.name, uses: t("self.control.uses", { count: c.uses }), enemies: c.category === "knock" ? "" : t("self.control.enemies", { count: c.enemies }) })),
+    control: d.control.map((c) => ({ id: c.id, name: c.name, uses: t("self.control.uses", { count: c.uses }), enemies: c.enemies > 0 ? t("self.control.enemies", { count: c.enemies }) : "" })),
     controlNote: d.controlRuns === 0
       ? t("self.panel.controlNone")
       : t("self.panel.controlOver", { runs: d.controlRuns }) + (row.analysed > d.controlRuns ? t("self.panel.controlMissing", { count: row.analysed - d.controlRuns }) : ""),
@@ -224,7 +224,7 @@ export function controlView(t: T, locale: Locale, c: RunControl | undefined): Co
     const rows = c.spells.filter((s) => s.category === cat).map((s) => ({
       id: s.id, name: s.name, pet: s.pet ? t("self.control.pet") : "",
       uses: t("self.control.uses", { count: s.uses }),
-      enemies: cat === "knock" ? "" : t("self.control.enemies", { count: s.enemies }),
+      enemies: s.enemies > 0 ? t("self.control.enemies", { count: s.enemies }) : "",
     }));
     return rows.length > 0 ? [{ label: t(`self.control.cat.${cat}`), rows }] : [];
   });

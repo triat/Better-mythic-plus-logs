@@ -1,10 +1,9 @@
 {
-  "version": "mn-2.0",
-  "source": "Draft 2026-10-10 from two probed runs and the class kits; validated by scripts/audit-control.ts.",
+  "version": "mn-2.1",
+  "source": "Draft 2026-10-10 from two probed runs and the class kits; audited 2026-10-10 (scripts/audit-control.ts, 40 specs x 2 top runs of Voidscar Arena): Typhoon's cast id fixed, Polymorph and Intimidation variants grouped, Silence, Sigil of Chains and Dominate Mind added, Asphyxiate 108194 dropped (never seen). Entries no sampled run showed are kept by the user's choice.",
   "specs": {
     "DeathKnight:*": [
       { "id": 221562, "name": "Asphyxiate", "category": "stun", "kind": "debuff" },
-      { "id": 108194, "name": "Asphyxiate", "category": "stun", "kind": "debuff" },
       { "id": 207167, "name": "Blinding Sleet", "category": "disorient", "kind": "debuff" },
       { "id": 91800, "name": "Gnaw", "category": "stun", "kind": "debuff", "pet": true },
       { "id": 91797, "name": "Monstrous Blow", "category": "stun", "kind": "debuff", "pet": true },
@@ -16,7 +15,8 @@
       { "id": 211881, "name": "Fel Eruption", "category": "stun", "kind": "debuff" },
       { "id": 217832, "name": "Imprison", "category": "incapacitate", "kind": "debuff" },
       { "id": 207685, "name": "Sigil of Misery", "category": "fear", "kind": "debuff" },
-      { "id": 204490, "name": "Sigil of Silence", "category": "silence", "kind": "debuff" }
+      { "id": 204490, "name": "Sigil of Silence", "category": "silence", "kind": "debuff" },
+      { "id": 204843, "name": "Sigil of Chains", "category": "knock", "kind": "debuff" }
     ],
     "Druid:*": [
       { "id": 99, "name": "Incapacitating Roar", "category": "incapacitate", "kind": "debuff" },
@@ -25,7 +25,7 @@
       { "id": 163505, "name": "Rake", "category": "stun", "kind": "debuff" },
       { "id": 2637, "name": "Hibernate", "category": "incapacitate", "kind": "debuff" },
       { "id": 81261, "name": "Solar Beam", "category": "silence", "kind": "debuff" },
-      { "id": 132469, "name": "Typhoon", "category": "knock", "kind": "cast" },
+      { "id": 61391, "name": "Typhoon", "category": "knock", "kind": "cast" },
       { "id": 102793, "name": "Ursol's Vortex", "category": "knock", "kind": "cast" }
     ],
     "Evoker:*": [
@@ -36,6 +36,7 @@
     ],
     "Hunter:*": [
       { "id": 24394, "name": "Intimidation", "category": "stun", "kind": "debuff" },
+      { "id": 1258508, "name": "Intimidation", "category": "stun", "kind": "debuff", "group": 24394 },
       { "id": 117526, "name": "Binding Shot", "category": "stun", "kind": "debuff" },
       { "id": 3355, "name": "Freezing Trap", "category": "incapacitate", "kind": "debuff" },
       { "id": 213691, "name": "Scatter Shot", "category": "disorient", "kind": "debuff" },
@@ -43,6 +44,8 @@
     ],
     "Mage:*": [
       { "id": 118, "name": "Polymorph", "category": "incapacitate", "kind": "debuff" },
+      { "id": 460392, "name": "Polymorph", "category": "incapacitate", "kind": "debuff", "group": 118 },
+      { "id": 391622, "name": "Polymorph", "category": "incapacitate", "kind": "debuff", "group": 118 },
       { "id": 383121, "name": "Mass Polymorph", "category": "incapacitate", "kind": "debuff" },
       { "id": 82691, "name": "Ring of Frost", "category": "incapacitate", "kind": "debuff" },
       { "id": 31661, "name": "Dragon's Breath", "category": "disorient", "kind": "debuff" },
@@ -66,7 +69,11 @@
       { "id": 64044, "name": "Psychic Horror", "category": "stun", "kind": "debuff" },
       { "id": 200200, "name": "Holy Word: Chastise", "category": "stun", "kind": "debuff" },
       { "id": 200196, "name": "Holy Word: Chastise", "category": "incapacitate", "kind": "debuff" },
-      { "id": 9484, "name": "Shackle Undead", "category": "incapacitate", "kind": "debuff" }
+      { "id": 9484, "name": "Shackle Undead", "category": "incapacitate", "kind": "debuff" },
+      { "id": 205364, "name": "Dominate Mind", "category": "incapacitate", "kind": "debuff" }
+    ],
+    "Priest:Shadow": [
+      { "id": 15487, "name": "Silence", "category": "silence", "kind": "debuff" }
     ],
     "Rogue:*": [
       { "id": 2094, "name": "Blind", "category": "disorient", "kind": "debuff" },

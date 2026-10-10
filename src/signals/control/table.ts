@@ -9,7 +9,7 @@ export interface CcEntry {
   id: number;
   name: string;
   category: CcCategory;
-  /** A knock leaves no debuff: it is read as a cast. */
+  /** A knock usually leaves no debuff and is read as a cast; a pull that leaves one (Sigil of Chains) is a debuff. */
   kind: "debuff" | "cast";
   /** Applied by the player's pet (credited to its owner). */
   pet?: true;

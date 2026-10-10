@@ -1,5 +1,7 @@
 // The five pillars of the self-review (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md): a regrouping
-// of today's sub-signals, scored with today's curves and weights. Nothing here feeds the global score or the verdict.
+// of today's sub-signals, scored with today's curves and weights. Nothing here feeds the global score or the verdict;
+// a `pillarOnly` sub-signal (utility.crowdControl, docs/superpowers/specs/2026-10-10-self-review-control-design.md)
+// exists only here.
 import type { EvidenceSource } from "./axes/index.ts";
 import { PILLAR_KEYS, type AxisScore, type PillarKey, type PillarScore } from "./types.ts";
 
@@ -8,7 +10,7 @@ export const PILLAR_SOURCES: Record<PillarKey, readonly EvidenceSource[]> = {
   survival: ["survival.individualDeaths", "survival.wipeDeaths", "survival.groupDeaths", "survival.defensiveUsage", "survival.avoidableDeaths"],
   avoidable: ["survival.avoidableVsPeers", "survival.dtpsVsPeers"],
   interrupts: ["utility.kicksVsPeers", "utility.kicksAbsolute"],
-  control: ["utility.dispels"],
+  control: ["utility.dispels", "utility.crowdControl"],
 };
 
 /** Shown beside the pillars, never scored into one. */
@@ -23,7 +25,7 @@ export const pillarOf = (source: string): PillarKey | null =>
 
 /** Each pillar's weighted mean of its sub-signals' curve scores: what `scoreAxis` computes over the same sub-signals. */
 export function pillarScores(axes: AxisScore[]): PillarScore[] {
-  const all = axes.flatMap((a) => a.evidence);
+  const all = axes.flatMap((a) => [...a.evidence, ...(a.pillarOnly ?? [])]);
   return PILLAR_KEYS.map((key) => {
     const sources = PILLAR_SOURCES[key] as readonly string[];
     const evidence = all

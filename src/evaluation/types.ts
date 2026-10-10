@@ -23,7 +23,13 @@ export interface Evidence {
   weight?: number;
   score?: number;
 }
-export interface EvidenceExtra { runs?: number; count?: number; total?: number }
+export interface EvidenceExtra {
+  runs?: number;
+  count?: number;
+  total?: number;
+  /** Crowd control's uses per 10 minutes (utility.crowdControl), rounded to 0.1. */
+  rate?: number;
+}
 
 export interface AxisScore {
   key: AxisKey;
@@ -31,6 +37,9 @@ export interface AxisScore {
   confidence: Confidence;
   /** Sorted by |delta| descending. */
   evidence: Evidence[];
+  /** Evidence of the axis' pillar-only sub-signals (delta 0): read by `pillarScores` only, never by the axis score,
+   * the global score, the drivers or the verdict. */
+  pillarOnly?: Evidence[];
 }
 
 /** A pillar: the weighted mean of its sub-signals' curve scores, `null` when none of them has data. */
@@ -84,6 +93,8 @@ export interface Evaluation {
 export interface SubSignalConfig {
   curve: CurvePoints;
   weights: Record<Role, number>;
+  /** Scored for its pillar only: kept out of the axis score, so out of the global score and the verdict. */
+  pillarOnly?: boolean;
 }
 export interface AxisConfig {
   subSignals: Record<string, SubSignalConfig>;

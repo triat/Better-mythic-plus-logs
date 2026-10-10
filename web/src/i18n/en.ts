@@ -250,6 +250,7 @@ export const en = {
       kicksVsPeers: "kicks {value} pts vs peers",
       kicksAbsolute: "{value}% of kick capacity used",
       dispels: "{value} dispels/run",
+      crowdControl: "crowd control {value}% vs spec median ({rate} per 10 min)",
     },
     throughput: {
       medianParse: "median parse {value}%",

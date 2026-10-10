@@ -76,10 +76,13 @@ export function validateConfig(obj: unknown): EvaluationConfig {
     for (const [id, s] of Object.entries(subs as Record<string, unknown>)) {
       const p = `axes.${k}.subSignals.${id}`;
       if (!isObj(s)) fail(p, "must be an object");
-      expectKeys(s as Record<string, unknown>, ["curve", "weights"], p);
+      const so = s as Record<string, unknown>;
+      expectKeys(so, "pillarOnly" in so ? ["curve", "weights", "pillarOnly"] : ["curve", "weights"], p);
+      if ("pillarOnly" in so && typeof so.pillarOnly !== "boolean") fail(`${p}.pillarOnly`, "must be a boolean");
       outSubs[id] = {
-        curve: checkCurve((s as Record<string, unknown>).curve, `${p}.curve`, 0, 100),
-        weights: checkWeights((s as Record<string, unknown>).weights, `${p}.weights`),
+        curve: checkCurve(so.curve, `${p}.curve`, 0, 100),
+        weights: checkWeights(so.weights, `${p}.weights`),
+        ...(so.pillarOnly === true ? { pillarOnly: true } : {}),
       };
     }
     axes[k] = { subSignals: outSubs };

@@ -27,6 +27,7 @@ export const confidenceFor = (runsUsed: number, cfg: EvaluationConfig): Confiden
 export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg: EvaluationConfig, runsUsed: number, override?: Override): AxisScore {
   const conf = cfg.axes[key].subSignals;
   const contributing: { source: string; w: number; s: number; label: string; value: number; extra?: EvidenceExtra }[] = [];
+  const pillarOnly: Evidence[] = [];
   let den = 0;
   for (const sub of subs) {
     const sc = conf[sub.id];
@@ -37,6 +38,11 @@ export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg:
     const x = override?.[source] ?? (sub.x ? sub.x(sub.value) : sub.value);
     const s = curve(x, sc.curve);
     const value = sub.raw ?? sub.value;
+    // Scored for its pillar only (src/evaluation/pillars.ts): never in Σw, so never in the axis score.
+    if (sc.pillarOnly) {
+      pillarOnly.push({ label: sub.label(value), delta: 0, source, value, ...(sub.extra ? { extra: sub.extra } : {}), weight: w, score: s });
+      continue;
+    }
     contributing.push({ source, w, s, label: sub.label(value), value, ...(sub.extra ? { extra: sub.extra } : {}) });
     den += w;
   }
@@ -47,5 +53,8 @@ export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg:
     evidence.push({ label, delta: Math.round(((w * (s - 50)) / den) * 10) / 10, source, value, ...(extra ? { extra } : {}), weight: w, score: s });
   }
   evidence.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
-  return { key, score: den > 0 ? Math.round(num / den) : null, confidence: confidenceFor(runsUsed, cfg), evidence };
+  return {
+    key, score: den > 0 ? Math.round(num / den) : null, confidence: confidenceFor(runsUsed, cfg), evidence,
+    ...(pillarOnly.length > 0 ? { pillarOnly } : {}),
+  };
 }

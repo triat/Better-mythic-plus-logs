@@ -4,7 +4,7 @@ import { scoreAxis } from "../../src/evaluation/axis.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import { evaluate } from "../../src/evaluation/evaluate.ts";
 import { collectInputs } from "../../src/evaluation/inputs.ts";
-import { CONTEXT_SOURCES, PILLAR_SOURCES, pillarOf } from "../../src/evaluation/pillars.ts";
+import { CONTEXT_SOURCES, PILLAR_SOURCES, pillarOf, pillarScores } from "../../src/evaluation/pillars.ts";
 import { PILLAR_KEYS } from "../../src/evaluation/types.ts";
 import { deaths, payloadWith, runWith } from "./helpers.ts";
 
@@ -53,5 +53,40 @@ describe("pillarScores", () => {
     expect(e.weight).toBe(3);
     expect(typeof e.score).toBe("number");
     expect(ev.pillars!.map((x) => x.key)).toEqual(["damage", "survival", "avoidable", "interrupts", "control"]);
+  });
+});
+
+describe("pillar-only sub-signals", () => {
+  test("utility.crowdControl is in the Control pillar and never in the axis score", () => {
+    const cfg = validateConfig(DEFAULT_CONFIG);
+    const subs = [
+      { id: "dispels", value: 10, label: (r: number) => `${r} dispels/run` },
+      { id: "crowdControl", value: 30, label: (r: number) => `crowd control ${r}`, extra: { rate: 4.2 } },
+    ];
+    const withCc = scoreAxis("utility", subs, "dps", cfg, 8);
+    const without = scoreAxis("utility", subs.slice(0, 1), "dps", cfg, 8);
+    expect(withCc.score).toBe(without.score);
+    expect(withCc.evidence).toEqual(without.evidence);
+    expect(withCc.pillarOnly).toEqual([{ label: "crowd control 30", delta: 0, source: "utility.crowdControl", value: 30, extra: { rate: 4.2 }, weight: 2, score: 85 }]);
+    const control = pillarScores([withCc]).find((p) => p.key === "control")!;
+    expect(control.evidence.map((e) => e.source)).toEqual(["utility.dispels", "utility.crowdControl"]);
+    // dispels: weight 1, curve(10) = 85; crowd control: weight 2, curve(30) = 85 → 85.
+    expect(control.score).toBe(85);
+  });
+  test("runs with crowd control: the Control pillar moves, the axes, global and verdict do not", () => {
+    const cfg = validateConfig(DEFAULT_CONFIG);
+    const control = (vsReference: number) => ({ uses: 10, enemies: 12, perTenMin: 4, reference: 4, vsReference, stale: false, spells: [] });
+    const plain = payloadWith([1, 2, 3].map(() => runWith({})));
+    const withCc = payloadWith([-40, -30, -20].map((v) => runWith({ control: control(v) })));
+    const a = evaluate(plain, cfg);
+    const b = evaluate(withCc, cfg);
+    expect(b.axes).toEqual(a.axes.map((x) => (x.key === "utility" ? { ...x, pillarOnly: b.axes.find((y) => y.key === "utility")!.pillarOnly } : x)));
+    expect(b.global).toBe(a.global);
+    expect(b.verdict).toBe(a.verdict);
+    expect(b.drivers).toEqual(a.drivers);
+    const cc = b.pillars!.find((p) => p.key === "control")!.evidence.find((e) => e.source === "utility.crowdControl")!;
+    expect(cc.value).toBe(-30);
+    expect(cc.extra).toEqual({ rate: 4 });
+    expect(cc.label).toBe("crowd control −30% vs spec median (4 per 10 min)");
   });
 });

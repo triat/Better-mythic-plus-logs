@@ -63,6 +63,10 @@ export interface EvalInputs {
     /** Median dispels/run; null when the kit cannot dispel at all. */
     dispels: number | null;
     hasDispel: boolean;
+    /** Median over runs of the % vs the spec's reference (src/signals/control); null without one. Control pillar only. */
+    crowdControl: number | null;
+    /** Median uses per 10 minutes over the same runs, for the label. */
+    controlRate: number | null;
   };
   throughput: { medianParse: number | null; parseAtTarget: number | null };
   consistency: { sample: number; parseSpread: number | null; deathsSpread: number | null; damageSpread: number | null };
@@ -153,6 +157,10 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
   // A kit with no dispel/purge (rogue, warrior, DK) is n/a, not 0 per run.
   const hasDispel = sig.some((s) => s.dispels.available);
   const dispels = hasDispel ? median(sig.map((s) => s.dispels.count)) : null;
+  // Crowd control: each run against the reference of the spec played in it (phase-2 plan, "Before you start" 1).
+  const compared = sig.filter((s) => typeof s.control?.vsReference === "number");
+  const crowdControl = median(compared.map((s) => s.control!.vsReference!));
+  const controlRate = median(compared.map((s) => s.control!.perTenMin));
 
   // --- throughput ---
   // A 0% parse is an unranked log (WCL has not ranked the fight), not a worst-in-bracket run.
@@ -194,7 +202,7 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
       individualDeaths, individualDeathsScaled, wipeDeaths, avoidableVsPeers, dtpsVsPeers, groupDeaths, groupDeathsScaled,
       defensiveUsage, avoidableDeathShare, avoidableDeathsCount: dd.avoidableDeaths, countedDeathsCount: dd.countedDeaths,
     },
-    utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, hasDispel },
+    utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, hasDispel, crowdControl, controlRate },
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },
     preparation: { potions, healthstones, ilvl },

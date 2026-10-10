@@ -58,7 +58,7 @@ describe("GET /api/docs", () => {
     expect(typeof b.defensives.version).toBe("string");
     expect(b.season).toBe(Object.keys(b.config.expectedIlvl).at(-1));
     expect(JSON.stringify(b)).not.toContain(process.env.WCL_CLIENT_ID!);
-    expect(b.pillarSources.control).toEqual(["utility.dispels"]);
+    expect(b.pillarSources.control).toEqual(["utility.dispels", "utility.crowdControl"]);
   });
 
   test("served body equals docsResponse(effective config, false)", async () => {

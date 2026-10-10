@@ -47,6 +47,7 @@ const VALUE_FORMAT: Record<EvidenceSource, ValueFormat> = {
   "utility.kicksVsPeers": signed0,
   "utility.kicksAbsolute": pctFixed,
   "utility.dispels": fixed(1),
+  "utility.crowdControl": signed0,
   "throughput.medianParse": fixed(0),
   "throughput.parseAtTarget": fixed(0),
   "consistency.parseSpread": fixed(0),

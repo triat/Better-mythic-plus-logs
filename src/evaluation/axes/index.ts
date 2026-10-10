@@ -18,7 +18,7 @@ export const scoreAllAxes = (i: EvalInputs, cfg: EvaluationConfig, override?: Ov
 export const EVIDENCE_SOURCES = [
   "survival.individualDeaths", "survival.wipeDeaths", "survival.avoidableVsPeers", "survival.dtpsVsPeers", "survival.groupDeaths",
   "survival.defensiveUsage", "survival.avoidableDeaths",
-  "utility.kicksVsPeers", "utility.kicksAbsolute", "utility.dispels",
+  "utility.kicksVsPeers", "utility.kicksAbsolute", "utility.dispels", "utility.crowdControl",
   "throughput.medianParse", "throughput.parseAtTarget",
   "consistency.parseSpread", "consistency.deathsSpread", "consistency.damageSpread",
   "preparation.potions", "preparation.healthstones", "preparation.ilvlVsLevel",

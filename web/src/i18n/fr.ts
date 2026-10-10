@@ -244,6 +244,7 @@ export const fr: Mirror<typeof en> = {
       kicksVsPeers: "kicks {value} pts vs pairs",
       kicksAbsolute: "{value} % de la capacité de kick utilisée",
       dispels: "{value} dispels / run",
+      crowdControl: "contrôle {value} % vs médiane de la spé ({rate} / 10 min)",
     },
     throughput: {
       medianParse: "parse médian {value} %",

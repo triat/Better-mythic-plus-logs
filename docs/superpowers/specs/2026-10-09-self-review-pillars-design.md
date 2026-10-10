@@ -126,7 +126,8 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    casts that went through). No new WCL query type.
 2. **Control.** A crowd-control spell table per class/spec (versioned season data like
    `defensives.json`, validated with an audit script), one more WCL query per run, and the Control
-   pillar's CC sub-signals. Needs its own spec for the curves.
+   pillar's CC sub-signals. Own spec: `docs/superpowers/specs/2026-10-10-self-review-control-design.md`
+   (implemented 2026-10-10, audit and reference pending).
 3. **Useful damage.** Damage done per target and a priority-target list per dungeon (season data like
    the avoidable list). The hardest part: the definition of "useful" must be agreed per dungeon before
    any code. Needs its own spec.

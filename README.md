@@ -48,9 +48,11 @@ damage they ate, how many interrupts they landed against how many they could hav
 
 <img src="docs/images/runs.png" alt="Per-run detail: deaths, damage taken versus peers, avoidable damage, interrupts, dispels and consumables for each dungeon" width="860">
 
-A result has three tabs — Overview, Dungeons, Runs — and a **Sync season** button that fetches the rest of the
-season's logs (on your own Warcraft Logs client) for five pillars, weekly trends and the points to work
-on; mark the characters you play to follow them on [My characters](https://bmpl.riat.dev/me).
+Mark the characters you play ("This is me") to follow them on [My characters](https://bmpl.riat.dev/me).
+Your own characters open three tabs — Overview, Dungeons, Runs — and a **Sync season** button that fetches
+the rest of the season's logs (on your own Warcraft Logs client) for five pillars, weekly trends, the points
+to work on and the crowd control you land. Anyone else opens the vetting view: the verdict, the signals, the
+runs and Raider.IO.
 
 Every number has a **?** next to it that opens the [Help page](https://bmpl.riat.dev/help), which
 explains that number with the thresholds your instance actually uses.

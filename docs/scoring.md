@@ -100,6 +100,26 @@ bmpl evaluate saved.json          # human-readable verdict block
 bmpl evaluate saved.json --json   # structured output
 ```
 
+## Self-review pillars and crowd control
+
+The self-review tabs (your own characters only, see [My characters](hosted.md)) regroup the same sub-signals
+into five pillars: Damage, Survival, Avoidable damage, Interrupts and Control. A pillar's score is the weighted
+mean of its sub-signals with the curves and weights above; it never changes the verdict.
+
+The Control pillar holds dispels and **crowd control**: the stuns, incapacitates, disorients, fears, silences
+and knocks (knock-backs, grips, pulls) the player or their pet landed on enemies. Roots and slows do not count.
+Per run, applications of one spell within 1 s are one use (an area stun on eight enemies is one use, eight
+enemies); bmpl takes the uses per 10 minutes of key and compares them with the median of ranked players of the
+same spec at +15 to +20, in percent. The character's value is the median of those percentages over the runs.
+It is `n/a` when no run was measured, when the spec's reference has fewer than 20 sampled players, or when its
+median is under 0.5 use per 10 minutes (no real kit).
+
+Crowd control is scored **for the pillar only** (`pillarOnly: true` in `default-config.json`): it is kept out of
+the Utility axis, the global score and the verdict. It is measured only for your own characters, from one more
+Warcraft Logs query per run (about 3 points). The list of spells is season data,
+`src/signals/control/cc-mn-2.json`, validated with `scripts/audit-control.ts`; the reference is
+`src/signals/control/reference-mn-2.json`, collected with `scripts/calibration/control.ts`.
+
 ## API cost
 
 Measured 2026-10-09: the rankings query costs 21 pts, one run's `report.table`
@@ -119,14 +139,19 @@ enrichment 7.3–7.9 pts. Before spending, bmpl checks against its estimates
   rankings listed (the self-review's season store), at no extra cost — unless
   the metric was forced (`--metric`), so stored parses stay on the
   auto-selected one.
+- A web lookup of one of your own characters (in My characters) also fetches
+  the crowd control of each displayed run that lacks it: ~3 pts per run, once
+  ever. A lookup of anyone else costs exactly the above.
 - `mplus`: ~20 pts per character (no enrichment; unchanged)
 - `analyze`: ~3 pts per run, once ever (cached forever); re-opening tabs or
   correcting the table costs 0
-- Season sync (the web UI's **Sync season**, `POST /api/season/sync`): the
-  rankings (~20 pts, on the first batch) plus ~8 pts per run whose log is not
-  cached yet, in batches of 10 runs, newest first; the estimate (20 + 10 per
-  pending run) is shown before anything is spent. A batch refuses to start
-  under 20 + 10 per run of the batch left on the client, the rankings under
-  20 + 20. On a hosted instance it runs only on the member's own Warcraft Logs
-  client. Opening the season views costs 0.
+- Season sync (the web UI's **Sync season**, `POST /api/season/sync`), for
+  your own characters only: the rankings (~20 pts, on the first batch) plus
+  ~8 pts per run whose log is not cached yet and ~3 pts per run without crowd
+  control, in batches of 10 runs, newest first; the estimate (20 + 10 per run
+  not analysed + 3 per run without crowd control) is shown before anything is
+  spent. A batch refuses to start under 20 + the batch's estimate left on the
+  client, the rankings under 20 + 20. On a hosted instance it runs only on the
+  member's own Warcraft Logs client, and only for a character in their list.
+  Opening the season views costs 0.
 - 3600 pts/hr → ~40 fully-uncached lookups/hr, or ~170/hr once runs are cached

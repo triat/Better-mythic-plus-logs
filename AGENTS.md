@@ -80,5 +80,10 @@ sign-up since 2026-09-24. Self-review phase 1 is implemented (spec
 `docs/superpowers/specs/2026-10-09-self-review-pillars-design.md`): five pillars over the evaluation's
 evidence, the `character_runs` season store filled by lookups at 0 pts, the season sync (own WCL
 client when hosted), the result page's three tabs (Overview, Dungeons, Runs) and the personal page `/me`.
-Next: phases 2 and 3 and Battle.net linking (own specs), WCL items in issue #24. Unscheduled ideas live
+Self-review phase 2 is implemented except its two point-spending steps (spec
+`docs/superpowers/specs/2026-10-10-self-review-control-design.md`, plan
+`docs/superpowers/plans/2026-10-10-self-review-phase-2.md`, Tasks 18–19: the table audit and the per-spec
+reference): crowd control in the Control pillar only (`pillarOnly`, never the verdict), `wcl_run_control`,
+fetched only for the member's own characters, and the vetting view for everyone else. Next: phase 3 and
+Battle.net linking (own specs), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

@@ -1,6 +1,8 @@
 # Self-review phase 2: crowd control, and the owner's view — design
 
-Status: approved 2026-10-10; canvas variants chosen 2026-10-10 (decision 8). Parent spec:
+Status: approved 2026-10-10; canvas variants chosen 2026-10-10 (decision 8); implemented 2026-10-10 (plan
+`docs/superpowers/plans/2026-10-10-self-review-phase-2.md`) except the table audit and the reference
+collection, which spend points and wait for the user (plan Tasks 18–19). Parent spec:
 `docs/superpowers/specs/2026-10-09-self-review-pillars-design.md` (phase 2 of its "Phases"). Probes of
 2026-10-10 on two cached runs (section "Data notes") cost about 12 pts.
 

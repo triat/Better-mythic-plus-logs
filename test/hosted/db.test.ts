@@ -139,7 +139,7 @@ test("user_settings is migrated in place: region and locale appear on a pre-regi
   expect(columns).toContain("live_roles");
   expect(columns).toContain("live_classes");
   const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
-  expect(db.settings.get(u.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [] });
+  expect(db.settings.get(u.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] });
   expect(db.settings.update(u.id, { region: "tw" }, 2000)).toMatchObject({ yourKey: null, legendOpen: true, region: "tw", locale: null });
   expect(db.settings.update(u.id, { locale: "fr" }, 3000)).toMatchObject({ yourKey: null, legendOpen: true, region: "tw", locale: "fr" });
 });

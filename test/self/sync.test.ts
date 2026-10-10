@@ -1,0 +1,164 @@
+import { describe, expect, test } from "bun:test";
+import type { MPlusData, MPlusRun } from "../../src/mplus.ts";
+import { SYNC_RETRY_MS, pendingRows, runSeasonSync, syncBatch, syncState } from "../../src/self/sync.ts";
+import { CC_TABLE } from "../../src/signals/control/table.ts";
+import { openStore } from "../../src/signals/store.ts";
+import { PING_QUERY } from "../../src/wcl/queries.ts";
+
+const key = { region: "eu" as const, realm: "draenor", name: "Noshiidk" };
+const NOW = Date.UTC(2026, 9, 9, 12);
+const run = (i: number): MPlusRun => ({
+  encounterID: 12923, encounterName: "Voidscar Arena", keyLevel: 18, amount: 1000, parsePercent: 50, spec: "Frost",
+  affixes: [], reportCode: `R${i}`, fightID: 1, startTime: i * 1000, score: 400, timed: true, durationMs: 1_700_000,
+});
+
+/**
+ * PING answers from `spent` in order (the last one repeats); report queries answer `{ code }`, null or throw. `calls`
+ * records the run-report queries by code, `controlCalls` the crowd-control ones (an empty page each).
+ */
+function fakeGql(o: { spent?: number[]; missing?: string[]; throwOn?: string[]; missingControl?: string[] } = {}) {
+  const calls: string[] = [];
+  const controlCalls: string[] = [];
+  let ping = 0;
+  const spent = o.spent ?? [0];
+  const gql = async <T,>(q: string, vars?: Record<string, unknown>): Promise<T> => {
+    if (q === PING_QUERY) {
+      const s = spent[Math.min(ping++, spent.length - 1)]!;
+      return { rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: s, pointsResetIn: 1000 } } as T;
+    }
+    const code = String(vars?.code);
+    if (q.includes("ReportRunControl")) {
+      controlCalls.push(code);
+      if (o.throwOn?.includes(code)) throw new Error("boom");
+      return { reportData: { report: o.missingControl?.includes(code) ? null : { masterData: { actors: [] }, cc: { data: [], nextPageTimestamp: null } } } } as T;
+    }
+    calls.push(code);
+    if (o.throwOn?.includes(code)) throw new Error("boom");
+    return { reportData: { report: o.missing?.includes(code) ? null : { code } } } as T;
+  };
+  return { gql, calls, controlCalls };
+}
+
+function seeded(n: number) {
+  const store = openStore(":memory:");
+  store.upsertSeasonRuns(key, 55, "dps", Array.from({ length: n }, (_, i) => run(i + 1)), NOW);
+  return store;
+}
+
+describe("syncState / pendingRows", () => {
+  test("counts and the estimate (rankings + 10 pts per run not analysed + 3 per run without crowd control)", () => {
+    const store = seeded(12);
+    store.putWclRun("R12", 1, { code: "R12" });
+    store.putWclRun("R1", 1, { code: "R1" });
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toEqual({ runs: 12, analysed: 2, pending: 12, controlOnly: 2, failed: 0, estimate: 156 });
+    for (const code of ["R12", "R1"]) store.putRunControl(code, 1, { tableVersion: CC_TABLE.version, pets: [], events: [] });
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toEqual({ runs: 12, analysed: 2, pending: 10, controlOnly: 0, failed: 0, estimate: 150 });
+  });
+  test("a control row from an older table counts as missing", () => {
+    const store = seeded(1);
+    store.putWclRun("R1", 1, { code: "R1" });
+    store.putRunControl("R1", 1, { tableVersion: "mn-1.0", pets: [], events: [] });
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toEqual({ runs: 1, analysed: 1, pending: 1, controlOnly: 1, failed: 0, estimate: 23 });
+  });
+});
+
+describe("syncBatch", () => {
+  test("fetches the 10 newest uncached runs, then the rest", async () => {
+    const store = seeded(12);
+    const f = fakeGql();
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW })).toEqual({ ok: true, fetched: 10, failed: 0 });
+    expect(f.calls).toEqual(["R12", "R11", "R10", "R9", "R8", "R7", "R6", "R5", "R4", "R3"]);
+    expect(f.controlCalls).toEqual(f.calls);
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW })).toEqual({ ok: true, fetched: 2, failed: 0 });
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW })).toEqual({ ok: true, fetched: 0, failed: 0 });
+    expect(f.calls).toHaveLength(12);
+  });
+
+  test("a report WCL does not return is skipped for 24 h, then retried", async () => {
+    const store = seeded(3);
+    await syncBatch(store, key, store.seasonRuns(key, 55), { gql: fakeGql({ missing: ["R3"] }).gql, now: NOW });
+    const rows = store.seasonRuns(key, 55);
+    expect(syncState(store, rows, NOW)).toMatchObject({ analysed: 2, pending: 0, controlOnly: 0, failed: 1 });
+    expect(pendingRows(store, rows, NOW + 3_600_000)).toEqual([]);
+    expect(pendingRows(store, rows, NOW + SYNC_RETRY_MS).map((r) => r.reportCode)).toEqual(["R3"]);
+  });
+
+  test("refuses to start under 20 + 13 pts per run left, spending nothing", async () => {
+    const store = seeded(10);
+    const f = fakeGql({ spent: [3600 - 149] });
+    const out = await syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW });
+    expect(out.ok).toBe(false);
+    expect(f.calls).toEqual([]);
+  });
+
+  test("runs analysed in phase 1 only fetch their crowd control, at 3 pts each", async () => {
+    const store = seeded(3);
+    for (const code of ["R1", "R2", "R3"]) store.putWclRun(code, 1, { code });
+    const tight = fakeGql({ spent: [3600 - 28] });
+    expect((await syncBatch(store, key, store.seasonRuns(key, 55), { gql: tight.gql, now: NOW })).ok).toBe(false);
+    const f = fakeGql({ spent: [3600 - 29] });
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW })).toEqual({ ok: true, fetched: 3, failed: 0 });
+    expect(f.calls).toEqual([]);
+    expect(f.controlCalls).toEqual(["R3", "R2", "R1"]);
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toMatchObject({ pending: 0, controlOnly: 0, estimate: 0 });
+  });
+  test("crowd control WCL does not return marks the run failed for 24 h", async () => {
+    const store = seeded(1);
+    const f = fakeGql({ missingControl: ["R1"] });
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW })).toEqual({ ok: true, fetched: 0, failed: 1 });
+    expect(store.hasWclRun("R1", 1)).toBe(true);
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toMatchObject({ analysed: 1, pending: 0, controlOnly: 0, failed: 1 });
+  });
+  test("crowd control throwing after the raw report was stored keeps the progress and the run pending", async () => {
+    const store = seeded(1);
+    const base = fakeGql();
+    const gql = async <T,>(q: string, vars?: Record<string, unknown>): Promise<T> => {
+      if (q.includes("ReportRunControl")) throw new Error("boom");
+      return base.gql<T>(q, vars);
+    };
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql, now: NOW })).toEqual({ ok: true, fetched: 1, failed: 0 });
+    expect(store.hasWclRun("R1", 1)).toBe(true);
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toMatchObject({ analysed: 1, pending: 1, controlOnly: 1, failed: 0 });
+  });
+  test("a batch where every fetch throws rethrows and marks nothing", async () => {
+    const store = seeded(2);
+    const f = fakeGql({ throwOn: ["R1", "R2"] });
+    await expect(syncBatch(store, key, store.seasonRuns(key, 55), { gql: f.gql, now: NOW })).rejects.toThrow("boom");
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toMatchObject({ pending: 2, controlOnly: 0, failed: 0 });
+  });
+});
+
+describe("runSeasonSync", () => {
+  test("refresh re-reads the rankings, then one batch; points measured by PING", async () => {
+    const store = openStore(":memory:");
+    let fetches = 0;
+    const data = { zoneID: 55, metric: "dps", runs: [run(1), run(2)] } as unknown as MPlusData;
+    const fetchMplus = async () => { fetches++; return data; };
+    const f = fakeGql({ spent: [100, 121, 140] });
+    const out = await runSeasonSync({ name: "Noshiidk", realm: "Draenor", region: "eu", refresh: true }, { store, gql: f.gql, fetchMplus, now: NOW });
+    expect(out).toEqual({ ok: true, fetched: 2, failed: 0, state: { runs: 2, analysed: 2, pending: 0, controlOnly: 0, failed: 0, estimate: 0 }, pointsSpent: 40 });
+    expect(fetches).toBe(1);
+    // Without refresh, a stored season is not fetched again.
+    await runSeasonSync({ name: "Noshiidk", realm: "Draenor", region: "eu" }, { store, gql: f.gql, fetchMplus, now: NOW });
+    expect(fetches).toBe(1);
+  });
+});
+
+describe("runSeasonSync — budget and counter", () => {
+  const data = { zoneID: 55, metric: "dps", runs: [run(1)] } as unknown as MPlusData;
+  test("refuses the rankings under 20 + 20 pts left, before any spend", async () => {
+    const store = openStore(":memory:");
+    let fetches = 0;
+    const out = await runSeasonSync({ name: "Noshiidk", realm: "Draenor", region: "eu", refresh: true },
+      { store, gql: fakeGql({ spent: [3600 - 39] }).gql, fetchMplus: async () => { fetches++; return data; }, now: NOW });
+    expect(out.ok).toBe(false);
+    expect(fetches).toBe(0);
+  });
+  test("a counter that went down means WCL's hour turned: what it shows now was spent", async () => {
+    const store = openStore(":memory:");
+    const out = await runSeasonSync({ name: "Noshiidk", realm: "Draenor", region: "eu", refresh: true },
+      { store, gql: fakeGql({ spent: [3000, 3000, 15] }).gql, fetchMplus: async () => data, now: NOW });
+    expect(out.ok && out.pointsSpent).toBe(15);
+  });
+});
+

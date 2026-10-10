@@ -19,6 +19,11 @@ export type { UiEvent, UsageCategory, UsageEvent, UsageSource } from "@shared/ho
 export type { FeatureTopUser, FeatureUsage, UsagePeriod, UsageReport } from "@shared/hosted/usage-events.ts";
 export type { OwnClientView, OwnClientSnapshot } from "@shared/hosted/wcl-clients.ts";
 export type { AxisKey, AxisScore, Confidence, CurvePoints, Driver, Evaluation, Evidence, NextVerdict, Verdict } from "@shared/evaluation/types.ts";
+export type { PillarKey, PillarScore } from "@shared/evaluation/types.ts";
+export type { DungeonDetails, DungeonRow, PillarRecord, PillarTrend, SeasonRunView, SeasonView, WindowView, WorkOnRow } from "@shared/self/season.ts";
+export type { SyncState } from "@shared/self/sync.ts";
+export type { CharacterSource, MyCharacter } from "@shared/self/characters.ts";
+export type { AbilityDamage, EnemyCast, KillingHit } from "@shared/signals/types.ts";
 export type { Role } from "@shared/evaluation/types.ts";
 export type { EvidenceSource } from "@shared/evaluation/axes/index.ts";
 export type { EvaluationDocs, AxisDoc, SubSignalDoc, ExtraDoc, FaqEntry, SourceDoc, TextBlock } from "@shared/evaluation/docs.ts";
@@ -26,7 +31,8 @@ export type { DocsResponse } from "@shared/server/routes-shared.ts";
 export type { WclClientDoc, LiveAddonDoc } from "@shared/evaluation/docs.ts";
 export type { TextSegment } from "./lib/help.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
-export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
+export type { ControlSpell, RioProfile, RioRun, RunControl, RunSignals } from "@shared/signals/types.ts";
+export type { CcCategory } from "@shared/signals/control/table.ts";
 export type { LiveVerdict } from "@shared/server/routes-live.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";
 export type { Metric } from "@shared/roles.ts";
@@ -62,6 +68,8 @@ export interface LookupRequest {
   /** Lower-case; omitted = the instance default. A pasted Raider.IO URL's own region wins. */
   region?: Region;
   refresh?: boolean;
+  /** One of the member's characters: the lookup also measures crowd control (the server checks it when hosted). */
+  mine?: boolean;
 }
 
 export interface WatchOpts {

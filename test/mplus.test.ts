@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { analyzeLookup, fetchMplusData, inferTargetLevel, isRanked, type MPlusRun } from "../src/mplus.ts";
 import { resetAuthCache } from "../src/wcl/auth.ts";
+import { loadRankingsFixture } from "./fixtures.ts";
 
 let seq = 0;
 const run = (encounterID: number, keyLevel: number, parsePercent: number): MPlusRun => ({
@@ -71,5 +72,37 @@ describe("fetchMplusData with a partial WCL zone answer", () => {
     zone = null;
     const data = await fetchIt();
     expect(data.runs).toEqual([]);
+  });
+});
+
+describe("fetchMplusData — every ranked run, with its result (issue #24 § 1)", () => {
+  const realFetch = globalThis.fetch;
+  const savedEnv = { id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+  beforeEach(async () => {
+    resetAuthCache();
+    process.env.WCL_CLIENT_ID = "bmpl-test";
+    process.env.WCL_CLIENT_SECRET = "bmpl-test";
+    const f = await loadRankingsFixture();
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input).endsWith("/oauth/token")) return Response.json({ access_token: "t", expires_in: 3600, token_type: "bearer" });
+      const body = String(init?.body ?? "");
+      if (body.includes("CharacterMetricProbe")) {
+        return Response.json({ data: { characterData: { character: { id: 1, name: "Noshiidk", classID: 1, dps: f.zoneRankings, hps: null } } } });
+      }
+      return Response.json({ data: { characterData: { character: f.encounterRankings } } });
+    }) as unknown as typeof fetch;
+  });
+  afterEach(() => { globalThis.fetch = realFetch; resetAuthCache(); });
+  afterAll(() => {
+    if (savedEnv.id === undefined) delete process.env.WCL_CLIENT_ID; else process.env.WCL_CLIENT_ID = savedEnv.id;
+    if (savedEnv.secret === undefined) delete process.env.WCL_CLIENT_SECRET; else process.env.WCL_CLIENT_SECRET = savedEnv.secret;
+  });
+
+  test("108 runs, 9 of them depleted, each with its duration", async () => {
+    const data = await fetchMplusData("Noshiidk", "Draenor", { region: "eu", metric: "dps", zone: { id: 55, name: "Mythic+ Season 2", partition: 1 } });
+    expect(data.runs).toHaveLength(108);
+    expect(data.runs.filter((r) => r.timed === false)).toHaveLength(9);
+    const first = data.runs.find((r) => r.reportCode === "jctk4KDHYXT1mb76")!;
+    expect(first).toMatchObject({ keyLevel: 19, timed: true, durationMs: 1761129, startTime: 1791322772832 });
   });
 });

@@ -13,6 +13,11 @@ export type WclFixtureName = keyof typeof WCL_FILES;
 export const loadWclFixture = async (name: WclFixtureName): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, WCL_FILES[name])).text());
 
+// Shape: { character, realm, region, metric, capturedAt, zone, zoneRankings, encounterRankings }.
+// `encounterRankings` is the character object of the multi-encounter query (`e0`…`e7`, byBracket: true).
+export const loadRankingsFixture = async (): Promise<any> =>
+  JSON.parse(await Bun.file(path.join(dir, "wcl-rankings-s2-dps.json")).text());
+
 export const loadRioFixture = async (): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, "rio-profile-muleyoxo.json")).text());
 
@@ -26,3 +31,12 @@ export type DeepdiveFixtureName = keyof typeof DEEPDIVE_FILES;
 // Shape: { character: string; run: MPlusRun; report: RawRunReport; deepdive: RawDeepDive }
 export const loadDeepdiveFixture = async (name: DeepdiveFixtureName): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, DEEPDIVE_FILES[name])).text());
+
+const CONTROL_FILES = {
+  "s2-dk-frost": "wcl-control-s2-dk-frost.json",
+  "s2-second": "wcl-control-s2-second.json",
+} as const;
+export type ControlFixtureName = keyof typeof CONTROL_FILES;
+// Shape: { character: string; report: <raw WCL run report, trimmed to fights + the summary's composition and totalTime>; control: RawRunControl }.
+export const loadControlFixture = async (name: ControlFixtureName): Promise<any> =>
+  JSON.parse(await Bun.file(path.join(dir, CONTROL_FILES[name])).text());

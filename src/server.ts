@@ -76,6 +76,7 @@ function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: nu
   const key = `user:${userId ?? "anonymous"}`;
   if (req.method === "POST" && url.pathname === "/api/lookup") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/deepdive") return { limiter: runtime.limits.deepdive, key };
+  if (req.method === "POST" && url.pathname === "/api/season/sync") return { limiter: runtime.limits.deepdive, key };
   if (req.method === "PUT" && url.pathname === "/api/me/wcl-client") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/me/wcl-client/verify") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/usage/events") return { limiter: runtime.limits.usage, key };
@@ -91,6 +92,7 @@ export function apiEventFor(method: string, path: string): ApiEvent | null {
   if (path.startsWith("/api/history/")) return method === "GET" ? "history_open" : method === "DELETE" ? "history_close" : null;
   switch (`${method} ${path}`) {
     case "DELETE /api/history": return "history_clear";
+    case "GET /api/season": return "season_view";
     case "POST /api/live/cached": return "live_roster";
     case "POST /api/defensives": return "defensives_correction";
     case "PUT /api/settings": return "settings_save";

@@ -65,6 +65,11 @@ describe("parseRunSignals — S1 tank (Biwaadrood, Magisters' Terrace +18)", () 
     expect(s.deaths.groupTotal).toBe(4);
     expect(s.deaths.events[0]).toEqual({
       atMs: 98742, cause: "Holy Fire", source: "Lightward Healer", overkill: 11498, inWipe: false,
+      killingHits: [
+        { ability: "Holy Fire", abilityId: 1255187, amount: 99796, overkill: 11498, friendly: false, instakill: false },
+        { ability: "Holy Fire", abilityId: 1255187, amount: 102686, overkill: 0, friendly: false, instakill: false },
+        { ability: "Holy Fire", abilityId: 1255187, amount: 105729, overkill: 0, friendly: false, instakill: false },
+      ],
     });
     expect(s.deaths.events.map((e) => e.inWipe)).toEqual([false, false, false]);
   });
@@ -152,5 +157,54 @@ describe("parseRunSignals — consumables", () => {
     const fb = { keyLevel: 18, affixes: f.run.affixes, encounterID: f.run.encounterID };
     expect(parseRunSignals(f.report, "Nobody", fb)!.consumables).toBeNull();
     expect(parseRunSignals({ ...f.report, summary: null }, "Biwaadrood", fb)!.consumables).toBeNull();
+  });
+});
+
+describe("parseRunSignals — self-review details (issue #24 § 3)", () => {
+  test("killing hits are the death's events, newest first; cause is unchanged", async () => {
+    const f = await loadWclFixture("s2-healer");
+    const s = parseRunSignals(f.report, "Muleyoxo", fb(f))!;
+    expect(s.deaths.events).toHaveLength(1);
+    const d = s.deaths.events[0]!;
+    expect(d.cause).toBe("Cosmic Crash");
+    expect(d.killingHits).toEqual([
+      { ability: "Unstable Singularity", abilityId: 1264188, amount: 15613, overkill: 18667, friendly: false, instakill: false },
+      { ability: "Unstable Singularity", abilityId: 1264188, amount: 34279, overkill: 0, friendly: false, instakill: false },
+      { ability: "Cosmic Crash", abilityId: 1300372, amount: 56623, overkill: 0, friendly: false, instakill: false },
+    ]);
+  });
+
+  test("a self-inflicted hit is marked friendly", async () => {
+    const f = await loadWclFixture("s2-healer");
+    const s = parseRunSignals(f.report, "Deeprayaa", fb(f))!;
+    expect(s.deaths.events[0]!.killingHits![2]).toEqual(
+      { ability: "Rune of Void-Tainted Shell", abilityId: 1287955, amount: 763, overkill: 0, friendly: true, instakill: false });
+  });
+
+  test("avoidable abilities of the player, the remainder as other", async () => {
+    const f = await loadWclFixture("s2-healer");
+    expect(parseRunSignals(f.report, "Wazocutie", fb(f))!.avoidableDamage).toMatchObject({
+      total: 17051476,
+      abilities: [
+        { id: 1264188, name: "Unstable Singularity", total: 11592618 },
+        { id: 1249712, name: "Venomous Spit", total: 3174069 },
+        { id: 1296963, name: "Umbral Rupture", total: 2284789 },
+      ],
+      other: 0,
+    });
+    // WCL keeps the top five abilities only: anything above their sum is "other".
+    const capped = structuredClone(f.report);
+    const entry = capped.avoidable.data.entries.find((e: { name: string }) => e.name === "Muleyoxo");
+    entry.total += 5000;
+    expect(parseRunSignals(capped, "Muleyoxo", fb(f))!.avoidableDamage!.other).toBe(5000);
+  });
+
+  test("enemy casts: attempts, completions, interrupts, the player's own kicks", async () => {
+    const f = await loadWclFixture("s2-healer");
+    const casts = parseRunSignals(f.report, "Muleyoxo", fb(f))!.interrupts.enemyCasts!;
+    expect(casts).toHaveLength(6);
+    expect(casts[0]).toEqual({ id: 1228176, name: "Lava Bolt", attempts: 40, completed: 11, interrupted: 27, mine: 1 });
+    // A channel: 0 begun, yet completed and interrupted.
+    expect(casts.find((c) => c.id === 1310324)).toEqual({ id: 1310324, name: "Mending Void", attempts: 42, completed: 25, interrupted: 17, mine: 0 });
   });
 });

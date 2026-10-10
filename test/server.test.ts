@@ -94,4 +94,8 @@ describe("createStaticHandler", () => {
     const handler = createStaticHandler(async () => ({ index: "/definitely/missing.html", appJs: "/x.js", appCss: "/x.css", whConfigJs: "/x.js" }));
     expect((await handler("/"))?.status).toBe(503);
   });
+  test("the pages the front resolves from the pathname are static routes (/me included)", async () => {
+    const handler = createStaticHandler(async () => null);
+    for (const p of ["/admin", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
+  });
 });

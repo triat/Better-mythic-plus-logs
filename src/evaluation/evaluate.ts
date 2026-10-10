@@ -3,6 +3,7 @@ import { configVersion } from "./config.ts";
 import { scoreDrivers } from "./drivers.ts";
 import { finalGlobal } from "./global.ts";
 import { collectInputs, type EvalPayload } from "./inputs.ts";
+import { pillarScores } from "./pillars.ts";
 import type { Evaluation, EvaluationConfig, Verdict } from "./types.ts";
 
 export { globalScore, finalGlobal } from "./global.ts";
@@ -33,6 +34,7 @@ export function evaluate(payload: EvalPayload, cfg: EvaluationConfig): Evaluatio
     verdict,
     drivers,
     nextVerdict,
+    pillars: pillarScores(axes),
     runsUsed: inputs.runsUsed,
     analyzedRuns: inputs.analyzedRuns,
     configVersion: configVersion(cfg),

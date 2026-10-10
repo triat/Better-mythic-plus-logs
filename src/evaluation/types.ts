@@ -1,6 +1,9 @@
 export type Role = "dps" | "healer" | "tank";
 export type AxisKey = "survival" | "utility" | "throughput" | "consistency" | "preparation" | "experience";
 export const AXIS_KEYS: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation", "experience"];
+/** The five pillars of the self-review (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md). */
+export type PillarKey = "damage" | "survival" | "avoidable" | "interrupts" | "control";
+export const PILLAR_KEYS: readonly PillarKey[] = ["damage", "survival", "avoidable", "interrupts", "control"];
 export type Verdict = "invite" | "maybe" | "pass" | "insufficient";
 export type Confidence = "high" | "medium" | "low";
 export type CurvePoints = [number, number][];
@@ -15,14 +18,35 @@ export interface Evidence {
   value: number;
   /** Extra numbers a few labels need: analyzed runs (survival.defensiveUsage), death counts (survival.avoidableDeaths). */
   extra?: EvidenceExtra;
+  /** The sub-signal's weight for the role and its curve score (0–100, unrounded), set by `scoreAxis`; the pillars
+   * (src/evaluation/pillars.ts) re-average them. Absent on the previous-season bonus and on payloads saved before. */
+  weight?: number;
+  score?: number;
 }
-export interface EvidenceExtra { runs?: number; count?: number; total?: number }
+export interface EvidenceExtra {
+  runs?: number;
+  count?: number;
+  total?: number;
+  /** Crowd control's uses per 10 minutes (utility.crowdControl), rounded to 0.1. */
+  rate?: number;
+}
 
 export interface AxisScore {
   key: AxisKey;
   score: number | null;
   confidence: Confidence;
   /** Sorted by |delta| descending. */
+  evidence: Evidence[];
+  /** Evidence of the axis' pillar-only sub-signals (delta 0): read by `pillarScores` only, never by the axis score,
+   * the global score, the drivers or the verdict. */
+  pillarOnly?: Evidence[];
+}
+
+/** A pillar: the weighted mean of its sub-signals' curve scores, `null` when none of them has data. */
+export interface PillarScore {
+  key: PillarKey;
+  score: number | null;
+  /** The pillar's evidence, sorted by |delta| descending (deltas stay in their own axis' points). */
   evidence: Evidence[];
 }
 
@@ -62,11 +86,15 @@ export interface Evaluation {
   drivers?: Driver[];
   /** The shortest path of driver sources to the next verdict up; null for INVITE or INSUFFICIENT DATA. */
   nextVerdict?: NextVerdict | null;
+  /** The five pillars, regrouped from `axes` (no effect on `global` or `verdict`); absent on payloads saved before. */
+  pillars?: PillarScore[];
 }
 
 export interface SubSignalConfig {
   curve: CurvePoints;
   weights: Record<Role, number>;
+  /** Scored for its pillar only: kept out of the axis score, so out of the global score and the verdict. */
+  pillarOnly?: boolean;
 }
 export interface AxisConfig {
   subSignals: Record<string, SubSignalConfig>;

@@ -18,6 +18,10 @@ export interface MPlusRun {
   fightID: number;
   startTime: number;
   score: number;
+  /** From the rankings: `medal: "none"` is a depleted key (issue #24 § 3); absent on runs saved before 2026-10. */
+  timed?: boolean;
+  /** The fight's duration in ms, from the rankings. */
+  durationMs?: number;
   // Populated only for runs we chose to display (see signals/enrich.ts).
   signals?: RunSignals;
 }
@@ -93,6 +97,8 @@ interface EncounterRank {
   spec: string;
   affixes: number[];
   score: number;
+  duration: number;
+  medal?: string;
   startTime: number;
   report: { code: string; fightID: number; startTime: number };
 }
@@ -338,6 +344,8 @@ export async function fetchMplusData(
         fightID: r.report.fightID,
         startTime: r.startTime,
         score: r.score,
+        ...(r.medal === undefined ? {} : { timed: r.medal !== "none" }),
+        durationMs: r.duration,
       });
     }
   });

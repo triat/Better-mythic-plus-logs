@@ -1,6 +1,6 @@
 import type { Locale } from "../hosted/locale.ts";
 import { EVALUATION_DOCS_FR } from "./docs.fr.ts";
-import type { AxisKey } from "./types.ts";
+import type { AxisKey, PillarKey } from "./types.ts";
 
 export interface SubSignalDoc {
   title: string; what: string; source: string; how: string; why: string; naWhen: string;
@@ -62,11 +62,12 @@ export interface EvaluationDocs {
   faq: FaqEntry[];
   wclClient: WclClientDoc;
   liveAddon: LiveAddonDoc;
+  pillars: { intro: string; items: Record<PillarKey, { title: string; what: string }> };
 }
 
 export const EVALUATION_DOCS: EvaluationDocs = {
   sources: [
-    { title: "Warcraft Logs rankings", text: "The character's best run per dungeon this season on the selected metric (DPS, or HPS for healers), with parse %, key level, date and report. This is the list the run table shows; the evaluation uses these runs plus the best run at the nearest key level below the target that has one. One region per lookup (EU, US, KR, TW) — the chip in the search field remembers your last choice; a pasted Raider.IO link brings its own region.", freshness: "Fetched at every lookup. A lookup stays in your history until you Refresh it; on a shared instance, a lookup of the same character made by another member less than 6 hours ago is reused instead of fetched again (the tab says \"cached\")." },
+    { title: "Warcraft Logs rankings", text: "Every ranked run of the character this season on the selected metric (DPS, or HPS for healers), with parse %, key level, timed or not, duration, date and report. The evaluation uses the best run per dungeon plus the best run at the nearest key level below the target that has one; the Runs tab lists every run, newest first, and a run whose log is not fetched yet reads \"not analysed\" until a season sync fetches it. One region per lookup (EU, US, KR, TW) — the chip in the search field remembers your last choice; a pasted Raider.IO link brings its own region.", freshness: "Fetched at every lookup, and kept for the season views at no extra cost (not when the metric was forced). A lookup stays in your history until you Refresh it; on a shared instance, a lookup of the same character made by another member less than 6 hours ago is reused instead of fetched again (the tab says \"cached\")." },
     { title: "Each run's log", text: "For every shown run, the fight's own events: deaths (what killed the player, who else died and when), damage taken, damage from the season's list of avoidable mechanics, interrupts, dispels, potions and healthstones — for the player and for the other four in the group.", freshness: "Fetched once per run (about 10 WCL points) and cached forever: a run never changes after the fact." },
     { title: "Raider.IO", text: "Item level, current and previous season score per role, and the last 10 runs with timed/depleted.", freshness: "Fetched at a lookup and reused for an hour (Refresh fetches it again); free, no key." },
   ],
@@ -106,6 +107,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
         kicksVsPeers: { title: "Kicks vs peers", what: "Interrupt usage compared with the DPS and tanks of the same run.", source: "Each run's interrupt table; every player's usage is normalized by their own spec's kick cooldown, so a spec with a short kick is not favoured.", how: "Usage = kicks / (fight length / kick cooldown). Per run: your usage − the peer median, in percentage points; the median over runs.", why: "Compared within the same pull count and the same affixes, the fairest kick measure there is.", naWhen: "When the spec has no interrupt, or when no run has an interrupt table.", unit: "percentage points vs peers", scaledByLevel: false },
         kicksAbsolute: { title: "Kick capacity used", what: "Interrupt usage on its own: how much of the possible kicks the player cast.", source: "Each run's interrupt table and the spec's baseline kick cooldown.", how: "Usage = kicks / (fight length / kick cooldown), per run; the median over runs.", why: "Even a group that kicks little should not hide a player who never kicks.", naWhen: "When the spec has no interrupt.", unit: "share of possible kicks (0–1)", scaledByLevel: false },
         dispels: { title: "Dispels", what: "Dispels, purges, spellsteals and soothes per run.", source: "Each run's dispel table (Warcraft Logs counts friendly dispels, enemy purges and pet dispels together).", how: "The median over runs of the count per run.", why: "Dispelling is the part of utility that scales with attention rather than with the kit.", naWhen: "When the class has no dispel or purge at all (rogues, warriors, death knights): n/a, not 0. The whole axis is n/a only when neither a kick nor a dispel applies; healers are always scored.", unit: "dispels per run", scaledByLevel: false },
+        crowdControl: { title: "Crowd control", what: "Stuns, incapacitates, disorients, fears, silences and knocks the player (or their pet) landed on enemies, per 10 minutes of key, against the average player of the same spec.", source: "Each run's crowd-control events, filtered on the season's crowd-control table (one more Warcraft Logs query per run of your own characters, about 3 points); the reference is the median of ranked players of the spec at +15 to +20.", how: "Per run: uses per 10 minutes (applications of one spell within 1 s are one use; a pet's go to its owner), then (yours − the spec's median) / the spec's median in %; the median over runs. Counted in the Control pillar only, never in the axis, the global score or the verdict.", why: "A stun or a knock at the right time is a cast that never lands on the group; the parse and the kick count do not see it.", naWhen: "When no run has crowd-control data (only your own characters are measured), or the spec has no reference: fewer than 20 sampled players, or a median under 0.5 use per 10 minutes.", unit: "% vs the spec's median", scaledByLevel: false },
       },
     },
     throughput: {
@@ -217,6 +219,16 @@ export const EVALUATION_DOCS: EvaluationDocs = {
       "Open the Group Finder in-game, or have an active posting — the strip appears top-left and this panel fills in within a couple of seconds.",
     ],
     sends: "The addon sends nothing, receives nothing and stores nothing — it only draws pixels. The browser reads them locally; only the player names it recognizes are sent to bmpl, to check against evaluations it already has.",
+  },
+  pillars: {
+    intro: "The same sub-signals, grouped by what a player can work on: five pillars. A pillar's score is the weighted mean of its sub-signals, with the same curves and weights as the axes, so it never changes the verdict. Preparation, consistency and experience stay beside the pillars as context.",
+    items: {
+      damage: { title: "Damage", what: "Your parse: the median over the runs, and at the key level asked for." },
+      survival: { title: "Survival", what: "Deaths outside wipes, deaths in wipes, teammates' deaths for a healer, and, once runs are analysed, the defensives you used and the deaths you could have prevented. A death's last three hits are listed in its run." },
+      avoidable: { title: "Avoidable damage", what: "Damage from the season's avoidable mechanics and damage taken overall, against the other players of the same runs. The abilities that hit you most are listed per dungeon." },
+      interrupts: { title: "Interrupts", what: "The share of your kick's cooldown you use, against the group and on its own. The enemy casts that went through are shown as group context, among the spells your group kicked at least once." },
+      control: { title: "Control", what: "Dispels and purges per run, for a kit that has one, and the crowd control you land (stuns, incapacitates, disorients, fears, silences, knocks) against the average player of your spec. Crowd control counts here only, not in the badge; each is n/a without data, never 0." },
+    },
   },
 };
 

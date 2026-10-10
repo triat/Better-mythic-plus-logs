@@ -1,0 +1,288 @@
+{
+ "version": "mn-2.0",
+ "tableVersion": "mn-2.2",
+ "source": "scripts/calibration/control.ts, 2026-10-10, 894 runs, 2552 pts this session",
+ "scope": "EU, +15 to +20, every dungeon weighs the same",
+ "specs": {
+  "DeathKnight:Blood": {
+   "median": 13.66,
+   "p25": 10.4,
+   "p75": 17.48,
+   "samples": 251,
+   "dungeons": 8
+  },
+  "DeathKnight:Frost": {
+   "median": 6.05,
+   "p25": 4.68,
+   "p75": 7.84,
+   "samples": 77,
+   "dungeons": 8
+  },
+  "DeathKnight:Unholy": {
+   "median": 5.17,
+   "p25": 3.37,
+   "p75": 7.69,
+   "samples": 133,
+   "dungeons": 8
+  },
+  "DemonHunter:Devourer": {
+   "median": 0.73,
+   "p25": 0.35,
+   "p75": 1.28,
+   "samples": 102,
+   "dungeons": 8
+  },
+  "DemonHunter:Havoc": {
+   "median": 3.92,
+   "p25": 2.06,
+   "p75": 5.32,
+   "samples": 92,
+   "dungeons": 8
+  },
+  "DemonHunter:Vengeance": {
+   "median": 7.19,
+   "p25": 4.52,
+   "p75": 9.63,
+   "samples": 72,
+   "dungeons": 8
+  },
+  "Druid:Balance": {
+   "median": 2.09,
+   "p25": 1.63,
+   "p75": 3.42,
+   "samples": 58,
+   "dungeons": 8
+  },
+  "Druid:Feral": {
+   "median": 5.7,
+   "p25": 4.23,
+   "p75": 7.16,
+   "samples": 80,
+   "dungeons": 8
+  },
+  "Druid:Guardian": {
+   "median": 5.55,
+   "p25": 3.5,
+   "p75": 7.61,
+   "samples": 334,
+   "dungeons": 8
+  },
+  "Druid:Restoration": {
+   "median": 3.75,
+   "p25": 1.35,
+   "p75": 6.26,
+   "samples": 52,
+   "dungeons": 8
+  },
+  "Evoker:Augmentation": {
+   "median": 4.52,
+   "p25": 3.36,
+   "p75": 5.87,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Evoker:Devastation": {
+   "median": 11.72,
+   "p25": 5.48,
+   "p75": 14.44,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Evoker:Preservation": {
+   "median": 1.47,
+   "p25": 0.37,
+   "p75": 2.49,
+   "samples": 53,
+   "dungeons": 8
+  },
+  "Hunter:BeastMastery": {
+   "median": 2.13,
+   "p25": 1.27,
+   "p75": 3.23,
+   "samples": 58,
+   "dungeons": 8
+  },
+  "Hunter:Marksmanship": {
+   "median": 2.21,
+   "p25": 1.74,
+   "p75": 2.87,
+   "samples": 42,
+   "dungeons": 8
+  },
+  "Hunter:Survival": {
+   "median": 2.31,
+   "p25": 1.78,
+   "p75": 3.18,
+   "samples": 42,
+   "dungeons": 8
+  },
+  "Mage:Arcane": {
+   "median": 1.68,
+   "p25": 0.96,
+   "p75": 2.45,
+   "samples": 406,
+   "dungeons": 8
+  },
+  "Mage:Fire": {
+   "median": 1.56,
+   "p25": 0.71,
+   "p75": 2.48,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Mage:Frost": {
+   "median": 1.07,
+   "p25": 0.68,
+   "p75": 2.19,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Monk:Brewmaster": {
+   "median": 7.43,
+   "p25": 4.76,
+   "p75": 8.85,
+   "samples": 63,
+   "dungeons": 8
+  },
+  "Monk:Mistweaver": {
+   "median": 5.08,
+   "p25": 2.97,
+   "p75": 5.96,
+   "samples": 50,
+   "dungeons": 8
+  },
+  "Monk:Windwalker": {
+   "median": 4.25,
+   "p25": 2.82,
+   "p75": 6.37,
+   "samples": 73,
+   "dungeons": 8
+  },
+  "Paladin:Holy": {
+   "median": 2.14,
+   "p25": 1.34,
+   "p75": 3.22,
+   "samples": 356,
+   "dungeons": 8
+  },
+  "Paladin:Protection": {
+   "median": 2.78,
+   "p25": 1.79,
+   "p75": 4.38,
+   "samples": 131,
+   "dungeons": 8
+  },
+  "Paladin:Retribution": {
+   "median": 2.55,
+   "p25": 1.76,
+   "p75": 3.82,
+   "samples": 87,
+   "dungeons": 8
+  },
+  "Priest:Discipline": {
+   "median": 0,
+   "p25": 0,
+   "p75": 0.56,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Priest:Holy": {
+   "median": 6.31,
+   "p25": 4.12,
+   "p75": 9.61,
+   "samples": 76,
+   "dungeons": 8
+  },
+  "Priest:Shadow": {
+   "median": 6.2,
+   "p25": 4.04,
+   "p75": 7.66,
+   "samples": 44,
+   "dungeons": 8
+  },
+  "Rogue:Assassination": {
+   "median": 2.22,
+   "p25": 1.44,
+   "p75": 3.26,
+   "samples": 161,
+   "dungeons": 8
+  },
+  "Rogue:Outlaw": {
+   "median": 2.77,
+   "p25": 1.99,
+   "p75": 3.8,
+   "samples": 51,
+   "dungeons": 8
+  },
+  "Rogue:Subtlety": {
+   "median": 2.28,
+   "p25": 1.57,
+   "p75": 3.08,
+   "samples": 48,
+   "dungeons": 8
+  },
+  "Shaman:Elemental": {
+   "median": 2.55,
+   "p25": 1.59,
+   "p75": 3.5,
+   "samples": 319,
+   "dungeons": 8
+  },
+  "Shaman:Enhancement": {
+   "median": 2.46,
+   "p25": 1.59,
+   "p75": 3.39,
+   "samples": 50,
+   "dungeons": 8
+  },
+  "Shaman:Restoration": {
+   "median": 2.44,
+   "p25": 1.43,
+   "p75": 3.53,
+   "samples": 266,
+   "dungeons": 8
+  },
+  "Warlock:Affliction": {
+   "median": 2.56,
+   "p25": 1.5,
+   "p75": 3.44,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Warlock:Demonology": {
+   "median": 2.13,
+   "p25": 1.34,
+   "p75": 3.26,
+   "samples": 72,
+   "dungeons": 8
+  },
+  "Warlock:Destruction": {
+   "median": 3.7,
+   "p25": 1.97,
+   "p75": 5.57,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Warrior:Arms": {
+   "median": 2.97,
+   "p25": 1.86,
+   "p75": 4.56,
+   "samples": 400,
+   "dungeons": 8
+  },
+  "Warrior:Fury": {
+   "median": 1.72,
+   "p25": 0.72,
+   "p75": 3.47,
+   "samples": 41,
+   "dungeons": 8
+  },
+  "Warrior:Protection": {
+   "median": 6.39,
+   "p25": 5.11,
+   "p75": 7.54,
+   "samples": 43,
+   "dungeons": 8
+  }
+ }
+}

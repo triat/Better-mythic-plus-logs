@@ -60,6 +60,7 @@ src/lookup.ts         rankings → analysis → enrich (WCL ‖ Raider.IO) → p
 src/wcl/              OAuth2 + gql() + queries + meter     src/signals/          per-run signals, peers, RIO, SQLite store
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
+src/self/             self-review: game weeks, season sync, season view, "My characters"
 src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, feature-usage counters, cookie/state/Discord helpers, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
@@ -68,11 +69,21 @@ web/src/lib/          pure tested view models      web/src/components/   thin Re
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
-Current state and roadmap: everything specified so far is shipped and live on bmpl.riat.dev.
+Current state and roadmap: everything up to sub-project 6 is shipped and live on bmpl.riat.dev.
 Sub-projects 1–4 (signals, evaluation, web front, deep-dive); sub-project 5, the hosted multi-user
 service, as GitHub issues #1–#11 (hosted skeleton, Discord login, per-user state, WCL budget /
 per-member quotas, shared defensives table, hosted front, admin page, hardening, VPS deployment, open
 signup / own WCL clients / bans / privacy); and sub-project 6, the game integration, shipped in v0.4.0
 — the `addon/` tree, `web/src/lib/live/`, `POST /api/live/cached`, spec
 `docs/superpowers/specs/2026-09-22-game-integration-design.md`. The hosted instance runs with open
-sign-up since 2026-09-24. Unscheduled ideas live as GitHub issues #12–#19.
+sign-up since 2026-09-24. Self-review phase 1 is implemented (spec
+`docs/superpowers/specs/2026-10-09-self-review-pillars-design.md`): five pillars over the evaluation's
+evidence, the `character_runs` season store filled by lookups at 0 pts, the season sync (own WCL
+client when hosted), the result page's three tabs (Overview, Dungeons, Runs) and the personal page `/me`.
+Self-review phase 2 is implemented (spec
+`docs/superpowers/specs/2026-10-10-self-review-control-design.md`, plan
+`docs/superpowers/plans/2026-10-10-self-review-phase-2.md`; crowd-control table `mn-2.2` audited, per-spec
+reference collected on 894 runs across the eight dungeons, each weighing the same): crowd control in the Control pillar only (`pillarOnly`, never the verdict), `wcl_run_control`,
+fetched only for the member's own characters, and the vetting view for everyone else. Next: phase 3 and
+Battle.net linking (own specs), WCL items in issue #24. Unscheduled ideas live
+as GitHub issues #12–#19.

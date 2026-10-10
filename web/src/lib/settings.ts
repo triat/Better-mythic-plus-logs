@@ -1,6 +1,6 @@
 // Per-user settings: "your key", the legend state, the remembered region and locale. Hosted mode keeps them
 // on the server (GET/PUT /api/settings); local mode keeps them in the browser under the same keys as before.
-import type { Region } from "../types.ts";
+import type { MyCharacter, Region } from "../types.ts";
 import { STORAGE_KEY, parseStoredKey } from "./keyLevel.ts";
 import { isLocale } from "./locale.ts";
 import type { Locale } from "./locale.ts";
@@ -16,6 +16,7 @@ export interface Settings {
   liveSort: LiveSort;
   liveRoles: LiveRole[];
   liveClasses: string[];
+  characters: MyCharacter[];
 }
 // liveRoles/liveClasses are frozen: DEFAULT_SETTINGS is a module-scoped singleton handed out as-is
 // on the "no storage" / throwing-storage fast paths below — a caller that sorted or pushed in place
@@ -29,6 +30,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveSort: "arrival",
   liveRoles: Object.freeze([...LIVE_ROLES]) as LiveRole[],
   liveClasses: Object.freeze([] as string[]) as string[],
+  characters: Object.freeze([] as MyCharacter[]) as MyCharacter[],
 };
 export const LEGEND_STORAGE_KEY = "bmpl.legendOpen";
 export const REGION_STORAGE_KEY = "bmpl.region";
@@ -37,6 +39,7 @@ export const LOCALE_STORAGE_KEY = "bmpl.locale";
 export const LIVE_SORT_STORAGE_KEY = "bmpl.liveSort";
 export const LIVE_ROLES_STORAGE_KEY = "bmpl.liveRoles";
 export const LIVE_CLASSES_STORAGE_KEY = "bmpl.liveClasses";
+export const CHARACTERS_STORAGE_KEY = "bmpl.characters";
 
 /** The subset of the Web Storage API we use; null when storage is unavailable. */
 export interface KeyValueStore { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void }
@@ -52,6 +55,14 @@ function readJsonArray<T>(raw: string | null, isItem: (v: unknown) => v is T, fa
   }
 }
 const isString = (v: unknown): v is string => typeof v === "string";
+const NAME = /^\p{L}{2,32}$/u;
+/** A stored "this is me" entry; the server's own check is src/self/characters.ts. */
+export const isMyCharacter = (v: unknown): v is MyCharacter => {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return typeof o.name === "string" && NAME.test(o.name) && typeof o.realm === "string" && o.realm.length >= 2 && o.realm.length <= 32
+    && isRegion(o.region) && (o.source === "manual" || o.source === "bnet");
+};
 
 /** Settings from the browser; defaults when storage is unavailable (private mode) or empty. */
 export function readLocalSettings(store: KeyValueStore | null): Settings {
@@ -68,6 +79,7 @@ export function readLocalSettings(store: KeyValueStore | null): Settings {
       liveSort: isLiveSort(liveSort) ? liveSort : DEFAULT_SETTINGS.liveSort,
       liveRoles: readJsonArray(store.getItem(LIVE_ROLES_STORAGE_KEY), isLiveRole, [...LIVE_ROLES]),
       liveClasses: readJsonArray(store.getItem(LIVE_CLASSES_STORAGE_KEY), isString, []),
+      characters: readJsonArray(store.getItem(CHARACTERS_STORAGE_KEY), isMyCharacter, []),
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -94,6 +106,7 @@ export function writeLocalSettings(store: KeyValueStore | null, patch: Partial<S
     if (patch.liveSort !== undefined) store.setItem(LIVE_SORT_STORAGE_KEY, patch.liveSort);
     if (patch.liveRoles !== undefined) store.setItem(LIVE_ROLES_STORAGE_KEY, JSON.stringify(patch.liveRoles));
     if (patch.liveClasses !== undefined) store.setItem(LIVE_CLASSES_STORAGE_KEY, JSON.stringify(patch.liveClasses));
+    if (patch.characters !== undefined) store.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(patch.characters));
   } catch {
     /* private mode etc. */
   }
@@ -110,5 +123,6 @@ export function parseServerSettings(raw: unknown): Settings {
     liveSort: isLiveSort(o.liveSort) ? o.liveSort : DEFAULT_SETTINGS.liveSort,
     liveRoles: Array.isArray(o.liveRoles) && o.liveRoles.every(isLiveRole) ? o.liveRoles : [...LIVE_ROLES],
     liveClasses: Array.isArray(o.liveClasses) && o.liveClasses.every((s) => typeof s === "string") ? o.liveClasses : [],
+    characters: Array.isArray(o.characters) ? o.characters.filter(isMyCharacter) : [],
   };
 }

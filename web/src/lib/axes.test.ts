@@ -127,6 +127,7 @@ describe("evidenceText", () => {
     expect(line("survival.avoidableDeaths", 2 / 3, { count: 2, total: 3 })).toEqual(["2/3 deaths with a defensive available", "2/3 morts avec un defensive dispo"]);
     expect(line("utility.kicksAbsolute", 0.2)).toEqual(["20% of kick capacity used", "20 % de la capacité de kick utilisée"]);
     expect(line("utility.dispels", 9)).toEqual(["9.0 dispels/run", "9,0 dispels / run"]);
+    expect(line("utility.crowdControl", 12.4, { rate: 4.2 })).toEqual(["crowd control +12% vs spec median (4.2 per 10 min)", "contrôle +12 % vs médiane de la spé (4,2 / 10 min)"]);
     expect(line("throughput.medianParse", 66.6)).toEqual(["median parse 67%", "parse médian 67 %"]);
     // French percent: a narrow no-break space (U+202F) before the sign, carried by the dictionary string.
     expect(line("throughput.medianParse", 66.6)[1]).toContain("\u202f%");

@@ -26,13 +26,14 @@ export function hashAnchor(hash: string): Anchor | null {
 
 export interface TocEntry { anchor: Anchor; label: string; sub?: boolean }
 
-/** what, verdict, axes (+ six sub entries, titled by the registry), level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), live-addon, reading, faq. */
+/** what, verdict, axes (+ six sub entries, titled by the registry), pillars, level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), live-addon, reading, faq. */
 export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
   return [
     { anchor: "what", label: t("help.toc.what") },
     { anchor: "verdict", label: t("help.toc.verdict") },
     { anchor: "axes", label: t("help.toc.axes") },
     ...AXIS_ORDER.map((key) => ({ anchor: anchorOf(key), label: docs.axes[key].title, sub: true })),
+    { anchor: "pillars", label: t("help.toc.pillars") },
     { anchor: "level-scale", label: t("help.toc.levelScale") },
     { anchor: "expected-ilvl", label: t("help.toc.expectedIlvl") },
     { anchor: "runs", label: t("help.toc.runs") },

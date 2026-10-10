@@ -18,6 +18,7 @@ export const USAGE_CATALOG = {
   region_change: { category: "lookup", source: "ui" },
   spec_pick: { category: "lookup", source: "ui" },
   metric_pick: { category: "lookup", source: "ui" },
+  season_sync: { category: "lookup", source: "api" },
   // Result
   page_main_result: { category: "result", source: "ui" },
   axis_expand: { category: "result", source: "ui" },
@@ -26,6 +27,9 @@ export const USAGE_CATALOG = {
   rio_toggle: { category: "result", source: "ui" },
   external_log: { category: "result", source: "ui" },
   external_rio: { category: "result", source: "ui" },
+  season_view: { category: "result", source: "api" },
+  self_tab_dungeons: { category: "result", source: "ui" },
+  self_tab_runs: { category: "result", source: "ui" },
   // Deep-dive
   deepdive: { category: "deepdive", source: "api" },
   deepdive_reanalyze: { category: "deepdive", source: "api" },
@@ -53,6 +57,7 @@ export const USAGE_CATALOG = {
   settings_save: { category: "account", source: "api" },
   page_settings: { category: "account", source: "ui" },
   page_privacy: { category: "account", source: "ui" },
+  page_me: { category: "account", source: "ui" },
   locale_switch: { category: "account", source: "ui" },
   toast_own_client: { category: "account", source: "ui" },
   // Admin

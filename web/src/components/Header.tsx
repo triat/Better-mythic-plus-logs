@@ -48,6 +48,8 @@ interface Props {
   onSignOut: () => void;
   /** Screen-capture state, lifted to `Main` so the Live panel shares it (see `LiveChip.tsx`). */
   live: { state: LiveState; connect: () => Promise<void> };
+  /** How many characters "My characters" holds (the /me link's count). */
+  meCount: number;
 }
 
 export function Header(p: Props) {
@@ -142,6 +144,7 @@ export function Header(p: Props) {
           </label>
         )}
         {!p.sseConnected && <span className="muted" title={t("header.reconnecting")}>{t("header.liveDisconnected")}</span>}
+        <a className="chip chip-on" href="/me">{p.meCount > 0 ? t("header.meCount", { n: p.meCount }) : t("header.me")}</a>
         <a className="muted" style={{ fontSize: 13 }} href="/help">{t("common.help")}</a>
         {p.controls.setup && <button className="btn" onClick={p.onSetup}>{t("header.reconfigure")}</button>}
         {p.controls.quit && <button className="btn" onClick={p.onQuit}>{t("header.quit")}</button>}

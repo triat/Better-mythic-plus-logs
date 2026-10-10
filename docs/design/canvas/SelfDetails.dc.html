@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .row-audit { grid-template-columns: 74px 130px 150px 220px 1fr; }
+    .row-audit > span:last-child { white-space: normal; }
+    .dot-error { background: #f85149; } .dot-admin { background: #58a6ff; } .dot-login { background: #56d364; } .dot-quota { background: #e3b341; } .dot-sec { background: #ffa657; }
+    .kind { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .day { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; padding: 8px 0 2px; }
+    .tl { display: grid; grid-template-columns: 56px 12px 1fr; gap: 0 10px; align-items: baseline; font-size: 13px; padding: 3px 0; }
+    .tl .t { color: #6e7681; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  
+    .hdr { display: flex; align-items: center; gap: 14px; }
+    .hdr h2 { margin: 0; font-size: 20px; font-weight: 700; }
+    .tabs2 { display: flex; gap: 4px; border-bottom: 1px solid #21262d; }
+    .tabs2 span { padding: 8px 14px; font-size: 13px; color: #8b949e; border-bottom: 2px solid transparent; }
+    .tabs2 span.on { color: #e6edf3; border-bottom-color: #58a6ff; font-weight: 600; }
+    .pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .pillar { display: flex; flex-direction: column; gap: 6px; }
+    .score { font-size: 28px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mid { color: #c9d1d9; } .good { color: #56d364; } .warn { color: #e3b341; } .bad { color: #f85149; } .na { color: #6e7681; }
+    .trend { font-size: 12px; font-weight: 600; }
+    .wk { display: flex; align-items: flex-end; gap: 2px; height: 28px; }
+    .wk i { display: block; width: 8px; background: #30363d; } .wk i.last { background: #58a6ff; }
+    .focus-row { display: grid; grid-template-columns: 24px 1fr 170px 170px; gap: 12px; align-items: center; font-size: 13px; padding: 8px 10px; }
+    .num { width: 20px; height: 20px; border-radius: 50%; background: #21262d; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .grid { display: grid; gap: 4px; font-size: 13px; align-items: center; }
+    .cell { border-radius: 6px; padding: 6px 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; }
+    .c-good { background: #0a2e1a; color: #56d364; } .c-mid { background: #161b22; color: #c9d1d9; border: 1px solid #21262d; } .c-warn { background: #2e2a0a; color: #e3b341; } .c-bad { background: #2e0a0a; color: #f85149; } .c-na { color: #6e7681; border: 1px dashed #21262d; }
+    .prow { display: grid; grid-template-columns: 170px 60px 200px 120px 1fr 20px; gap: 14px; align-items: center; padding: 10px 12px; font-size: 13px; }
+    .bar2 { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; } .bar2 > span { display: block; height: 100%; }
+    .runrow { display: grid; grid-template-columns: 54px 200px 90px 90px repeat(5, 70px) 1fr; gap: 10px; align-items: center; padding: 7px 10px; font-size: 13px; }
+    .lvl { color: #ffa657; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .side { display: grid; grid-template-columns: 1fr 440px; gap: 16px; align-items: start; }
+    .ab { display: grid; grid-template-columns: 1fr 110px 110px; gap: 10px; font-size: 13px; align-items: center; }
+    .me { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 1300px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="content content-wide" style="gap: 22px;">
+    <div><div class="label" style="margin-bottom: 8px;">DETAILS · SYNC — needs your own WCL client (decision 3): estimate before spending, progress, the no-client state</div>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+    <div class="card" style="display: flex; flex-direction: column; gap: 8px;"><span class="section-title">Sync your season</span><span class="soft" style="font-size: 13px;">142 ranked runs found · 118 not analysed yet</span><span class="muted" style="font-size: 12px;">~1 200 pts on your own WCL client · the shared budget is not used</span><div style="display: flex; gap: 8px;"><span class="btn btn-sm btn-primary">Sync 118 runs</span><span class="btn btn-sm">Cancel</span></div></div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 8px;"><span class="section-title">Syncing…</span><span class="bar2"><span style="width: 46%; background: #58a6ff;"></span></span><span class="muted" style="font-size: 12px;">54 of 118 runs · 540 pts spent · you can leave this page, it resumes</span></div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 8px;"><span class="section-title">Sync your season</span><span class="soft" style="font-size: 13px;">A season sync needs your own Warcraft Logs client: it can cost over 1 000 points.</span><a href="#" style="font-size: 13px;">Add your client in Settings ›</a><span class="faint" style="font-size: 12px;">Without it: the best run per dungeon, as today.</span></div>
+  </div>
+    </div>
+    <div><div class="label" style="margin-bottom: 8px;">DETAILS · NOT ENOUGH RUNS — a pillar with fewer than 3 runs in a window shows no arrow</div>
+  <div class="card pillar" style="width: 260px;"><span class="caps">Survival</span><span class="score warn">49</span><span class="trend na">not enough runs for a trend (2 this week)</span><span class="soft" style="font-size: 13px;">0.5 deaths per run.</span></div>
+    </div>
+    <div><div class="label" style="margin-bottom: 8px;">DETAILS · RUN DETAIL — today's row and deep-dive, plus the killing hits and the avoidable abilities of that run</div>
+  <div class="card" style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="inset runrow"><span class="lvl">+18</span><span>Voidscar Arena</span><span class="bad">depleted</span><span class="faint">2 d ago</span><span class="mono">61</span><span class="mono bad">1</span><span class="mono warn">+34 %</span><span class="mono">58 %</span><span class="mono faint">2</span><span style="text-align: right;"><a href="#">hide ‹</a></span></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 4px 10px;">
+      <div><div class="caps" style="margin-bottom: 4px;">Death at 14:02</div><div class="ab"><span>Void Slash</span><span class="faint">71 % of the hit</span><span></span></div><div class="ab"><span>Shadow Pool</span><span class="faint">20 %</span><span></span></div><div class="faint" style="font-size: 12px;">Aspect of the Turtle was available</div></div>
+      <div><div class="caps" style="margin-bottom: 4px;">Avoidable damage taken</div><div class="ab"><span>Shadow Pool</span><span class="faint">2.1 M</span><span></span></div><div class="ab"><span>Void Slash</span><span class="faint">1.4 M</span><span></span></div></div>
+      <div><div class="caps" style="margin-bottom: 4px;">Casts that went through</div><div class="ab"><span>Lava Bolt</span><span class="faint">3 of 12</span><span></span></div><div class="faint" style="font-size: 12px;">You kicked 4 of the 9 interrupted.</div></div>
+    </div>
+  </div>
+    </div>
+    <div><div class="label" style="margin-bottom: 8px;">DETAILS · THIS IS ME — set from the result page; the header chip opens your character; up to 5</div>
+  <div style="display: flex; gap: 12px; align-items: center;"><span class="chip">This is me</span><span class="faint">→</span><span class="chip me">This is me ✓</span><span class="faint" style="font-size: 12px;">· Settings lists them, the first one is the home page</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { buildLookupPayload, performLookup, RecentRankings, specsSeen } from "../src/lookup.ts";
 import type { MPlusData, MPlusRun } from "../src/mplus.ts";
 import { openStore } from "../src/signals/store.ts";
-import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../src/wcl/meter.ts";
+import { ESTIMATE_CONTROL, ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../src/wcl/meter.ts";
+import { CC_TABLE } from "../src/signals/control/table.ts";
 import type { QuotaRefusal } from "../src/hosted/quota.ts";
 import { loadWclFixture } from "./fixtures.ts";
 
@@ -49,6 +50,39 @@ describe("performLookup — quota reservations", () => {
     expect(o.ok).toBe(true);
     expect(estimates).toEqual([ESTIMATE_RANKINGS, ESTIMATE_RUN]);
     expect(x.gqlCalls).toEqual(["OTHERCODE"]);
+    x.store.close();
+  });
+  test("own character (`control`): control is reserved for every displayed run lacking it", async () => {
+    const x = await fixture();
+    const estimates: number[] = [];
+    const o = await performLookup({ ...opts(x.name), control: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, reserve: (e) => { estimates.push(e); return null; } });
+    expect(o.ok).toBe(true);
+    // One uncached run (summary + control), one cached run (control only).
+    expect(estimates).toEqual([ESTIMATE_RANKINGS, ESTIMATE_RUN + 2 * ESTIMATE_CONTROL]);
+    x.store.close();
+  });
+  test("own character: a refusal that only crowd control causes drops crowd control, not the lookup", async () => {
+    const x = await fixture();
+    for (const r of x.data.runs) x.store.putWclRun(r.reportCode, r.fightID, (await loadWclFixture("s2-healer")).report);
+    const estimates: number[] = [];
+    const o = await performLookup({ ...opts(x.name), control: true }, {
+      store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus,
+      reserve: (e) => { estimates.push(e); return e === 2 * ESTIMATE_CONTROL ? REFUSED : null; },
+    });
+    expect(o.ok).toBe(true);
+    expect(estimates).toEqual([ESTIMATE_RANKINGS, 2 * ESTIMATE_CONTROL]);
+    expect(x.gqlCalls).toEqual([]);
+    x.store.close();
+  });
+  test("own character with everything cached reserves nothing after the rankings", async () => {
+    const x = await fixture();
+    for (const r of x.data.runs) {
+      x.store.putWclRun(r.reportCode, r.fightID, (await loadWclFixture("s2-healer")).report);
+      x.store.putRunControl(r.reportCode, r.fightID, { tableVersion: CC_TABLE.version, pets: [], events: [] });
+    }
+    const estimates: number[] = [];
+    await performLookup({ ...opts(x.name), control: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, reserve: (e) => { estimates.push(e); return null; } });
+    expect(estimates).toEqual([ESTIMATE_RANKINGS]);
     x.store.close();
   });
   test("a refusal before the rankings fetches nothing", async () => {
@@ -146,3 +180,29 @@ describe("performLookup — region and specsSeen", () => {
     x.store.close();
   });
 });
+
+describe("performLookup — season store", () => {
+  test("records every ranked run, before the spec filter, without another WCL call", async () => {
+    const x = await fixture();
+    const o = await performLookup(opts(x.name), { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus });
+    expect(o.ok).toBe(true);
+    const key = { region: "eu", realm: "hyjal", name: x.name };
+    expect(x.store.seasonRuns(key, 1).map((r) => r.reportCode).sort()).toEqual([x.data.runs[0]!.reportCode, "OTHERCODE"].sort());
+    expect(x.fetches()).toBe(1);
+    await performLookup({ ...opts(x.name), refresh: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus });
+    expect(x.store.seasonRuns(key, 1)).toHaveLength(2);
+    x.store.close();
+  });
+});
+
+describe("performLookup — season store and a forced metric", () => {
+  test("a metric the request forced does not rewrite the stored season", async () => {
+    const x = await fixture();
+    const fetchMplus = async () => ({ ...x.data, metricAutoSelected: false });
+    const o = await performLookup({ ...opts(x.name), metric: "dps" }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus });
+    expect(o.ok).toBe(true);
+    expect(x.store.seasonRuns({ region: "eu", realm: "hyjal", name: x.name }, 1)).toEqual([]);
+    x.store.close();
+  });
+});
+

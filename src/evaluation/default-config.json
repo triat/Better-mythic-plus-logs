@@ -1,5 +1,5 @@
 {
-  "version": "4",
+  "version": "5",
   "levelScale": [[8, 1.6], [12, 1.3], [16, 1.0], [20, 0.8], [25, 0.65]],
   "expectedIlvl": {
     "season-mn-2": [[10, 300], [15, 315], [20, 325], [25, 332]]
@@ -20,7 +20,8 @@
       "subSignals": {
         "kicksVsPeers":  { "curve": [[-40, 10], [-20, 40], [0, 65], [15, 85], [30, 100]], "weights": { "dps": 3, "healer": 1, "tank": 3 } },
         "kicksAbsolute": { "curve": [[0, 20], [0.15, 50], [0.3, 80], [0.45, 100]],      "weights": { "dps": 1, "healer": 1, "tank": 1 } },
-        "dispels":       { "curve": [[0, 40], [3, 60], [10, 85], [20, 100]],            "weights": { "dps": 1, "healer": 3, "tank": 1 } }
+        "dispels":       { "curve": [[0, 40], [3, 60], [10, 85], [20, 100]],            "weights": { "dps": 1, "healer": 3, "tank": 1 } },
+        "crowdControl":  { "curve": [[-60, 15], [-30, 40], [0, 65], [30, 85], [60, 100]], "weights": { "dps": 2, "healer": 1, "tank": 2 }, "pillarOnly": true }
       }
     },
     "throughput": {

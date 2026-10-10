@@ -51,6 +51,11 @@ describe("validateConfig", () => {
     delete noTank.axisWeights.tank;
     expect(() => validateConfig(noTank)).toThrow(/axisWeights\.tank/);
   });
+  test("pillarOnly is an optional boolean on a sub-signal", () => {
+    expect(validateConfig(DEFAULT_CONFIG).axes.utility.subSignals.crowdControl!.pillarOnly).toBe(true);
+    expect(validateConfig(DEFAULT_CONFIG).axes.utility.subSignals.dispels!.pillarOnly).toBeUndefined();
+    expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { axes: { utility: { subSignals: { crowdControl: { pillarOnly: "yes" } } } } }))).toThrow("pillarOnly");
+  });
   test("rejects unknown keys", () => {
     expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { axes: { survival: { subSignals: { foo: { curve: [[0, 1]], weights: { dps: 1, healer: 1, tank: 1 } } } } } }))).toThrow(/axes\.survival\.subSignals\.foo/);
     expect(() => validateConfig(deepMerge(DEFAULT_CONFIG, { bogus: 1 }))).toThrow(/bogus/);

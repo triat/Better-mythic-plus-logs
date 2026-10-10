@@ -7,7 +7,8 @@ import { SHIPPED } from "../deepdive/table.ts";
 import { configVersion, getEvalConfig } from "../evaluation/config.ts";
 import type { EvaluationDocs } from "../evaluation/docs.ts";
 import { EVALUATION_DOCS_BY_LOCALE } from "../evaluation/docs.ts";
-import type { CurvePoints, EvaluationConfig } from "../evaluation/types.ts";
+import { PILLAR_SOURCES } from "../evaluation/pillars.ts";
+import type { CurvePoints, EvaluationConfig, PillarKey } from "../evaluation/types.ts";
 import { lastBackupAt } from "../hosted/instance.ts";
 import { isLocale } from "../hosted/locale.ts";
 import type { Locale } from "../hosted/locale.ts";
@@ -17,6 +18,7 @@ import type { LookupPayload } from "../lookup.ts";
 import { handleDeepdive, handleDefensivesGet, handleDefensivesPost, tablesOf, withCachedAnalyses } from "./deepdive.ts";
 import { jsonResponse } from "./http.ts";
 import { handleLookup, historyOf, historySummary } from "./lookup.ts";
+import { handleSeasonGet, handleSeasonSync } from "./season.ts";
 import { liveRoutes } from "./routes-live.ts";
 import { prefixRoute, route } from "./routes.ts";
 import type { Route } from "./routes.ts";
@@ -43,6 +45,8 @@ export interface DocsResponse {
   hosted: boolean;
   /** The numbers of the "own WCL client" guide: the per-member hourly quota (null locally) and what one WCL client gets. */
   quota: { pointsPerUserHour: number | null; wclPointsPerHour: number };
+  /** The sub-signals each self-review pillar groups ("axis.subSignal"), for the /help pillars section. */
+  pillarSources: Record<PillarKey, readonly string[]>;
 }
 
 /** What Warcraft Logs grants one API client per hour (rateLimitData.limitPerHour); shown by the /help guide. */
@@ -66,6 +70,7 @@ export function docsResponse(cfg: EvaluationConfig, hosted: boolean, pointsPerUs
     season: Object.keys(cfg.expectedIlvl).at(-1) ?? null,
     hosted,
     quota: { pointsPerUserHour, wclPointsPerHour: WCL_POINTS_PER_HOUR },
+    pillarSources: PILLAR_SOURCES,
   };
 }
 
@@ -107,6 +112,8 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
   return [
     route("POST", "/api/lookup", (req, _url, rc) => handleLookup(req, rc, ctx.runtime)),
     route("POST", "/api/deepdive", (req, _url, rc) => handleDeepdive(req, rc, ctx.runtime)),
+    route("GET", "/api/season", (_req, url, rc) => handleSeasonGet(url, rc, ctx.runtime)),
+    route("POST", "/api/season/sync", (req, _url, rc) => handleSeasonSync(req, rc, ctx.runtime)),
     route("GET", "/api/defensives", (_req, url, rc) => handleDefensivesGet(url, rc, ctx.runtime)),
     route("POST", "/api/defensives", (req, _url, rc) => handleDefensivesPost(req, rc, ctx.runtime)),
     route("GET", "/api/history", (_req, _url, rc) => jsonResponse({ ok: true, items: historyOf(rc).list().map(historySummary) })),

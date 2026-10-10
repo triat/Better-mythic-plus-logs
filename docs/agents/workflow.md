@@ -41,7 +41,16 @@ Anything the user will see is mocked first on the Claude Design canvas (`docs/ag
 Sub-projects 1–6 are shipped: signals, evaluation model, web front, run deep-dive, the hosted
 multi-user service (GitHub issue #1 and its sub-issues #2–#11), and the game integration — the in-game
 addon, the Live panel and the pixel strip, released as v0.4.0. Production runs 0.4.0 with open
-sign-up. **Nothing is currently scheduled**; the next piece of work is whatever the user picks.
+sign-up. Self-review phase 1 is implemented (spec
+`docs/superpowers/specs/2026-10-09-self-review-pillars-design.md`, plan
+`docs/superpowers/plans/2026-10-09-self-review-phase-1.md`): five pillars, the season store and sync,
+the result page's three tabs and the personal page `/me`. Phase 2 (spec
+`docs/superpowers/specs/2026-10-10-self-review-control-design.md`, plan
+`docs/superpowers/plans/2026-10-10-self-review-phase-2.md`) is implemented, the crowd-control table audited
+and the per-spec reference collected (re-running either spends points: ask the user first): crowd control in
+the Control pillar, the owner's view for the member's own characters, the vetting view for everyone else. Next pieces,
+each with its own spec: phase 3 (useful damage) and Battle.net linking to replace the hand-added
+characters; the WCL-dependent items are tracked in GitHub issue #24.
 
 Open GitHub issues, none of them planned: #12 talent-aware interrupt cooldowns, #13 browser
 end-to-end tests for the web front, #14 an off-VPS backup copy of `bmpl.db`, #15 an Overwolf app

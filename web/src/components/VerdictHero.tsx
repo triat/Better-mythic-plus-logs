@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { classHex, className } from "@shared/wow/classes.ts";
 import type { LookupPayload } from "../types.ts";
 import { axisRows, heroStats, radarPoints } from "../lib/axes.ts";
@@ -12,7 +13,8 @@ import { HelpLink } from "./HelpLink.tsx";
 import { Radar } from "./Radar.tsx";
 import { ScoreDrivers } from "./ScoreDrivers.tsx";
 
-export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void }) {
+/** `identityExtra` sits at the end of the name line: the vetting view's "This is me" (canvas ControlVettingA). */
+export function VerdictHero({ payload, hint, onReevaluate, identityExtra }: { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; identityExtra?: ReactNode }) {
   const { t, locale } = useT();
   const c = payload.character;
   const v = verdictView(t, payload.evaluation, payload.targetAutoDetected);
@@ -26,6 +28,7 @@ export function VerdictHero({ payload, hint, onReevaluate }: { payload: LookupPa
           <span className="name" style={{ color }}>{c.name}</span>
           <span style={{ color }}>{c.spec ? `${c.spec} ` : ""}{className(c.classID)}</span>
           <span className="muted">{realmName(c.realmSlug)} · {c.region.toUpperCase()}</span>
+          {identityExtra}
         </div>
         <div className="verdict-row">
           <div className={"badge " + v.cls}>

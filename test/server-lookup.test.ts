@@ -7,7 +7,7 @@ import type { LookupOptions, LookupOutcome } from "../src/lookup.ts";
 import { History } from "../src/server-history.ts";
 import { failureBody } from "../src/server/deepdive.ts";
 import { CharacterNotFoundError } from "../src/mplus.ts";
-import { runLookupWithCache } from "../src/server/lookup.ts";
+import { listedFor, lookupOwns, runLookupWithCache } from "../src/server/lookup.ts";
 import { WclError } from "../src/wcl/client.ts";
 import { payloadWith } from "./evaluation/helpers.ts";
 
@@ -156,5 +156,62 @@ describe("failures", () => {
       ["quota_refused", { used: 300, limit: 300, resetInS: 120, error: "quota" }],
       ["server_error", { message: "ENOENT: /srv/bmpl/bmpl.db" }],
     ]);
+  });
+});
+
+describe("mine: crowd control for your own characters", () => {
+  const capture = () => {
+    const seen: LookupOptions[] = [];
+    const performLookup = (async (o: LookupOptions) => { seen.push(o); return outcome(); }) as unknown as typeof import("../src/lookup.ts").performLookup;
+    return { seen, performLookup };
+  };
+  test("`owns` decides `control` from the parsed target", async () => {
+    const x = capture();
+    const targets: unknown[] = [];
+    await runLookupWithCache({ ...opts(), owns: (t) => { targets.push(t); return true; } }, new History(5), { performLookup: x.performLookup });
+    await runLookupWithCache({ ...opts(true) }, new History(5), { performLookup: x.performLookup });
+    expect(targets).toEqual([{ name: "Muleyoxo", realm: "Silvermoon", region: "eu" }]);
+    expect(x.seen.map((o) => o.control)).toEqual([true, false]);
+  });
+  test("a crowd-control lookup never joins a plain flight in progress", async () => {
+    let calls = 0;
+    const releases: Array<(o: LookupOutcome) => void> = [];
+    const performLookup = (async () => { calls++; return new Promise<LookupOutcome>((r) => { releases.push(r); }); }) as unknown as typeof import("../src/lookup.ts").performLookup;
+    const a = runLookupWithCache(opts(), new History(5), { performLookup });
+    const b = runLookupWithCache({ ...opts(), owns: () => true }, new History(5), { performLookup });
+    await Promise.resolve();
+    expect(calls).toBe(2);
+    for (const r of releases) r(outcome());
+    await Promise.all([a, b]);
+  });
+  test("a plain lookup joins a crowd-control flight in progress (nobody pays twice)", async () => {
+    let calls = 0;
+    const releases: Array<(o: LookupOutcome) => void> = [];
+    const performLookup = (async () => { calls++; return new Promise<LookupOutcome>((r) => { releases.push(r); }); }) as unknown as typeof import("../src/lookup.ts").performLookup;
+    const a = runLookupWithCache({ ...opts(), owns: () => true }, new History(5), { performLookup });
+    const b = runLookupWithCache(opts(), new History(5), { performLookup });
+    await Promise.resolve();
+    expect(calls).toBe(1);
+    for (const r of releases) r(outcome());
+    const [ra, rb] = await Promise.all([a, b]);
+    expect(rb.ok && rb.joined).toBe(true);
+    expect(ra.ok && ra.joined).toBe(false);
+  });
+  test("listedFor + lookupOwns, as handleLookup wires them: hosted reads the member's own list", () => {
+    const mine = [{ name: "Noshiidk", realm: "draenor", region: "eu" as const, source: "manual" as const }];
+    const runtime = { db: { settings: { get: (id: number) => ({ characters: id === 7 ? mine : [] }) } } };
+    const t = { name: "Noshiidk", realm: "Draenor", region: "eu" as const };
+    expect(listedFor({ hosted: false, user: null }, null)).toBeNull();
+    expect(lookupOwns(true, listedFor({ hosted: true, user: { id: 7 } }, runtime))!(t)).toBe(true);
+    // Another member, or no member at all: `mine` alone is not enough.
+    expect(lookupOwns(true, listedFor({ hosted: true, user: { id: 8 } }, runtime))!(t)).toBe(false);
+    expect(lookupOwns(true, listedFor({ hosted: true, user: null }, runtime))!(t)).toBe(false);
+  });
+  test("lookupOwns: no flag → nobody; local → trusted; hosted → the member's list", () => {
+    const t = { name: "Noshiidk", realm: "Argent Dawn", region: "eu" as const };
+    expect(lookupOwns(false, null)).toBeUndefined();
+    expect(lookupOwns(true, null)!(t)).toBe(true);
+    expect(lookupOwns(true, [{ name: "Noshiidk", realm: "argent-dawn", region: "eu", source: "manual" }])!(t)).toBe(true);
+    expect(lookupOwns(true, [])!(t)).toBe(false);
   });
 });

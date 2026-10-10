@@ -63,7 +63,7 @@ export interface RunRowModel {
   url: string;
 }
 
-const rowOf = (t: T, r: MPlusRun, metric: string, now: number): RunRowModel => {
+export const rowOf = (t: T, r: MPlusRun, metric: string, now: number): RunRowModel => {
   const s = r.signals;
   const keystone = s && !s.partial
     ? s.keystone.timed

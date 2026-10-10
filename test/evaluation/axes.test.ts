@@ -17,7 +17,7 @@ const cfg = validateConfig(DEFAULT_CONFIG);
 const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   role: "dps", targetLevel: 16, runsUsed: 6, analyzedRuns: 0, seasonSlug: "season-mn-2",
   survival: { individualDeaths: null, individualDeathsScaled: null, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: null, groupDeathsScaled: null, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 },
-  utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, hasDispel: true },
+  utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, hasDispel: true, crowdControl: null, controlRate: null },
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
   preparation: { potions: null, healthstones: null, ilvl: null },
@@ -149,22 +149,22 @@ describe("utility", () => {
     expect(scoreUtility(baseInputs(), cfg).score).toBeNull();
   });
   test("healer without kick still scored on dispels (0 dispels is information)", () => {
-    const h = scoreUtility(baseInputs({ role: "healer", utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: 0, hasDispel: true } }), cfg);
+    const h = scoreUtility(baseInputs({ role: "healer", utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: 0, hasDispel: true, crowdControl: null, controlRate: null } }), cfg);
     expect(h.score).toBe(40);
   });
   test("dps with kicks: peers and absolute", () => {
-    const d = scoreUtility(baseInputs({ utility: { hasKick: true, kicksVsPeers: 15, kicksAbsolute: 0.3, dispels: 3, hasDispel: true } }), cfg);
+    const d = scoreUtility(baseInputs({ utility: { hasKick: true, kicksVsPeers: 15, kicksAbsolute: 0.3, dispels: 3, hasDispel: true, crowdControl: null, controlRate: null } }), cfg);
     // dps weights kicksVsPeers=3, kicksAbsolute=1, dispels=1 → (3×85 + 1×80 + 1×60)/5 = 395/5 = 79
     expect(d.score).toBe(79);
   });
   test("a kit without any dispel is not penalized for 0 dispels/run", () => {
-    const d = scoreUtility(baseInputs({ utility: { hasKick: true, kicksVsPeers: 15, kicksAbsolute: 0.3, dispels: null, hasDispel: false } }), cfg);
+    const d = scoreUtility(baseInputs({ utility: { hasKick: true, kicksVsPeers: 15, kicksAbsolute: 0.3, dispels: null, hasDispel: false, crowdControl: null, controlRate: null } }), cfg);
     // dispels n/a → (3×85 + 1×80)/4 = 335/4 = 83.75 → 84
     expect(d.score).toBe(84);
     expect(d.evidence.map((e) => e.source)).not.toContain("utility.dispels");
   });
   test("no kick, no dispel, dps → null even with a 0 dispel count", () => {
-    expect(scoreUtility(baseInputs({ utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, hasDispel: false } }), cfg).score).toBeNull();
+    expect(scoreUtility(baseInputs({ utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, hasDispel: false, crowdControl: null, controlRate: null } }), cfg).score).toBeNull();
   });
 });
 

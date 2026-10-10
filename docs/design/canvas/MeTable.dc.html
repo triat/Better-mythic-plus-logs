@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1117; color: #e6edf3; line-height: 1.5; font-size: 14px; }
+    a { color: #58a6ff; text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #8b949e; } .faint { color: #6e7681; } .soft { color: #c9d1d9; }
+    .caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; }
+    .top { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .top > * { flex: none; }
+    .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+    .search { display: flex; align-items: center; gap: 8px; width: 520px; background: #0b0f14; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; height: 40px; color: #6e7681; }
+    .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid #30363d; border-radius: 8px; background: #0b0f14; overflow: hidden; }
+    .stepper .lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #8b949e; padding: 0 10px; border-right: 1px solid #21262d; height: 100%; display: flex; align-items: center; }
+    .stepper .b { width: 32px; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 16px; }
+    .stepper .v { min-width: 48px; text-align: center; font-size: 15px; font-weight: 700; color: #ffa657; }
+    .stepper .auto { font-size: 12px; padding: 0 10px; height: 100%; display: flex; align-items: center; border-left: 1px solid #21262d; color: #56d364; background: #0a2e1a; }
+    .lookup { background: #238636; color: #ffffff; font-size: 14px; font-weight: 600; padding: 0 16px; height: 40px; display: flex; align-items: center; border-radius: 6px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #30363d; color: #8b949e; font-size: 14px; white-space: nowrap; }
+    .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
+    .btn-primary { background: #238636; border-color: #238636; color: #fff; font-weight: 600; }
+    .btn-danger { color: #f85149; border-color: #7a1f1f; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #30363d; color: #e6edf3; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+    .chip { display: inline-block; font-size: 12px; color: #8b949e; border: 1px solid #30363d; border-radius: 999px; padding: 1px 8px; line-height: 18px; white-space: nowrap; }
+    .chip-on { color: #e6edf3; border-color: #8b949e; }
+    .chip-admin { color: #58a6ff; border-color: #30363d; }
+    .chip-warn { color: #d29922; border-color: #7a6a1f; }
+    .chip-ok { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+    .inset { background: #0b0f14; border: 1px solid #21262d; border-radius: 6px; }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .bar { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #56d364; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+    .dot-pending { background: #e3b341; } .dot-rejected { background: #f85149; } .dot-approved { background: #56d364; } .dot-shared { background: #58a6ff; }
+    .tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #21262d; border-radius: 8px; padding: 5px 8px; font-size: 13px; white-space: nowrap; }
+    .tab.active { background: #161b22; border-color: #30363d; }
+    .tab .n { font-size: 11px; color: #8b949e; }
+    .row { display: grid; align-items: center; gap: 12px; padding: 8px 10px; font-size: 13px; }
+    .row > span { white-space: nowrap; }
+    .row-user { grid-template-columns: 24px 160px 90px 110px 110px 110px 1fr auto; }
+    .row-invite { grid-template-columns: 200px 1fr 160px 200px auto; }
+    .content { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; max-width: 1200px; }
+    .content-wide { max-width: none; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 16px; font-size: 13px; }
+    .kv .k { color: #8b949e; }
+    .diff { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2px 12px; font-size: 12px; align-items: baseline; }
+    .diff .k { color: #6e7681; } .diff .old { color: #8b949e; text-decoration: line-through; } .diff .new { color: #e3b341; }
+    .gauge { display: flex; flex-direction: column; gap: 6px; }
+    .gauge .big { font-size: 26px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note-input { display: inline-flex; align-items: center; height: 26px; width: 260px; padding: 0 8px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #6e7681; font-size: 12px; }
+    .row-audit { grid-template-columns: 74px 130px 150px 220px 1fr; }
+    .row-audit > span:last-child { white-space: normal; }
+    .dot-error { background: #f85149; } .dot-admin { background: #58a6ff; } .dot-login { background: #56d364; } .dot-quota { background: #e3b341; } .dot-sec { background: #ffa657; }
+    .kind { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .day { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #6e7681; padding: 8px 0 2px; }
+    .tl { display: grid; grid-template-columns: 56px 12px 1fr; gap: 0 10px; align-items: baseline; font-size: 13px; padding: 3px 0; }
+    .tl .t { color: #6e7681; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  
+    .hdr { display: flex; align-items: center; gap: 14px; }
+    .hdr h2 { margin: 0; font-size: 20px; font-weight: 700; }
+    .tabs2 { display: flex; gap: 4px; border-bottom: 1px solid #21262d; }
+    .tabs2 span { padding: 8px 14px; font-size: 13px; color: #8b949e; border-bottom: 2px solid transparent; }
+    .tabs2 span.on { color: #e6edf3; border-bottom-color: #58a6ff; font-weight: 600; }
+    .pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .pillar { display: flex; flex-direction: column; gap: 6px; }
+    .score { font-size: 28px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mid { color: #c9d1d9; } .good { color: #56d364; } .warn { color: #e3b341; } .bad { color: #f85149; } .na { color: #6e7681; }
+    .trend { font-size: 12px; font-weight: 600; }
+    .wk { display: flex; align-items: flex-end; gap: 2px; height: 28px; }
+    .wk i { display: block; width: 8px; background: #30363d; } .wk i.last { background: #58a6ff; }
+    .focus-row { display: grid; grid-template-columns: 24px 1fr 170px 170px; gap: 12px; align-items: center; font-size: 13px; padding: 8px 10px; }
+    .num { width: 20px; height: 20px; border-radius: 50%; background: #21262d; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .grid { display: grid; gap: 4px; font-size: 13px; align-items: center; }
+    .cell { border-radius: 6px; padding: 6px 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; }
+    .c-good { background: #0a2e1a; color: #56d364; } .c-mid { background: #161b22; color: #c9d1d9; border: 1px solid #21262d; } .c-warn { background: #2e2a0a; color: #e3b341; } .c-bad { background: #2e0a0a; color: #f85149; } .c-na { color: #6e7681; border: 1px dashed #21262d; }
+    .prow { display: grid; grid-template-columns: 170px 60px 200px 120px 1fr 20px; gap: 14px; align-items: center; padding: 10px 12px; font-size: 13px; }
+    .bar2 { display: block; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; } .bar2 > span { display: block; height: 100%; }
+    .runrow { display: grid; grid-template-columns: 54px 200px 90px 90px repeat(5, 70px) 1fr; gap: 10px; align-items: center; padding: 7px 10px; font-size: 13px; }
+    .lvl { color: #ffa657; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .side { display: grid; grid-template-columns: 1fr 440px; gap: 16px; align-items: start; }
+    .ab { display: grid; grid-template-columns: 1fr 110px 110px; gap: 10px; font-size: 13px; align-items: center; }
+    .me { color: #56d364; border-color: #1f6f3a; background: #0a2e1a; }
+  
+    .mecard { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; }
+    .cname { font-size: 16px; font-weight: 700; }
+    .main-badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #58a6ff; border: 1px solid #30363d; border-radius: 999px; padding: 0 7px; line-height: 18px; }
+    .cells5 { display: grid; grid-template-columns: repeat(5, 56px); gap: 4px; }
+    .cells5 .cell { padding: 3px 0; font-size: 13px; }
+    .cells5h { display: grid; grid-template-columns: repeat(5, 56px); gap: 4px; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6e7681; text-align: center; }
+    .acts { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+    .icon-btn { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #30363d; border-radius: 6px; color: #8b949e; font-size: 13px; }
+    .addrow { display: flex; gap: 8px; align-items: center; }
+    .field { display: inline-flex; align-items: center; height: 32px; width: 360px; padding: 0 10px; border: 1px solid #30363d; border-radius: 6px; background: #0b0f14; color: #6e7681; font-size: 13px; }
+    .bnet { display: flex; gap: 10px; align-items: center; font-size: 13px; padding: 10px 12px; border: 1px dashed #30363d; border-radius: 6px; color: #8b949e; }
+    .trow { display: grid; grid-template-columns: 34px 230px 210px 300px 1fr; gap: 14px; align-items: center; padding: 9px 12px; font-size: 13px; }
+    .compact { display: grid; grid-template-columns: 230px 220px 300px 1fr; gap: 14px; align-items: center; padding: 9px 12px; font-size: 13px; }
+    .bigpillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .bp { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; }
+    .bp .score { font-size: 24px; }
+    .menu { width: 240px; background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+    .menu span { padding: 6px 10px; border-radius: 6px; }
+    .menu .hl { background: #21262d; color: #e6edf3; }
+    .confirm { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border: 1px solid #7a1f1f; border-radius: 6px; background: #2e0a0a; font-size: 13px; }
+  </style>
+</helmet>
+<div style="width: 1440px; min-height: 820px; background: #0d1117; display: flex; flex-direction: column;">
+  <div class="content content-wide" style="gap: 22px;">
+    <div><div class="label" style="margin-bottom: 8px;">B · TABLE — one row per character, pillar cells coloured as in the Dungeons grid, actions at the end; ⋯ holds make main, move, remove</div>
+  <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #21262d;"><span class="brand">bmpl</span><span class="search">Name-Realm or Raider.IO URL</span><span class="lookup">Look up</span><div style="flex: 1;"></div><span class="chip chip-on">My characters · 3</span><a class="muted" style="font-size: 13px;">Help</a><span class="avatar">T</span></div>
+  <div style="display: flex; flex-direction: column; gap: 14px; padding-top: 16px;">
+    <div class="hdr"><h2>My characters</h2><span class="muted">the first one is your main · up to 5 · added by hand until Battle.net linking</span><div style="flex: 1;"></div><span class="muted" style="font-size: 12px;">3 of 5</span></div>
+    <div class="addrow"><span class="field">Name-Realm or Raider.IO URL</span><span class="chip">EU ▾</span><span class="btn btn-sm btn-primary">Add</span><span class="faint" style="font-size: 12px;">or press “This is me” on a result page</span></div>
+    <div class="card" style="display: flex; flex-direction: column; gap: 4px;">
+      <div class="trow caps" style="padding: 2px 12px;"><span></span><span>character</span><span>season</span><div class="cells5h"><span>Damage</span><span>Survival</span><span>Avoid.</span><span>Kicks</span><span>Control</span></div><span style="text-align: right;">actions</span></div>
+      <div class="inset trow"><span class="muted mono">★</span><span><b style="color: #FFFFFF;">Muleyoxo</b><br><span class="muted" style="font-size: 12px;">Silvermoon · EU · Holy Priest</span></span><span style="font-size: 12px;" class="soft">142 runs · 118 not analysed · checked 2 h ago</span><div class="cells5"><span class="cell c-mid">68</span><span class="cell c-bad">41</span><span class="cell c-mid">57</span><span class="cell c-good">82</span><span class="cell c-na">n/a</span></div><div class="acts"><span class="btn btn-sm btn-primary" title="from history · 0 pts">Open</span><span class="btn btn-sm">Sync</span><span class="icon-btn">⋯</span></div></div>
+      <div class="inset trow"><span class="muted mono">2</span><span><b style="color: #0070DD;">Biwaasham</b><br><span class="muted" style="font-size: 12px;">Hyjal · EU · Elemental Shaman</span></span><span style="font-size: 12px;" class="soft">94 runs · all analysed · synced yesterday</span><div class="cells5"><span class="cell c-mid">71</span><span class="cell c-mid">55</span><span class="cell c-warn">48</span><span class="cell c-good">77</span><span class="cell c-mid">62</span></div><div class="acts"><span class="btn btn-sm btn-primary" title="from history · 0 pts">Open</span><span class="btn btn-sm" style="opacity: .5;">Sync</span><span class="icon-btn">⋯</span></div></div>
+      <div class="inset trow"><span class="muted mono">3</span><span><b style="color: #FF7C0A;">Biwaadrood</b><br><span class="muted" style="font-size: 12px;">Nerzhul · EU · Guardian Druid</span></span><span style="font-size: 12px;" class="soft">31 runs · none analysed</span><div class="cells5"><span class="cell c-na">—</span><span class="cell c-na">—</span><span class="cell c-na">—</span><span class="cell c-na">—</span><span class="cell c-na">—</span></div><div class="acts"><span class="btn btn-sm btn-primary" title="not in history · ~20 pts">Look up</span><span class="btn btn-sm">Sync</span><span class="icon-btn">⋯</span></div></div>
+      <div class="faint" style="font-size: 12px; padding: 4px 12px;">Pillars over the last 4 weeks · Open reads your history at 0 pts; a character not in it costs a lookup (~20 pts) · Sync needs your own Warcraft Logs client</div>
+    </div>
+    <div class="bnet"><span class="chip">Battle.net</span><span>Link your Battle.net account: coming next. It will import your characters and replace adding them by hand.</span></div>
+  </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

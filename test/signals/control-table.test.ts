@@ -6,7 +6,7 @@ const CLASS_KEYS = new Set(Object.values(CLASS_NAMES).map((n) => n.replace(/\s+/
 
 describe("crowd-control table", () => {
   test("version and keys", () => {
-    expect(CC_TABLE.version).toBe("mn-2.1");
+    expect(CC_TABLE.version).toBe("mn-2.2");
     for (const key of Object.keys(CC_TABLE.specs)) {
       const [cls, spec] = key.split(":");
       expect(CLASS_KEYS.has(cls!)).toBe(true);

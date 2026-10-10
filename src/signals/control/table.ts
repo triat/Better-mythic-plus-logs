@@ -15,6 +15,9 @@ export interface CcEntry {
   pet?: true;
   /** Another id of the same spell, applied by the same cast (Blind's area effect): counted as that spell's uses. */
   group?: number;
+  /** One cast's applications land over this long (Binding Shot's field, Deep Breath's sweep); default `USE_WINDOW_MS`.
+   * Only for spells whose cooldown is longer, so two casts never fall in one window. */
+  windowMs?: number;
 }
 /** `specs` is keyed `Class:Spec` or `Class:*` (WCL's spacing-free names, as `src/signals/kick-cooldowns.ts`). */
 export interface CcTable { version: string; source: string; specs: Record<string, CcEntry[]> }

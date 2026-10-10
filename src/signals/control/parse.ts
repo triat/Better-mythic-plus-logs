@@ -5,7 +5,8 @@ import type { ControlSpell, RawRunControl, RawRunReport, RunControl } from "../t
 import { CONTROL_REFERENCE, referenceFor, type ControlReference } from "./reference.ts";
 import { CC_TABLE, ccIndex, type CcTable } from "./table.ts";
 
-/** Applications of the same spell by the same player within 1 s of the use's first one are one use. */
+/** Applications of the same spell by the same player within 1 s of the use's first one are one use (a spell's own
+ * `windowMs` when one cast lands over longer, src/signals/control/table.ts). */
 export const USE_WINDOW_MS = 1_000;
 const TEN_MINUTES_MS = 600_000;
 
@@ -35,7 +36,7 @@ export function parseRunControl(
       s = { id, name: entry.name, category: entry.category, uses: 0, enemies: 0, ...(entry.pet ? { pet: true as const } : {}), start: Number.NEGATIVE_INFINITY };
       spells.set(key, s);
     }
-    if (kind === "cast" || e.timestamp - s.start >= USE_WINDOW_MS) {
+    if (kind === "cast" || e.timestamp - s.start >= (entry.windowMs ?? USE_WINDOW_MS)) {
       s.uses++;
       s.start = e.timestamp;
     }

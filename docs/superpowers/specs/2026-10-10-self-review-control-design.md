@@ -114,7 +114,9 @@ read (0 pts) ──► wcl_run_control + cc-mn-2.json ──► uses per run ─
 
 - **Control query:** 3 pts per run (`ESTIMATE_CONTROL = 3`).
 - **Sync estimate:** rankings 20 + 10 per run not analysed + 3 per run without control data.
-- **Use grouping window:** 1 s, same spell, same player (pet credited to its owner).
+- **Use grouping window:** 1 s, same spell, same player (pet credited to its owner); 10 s for the spells one cast
+  lands over longer and whose cooldown is 30 s or more (`windowMs` in the table: Binding Shot, Psychic Scream,
+  Terror of the Skies, Chaos Nova, Holy Word: Chastise; table `mn-2.2`, 2026-10-10).
 - **Rate:** uses per 10 minutes of key (fight start to end).
 - **Kit floor:** spec reference median under 0.5 use per 10 minutes → `null`.
 - **Reference:** at least 20 samples per spec; EU, +15 to +20.
@@ -150,6 +152,17 @@ user's choice: better to have the information when it happens). Not counted: roo
 Ice, Frost Nova…), and Death Grip's own debuff 51399 (the cast already counts). The candidates' names came from one
 more pass over the reports' `masterData.abilities` (cost not measured exactly: the WCL hour turned during the run;
 estimated 100 to 200 pts).
+
+## Reference (2026-10-10, plan Task 19)
+
+`scripts/calibration/control.ts`, EU +15 to +20: 422 runs, 2 080 pts, every spec at 20 samples or more
+(`reference-mn-2.json`, table `mn-2.2`). After the per-spell windows above, the same cached runs were re-read at
+0 pts: Devastation 17.3 → 12.3 uses per 10 minutes, Shadow 6.9 → 6.1, Havoc, Vengeance, Augmentation and Beast
+Mastery a little lower. Lowest medians: Discipline 1.0, Devourer 1.1, Frost mage 1.6; highest: Blood 15.8 (Death
+Grip, also used to taunt), Devastation 12.3. Devastation still lands Terror of the Skies more often than a 2-minute
+Deep Breath would allow; whether the stun has another source this season is not known. Each spec is compared with
+its own median, so a counting artefact shared by the whole spec does not bias the comparison. The dungeon spread of
+the samples is not recorded: a spec that reached 20 quickly took them from the first dungeons walked.
 
 ## Error handling
 

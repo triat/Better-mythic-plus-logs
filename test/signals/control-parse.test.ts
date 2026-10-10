@@ -26,6 +26,12 @@ describe("parseRunControl", () => {
     expect(c.uses).toBe(2);
     expect(c.enemies).toBe(4);
   });
+  test("a spell with its own window: one cast landing over 10 s is one use", () => {
+    const table: CcTable = { version: "t1", source: "", specs: { "Hunter:*": [{ id: 117526, name: "Binding Shot", category: "stun", kind: "debuff", windowMs: 10_000 }] } };
+    const hunter = { actorID: 10, className: "Hunter", spec: "Survival" };
+    const c = parseRunControl(raw([ev(0, 10, 117526), ev(3_000, 10, 117526), ev(9_000, 10, 117526), ev(10_000, 10, 117526)]), hunter, TEN_MIN, { table, reference: REF });
+    expect(c.spells).toEqual([{ id: 117526, name: "Binding Shot", category: "stun", uses: 2, enemies: 4 }]);
+  });
   test("other players, unknown ids and other event types do not count", () => {
     const c = parseRunControl(raw([ev(0, 11, 408), ev(0, 10, 999), ev(0, 10, 408, "removedebuff")]), ROGUE, TEN_MIN, { table: TABLE, reference: REF });
     expect(c.uses).toBe(0);

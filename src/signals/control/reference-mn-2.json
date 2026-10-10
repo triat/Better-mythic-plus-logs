@@ -1,7 +1,7 @@
 {
  "version": "mn-2.0",
- "tableVersion": "mn-2.1",
- "source": "scripts/calibration/control.ts, 2026-10-10, 422 runs, 2080 pts this session",
+ "tableVersion": "mn-2.2",
+ "source": "scripts/calibration/control.ts, 2026-10-10, 422 runs, 0 pts this session",
  "scope": "EU, +15 to +20",
  "specs": {
   "DeathKnight:Blood": {
@@ -29,15 +29,15 @@
    "samples": 45
   },
   "DemonHunter:Havoc": {
-   "median": 4.96,
-   "p25": 3.89,
-   "p75": 6.13,
+   "median": 4.76,
+   "p25": 3.58,
+   "p75": 5.69,
    "samples": 43
   },
   "DemonHunter:Vengeance": {
-   "median": 9.15,
-   "p25": 7.94,
-   "p75": 11.16,
+   "median": 8.97,
+   "p25": 7.61,
+   "p75": 11,
    "samples": 42
   },
   "Druid:Balance": {
@@ -65,15 +65,15 @@
    "samples": 25
   },
   "Evoker:Augmentation": {
-   "median": 5.16,
+   "median": 4.98,
    "p25": 1.46,
    "p75": 6.7,
    "samples": 20
   },
   "Evoker:Devastation": {
-   "median": 17.25,
-   "p25": 9.65,
-   "p75": 18.65,
+   "median": 12.28,
+   "p25": 7.19,
+   "p75": 14.79,
    "samples": 20
   },
   "Evoker:Preservation": {
@@ -83,9 +83,9 @@
    "samples": 22
   },
   "Hunter:BeastMastery": {
-   "median": 2.75,
+   "median": 2.51,
    "p25": 1.74,
-   "p75": 3.9,
+   "p75": 3.75,
    "samples": 28
   },
   "Hunter:Marksmanship": {
@@ -97,7 +97,7 @@
   "Hunter:Survival": {
    "median": 2.26,
    "p25": 1.44,
-   "p75": 3.26,
+   "p75": 3.25,
    "samples": 20
   },
   "Mage:Arcane": {
@@ -162,14 +162,14 @@
   },
   "Priest:Holy": {
    "median": 7.69,
-   "p25": 6.01,
-   "p75": 10.67,
+   "p25": 5.65,
+   "p75": 9.63,
    "samples": 37
   },
   "Priest:Shadow": {
-   "median": 6.87,
-   "p25": 5.67,
-   "p75": 9.62,
+   "median": 6.08,
+   "p25": 5.24,
+   "p75": 7.99,
    "samples": 23
   },
   "Rogue:Assassination": {

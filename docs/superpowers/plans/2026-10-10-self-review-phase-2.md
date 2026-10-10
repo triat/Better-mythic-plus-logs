@@ -1202,6 +1202,10 @@ Done 2026-10-10: 477 pts, plus the names pass (cost not measured exactly, 100 to
 
 ### Task 19: Collect the reference (stop and ask before spending)
 
+Done 2026-10-10 with the user's budget of 10 000 pts: 422 runs, 2 080 pts; then, at the user's request, one cast
+counted once for five spells (table `mn-2.2`, `windowMs`) and the reference re-read from the cache at 0 pts. Details
+in the spec's "Reference" section.
+
 - [ ] **Step 1: Ask the user**: "Reference collection: EU, +15 to +20, 20 samples per spec, between 1 500 and 2 500 WCL pts (`--budget 2500`) on <client>. Go?"
 - [ ] **Step 2**: `bun scripts/calibration/control.ts --per-spec 20 --budget 2500`; report the specs under 20 samples and the medians; the user approves the file.
 - [ ] **Step 3**: commit `src/signals/control/reference-mn-2.json` → `feat(signals): crowd-control reference per spec (EU +15–20)`; `bun test`.

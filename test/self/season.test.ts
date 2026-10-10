@@ -143,7 +143,12 @@ describe("seasonView — crowd control", () => {
     const withIt = await dk(true);
     expect(without.runs[0]!.signals!.control).toBeUndefined();
     expect(without.dungeons[0]!.details).toMatchObject({ control: [], controlRuns: 0 });
-    // The shipped reference is empty: crowd control has no score yet, so the Control pillar does not move.
-    expect(withIt.runs[0]!.pillars).toEqual(without.runs[0]!.pillars);
+    // A Frost death knight has no dispel: without crowd control the Control pillar is n/a; with it, the run is scored
+    // against the spec's reference, and the four other pillars do not move.
+    const a = without.runs[0]!.pillars!;
+    const b = withIt.runs[0]!.pillars!;
+    expect(a.control).toBeNull();
+    expect(typeof b.control).toBe("number");
+    expect({ ...b, control: null as number | null }).toEqual(a);
   });
 });

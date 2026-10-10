@@ -1,1 +1,248 @@
-{ "version": "mn-2.0", "tableVersion": "mn-2.1", "source": "Not collected yet (scripts/calibration/control.ts).", "scope": "EU, +15 to +20", "specs": {} }
+{
+ "version": "mn-2.0",
+ "tableVersion": "mn-2.1",
+ "source": "scripts/calibration/control.ts, 2026-10-10, 422 runs, 2080 pts this session",
+ "scope": "EU, +15 to +20",
+ "specs": {
+  "DeathKnight:Blood": {
+   "median": 15.83,
+   "p25": 13.31,
+   "p75": 18.37,
+   "samples": 124
+  },
+  "DeathKnight:Frost": {
+   "median": 8.41,
+   "p25": 7.62,
+   "p75": 9.22,
+   "samples": 31
+  },
+  "DeathKnight:Unholy": {
+   "median": 7.49,
+   "p25": 6.31,
+   "p75": 9.52,
+   "samples": 72
+  },
+  "DemonHunter:Devourer": {
+   "median": 1.09,
+   "p25": 0.69,
+   "p75": 1.73,
+   "samples": 45
+  },
+  "DemonHunter:Havoc": {
+   "median": 4.96,
+   "p25": 3.89,
+   "p75": 6.13,
+   "samples": 43
+  },
+  "DemonHunter:Vengeance": {
+   "median": 9.15,
+   "p25": 7.94,
+   "p75": 11.16,
+   "samples": 42
+  },
+  "Druid:Balance": {
+   "median": 3.32,
+   "p25": 2.09,
+   "p75": 3.52,
+   "samples": 27
+  },
+  "Druid:Feral": {
+   "median": 5.28,
+   "p25": 3.98,
+   "p75": 6.43,
+   "samples": 33
+  },
+  "Druid:Guardian": {
+   "median": 6.25,
+   "p25": 4.61,
+   "p75": 8.08,
+   "samples": 154
+  },
+  "Druid:Restoration": {
+   "median": 3.38,
+   "p25": 2.37,
+   "p75": 4.15,
+   "samples": 25
+  },
+  "Evoker:Augmentation": {
+   "median": 5.16,
+   "p25": 1.46,
+   "p75": 6.7,
+   "samples": 20
+  },
+  "Evoker:Devastation": {
+   "median": 17.25,
+   "p25": 9.65,
+   "p75": 18.65,
+   "samples": 20
+  },
+  "Evoker:Preservation": {
+   "median": 1.97,
+   "p25": 0.59,
+   "p75": 2.36,
+   "samples": 22
+  },
+  "Hunter:BeastMastery": {
+   "median": 2.75,
+   "p25": 1.74,
+   "p75": 3.9,
+   "samples": 28
+  },
+  "Hunter:Marksmanship": {
+   "median": 1.71,
+   "p25": 0.77,
+   "p75": 2.13,
+   "samples": 21
+  },
+  "Hunter:Survival": {
+   "median": 2.26,
+   "p25": 1.44,
+   "p75": 3.26,
+   "samples": 20
+  },
+  "Mage:Arcane": {
+   "median": 1.69,
+   "p25": 1.11,
+   "p75": 2.1,
+   "samples": 186
+  },
+  "Mage:Fire": {
+   "median": 2.1,
+   "p25": 1.71,
+   "p75": 2.58,
+   "samples": 20
+  },
+  "Mage:Frost": {
+   "median": 1.57,
+   "p25": 1.03,
+   "p75": 2.24,
+   "samples": 20
+  },
+  "Monk:Brewmaster": {
+   "median": 8.66,
+   "p25": 7.81,
+   "p75": 9.83,
+   "samples": 27
+  },
+  "Monk:Mistweaver": {
+   "median": 4.84,
+   "p25": 4.29,
+   "p75": 5.82,
+   "samples": 26
+  },
+  "Monk:Windwalker": {
+   "median": 4.53,
+   "p25": 3.42,
+   "p75": 5.33,
+   "samples": 39
+  },
+  "Paladin:Holy": {
+   "median": 2.19,
+   "p25": 1.4,
+   "p75": 3.04,
+   "samples": 159
+  },
+  "Paladin:Protection": {
+   "median": 3.31,
+   "p25": 2.62,
+   "p75": 4.8,
+   "samples": 55
+  },
+  "Paladin:Retribution": {
+   "median": 2.8,
+   "p25": 1.74,
+   "p75": 3.78,
+   "samples": 53
+  },
+  "Priest:Discipline": {
+   "median": 1.04,
+   "p25": 0.57,
+   "p75": 1.4,
+   "samples": 20
+  },
+  "Priest:Holy": {
+   "median": 7.69,
+   "p25": 6.01,
+   "p75": 10.67,
+   "samples": 37
+  },
+  "Priest:Shadow": {
+   "median": 6.87,
+   "p25": 5.67,
+   "p75": 9.62,
+   "samples": 23
+  },
+  "Rogue:Assassination": {
+   "median": 1.92,
+   "p25": 1.37,
+   "p75": 2.48,
+   "samples": 66
+  },
+  "Rogue:Outlaw": {
+   "median": 2.83,
+   "p25": 2.14,
+   "p75": 3.64,
+   "samples": 24
+  },
+  "Rogue:Subtlety": {
+   "median": 1.87,
+   "p25": 1.37,
+   "p75": 2.77,
+   "samples": 23
+  },
+  "Shaman:Elemental": {
+   "median": 3.05,
+   "p25": 2.1,
+   "p75": 3.94,
+   "samples": 138
+  },
+  "Shaman:Enhancement": {
+   "median": 2.96,
+   "p25": 2.01,
+   "p75": 3.97,
+   "samples": 24
+  },
+  "Shaman:Restoration": {
+   "median": 3.15,
+   "p25": 2.45,
+   "p75": 3.88,
+   "samples": 133
+  },
+  "Warlock:Affliction": {
+   "median": 2.37,
+   "p25": 2.07,
+   "p75": 3.76,
+   "samples": 20
+  },
+  "Warlock:Demonology": {
+   "median": 3.26,
+   "p25": 2.21,
+   "p75": 4.31,
+   "samples": 37
+  },
+  "Warlock:Destruction": {
+   "median": 4.03,
+   "p25": 3,
+   "p75": 4.98,
+   "samples": 20
+  },
+  "Warrior:Arms": {
+   "median": 3.87,
+   "p25": 2.8,
+   "p75": 5.32,
+   "samples": 193
+  },
+  "Warrior:Fury": {
+   "median": 2.81,
+   "p25": 0.95,
+   "p75": 5.69,
+   "samples": 20
+  },
+  "Warrior:Protection": {
+   "median": 7,
+   "p25": 6.41,
+   "p75": 8.28,
+   "samples": 20
+  }
+ }
+}

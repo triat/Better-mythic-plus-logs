@@ -3,7 +3,7 @@ import type { DungeonRow, Evaluation, LookupPayload, MyCharacter, SeasonRunView,
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  dungeonPanel, isMe, meChip, pillarCards, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
+  dungeonPanel, isMe, meChip, pillarCards, resultView, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
 } from "./self.ts";
 
 const tFr = makeT(fr, "fr");
@@ -160,6 +160,11 @@ describe("me", () => {
     expect(toggleMe(full, p)).toBeNull();
     expect(meChip(tEn, full, p)).toEqual({ label: "This is me", on: false, disabled: true, title: "Up to 5 characters: remove one from your list first" });
     expect(meChip(tEn, [c("Muleyoxo")], p)).toEqual({ label: "This is me ✓", on: true, disabled: false });
+  });
+  test("your own characters open the self-review tabs, anyone else the vetting view (phase-2 spec, decision 6)", () => {
+    expect(resultView([c("muleyoxo")], p)).toBe("owner");
+    expect(resultView([c("Other")], p)).toBe("vetting");
+    expect(resultView([], p)).toBe("vetting");
   });
 });
 

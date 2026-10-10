@@ -1,6 +1,6 @@
 # Self-review phase 2: crowd control, and the owner's view — design
 
-Status: approved 2026-10-10. Parent spec:
+Status: approved 2026-10-10; canvas variants chosen 2026-10-10 (decision 8). Parent spec:
 `docs/superpowers/specs/2026-10-09-self-review-pillars-design.md` (phase 2 of its "Phases"). Probes of
 2026-10-10 on two cached runs (section "Data notes") cost about 12 pts.
 
@@ -88,7 +88,10 @@ characters; any other character opens the vetting view the result page had befor
    with the user's agreement like the calibration study. The table (decision 2) is validated before
    the reference is collected.
 
-8. **What the views show** (owner's view only; canvas first, page "control"):
+8. **What the views show** (owner's view only; canvas page "control", `docs/design/canvas/Control*.dc.html`;
+   chosen 2026-10-10: `ControlVettingA` for the vetting view, "This is me" on the name line, and run
+   detail B of `ControlDetails`, the run's rate against the spec's median first, then the spells grouped
+   by category):
    - Overview: the Control pillar card reads its two sub-signals, crowd control vs the average player
      of the spec and vs the player's own past, like the other pillars.
    - Dungeons: the Control column includes crowd control; the dungeon panel adds "Crowd control here",

@@ -255,6 +255,10 @@ const sameCharacter = (c: MyCharacter, p: LookupPayload): boolean =>
   c.region === p.character.region && c.realm.toLowerCase() === p.character.realmSlug.toLowerCase() && c.name.toLowerCase() === p.character.name.toLowerCase();
 export const isMe = (chars: MyCharacter[], p: LookupPayload): boolean => chars.some((c) => sameCharacter(c, p));
 
+/** Phase-2 spec, decision 6: the member's own characters open the self-review tabs, anyone else the vetting view the
+ * result page had before phase 1. Until Battle.net linking, "own" means "in My characters". */
+export const resultView = (chars: MyCharacter[], p: LookupPayload): "owner" | "vetting" => (isMe(chars, p) ? "owner" : "vetting");
+
 /** Adds or removes the payload's character; null when the list is full and it is not in it. */
 export function toggleMe(chars: MyCharacter[], p: LookupPayload): MyCharacter[] | null {
   if (isMe(chars, p)) return chars.filter((c) => !sameCharacter(c, p));

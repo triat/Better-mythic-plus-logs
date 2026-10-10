@@ -1148,6 +1148,8 @@ Not run here (Task 19). Scope of `docs/superpowers/specs/2026-09-24-scoring-cali
 
 ### Task 12: Canvas page "control" (user's choice)
 
+Done 2026-10-10 (canvas version 24). The user chose **A + B**: `ControlVettingA` (the chip on the verdict block's name line) and run detail **B** (the run's rate and the spec's median first, then the spells grouped by category). The dungeon panel, the Control pillar states and the sync card of `ControlDetails` are shared.
+
 **Files:** `docs/design/canvas/Control*.dc.html` (new), `docs/design/canvas/canvas.json`.
 
 Following `docs/agents/web-front.md` "Design first" (read the artifact first, edit, seed, republish the same artifact, copy the sources back).

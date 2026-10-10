@@ -50,7 +50,7 @@ just check-deps                             # bun audit on both lockfiles — ru
 
 ## Toolchain
 
-Bun ≥ 1.4, pinned to 1.4.3 in `.tool-versions` and the deploy workflow (runtime, test runner, bundler, SQLite via `bun:sqlite`), TypeScript strict, `just` for recipes, Vite 8 + React 19 in `web/` (no router, no state lib, no CSS framework, no component lib). No linter/formatter is configured: match the surrounding style (2 spaces, double quotes, trailing commas, ≤ ~120 cols, `.ts` extensions in imports).
+Bun ≥ 1.4, pinned to 1.4.3 in `.tool-versions` and the deploy workflow (runtime, test runner, bundler, SQLite via `bun:sqlite`), TypeScript 7 strict (`tsc` is the native compiler), `just` for recipes, Vite 8 + React 19 in `web/` (no router, no state lib, no CSS framework, no component lib). No linter/formatter is configured: match the surrounding style (2 spaces, double quotes, trailing commas, ≤ ~120 cols, `.ts` extensions in imports).
 
 ## Where things are
 

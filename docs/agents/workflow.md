@@ -46,9 +46,9 @@ sign-up. Self-review phase 1 is implemented (spec
 `docs/superpowers/plans/2026-10-09-self-review-phase-1.md`): five pillars, the season store and sync,
 the result page's three tabs and the personal page `/me`. Phase 2 (spec
 `docs/superpowers/specs/2026-10-10-self-review-control-design.md`, plan
-`docs/superpowers/plans/2026-10-10-self-review-phase-2.md`) is implemented except the table audit and the
-reference collection (Tasks 18–19, they spend points: ask the user first): crowd control in the Control
-pillar, the owner's view for the member's own characters, the vetting view for everyone else. Next pieces,
+`docs/superpowers/plans/2026-10-10-self-review-phase-2.md`) is implemented, the crowd-control table audited
+and the per-spec reference collected (re-running either spends points: ask the user first): crowd control in
+the Control pillar, the owner's view for the member's own characters, the vetting view for everyone else. Next pieces,
 each with its own spec: phase 3 (useful damage) and Battle.net linking to replace the hand-added
 characters; the WCL-dependent items are tracked in GitHub issue #24.
 

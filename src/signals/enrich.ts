@@ -6,6 +6,7 @@ import {
   REPORT_RUN_SUMMARY_WITH_AVOIDABLE_QUERY,
 } from "../wcl/queries.ts";
 import { avoidableFilterExpression, avoidableSpellIdsFor } from "./avoidable/index.ts";
+import { controlOf } from "./control/parse.ts";
 import { CC_TABLE, ccFilterExpression } from "./control/table.ts";
 import type { Store } from "./store.ts";
 import type { RawControlEvent, RawRunControl, RawRunReport } from "./types.ts";
@@ -15,6 +16,8 @@ export type GqlFn = <T>(query: string, variables?: Record<string, unknown>) => P
 
 interface Deps {
   gql?: GqlFn;
+  /** Fetch crowd control for the runs that lack it (the member's own character only, phase-2 spec decision 4). */
+  control?: boolean;
 }
 
 const runKey = (r: MPlusRun) => `${r.reportCode}:${r.fightID}`;
@@ -71,7 +74,9 @@ export async function fetchRunControl(run: { reportCode: string; fightID: number
 /**
  * Attach `signals` to each run: store hit → parse; miss → WCL → store → parse.
  * Runs in parallel. A failure on one run leaves that run's `signals`
- * undefined and never throws. ~10 pts per uncached run.
+ * undefined and never throws. ~10 pts per uncached run, ~3 more per run
+ * without crowd control when `control` is set; a cached control row is
+ * attached either way (0 pts), even one fetched with an older table.
  */
 export async function enrichRuns(
   runs: MPlusRun[],
@@ -100,6 +105,18 @@ export async function enrichRuns(
           affixes: first.affixes,
           encounterID: first.encounterID,
         });
+        if (signals && raw) {
+          let control = store.getRunControl(first.reportCode, first.fightID);
+          if (deps.control && (!control || control.tableVersion !== CC_TABLE.version)) {
+            const fetched = await fetchRunControl(first, gql).catch(() => null);
+            if (fetched) {
+              store.putRunControl(first.reportCode, first.fightID, fetched);
+              control = fetched;
+            }
+          }
+          const c = controlOf(raw, control, characterName, signals.fightDurationMs);
+          if (c) signals.control = c;
+        }
         if (signals) for (const r of group) r.signals = signals;
       } catch {
         /* leave signals undefined for this run */

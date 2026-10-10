@@ -23,7 +23,8 @@ import { type Store, getStore } from "./signals/store.ts";
 import { type SignalSummary, signalSummary } from "./signals/summary.ts";
 import type { RioProfile } from "./signals/types.ts";
 import { realmToSlug } from "./util.ts";
-import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "./wcl/meter.ts";
+import { CC_TABLE } from "./signals/control/table.ts";
+import { ESTIMATE_CONTROL, ESTIMATE_RANKINGS, ESTIMATE_RUN } from "./wcl/meter.ts";
 import type { Region } from "./wow/regions.ts";
 import type { QuotaRefusal, Reserve } from "./hosted/quota.ts";
 
@@ -37,6 +38,8 @@ export interface LookupOptions {
   metric?: Metric;
   enrich: boolean;
   refresh?: boolean;
+  /** The member's own character: fetch crowd control too (self-review phase-2 spec, decision 4). */
+  control?: boolean;
 }
 
 /**
@@ -167,8 +170,11 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
   const shown = displayedRuns(result);
 
   if (opts.enrich && deps.reserve) {
-    const uncached = new Set(shown.filter((r) => !store.getWclRun(r.reportCode, r.fightID)).map((r) => `${r.reportCode}:${r.fightID}`)).size;
-    const refusedRuns = uncached > 0 ? deps.reserve(uncached * ESTIMATE_RUN) : null;
+    const keys = [...new Map(shown.map((r) => [`${r.reportCode}:${r.fightID}`, r])).values()];
+    const uncached = keys.filter((r) => !store.hasWclRun(r.reportCode, r.fightID)).length;
+    const noControl = opts.control ? keys.filter((r) => !store.hasRunControl(r.reportCode, r.fightID, CC_TABLE.version)).length : 0;
+    const estimate = uncached * ESTIMATE_RUN + noControl * ESTIMATE_CONTROL;
+    const refusedRuns = estimate > 0 ? deps.reserve(estimate) : null;
     if (refusedRuns) {
       recent.keep(recentKey, fetched);
       return { ok: false, status: 429, error: refusedRuns.message, quota: refusedRuns };
@@ -178,7 +184,7 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
 
   const [, rioRes] = await Promise.all([
     opts.enrich
-      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql })
+      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql, control: opts.control })
       : Promise.resolve(),
     fetchRioProfile(opts.region, opts.realm, data.character.name, store, {
       refresh: opts.refresh,

@@ -3,7 +3,7 @@ import type { MPlusRun } from "../../src/mplus.ts";
 import { enrichRuns, fetchRunControl } from "../../src/signals/enrich.ts";
 import { CC_TABLE, ccFilterExpression } from "../../src/signals/control/table.ts";
 import { openStore } from "../../src/signals/store.ts";
-import { loadWclFixture } from "../fixtures.ts";
+import { loadControlFixture, loadWclFixture } from "../fixtures.ts";
 
 const runFrom = (f: any): MPlusRun => ({ ...f.run, signals: undefined });
 
@@ -91,5 +91,75 @@ describe("fetchRunControl", () => {
   test("a report WCL does not return → null", async () => {
     const gql = async <T,>(): Promise<T> => ({ reportData: { report: null } }) as T;
     expect(await fetchRunControl({ reportCode: "AbC", fightID: 9 }, gql)).toBeNull();
+  });
+});
+
+describe("enrichRuns — crowd control", () => {
+  /** The DK fixture's run, its summary answered by the fake, its control answered on the control query. */
+  async function setup(opts: { throwOnControl?: boolean } = {}) {
+    const f = await loadControlFixture("s2-dk-frost");
+    const store = openStore(":memory:");
+    const calls: string[] = [];
+    const gql = async <T,>(query: string): Promise<T> => {
+      const kind = query.includes("ReportRunControl") ? "control" : "summary";
+      calls.push(kind);
+      if (kind === "control") {
+        if (opts.throwOnControl) throw new Error("boom");
+        return { reportData: { report: { masterData: { actors: f.control.pets }, cc: { data: f.control.events, nextPageTimestamp: null } } } } as T;
+      }
+      return { reportData: { report: f.report } } as T;
+    };
+    const run = (): MPlusRun => ({
+      encounterID: f.report.fights[0].encounterID, encounterName: "Den of Nalorakk", keyLevel: 19, amount: 1, parsePercent: 50, spec: "Frost",
+      affixes: [], reportCode: f.report.code, fightID: f.report.fights[0].id, startTime: 0, score: 0,
+    });
+    return { f, store, calls, gql, run };
+  }
+
+  test("without `control`: no control call, nothing attached", async () => {
+    const x = await setup();
+    const runs = [x.run()];
+    await enrichRuns(runs, x.f.character, x.store, { gql: x.gql });
+    expect(x.calls).toEqual(["summary"]);
+    expect(runs[0]!.signals?.control).toBeUndefined();
+  });
+  test("with `control`: fetched once, stored, attached; then all from the cache", async () => {
+    const x = await setup();
+    const runs = [x.run()];
+    await enrichRuns(runs, x.f.character, x.store, { gql: x.gql, control: true });
+    expect(x.calls).toEqual(["summary", "control"]);
+    expect(x.store.hasRunControl(x.f.report.code, x.f.report.fights[0].id, CC_TABLE.version)).toBe(true);
+    expect(runs[0]!.signals!.control!.uses).toBeGreaterThan(0);
+    const again = [x.run()];
+    await enrichRuns(again, x.f.character, x.store, { gql: x.gql, control: true });
+    expect(x.calls).toEqual(["summary", "control"]);
+    expect(again[0]!.signals!.control!.uses).toBe(runs[0]!.signals!.control!.uses);
+  });
+  test("a cached control row is attached at 0 pts even without `control`", async () => {
+    const x = await setup();
+    x.store.putRunControl(x.f.report.code, x.f.report.fights[0].id, x.f.control);
+    const runs = [x.run()];
+    await enrichRuns(runs, x.f.character, x.store, { gql: x.gql });
+    expect(x.calls).toEqual(["summary"]);
+    expect(runs[0]!.signals!.control!.uses).toBeGreaterThan(0);
+  });
+  test("a row at another table version is refetched when asked, kept (stale) otherwise", async () => {
+    const x = await setup();
+    x.store.putRunControl(x.f.report.code, x.f.report.fights[0].id, { ...x.f.control, tableVersion: "mn-1.0" });
+    const plain = [x.run()];
+    await enrichRuns(plain, x.f.character, x.store, { gql: x.gql });
+    expect(plain[0]!.signals!.control!.stale).toBe(true);
+    const asked = [x.run()];
+    await enrichRuns(asked, x.f.character, x.store, { gql: x.gql, control: true });
+    expect(x.calls.filter((c) => c === "control")).toHaveLength(1);
+    expect(asked[0]!.signals!.control!.stale).toBe(false);
+    expect(x.store.getRunControl(x.f.report.code, x.f.report.fights[0].id)!.tableVersion).toBe(CC_TABLE.version);
+  });
+  test("a failing control call keeps the run's signals, without control", async () => {
+    const x = await setup({ throwOnControl: true });
+    const runs = [x.run()];
+    await enrichRuns(runs, x.f.character, x.store, { gql: x.gql, control: true });
+    expect(runs[0]!.signals).toBeDefined();
+    expect(runs[0]!.signals!.control).toBeUndefined();
   });
 });

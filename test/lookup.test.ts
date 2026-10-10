@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { buildLookupPayload, performLookup, RecentRankings, specsSeen } from "../src/lookup.ts";
 import type { MPlusData, MPlusRun } from "../src/mplus.ts";
 import { openStore } from "../src/signals/store.ts";
-import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../src/wcl/meter.ts";
+import { ESTIMATE_CONTROL, ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../src/wcl/meter.ts";
+import { CC_TABLE } from "../src/signals/control/table.ts";
 import type { QuotaRefusal } from "../src/hosted/quota.ts";
 import { loadWclFixture } from "./fixtures.ts";
 
@@ -49,6 +50,26 @@ describe("performLookup — quota reservations", () => {
     expect(o.ok).toBe(true);
     expect(estimates).toEqual([ESTIMATE_RANKINGS, ESTIMATE_RUN]);
     expect(x.gqlCalls).toEqual(["OTHERCODE"]);
+    x.store.close();
+  });
+  test("own character (`control`): control is reserved for every displayed run lacking it", async () => {
+    const x = await fixture();
+    const estimates: number[] = [];
+    const o = await performLookup({ ...opts(x.name), control: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, reserve: (e) => { estimates.push(e); return null; } });
+    expect(o.ok).toBe(true);
+    // One uncached run (summary + control), one cached run (control only).
+    expect(estimates).toEqual([ESTIMATE_RANKINGS, ESTIMATE_RUN + 2 * ESTIMATE_CONTROL]);
+    x.store.close();
+  });
+  test("own character with everything cached reserves nothing after the rankings", async () => {
+    const x = await fixture();
+    for (const r of x.data.runs) {
+      x.store.putWclRun(r.reportCode, r.fightID, (await loadWclFixture("s2-healer")).report);
+      x.store.putRunControl(r.reportCode, r.fightID, { tableVersion: CC_TABLE.version, pets: [], events: [] });
+    }
+    const estimates: number[] = [];
+    await performLookup({ ...opts(x.name), control: true }, { store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus, reserve: (e) => { estimates.push(e); return null; } });
+    expect(estimates).toEqual([ESTIMATE_RANKINGS]);
     x.store.close();
   });
   test("a refusal before the rankings fetches nothing", async () => {

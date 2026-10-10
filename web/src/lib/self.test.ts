@@ -87,6 +87,7 @@ describe("dungeonPanel", () => {
       avoidable: [{ id: 1, name: "Shadow Pool", total: 380 }, { id: 2, name: "Void Slash", total: 240 }], avoidableOther: 380, avoidableTotal: 1000,
       killers: [{ ability: "Void Slash", deaths: 4 }],
       casts: [{ id: 3, name: "Lava Bolt", attempts: 40, completed: 11, interrupted: 27, mine: 9 }],
+      control: [], controlRuns: 0,
     },
   };
   test("shares, counts and the runs link", () => {

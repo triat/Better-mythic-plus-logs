@@ -1,0 +1,105 @@
+{
+  "version": "mn-2.0",
+  "source": "Draft 2026-10-10 from two probed runs and the class kits; validated by scripts/audit-control.ts.",
+  "specs": {
+    "DeathKnight:*": [
+      { "id": 221562, "name": "Asphyxiate", "category": "stun", "kind": "debuff" },
+      { "id": 108194, "name": "Asphyxiate", "category": "stun", "kind": "debuff" },
+      { "id": 207167, "name": "Blinding Sleet", "category": "disorient", "kind": "debuff" },
+      { "id": 91800, "name": "Gnaw", "category": "stun", "kind": "debuff", "pet": true },
+      { "id": 91797, "name": "Monstrous Blow", "category": "stun", "kind": "debuff", "pet": true },
+      { "id": 49576, "name": "Death Grip", "category": "knock", "kind": "cast" },
+      { "id": 108199, "name": "Gorefiend's Grasp", "category": "knock", "kind": "cast" }
+    ],
+    "DemonHunter:*": [
+      { "id": 179057, "name": "Chaos Nova", "category": "stun", "kind": "debuff" },
+      { "id": 211881, "name": "Fel Eruption", "category": "stun", "kind": "debuff" },
+      { "id": 217832, "name": "Imprison", "category": "incapacitate", "kind": "debuff" },
+      { "id": 207685, "name": "Sigil of Misery", "category": "fear", "kind": "debuff" },
+      { "id": 204490, "name": "Sigil of Silence", "category": "silence", "kind": "debuff" }
+    ],
+    "Druid:*": [
+      { "id": 99, "name": "Incapacitating Roar", "category": "incapacitate", "kind": "debuff" },
+      { "id": 5211, "name": "Mighty Bash", "category": "stun", "kind": "debuff" },
+      { "id": 203123, "name": "Maim", "category": "stun", "kind": "debuff" },
+      { "id": 163505, "name": "Rake", "category": "stun", "kind": "debuff" },
+      { "id": 2637, "name": "Hibernate", "category": "incapacitate", "kind": "debuff" },
+      { "id": 81261, "name": "Solar Beam", "category": "silence", "kind": "debuff" },
+      { "id": 132469, "name": "Typhoon", "category": "knock", "kind": "cast" },
+      { "id": 102793, "name": "Ursol's Vortex", "category": "knock", "kind": "cast" }
+    ],
+    "Evoker:*": [
+      { "id": 372245, "name": "Terror of the Skies", "category": "stun", "kind": "debuff" },
+      { "id": 360806, "name": "Sleep Walk", "category": "incapacitate", "kind": "debuff" },
+      { "id": 357214, "name": "Wing Buffet", "category": "knock", "kind": "cast" },
+      { "id": 368970, "name": "Tail Swipe", "category": "knock", "kind": "cast" }
+    ],
+    "Hunter:*": [
+      { "id": 24394, "name": "Intimidation", "category": "stun", "kind": "debuff" },
+      { "id": 117526, "name": "Binding Shot", "category": "stun", "kind": "debuff" },
+      { "id": 3355, "name": "Freezing Trap", "category": "incapacitate", "kind": "debuff" },
+      { "id": 213691, "name": "Scatter Shot", "category": "disorient", "kind": "debuff" },
+      { "id": 186387, "name": "Bursting Shot", "category": "knock", "kind": "cast" }
+    ],
+    "Mage:*": [
+      { "id": 118, "name": "Polymorph", "category": "incapacitate", "kind": "debuff" },
+      { "id": 383121, "name": "Mass Polymorph", "category": "incapacitate", "kind": "debuff" },
+      { "id": 82691, "name": "Ring of Frost", "category": "incapacitate", "kind": "debuff" },
+      { "id": 31661, "name": "Dragon's Breath", "category": "disorient", "kind": "debuff" },
+      { "id": 157981, "name": "Blast Wave", "category": "knock", "kind": "cast" },
+      { "id": 157980, "name": "Supernova", "category": "knock", "kind": "cast" }
+    ],
+    "Monk:*": [
+      { "id": 119381, "name": "Leg Sweep", "category": "stun", "kind": "debuff" },
+      { "id": 115078, "name": "Paralysis", "category": "incapacitate", "kind": "debuff" },
+      { "id": 198909, "name": "Song of Chi-Ji", "category": "disorient", "kind": "debuff" },
+      { "id": 116844, "name": "Ring of Peace", "category": "knock", "kind": "cast" }
+    ],
+    "Paladin:*": [
+      { "id": 853, "name": "Hammer of Justice", "category": "stun", "kind": "debuff" },
+      { "id": 105421, "name": "Blinding Light", "category": "disorient", "kind": "debuff" },
+      { "id": 20066, "name": "Repentance", "category": "incapacitate", "kind": "debuff" },
+      { "id": 10326, "name": "Turn Evil", "category": "fear", "kind": "debuff" }
+    ],
+    "Priest:*": [
+      { "id": 8122, "name": "Psychic Scream", "category": "fear", "kind": "debuff" },
+      { "id": 64044, "name": "Psychic Horror", "category": "stun", "kind": "debuff" },
+      { "id": 200200, "name": "Holy Word: Chastise", "category": "stun", "kind": "debuff" },
+      { "id": 200196, "name": "Holy Word: Chastise", "category": "incapacitate", "kind": "debuff" },
+      { "id": 9484, "name": "Shackle Undead", "category": "incapacitate", "kind": "debuff" }
+    ],
+    "Rogue:*": [
+      { "id": 2094, "name": "Blind", "category": "disorient", "kind": "debuff" },
+      { "id": 427773, "name": "Blind", "category": "disorient", "kind": "debuff" },
+      { "id": 6770, "name": "Sap", "category": "incapacitate", "kind": "debuff" },
+      { "id": 1776, "name": "Gouge", "category": "incapacitate", "kind": "debuff" },
+      { "id": 1833, "name": "Cheap Shot", "category": "stun", "kind": "debuff" },
+      { "id": 408, "name": "Kidney Shot", "category": "stun", "kind": "debuff" }
+    ],
+    "Rogue:Outlaw": [
+      { "id": 199804, "name": "Between the Eyes", "category": "stun", "kind": "debuff" }
+    ],
+    "Shaman:*": [
+      { "id": 118905, "name": "Capacitor Totem", "category": "stun", "kind": "debuff" },
+      { "id": 51514, "name": "Hex", "category": "incapacitate", "kind": "debuff" },
+      { "id": 197214, "name": "Sundering", "category": "incapacitate", "kind": "debuff" },
+      { "id": 51490, "name": "Thunderstorm", "category": "knock", "kind": "cast" }
+    ],
+    "Warlock:*": [
+      { "id": 118699, "name": "Fear", "category": "fear", "kind": "debuff" },
+      { "id": 5484, "name": "Howl of Terror", "category": "fear", "kind": "debuff" },
+      { "id": 30283, "name": "Shadowfury", "category": "stun", "kind": "debuff" },
+      { "id": 6789, "name": "Mortal Coil", "category": "incapacitate", "kind": "debuff" },
+      { "id": 710, "name": "Banish", "category": "incapacitate", "kind": "debuff" },
+      { "id": 6358, "name": "Seduction", "category": "disorient", "kind": "debuff", "pet": true }
+    ],
+    "Warlock:Demonology": [
+      { "id": 89766, "name": "Axe Toss", "category": "stun", "kind": "debuff", "pet": true }
+    ],
+    "Warrior:*": [
+      { "id": 132168, "name": "Shockwave", "category": "stun", "kind": "debuff" },
+      { "id": 132169, "name": "Storm Bolt", "category": "stun", "kind": "debuff" },
+      { "id": 5246, "name": "Intimidating Shout", "category": "fear", "kind": "debuff" }
+    ]
+  }
+}

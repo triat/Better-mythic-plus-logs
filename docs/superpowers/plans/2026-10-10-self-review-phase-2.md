@@ -12,6 +12,8 @@
 
 ## Before you start: what the user validates with this plan
 
+Validated by the user on 2026-10-10, as written.
+
 These choices are not in the spec or were left open there. The plan implements them as written; the user confirms or changes them before Task 1.
 
 1. **Per-run comparison.** Spec decision 5 compares "the median over the runs used" with the spec's reference. The plan compares each run with the reference of the spec played in that run, then takes the median of those percentages (the way `kicksVsPeers` works), so a character who plays two specs is compared fairly. With one spec, both readings give the same number.

@@ -11,7 +11,9 @@ import type { Metric } from "../roles.ts";
 import { median } from "../signals/peers.ts";
 import type { SeasonRow } from "../signals/store.ts";
 import { signalSummary } from "../signals/summary.ts";
-import type { RawRunReport, RunSignals } from "../signals/types.ts";
+import { controlOf } from "../signals/control/parse.ts";
+import type { CcCategory } from "../signals/control/table.ts";
+import type { RawRunControl, RawRunReport, RunSignals } from "../signals/types.ts";
 import { parseRunSignals } from "../signals/wcl-run.ts";
 import type { Region } from "../wow/regions.ts";
 import { SYNC_RETRY_MS, rowToRun, type SyncState } from "./sync.ts";
@@ -94,6 +96,10 @@ export interface DungeonDetails {
   killers: { ability: string; deaths: number }[];
   /** Enemy spells the group kicked at least once, most completed first. */
   casts: { id: number; name: string; attempts: number; completed: number; interrupted: number; mine: number }[];
+  /** The player's crowd control over the dungeon's runs that have it, most uses first (top five). */
+  control: { id: number; name: string; category: CcCategory; uses: number; enemies: number }[];
+  /** Runs of the dungeon with crowd-control data. */
+  controlRuns: number;
 }
 
 export interface DungeonRow {
@@ -139,6 +145,8 @@ export interface SeasonInput {
   report: (code: string, fightID: number) => RawRunReport | null;
   /** `name` is the player's name as the raw report spells it (see `nameInReport`). */
   analysis: (code: string, fightID: number, name: string) => RunDefensives | null;
+  /** The run's cached crowd-control events (any table version). */
+  control: (code: string, fightID: number) => RawRunControl | null;
   state: SyncState;
 }
 
@@ -190,6 +198,8 @@ export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
   const avoid = new Map<number, { id: number; name: string; total: number }>();
   const killers = new Map<string, number>();
   const casts = new Map<number, DungeonDetails["casts"][number]>();
+  const control = new Map<number, DungeonDetails["control"][number]>();
+  let controlRuns = 0;
   let other = 0;
   let total = 0;
   for (const s of signals) {
@@ -215,6 +225,15 @@ export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
       cur.mine += c.mine;
       casts.set(c.id, cur);
     }
+    if (s.control) {
+      controlRuns++;
+      for (const c of s.control.spells) {
+        const cur = control.get(c.id) ?? { id: c.id, name: c.name, category: c.category, uses: 0, enemies: 0 };
+        cur.uses += c.uses;
+        cur.enemies += c.enemies;
+        control.set(c.id, cur);
+      }
+    }
   }
   const abilities = [...avoid.values()].sort((a, b) => b.total - a.total);
   return {
@@ -224,6 +243,8 @@ export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
     killers: [...killers].map(([ability, deaths]) => ({ ability, deaths }))
       .sort((a, b) => b.deaths - a.deaths || a.ability.localeCompare(b.ability)).slice(0, TOP_DETAILS),
     casts: [...casts.values()].sort((a, b) => b.completed - a.completed || a.name.localeCompare(b.name)).slice(0, TOP_DETAILS),
+    control: [...control.values()].sort((a, b) => b.uses - a.uses || a.name.localeCompare(b.name)).slice(0, TOP_DETAILS),
+    controlRuns,
   };
 }
 
@@ -246,6 +267,8 @@ export function seasonView(input: SeasonInput, cfg: EvaluationConfig): SeasonVie
     const run = rowToRun(row);
     const name = raw ? nameInReport(raw, character.name) : character.name;
     const signals = raw ? parseRunSignals(raw, name, { keyLevel: row.keyLevel, affixes: row.affixes, encounterID: row.encounterID }) : null;
+    const control = raw && signals ? controlOf(raw, input.control(row.reportCode, row.fightID), name, signals.fightDurationMs) : null;
+    if (signals && control) signals.control = control;
     if (signals) run.signals = signals;
     const analysis = signals ? input.analysis(row.reportCode, row.fightID, name) : null;
     const view: SeasonRunView = {

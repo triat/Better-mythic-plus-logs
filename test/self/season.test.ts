@@ -5,7 +5,7 @@ import {
   changeOf, seasonView, trendOf,
 } from "../../src/self/season.ts";
 import type { SeasonRow } from "../../src/signals/store.ts";
-import { loadWclFixture } from "../fixtures.ts";
+import { loadControlFixture, loadWclFixture } from "../fixtures.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
 const NOW = Date.UTC(2026, 9, 9, 12); // EU game week 0 opened 2026-10-07 04:00 UTC
@@ -26,6 +26,7 @@ async function input() {
     zoneID: 55, targetLevel: 21, now: NOW, rows,
     report: (code: string) => (code === "E" ? null : f.report),
     analysis: () => null,
+    control: () => null,
     state: { runs: 5, analysed: 4, pending: 1, controlOnly: 0, failed: 0, estimate: 30 },
   };
 }
@@ -117,3 +118,32 @@ describe("seasonView — overall", () => {
   });
 });
 
+
+describe("seasonView — crowd control", () => {
+  async function dk(withControl: boolean) {
+    const f = await loadControlFixture("s2-dk-frost");
+    const fight = f.report.fights[0];
+    const r: SeasonRow = { ...row(f.report.code, NOW - DAY), fightID: fight.id, encounterID: fight.encounterID, encounterName: "Den of Nalorakk", spec: "Frost", metric: "dps" };
+    return seasonView({
+      character: { name: "Noshiidk", realm: "argent-dawn", region: "eu" }, zoneID: 55, targetLevel: 19, now: NOW, rows: [r],
+      report: () => f.report, analysis: () => null, control: () => (withControl ? f.control : null),
+      state: { runs: 1, analysed: 1, pending: 0, controlOnly: 0, failed: 0, estimate: 0 },
+    }, cfg);
+  }
+  test("a run with cached crowd control carries it; the dungeon sums it", async () => {
+    const v = await dk(true);
+    const c = v.runs[0]!.signals!.control!;
+    expect(c.uses).toBe(14);
+    const d = v.dungeons[0]!.details;
+    expect(d.controlRuns).toBe(1);
+    expect(d.control.map((s) => [s.name, s.uses, s.enemies])).toEqual([["Gnaw", 8, 8], ["Death Grip", 5, 0], ["Blinding Sleet", 1, 5]]);
+  });
+  test("without it: no control on the run, an empty list for the dungeon, the same pillars", async () => {
+    const without = await dk(false);
+    const withIt = await dk(true);
+    expect(without.runs[0]!.signals!.control).toBeUndefined();
+    expect(without.dungeons[0]!.details).toMatchObject({ control: [], controlRuns: 0 });
+    // The shipped reference is empty: crowd control has no score yet, so the Control pillar does not move.
+    expect(withIt.runs[0]!.pillars).toEqual(without.runs[0]!.pillars);
+  });
+});

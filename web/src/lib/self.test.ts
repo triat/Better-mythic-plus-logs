@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import type { DungeonRow, Evaluation, LookupPayload, MyCharacter, SeasonRunView, SeasonView } from "../types.ts";
+import type { DungeonRow, Evaluation, LookupPayload, MyCharacter, RunControl, SeasonRunView, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  dungeonPanel, isMe, meChip, pillarCards, resultView, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
+  controlView, dungeonPanel, isMe, meChip, pillarCards, resultView, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
 } from "./self.ts";
 
 const tFr = makeT(fr, "fr");
@@ -55,8 +55,8 @@ describe("pillarCards", () => {
     ]);
     expect(c[1]!.trend.text).toBe("↘ −9");
     expect(c[1]!.bars.map((b) => [b.px, b.last, b.empty])).toEqual([[2, false, true], [2, false, true], [2, false, true], [2, false, true], [2, false, true], [2, false, true], [13, false, false], [11, true, false]]);
-    expect(c[4]!.trend.text).toBe("dispels only until phase 2");
-    expect(c[4]!.sentence).toBe("No dispel or purge for this spec: n/a, not 0.");
+    expect(c[4]!.trend.text).toBe("no dispel, no crowd control measured yet");
+    expect(c[4]!.sentence).toBe("No dispel for this spec and no crowd control measured yet: n/a, not 0.");
   });
   test("from the 4-week window when there is one", () => {
     const s = season({ recent: { runs: 38, overall: 60, pillars: [{ key: "damage", score: 70, evidence: [] }] } });
@@ -87,7 +87,7 @@ describe("dungeonPanel", () => {
       avoidable: [{ id: 1, name: "Shadow Pool", total: 380 }, { id: 2, name: "Void Slash", total: 240 }], avoidableOther: 380, avoidableTotal: 1000,
       killers: [{ ability: "Void Slash", deaths: 4 }],
       casts: [{ id: 3, name: "Lava Bolt", attempts: 40, completed: 11, interrupted: 27, mine: 9 }],
-      control: [], controlRuns: 0,
+      control: [{ id: 91800, name: "Gnaw", category: "stun", uses: 41, enemies: 44 }, { id: 49576, name: "Death Grip", category: "knock", uses: 33, enemies: 0 }], controlRuns: 9,
     },
   };
   test("shares, counts and the runs link", () => {
@@ -96,6 +96,9 @@ describe("dungeonPanel", () => {
     expect(p.avoidable.map((a) => [a.name, a.pct, a.width])).toEqual([["Shadow Pool", "38%", 38], ["Void Slash", "24%", 24]]);
     expect(p.other).toEqual({ pct: "38%", width: 38 });
     expect(p.killers).toEqual([{ ability: "Void Slash", deaths: "4 deaths" }]);
+    expect(p.control).toEqual([{ id: 91800, name: "Gnaw", uses: "41 uses", enemies: "44 enemies" }, { id: 49576, name: "Death Grip", uses: "33 uses", enemies: "" }]);
+    expect(p.controlNote).toBe("over 9 runs with crowd control · 9 analysed runs not measured yet");
+    expect(dungeonPanel(tEn, "en", { ...row, details: { ...row.details, control: [], controlRuns: 0 } }).controlNote).toBe("No crowd control measured in this dungeon yet.");
     expect(p.casts).toEqual([{ id: 3, name: "Lava Bolt", ofText: "11 of 40", mine: "you kicked 9" }]);
     expect(p.runsLink).toBe("21 runs in Voidscar Arena ›");
     expect(dungeonPanel(tFr, "fr", row).avoidable[0]!.pct).toBe("38\u00a0%"); // Intl: no-break space
@@ -119,6 +122,40 @@ describe("runDetail", () => {
     expect(d.avoidable.map((a) => a.name)).toEqual(["Shadow Pool", "other avoidable damage"]);
     expect(d.casts).toEqual([{ id: 7, name: "Lava Bolt", ofText: "3 of 12" }]);
     expect(d.kicked).toBe("You kicked 4 of the 9 interrupted.");
+  });
+});
+
+describe("controlView (canvas control, run detail B)", () => {
+  const control = (over: Partial<RunControl> = {}): RunControl => ({
+    uses: 14, enemies: 13, perTenMin: 4.66, reference: 3.86, vsReference: 20.7, stale: false,
+    spells: [
+      { id: 91800, name: "Gnaw", category: "stun", uses: 8, enemies: 8, pet: true },
+      { id: 49576, name: "Death Grip", category: "knock", uses: 5, enemies: 0 },
+      { id: 207167, name: "Blinding Sleet", category: "disorient", uses: 1, enemies: 5 },
+    ],
+    ...over,
+  });
+  test("the rate against the spec's median first, then the spells by category", () => {
+    const v = controlView(tEn, "en", control());
+    expect(v.rate).toBe("4.7");
+    expect(v.line).toEqual({ text: "per 10 min · median of the spec 3.9 ·", delta: "+21%", cls: "tone-good" });
+    expect(v.groups).toEqual([
+      { label: "stun", rows: [{ id: 91800, name: "Gnaw", pet: "(pet)", uses: "8 uses", enemies: "8 enemies" }] },
+      { label: "disorient", rows: [{ id: 207167, name: "Blinding Sleet", pet: "", uses: "1 use", enemies: "5 enemies" }] },
+      { label: "knock", rows: [{ id: 49576, name: "Death Grip", pet: "", uses: "5 uses", enemies: "" }] },
+    ]);
+    expect(v.note).toBeNull();
+    const fr = controlView(tFr, "fr", control());
+    expect(fr.rate).toBe("4,7");
+    expect(fr.line.text).toBe("par 10 min · médiane de la spé 3,9 ·");
+    expect(fr.groups[0]!.rows[0]).toMatchObject({ pet: "(pet)", uses: "8 utilisations", enemies: "8 ennemis" });
+  });
+  test("no reference yet, an older list, nothing landed, not measured", () => {
+    expect(controlView(tEn, "en", control({ reference: null, vsReference: null })).line).toEqual({ text: "per 10 min · no spec median yet", delta: "", cls: "" });
+    expect(controlView(tEn, "en", control({ vsReference: -6 })).line).toMatchObject({ delta: "−6%", cls: "tone-bad" });
+    expect(controlView(tEn, "en", control({ stale: true })).note).toBe("Measured with an older list: the next sync updates it.");
+    expect(controlView(tEn, "en", control({ uses: 0, enemies: 0, perTenMin: 0, spells: [] })).note).toBe("No crowd control landed in this run.");
+    expect(controlView(tEn, "en", undefined)).toEqual({ rate: null, line: { text: "", delta: "", cls: "" }, groups: [], note: "Crowd control not measured for this run: sync the season to measure it." });
   });
 });
 

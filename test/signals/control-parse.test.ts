@@ -36,7 +36,7 @@ describe("parseRunControl", () => {
     const c = parseRunControl(raw([ev(0, 333, 91800), ev(5_000, 328, 49576, "cast"), ev(5_100, 328, 49576, "cast")], [{ id: 333, petOwner: 328 }]), dk, TEN_MIN, { table: TABLE, reference: REF });
     expect(c.spells).toEqual([
       { id: 49576, name: "Death Grip", category: "knock", uses: 2, enemies: 0 },
-      { id: 91800, name: "Gnaw", category: "stun", uses: 1, enemies: 1 },
+      { id: 91800, name: "Gnaw", category: "stun", uses: 1, enemies: 1, pet: true },
     ]);
   });
   test("rate per 10 minutes and the comparison with the spec's reference", () => {

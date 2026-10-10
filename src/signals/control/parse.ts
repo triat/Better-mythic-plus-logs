@@ -30,7 +30,7 @@ export function parseRunControl(
     const key = `${kind}:${entry.id}`;
     let s = spells.get(key);
     if (!s) {
-      s = { id: entry.id, name: entry.name, category: entry.category, uses: 0, enemies: 0, start: Number.NEGATIVE_INFINITY };
+      s = { id: entry.id, name: entry.name, category: entry.category, uses: 0, enemies: 0, ...(entry.pet ? { pet: true as const } : {}), start: Number.NEGATIVE_INFINITY };
       spells.set(key, s);
     }
     if (kind === "cast" || e.timestamp - s.start >= USE_WINDOW_MS) {

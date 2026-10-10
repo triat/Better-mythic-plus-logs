@@ -1,8 +1,8 @@
 // View models of the self-review result tabs (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md;
 // canvas page "self-review": SelfTabs, SelfDungeonFirst, SelfDetails). Pure: no React, no fetch.
 import type {
-  AxisKey, DungeonRow, Evaluation, LookupPayload, MPlusRun, MyCharacter, OwnClientView, PillarKey, PillarScore, PillarTrend,
-  SeasonRunView, SeasonView, WorkOnRow,
+  AxisKey, CcCategory, DungeonRow, Evaluation, LookupPayload, MPlusRun, MyCharacter, OwnClientView, PillarKey, PillarScore, PillarTrend,
+  RunControl, SeasonRunView, SeasonView, WorkOnRow,
 } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
@@ -155,6 +155,9 @@ export interface PanelView {
   other: { pct: string; width: number } | null;
   killers: { ability: string; deaths: string }[];
   casts: { id: number; name: string; ofText: string; mine: string }[];
+  /** "Crowd control here" (canvas control, dungeon panel): most uses first. */
+  control: { id: number; name: string; uses: string; enemies: string }[];
+  controlNote: string;
   runsLink: string;
   empty: boolean;
 }
@@ -170,6 +173,10 @@ export function dungeonPanel(t: T, locale: Locale, row: DungeonRow): PanelView {
     other: d.avoidableOther > 0 ? { pct: pct(locale, share(d.avoidableOther)), width: Math.round(share(d.avoidableOther) * 100) } : null,
     killers: d.killers.map((k) => ({ ability: k.ability, deaths: t("self.panel.deaths", { count: k.deaths }) })),
     casts: d.casts.map((c) => ({ id: c.id, name: c.name, ofText: t("self.panel.castOf", { completed: c.completed, attempts: c.attempts }), mine: c.mine > 0 ? t("self.panel.mine", { n: c.mine }) : "" })),
+    control: d.control.map((c) => ({ id: c.id, name: c.name, uses: t("self.control.uses", { count: c.uses }), enemies: c.category === "knock" ? "" : t("self.control.enemies", { count: c.enemies }) })),
+    controlNote: d.controlRuns === 0
+      ? t("self.panel.controlNone")
+      : t("self.panel.controlOver", { runs: d.controlRuns }) + (row.analysed > d.controlRuns ? t("self.panel.controlMissing", { count: row.analysed - d.controlRuns }) : ""),
     runsLink: t("self.panel.runsLink", { count: row.runs, name: row.name }),
     empty: row.analysed === 0,
   };
@@ -187,6 +194,42 @@ export interface RunDetailView {
   avoidable: { key: string; name: string; amount: string }[];
   casts: { id: number; name: string; ofText: string }[];
   kicked: string | null;
+  control: ControlView;
+}
+
+/** Same order as src/signals/control/table.ts CC_CATEGORIES (the front cannot import runtime values from src/). */
+const CC_ORDER: readonly CcCategory[] = ["stun", "incapacitate", "disorient", "fear", "silence", "knock"];
+
+export interface ControlView {
+  /** Uses per 10 minutes, one decimal; null when the run was not measured. */
+  rate: string | null;
+  /** "per 10 min · median of the spec 3.9 ·" and the signed gap, coloured. */
+  line: { text: string; delta: string; cls: "tone-good" | "tone-bad" | "" };
+  /** Spells grouped by category, in the table's category order (canvas control, run detail B). */
+  groups: { label: string; rows: { id: number; name: string; pet: string; uses: string; enemies: string }[] }[];
+  note: string | null;
+}
+
+export function controlView(t: T, locale: Locale, c: RunControl | undefined): ControlView {
+  if (!c) return { rate: null, line: { text: "", delta: "", cls: "" }, groups: [], note: t("self.control.notMeasured") };
+  const one = (x: number) => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x);
+  const line: ControlView["line"] = c.reference === null || c.vsReference === null
+    ? { text: t("self.control.noReference"), delta: "", cls: "" }
+    : {
+        text: t("self.control.vsMedian", { median: one(c.reference) }),
+        delta: t("self.control.delta", { value: signed(c.vsReference) }),
+        cls: c.vsReference > 0 ? "tone-good" : c.vsReference < 0 ? "tone-bad" : "",
+      };
+  const groups = CC_ORDER.flatMap((cat) => {
+    const rows = c.spells.filter((s) => s.category === cat).map((s) => ({
+      id: s.id, name: s.name, pet: s.pet ? t("self.control.pet") : "",
+      uses: t("self.control.uses", { count: s.uses }),
+      enemies: cat === "knock" ? "" : t("self.control.enemies", { count: s.enemies }),
+    }));
+    return rows.length > 0 ? [{ label: t(`self.control.cat.${cat}`), rows }] : [];
+  });
+  const note = c.stale ? t("self.control.stale") : c.uses === 0 ? t("self.control.none") : null;
+  return { rate: one(c.perTenMin), line, groups, note };
 }
 
 export function runDetail(t: T, locale: Locale, v: SeasonRunView): RunDetailView | null {
@@ -216,6 +259,7 @@ export function runDetail(t: T, locale: Locale, v: SeasonRunView): RunDetailView
     avoidable,
     casts: enemy.map((c) => ({ id: c.id, name: c.name, ofText: t("self.panel.castOf", { completed: c.completed, attempts: c.attempts }) })),
     kicked: enemy.length > 0 ? t("self.detail.kicked", { mine, interrupted }) : null,
+    control: controlView(t, locale, s.control),
   };
 }
 

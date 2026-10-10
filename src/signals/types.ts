@@ -43,7 +43,15 @@ export interface DeathEvent {
 }
 
 /** One crowd-control spell of a run: `uses` grouped within 1 s, `enemies` the debuff applications (0 for a knock). */
-export interface ControlSpell { id: number; name: string; category: CcCategory; uses: number; enemies: number }
+export interface ControlSpell {
+  id: number;
+  name: string;
+  category: CcCategory;
+  uses: number;
+  enemies: number;
+  /** Landed by the player's pet (the table's `pet` entries). */
+  pet?: true;
+}
 
 export interface RunControl {
   uses: number;

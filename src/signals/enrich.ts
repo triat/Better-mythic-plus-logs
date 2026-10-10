@@ -1,12 +1,14 @@
 import type { LookupResult, MPlusRun } from "../mplus.ts";
 import { gql as realGql } from "../wcl/client.ts";
 import {
+  REPORT_RUN_CONTROL_QUERY,
   REPORT_RUN_SUMMARY_QUERY,
   REPORT_RUN_SUMMARY_WITH_AVOIDABLE_QUERY,
 } from "../wcl/queries.ts";
 import { avoidableFilterExpression, avoidableSpellIdsFor } from "./avoidable/index.ts";
+import { CC_TABLE, ccFilterExpression } from "./control/table.ts";
 import type { Store } from "./store.ts";
-import type { RawRunReport } from "./types.ts";
+import type { RawControlEvent, RawRunControl, RawRunReport } from "./types.ts";
 import { parseRunSignals } from "./wcl-run.ts";
 
 export type GqlFn = <T>(query: string, variables?: Record<string, unknown>) => Promise<T>;
@@ -36,6 +38,34 @@ export async function fetchRunReport(run: MPlusRun, gql: GqlFn): Promise<RawRunR
   }
   const resp = await gql<{ reportData: { report: RawRunReport | null } }>(query, variables);
   return resp.reportData.report;
+}
+
+const CONTROL_MAX_PAGES = 5;
+
+interface RawControlAnswer {
+  reportData: { report: {
+    masterData?: { actors?: Array<{ id: number; petOwner?: number | null }> };
+    cc?: { data?: RawControlEvent[]; nextPageTimestamp?: number | null };
+  } | null };
+}
+
+/** One run's crowd-control events (~3 pts, spec decision 3); null when WCL returns no report. */
+export async function fetchRunControl(run: { reportCode: string; fightID: number }, gql: GqlFn): Promise<RawRunControl | null> {
+  const filter = ccFilterExpression();
+  const events: RawControlEvent[] = [];
+  let pets: RawRunControl["pets"] | null = null;
+  let startTime: number | undefined;
+  for (let page = 0; page < CONTROL_MAX_PAGES; page++) {
+    const resp = await gql<RawControlAnswer>(REPORT_RUN_CONTROL_QUERY, { code: run.reportCode, fightID: run.fightID, filter, ...(startTime === undefined ? {} : { startTime }) });
+    const report = resp.reportData.report;
+    if (!report) return null;
+    pets ??= (report.masterData?.actors ?? []).filter((a) => typeof a.petOwner === "number").map((a) => ({ id: a.id, petOwner: a.petOwner! }));
+    events.push(...(report.cc?.data ?? []));
+    const next = report.cc?.nextPageTimestamp;
+    if (typeof next !== "number") break;
+    startTime = next;
+  }
+  return { tableVersion: CC_TABLE.version, pets: pets ?? [], events };
 }
 
 /**

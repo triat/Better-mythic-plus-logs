@@ -193,3 +193,21 @@ export interface RawRunReport {
   dispels?: RawTable | null;
   avoidable?: RawTable | null;
 }
+
+/** One event of REPORT_RUN_CONTROL_QUERY (only the fields we read). */
+export interface RawControlEvent {
+  timestamp: number;
+  type: string; // "applydebuff" | "cast"
+  sourceID?: number;
+  targetID?: number;
+  targetInstance?: number;
+  abilityGameID?: number;
+}
+
+/** A run's crowd-control events as fetched, cached forever in `wcl_run_control`. */
+export interface RawRunControl {
+  /** `CC_TABLE.version` the filter was built from: an older one marks the row stale. */
+  tableVersion: string;
+  pets: Array<{ id: number; petOwner: number }>;
+  events: RawControlEvent[];
+}

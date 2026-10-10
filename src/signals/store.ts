@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { resolveDbPath } from "../setup.ts";
-import type { RawRunReport } from "./types.ts";
+import type { RawRunControl, RawRunReport } from "./types.ts";
 import type { RawDeepDive } from "../deepdive/types.ts";
 import type { MPlusRun } from "../mplus.ts";
 import type { Metric } from "../roles.ts";
@@ -64,6 +64,11 @@ export interface Store {
   markSeasonRunFailed(key: CharacterKey, code: string, fightID: number, now?: number): void;
   /** Whether the run's raw report is cached at the current QUERY_VERSION, without parsing it. */
   hasWclRun(code: string, fightID: number): boolean;
+  /** The run's cached crowd-control events, whatever table version they were fetched with. */
+  getRunControl(code: string, fightID: number): RawRunControl | null;
+  putRunControl(code: string, fightID: number, raw: RawRunControl): void;
+  /** Cached at that table version. */
+  hasRunControl(code: string, fightID: number, tableVersion: string): boolean;
   close(): void;
   /** Exposed for tests only. */
   _db: Database;
@@ -145,6 +150,16 @@ CREATE TABLE IF NOT EXISTS character_runs (
   PRIMARY KEY (region, realm, name, report_code, fight_id)
 );
 CREATE INDEX IF NOT EXISTS character_runs_zone ON character_runs (region, realm, name, zone_id, start_time);
+-- Crowd-control events of a run (self-review phase 2, decision 3), all five players and their pets, as fetched.
+-- Immutable; a newer table version replaces the row only on an explicit fetch.
+CREATE TABLE IF NOT EXISTS wcl_run_control (
+  report_code   TEXT    NOT NULL,
+  fight_id      INTEGER NOT NULL,
+  table_version TEXT    NOT NULL,
+  fetched_at    INTEGER NOT NULL,
+  json          TEXT    NOT NULL,
+  PRIMARY KEY (report_code, fight_id)
+);
 `;
 
 const rioKey = (region: string, realmSlug: string, name: string) =>
@@ -208,6 +223,13 @@ export function openStore(path: string): Store {
   const hasRunQ = db.query<{ one: number }, [string, number, number]>(
     "SELECT 1 AS one FROM wcl_run_raw WHERE report_code = ? AND fight_id = ? AND query_version = ?",
   );
+  const getControlQ = db.query<{ json: string }, [string, number]>("SELECT json FROM wcl_run_control WHERE report_code = ? AND fight_id = ?");
+  const putControlQ = db.query(
+    "INSERT OR REPLACE INTO wcl_run_control (report_code, fight_id, table_version, fetched_at, json) VALUES (?, ?, ?, ?, ?)",
+  );
+  const hasControlQ = db.query<{ one: number }, [string, number, string]>(
+    "SELECT 1 AS one FROM wcl_run_control WHERE report_code = ? AND fight_id = ? AND table_version = ?",
+  );
   const toSeasonRow = (r: SeasonDbRow): SeasonRow => ({
     reportCode: r.report_code, fightID: r.fight_id, zoneID: r.zone_id, encounterID: r.encounter_id, encounterName: r.encounter_name,
     startTime: r.start_time, durationMs: r.duration_ms, keyLevel: r.key_level, timed: r.timed === null ? null : r.timed === 1,
@@ -256,6 +278,16 @@ export function openStore(path: string): Store {
     },
     hasWclRun(code, fightID) {
       return hasRunQ.get(code, fightID, QUERY_VERSION) !== null;
+    },
+    getRunControl(code, fightID) {
+      const row = getControlQ.get(code, fightID);
+      return row ? (JSON.parse(row.json) as RawRunControl) : null;
+    },
+    putRunControl(code, fightID, raw) {
+      putControlQ.run(code, fightID, raw.tableVersion, Date.now(), JSON.stringify(raw));
+    },
+    hasRunControl(code, fightID, tableVersion) {
+      return hasControlQ.get(code, fightID, tableVersion) !== null;
     },
     close() {
       db.close();

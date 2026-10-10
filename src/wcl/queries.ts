@@ -128,6 +128,21 @@ ${RUN_SUMMARY_FIELDS}
   }
 `;
 
+// Crowd control of one run (docs/superpowers/specs/2026-10-10-self-review-control-design.md, decision 3): the
+// table's debuff applications and knock casts by the friendly side, and the pets' owners. One page in practice
+// (~150 events, 3 pts measured); paged on `startTime` like the deep-dive.
+export const REPORT_RUN_CONTROL_QUERY = /* GraphQL */ `
+  query ReportRunControl($code: String!, $fightID: Int!, $filter: String!, $startTime: Float) {
+    ${RATE_LIMIT}
+    reportData {
+      report(code: $code) {
+        masterData { actors(type: "Pet") { id petOwner } }
+        cc: events(fightIDs: [$fightID], filterExpression: $filter, limit: 10000, startTime: $startTime) { data nextPageTimestamp }
+      }
+    }
+  }
+`;
+
 export const CHARACTER_ENCOUNTER_RANKINGS_QUERY = /* GraphQL */ `
   query CharacterEncounterRankings(
     $name: String!

@@ -97,3 +97,19 @@ describe("season store (character_runs)", () => {
     s.close();
   });
 });
+
+describe("wcl_run_control", () => {
+  test("put, get, version check; a newer version replaces the row", () => {
+    const store = openStore(":memory:");
+    const raw = { tableVersion: "mn-2.0", pets: [{ id: 333, petOwner: 328 }], events: [{ timestamp: 1, type: "applydebuff", sourceID: 333, abilityGameID: 91800 }] };
+    expect(store.getRunControl("AbC", 9)).toBeNull();
+    expect(store.hasRunControl("AbC", 9, "mn-2.0")).toBe(false);
+    store.putRunControl("AbC", 9, raw);
+    expect(store.getRunControl("AbC", 9)).toEqual(raw);
+    expect(store.hasRunControl("AbC", 9, "mn-2.0")).toBe(true);
+    expect(store.hasRunControl("AbC", 9, "mn-2.1")).toBe(false);
+    store.putRunControl("AbC", 9, { ...raw, tableVersion: "mn-2.1", events: [] });
+    expect(store.getRunControl("AbC", 9)?.events).toEqual([]);
+    expect(store.hasRunControl("AbC", 9, "mn-2.1")).toBe(true);
+  });
+});

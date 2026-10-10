@@ -19,6 +19,8 @@ import type { RateLimit } from "./client.ts";
 // Rankings measured 12–19 pts on the hosted instance (2026-10-02); 10 under-reserved them.
 export const ESTIMATE_RANKINGS = 20;
 export const ESTIMATE_RUN = 10;
+// A run's crowd-control events: 3.0 pts measured on two runs (2026-10-10).
+export const ESTIMATE_CONTROL = 3;
 export const ESTIMATE_DEEPDIVE = 3;
 
 /** A single observation charging more than this is treated as a clock-boundary artefact, not a real spend. */

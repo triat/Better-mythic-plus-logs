@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { MPlusRun } from "../../src/mplus.ts";
-import { enrichRuns } from "../../src/signals/enrich.ts";
+import { enrichRuns, fetchRunControl } from "../../src/signals/enrich.ts";
+import { CC_TABLE, ccFilterExpression } from "../../src/signals/control/table.ts";
 import { openStore } from "../../src/signals/store.ts";
 import { loadWclFixture } from "../fixtures.ts";
 
@@ -59,5 +60,36 @@ describe("enrichRuns", () => {
     expect(n).toBe(1);
     expect(runs[1]!.signals?.deaths.groupTotal).toBe(4);
     store.close();
+  });
+});
+
+describe("fetchRunControl", () => {
+  test("one page: events, pets with an owner, the table version", async () => {
+    const calls: Record<string, unknown>[] = [];
+    const gql = async <T,>(_q: string, v?: Record<string, unknown>): Promise<T> => {
+      calls.push(v!);
+      return { reportData: { report: {
+        masterData: { actors: [{ id: 333, petOwner: 328 }, { id: 400, petOwner: null }] },
+        cc: { data: [{ timestamp: 5, type: "applydebuff", sourceID: 333, abilityGameID: 91800 }], nextPageTimestamp: null },
+      } } } as T;
+    };
+    const out = await fetchRunControl({ reportCode: "AbC", fightID: 9 }, gql);
+    expect(out).toEqual({ tableVersion: CC_TABLE.version, pets: [{ id: 333, petOwner: 328 }], events: [{ timestamp: 5, type: "applydebuff", sourceID: 333, abilityGameID: 91800 }] });
+    expect(calls).toEqual([{ code: "AbC", fightID: 9, filter: ccFilterExpression() }]);
+  });
+  test("follows nextPageTimestamp, then stops", async () => {
+    let n = 0;
+    const gql = async <T,>(_q: string, v?: Record<string, unknown>): Promise<T> => {
+      n++;
+      const first = v!.startTime === undefined;
+      return { reportData: { report: { masterData: { actors: [] }, cc: { data: [{ timestamp: first ? 1 : 2, type: "cast", sourceID: 1, abilityGameID: 49576 }], nextPageTimestamp: first ? 2 : null } } } } as T;
+    };
+    const out = await fetchRunControl({ reportCode: "AbC", fightID: 9 }, gql);
+    expect(n).toBe(2);
+    expect(out!.events.map((e) => e.timestamp)).toEqual([1, 2]);
+  });
+  test("a report WCL does not return → null", async () => {
+    const gql = async <T,>(): Promise<T> => ({ reportData: { report: null } }) as T;
+    expect(await fetchRunControl({ reportCode: "AbC", fightID: 9 }, gql)).toBeNull();
   });
 });

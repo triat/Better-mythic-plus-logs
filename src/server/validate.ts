@@ -100,7 +100,7 @@ export async function parseBody<T>(req: Request, schema: Schema<T>, emptyAs?: un
 export const WOW_NAME = /^\p{L}{2,32}$/u;
 export const WOW_REALM = /^[\p{L}\d' -]{2,32}$/u;
 const METRIC = ["dps", "hps"] as const;
-export const LOOKUP_BODY = obj({ character: str({ min: 1, max: 200, trim: true }), level: opt(nullable(int({ min: 2, max: 50 }))), spec: opt(nullable(str({ max: 32, trim: true }))), metric: opt(nullable(oneOf(METRIC))), refresh: opt(bool()), region: opt(oneOf(REGIONS)) });
+export const LOOKUP_BODY = obj({ character: str({ min: 1, max: 200, trim: true }), level: opt(nullable(int({ min: 2, max: 50 }))), spec: opt(nullable(str({ max: 32, trim: true }))), metric: opt(nullable(oneOf(METRIC))), refresh: opt(bool()), region: opt(oneOf(REGIONS)), mine: opt(bool()) });
 /** POST /api/season/sync: one batch of a character's season sync (self-review spec, decision 3). */
 export const SEASON_SYNC_BODY = obj({
   name: str({ min: 2, max: 32, trim: true, pattern: WOW_NAME }),

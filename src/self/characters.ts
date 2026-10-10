@@ -1,6 +1,7 @@
 // "Me" (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md, decision 1): up to five characters per
 // member. Phase 1 has manual entries only; `bnet` is reserved for the Battle.net import, which writes them itself —
 // PUT /api/settings never accepts one.
+import { realmToSlug } from "../util.ts";
 import { isRegion, type Region } from "../wow/regions.ts";
 
 // Same patterns as src/server/validate.ts (WOW_NAME, WOW_REALM), duplicated so validate.ts can import
@@ -44,3 +45,10 @@ export function parseCharacters(raw: string | null): MyCharacter[] {
   }
   return out;
 }
+
+/** Whether a looked-up `Name-Realm` (any realm spelling, any name case) is in the member's list. */
+export const ownsCharacter = (list: readonly MyCharacter[], c: { name: string; realm: string; region: Region }): boolean => {
+  const realm = realmToSlug(c.realm);
+  const name = c.name.toLowerCase();
+  return list.some((x) => x.region === c.region && x.realm.toLowerCase() === realm && x.name.toLowerCase() === name);
+};

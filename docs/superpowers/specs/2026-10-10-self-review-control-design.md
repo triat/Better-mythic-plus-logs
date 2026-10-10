@@ -164,6 +164,24 @@ Deep Breath would allow; whether the stun has another source this season is not 
 its own median, so a counting artefact shared by the whole spec does not bias the comparison. The dungeon spread of
 the samples is not recorded: a spec that reached 20 quickly took them from the first dungeons walked.
 
+## Live check (2026-10-10, plan Task 20)
+
+Local mode, the environment's WCL client, a copy of the phase-1 verification cache (Noshiidk's season analysed, no
+crowd control yet):
+
+- **Own lookup** (Noshiidk-Draenor, `mine`, refresh): 45.9 pts for the rankings, one new run report and the crowd
+  control of the 9 displayed runs; every displayed run carries it; Control pillar 30 ("crowd control −42% vs spec
+  median (4.9 per 10 min)").
+- **Someone else's lookup** (Biwaasham-Hyjal, refresh): 83.9 pts, no crowd-control query (0 rows added); phase 1
+  measured 84.5 pts for the same kind of lookup.
+- **Sync** of the phase-1-synced season: 108 pending runs (103 only needing crowd control), estimate 394 pts,
+  11 batches, 311.9 pts measured by PING (299.9 reported by the batches); every run then has its crowd control.
+  Crowd control cost about 2 to 2.3 pts per run here, so `ESTIMATE_CONTROL = 3` errs high, as the other estimates do.
+- **Season view** afterwards: Control pillar 33 over the last 4 weeks (56 runs, −38%); Murder Row: Death Grip 173
+  uses, Blinding Sleet 44 uses on 330 enemies, Gnaw 17, over 14 of 14 runs.
+- **Hosted**, 0 pts: a sync for a character outside the member's list → 403 `not_your_character`; listed, without an
+  own client → 403 `own_client_required`.
+
 ## Error handling
 
 - The control query fails or the report is private: the run shows "control not measured", nothing is

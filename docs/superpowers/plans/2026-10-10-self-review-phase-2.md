@@ -1212,4 +1212,7 @@ in the spec's "Reference" section.
 
 ### Task 20: Live verification
 
+Done 2026-10-10: numbers in the spec's "Live check" section (own lookup 45.9 pts, someone else's 83.9 pts with no
+crowd-control query, sync 311.9 pts against an estimate of 394, hosted refusals confirmed).
+
 - [ ] **Step 1**: with the user's credentials, on Noshiidk (own character) and biwaasham-hyjal (another): a lookup of the own character costs today's points plus ~3 per enriched run, a lookup of the other costs exactly what it cost before; the sync of a phase-1-synced character fetches only crowd control (~3 pts per run, the estimate matches within 20 %); the owner's view shows crowd control in the run detail, the dungeon panel and the Control pillar; the other character opens the vetting view; hosted: `POST /api/season/sync` for a character not in the list → 403 `not_your_character`. Record the numbers in the spec's "Data notes" and in issue #24 if they concern WCL.

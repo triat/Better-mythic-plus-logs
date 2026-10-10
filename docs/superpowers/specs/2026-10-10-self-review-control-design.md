@@ -1,6 +1,6 @@
 # Self-review phase 2: crowd control, and the owner's view — design
 
-Status: draft 2026-10-10, for the user's review. Parent spec:
+Status: approved 2026-10-10. Parent spec:
 `docs/superpowers/specs/2026-10-09-self-review-pillars-design.md` (phase 2 of its "Phases"). Probes of
 2026-10-10 on two cached runs (section "Data notes") cost about 12 pts.
 

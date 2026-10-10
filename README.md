@@ -118,7 +118,7 @@ same source. If you want your own — for a guild, or offline — start here:
 | [addon/README.md](addon/README.md) | the in-game addon |
 | `AGENTS.md` | the developer and AI-agent manual |
 
-Bun ≥ 1.3, TypeScript, React. Avoidable-damage classification courtesy of
+Bun ≥ 1.4, TypeScript, React. Avoidable-damage classification courtesy of
 [postmortem](https://github.com/Sharpened-Banana/postmortem).
 
 [AGPL-3.0](LICENSE) — use it, change it, host your own. If you run a modified version for other

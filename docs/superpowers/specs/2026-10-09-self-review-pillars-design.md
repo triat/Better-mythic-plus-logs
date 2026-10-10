@@ -6,7 +6,7 @@ question 1 settled 2026-10-09; the other WCL-dependent items are tracked in GitH
 Amended 2026-10-09: a personal page (decision 8), manual characters until Battle.net linking
 (decision 1), the phase-1 numbers (section "Numbers"), open question 2. Phase 1 implemented
 2026-10-09 (plan `docs/superpowers/plans/2026-10-09-self-review-phase-1.md`, commits from
-`19c89ec`; the personal page is canvas page "me", variant C).
+`19c89ec`; the personal page is canvas page "me", variant C). Open question 2 settled 2026-10-10.
 
 ## Goal
 
@@ -78,7 +78,8 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    client (`runWithWclClient`), so it never touches the shared budget or the hourly quota; without an
    own client the button is replaced by the guide to add one. Local mode uses the CLI's own
    credentials. A normal lookup of another player keeps today's cost (best run per dungeon); "Load full
-   season" is the same explicit sync for anyone, under the same rule.
+   season" is the same explicit sync for anyone, under the same rule (amended 2026-10-10, open
+   question 2: the sync is for the member's own characters only).
 
 4. **Three views on one page** (canvas variants A + C, user's choice 2026-10-09: A's tabs and Overview,
    C's dungeon-first layout as the Dungeons tab). The result page gets three tabs, the same for the member and for
@@ -108,7 +109,8 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    each pillar the way it explains the axes today.
 
 7. **Same engine for others.** Looking up a candidate shows the same three tabs. The verdict
-   (INVITE / MAYBE / PASS) stays where it is, computed exactly as today.
+   (INVITE / MAYBE / PASS) stays where it is, computed exactly as today. Amended 2026-10-10 (open
+   question 2): a character outside the member's list opens the pre-phase-1 vetting view instead.
 
 8. **A personal page** (user's idea, 2026-10-09): one page that gathers the member's characters, their
    season state (runs found, analysed, last sync) and the sync itself, and opens each character's
@@ -216,10 +218,11 @@ Checked on 26 real runs (all eight dungeons, 15 timed, 11 depleted), 0 new query
    and a DPS or tank run's from `dps`. Order: key level, then amount, not time. Cost measured: 12 pts
    (probe) + 9 pts (eight dungeons) = 21 pts, in line with `ESTIMATE_RANKINGS`. Limit: a run that was
    not logged, or not ranked, is absent (non-goal above); the views state the count they rest on.
-2. **What a non-owner sees.** With Battle.net linking, bmpl will know which characters a member owns.
-   Whether the sync and the self-review views (trends, points to work on) become owner-only, while
-   others keep today's vetting view, is decided with the Battle.net spec. Phase 1 has no proof of
-   ownership, so decisions 3 and 7 stand as written.
+2. **What a non-owner sees.** Settled 2026-10-10 by the user ("Quelqu'un sans personnage a la vue de
+   la recherche comme avant"): the three tabs and the sync are for the member's own characters; any
+   other character opens the vetting view the result page had before phase 1. It amends decisions 3
+   and 7 and ships with phase 2 (spec `docs/superpowers/specs/2026-10-10-self-review-control-design.md`,
+   decision 6). Until Battle.net linking, "own" means "in the member's list".
 
 Settled 2026-10-09: sync needs the member's own WCL client (decision 3); points to work on show
 both references (decision 4).

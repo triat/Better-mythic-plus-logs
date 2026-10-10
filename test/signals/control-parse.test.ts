@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { controlOf, parseRunControl, USE_WINDOW_MS } from "../../src/signals/control/parse.ts";
-import { referenceFor, type ControlReference } from "../../src/signals/control/reference.ts";
+import { referenceFor, summariseByDungeon, weightedQuantile, type ControlReference } from "../../src/signals/control/reference.ts";
 import type { CcTable } from "../../src/signals/control/table.ts";
 import type { RawRunControl } from "../../src/signals/types.ts";
 import { loadControlFixture } from "../fixtures.ts";
@@ -10,9 +10,10 @@ const TABLE: CcTable = { version: "t1", source: "", specs: {
   "DeathKnight:*": [{ id: 91800, name: "Gnaw", category: "stun", kind: "debuff", pet: true }, { id: 49576, name: "Death Grip", category: "knock", kind: "cast" }],
 } };
 const REF: ControlReference = { version: "r", tableVersion: "t1", source: "", scope: "", specs: {
-  "Rogue:Outlaw": { median: 4, p25: 2, p75: 6, samples: 30 },
-  "Rogue:Subtlety": { median: 4, p25: 2, p75: 6, samples: 19 },
-  "Warrior:Fury": { median: 0.4, p25: 0, p75: 1, samples: 30 },
+  "Rogue:Outlaw": { median: 4, p25: 2, p75: 6, samples: 30, dungeons: 8 },
+  "Rogue:Subtlety": { median: 4, p25: 2, p75: 6, samples: 19, dungeons: 8 },
+  "Rogue:Assassination": { median: 4, p25: 2, p75: 6, samples: 30, dungeons: 3 },
+  "Warrior:Fury": { median: 0.4, p25: 0, p75: 1, samples: 30, dungeons: 8 },
 } };
 const ROGUE = { actorID: 10, className: "Rogue", spec: "Outlaw" };
 const raw = (events: RawRunControl["events"], pets: RawRunControl["pets"] = [], tableVersion = "t1"): RawRunControl => ({ tableVersion, pets, events });
@@ -68,6 +69,24 @@ describe("referenceFor", () => {
     expect(referenceFor("Warrior", "Fury", REF, TABLE)).toBeNull();
     expect(referenceFor("Rogue", "Outlaw", { ...REF, tableVersion: "t0" }, TABLE)).toBeNull();
     expect(referenceFor("Mage", "Fire", REF, TABLE)).toBeNull();
+    expect(referenceFor("Rogue", "Assassination", REF, TABLE)).toBeNull(); // 3 dungeons, under 4
+  });
+  test("weightedQuantile: the usual median with equal weights, interpolated", () => {
+    const eq = (xs: number[]) => xs.map((value) => ({ value, weight: 1 }));
+    expect(weightedQuantile(eq([3, 1, 2]), 0.5)).toBe(2);
+    expect(weightedQuantile(eq([1, 2, 3, 4]), 0.5)).toBe(2.5);
+    expect(weightedQuantile(eq([5]), 0.25)).toBe(5);
+  });
+  test("summariseByDungeon: every dungeon weighs the same, whatever its sample count", () => {
+    // 9 samples at 10 in one dungeon, 1 sample at 0 in another: the dungeons weigh 50/50, so the median sits between.
+    const e = summariseByDungeon(new Map([[1, Array(9).fill(10)], [2, [0]]]))!;
+    expect(e.samples).toBe(10);
+    expect(e.dungeons).toBe(2);
+    expect(e.median).toBeGreaterThan(0);
+    expect(e.median).toBeLessThan(10);
+    // Unweighted, the median would be 10.
+    expect(weightedQuantile(Array(9).fill(10).concat([0]).map((value: number) => ({ value, weight: 1 })), 0.5)).toBe(10);
+    expect(summariseByDungeon(new Map())).toBeNull();
   });
 });
 

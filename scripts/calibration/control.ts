@@ -3,13 +3,14 @@
 // decision 7): per Class:Spec, the median crowd-control uses per 10 minutes of ranked EU players at +15 to +20,
 // the calibration study's scope (docs/superpowers/specs/2026-09-24-scoring-calibration-design.md).
 //
-// For each spec still under `--per-spec` samples, it walks the spec's ranking ladder of every dungeon
-// (worldData.encounter.characterRankings, sorted by key level) down to the +15..+20 band, and fetches each new run's
-// Summary table (the five players' specs and actor ids) and its crowd-control events. Every player of a run is a
-// sample of their own spec, so one run feeds five specs. Runs already fetched are kept in a scratch SQLite and never
-// paid for twice; the run stops at `--budget` points.
+// For every dungeon, and every spec with fewer than `--per-dungeon` samples there, it walks that spec's ranking ladder
+// of the dungeon (worldData.encounter.characterRankings, sorted by key level) down to the +15..+20 band, and fetches
+// each new run's Summary table (the five players' specs and actor ids) and its crowd-control events. Every player of a
+// run is a sample of their own spec in that dungeon, so one run feeds five specs. The quantiles weigh every dungeon the
+// same (`summariseByDungeon`): a first collection that took all its runs from one dungeon is why. Runs already
+// fetched are kept in a scratch SQLite (with their dungeon) and never paid for twice; the run stops at `--budget`.
 //
-//   bun scripts/calibration/control.ts [--per-spec 20] [--budget 2500] [--cache .calibration/control.db]
+//   bun scripts/calibration/control.ts [--per-dungeon 3] [--budget 2500] [--cache .calibration/control.db]
 //                                      [--out src/signals/control/reference-mn-2.json]
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
@@ -17,7 +18,7 @@ import { dirname } from "node:path";
 import { getCurrentMplusZone } from "../../src/mplus.ts";
 import { HEALER_SPECS } from "../../src/roles.ts";
 import { parseRunControl } from "../../src/signals/control/parse.ts";
-import type { ControlReference, ControlReferenceEntry } from "../../src/signals/control/reference.ts";
+import { MIN_REFERENCE_DUNGEONS, MIN_REFERENCE_SAMPLES, summariseByDungeon, type ControlReference, type ControlReferenceEntry } from "../../src/signals/control/reference.ts";
 import { CC_TABLE } from "../../src/signals/control/table.ts";
 import { fetchRunControl } from "../../src/signals/enrich.ts";
 import type { RawRunControl } from "../../src/signals/types.ts";
@@ -41,7 +42,7 @@ const HIGH = 20;
 const MAX_PAGES = 12;
 
 const arg = (flag: string, dflt: string) => { const i = process.argv.indexOf(flag); return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : dflt; };
-const perSpec = Number(arg("--per-spec", "20"));
+const perDungeon = Number(arg("--per-dungeon", "3"));
 const budget = Number(arg("--budget", "2500"));
 const cachePath = arg("--cache", ".calibration/control.db");
 const out = arg("--out", "src/signals/control/reference-mn-2.json");
@@ -71,7 +72,7 @@ const SUMMARY_QUERY = /* GraphQL */ `
 
 interface Ranking { bracketData: number; report?: { code: string; fightID: number } }
 interface Player { id: number; className: string; spec: string }
-interface CachedRun { durationMs: number; players: Player[]; control: RawRunControl }
+interface CachedRun { encounterID: number; durationMs: number; players: Player[]; control: RawRunControl }
 
 mkdirSync(dirname(cachePath), { recursive: true });
 const db = new Database(cachePath, { create: true });
@@ -93,22 +94,28 @@ const z = await gql<{ worldData: { zone: { encounters: { id: number; name: strin
 const encounters = z.worldData.zone.encounters;
 console.log(`${zone.name}: ${encounters.length} dungeons, ${SPECS.length} specs, table ${CC_TABLE.version}, budget ${budget} pts`);
 
-const samples = new Map<string, number[]>(SPECS.map((s) => [s, []]));
+/** spec → dungeon → uses per 10 minutes, one per player sample. */
+const samples = new Map<string, Map<number, number[]>>(SPECS.map((s) => [s, new Map()]));
+const count = (spec: string, encounterID: number) => samples.get(spec)?.get(encounterID)?.length ?? 0;
 const seenRuns = new Set<string>();
 const addRun = (run: CachedRun): void => {
   for (const p of run.players) {
     const key = `${p.className}:${p.spec}`;
     const rate = parseRunControl(run.control, { actorID: p.id, className: p.className, spec: p.spec }, run.durationMs).perTenMin;
-    (samples.get(key) ?? samples.set(key, []).get(key)!).push(rate);
+    const byDungeon = samples.get(key) ?? samples.set(key, new Map()).get(key)!;
+    (byDungeon.get(run.encounterID) ?? byDungeon.set(run.encounterID, []).get(run.encounterID)!).push(rate);
   }
 };
-// Runs fetched by an earlier session count first, at 0 pts.
+// Runs fetched by an earlier session count first, at 0 pts; one without its dungeon cannot be placed.
+let unplaced = 0;
 for (const r of db.query<{ code: string; fight: number; json: string }, []>("SELECT code, fight, json FROM runs").all()) {
   seenRuns.add(`${r.code}:${r.fight}`);
-  addRun(JSON.parse(r.json) as CachedRun);
+  const run = JSON.parse(r.json) as CachedRun;
+  if (typeof run.encounterID === "number") addRun(run); else unplaced++;
 }
+if (unplaced > 0) console.log(`${unplaced} cached runs have no dungeon and are left out`);
 
-async function fetchRun(code: string, fightID: number): Promise<CachedRun | null> {
+async function fetchRun(code: string, fightID: number, encounterID: number): Promise<CachedRun | null> {
   const cached = getRun.get(code, fightID);
   if (cached) return JSON.parse(cached.json) as CachedRun;
   type Summary = { data?: { totalTime?: number; composition?: Array<{ id?: number; type?: string; specs?: Array<{ spec?: string }> }> } };
@@ -120,18 +127,18 @@ async function fetchRun(code: string, fightID: number): Promise<CachedRun | null
   const players = (summary.data.composition ?? [])
     .filter((p) => typeof p.id === "number" && p.type && p.specs?.[0]?.spec)
     .map((p) => ({ id: p.id!, className: p.type!, spec: p.specs![0]!.spec! }));
-  const run: CachedRun = { durationMs: summary.data.totalTime, players, control };
+  const run: CachedRun = { encounterID, durationMs: summary.data.totalTime, players, control };
   putRun.run(code, fightID, JSON.stringify(run));
   return run;
 }
 
 let stopped = false;
-outer: for (const key of [...SPECS].sort((a, b) => samples.get(a)!.length - samples.get(b)!.length)) {
-  const [className, specName] = key.split(":") as [string, string];
-  const metric = HEALER_SPECS.has(specName) ? "hps" : "dps";
-  for (const enc of encounters) {
-    if (samples.get(key)!.length >= perSpec) break;
-    for (let page = 1; page <= MAX_PAGES && samples.get(key)!.length < perSpec; page++) {
+outer: for (const enc of encounters) {
+  for (const key of [...SPECS].sort((a, b) => count(a, enc.id) - count(b, enc.id))) {
+    if (count(key, enc.id) >= perDungeon) continue;
+    const [className, specName] = key.split(":") as [string, string];
+    const metric = HEALER_SPECS.has(specName) ? "hps" : "dps";
+    for (let page = 1; page <= MAX_PAGES && count(key, enc.id) < perDungeon; page++) {
       if (await overBudget()) { stopped = true; break outer; }
       const r = await gql<{ worldData: { encounter: { characterRankings: { rankings?: Ranking[] } } } }>(
         RANKINGS_QUERY, { e: enc.id, c: className, s: specName, p: page, m: metric });
@@ -144,43 +151,37 @@ outer: for (const key of [...SPECS].sort((a, b) => samples.get(a)!.length - samp
         seenRuns.add(id);
         if (await overBudget()) { stopped = true; break outer; }
         try {
-          const run = await fetchRun(row.report.code, row.report.fightID);
+          const run = await fetchRun(row.report.code, row.report.fightID, enc.id);
           if (run) addRun(run);
         } catch (e) {
           console.error(`${id}: ${e instanceof Error ? e.message : e}`);
         }
-        if (samples.get(key)!.length >= perSpec) break;
+        if (count(key, enc.id) >= perDungeon) break;
       }
       // Sorted by key level: once a page ends under the band, the ladder has nothing more for us.
       if (rows[rows.length - 1]!.bracketData < LOW) break;
     }
   }
-  console.log(`${key}: ${samples.get(key)!.length} samples · ${spent.toFixed(0)} pts so far`);
+  console.log(`${enc.name}: ${SPECS.filter((k) => count(k, enc.id) >= perDungeon).length} of ${SPECS.length} specs at ${perDungeon}+ · ${spent.toFixed(0)} pts so far`);
 }
 
-const quantile = (sorted: number[], q: number): number => {
-  const i = (sorted.length - 1) * q;
-  const lo = Math.floor(i);
-  const hi = Math.ceil(i);
-  return sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (i - lo);
-};
-const round = (x: number) => Math.round(x * 100) / 100;
 const specs: Record<string, ControlReferenceEntry> = {};
 for (const key of [...samples.keys()].sort()) {
-  const xs = [...samples.get(key)!].sort((a, b) => a - b);
-  if (xs.length === 0) continue;
-  specs[key] = { median: round(quantile(xs, 0.5)), p25: round(quantile(xs, 0.25)), p75: round(quantile(xs, 0.75)), samples: xs.length };
+  const e = summariseByDungeon(samples.get(key)!);
+  if (e) specs[key] = e;
 }
 const date = new Date().toISOString().slice(0, 10);
 const reference: ControlReference = {
   version: "mn-2.0",
   tableVersion: CC_TABLE.version,
   source: `scripts/calibration/control.ts, ${date}, ${seenRuns.size} runs, ${Math.round(spent)} pts this session`,
-  scope: "EU, +15 to +20",
+  scope: "EU, +15 to +20, every dungeon weighs the same",
   specs,
 };
 await Bun.write(out, JSON.stringify(reference, null, 1) + "\n");
-const short = SPECS.filter((k) => (specs[k]?.samples ?? 0) < perSpec);
+const short = SPECS.filter((k) => (specs[k]?.samples ?? 0) < MIN_REFERENCE_SAMPLES || (specs[k]?.dungeons ?? 0) < MIN_REFERENCE_DUNGEONS);
+const partial = SPECS.filter((k) => (specs[k]?.dungeons ?? 0) < encounters.length);
 console.log(`\n${stopped ? "stopped at the budget · " : ""}${Math.round(spent)} pts · wrote ${out}`);
-console.log(`under ${perSpec} samples: ${short.map((k) => `${k} (${specs[k]?.samples ?? 0})`).join(", ") || "none"}`);
+console.log(`n/a (under ${MIN_REFERENCE_SAMPLES} samples or ${MIN_REFERENCE_DUNGEONS} dungeons): ${short.map((k) => `${k} (${specs[k]?.samples ?? 0} in ${specs[k]?.dungeons ?? 0})`).join(", ") || "none"}`);
+console.log(`not in every dungeon: ${partial.map((k) => `${k} (${specs[k]?.dungeons ?? 0})`).join(", ") || "none"}`);
 db.close();

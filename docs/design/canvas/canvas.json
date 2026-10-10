@@ -386,6 +386,33 @@
       "h": 800,
       "title": "Me — details (empty, full, local mode, entry points)",
       "page": "me"
+    },
+    {
+      "file": "ControlVettingA.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1180,
+      "title": "Vetting view · A — “This is me” on the name line",
+      "page": "control"
+    },
+    {
+      "file": "ControlVettingB.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1180,
+      "title": "Vetting view · B — a line above the verdict",
+      "page": "control"
+    },
+    {
+      "file": "ControlDetails.dc.html",
+      "x": 0,
+      "y": 1340,
+      "w": 1440,
+      "h": 1500,
+      "title": "Crowd control — run detail A / B, dungeon panel, Control pillar, sync",
+      "page": "control"
     }
   ],
   "annotations": [
@@ -508,11 +535,19 @@
       "w": 1440,
       "page": "me",
       "text": "Personal page (self-review spec, decision 8): the member's characters, up to 5, added by hand until Battle.net linking (its own spec). Pick a layout: A list of cards / B table / C main first. All three show the season state, the five pillars of the last 4 weeks, Open (from history at 0 pts, else a lookup with its cost) and Sync (own WCL client when hosted). Details board: empty and full states, inline remove confirmation, local mode, the header link, the user-menu item and the home-page card for the main character, which never starts a lookup by itself."
+    },
+    {
+      "id": "control-brief",
+      "x": 0,
+      "y": -170,
+      "w": 560,
+      "page": "control",
+      "text": "Self-review phase 2 (spec 2026-10-10-self-review-control-design.md).\nTop: a character outside My characters opens the result page exactly as before phase 1, plus “This is me” (pick A or B).\nBelow: crowd control in the owner's view. Run detail: pick A (one line per spell) or B (rate first, grouped by category). Dungeon panel, Control pillar states and the sync card are shared. Sample data: a Frost death knight, Den of Nalorakk +19 (captured run: Gnaw 8, Death Grip 5, Blinding Sleet 1 on 5 enemies); the spec median 3.9 is a placeholder until the reference is collected."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "me"
+    "page": "control"
   },
   "pages": [
     {
@@ -550,6 +585,10 @@
     {
       "id": "me",
       "name": "Me — my characters (personal page)"
+    },
+    {
+      "id": "control",
+      "name": "Control — crowd control, the owner's view and the vetting view (phase 2)"
     }
   ]
 }

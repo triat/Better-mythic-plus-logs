@@ -1,0 +1,1546 @@
+{
+ "character": "Noshiidk",
+ "report": {
+  "code": "LMTk3X7BWtgHzjJK",
+  "fights": [
+   {
+    "id": 3,
+    "encounterID": 61877,
+    "keystoneLevel": 19,
+    "keystoneBonus": 1,
+    "keystoneTime": 1716634,
+    "keystoneAffixes": [
+     9,
+     10,
+     147
+    ],
+    "startTime": 3747449,
+    "endTime": 5472760
+   }
+  ],
+  "summary": {
+   "data": {
+    "totalTime": 1725311,
+    "composition": [
+     {
+      "name": "Noshiidk",
+      "id": 88,
+      "guid": 174508900,
+      "type": "DeathKnight",
+      "specs": [
+       {
+        "spec": "Frost",
+        "role": "dps"
+       }
+      ]
+     },
+     {
+      "name": "Koos",
+      "id": 87,
+      "guid": 188119326,
+      "type": "Rogue",
+      "specs": [
+       {
+        "spec": "Outlaw",
+        "role": "dps"
+       }
+      ]
+     },
+     {
+      "name": "Oldesthealer",
+      "id": 1,
+      "guid": 177618081,
+      "type": "Paladin",
+      "specs": [
+       {
+        "spec": "Holy",
+        "role": "healer"
+       }
+      ]
+     },
+     {
+      "name": "Gerdoxd",
+      "id": 89,
+      "guid": 173888681,
+      "type": "Druid",
+      "specs": [
+       {
+        "spec": "Guardian",
+        "role": "tank"
+       }
+      ]
+     },
+     {
+      "name": "Tmatm",
+      "id": 92,
+      "guid": 220586586,
+      "type": "Mage",
+      "specs": [
+       {
+        "spec": "Arcane",
+        "role": "dps"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "control": {
+  "tableVersion": "mn-2.0",
+  "pets": [
+   {
+    "id": 19,
+    "petOwner": 18
+   },
+   {
+    "id": 24,
+    "petOwner": 25
+   },
+   {
+    "id": 61,
+    "petOwner": 52
+   },
+   {
+    "id": 70,
+    "petOwner": 60
+   },
+   {
+    "id": 73,
+    "petOwner": 62
+   },
+   {
+    "id": 74,
+    "petOwner": 1
+   },
+   {
+    "id": 75,
+    "petOwner": 60
+   },
+   {
+    "id": 82,
+    "petOwner": 81
+   },
+   {
+    "id": 90,
+    "petOwner": 89
+   },
+   {
+    "id": 91,
+    "petOwner": 89
+   },
+   {
+    "id": 101,
+    "petOwner": 92
+   },
+   {
+    "id": 102,
+    "petOwner": 88
+   },
+   {
+    "id": 103,
+    "petOwner": 92
+   },
+   {
+    "id": 107,
+    "petOwner": 92
+   },
+   {
+    "id": 110,
+    "petOwner": 106
+   },
+   {
+    "id": 113,
+    "petOwner": 111
+   },
+   {
+    "id": 118,
+    "petOwner": 92
+   },
+   {
+    "id": 155,
+    "petOwner": 92
+   },
+   {
+    "id": 164,
+    "petOwner": 163
+   },
+   {
+    "id": 167,
+    "petOwner": 165
+   },
+   {
+    "id": 171,
+    "petOwner": 163
+   },
+   {
+    "id": 178,
+    "petOwner": 177
+   },
+   {
+    "id": 203,
+    "petOwner": 201
+   },
+   {
+    "id": 218,
+    "petOwner": 165
+   },
+   {
+    "id": 221,
+    "petOwner": 220
+   },
+   {
+    "id": 222,
+    "petOwner": 177
+   },
+   {
+    "id": 223,
+    "petOwner": 89
+   },
+   {
+    "id": 239,
+    "petOwner": 193
+   },
+   {
+    "id": 240,
+    "petOwner": 193
+   },
+   {
+    "id": 277,
+    "petOwner": 275
+   },
+   {
+    "id": 280,
+    "petOwner": 193
+   }
+  ],
+  "events": [
+   {
+    "timestamp": 3763040,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 98,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3763040,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 98,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3763040,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 96,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3763040,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 94,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3763042,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 97,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3763042,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 97,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3763055,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 97,
+    "targetInstance": 2,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 3763055,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 95,
+    "targetInstance": 1,
+    "abilityGameID": 207167,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 3763055,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 94,
+    "targetInstance": 1,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 3763056,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 96,
+    "targetInstance": 1,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 3773837,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 95,
+    "targetInstance": 1,
+    "abilityGameID": 49576,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 3775278,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 94,
+    "targetInstance": 1,
+    "abilityGameID": 49576,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781618,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 2,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781618,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 96,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781618,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 96,
+    "targetInstance": 2,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781619,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781619,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 97,
+    "targetInstance": 2,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781619,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 3,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781619,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 95,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 3781619,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 97,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3781619,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 97,
+    "targetInstance": 3,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3800332,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 100,
+    "targetInstance": 1,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 3812145,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 94,
+    "targetInstance": 2,
+    "abilityGameID": 2094,
+    "fight": 3
+   },
+   {
+    "timestamp": 3812160,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 94,
+    "targetInstance": 3,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 3812160,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 94,
+    "targetInstance": 1,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 3828689,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 97,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3828691,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 95,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 3873021,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 99,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3873021,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 94,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3873021,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 97,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3873021,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 96,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3873022,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 95,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 3873025,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 95,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3873052,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 97,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3881949,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 96,
+    "targetInstance": 3,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3881952,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 95,
+    "targetInstance": 3,
+    "abilityGameID": 105421,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 3881952,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 97,
+    "targetInstance": 4,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3881952,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 4,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3881952,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 97,
+    "targetInstance": 5,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 3913221,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 104,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 3945121,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 104,
+    "abilityGameID": 49576,
+    "fight": 3
+   },
+   {
+    "timestamp": 3945286,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 94,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 3945286,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 97,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4133093,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 110,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4133093,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 95,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4133093,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 110,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4133093,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 109,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4133093,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 108,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4133093,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 94,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4134125,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 5,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4134125,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 109,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4134125,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 95,
+    "targetInstance": 4,
+    "abilityGameID": 105421,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4134125,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 108,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4154618,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 94,
+    "targetInstance": 5,
+    "abilityGameID": 49576,
+    "fight": 3
+   },
+   {
+    "timestamp": 4155462,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 106,
+    "targetInstance": 1,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 4173214,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 95,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4173214,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 96,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4173214,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 108,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4173214,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 94,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4173215,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 109,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4173217,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 111,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4173217,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 96,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4177304,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 102793,
+    "fight": 3,
+    "sourceMarker": 6
+   },
+   {
+    "timestamp": 4221499,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 114,
+    "targetInstance": 1,
+    "abilityGameID": 49576,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4224654,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 94,
+    "targetInstance": 6,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 110,
+    "targetInstance": 5,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 94,
+    "targetInstance": 6,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 115,
+    "targetInstance": 1,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 109,
+    "targetInstance": 2,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 108,
+    "targetInstance": 2,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 114,
+    "targetInstance": 1,
+    "abilityGameID": 207167,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4247140,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 110,
+    "targetInstance": 6,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4253700,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 114,
+    "targetInstance": 1,
+    "abilityGameID": 427773,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4253700,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 115,
+    "targetInstance": 1,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 4253700,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 94,
+    "targetInstance": 6,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 4253700,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 108,
+    "targetInstance": 2,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 4253700,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 109,
+    "targetInstance": 2,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 4283129,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 108,
+    "targetInstance": 3,
+    "abilityGameID": 49576,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284571,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 108,
+    "targetInstance": 3,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284571,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 7,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284571,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 109,
+    "targetInstance": 3,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284571,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 110,
+    "targetInstance": 8,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284571,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 108,
+    "targetInstance": 2,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284573,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 114,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4284573,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 115,
+    "targetInstance": 2,
+    "abilityGameID": 105421,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 4284573,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 115,
+    "targetInstance": 1,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4284573,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 94,
+    "targetInstance": 6,
+    "abilityGameID": 105421,
+    "fight": 3
+   },
+   {
+    "timestamp": 4288687,
+    "type": "applydebuff",
+    "sourceID": 102,
+    "sourceInstance": 6,
+    "targetID": 109,
+    "targetInstance": 5,
+    "abilityGameID": 91800,
+    "fight": 3
+   },
+   {
+    "timestamp": 4301649,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 106,
+    "targetInstance": 3,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 4314169,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 108,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 8
+   },
+   {
+    "timestamp": 4314169,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 94,
+    "targetInstance": 7,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4314169,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 109,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4314169,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 115,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 2
+   },
+   {
+    "timestamp": 4314169,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 109,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4314169,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 109,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4315347,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 94,
+    "targetInstance": 7,
+    "abilityGameID": 49576,
+    "fight": 3
+   },
+   {
+    "timestamp": 4391759,
+    "type": "cast",
+    "sourceID": 88,
+    "targetID": 114,
+    "targetInstance": 3,
+    "abilityGameID": 49576,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 4395433,
+    "type": "applydebuff",
+    "sourceID": 102,
+    "sourceInstance": 7,
+    "targetID": 114,
+    "targetInstance": 2,
+    "abilityGameID": 91800,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4401609,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 109,
+    "targetInstance": 7,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4401609,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 108,
+    "targetInstance": 6,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4401612,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 114,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 4401612,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 114,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4401612,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 108,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4401612,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 108,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4407862,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 102793,
+    "fight": 3
+   },
+   {
+    "timestamp": 4472681,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 118,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4472706,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 119,
+    "targetInstance": 1,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4535081,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 129,
+    "targetInstance": 1,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 4568127,
+    "type": "applydebuff",
+    "sourceID": 88,
+    "targetID": 118,
+    "targetInstance": 2,
+    "abilityGameID": 207167,
+    "fight": 3
+   },
+   {
+    "timestamp": 4625017,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 126,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4625017,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 126,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 4625017,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 126,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4693219,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 133,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 2
+   },
+   {
+    "timestamp": 4693219,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4693219,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 133,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4693219,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4701475,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 134,
+    "targetInstance": 1,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 4701475,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 133,
+    "targetInstance": 2,
+    "abilityGameID": 427773,
+    "fight": 3,
+    "targetMarker": 2
+   },
+   {
+    "timestamp": 4701479,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 133,
+    "targetInstance": 1,
+    "abilityGameID": 427773,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4701479,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 134,
+    "targetInstance": 2,
+    "abilityGameID": 427773,
+    "fight": 3
+   },
+   {
+    "timestamp": 4707016,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 102793,
+    "fight": 3
+   },
+   {
+    "timestamp": 4707293,
+    "type": "applydebuff",
+    "sourceID": 1,
+    "targetID": 133,
+    "targetInstance": 2,
+    "abilityGameID": 853,
+    "fight": 3,
+    "targetMarker": 2
+   },
+   {
+    "timestamp": 4723506,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 133,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 2
+   },
+   {
+    "timestamp": 4723508,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 133,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4723508,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 2,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4723508,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 1,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4782757,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4782760,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 133,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 4782762,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 133,
+    "targetInstance": 3,
+    "abilityGameID": 99,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 4782762,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 4,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4782762,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 6,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 4782762,
+    "type": "applydebuff",
+    "sourceID": 89,
+    "targetID": 134,
+    "targetInstance": 5,
+    "abilityGameID": 99,
+    "fight": 3
+   },
+   {
+    "timestamp": 5083487,
+    "type": "applydebuff",
+    "sourceID": 87,
+    "targetID": 143,
+    "targetInstance": 1,
+    "abilityGameID": 408,
+    "fight": 3
+   },
+   {
+    "timestamp": 5085253,
+    "type": "applydebuff",
+    "sourceID": 92,
+    "targetID": 143,
+    "targetInstance": 2,
+    "abilityGameID": 118,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 5170314,
+    "type": "applydebuff",
+    "sourceID": 92,
+    "targetID": 143,
+    "targetInstance": 4,
+    "abilityGameID": 118,
+    "fight": 3,
+    "targetMarker": 6
+   },
+   {
+    "timestamp": 5236054,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 102793,
+    "fight": 3
+   },
+   {
+    "timestamp": 5245405,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 144,
+    "abilityGameID": 157980,
+    "fight": 3,
+    "targetMarker": 1
+   },
+   {
+    "timestamp": 5365089,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 102793,
+    "fight": 3
+   },
+   {
+    "timestamp": 5378982,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 152,
+    "targetInstance": 17,
+    "abilityGameID": 157980,
+    "fight": 3
+   },
+   {
+    "timestamp": 5459959,
+    "type": "cast",
+    "sourceID": 89,
+    "targetID": -1,
+    "abilityGameID": 102793,
+    "fight": 3
+   },
+   {
+    "timestamp": 5461915,
+    "type": "cast",
+    "sourceID": 92,
+    "targetID": 152,
+    "targetInstance": 25,
+    "abilityGameID": 157980,
+    "fight": 3
+   }
+  ]
+ }
+}

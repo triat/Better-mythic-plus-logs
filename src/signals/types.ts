@@ -1,3 +1,5 @@
+import type { CcCategory } from "./control/table.ts";
+
 export type GroupRole = "dps" | "healer" | "tank" | "unknown";
 
 export interface PeerComparison {
@@ -40,6 +42,24 @@ export interface DeathEvent {
   killingHits?: KillingHit[]; // newest first; absent on payloads saved before 2026-10
 }
 
+/** One crowd-control spell of a run: `uses` grouped within 1 s, `enemies` the debuff applications (0 for a knock). */
+export interface ControlSpell { id: number; name: string; category: CcCategory; uses: number; enemies: number }
+
+export interface RunControl {
+  uses: number;
+  enemies: number;
+  /** Uses per 10 minutes of key. */
+  perTenMin: number;
+  /** The spec's reference median per 10 minutes; null without a usable reference (src/signals/control/reference.ts). */
+  reference: number | null;
+  /** (perTenMin − reference) / reference × 100; null without a reference. */
+  vsReference: number | null;
+  /** Fetched with an older table version than the shipped one. */
+  stale: boolean;
+  /** Most uses first. */
+  spells: ControlSpell[];
+}
+
 export interface RunSignals {
   role: GroupRole;
   keystone: {
@@ -70,6 +90,7 @@ export interface RunSignals {
     abilities?: AbilityDamage[];  // the player's top five avoidable abilities
     other?: number;               // total − Σ abilities (WCL's top-five cap)
   } | null;                       // null = no list for this dungeon
+  control?: RunControl;           // absent when the run's crowd control was never fetched
   fightDurationMs: number;
   partial?: boolean;              // fights[0] missing: keystone came from ranking data
 }

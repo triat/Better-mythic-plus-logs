@@ -111,8 +111,9 @@ and knocks (knock-backs, grips, pulls) the player or their pet landed on enemies
 Per run, applications of one spell within 1 s are one use (an area stun on eight enemies is one use, eight
 enemies); bmpl takes the uses per 10 minutes of key and compares them with the median of ranked players of the
 same spec at +15 to +20, in percent. The character's value is the median of those percentages over the runs.
-It is `n/a` when no run was measured, when the spec's reference has fewer than 20 sampled players, or when its
-median is under 0.5 use per 10 minutes (no real kit).
+It is `n/a` when no run was measured, when the spec's reference has fewer than 20 sampled players or comes from
+fewer than 4 dungeons, or when its median is under 0.5 use per 10 minutes (no real kit). The reference samples every
+dungeon and weighs each one the same, since crowd-control opportunities differ from dungeon to dungeon.
 
 Crowd control is scored **for the pillar only** (`pillarOnly: true` in `default-config.json`): it is kept out of
 the Utility axis, the global score and the verdict. It is measured only for your own characters, from one more

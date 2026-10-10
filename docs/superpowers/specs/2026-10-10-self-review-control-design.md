@@ -119,7 +119,8 @@ read (0 pts) ──► wcl_run_control + cc-mn-2.json ──► uses per run ─
   Terror of the Skies, Chaos Nova, Holy Word: Chastise; table `mn-2.2`, 2026-10-10).
 - **Rate:** uses per 10 minutes of key (fight start to end).
 - **Kit floor:** spec reference median under 0.5 use per 10 minutes → `null`.
-- **Reference:** at least 20 samples per spec; EU, +15 to +20.
+- **Reference:** at least 20 samples per spec from at least 4 dungeons; EU, +15 to +20; every dungeon weighs
+  the same in the quantiles (added 2026-10-10 after the first collection turned out to come from one dungeon).
 - **Curve and weights:** decision 5.
 
 ## Data notes (probed 2026-10-10)
@@ -155,14 +156,17 @@ estimated 100 to 200 pts).
 
 ## Reference (2026-10-10, plan Task 19)
 
-`scripts/calibration/control.ts`, EU +15 to +20: 422 runs, 2 080 pts, every spec at 20 samples or more
-(`reference-mn-2.json`, table `mn-2.2`). After the per-spell windows above, the same cached runs were re-read at
-0 pts: Devastation 17.3 → 12.3 uses per 10 minutes, Shadow 6.9 → 6.1, Havoc, Vengeance, Augmentation and Beast
-Mastery a little lower. Lowest medians: Discipline 1.0, Devourer 1.1, Frost mage 1.6; highest: Blood 15.8 (Death
-Grip, also used to taunt), Devastation 12.3. Devastation still lands Terror of the Skies more often than a 2-minute
-Deep Breath would allow; whether the stun has another source this season is not known. Each spec is compared with
-its own median, so a counting artefact shared by the whole spec does not bias the comparison. The dungeon spread of
-the samples is not recorded: a spec that reached 20 quickly took them from the first dungeons walked.
+First collection: 422 runs, 2 080 pts, every spec at 20 samples or more. Asking WCL for each cached run's dungeon
+(423 pts) showed that **all 422 came from one dungeon**, Altar of Fangs: the script walked the dungeons in order and
+stopped each spec at 20 samples, and one run feeds five specs. Second collection: the script stores each run's
+dungeon, samples 3 players of every spec in each of the eight dungeons, and weighs every dungeon the same
+(`summariseByDungeon`); 894 runs in all (422 in Altar of Fangs, 64 to 73 in each other dungeon), 2 552 pts. Every spec
+has samples in all 8 dungeons (41 to 406). Medians moved by up to a third, mostly down: Frost death knight 8.4 → 6.1,
+Unholy 7.5 → 5.2, Vengeance 9.0 → 7.2, Arms 3.9 → 3.0; Discipline falls to 0 (under the kit floor: n/a). Highest:
+Blood 13.7 (Death Grip, also used to taunt), Devastation 11.7 (Terror of the Skies still lands more often than a
+2-minute Deep Breath would allow; the cause is not known). With 3 samples a dungeon for the rarer specs, a dungeon's
+share is noisy; each spec is compared with its own median, so a counting artefact shared by the whole spec does not
+bias the comparison.
 
 ## Live check (2026-10-10, plan Task 20)
 

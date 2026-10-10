@@ -38,6 +38,14 @@ describe("crowd-control table", () => {
     expect(ccFilterExpression({ version: "x", source: "", specs: { "Rogue:*": [{ id: 408, name: "Kidney Shot", category: "stun", kind: "debuff" }] } }))
       .toBe('(type = "applydebuff" and ability.id in (408))');
   });
+  test("a group points at another debuff of the same spec key", () => {
+    for (const [key, entries] of Object.entries(CC_TABLE.specs)) {
+      for (const e of entries.filter((x) => x.group !== undefined)) {
+        expect(entries.some((x) => x.id === e.group && x.kind === e.kind && x.name === e.name)).toBe(true);
+        expect(key.length > 0).toBe(true);
+      }
+    }
+  });
   test("index and spec lookup", () => {
     expect(ccIndex().get("debuff:91800")?.pet).toBe(true); // Gnaw, the ghoul's
     expect(specCc("Rogue", "Outlaw").map((e) => e.id)).toContain(2094);

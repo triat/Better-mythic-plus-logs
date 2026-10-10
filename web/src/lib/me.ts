@@ -52,7 +52,12 @@ export const removeAt = (list: MyCharacter[], i: number): MyCharacter[] => list.
 
 /** Whether a lookup request is for one of the member's characters (the server checks it again when hosted). */
 export const mineRequest = (list: MyCharacter[], character: string, region: Region): boolean => {
-  const c = parseEntry(character, region);
+  const s = character.trim();
+  // A Raider.IO link carries its own region; otherwise a WoW name has no "-" and no space, so the first one ends it,
+  // which keeps a hyphenated realm ("Name-tarren-mill") and the "Name Realm" form the server also accepts.
+  const link = RIO.test(s) ? parseEntry(s, region) : null;
+  const cut = s.search(/[-\s]/);
+  const c = link ?? (cut > 0 && cut < s.length - 1 ? make(s.slice(0, cut), s.slice(cut + 1).trim(), region) : null);
   return c !== null && list.some((x) => sameId(x, c));
 };
 

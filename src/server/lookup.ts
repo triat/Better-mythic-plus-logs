@@ -60,6 +60,13 @@ export type OwnsTarget = (t: { name: string; realm: string; region: Region }) =>
 export const lookupOwns = (mine: boolean, listed: readonly MyCharacter[] | null): OwnsTarget | undefined =>
   !mine ? undefined : listed === null ? () => true : (t) => ownsCharacter(listed, t);
 
+/** The list `lookupOwns` checks: null locally (no account), the member's characters when hosted, and an empty list
+ * for a hosted request without a member, so hosted never trusts the flag alone. */
+export const listedFor = (
+  ctx: { hosted: boolean; user: { id: number } | null },
+  runtime: { db: { settings: { get(userId: number): { characters: MyCharacter[] } } } } | null,
+): MyCharacter[] | null => (!ctx.hosted ? null : runtime && ctx.user ? runtime.db.settings.get(ctx.user.id).characters : []);
+
 // Identical lookups that overlap share one WCL fetch (keyed like the history, "auto" level included).
 // A refresh never joins an existing flight, and it registers its own flight only when none is in
 // progress for that key — it must never displace another caller's in-flight (non-refresh) fetch,
@@ -111,9 +118,11 @@ export async function runLookupWithCache(opts: {
   }
 
   try {
-    // A lookup that fetches crowd control does more than one that does not: they never share a flight.
-    const flightKey = cacheKey(request) + (control ? "|control" : "");
-    let flight = opts.refresh ? undefined : inflight.get(flightKey);
+    // A lookup that fetches crowd control does everything a plain one does, and more: a plain lookup may join it (so
+    // nobody else pays twice), a crowd-control lookup never joins a plain one.
+    const baseKey = cacheKey(request);
+    const flightKey = baseKey + (control ? "|control" : "");
+    let flight = opts.refresh ? undefined : inflight.get(flightKey) ?? (control ? undefined : inflight.get(`${baseKey}|control`));
     const joined = flight !== undefined;
     if (!flight) {
       flight = (deps.performLookup ?? performLookup)(lookupOptions, { reserve: deps.reserve, tables: deps.tables });
@@ -164,8 +173,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   runtime?.audit.setTarget(`lookup ${body.character}`);
   const tables = await tablesOf(ctx, runtime);
   const scope = await wclScopeFor(runtime, ctx.user);
-  // Hosted never trusts the flag alone: no member, no list, nobody is theirs.
-  const listed = !ctx.hosted ? null : runtime && ctx.user ? runtime.db.settings.get(ctx.user.id).characters : [];
+  const listed = listedFor(ctx, runtime);
   const result = await scope.run(() => runLookupWithCache({
     character: body.character,
     level: body.level ?? null,

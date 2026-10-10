@@ -169,12 +169,18 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
   const result = analyzeLookup(data.runs, effective, data.seasonDungeons, opts.level === null);
   const shown = displayedRuns(result);
 
+  let control = opts.control ?? false;
   if (opts.enrich && deps.reserve) {
     const keys = [...new Map(shown.map((r) => [`${r.reportCode}:${r.fightID}`, r])).values()];
-    const uncached = keys.filter((r) => !store.hasWclRun(r.reportCode, r.fightID)).length;
-    const noControl = opts.control ? keys.filter((r) => !store.hasRunControl(r.reportCode, r.fightID, CC_TABLE.version)).length : 0;
-    const estimate = uncached * ESTIMATE_RUN + noControl * ESTIMATE_CONTROL;
-    const refusedRuns = estimate > 0 ? deps.reserve(estimate) : null;
+    const runsEstimate = keys.filter((r) => !store.hasWclRun(r.reportCode, r.fightID)).length * ESTIMATE_RUN;
+    const noControl = control ? keys.filter((r) => !store.hasRunControl(r.reportCode, r.fightID, CC_TABLE.version)).length : 0;
+    const estimate = runsEstimate + noControl * ESTIMATE_CONTROL;
+    let refusedRuns = estimate > 0 ? deps.reserve(estimate) : null;
+    // Crowd control is optional: refused with it, the lookup asks again without it rather than failing.
+    if (refusedRuns && noControl > 0) {
+      refusedRuns = runsEstimate > 0 ? deps.reserve(runsEstimate) : null;
+      if (!refusedRuns) control = false;
+    }
     if (refusedRuns) {
       recent.keep(recentKey, fetched);
       return { ok: false, status: 429, error: refusedRuns.message, quota: refusedRuns };
@@ -184,7 +190,7 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
 
   const [, rioRes] = await Promise.all([
     opts.enrich
-      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql, control: opts.control })
+      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql, control })
       : Promise.resolve(),
     fetchRioProfile(opts.region, opts.realm, data.character.name, store, {
       refresh: opts.refresh,

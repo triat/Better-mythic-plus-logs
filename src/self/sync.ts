@@ -87,13 +87,18 @@ export async function syncBatch(store: Store, key: CharacterKey, rows: SeasonRow
   const batchCost = batch.reduce((n, r) => n + costOf(store, r), 0);
   if (left < MIN_BUDGET_POINTS + batchCost) return { ok: false, status: 402, error: new BudgetLowError(left).message };
   const work = async (r: SeasonRow): Promise<"ok" | "missing"> => {
+    let stored = false;
     if (needsRaw(store, r)) {
       const raw = await fetchRunReport(rowToRun(r), gql);
       if (!raw) return "missing";
       store.putWclRun(r.reportCode, r.fightID, raw);
+      stored = true;
     }
     if (needsControl(store, r)) {
-      const control = await fetchRunControl(r, gql);
+      // The raw report just stored is progress: a failing crowd-control call then leaves the run pending (the next
+      // sync asks again) instead of failing the batch.
+      const control = await fetchRunControl(r, gql).catch((e: unknown) => { if (stored) return undefined; throw e; });
+      if (control === undefined) return "ok";
       if (!control) return "missing";
       store.putRunControl(r.reportCode, r.fightID, control);
     }

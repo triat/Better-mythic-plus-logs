@@ -78,6 +78,8 @@ describe("mineRequest", () => {
     expect(mineRequest(list, "Noshiidk-Argent Dawn", "eu")).toBe(true);
     expect(mineRequest(list, "noshiidk-ArgentDawn", "eu")).toBe(true);
     expect(mineRequest(list, "https://raider.io/characters/eu/argent-dawn/Noshiidk", "us")).toBe(true);
+    expect(mineRequest(list, "Noshiidk-argent-dawn", "eu")).toBe(true);
+    expect(mineRequest(list, "Noshiidk Argent Dawn", "eu")).toBe(true);
   });
   test("anyone else, another region, or nothing parseable", () => {
     expect(mineRequest(list, "Other-Argent Dawn", "eu")).toBe(false);

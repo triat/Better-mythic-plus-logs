@@ -70,7 +70,7 @@
     ],
     "Rogue:*": [
       { "id": 2094, "name": "Blind", "category": "disorient", "kind": "debuff" },
-      { "id": 427773, "name": "Blind", "category": "disorient", "kind": "debuff" },
+      { "id": 427773, "name": "Blind", "category": "disorient", "kind": "debuff", "group": 2094 },
       { "id": 6770, "name": "Sap", "category": "incapacitate", "kind": "debuff" },
       { "id": 1776, "name": "Gouge", "category": "incapacitate", "kind": "debuff" },
       { "id": 1833, "name": "Cheap Shot", "category": "stun", "kind": "debuff" },

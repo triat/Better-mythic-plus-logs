@@ -13,6 +13,8 @@ export interface CcEntry {
   kind: "debuff" | "cast";
   /** Applied by the player's pet (credited to its owner). */
   pet?: true;
+  /** Another id of the same spell, applied by the same cast (Blind's area effect): counted as that spell's uses. */
+  group?: number;
 }
 /** `specs` is keyed `Class:Spec` or `Class:*` (WCL's spacing-free names, as `src/signals/kick-cooldowns.ts`). */
 export interface CcTable { version: string; source: string; specs: Record<string, CcEntry[]> }

@@ -61,6 +61,19 @@ describe("performLookup — quota reservations", () => {
     expect(estimates).toEqual([ESTIMATE_RANKINGS, ESTIMATE_RUN + 2 * ESTIMATE_CONTROL]);
     x.store.close();
   });
+  test("own character: a refusal that only crowd control causes drops crowd control, not the lookup", async () => {
+    const x = await fixture();
+    for (const r of x.data.runs) x.store.putWclRun(r.reportCode, r.fightID, (await loadWclFixture("s2-healer")).report);
+    const estimates: number[] = [];
+    const o = await performLookup({ ...opts(x.name), control: true }, {
+      store: x.store, gql: x.gql, fetchFn: x.fetchFn, fetchMplus: x.fetchMplus,
+      reserve: (e) => { estimates.push(e); return e === 2 * ESTIMATE_CONTROL ? REFUSED : null; },
+    });
+    expect(o.ok).toBe(true);
+    expect(estimates).toEqual([ESTIMATE_RANKINGS, 2 * ESTIMATE_CONTROL]);
+    expect(x.gqlCalls).toEqual([]);
+    x.store.close();
+  });
   test("own character with everything cached reserves nothing after the rankings", async () => {
     const x = await fixture();
     for (const r of x.data.runs) {

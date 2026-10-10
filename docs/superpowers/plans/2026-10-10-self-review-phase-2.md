@@ -1195,7 +1195,7 @@ Following `docs/agents/web-front.md` "Design first" (read the artifact first, ed
 ### Task 18: Run the audit (stop and ask before spending)
 
 - [ ] **Step 1: Ask the user**: "Audit of the crowd-control table: 40 specs × 2 runs, about 300 WCL pts on <client>. Go?"
-- [ ] **Step 2**: `bun scripts/audit-control.ts --runs 2 --out .calibration/audit-control.json`; report per spec what is never seen and the candidates; the user decides each change.
+- [ ] **Step 2**: `bun scripts/audit-control.ts --runs 2 --out .calibration/audit-control.json`; report per spec what is never seen and the candidates; the user decides each change. Also look at the spells whose debuff lands over time from one cast (Ring of Frost 82691, Binding Shot 117526, Rake 163505 from stealth): with the 1 s window each enemy walking in later is a new use; count them from the cast (a `cast` entry, or a `group` like Blind's) if the audit shows it (whole-branch review, 2026-10-10).
 - [ ] **Step 3**: apply the decisions to `cc-mn-2.json`, bump `version` to `mn-2.1` if anything changed (and `reference-mn-2.json`'s `tableVersion` follows only with Task 19); `bun test`; commit → `feat(signals): crowd-control table mn-2.1 (audited)`.
 
 ### Task 19: Collect the reference (stop and ask before spending)

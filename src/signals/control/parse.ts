@@ -27,10 +27,12 @@ export function parseRunControl(
     if (kind === null || typeof e.abilityGameID !== "number") continue;
     const entry = index.get(`${kind}:${e.abilityGameID}`);
     if (!entry) continue;
-    const key = `${kind}:${entry.id}`;
+    // One cast can apply several ids of the same spell (Blind and its area effect): they share one use window.
+    const id = entry.group ?? entry.id;
+    const key = `${kind}:${id}`;
     let s = spells.get(key);
     if (!s) {
-      s = { id: entry.id, name: entry.name, category: entry.category, uses: 0, enemies: 0, ...(entry.pet ? { pet: true as const } : {}), start: Number.NEGATIVE_INFINITY };
+      s = { id, name: entry.name, category: entry.category, uses: 0, enemies: 0, ...(entry.pet ? { pet: true as const } : {}), start: Number.NEGATIVE_INFINITY };
       spells.set(key, s);
     }
     if (kind === "cast" || e.timestamp - s.start >= USE_WINDOW_MS) {

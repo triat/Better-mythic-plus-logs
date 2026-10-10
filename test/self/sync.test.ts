@@ -109,6 +109,17 @@ describe("syncBatch", () => {
     expect(store.hasWclRun("R1", 1)).toBe(true);
     expect(syncState(store, store.seasonRuns(key, 55), NOW)).toMatchObject({ analysed: 1, pending: 0, controlOnly: 0, failed: 1 });
   });
+  test("crowd control throwing after the raw report was stored keeps the progress and the run pending", async () => {
+    const store = seeded(1);
+    const base = fakeGql();
+    const gql = async <T,>(q: string, vars?: Record<string, unknown>): Promise<T> => {
+      if (q.includes("ReportRunControl")) throw new Error("boom");
+      return base.gql<T>(q, vars);
+    };
+    expect(await syncBatch(store, key, store.seasonRuns(key, 55), { gql, now: NOW })).toEqual({ ok: true, fetched: 1, failed: 0 });
+    expect(store.hasWclRun("R1", 1)).toBe(true);
+    expect(syncState(store, store.seasonRuns(key, 55), NOW)).toMatchObject({ analysed: 1, pending: 1, controlOnly: 1, failed: 0 });
+  });
   test("a batch where every fetch throws rethrows and marks nothing", async () => {
     const store = seeded(2);
     const f = fakeGql({ throwOn: ["R1", "R2"] });

@@ -66,6 +66,12 @@ describe("referenceFor", () => {
 });
 
 describe("controlOf on captured runs", () => {
+  test("rogue: Blind and its area effect from one cast are one use (group)", async () => {
+    const f = await loadControlFixture("s2-dk-frost");
+    const c = controlOf(f.report, f.control, "Astrack", 30 * 60_000)!;
+    const blind = c.spells.filter((s) => s.name === "Blind");
+    expect(blind).toEqual([{ id: 2094, name: "Blind", category: "disorient", uses: 6, enemies: 34 }]);
+  });
   test("Frost death knight: the ghoul's Gnaw is credited, Blinding Sleet and Death Grip are there", async () => {
     const f = await loadControlFixture("s2-dk-frost");
     const c = controlOf(f.report, f.control, f.character, 30 * 60_000)!;

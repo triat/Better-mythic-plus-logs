@@ -372,7 +372,7 @@ export const fr: Mirror<typeof en> = {
       empty: "Aucun run analysé dans ce donjon pour l'instant.",
       control: "Contrôle ici",
       controlOver: "sur {runs, plural, one {# run} other {# runs}} avec du contrôle mesuré",
-      controlMissing: " · {count, plural, one {# run analysé} other {# runs analysés}} pas encore mesuré(s)",
+      controlMissing: " · {count, plural, one {# run analysé pas encore mesuré} other {# runs analysés pas encore mesurés}}",
       controlNone: "Aucun contrôle mesuré dans ce donjon pour l'instant.",
     },
     control: {

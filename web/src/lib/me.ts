@@ -50,6 +50,12 @@ export function addCharacter(list: MyCharacter[], c: MyCharacter): { ok: true; l
 export const makeMain = (list: MyCharacter[], i: number): MyCharacter[] => [list[i]!, ...list.filter((_, j) => j !== i)];
 export const removeAt = (list: MyCharacter[], i: number): MyCharacter[] => list.filter((_, j) => j !== i);
 
+/** Whether a lookup request is for one of the member's characters (the server checks it again when hosted). */
+export const mineRequest = (list: MyCharacter[], character: string, region: Region): boolean => {
+  const c = parseEntry(character, region);
+  return c !== null && list.some((x) => sameId(x, c));
+};
+
 /** What the search field gets: a Raider.IO link, which carries the character's own region (the server's rule). */
 export const lookupQuery = (c: MyCharacter): string =>
   `https://raider.io/characters/${c.region}/${encodeURIComponent(c.realm)}/${encodeURIComponent(c.name)}`;

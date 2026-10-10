@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { HistoryItem, MyCharacter, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { addCharacter, historyKeyFor, lookupQuery, mainPillars, makeMain, parseEntry, removeAt, rowCells, seasonLine, slugOf } from "./me.ts";
+import { addCharacter, historyKeyFor, lookupQuery, mainPillars, makeMain, mineRequest, parseEntry, removeAt, rowCells, seasonLine, slugOf } from "./me.ts";
 
 const tFr = makeT(fr, "fr");
 const c = (name: string, realm = "silvermoon", region: MyCharacter["region"] = "eu"): MyCharacter => ({ name, realm, region, source: "manual" });
@@ -71,3 +71,18 @@ describe("mainPillars without a season", () => {
   });
 });
 
+
+describe("mineRequest", () => {
+  const list: MyCharacter[] = [{ name: "Noshiidk", realm: "argent-dawn", region: "eu", source: "manual" }];
+  test("a Name-Realm or a Raider.IO link of a listed character", () => {
+    expect(mineRequest(list, "Noshiidk-Argent Dawn", "eu")).toBe(true);
+    expect(mineRequest(list, "noshiidk-ArgentDawn", "eu")).toBe(true);
+    expect(mineRequest(list, "https://raider.io/characters/eu/argent-dawn/Noshiidk", "us")).toBe(true);
+  });
+  test("anyone else, another region, or nothing parseable", () => {
+    expect(mineRequest(list, "Other-Argent Dawn", "eu")).toBe(false);
+    expect(mineRequest(list, "Noshiidk-Argent Dawn", "us")).toBe(false);
+    expect(mineRequest(list, "Noshiidk", "eu")).toBe(false);
+    expect(mineRequest([], "Noshiidk-Argent Dawn", "eu")).toBe(false);
+  });
+});

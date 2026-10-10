@@ -392,6 +392,9 @@ export const fr: Mirror<typeof en> = {
     sync: {
       title: "Synchroniser ta saison",
       found: "{runs} runs classés trouvés · {pending} pas encore analysés",
+      foundControl: "{runs} runs classés trouvés · {count} à mesurer pour le contrôle",
+      foundMixed: "{runs} runs classés trouvés · {pending} pas encore analysés · {control} n'ont besoin que du contrôle",
+      controlOnly: "Mesurer le contrôle sur {count, plural, one {# run} other {# runs}}",
       cost: "~{pts} pts sur ton propre client WCL · le budget partagé n'est pas utilisé",
       costLocal: "~{pts} pts sur ton client WCL",
       start: "Synchroniser {count, plural, one {# run} other {# runs}}",

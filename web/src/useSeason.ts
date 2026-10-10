@@ -25,7 +25,8 @@ export interface SeasonState {
  * The season of one character (GET /api/season, 0 pts). A new character resets the view and stops a running sync;
  * a new `reloadKey` for the same character (the result page passes its payload, which `reloadActive` in App replaces
  * after a deep-dive) reloads in place, keeping the current view and any running sync. An answer that arrives for an
- * earlier character, or after a newer request, is dropped. The sync loops one batch per request (decision 3) until
+ * earlier character, or after a newer request, is dropped. The sync loops one batch per request (decision 3; a batch
+ * fetches the missing raw reports and crowd control, `state.pending` counts both) until
  * nothing is pending, a batch fetches nothing, an error, Cancel or a character change; the batch already in flight
  * still completes, and the next sync resumes from the cache.
  */

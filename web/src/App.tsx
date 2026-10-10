@@ -7,7 +7,7 @@ import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { realmName } from "./lib/format.ts";
-import { historyKeyFor, lookupQuery } from "./lib/me.ts";
+import { historyKeyFor, lookupQuery, mineRequest } from "./lib/me.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
@@ -256,7 +256,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const runLookup = useCallback(async (req: LookupRequest, refresh: boolean) => {
     setBusy(t(refresh ? "header.busy.refreshing" : "header.busy.lookingUp", { name: req.character }));
     setCompareOpen(false);
-    const r = await api.lookup({ ...req, refresh });
+    const r = await api.lookup({ ...req, refresh, mine: mineRequest(settings.characters, req.character, req.region ?? regionRef.current) });
     setBusy(null);
     // A refusal that carries the member's own quota numbers gets the way out: the guide to an own client.
     if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return; }
@@ -270,7 +270,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!refresh && r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
     touch();
     await loadHistory();
-  }, [loadHistory, updateSettings, t, ownClientAction]);
+  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters]);
 
   const onLookup = () => void runLookup(formToRequest(form, yourKey, region), false);
   const onRefresh = () => {

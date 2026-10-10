@@ -128,6 +128,17 @@ describe("syncCard", () => {
     expect(syncCard(tEn, season(), true, null).kind).toBe("noClient");
     expect(syncCard(tEn, season(), true, { ...own, usable: false }).kind).toBe("noClient");
   });
+  test("runs synced before crowd control existed: only crowd control to fetch", () => {
+    const only = season({ state: { runs: 5, analysed: 5, pending: 5, controlOnly: 5, failed: 0, estimate: 35 } });
+    expect(syncCard(tEn, only, true, own)).toEqual({
+      kind: "ready", found: "5 ranked runs found · 5 need crowd control", cost: "~35 pts on your own WCL client · the shared budget is not used",
+      start: "Measure crowd control on 5 runs",
+    });
+    expect(syncCard(tFr, only, true, own)).toMatchObject({ found: "5 runs classés trouvés · 5 à mesurer pour le contrôle", start: "Mesurer le contrôle sur 5 runs" });
+    const mixed = season({ state: { runs: 7, analysed: 4, pending: 5, controlOnly: 2, failed: 0, estimate: 65 } });
+    expect(syncCard(tEn, mixed, false, null)).toMatchObject({ found: "7 ranked runs found · 3 not analysed yet · 2 only need crowd control", start: "Sync 5 runs" });
+    expect(syncCard(tFr, mixed, false, null)).toMatchObject({ found: "7 runs classés trouvés · 3 pas encore analysés · 2 n'ont besoin que du contrôle" });
+  });
   test("estimate before spending, done when nothing is pending", () => {
     const v = syncCard(tEn, season(), true, own);
     expect(v).toEqual({ kind: "ready", found: "142 ranked runs found · 118 not analysed yet", cost: "~1\u202f200 pts on your own WCL client · the shared budget is not used", start: "Sync 118 runs" });

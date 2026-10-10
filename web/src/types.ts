@@ -31,7 +31,8 @@ export type { DocsResponse } from "@shared/server/routes-shared.ts";
 export type { WclClientDoc, LiveAddonDoc } from "@shared/evaluation/docs.ts";
 export type { TextSegment } from "./lib/help.ts";
 export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
-export type { RioProfile, RioRun, RunSignals } from "@shared/signals/types.ts";
+export type { ControlSpell, RioProfile, RioRun, RunControl, RunSignals } from "@shared/signals/types.ts";
+export type { CcCategory } from "@shared/signals/control/table.ts";
 export type { LiveVerdict } from "@shared/server/routes-live.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";
 export type { Metric } from "@shared/roles.ts";
@@ -67,6 +68,8 @@ export interface LookupRequest {
   /** Lower-case; omitted = the instance default. A pasted Raider.IO URL's own region wins. */
   region?: Region;
   refresh?: boolean;
+  /** One of the member's characters: the lookup also measures crowd control (the server checks it when hosted). */
+  mine?: boolean;
 }
 
 export interface WatchOpts {

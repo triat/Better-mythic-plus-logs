@@ -398,6 +398,9 @@ export const en = {
     sync: {
       title: "Sync your season",
       found: "{runs} ranked runs found · {pending} not analysed yet",
+      foundControl: "{runs} ranked runs found · {count} need crowd control",
+      foundMixed: "{runs} ranked runs found · {pending} not analysed yet · {control} only need crowd control",
+      controlOnly: "Measure crowd control on {count, plural, one {# run} other {# runs}}",
       cost: "~{pts} pts on your own WCL client · the shared budget is not used",
       costLocal: "~{pts} pts on your WCL client",
       start: "Sync {count, plural, one {# run} other {# runs}}",

@@ -233,11 +233,18 @@ export function syncCard(t: T, season: SeasonView | null, hosted: boolean, ownCl
   if (s.pending === 0) {
     return { kind: "done", text: t("self.sync.done", { analysed: s.analysed, runs: s.runs }), failed: s.failed > 0 ? t("self.sync.failed", { count: s.failed }) : null };
   }
+  // Runs synced before crowd control existed only need it (~3 pts each): say so rather than "not analysed".
+  const notAnalysed = s.pending - s.controlOnly;
+  const found = notAnalysed === 0
+    ? t("self.sync.foundControl", { runs: s.runs, count: s.controlOnly })
+    : s.controlOnly > 0
+      ? t("self.sync.foundMixed", { runs: s.runs, pending: notAnalysed, control: s.controlOnly })
+      : t("self.sync.found", { runs: s.runs, pending: s.pending });
   return {
     kind: "ready",
-    found: t("self.sync.found", { runs: s.runs, pending: s.pending }),
+    found,
     cost: t(hosted ? "self.sync.cost" : "self.sync.costLocal", { pts: s.estimate }),
-    start: t("self.sync.start", { count: s.pending }),
+    start: notAnalysed === 0 ? t("self.sync.controlOnly", { count: s.controlOnly }) : t("self.sync.start", { count: s.pending }),
   };
 }
 

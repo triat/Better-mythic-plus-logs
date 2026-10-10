@@ -83,7 +83,7 @@ client when hosted), the result page's three tabs (Overview, Dungeons, Runs) and
 Self-review phase 2 is implemented (spec
 `docs/superpowers/specs/2026-10-10-self-review-control-design.md`, plan
 `docs/superpowers/plans/2026-10-10-self-review-phase-2.md`; crowd-control table `mn-2.2` audited, per-spec
-reference collected on 422 runs): crowd control in the Control pillar only (`pillarOnly`, never the verdict), `wcl_run_control`,
+reference collected on 894 runs across the eight dungeons, each weighing the same): crowd control in the Control pillar only (`pillarOnly`, never the verdict), `wcl_run_control`,
 fetched only for the member's own characters, and the vetting view for everyone else. Next: phase 3 and
 Battle.net linking (own specs), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

@@ -980,7 +980,7 @@ and `owns` passed in the options object.
   - a batch whose rows only need control makes control calls only, and refuses under `MIN_BUDGET_POINTS + 3 × runs` (not `+ 10 ×`);
   - the control query returning no report marks the run failed (not retried for 24 h);
   - `test/server-season.test.ts:56` → `{ runs: 2, analysed: 1, pending: 2, controlOnly: 1, failed: 0, estimate: 36 }`;
-  - hosted `POST /api/season/sync` for a character not in `user_settings.characters`, with an own client → 403 `{ ok: false, error: "not_your_character" }`, no WCL call; the existing hosted success tests add the character to the member's settings first; without an own client the answer stays 403 `own_client_required` (checked first).
+  - hosted `POST /api/season/sync` for a character not in `user_settings.characters` → 403 `{ ok: false, error: "not_your_character" }`, no WCL call (checked first); a listed character without an own client → 403 `own_client_required`.
 
 - [ ] **Step 2: `sync.ts`.**
 
@@ -1037,7 +1037,7 @@ export const pendingRows = (store: Store, rows: SeasonRow[], now: number): Seaso
 
 with `res.value === "ok"` → `fetched++`, `"missing"` → `markSeasonRunFailed` and `failed++`. Update the header comments ("one batch of raw run reports and their crowd control").
 
-- [ ] **Step 3: `server/season.ts`** (`handleSeasonSync`), after the own-client check:
+- [ ] **Step 3: `server/season.ts`** (`handleSeasonSync`), before the own-client check (amended while implementing: each refusal is then testable without an own client, and the front never offers the sync for a character outside the list anyway):
 
 ```ts
   // The sync is for the member's own characters (spec decision 6); local mode has no account to check against.

@@ -47,7 +47,7 @@ describe("history", () => {
 
 describe("season figures", () => {
   const season = {
-    checkedAt: 0, state: { runs: 142, analysed: 24, pending: 118, failed: 0, estimate: 1200 },
+    checkedAt: 0, state: { runs: 142, analysed: 24, pending: 118, controlOnly: 0, failed: 0, estimate: 1200 },
     recent: { runs: 38, global: 60, pillars: [{ key: "damage", score: 68, evidence: [] }, { key: "survival", score: 41, evidence: [] }] },
     season: null,
     trends: [{ key: "damage", delta: 6, direction: "up", recentRuns: 5, weekly: [] }],

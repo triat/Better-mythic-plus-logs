@@ -6,6 +6,7 @@ import { getEvalConfig } from "../evaluation/config.ts";
 import type { RequestContext } from "../hosted/auth.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import { CharacterNotFoundError, inferTargetLevel } from "../mplus.ts";
+import { ownsCharacter } from "../self/characters.ts";
 import { seasonView } from "../self/season.ts";
 import { rowToRun, runSeasonSync, syncState } from "../self/sync.ts";
 import { getStore } from "../signals/store.ts";
@@ -17,6 +18,7 @@ import { jsonResponse } from "./http.ts";
 import { SEASON_SYNC_BODY, WOW_NAME, WOW_REALM, parseBody } from "./validate.ts";
 
 const OWN_CLIENT_REQUIRED = "A season sync runs on your own Warcraft Logs client: add one in Settings.";
+const NOT_YOURS = "A season sync is for your own characters: add this one to My characters first.";
 
 export async function handleSeasonGet(url: URL, ctx: RequestContext, runtime: HostedRuntime | null): Promise<Response> {
   const name = url.searchParams.get("name") ?? "";
@@ -52,6 +54,10 @@ export async function handleSeasonSync(req: Request, ctx: RequestContext, runtim
   if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
   const body = b.value;
   if (!hasCredentials()) return jsonResponse({ ok: false, error: "No credentials configured. Visit /setup first." }, 400);
+  // The sync is for the member's own characters (phase-2 spec, decision 6); local mode has no account to check against.
+  if (ctx.hosted && !(runtime && ctx.user && ownsCharacter(runtime.db.settings.get(ctx.user.id).characters, body))) {
+    return jsonResponse({ ok: false, error: "not_your_character", message: NOT_YOURS }, 403);
+  }
   const scope = await wclScopeFor(runtime, ctx.user);
   // Hosted, a sync never spends the shared budget (decision 3): refused before any WCL call.
   if (ctx.hosted && !scope.own) return jsonResponse({ ok: false, error: "own_client_required", message: OWN_CLIENT_REQUIRED }, 403);

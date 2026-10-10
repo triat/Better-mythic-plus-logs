@@ -1,13 +1,15 @@
 // Season sync (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md, decision 3): one batch of raw run
-// reports per request, newest first, so a member's own WCL secret only lives for one request and an interrupted sync
-// resumes from the cache. The caller decides which WCL client runs it (src/server/season.ts).
+// reports and their crowd control (docs/superpowers/specs/2026-10-10-self-review-control-design.md, decision 4) per
+// request, newest first, so a member's own WCL secret only lives for one request and an interrupted sync resumes from
+// the cache. The caller decides which WCL client runs it (src/server/season.ts).
 import { BudgetLowError, MIN_BUDGET_POINTS } from "../deepdive/wcl.ts";
 import { fetchMplusData, type MPlusRun } from "../mplus.ts";
-import { fetchRunReport, type GqlFn } from "../signals/enrich.ts";
+import { CC_TABLE } from "../signals/control/table.ts";
+import { fetchRunControl, fetchRunReport, type GqlFn } from "../signals/enrich.ts";
 import type { CharacterKey, SeasonRow, Store } from "../signals/store.ts";
 import { realmToSlug } from "../util.ts";
 import { gql as realGql } from "../wcl/client.ts";
-import { ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../wcl/meter.ts";
+import { ESTIMATE_CONTROL, ESTIMATE_RANKINGS, ESTIMATE_RUN } from "../wcl/meter.ts";
 import { PING_QUERY } from "../wcl/queries.ts";
 import type { RateLimitData } from "../wcl/types.ts";
 import type { Region } from "../wow/regions.ts";
@@ -19,11 +21,14 @@ export interface SyncState {
   runs: number;
   /** Raw report cached: the run is analysed on read. */
   analysed: number;
-  /** Still to fetch. */
+  /** Runs with something to fetch: the raw report, the crowd control, or both. */
   pending: number;
+  /** Pending runs whose raw report is cached: only their crowd control is fetched (~3 pts each). */
+  controlOnly: number;
   /** WCL returned no report in the last 24 h (private or deleted log). */
   failed: number;
-  /** Points a full sync would cost now: the rankings plus `ESTIMATE_RUN` per pending run (0 when nothing is pending). */
+  /** Points a full sync would cost now: the rankings, `ESTIMATE_RUN` per run not analysed and `ESTIMATE_CONTROL` per run
+   * without crowd control at the current table version (0 when nothing is pending). */
   estimate: number;
 }
 
@@ -36,27 +41,41 @@ export const rowToRun = (r: SeasonRow): MPlusRun => ({
   ...(r.durationMs === null ? {} : { durationMs: r.durationMs }),
 });
 
+const needsRaw = (store: Store, r: SeasonRow): boolean => !store.hasWclRun(r.reportCode, r.fightID);
+const needsControl = (store: Store, r: SeasonRow): boolean => !store.hasRunControl(r.reportCode, r.fightID, CC_TABLE.version);
+const costOf = (store: Store, r: SeasonRow): number =>
+  (needsRaw(store, r) ? ESTIMATE_RUN : 0) + (needsControl(store, r) ? ESTIMATE_CONTROL : 0);
+
 export function syncState(store: Store, rows: SeasonRow[], now: number): SyncState {
   let analysed = 0;
   let failed = 0;
+  let pending = 0;
+  let controlOnly = 0;
+  let cost = 0;
   for (const r of rows) {
-    if (store.hasWclRun(r.reportCode, r.fightID)) analysed++;
-    else if (recentlyFailed(r, now)) failed++;
+    const raw = !needsRaw(store, r);
+    if (raw) analysed++;
+    const c = costOf(store, r);
+    if (c === 0) continue;
+    if (recentlyFailed(r, now)) { failed++; continue; }
+    pending++;
+    if (raw) controlOnly++;
+    cost += c;
   }
-  const pending = rows.length - analysed - failed;
-  return { runs: rows.length, analysed, pending, failed, estimate: pending > 0 ? ESTIMATE_RANKINGS + pending * ESTIMATE_RUN : 0 };
+  return { runs: rows.length, analysed, pending, controlOnly, failed, estimate: pending > 0 ? ESTIMATE_RANKINGS + cost : 0 };
 }
 
 /** The runs a sync still has to fetch, in the rows' order (newest first from `Store.seasonRuns`). */
 export const pendingRows = (store: Store, rows: SeasonRow[], now: number): SeasonRow[] =>
-  rows.filter((r) => !store.hasWclRun(r.reportCode, r.fightID) && !recentlyFailed(r, now));
+  rows.filter((r) => costOf(store, r) > 0 && !recentlyFailed(r, now));
 
 export type SyncBatchOutcome = { ok: true; fetched: number; failed: number } | { ok: false; status: 402; error: string };
 
 /**
- * Fetches up to `SYNC_BATCH` pending reports. Refuses before spending when the client has less than
- * `MIN_BUDGET_POINTS` + `ESTIMATE_RUN` per run left. A report WCL does not return is marked failed (retried after
- * `SYNC_RETRY_MS`); a thrown fetch is not marked, and a batch where every fetch threw rethrows the first error.
+ * Fetches up to `SYNC_BATCH` pending runs: the raw report when it is missing, then the crowd control when it is
+ * missing. Refuses before spending when the client has less than `MIN_BUDGET_POINTS` + the batch's cost left. A
+ * report or crowd control WCL does not return marks the run failed (retried after `SYNC_RETRY_MS`); a thrown fetch is
+ * not marked, and a batch where every fetch threw rethrows the first error.
  */
 export async function syncBatch(store: Store, key: CharacterKey, rows: SeasonRow[], deps: { gql?: GqlFn; now?: number } = {}): Promise<SyncBatchOutcome> {
   const gql = deps.gql ?? realGql;
@@ -65,8 +84,22 @@ export async function syncBatch(store: Store, key: CharacterKey, rows: SeasonRow
   if (batch.length === 0) return { ok: true, fetched: 0, failed: 0 };
   const ping = await gql<RateLimitData>(PING_QUERY);
   const left = ping.rateLimitData.limitPerHour - ping.rateLimitData.pointsSpentThisHour;
-  if (left < MIN_BUDGET_POINTS + batch.length * ESTIMATE_RUN) return { ok: false, status: 402, error: new BudgetLowError(left).message };
-  const results = await Promise.allSettled(batch.map((r) => fetchRunReport(rowToRun(r), gql)));
+  const batchCost = batch.reduce((n, r) => n + costOf(store, r), 0);
+  if (left < MIN_BUDGET_POINTS + batchCost) return { ok: false, status: 402, error: new BudgetLowError(left).message };
+  const work = async (r: SeasonRow): Promise<"ok" | "missing"> => {
+    if (needsRaw(store, r)) {
+      const raw = await fetchRunReport(rowToRun(r), gql);
+      if (!raw) return "missing";
+      store.putWclRun(r.reportCode, r.fightID, raw);
+    }
+    if (needsControl(store, r)) {
+      const control = await fetchRunControl(r, gql);
+      if (!control) return "missing";
+      store.putRunControl(r.reportCode, r.fightID, control);
+    }
+    return "ok";
+  };
+  const results = await Promise.allSettled(batch.map(work));
   let fetched = 0;
   let failed = 0;
   let firstError: unknown = null;
@@ -76,8 +109,7 @@ export async function syncBatch(store: Store, key: CharacterKey, rows: SeasonRow
       firstError ??= res.reason;
       return;
     }
-    if (res.value) {
-      store.putWclRun(r.reportCode, r.fightID, res.value);
+    if (res.value === "ok") {
       fetched++;
     } else {
       store.markSeasonRunFailed(key, r.reportCode, r.fightID, now);

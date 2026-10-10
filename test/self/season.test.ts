@@ -26,7 +26,7 @@ async function input() {
     zoneID: 55, targetLevel: 21, now: NOW, rows,
     report: (code: string) => (code === "E" ? null : f.report),
     analysis: () => null,
-    state: { runs: 5, analysed: 4, pending: 1, failed: 0, estimate: 30 },
+    state: { runs: 5, analysed: 4, pending: 1, controlOnly: 0, failed: 0, estimate: 30 },
   };
 }
 

@@ -53,7 +53,8 @@ describe("GET /api/season", () => {
     expect(r.status).toBe(200);
     expect(body.season.runs.map((x: { reportCode: string; analysed: boolean }) => [x.reportCode, x.analysed]))
       .toEqual([["UNFETCHED", false], [expect.any(String), true]]);
-    expect(body.season.state).toEqual({ runs: 2, analysed: 1, pending: 1, failed: 0, estimate: 30 });
+    // The analysed run lacks crowd control (3 pts), the other lacks everything (10 + 3), plus the rankings (20).
+    expect(body.season.state).toEqual({ runs: 2, analysed: 1, pending: 2, controlOnly: 1, failed: 0, estimate: 36 });
   });
   test("an unknown character has no season; bad parameters are a 400", async () => {
     expect((await (await fetch(l("/api/season?name=Nobody&realm=silvermoon&region=eu"))).json()).season).toBeNull();
@@ -67,7 +68,18 @@ describe("GET /api/season", () => {
 });
 
 describe("POST /api/season/sync", () => {
+  const sync = (cookie: string) => fetch(h("/api/season/sync"), {
+    method: "POST", headers: { cookie, "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Muleyoxo", realm: "silvermoon", region: "eu" }),
+  });
+  test("hosted, a character outside the member's list: refused before any WCL call", async () => {
+    const r = await sync(member.cookie);
+    expect(r.status).toBe(403);
+    expect((await r.json()).error).toBe("not_your_character");
+  });
   test("hosted without an own WCL client: refused before any WCL call", async () => {
+    const store = await getStore();
+    openHosted(store._db).settings.update(member.user.id, { characters: [{ name: "Muleyoxo", realm: "silvermoon", region: "eu", source: "manual" }] }, Date.now());
     const r = await fetch(h("/api/season/sync"), {
       method: "POST", headers: { cookie: member.cookie, "Content-Type": "application/json" },
       body: JSON.stringify({ name: "Muleyoxo", realm: "silvermoon", region: "eu" }),

@@ -25,7 +25,7 @@ const ev = (over: Partial<Evaluation> = {}): Evaluation => ({
 
 const season = (over: Partial<SeasonView> = {}): SeasonView => ({
   character: { name: "Muleyoxo", realm: "silvermoon", region: "eu" }, zoneID: 55, targetLevel: 18, currentWeek: 0, checkedAt: 0,
-  state: { runs: 142, analysed: 24, pending: 118, failed: 0, estimate: 1200 },
+  state: { runs: 142, analysed: 24, pending: 118, controlOnly: 0, failed: 0, estimate: 1200 },
   runs: [], recent: null, season: null,
   trends: [{ key: "survival", delta: -9, direction: "down", recentRuns: 6, weekly: [null, null, null, null, null, null, 45, 40] }],
   workOn: [], dungeons: [], ...over,
@@ -131,7 +131,7 @@ describe("syncCard", () => {
     const v = syncCard(tEn, season(), true, own);
     expect(v).toEqual({ kind: "ready", found: "142 ranked runs found · 118 not analysed yet", cost: "~1\u202f200 pts on your own WCL client · the shared budget is not used", start: "Sync 118 runs" });
     expect(syncCard(tEn, season(), false, null)).toMatchObject({ kind: "ready", cost: "~1\u202f200 pts on your WCL client" });
-    expect(syncCard(tEn, season({ state: { runs: 142, analysed: 140, pending: 0, failed: 2, estimate: 0 } }), false, null))
+    expect(syncCard(tEn, season({ state: { runs: 142, analysed: 140, pending: 0, controlOnly: 0, failed: 2, estimate: 0 } }), false, null))
       .toEqual({ kind: "done", text: "Season synced · 140 of 142 runs analysed", failed: "2 logs are not available on Warcraft Logs" });
     expect(syncCard(tEn, null, false, null).kind).toBe("nothing");
   });

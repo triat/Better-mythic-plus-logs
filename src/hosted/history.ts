@@ -89,7 +89,8 @@ function migrateVerdictColumns(db: Database, tables: HistoryTables): void {
     db.run(`ALTER TABLE ${T} ADD COLUMN verdict TEXT`);
     db.run(`ALTER TABLE ${T} ADD COLUMN score INTEGER`);
     const set = db.query(`UPDATE ${T} SET verdict = ?, score = ? WHERE user_id = ? AND key = ?`);
-    for (const row of db.query<{ user_id: number; key: string; payload: string }, []>(`SELECT user_id, key, payload FROM ${T}`).all()) {
+    // Streamed: one payload in memory at a time. The UPDATE never moves a row (same rowid), so the scan is not disturbed.
+    for (const row of db.query<{ user_id: number; key: string; payload: string }, []>(`SELECT user_id, key, payload FROM ${T}`).iterate()) {
       let result: unknown = null;
       try { result = JSON.parse(row.payload); } catch { /* an unreadable payload keeps NULLs */ }
       const s = summaryOf(result);

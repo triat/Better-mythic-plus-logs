@@ -36,7 +36,6 @@ export const en = {
   },
   header: {
     me: "My characters",
-    meCount: "My characters · {n}",
     searchPlaceholder: "Name-Realm or Raider.IO URL",
     suggest: {
       label: "Known characters",
@@ -57,7 +56,6 @@ export const en = {
       chipAny: "spec any ▾",
       chip: "spec {spec} ▾",
     },
-    lookup: "Look up",
     key: {
       label: "Your key",
       lower: "Lower key level",
@@ -143,18 +141,6 @@ export const en = {
   },
   tabs: {
     auto: "auto",
-    profiles: "{n, plural, one {# profile} other {# profiles}}",
-    selected: " · {n} selected",
-    fetched: " · fetched {age}",
-    cached: " · cached · 0 API pts",
-    compare: "Select for compare",
-    compareBtn: "Compare ({sel}/{max})",
-    close: "Close tab",
-    closeAll: "Close all tabs",
-    clear: "Clear {n}",
-    clearConfirm: "{count, plural, one {Close the only tab?} other {Close all # tabs?}}",
-    refresh: "↻ Refresh",
-    refreshTitle: "Re-fetch the active tab",
   },
   errors: {
     quota: "Hourly quota reached ({used}/{limit} pts) — resets in {min} min",

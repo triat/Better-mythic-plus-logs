@@ -33,7 +33,6 @@ export const fr: Mirror<typeof en> = {
   },
   header: {
     me: "Mes personnages",
-    meCount: "Mes personnages · {n}",
     searchPlaceholder: "Nom-Serveur ou lien Raider.IO",
     suggest: {
       label: "Personnages connus",
@@ -54,7 +53,6 @@ export const fr: Mirror<typeof en> = {
       chipAny: "spec toutes ▾",
       chip: "spec {spec} ▾",
     },
-    lookup: "Chercher",
     key: {
       label: "Ta key",
       lower: "Baisser le niveau de key",
@@ -137,18 +135,6 @@ export const fr: Mirror<typeof en> = {
   },
   tabs: {
     auto: "auto",
-    profiles: "{n, plural, one {# profil} other {# profils}}",
-    selected: " · {n, plural, one {# sélectionné} other {# sélectionnés}}",
-    fetched: " · récupéré {age}",
-    cached: " · en cache · 0 pt API",
-    compare: "Sélectionner pour comparer",
-    compareBtn: "Comparer ({sel}/{max})",
-    close: "Fermer l'onglet",
-    closeAll: "Fermer tous les onglets",
-    clear: "Fermer {n}",
-    clearConfirm: "{count, plural, one {Fermer le seul onglet ?} other {Fermer les # onglets ?}}",
-    refresh: "↻ Rafraîchir",
-    refreshTitle: "Recharger l'onglet actif",
   },
   errors: {
     quota: "Quota horaire atteint ({used}/{limit} pts) — reset dans {min} min",

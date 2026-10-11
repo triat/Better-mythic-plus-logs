@@ -14,7 +14,7 @@ interface Props {
 export function Forbidden({ reason, handle, title, text }: Props) {
   const { t } = useT();
   return (
-    <main className="forbidden">
+    <div className="forbidden">
       <h1>{title ?? t("admin.forbidden.title")}</h1>
       <p className="muted" style={{ margin: 0 }}>
         {text ?? (reason === "local"
@@ -22,6 +22,6 @@ export function Forbidden({ reason, handle, title, text }: Props) {
           : <Around message={t("admin.forbidden.member")} params={{ handle: handle ? <span className="mono">{handle}</span> : "" }} />)}
       </p>
       <a className="btn" href="/" style={{ marginTop: 6 }}>{t("common.backToLookups")}</a>
-    </main>
+    </div>
   );
 }

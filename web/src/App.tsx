@@ -4,22 +4,24 @@ import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
-import { pruneSelection, toggleSelection } from "./lib/history.ts";
+import { MAX_COMPARE, pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
-import { realmName } from "./lib/format.ts";
+import { fmtAge, realmName } from "./lib/format.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
-import { historyKeyFor, lookupQuery, mineRequest } from "./lib/me.ts";
+import { lookupQuery, mineRequest } from "./lib/me.ts";
 import { suggestionsOf } from "./lib/suggest.ts";
 import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, candidateHref, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
 import { autoQueue, verdictScope } from "./lib/live/panel.ts";
 import { useWowCapture } from "./lib/live/useWowCapture.ts";
 import type { Locale } from "./lib/locale.ts";
 import { effectiveRegion, isRegion } from "./lib/regions.ts";
+import type { PaletteAction } from "./lib/palette.ts";
+import { accountView, navItems, recentRows } from "./lib/shell.ts";
 import { parseServerSettings, readLocalSettings, writeLocalSettings } from "./lib/settings.ts";
 import type { KeyValueStore, Settings } from "./lib/settings.ts";
 import { DocsProvider } from "./docs.tsx";
@@ -36,14 +38,15 @@ import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
 import type { SelfActions } from "./components/self/ResultHead.tsx";
-import { EMPTY_FORM, Header } from "./components/Header.tsx";
-import type { LookupForm } from "./components/Header.tsx";
 import { Home } from "./components/Home.tsx";
+import { LiveChip } from "./components/LiveChip.tsx";
 import { LivePanel } from "./components/LivePanel.tsx";
 import { MePage } from "./components/me/MePage.tsx";
 import { Setup } from "./components/Setup.tsx";
 import { SignIn } from "./components/SignIn.tsx";
-import { Tabs } from "./components/Tabs.tsx";
+import { Shell } from "./components/shell/Shell.tsx";
+import { EMPTY_FORM } from "./components/shell/Sidebar.tsx";
+import type { LookupForm } from "./components/shell/Sidebar.tsx";
 import { Toast } from "./components/Toast.tsx";
 import type { ToastAction } from "./components/Toast.tsx";
 
@@ -61,8 +64,9 @@ const PAGE_EVENT = {
   home: "page_home", candidate: "page_candidate", compare: "page_compare", live: "page_live",
   admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me",
 } as const;
-// Until the frame lands (redesign phase 1, task 9), home, candidate, compare and live all render today's result view.
-const resultPage = page === "home" || page === "candidate" || page === "compare" || page === "live";
+// The pages that switch profiles in place (Récents, the palette, a lookup): the candidate page, and Live, whose screen
+// capture a navigation would end. Every other page navigates to the candidate page instead.
+const inPlace = page === "candidate" || page === "live";
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
@@ -173,8 +177,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   regionRef.current = region;
   const [tabs, setTabs] = useState<HistoryItem[]>([]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  // The Compare page's picker (redesign phase 1 caps it at MAX_COMPARE = 3 — phase 4: 5).
   const [selected, setSelected] = useState<string[]>([]);
-  const [compareOpen, setCompareOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToastState] = useState<{ message: string; action: ToastAction | null } | null>(null);
   const setToast = useCallback((message: string, action: ToastAction | null = null) => setToastState({ message, action }), []);
@@ -217,7 +221,6 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   }, [loadHistory]);
 
   const showTab = useCallback(async (key: string) => {
-    setCompareOpen(false);
     setActiveKey(key);
     setFromCache(true);
     const { payload, items } = await fetchPayload(key);
@@ -238,23 +241,24 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     }
   }, [fetchPayload]);
 
-  // Boot: history → ?open=<key> when it names a tab, else the main character's tab, else the most recent one (0 pts).
-  // ?q= only fills the search field (a Raider.IO link carries its own region): a URL never starts a lookup by itself,
-  // and never writes a setting.
+  // Boot: history, then on the candidate page ?open=<key> when it names a tab, else the most recent one (0 pts), with
+  // the URL naming the profile shown. ?q= only fills the search field (a Raider.IO link carries its own region): a URL
+  // never starts a lookup by itself, and never writes a setting. A pre-redesign /?open= link lands on the candidate page.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    const legacyOpen = page === "home" ? params.get("open") : null;
+    if (legacyOpen) { location.replace(candidateHref(legacyOpen)); return; }
     const q = params.get("q");
     if (q) setForm((f) => ({ ...f, character: q }));
     if (location.search) history.replaceState({}, "", location.pathname);
     loadHistory().then((items) => {
-      if (!resultPage || items.length === 0) return;
+      if (page !== "candidate" || items.length === 0) return;
       const want = params.get("open");
-      const main = settings.characters[0];
-      const key = (want && items.some((i) => i.key === want) ? want : null) ?? (main ? historyKeyFor(items, main) : null) ?? items[0]!.key;
+      const key = (want && items.some((i) => i.key === want) ? want : null) ?? items[0]!.key;
+      history.replaceState({}, "", candidateHref(key));
       void showTab(key);
     });
-    // Once per page load: the URL and the main character are read at boot only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Once per page load: the URL is read at boot only.
   }, [loadHistory, showTab]);
 
   // Self-heal: whenever the cache was cleared (e.g. by a reload that raced a tab switch),
@@ -263,13 +267,13 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (activeKey && !payloads.current.has(activeKey)) void fetchPayload(activeKey);
   }, [activeKey, fetchPayload, tick]);
 
-  const runLookup = useCallback(async (req: LookupRequest, refresh: boolean) => {
+  /** Runs a lookup and shows its result here; the history key, or null when it was refused (the toast says why). */
+  const runLookup = useCallback(async (req: LookupRequest, refresh: boolean): Promise<string | null> => {
     setBusy(t(refresh ? "header.busy.refreshing" : "header.busy.lookingUp", { name: req.character }));
-    setCompareOpen(false);
     const r = await api.lookup({ ...req, refresh, mine: mineRequest(settings.characters, req.character, req.region ?? regionRef.current) });
     setBusy(null);
     // A refusal that carries the member's own quota numbers gets the way out: the guide to an own client.
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return; }
+    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return null; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
@@ -280,9 +284,26 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!refresh && r.request.region !== regionRef.current) updateSettings({ region: r.request.region });
     touch();
     await loadHistory();
+    return r.key;
   }, [loadHistory, updateSettings, t, ownClientAction, settings.characters]);
 
-  const onLookup = () => void runLookup(formToRequest(form, yourKey, region), false);
+  /** Shows a history profile: in place on the candidate page (the URL follows) and on Live, else on the candidate page. */
+  const openProfile = useCallback((key: string) => {
+    if (!inPlace) { location.assign(candidateHref(key)); return; }
+    if (page === "candidate") history.replaceState({}, "", candidateHref(key));
+    void showTab(key);
+  }, [showTab]);
+
+  /** A lookup from the sidebar, the palette or a page: shown in place, else the candidate page once it answered — the
+   * navigation opens the stored result (0 pts), so no lookup is ever repeated by it. */
+  const lookupAndLand = useCallback(async (req: LookupRequest, refresh = false) => {
+    const key = await runLookup(req, refresh);
+    if (key === null) return;
+    if (!inPlace) location.assign(candidateHref(key));
+    else if (page === "candidate") history.replaceState({}, "", candidateHref(key));
+  }, [runLookup]);
+
+  const onLookup = () => void lookupAndLand(formToRequest(form, yourKey, region));
 
   // The search suggestions (canvas "suggest"): history and My characters, plus, locally, the characters bmpl's own
   // database has seen, read again whenever history changes. Hosted, that cache is every member's: never asked for.
@@ -299,12 +320,20 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const onSuggest = (s: Suggestion) => {
     setForm((f) => ({ ...f, character: s.fill }));
     if (s.region !== regionRef.current) { updateSettings({ region: s.region }); regionRef.current = s.region; }
-    if (s.historyKey) void showTab(s.historyKey);
-    else if (!busy) void runLookup(formToRequest({ ...form, character: s.fill }, yourKey, s.region), false);
+    if (s.historyKey) openProfile(s.historyKey);
+    else if (!busy) void lookupAndLand(formToRequest({ ...form, character: s.fill }, yourKey, s.region));
+  };
+  // The palette's rows: a history profile, a lookup (in the row's region, like a suggestion), or a page.
+  const onPalette = (a: PaletteAction) => {
+    if (a.kind === "go") { location.assign(a.href); return; }
+    if (a.kind === "open") { openProfile(a.historyKey); return; }
+    setForm((f) => ({ ...f, character: a.fill }));
+    if (a.region !== regionRef.current) { updateSettings({ region: a.region }); regionRef.current = a.region; }
+    if (!busy) void lookupAndLand(formToRequest({ ...form, character: a.fill }, yourKey, a.region));
   };
   const onRefresh = () => {
     const tab = tabs.find((x) => x.key === activeKey);
-    if (tab) void runLookup(tab.request, true);
+    if (tab) void lookupAndLand(tab.request, true);
   };
 
   const closeTab = async (key: string) => {
@@ -314,9 +343,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (activeKey === key) {
       const next = items[0]?.key ?? null;
       setActiveKey(next);
+      if (page === "candidate") history.replaceState({}, "", next ? candidateHref(next) : "/candidate");
       if (next) void showTab(next);
     }
-    if (selected.filter((k) => k !== key).length < 2) setCompareOpen(false);
   };
 
   /** Re-run the active tab's lookup for "your key" and drop the old tab (the cache key includes the level). */
@@ -325,7 +354,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!tab) return;
     track("reevaluate");
     const oldKey = tab.key;
-    await runLookup({ ...tab.request, level: yourKey }, false);
+    if (await runLookup({ ...tab.request, level: yourKey }, false) === null) return;
+    if (page === "candidate" && activeKeyRef.current) history.replaceState({}, "", candidateHref(activeKeyRef.current));
     // runLookup activated the new key; the old entry is redundant now.
     await api.removeHistory(oldKey);
     payloads.current.delete(oldKey);
@@ -333,19 +363,29 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   };
 
   const clearAll = async () => {
-    if (!window.confirm(t("tabs.clearConfirm", { count: tabs.length }))) return;
+    if (!window.confirm(t("shell.recent.clearConfirm", { count: tabs.length }))) return;
     await api.clearHistory();
     payloads.current.clear();
     setActiveKey(null);
     setSelected([]);
-    setCompareOpen(false);
+    if (page === "candidate") history.replaceState({}, "", "/candidate");
     await loadHistory();
   };
 
   const sseConnected = useSse({
     status: (s) => setWatch({ active: s.active, label: s.backend }),
     searching: (d) => setWatch((w) => ({ ...w, label: t("header.busy.lookingUp", { name: d.character }) })),
-    result: async (d) => { await loadHistory(); if (!d.fromCache) payloads.current.delete(d.key); await showTab(d.key); setFromCache(d.fromCache); },
+    // A clipboard-watch result: shown in place on the candidate and Live pages, opened from home (as the old home
+    // page showed it); elsewhere (My characters, Help, …) it only lands in Récents.
+    result: async (d) => {
+      await loadHistory();
+      if (!d.fromCache) payloads.current.delete(d.key);
+      if (page === "home") { location.assign(candidateHref(d.key)); return; }
+      if (!inPlace) return;
+      if (page === "candidate") history.replaceState({}, "", candidateHref(d.key));
+      await showTab(d.key);
+      setFromCache(d.fromCache);
+    },
     error: (d) => setToast(d.message),
   });
 
@@ -461,7 +501,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveAuto, liveAutoAllowed, live.roster, liveVerdicts, liveAutoInFlight, yourKey, region]);
 
-  const onLiveSelect = (character: string) => { track("live_check"); void runLookup({ character, level: yourKey, spec: null, metric: null, region }, false); };
+  const onLiveSelect = (character: string) => { track("live_check"); void lookupAndLand({ character, level: yourKey, spec: null, metric: null, region }); };
 
   // --- run deep-dive ---
   const [analyzing, setAnalyzing] = useState<string | null>(null);
@@ -529,88 +569,144 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     ? {
         name: mainChar.name,
         detail: `${realmName(mainChar.realm)} · ${mainChar.region.toUpperCase()}`,
-        onLookUp: () => void runLookup({ character: lookupQuery(mainChar), level: yourKey, spec: null, metric: null, region: mainChar.region }, false),
+        onLookUp: () => void lookupAndLand({ character: lookupQuery(mainChar), level: yourKey, spec: null, metric: null, region: mainChar.region }),
       }
     : null;
 
+  // The Compare page opens a comparison as soon as two profiles are ticked; counted once per opening.
+  const showCompare = page === "compare" && selected.length >= 2;
+  useEffect(() => { if (showCompare) track("compare_open"); }, [showCompare]);
+
   if (stopped) return <main className="stopped"><h2>{t("header.stopped")}</h2><p className="muted">{t("header.stoppedSub")}</p></main>;
 
-  const empty = tabs.length === 0;
-  // History eviction can shrink `selected` below 2 while compareOpen is still true; fall back
-  // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
-  const showCompare = compareOpen && selected.length >= 2;
-  // /admin, /settings and /help are full navigations (no router): same header (no search), their sections instead of the tabs.
-  const isMainPage = resultPage;
   const access = adminAccess(status, me);
   const account = accountAccess(status, me);
+  const onRegionChange = (r: Region) => { track("region_change"); updateSettings({ region: r }); };
+  const result = activeKey && (activePayload
+    ? <Detail key={activeKey} payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
+    : <Loading inline />);
 
   return (
     <>
-      <Header
-        form={form} onChange={setForm} yourKey={yourKey} keyFallback={activePayload?.targetLevel ?? null} onKeyChange={onKeyChange}
-        region={region} instanceRegion={status.region} onRegionChange={(r) => { track("region_change"); updateSettings({ region: r }); }} payload={activePayload}
-        onLookup={onLookup} busy={busy}
-        watchActive={watch.active} watchLabel={watch.label} onWatchToggle={onWatchToggle}
-        sseConnected={sseConnected} onSetup={onSetup} onQuit={onQuit} hero={empty && isMainPage} search={isMainPage} controls={controls}
-        menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
-        live={{ state: live.state, connect: () => { track("live_connect"); return live.connect(); } }}
-        meCount={settings.characters.length}
-        suggestions={suggestions} onSuggest={onSuggest}
-      />
-      {isMainPage && live.roster && (
-        <LivePanel
-          roster={live.roster} verdicts={liveVerdicts}
-          sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
-          onSortChange={(v: LiveSort) => { track("live_filter"); updateSettings({ liveSort: v }); }}
-          onRolesChange={(v: LiveRole[]) => { track("live_filter"); updateSettings({ liveRoles: v }); }}
-          onClassesChange={(v: string[]) => { track("live_filter"); updateSettings({ liveClasses: v }); }}
-          onSelect={onLiveSelect}
-          auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={(v: boolean) => { track("live_auto_toggle"); setLiveAuto(v); }}
-          queued={liveAutoInFlight ? new Set([liveAutoInFlight]) : new Set<string>()}
-          now={Date.now()}
-        />
-      )}
-      {page === "admin" && (
-        access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
-      )}
-      {page === "settings" && (
-        account === "ok" && me
-          ? <SettingsPage me={me} status={status} quota={quota} ownClient={ownClient} onOwnClientChange={setOwnClient} onDeleted={() => location.assign("/")} />
-          : <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.settingsHosted")} />
-      )}
-      {page === "help" && <HelpPage status={status} />}
-      {page === "me" && (
-        <main className="content">
-          <MePage
-            self={selfActions} history={tabs} region={region} instanceRegion={status.region} bnetCode={bnetCode}
-            onRegionChange={(r) => { track("region_change"); updateSettings({ region: r }); }}
-          />
-        </main>
-      )}
-      {page === "privacy" && (
-        // Hosted visitors never reach here (App renders the bare page before Main).
-        <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.privacyHosted")} />
-      )}
-      {isMainPage && (
-        <>
-          <Tabs
-            items={tabs} activeKey={activeKey} selected={selected} compareOpen={showCompare}
-            onSelectTab={(k) => void showTab(k)} onToggle={(k) => setSelected((s) => toggleSelection(s, k))}
-            onClose={(k) => void closeTab(k)} onClearAll={() => void clearAll()} onCompare={() => { track("compare_open"); setCompareOpen(true); }}
-            onRefresh={onRefresh} fetchedAt={activeTab?.fetchedAt ?? null} fromCache={fromCache} region={status.region}
-          />
-          <main className={"content" + (empty ? "" : " content-result")}>
-            {empty && <Home envPath={controls.envPath ? status.envPath : null} main={homeMain} />}
-            {!empty && !showCompare && activePayload && (
-              <Detail key={activeKey ?? ""} payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
+      <Shell
+        sidebar={{
+          form, onFormChange: setForm, onLookup, busy, suggestions, onSuggest,
+          region, instanceRegion: status.region, onRegionChange, payload: activePayload,
+          yourKey, keyFallback: activePayload?.targetLevel ?? null, onKeyChange, sseConnected,
+          nav: navItems(t, page, { candidates: tabs.length, liveOn: live.state.kind === "live" }),
+          recent: recentRows(tabs, inPlace ? activeKey : null),
+          onRecent: inPlace ? openProfile : null,
+          onRemove: (k) => void closeTab(k), onClearAll: () => void clearAll(),
+          account: accountView(t, status, menu), controls, menu, pendingProposals, onMenuOpen: () => void onMenuOpen(), onSignOut,
+          watch, onWatchToggle, onSetup, onQuit,
+        }}
+        palette={{ sources: { suggestions, mine: settings.characters, history: tabs, region }, yourKey, onRun: onPalette }}
+      >
+        {page === "home" && (
+          // Placeholder until the connected home page (redesign phase 1, task 11): today's empty-state content.
+          <div className="content">
+            <Home envPath={controls.envPath ? status.envPath : null} main={homeMain} />
+          </div>
+        )}
+        {page === "candidate" && (
+          <div className="content content-result">
+            {tabs.length === 0 ? (
+              <section className="card cand-empty">
+                <h1>{t("shell.candidate.empty")}</h1>
+                <p className="muted">{t("shell.candidate.emptySub")}</p>
+                <a href="/">{t("shell.candidate.home")}</a>
+              </section>
+            ) : (
+              <>
+                <div className="cand-bar">
+                  <span className="muted">
+                    {activeTab ? t("shell.candidate.fetched", { age: fmtAge(t, activeTab.fetchedAt) }) : ""}
+                    {activeTab && fromCache ? ` · ${t("shell.candidate.cached")}` : ""}
+                  </span>
+                  <button type="button" className="btn" onClick={onRefresh} disabled={!activeTab || !!busy} title={t("shell.candidate.refreshTitle")}>{t("shell.candidate.refresh")}</button>
+                </div>
+                {result}
+              </>
             )}
-            {!empty && !showCompare && !activePayload && activeKey && <Loading inline />}
+          </div>
+        )}
+        {page === "compare" && (
+          <div className={"content" + (showCompare ? " content-result" : "")}>
+            <div className="page-head">
+              <h1>{t("shell.compare.title")}</h1>
+              <span className="muted">{tabs.length === 0 ? t("shell.compare.empty") : t("shell.compare.sub")}</span>
+            </div>
+            {tabs.length > 0 && (
+              <fieldset className="card compare-pick">
+                <legend className="side-label">{t("shell.compare.count", { sel: selected.length, max: MAX_COMPARE })}</legend>
+                {tabs.map((item) => {
+                  const on = selected.includes(item.key);
+                  return (
+                    <label key={item.key} className={"compare-pick-row" + (on ? " on" : "")}>
+                      <input
+                        type="checkbox" checked={on} disabled={!on && selected.length >= MAX_COMPARE}
+                        onChange={() => setSelected((s) => toggleSelection(s, item.key))}
+                      />
+                      <span className={"recent-dot " + (item.verdict ?? "none")} aria-hidden="true" />
+                      <span className="compare-pick-name">{item.label}</span>
+                      <span className={"recent-score mono " + (item.verdict ?? "none")}>{item.score === null ? "—" : Math.round(item.score)}</span>
+                    </label>
+                  );
+                })}
+              </fieldset>
+            )}
+            {tabs.length > 0 && !showCompare && <p className="faint">{t("shell.compare.pick")}</p>}
             {showCompare && (
-              <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => void showTab(k)} />
+              <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => location.assign(candidateHref(k))} />
             )}
-          </main>
-        </>
-      )}
+          </div>
+        )}
+        {page === "live" && (
+          <div className={"content" + (activeKey ? " content-result" : "")}>
+            <div className="page-head">
+              <h1>{t("shell.live.title")}</h1>
+              <LiveChip state={live.state} connect={() => { track("live_connect"); return live.connect(); }} />
+            </div>
+            {live.roster ? (
+              <LivePanel
+                roster={live.roster} verdicts={liveVerdicts}
+                sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
+                onSortChange={(v: LiveSort) => { track("live_filter"); updateSettings({ liveSort: v }); }}
+                onRolesChange={(v: LiveRole[]) => { track("live_filter"); updateSettings({ liveRoles: v }); }}
+                onClassesChange={(v: string[]) => { track("live_filter"); updateSettings({ liveClasses: v }); }}
+                onSelect={onLiveSelect}
+                auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={(v: boolean) => { track("live_auto_toggle"); setLiveAuto(v); }}
+                queued={liveAutoInFlight ? new Set([liveAutoInFlight]) : new Set<string>()}
+                now={Date.now()}
+              />
+            ) : (
+              <p className="muted live-intro">{t("shell.live.sub")}</p>
+            )}
+            {result}
+          </div>
+        )}
+        {page === "admin" && (
+          access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
+        )}
+        {page === "settings" && (
+          account === "ok" && me
+            ? <SettingsPage me={me} status={status} quota={quota} ownClient={ownClient} onOwnClientChange={setOwnClient} onDeleted={() => location.assign("/")} />
+            : <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.settingsHosted")} />
+        )}
+        {page === "help" && <HelpPage status={status} />}
+        {page === "me" && (
+          <div className="content">
+            <MePage
+              self={selfActions} history={tabs} region={region} instanceRegion={status.region} bnetCode={bnetCode}
+              onRegionChange={onRegionChange}
+            />
+          </div>
+        )}
+        {page === "privacy" && (
+          // Hosted visitors never reach here (App renders the bare page before Main).
+          <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.privacyHosted")} />
+        )}
+      </Shell>
       <Toast message={toast?.message ?? null} action={toast?.action ?? null} onClose={closeToast} />
     </>
   );

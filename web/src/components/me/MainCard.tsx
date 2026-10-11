@@ -1,6 +1,7 @@
 import { classHex, className } from "@shared/wow/classes.ts";
 import type { AxisKey, HistoryItem, MyCharacter } from "../../types.ts";
 import { realmName } from "../../lib/format.ts";
+import { candidateHref } from "../../lib/hostedMode.ts";
 import { historyKeyFor, lookupQuery, mainPillars, seasonLine } from "../../lib/me.ts";
 import { workOnRows } from "../../lib/self.ts";
 import { useDocs } from "../../docs.tsx";
@@ -50,7 +51,7 @@ export function MainCard({ c, classID, spec, history, self }: { c: MyCharacter; 
       )}
       <div className="me-actions">
         {key ? (
-          <><a className="btn btn-sm btn-primary" href={`/?open=${encodeURIComponent(key)}`}>{t("me.openName", { name: c.name })}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.fromHistory")}</span></>
+          <><a className="btn btn-sm btn-primary" href={candidateHref(key)}>{t("me.openName", { name: c.name })}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.fromHistory")}</span></>
         ) : (
           <><a className="btn btn-sm" href={`/?q=${encodeURIComponent(lookupQuery(c))}`}>{t("me.lookUp")}</a><span className="faint" style={{ fontSize: 12 }}>{t("me.notInHistory")}</span></>
         )}

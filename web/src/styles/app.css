@@ -12,7 +12,7 @@ html, body { margin: 0; background: var(--bg); color: var(--text); }
    `--gutter` is the side padding that centres a `--col` wide column inside a full-width bar. */
 :root { --col: 1200px; --gutter: max(24px, calc((100% - var(--col)) / 2)); }
 :root:has(.content-result) { --col: 1640px; }
-body { font: 14px/1.5 var(--font-ui); min-width: 960px; }
+body { font: 14px/1.5 var(--font-ui); }
 a { color: var(--link); text-decoration: none; }
 a:hover { color: #79b8ff; }
 input, select, button { font: inherit; color: inherit; }
@@ -65,14 +65,12 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .radar-legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
 .radar-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 
-/* header */
+/* bare-page brand bar (sign-in, privacy, signed-out help) and the search field's box (the sidebar's, see "shell") */
 .top { border-bottom: 1px solid var(--border-soft); padding: 12px var(--gutter); display: flex; flex-direction: column; gap: 10px; }
 .top-row { display: flex; align-items: center; gap: 16px; }
 .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; color: var(--text); }
 .brand:hover { color: var(--text); }
 .grow { flex: 1; }
-.search { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 760px; }
-.top-row .search { flex: 1 1 auto; min-width: 720px; max-width: 980px; }
 .search-box { position: relative; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px; color: var(--muted); }
 .search-box:focus-within { border-color: var(--link); }
 .search-box input { flex: 1; min-width: 0; background: transparent; border: 0; height: 100%; padding: 0; color: var(--text); font-size: 14px; }
@@ -104,7 +102,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .options { display: flex; gap: 16px; }
 .options label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .options input, .options select { width: 200px; }
-.busy { font-size: 13px; }
 .watch { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; cursor: pointer; }
 .watch input { position: absolute; opacity: 0; width: 0; height: 0; }
 /* Off: a grey knob on the selected surface; on: the green knob on its green track (`--button` is near-white since the
@@ -116,10 +113,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .watch input:focus-visible + .switch { outline: 2px solid var(--link); outline-offset: 2px; }
 .watch b { color: var(--green); font-weight: 600; }
 .watch:not(.on) b { color: var(--muted); }
-.top-hero { padding-bottom: 0; border-bottom: 0; }
-.hero-search { display: flex; justify-content: center; padding: 140px 0 24px; }
-.hero-search .search { max-width: 980px; }
-.hero-search .search-box { height: 48px; font-size: 16px; }
 
 /* live chip (screen-capture roster; design: canvas "Live", variant A) */
 .live-chip-wrap { position: relative; display: inline-flex; }
@@ -181,23 +174,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .stepper-auto { font-size: 12px; padding: 0 10px; height: 100%; border: 0; border-left: 1px solid var(--border-soft); background: transparent; color: var(--muted); cursor: pointer; }
 .stepper-auto.on { color: var(--green); background: var(--green-bg); }
 .stepper-auto:hover:not(.on) { color: var(--text); }
-.hero-search .stepper { height: 48px; }
-
-/* tabs: compact chips that wrap; toolbar on its own row */
-.tabs { display: flex; flex-direction: column; gap: 8px; padding: 10px var(--gutter); border-bottom: 1px solid var(--border-soft); }
-.tab-strip { display: flex; flex-wrap: wrap; gap: 6px; }
-.tab { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border-soft); border-radius: 8px; padding: 5px 6px 5px 8px; cursor: pointer; background: transparent; font-size: 13px; white-space: nowrap; }
-.tab:hover { border-color: var(--border); }
-.tab.active { background: var(--card); border-color: var(--border); }
-.tab-check { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
-.tab-check.checked { background: var(--link); border-color: var(--link); }
-.tab-title { font-weight: 600; }
-.tab-level { font-size: 11px; color: var(--muted); }
-.tab-close { border: 0; background: transparent; color: var(--faint); font-size: 15px; line-height: 1; padding: 0 2px; cursor: pointer; opacity: 0; transition: opacity .1s; }
-.tab:hover .tab-close, .tab.active .tab-close { opacity: 1; }
-.tab-close:hover { color: var(--red); }
-.tab-toolbar { display: flex; align-items: center; gap: 8px; }
-.tab-meta { font-size: 12px; }
 
 /* content */
 .content { display: flex; flex-direction: column; gap: 16px; padding: 20px var(--gutter); }
@@ -764,3 +740,17 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
   .palette-input .chip { display: none; }
   .palette-main { flex-direction: column; gap: 0; }
 }
+.cand-bar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+.cand-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.cand-empty h1, .page-head h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+.cand-empty p { margin: 0; }
+.page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.page-head .muted { flex: 1 1 280px; font-size: 13px; }
+.live-intro { margin: 0; max-width: 640px; }
+.compare-pick { margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.compare-pick legend { padding: 0 4px; }
+.compare-pick-row { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 12px; border-radius: var(--radius); cursor: pointer; }
+.compare-pick-row:hover, .compare-pick-row.on { background: var(--card-2); }
+.compare-pick-row input { height: auto; accent-color: var(--link); }
+.compare-pick-row input:disabled + .recent-dot, .compare-pick-row:has(input:disabled) { opacity: .6; cursor: default; }
+.compare-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-soft); }

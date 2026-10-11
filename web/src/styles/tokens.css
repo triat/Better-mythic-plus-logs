@@ -56,6 +56,10 @@
   --button: #eceef2; /* redesign spec 2026-10-11 — old name, mapped to --primary */
   --discord: #5865f2; /* Discord brand colour ("blurple") — the hosted sign-in button only, issue #7 */
 
+  /* Overlays */
+  --scrim: rgba(8, 9, 12, .72); /* mockup F-Palette — the command palette's backdrop */
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, .6); /* mockup F-Palette — the command palette */
+
   /* Type */
   --font-ui: Geist, system-ui, sans-serif; /* redesign spec 2026-10-11 */
   --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* redesign spec 2026-10-11 */

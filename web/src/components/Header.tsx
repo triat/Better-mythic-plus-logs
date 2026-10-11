@@ -155,7 +155,7 @@ export function Header(p: Props) {
         {p.controls.signOut && p.menu && (
           <>
             {p.menu.exhausted && <span className="mono quota-exhausted" title={t("header.quotaShare")}>{p.menu.exhausted}</span>}
-            <UserMenu m={p.menu} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
+            <UserMenu m={p.menu} lines={[p.menu.quota.text]} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
           </>
         )}
       </div>

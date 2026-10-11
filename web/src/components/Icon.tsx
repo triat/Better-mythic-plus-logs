@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import type { IconName as NavIconName } from "../lib/shell.ts";
 
-export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "discord";
+export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "discord";
 
 const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
   search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>,
@@ -17,6 +17,7 @@ const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
   bolt: <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
   chevron: <path d="M6 9l6 6 6-6" />,
+  arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   more: <><circle cx="5" cy="12" r="1.3" fill="currentColor" /><circle cx="12" cy="12" r="1.3" fill="currentColor" /><circle cx="19" cy="12" r="1.3" fill="currentColor" /></>,
   settings: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></>,
   logout: <path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l-5-5 5-5M5 12h11" />,

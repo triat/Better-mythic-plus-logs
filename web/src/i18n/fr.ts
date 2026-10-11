@@ -339,8 +339,9 @@ export const fr: Mirror<typeof en> = {
       up: "↗ {delta}",
       down: "↘ {delta}",
       same: "→ stable",
-      notEnough: "pas assez de runs pour une tendance ({count} récemment)",
+      notEnough: "pas encore de tendance : {recent, plural, one {# run} other {# runs}} récemment et {before} avant, il en faut 3 de chaque côté",
       few: "trop peu de runs",
+      rule: "Tendance : le score médian des 2 dernières semaines de jeu (récemment) comparé aux 4 semaines d'avant (avant), avec au moins 3 runs analysés de chaque côté. « Trop peu de runs » veut seulement dire qu'il n'y a pas encore de tendance ; le score est calculé quand même.",
     },
     pillar: {
       na: "n/a",

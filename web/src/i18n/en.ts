@@ -345,8 +345,9 @@ export const en = {
       up: "↗ {delta}",
       down: "↘ {delta}",
       same: "→ same",
-      notEnough: "not enough runs for a trend ({count} recently)",
+      notEnough: "no trend yet: {recent, plural, one {# run} other {# runs}} lately and {before} before, 3 needed on each side",
       few: "too few runs",
+      rule: "Trend: the median score of the last 2 game weeks (lately) against the 4 weeks before them (before), with at least 3 analysed runs on each side. “Too few runs” only means there is no trend yet; the score is computed all the same.",
     },
     pillar: {
       na: "n/a",

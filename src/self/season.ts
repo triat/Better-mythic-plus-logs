@@ -21,6 +21,7 @@ import { weekOf } from "./weeks.ts";
 
 export const RECENT_WEEKS = 4;
 export const PAST_WEEKS = 4;
+// The front's self.trend.notEnough / self.trend.rule repeat these three numbers (2 weeks, 4 before, 3 runs).
 export const TREND_RECENT_WEEKS = 2;
 export const TREND_BEFORE_WEEKS = 4;
 export const MIN_WINDOW_RUNS = 3;
@@ -68,8 +69,9 @@ export interface PillarTrend {
   /** Median per-run score of the last 2 weeks minus the 4 before, rounded; null under 3 runs on a side. */
   delta: number | null;
   direction: "up" | "down" | "same" | null;
-  /** Scored runs in the last 2 weeks (what "not enough runs" shows). */
+  /** Scored runs in the last 2 weeks and in the 4 before (what "no trend yet" shows). */
   recentRuns: number;
+  beforeRuns: number;
   /** Median per-run score of each of the last 8 weeks, oldest first; null for a week without a run. */
   weekly: (number | null)[];
 }
@@ -312,7 +314,7 @@ export function seasonView(input: SeasonInput, cfg: EvaluationConfig): SeasonVie
       const m = median(scores(w, w));
       return m === null ? null : Math.round(m);
     });
-    return { key, ...trendOf(r, b), recentRuns: r.length, weekly };
+    return { key, ...trendOf(r, b), recentRuns: r.length, beforeRuns: b.length, weekly };
   });
 
   const evidenceOf = (ev: Evaluation | null, source: string) => ev?.axes.flatMap((a) => a.evidence).find((e) => e.source === source) ?? null;

@@ -26,7 +26,7 @@ export function DungeonsTab({ payload, season, loading, onRuns }: { payload: Loo
         <div className="grid5">
           <span className="label-caps">{t("self.grid.season")}</span>
           {head.cells.map((c, i) => (
-            <span key={i} className={"cell cell-big cell-" + c.band}>{c.text}{c.trend && <div className="pillar-trend">{c.trend}</div>}</span>
+            <span key={i} className={"cell cell-big cell-" + c.band} title={c.hint}>{c.text}{c.trend && <div className="pillar-trend">{c.trend}</div>}</span>
           ))}
           <span className={"cell cell-big cell-" + head.overall.band}>{head.overall.text}</span>
           <span className="muted mono">{head.runs}</span>
@@ -45,6 +45,7 @@ export function DungeonsTab({ payload, season, loading, onRuns }: { payload: Loo
             </Fragment>
           ))}
         </div>
+        {head.trendNote && <div className="faint" style={{ fontSize: 12 }}>{head.trendNote}</div>}
         {work.length > 0 && <div className="muted" style={{ fontSize: 12 }}>{t("self.workOn.line", { list: work.map((w) => w.title).join(" · ") })}</div>}
       </section>
       <DungeonPanel v={dungeonPanel(t, locale, selected)} onRuns={() => onRuns(selected.encounterID)} />

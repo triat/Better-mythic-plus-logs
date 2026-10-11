@@ -75,7 +75,7 @@ describe("seasonView", () => {
   test("trends: no arrow without 3 runs before; 8 weekly bars, oldest first", async () => {
     const v = seasonView(await input(), cfg);
     const t = v.trends.find((x) => x.key === "survival")!;
-    expect(t).toMatchObject({ delta: null, direction: null, recentRuns: 4 });
+    expect(t).toMatchObject({ delta: null, direction: null, recentRuns: 4, beforeRuns: 0 });
     expect(t.weekly).toHaveLength(8);
     expect(t.weekly.slice(0, 6)).toEqual([null, null, null, null, null, null]);
     expect(t.weekly[6]).toBe(t.weekly[7]);

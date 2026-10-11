@@ -35,7 +35,7 @@ export function MainCard({ c, classID, spec, history, self }: { c: MyCharacter; 
           <div key={p.key} className="inset me-tile">
             <span className="label-caps">{p.title}</span>
             <span className={"pillar-score band-" + p.band} style={{ fontSize: 24 }}>{p.score}</span>
-            <span className={"pillar-trend " + p.trend.cls}>{p.trend.text}</span>
+            <span className={"pillar-trend " + p.trend.cls} title={p.trend.hint}>{p.trend.text}</span>
           </div>
         ))}
       </div>

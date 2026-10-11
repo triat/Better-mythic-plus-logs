@@ -24,10 +24,14 @@ const scoreText = (t: T, s: number | null): string => (s === null ? t("self.pill
 const BAR_PX_PER_POINT = 0.28;
 const pct = (locale: Locale, x: number): string => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(x);
 
-export interface TrendView { text: string; cls: "tone-good" | "tone-bad" | "muted" | "faint" }
+/** `missing`: no trend yet (under 3 scored runs on a side), what the grid's short "too few runs" stands for;
+ *  `hint` then explains the rule (the trend line's tooltip). */
+export interface TrendView { text: string; cls: "tone-good" | "tone-bad" | "muted" | "faint"; missing?: true; hint?: string }
 
 export function trendView(t: T, tr: PillarTrend | undefined): TrendView {
-  if (!tr || tr.direction === null || tr.delta === null) return { text: t("self.trend.notEnough", { count: tr?.recentRuns ?? 0 }), cls: "faint" };
+  if (!tr || tr.direction === null || tr.delta === null) {
+    return { text: t("self.trend.notEnough", { recent: tr?.recentRuns ?? 0, before: tr?.beforeRuns ?? 0 }), cls: "faint", missing: true, hint: t("self.trend.rule") };
+  }
   if (tr.direction === "same") return { text: t("self.trend.same"), cls: "muted" };
   return { text: t(`self.trend.${tr.direction}`, { delta: signed(tr.delta) }), cls: tr.direction === "up" ? "tone-good" : "tone-bad" };
 }
@@ -120,20 +124,26 @@ export function verdictLine(t: T, ev: Evaluation, informational: (key: AxisKey) 
 export const headLine = (t: T, season: SeasonView, now = Date.now()): string =>
   t("self.head.runs", { count: season.state.runs }) + (season.checkedAt !== null ? t("self.head.checked", { age: fmtAge(t, season.checkedAt, now) }) : "");
 
-export interface GridCell { text: string; band: Band; trend?: string }
+/** `hint`: the full sentence behind the short "too few runs" (the cell's tooltip). */
+export interface GridCell { text: string; band: Band; trend?: string; hint?: string }
 
-export function seasonHeader(t: T, season: SeasonView): { cells: GridCell[]; overall: GridCell; runs: string } {
+/** `trendNote`: what a trend is and what "too few runs" means, under the grid while a cell shows it. */
+export function seasonHeader(t: T, season: SeasonView): { cells: GridCell[]; overall: GridCell; runs: string; trendNote: string | null } {
   const pillars = season.season?.pillars ?? [];
+  const cells: GridCell[] = PILLAR_ORDER.map((key) => {
+    const s = pillars.find((p) => p.key === key)?.score ?? null;
+    const tr = trendView(t, season.trends.find((x) => x.key === key));
+    // The grid's cells are narrow: "too few runs" instead of the cards' longer sentence, which becomes the tooltip.
+    if (key === "control" && s === null) return { text: scoreText(t, s), band: scoreBand(s), trend: t("self.pillar.controlNote") };
+    return tr.missing
+      ? { text: scoreText(t, s), band: scoreBand(s), trend: t("self.trend.few"), hint: tr.text }
+      : { text: scoreText(t, s), band: scoreBand(s), trend: tr.text };
+  });
   return {
-    cells: PILLAR_ORDER.map((key) => {
-      const s = pillars.find((p) => p.key === key)?.score ?? null;
-      const tr = trendView(t, season.trends.find((x) => x.key === key));
-      // The grid's cells are narrow: "too few runs" instead of the cards' longer sentence.
-      const trend = key === "control" && s === null ? t("self.pillar.controlNote") : tr.cls === "faint" ? t("self.trend.few") : tr.text;
-      return { text: scoreText(t, s), band: scoreBand(s), trend };
-    }),
+    cells,
     overall: { text: scoreText(t, season.season?.overall ?? null), band: scoreBand(season.season?.overall ?? null) },
     runs: String(season.state.runs),
+    trendNote: cells.some((c) => c.hint) ? t("self.trend.rule") : null,
   };
 }
 

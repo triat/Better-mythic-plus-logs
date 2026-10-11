@@ -740,4 +740,14 @@ export const fr: Mirror<typeof en> = {
     nav: { home: "Accueil", candidate: "Candidats", me: "Mes persos", compare: "Comparer", live: "Live", help: "Aide" },
     account: { local: "Mode local" },
   },
+  palette: {
+    recent: "Personnages récents",
+    mine: "Mes persos",
+    results: "Résultats",
+    actionsTitle: "Actions",
+    main: "principal",
+    open: "Ouvrir · 0 pt",
+    lookup: "Rechercher",
+    actions: { compare: "Comparer les candidats ouverts…", live: "Ouvrir Live", help: "Aide : comment le verdict est calculé", me: "Mes persos" },
+  },
 };

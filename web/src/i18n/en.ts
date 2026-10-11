@@ -746,4 +746,14 @@ export const en = {
     nav: { home: "Home", candidate: "Candidates", me: "My characters", compare: "Compare", live: "Live", help: "Help" },
     account: { local: "Local mode" },
   },
+  palette: {
+    recent: "Recent characters",
+    mine: "My characters",
+    results: "Results",
+    actionsTitle: "Actions",
+    main: "main",
+    open: "Open · 0 pts",
+    lookup: "Look up",
+    actions: { compare: "Compare open candidates…", live: "Open Live", help: "Help: how the verdict is computed", me: "My characters" },
+  },
 } as const;

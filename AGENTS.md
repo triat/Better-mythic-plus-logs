@@ -65,7 +65,7 @@ src/hosted/           hosted-mode config, schema/repos (users, sessions, invites
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
 addon/bmpl/            in-game addon: draws the Live panel's pixel strip, mirrors web/src/lib/live/codec.ts — addon/README.md
-web/src/lib/          pure tested view models      web/src/components/   thin React components
+web/src/lib/          pure tested view models      web/src/components/   thin React components (shell/: the frame + palette)
 test/                 bun:test + fixtures/         docs/superpowers/     specs and plans
 ```
 
@@ -88,5 +88,10 @@ fetched only for the member's own characters, and the vetting view for everyone 
 implemented (spec `docs/superpowers/specs/2026-10-11-battlenet-linking-design.md`, plan
 `docs/superpowers/plans/2026-10-11-battlenet-linking.md`; live check pending the release): hosted "My characters"
 (up to 20) come only from the member's linked Battle.net account, re-checked with Blizzard every 30 days, manual
-entries removed at launch; local mode keeps the manual list. Next: phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
+entries removed at launch; local mode keeps the manual list. UI redesign phase 1 is implemented (spec
+`docs/superpowers/specs/2026-10-11-ui-redesign-design.md`, plan `docs/superpowers/plans/2026-10-11-ui-redesign-phase-1.md`,
+mockups `docs/design/redesign/`): new tokens, self-hosted Geist fonts, the sidebar frame (search, Récents, account) and
+the Ctrl K palette around every page, the pages `/candidate`, `/compare` and `/live`, the connected home page and the
+hosted landing; redesign phases 2–4 (candidate, owner, compare and Live) next. Also next: self-review phase 3 (own
+spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

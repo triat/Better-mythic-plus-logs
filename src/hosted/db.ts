@@ -15,6 +15,8 @@ import { HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, openUserHistory } from "./hi
 import type { UserHistoryRepo } from "./history.ts";
 import { openDefensives } from "./defensives.ts";
 import type { DefensivesRepo } from "./defensives.ts";
+import { openBnet, resetManualCharacters } from "./bnet-db.ts";
+import type { BnetRepo } from "./bnet-db.ts";
 import { AUDIT_KINDS, actionsOf } from "./audit.ts";
 import { openUsageEvents } from "./usage-events.ts";
 import type { UsageEventsRepo } from "./usage-events.ts";
@@ -104,6 +106,8 @@ export interface HostedDb {
   usageOwn: UsageRepo;
   history: UserHistoryRepo;
   defensives: DefensivesRepo;
+  /** Battle.net link, import candidates and check-round removals (bnet-db.ts). */
+  bnet: BnetRepo;
   /** Feature-usage counters per member and UTC day (`usage_events`), for the admin page's Usage section. */
   features: UsageEventsRepo;
   wclClients: {
@@ -152,6 +156,9 @@ const auditRow = (r: AuditRaw): AuditRow => ({ id: r.id, at: r.at, userId: r.use
 export function openHosted(db: Database): HostedDb {
   db.exec("PRAGMA foreign_keys = ON");
   applyHostedSchema(db);
+  // Battle.net spec, decision 7: hosted members' manual entries go at the first start of the release;
+  // self-detecting, so later starts are no-ops.
+  resetManualCharacters(db, Date.now());
 
   const userById = db.query<UserRaw, [number]>("SELECT * FROM users WHERE id = ?");
   const userByDiscord = db.query<UserRaw, [string]>("SELECT * FROM users WHERE discord_id = ?");
@@ -302,6 +309,7 @@ export function openHosted(db: Database): HostedDb {
     usageOwn: openUsage(db, "usage_hourly_own"),
     history: openUserHistory(db, HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, config.region),
     defensives: openDefensives(db),
+    bnet: openBnet(db),
     features: openUsageEvents(db),
     wclClients: {
       get: (userId) => { const r = wclClientGet.get(userId); return r ? wclClient(r) : null; },

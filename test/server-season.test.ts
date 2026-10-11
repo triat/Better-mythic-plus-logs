@@ -79,7 +79,7 @@ describe("POST /api/season/sync", () => {
   });
   test("hosted without an own WCL client: refused before any WCL call", async () => {
     const store = await getStore();
-    openHosted(store._db).settings.update(member.user.id, { characters: [{ name: "Muleyoxo", realm: "silvermoon", region: "eu", source: "manual" }] }, Date.now());
+    openHosted(store._db).settings.update(member.user.id, { characters: [{ name: "Muleyoxo", realm: "silvermoon", region: "eu", source: "bnet", bnetId: 1, verifiedAt: Date.now() }] }, Date.now());
     const r = await fetch(h("/api/season/sync"), {
       method: "POST", headers: { cookie: member.cookie, "Content-Type": "application/json" },
       body: JSON.stringify({ name: "Muleyoxo", realm: "silvermoon", region: "eu" }),

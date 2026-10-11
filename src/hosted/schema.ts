@@ -130,6 +130,18 @@ CREATE TABLE IF NOT EXISTS usage_events (
 );
 CREATE INDEX IF NOT EXISTS usage_events_day ON usage_events(day);
 CREATE INDEX IF NOT EXISTS usage_events_user ON usage_events(user_id);
+CREATE TABLE IF NOT EXISTS user_bnet (
+  user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  account_id TEXT    NOT NULL UNIQUE,
+  battletag  TEXT,
+  linked_at  INTEGER NOT NULL,
+  removed    TEXT
+);
+CREATE TABLE IF NOT EXISTS bnet_imports (
+  user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  candidates TEXT    NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `;
 
 /** Columns added to `users` after its first release; migrated in place on an older database. */

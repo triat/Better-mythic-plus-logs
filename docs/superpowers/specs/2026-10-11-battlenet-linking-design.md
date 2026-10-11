@@ -128,7 +128,7 @@ equals the WCL realm slug bmpl stores (`realmToSlug`), whether `http://localhost
 GET /auth/bnet/callback?code&state ◄─────────────────┘
   consume state ─► POST /token (Basic) ─► GET /userinfo ─► user_bnet (account id unique)
   ─► GET {eu,us,kr,tw}.api.blizzard.com/profile/user/wow ─► bnet_imports (1 h) ─► 302 /me?bnet=pick
-/me picker ─► GET /api/bnet/import ─► member ticks ≤ 20, orders ─► PUT /api/bnet/characters
+/me picker ─► GET /api/bnet ─► member ticks ≤ 20, orders ─► PUT /api/bnet/characters
   ─► user_settings.characters (source bnet, bnetId, verifiedAt) ─► bnet_imports deleted
 every 6 h ─► bnet characters verifiedAt > 25 d ─► client-credentials token ─► /status ─► keep / remove
 ```

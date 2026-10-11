@@ -5,6 +5,7 @@ import type { HostedConfig } from "./config.ts";
 import { openHosted } from "./db.ts";
 import type { HostedDb } from "./db.ts";
 import { OAuthStates } from "./oauth-state.ts";
+import { BnetAppToken } from "./bnet.ts";
 import { setRateLimitObserver, setWclErrorObserver } from "../wcl/client.ts";
 import { PointsMeter } from "../wcl/meter.ts";
 import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
@@ -21,6 +22,10 @@ export interface HostedRuntime {
   config: HostedConfig;
   db: HostedDb;
   states: OAuthStates;
+  /** Battle.net link states, their own instance so a Discord state is never consumed by the Battle.net callback. */
+  bnetStates: OAuthStates;
+  /** Blizzard application token (client credentials) for the 30-day character check. */
+  bnetApp: BnetAppToken;
   fetchFn: typeof fetch;
   secure: boolean;
   meter: PointsMeter;
@@ -56,6 +61,8 @@ export function createHostedRuntime(
     config,
     db: hostedDb,
     states: new OAuthStates(),
+    bnetStates: new OAuthStates(),
+    bnetApp: new BnetAppToken(config, fetchFn),
     fetchFn,
     secure: config.baseUrl.startsWith("https:"),
     meter,

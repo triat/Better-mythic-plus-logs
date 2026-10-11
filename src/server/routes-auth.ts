@@ -12,7 +12,8 @@ import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 
-const redirect = (location: string, setCookies: string[] = []): Response => {
+/** A no-store 302, with any Set-Cookie headers (also the Battle.net routes' redirect). */
+export const redirect = (location: string, setCookies: string[] = []): Response => {
   const headers = new Headers({ Location: location, "Cache-Control": "no-store" });
   for (const c of setCookies) headers.append("Set-Cookie", c);
   return new Response(null, { status: 302, headers });

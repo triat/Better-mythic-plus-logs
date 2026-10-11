@@ -129,6 +129,8 @@ export const SETTINGS_BODY = obj({
   liveClasses: opt(arr(str({ min: 1, max: 20 }), { max: 13 })),
   characters: opt(arr(MY_CHARACTER, { max: MAX_CHARACTERS })),
 });
+/** PUT /api/bnet/characters: the chosen candidates of the member's import, in order (Battle.net spec, decision 4). */
+export const BNET_PICK_BODY = obj({ picks: arr(obj({ region: oneOf(REGIONS), bnetId: int({ min: 1 }) }), { min: 1, max: MAX_CHARACTERS }) });
 export const INVITE_BODY = obj({ discordId: str({ pattern: DISCORD_ID }), note: opt(nullable(str({ max: 200, trim: true }))) });
 export const NOTE_BODY = obj({ note: opt(nullable(str({ max: 500, trim: true }))) });
 export const ROLE_BODY = obj({ role: oneOf(["member", "admin"] as const) });

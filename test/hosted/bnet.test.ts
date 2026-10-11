@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  BLIZZARD_TO_WCL_CLASS,
   BNET_REGIONS,
   BNET_TOKEN_URL,
   BNET_USERINFO_URL,
@@ -13,6 +14,7 @@ import {
   mergeCandidates,
 } from "../../src/hosted/bnet.ts";
 import type { BnetCandidate } from "../../src/hosted/bnet-db.ts";
+import { CLASS_NAMES } from "../../src/wow/classes.ts";
 import { loadBnetFixture } from "../fixtures.ts";
 
 const CFG = { bnetClientId: "bnet-client", bnetClientSecret: "bnet-sekrit", baseUrl: "https://bmpl.example.com" };
@@ -125,9 +127,9 @@ describe("fetchAccountCharacters", () => {
     expect(r).toEqual({
       ok: true,
       candidates: [
-        { bnetId: 70000101, name: "Thornwick", realm: "silverbough", realmName: "Silverbough", region: "eu", level: 80, classID: 11 },
-        { bnetId: 70000102, name: "Aelinora", realm: "mistvale-keep", realmName: "Mistvale Keep", region: "eu", level: 80, classID: 5 },
-        { bnetId: 70000103, name: "Pebblet", realm: "silverbough", realmName: "Silverbough", region: "eu", level: 12, classID: 1 },
+        { bnetId: 70000101, name: "Thornwick", realm: "silverbough", realmName: "Silverbough", region: "eu", level: 80, classID: 2 },
+        { bnetId: 70000102, name: "Aelinora", realm: "mistvale-keep", realmName: "Mistvale Keep", region: "eu", level: 80, classID: 7 },
+        { bnetId: 70000103, name: "Pebblet", realm: "silverbough", realmName: "Silverbough", region: "eu", level: 12, classID: 11 },
       ],
     });
   });
@@ -266,5 +268,13 @@ describe("characterStatus", () => {
     expect(odd.ok === false && odd.kind).toBe("invalid");
     const r401 = await answer(() => new Response("", { status: 401 }));
     expect(r401.ok === false && r401.kind).toBe("invalid");
+  });
+});
+
+describe("BLIZZARD_TO_WCL_CLASS", () => {
+  test("every Blizzard playable class lands on the WCL class of the same name", () => {
+    const blizzard: Record<number, string> = { 1: "Warrior", 2: "Paladin", 3: "Hunter", 4: "Rogue", 5: "Priest", 6: "Death Knight", 7: "Shaman", 8: "Mage", 9: "Warlock", 10: "Monk", 11: "Druid", 12: "Demon Hunter", 13: "Evoker" };
+    for (const [id, name] of Object.entries(blizzard)) expect(CLASS_NAMES[BLIZZARD_TO_WCL_CLASS[Number(id)]!]).toBe(name);
+    expect(BLIZZARD_TO_WCL_CLASS[99]).toBeUndefined();
   });
 });

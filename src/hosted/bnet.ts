@@ -84,6 +84,15 @@ export async function fetchBnetUser(
 const idString = (v: unknown): string | null =>
   typeof v === "number" && Number.isSafeInteger(v) ? String(v) : typeof v === "string" && v ? v : null;
 
+/**
+ * Blizzard's `playable_class.id` (Game Data playable-class index: 1 Warrior … 13 Evoker) to the WCL class id the rest
+ * of bmpl uses (src/wow/classes.ts: 1 Death Knight … 13 Evoker). The two numberings differ: Blizzard 5 is Priest,
+ * WCL 5 is Monk. An unknown id maps to null.
+ */
+export const BLIZZARD_TO_WCL_CLASS: Readonly<Record<number, number>> = {
+  1: 11, 2: 6, 3: 3, 4: 8, 5: 7, 6: 1, 7: 9, 8: 4, 9: 10, 10: 5, 11: 2, 12: 12, 13: 13,
+};
+
 /** One character of `wow_accounts[].characters[]`, or null when it breaks bmpl's name/realm rules or has no id. */
 function candidate(raw: unknown, region: Region): BnetCandidate | null {
   const c = asRecord(raw);
@@ -101,7 +110,7 @@ function candidate(raw: unknown, region: Region): BnetCandidate | null {
     realmName: typeof realm?.name === "string" && realm.name ? realm.name : slug,
     region,
     level: typeof c.level === "number" && Number.isFinite(c.level) ? c.level : 0,
-    classID: typeof classID === "number" && Number.isInteger(classID) ? classID : null,
+    classID: typeof classID === "number" ? BLIZZARD_TO_WCL_CLASS[classID] ?? null : null,
   };
 }
 

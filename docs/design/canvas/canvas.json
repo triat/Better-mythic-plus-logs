@@ -413,6 +413,42 @@
       "h": 1500,
       "title": "Crowd control — run detail A / B, dungeon panel, Control pillar, sync",
       "page": "control"
+    },
+    {
+      "file": "BnetPickA.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Picker A — one list with ticks",
+      "page": "bnet"
+    },
+    {
+      "file": "BnetPickB.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Picker B — two columns",
+      "page": "bnet"
+    },
+    {
+      "file": "BnetPickC.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Picker C — grouped by region and realm",
+      "page": "bnet"
+    },
+    {
+      "file": "BnetDetails.dc.html",
+      "x": 0,
+      "y": 1040,
+      "w": 1440,
+      "h": 1700,
+      "title": "Battle.net — link card, linked, unlink, removal, notices, result chip, privacy, local mode",
+      "page": "bnet"
     }
   ],
   "annotations": [
@@ -543,11 +579,19 @@
       "w": 560,
       "page": "control",
       "text": "Self-review phase 2 (spec 2026-10-10-self-review-control-design.md).\nTop: a character outside My characters opens the result page exactly as before phase 1, plus “This is me” (pick A or B).\nBelow: crowd control in the owner's view. Run detail: pick A (one line per spell) or B (rate first, grouped by category). Dungeon panel, Control pillar states and the sync card are shared. Sample data: a Frost death knight, Den of Nalorakk +19 (captured run: Gnaw 8, Death Grip 5, Blinding Sleet 1 on 5 enemies); the spec median 3.9 is a placeholder until the reference is collected."
+    },
+    {
+      "id": "bnet-brief",
+      "x": 0,
+      "y": -170,
+      "w": 560,
+      "page": "bnet",
+      "text": "Battle.net linking (spec 2026-10-11-battlenet-linking-design.md). Hosted only.\nTop: the picker after the round trip to Battle.net (pick A, B or C): every character of the account, up to 20 kept, the first is the main.\nBelow: the link card, the linked state, unlink, the 30-day removal notice, the notices after the round trip, the result-page chip for a character not on your list (pick 1 or 2), the privacy line and local mode. Sample data is fictional."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "control"
+    "page": "bnet"
   },
   "pages": [
     {
@@ -589,6 +633,10 @@
     {
       "id": "control",
       "name": "Control — crowd control, the owner's view and the vetting view (phase 2)"
+    },
+    {
+      "id": "bnet",
+      "name": "Battle.net linking"
     }
   ]
 }

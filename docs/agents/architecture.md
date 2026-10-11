@@ -135,7 +135,7 @@ Commands: `ping, char, lookup, mplus, evaluate, analyze, defensives, serve, invi
 
 `resolveEnvPath()` looks in cwd then next to the executable. Beside that `.env`: `bmpl.db`, `evaluation.json`, `defensives.json`. Env overrides: `BMPL_DB_PATH`, `BMPL_EVAL_CONFIG`, `BMPL_DEFENSIVES`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET`, `BMPL_REGION` (instance default WoW region, `eu`/`us`/`kr`/`tw`, falls back to `eu` with a one-line warning on an invalid value). All are user data: git-ignored or, at the repo root, simply never staged. A lookup's region: the request's own `region` (CLI `--region`, or the `region` field the front sends — the caller's saved setting or the search field's chip) falls back to `config.region` (`BMPL_REGION`, default `eu`) when absent.
 
-Hosted mode (`bmpl serve --hosted`) additionally requires `BMPL_BASE_URL`, `BMPL_SESSION_SECRET`, `BMPL_DISCORD_CLIENT_ID`, `BMPL_DISCORD_CLIENT_SECRET`, `BMPL_ADMIN_DISCORD_IDS`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` — see `.env.hosted.example` and `docs/hosted.md#environment`.
+Hosted mode (`bmpl serve --hosted`) additionally requires `BMPL_BASE_URL`, `BMPL_SESSION_SECRET`, `BMPL_DISCORD_CLIENT_ID`, `BMPL_DISCORD_CLIENT_SECRET`, `BMPL_ADMIN_DISCORD_IDS`, `BMPL_BNET_CLIENT_ID`, `BMPL_BNET_CLIENT_SECRET`, `WCL_CLIENT_ID`, `WCL_CLIENT_SECRET` — see `.env.hosted.example` and `docs/hosted.md#environment`.
 
 ## Deployment (issue #10)
 

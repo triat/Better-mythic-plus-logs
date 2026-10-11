@@ -8,6 +8,8 @@ const FULL = {
   BMPL_DISCORD_CLIENT_ID: "123456789012345678",
   BMPL_DISCORD_CLIENT_SECRET: "s",
   BMPL_ADMIN_DISCORD_IDS: "111111111111111111",
+  BMPL_BNET_CLIENT_ID: "b",
+  BMPL_BNET_CLIENT_SECRET: "c",
   WCL_CLIENT_ID: "w",
   WCL_CLIENT_SECRET: "x",
 };
@@ -22,10 +24,10 @@ describe("planServe", () => {
     expect(planServe(["--port", "abc"], {}).ok).toBe(false);
   });
   test("--hosted with a full env: hosted, never opens the browser", () => {
-    expect(planServe(["--hosted"], FULL)).toEqual({ ok: true, port: 3000, open: false, hosted: true, host: "127.0.0.1", hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"], pointsPerUserHour: 300, openSignup: false, discordGuildId: null, encryptionKey: null, operator: DEFAULT_OPERATOR, opsTokenSha256: null } });
+    expect(planServe(["--hosted"], FULL)).toEqual({ ok: true, port: 3000, open: false, hosted: true, host: "127.0.0.1", hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"], bnetClientId: "b", bnetClientSecret: "c", pointsPerUserHour: 300, openSignup: false, discordGuildId: null, encryptionKey: null, operator: DEFAULT_OPERATOR, opsTokenSha256: null } });
   });
   test("BMPL_MODE=hosted is equivalent; a bad BMPL_MODE is an error", () => {
-    expect(planServe([], { ...FULL, BMPL_MODE: "hosted" })).toEqual({ ok: true, port: 3000, open: false, hosted: true, host: "127.0.0.1", hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"], pointsPerUserHour: 300, openSignup: false, discordGuildId: null, encryptionKey: null, operator: DEFAULT_OPERATOR, opsTokenSha256: null } });
+    expect(planServe([], { ...FULL, BMPL_MODE: "hosted" })).toEqual({ ok: true, port: 3000, open: false, hosted: true, host: "127.0.0.1", hostedConfig: { baseUrl: "https://bmpl.example.com", sessionSecret: FULL.BMPL_SESSION_SECRET, discordClientId: FULL.BMPL_DISCORD_CLIENT_ID, discordClientSecret: "s", adminDiscordIds: ["111111111111111111"], bnetClientId: "b", bnetClientSecret: "c", pointsPerUserHour: 300, openSignup: false, discordGuildId: null, encryptionKey: null, operator: DEFAULT_OPERATOR, opsTokenSha256: null } });
     const r = planServe([], { BMPL_MODE: "nope" });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain("BMPL_MODE");
@@ -34,7 +36,7 @@ describe("planServe", () => {
     const r = planServe(["--hosted"], { BMPL_BASE_URL: "https://x.example", BMPL_SESSION_SECRET: "short" });
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(r.error).toContain("missing: BMPL_DISCORD_CLIENT_ID, BMPL_DISCORD_CLIENT_SECRET, BMPL_ADMIN_DISCORD_IDS, WCL_CLIENT_ID, WCL_CLIENT_SECRET");
+      expect(r.error).toContain("missing: BMPL_DISCORD_CLIENT_ID, BMPL_DISCORD_CLIENT_SECRET, BMPL_ADMIN_DISCORD_IDS, BMPL_BNET_CLIENT_ID, BMPL_BNET_CLIENT_SECRET, WCL_CLIENT_ID, WCL_CLIENT_SECRET");
       expect(r.error).toContain("invalid: BMPL_SESSION_SECRET");
     }
   });

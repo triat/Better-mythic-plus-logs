@@ -7,6 +7,8 @@ const FULL: Record<string, string> = {
   BMPL_DISCORD_CLIENT_ID: "123456789012345678",
   BMPL_DISCORD_CLIENT_SECRET: "abc",
   BMPL_ADMIN_DISCORD_IDS: "111111111111111111, 222222222222222222",
+  BMPL_BNET_CLIENT_ID: "bnet-client-id",
+  BMPL_BNET_CLIENT_SECRET: "bnet-secret",
   WCL_CLIENT_ID: "wcl-id",
   WCL_CLIENT_SECRET: "wcl-secret",
 };
@@ -33,11 +35,29 @@ describe("resolveMode", () => {
 });
 
 describe("validateHostedEnv", () => {
-  test("lists the seven variables", () => {
+  test("lists the nine variables", () => {
     expect([...HOSTED_ENV_VARS]).toEqual([
       "BMPL_BASE_URL", "BMPL_SESSION_SECRET", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET",
-      "BMPL_ADMIN_DISCORD_IDS", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET",
+      "BMPL_ADMIN_DISCORD_IDS", "BMPL_BNET_CLIENT_ID", "BMPL_BNET_CLIENT_SECRET", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET",
     ]);
+  });
+  test("a missing Battle.net client secret is reported", () => {
+    const env = { ...FULL };
+    delete (env as Record<string, unknown>).BMPL_BNET_CLIENT_SECRET;
+    const r = validateHostedEnv(env);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.missing).toEqual(["BMPL_BNET_CLIENT_SECRET"]);
+      expect(r.invalid).toEqual([]);
+    }
+  });
+  test("the Battle.net client id and secret are read", () => {
+    const r = validateHostedEnv(FULL);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.config.bnetClientId).toBe("bnet-client-id");
+      expect(r.config.bnetClientSecret).toBe("bnet-secret");
+    }
   });
   test("full env is ok and parsed", () => {
     const r = validateHostedEnv(FULL);
@@ -123,7 +143,7 @@ describe("validateHostedEnv", () => {
 });
 
 describe("phase 2 optional variables", () => {
-  const base = { BMPL_BASE_URL: "https://bmpl.example.com", BMPL_SESSION_SECRET: "x".repeat(20) + "abcdefghijklmnop", BMPL_DISCORD_CLIENT_ID: "123456789012345678", BMPL_DISCORD_CLIENT_SECRET: "s", BMPL_ADMIN_DISCORD_IDS: "123456789012345678", WCL_CLIENT_ID: "a", WCL_CLIENT_SECRET: "b" };
+  const base = { BMPL_BASE_URL: "https://bmpl.example.com", BMPL_SESSION_SECRET: "x".repeat(20) + "abcdefghijklmnop", BMPL_DISCORD_CLIENT_ID: "123456789012345678", BMPL_DISCORD_CLIENT_SECRET: "s", BMPL_ADMIN_DISCORD_IDS: "123456789012345678", BMPL_BNET_CLIENT_ID: "c", BMPL_BNET_CLIENT_SECRET: "d", WCL_CLIENT_ID: "a", WCL_CLIENT_SECRET: "b" };
   test("defaults: closed signup, no guild, no key, default operator", () => {
     const r = validateHostedEnv(base);
     expect(r.ok && r.config.openSignup).toBe(false);

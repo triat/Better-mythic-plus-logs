@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, initialScreen, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./hostedMode.ts";
+import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, initialScreen, candidateHref, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./hostedMode.ts";
 
 const tFr = makeT(fr, "fr");
 const local = { hosted: false, hasCredentials: true, envPath: "/x/.env", openSignup: false, guildRequired: false, wclClients: false, operator: "", region: "eu" as const };
@@ -69,13 +69,26 @@ describe("deniedNotice / signInNote / pageOf / accountAccess", () => {
     expect(signInNote(tFr, hosted)).toBe("Sur invitation uniquement. Seuls ton id et ton nom Discord sont stockés — aucun accès aux messages ni aux serveurs.");
   });
   test("pages", () => {
-    expect(pageOf("/")).toBe("main");
+    expect(pageOf("/")).toBe("home");
+    expect(pageOf("/candidate")).toBe("candidate");
+    expect(pageOf("/compare")).toBe("compare");
+    expect(pageOf("/live")).toBe("live");
     expect(pageOf("/admin")).toBe("admin");
     expect(pageOf("/settings")).toBe("settings");
     expect(pageOf("/privacy")).toBe("privacy");
     expect(pageOf("/help")).toBe("help");
     expect(pageOf("/me")).toBe("me");
-    expect(pageOf("/other")).toBe("main");
+    expect(pageOf("/other")).toBe("home");
+    expect(pageOf("/setup")).toBe("home");
+  });
+  test("candidateHref round-trips a key with quotes and accents", () => {
+    const key = `eu|Élise-Kel'Thas "x"|12`;
+    const href = candidateHref(key);
+    expect(href.startsWith("/candidate?open=")).toBe(true);
+    const url = new URL(href, "http://x");
+    expect(url.pathname).toBe("/candidate");
+    expect(pageOf(url.pathname)).toBe("candidate");
+    expect(url.searchParams.get("open")).toBe(key);
   });
   test("accountAccess", () => {
     expect(accountAccess(hosted, me.user)).toBe("ok");

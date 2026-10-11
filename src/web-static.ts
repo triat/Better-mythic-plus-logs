@@ -27,6 +27,9 @@ const IMMUTABLE = "public, max-age=31536000, immutable";
 const ROUTES: Record<string, { pick: (a: WebAssets) => string; type: string; cache?: string }> = {
   "/": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/setup": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
+  "/candidate": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
+  "/compare": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
+  "/live": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/admin": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/settings": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/privacy": { pick: (a) => a.index, type: "text/html; charset=utf-8" },

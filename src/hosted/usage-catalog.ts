@@ -20,6 +20,8 @@ export const USAGE_CATALOG = {
   metric_pick: { category: "lookup", source: "ui" },
   season_sync: { category: "lookup", source: "api" },
   // Result
+  page_home: { category: "result", source: "ui" },
+  page_candidate: { category: "result", source: "ui" },
   page_main_result: { category: "result", source: "ui" },
   axis_expand: { category: "result", source: "ui" },
   legend_toggle: { category: "result", source: "ui" },
@@ -41,7 +43,9 @@ export const USAGE_CATALOG = {
   history_close: { category: "history", source: "api" },
   history_clear: { category: "history", source: "api" },
   compare_open: { category: "history", source: "ui" },
+  page_compare: { category: "history", source: "ui" },
   // Live
+  page_live: { category: "live", source: "ui" },
   live_roster: { category: "live", source: "api" },
   live_connect: { category: "live", source: "ui" },
   live_check: { category: "live", source: "ui" },

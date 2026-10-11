@@ -33,6 +33,13 @@ describe("catalogue", () => {
     expect(isUiEvent("toString")).toBe(false);
     expect(isUiEvent("nope")).toBe(false);
   });
+  test("each page the front resolves has a ui page event", () => {
+    for (const e of ["page_home", "page_candidate", "page_compare", "page_live", "page_admin", "page_settings", "page_privacy", "page_help", "page_me", "page_main_result"]) {
+      expect(isUiEvent(e)).toBe(true);
+    }
+    expect(USAGE_CATALOG.page_live.category).toBe("live");
+    expect(USAGE_CATALOG.page_compare.category).toBe("history");
+  });
   test("dayStart is UTC midnight", () => {
     expect(dayStart(NOW)).toBe(Date.UTC(2026, 9, 9));
     expect(dayStart(Date.UTC(2026, 9, 9, 23, 59))).toBe(Date.UTC(2026, 9, 9));

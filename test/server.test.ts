@@ -125,6 +125,6 @@ describe("createStaticHandler", () => {
   });
   test("the pages the front resolves from the pathname are static routes (/me included)", async () => {
     const handler = createStaticHandler(async () => null);
-    for (const p of ["/admin", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
+    for (const p of ["/", "/candidate", "/compare", "/live", "/admin", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
   });
 });

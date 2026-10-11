@@ -53,11 +53,16 @@ type Screen =
   | { kind: "signin"; status: StatusInfo }
   | { kind: "main"; status: StatusInfo; me: MeUser | null; settings: Settings | null; quota: QuotaInfo | null; ownClient: OwnClientView | null };
 
-// No router: /admin, /settings, /privacy, /help and /me are full navigations resolved once from the pathname.
+// No router: every page (/, /candidate, /compare, /live, /admin, /settings, /privacy, /help, /me) is a full navigation resolved once from the pathname.
 const page = pageOf(location.pathname);
 // The Battle.net callback lands on /me?bnet=<code>; read before the boot effect erases the query string.
 const bnetCode = bnetCodeOf(location.search);
-const PAGE_EVENT = { admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me" } as const;
+const PAGE_EVENT = {
+  home: "page_home", candidate: "page_candidate", compare: "page_compare", live: "page_live",
+  admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me",
+} as const;
+// Until the frame lands (redesign phase 1, task 9), home, candidate, compare and live all render today's result view.
+const resultPage = page === "home" || page === "candidate" || page === "compare" || page === "live";
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
@@ -74,7 +79,7 @@ export function App() {
       const me = status.hosted ? await api.me() : null;
       // Feature usage (hosted, signed in only): on for the page's lifetime; a full navigation starts it again.
       startUsageTracking(status.hosted && me?.kind === "ok");
-      if (page !== "main") track(PAGE_EVENT[page]);
+      track(PAGE_EVENT[page]);
       const kind = bootScreen(status, me, location.pathname);
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
@@ -242,7 +247,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (q) setForm((f) => ({ ...f, character: q }));
     if (location.search) history.replaceState({}, "", location.pathname);
     loadHistory().then((items) => {
-      if (page !== "main" || items.length === 0) return;
+      if (!resultPage || items.length === 0) return;
       const want = params.get("open");
       const main = settings.characters[0];
       const key = (want && items.some((i) => i.key === want) ? want : null) ?? (main ? historyKeyFor(items, main) : null) ?? items[0]!.key;
@@ -535,7 +540,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // to the detail view rather than leaving CompareLoader stuck on its "building…" spinner.
   const showCompare = compareOpen && selected.length >= 2;
   // /admin, /settings and /help are full navigations (no router): same header (no search), their sections instead of the tabs.
-  const isMainPage = page === "main";
+  const isMainPage = resultPage;
   const access = adminAccess(status, me);
   const account = accountAccess(status, me);
 

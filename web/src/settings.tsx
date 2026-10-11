@@ -4,8 +4,13 @@ import { api } from "./api.ts";
 import { DEFAULT_SETTINGS, readLocalSettings, writeLocalSettings } from "./lib/settings.ts";
 import type { KeyValueStore, Settings } from "./lib/settings.ts";
 
-interface SettingsContext { settings: Settings; update: (patch: Partial<Settings>) => void }
-const Ctx = createContext<SettingsContext>({ settings: DEFAULT_SETTINGS, update: () => {} });
+interface SettingsContext {
+  settings: Settings;
+  update: (patch: Partial<Settings>) => void;
+  /** Takes values the server already stored (the Battle.net pick's answer, an unlink): state only, no PUT, no localStorage. */
+  adopt: (patch: Partial<Settings>) => void;
+}
+const Ctx = createContext<SettingsContext>({ settings: DEFAULT_SETTINGS, update: () => {}, adopt: () => {} });
 
 const browserStore = (): KeyValueStore | null => {
   try { return localStorage; } catch { return null; }
@@ -26,7 +31,8 @@ export function SettingsProvider({ hosted, initial, children }: { hosted: boolea
       if ("locale" in patch) writeLocalSettings(browserStore(), { locale: patch.locale ?? null });
     } else writeLocalSettings(browserStore(), patch);
   }, [hosted]);
-  return <Ctx.Provider value={{ settings, update }}>{children}</Ctx.Provider>;
+  const adopt = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), []);
+  return <Ctx.Provider value={{ settings, update, adopt }}>{children}</Ctx.Provider>;
 }
 
 export const useSettings = (): SettingsContext => useContext(Ctx);

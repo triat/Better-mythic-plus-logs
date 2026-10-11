@@ -64,8 +64,9 @@ equals the WCL realm slug bmpl stores (`realmToSlug`), whether `http://localhost
    5 to **20**, in both modes, a bound for the page and the settings row rather than a product limit (confirmed
    2026-10-11).
 
-3. **One import = one Battle.net visit, nothing kept but the picks.** `GET /auth/bnet/start` (signed-in member,
-   same-origin) issues a `state` bound to a nonce cookie (`OAuthStates`, as Discord). The callback consumes it,
+3. **One import = one Battle.net visit, nothing kept but the picks.** `GET /auth/bnet/start` (signed-in member; a
+   GET, so protected like Discord's by the session cookie, the `state` and a nonce cookie rather than the origin
+   check, which runs only for non-GET requests) issues a `state` bound to a nonce cookie (its own `OAuthStates`). The callback consumes it,
    exchanges the code (HTTP Basic), reads `https://oauth.battle.net/userinfo` (account id, BattleTag), then
    `GET https://{region}.api.blizzard.com/profile/user/wow?namespace=profile-{region}&locale=en_US` for `eu`, `us`,
    `kr`, `tw` in turn (a 404 in a region means no account there, or the privacy option off). The token is then

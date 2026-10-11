@@ -5,9 +5,7 @@ import type { UiControls } from "../../lib/hostedMode.ts";
 import type { MenuModel } from "../../lib/session.ts";
 import type { AccountView, NavItem, RecentRow } from "../../lib/shell.ts";
 import type { Suggestion } from "../../lib/suggest.ts";
-import { OTHER_SPEC, localeMenu, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../../lib/header.ts";
-import { LOCALE_LABELS, detectLocale } from "../../lib/locale.ts";
-import type { Locale } from "../../lib/locale.ts";
+import { OTHER_SPEC, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../../lib/header.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
 import { ChipMenu } from "../ChipMenu.tsx";
@@ -15,6 +13,7 @@ import { Icon } from "../Icon.tsx";
 import { KeyStepper } from "../KeyStepper.tsx";
 import { SearchInput } from "../SearchInput.tsx";
 import { UserMenu } from "../UserMenu.tsx";
+import { LocalAccount } from "./LocalAccount.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -159,7 +158,7 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
         {p.controls.signOut && p.menu ? (
           <UserMenu m={p.menu} lines={p.menu.exhausted ? [p.menu.exhausted] : p.account.lines} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
         ) : (
-          <LocalAccount {...p} />
+          <LocalAccount title={p.account.title} controls={p.controls} watch={p.watch} onWatchToggle={p.onWatchToggle} onSetup={p.onSetup} onQuit={p.onQuit} />
         )}
       </div>
     </aside>
@@ -202,41 +201,5 @@ function Recent({ row, onRecent, onRemove }: { row: RecentRow; onRecent: ((key: 
         </div>
       )}
     </li>
-  );
-}
-
-/** Local mode's account block: "Local mode", the EN / FR chip, the clipboard watch, Re-configure and Quit. */
-function LocalAccount(p: SidebarProps) {
-  const { t, locale, setLocale } = useT();
-  return (
-    <div className="account-local">
-      <div className="account-local-head">
-        <span className="account-name">{p.account.title}</span>
-        {p.controls.watch && (
-          <ChipMenu
-            label={LOCALE_LABELS[locale]}
-            className={"chip" + (locale !== detectLocale(navigator.language) ? " chip-on" : "")}
-            head={t("common.locale.remembered")}
-            items={localeMenu(locale)}
-            onPick={(v) => setLocale(v as Locale)}
-            title={t("common.locale.title")}
-          />
-        )}
-      </div>
-      {p.controls.watch && (
-        <label className={"watch" + (p.watch.active ? " on" : "")} title={t("header.watch.title")}>
-          <input type="checkbox" checked={p.watch.active} onChange={(e) => p.onWatchToggle(e.target.checked)} />
-          <span className="switch" />
-          <span>{t("header.watch.label")} <b>{p.watch.active ? t("header.watch.on") : t("header.watch.off")}</b></span>
-        </label>
-      )}
-      {p.controls.watch && p.watch.label && <span className="side-note muted">{p.watch.label}</span>}
-      {(p.controls.setup || p.controls.quit) && (
-        <div className="account-actions">
-          {p.controls.setup && <button type="button" className="btn btn-sm" onClick={p.onSetup}>{t("header.reconfigure")}</button>}
-          {p.controls.quit && <button type="button" className="btn btn-sm" onClick={p.onQuit}>{t("header.quit")}</button>}
-        </div>
-      )}
-    </div>
   );
 }

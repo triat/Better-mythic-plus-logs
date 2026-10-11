@@ -5,16 +5,17 @@ import { Palette } from "./Palette.tsx";
 import { Sidebar } from "./Sidebar.tsx";
 import type { SidebarProps } from "./Sidebar.tsx";
 
+export interface PaletteProps { sources: PaletteSources; yourKey: number | null; onRun: (a: PaletteAction) => void }
 interface Props {
   sidebar: SidebarProps;
-  palette: { sources: PaletteSources; yourKey: number | null; onRun: (a: PaletteAction) => void };
+  palette: PaletteProps;
   children: ReactNode;
 }
 
-/** A text field other than the sidebar's search: Ctrl K there belongs to the field (or the browser), not to us. */
+/** A text field other than the sidebar's (or the home page's) search: Ctrl K there belongs to the field, not to us. */
 function typingElsewhere(el: Element | null): boolean {
   if (!(el instanceof HTMLElement)) return false;
-  if (el.closest(".side-search")) return false;
+  if (el.closest(".side-search, .home-search")) return false;
   return el.isContentEditable || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement
     || (el instanceof HTMLInputElement && !["checkbox", "radio", "button", "submit"].includes(el.type));
 }
@@ -25,6 +26,20 @@ function typingElsewhere(el: Element | null): boolean {
  */
 export function Shell({ sidebar, palette, children }: Props) {
   const [open, setOpen] = useState(false);
+  usePaletteKey(open, setOpen);
+  return (
+    <div className="shell">
+      <Sidebar {...sidebar} onOpenPalette={() => setOpen(true)} />
+      <main className="shell-main">
+        <div className="shell-content">{children}</div>
+      </main>
+      {open && <Palette {...palette} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
+/** Ctrl K / Cmd K opens the palette: one `keydown` listener on `window` while it is closed (the frame and the home page). */
+export function usePaletteKey(open: boolean, setOpen: (v: boolean) => void): void {
   useEffect(() => {
     if (open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -35,14 +50,5 @@ export function Shell({ sidebar, palette, children }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-  return (
-    <div className="shell">
-      <Sidebar {...sidebar} onOpenPalette={() => setOpen(true)} />
-      <main className="shell-main">
-        <div className="shell-content">{children}</div>
-      </main>
-      {open && <Palette {...palette} onClose={() => setOpen(false)} />}
-    </div>
-  );
+  }, [open, setOpen]);
 }

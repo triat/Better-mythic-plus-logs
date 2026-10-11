@@ -6,9 +6,9 @@ import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, Overrid
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { MAX_COMPARE, pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
-import { fmtAge, realmName } from "./lib/format.ts";
+import { fmtAge } from "./lib/format.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
-import { lookupQuery, mineRequest } from "./lib/me.ts";
+import { mineRequest } from "./lib/me.ts";
 import { suggestionsOf } from "./lib/suggest.ts";
 import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
@@ -38,7 +38,7 @@ import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
 import type { SelfActions } from "./components/self/ResultHead.tsx";
-import { Home } from "./components/Home.tsx";
+import { HomePage } from "./components/home/HomePage.tsx";
 import { LiveChip } from "./components/LiveChip.tsx";
 import { LivePanel } from "./components/LivePanel.tsx";
 import { MePage } from "./components/me/MePage.tsx";
@@ -46,7 +46,7 @@ import { Setup } from "./components/Setup.tsx";
 import { SignIn } from "./components/SignIn.tsx";
 import { Shell } from "./components/shell/Shell.tsx";
 import { EMPTY_FORM } from "./components/shell/Sidebar.tsx";
-import type { LookupForm } from "./components/shell/Sidebar.tsx";
+import type { LookupForm, SidebarProps } from "./components/shell/Sidebar.tsx";
 import { Toast } from "./components/Toast.tsx";
 import type { ToastAction } from "./components/Toast.tsx";
 
@@ -563,16 +563,6 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     adoptCharacters: (characters) => adoptSettings({ characters }),
   };
 
-  // The home card (empty history only): the main character, looked up on its button only.
-  const mainChar = settings.characters[0] ?? null;
-  const homeMain = mainChar
-    ? {
-        name: mainChar.name,
-        detail: `${realmName(mainChar.realm)} · ${mainChar.region.toUpperCase()}`,
-        onLookUp: () => void lookupAndLand({ character: lookupQuery(mainChar), level: yourKey, spec: null, metric: null, region: mainChar.region }),
-      }
-    : null;
-
   // The Compare page opens a comparison as soon as two profiles are ticked; counted once per opening.
   const showCompare = page === "compare" && selected.length >= 2;
   useEffect(() => { if (showCompare) track("compare_open"); }, [showCompare]);
@@ -586,28 +576,33 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     ? <Detail key={activeKey} payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
     : <Loading inline />);
 
+  const sidebar: SidebarProps = {
+    form, onFormChange: setForm, onLookup, busy, suggestions, onSuggest,
+    region, instanceRegion: status.region, onRegionChange, payload: activePayload,
+    yourKey, keyFallback: activePayload?.targetLevel ?? null, onKeyChange, sseConnected,
+    nav: navItems(t, page, { candidates: tabs.length, liveOn: live.state.kind === "live" }),
+    recent: recentRows(tabs, inPlace ? activeKey : null),
+    onRecent: inPlace ? openProfile : null,
+    onRemove: (k) => void closeTab(k), onClearAll: () => void clearAll(),
+    account: accountView(t, status, menu), controls, menu, pendingProposals, onMenuOpen: () => void onMenuOpen(), onSignOut,
+    watch, onWatchToggle, onSetup, onQuit,
+  };
+  const palette = { sources: { suggestions, mine: settings.characters, history: tabs, region }, yourKey, onRun: onPalette };
+  const toastEl = <Toast message={toast?.message ?? null} action={toast?.action ?? null} onClose={closeToast} />;
+
+  // The connected home page sits outside the frame (redesign spec decision 2).
+  if (page === "home") {
+    return (
+      <>
+        <HomePage {...sidebar} palette={palette} history={tabs} liveOn={live.state.kind === "live"} self={selfActions} />
+        {toastEl}
+      </>
+    );
+  }
+
   return (
     <>
-      <Shell
-        sidebar={{
-          form, onFormChange: setForm, onLookup, busy, suggestions, onSuggest,
-          region, instanceRegion: status.region, onRegionChange, payload: activePayload,
-          yourKey, keyFallback: activePayload?.targetLevel ?? null, onKeyChange, sseConnected,
-          nav: navItems(t, page, { candidates: tabs.length, liveOn: live.state.kind === "live" }),
-          recent: recentRows(tabs, inPlace ? activeKey : null),
-          onRecent: inPlace ? openProfile : null,
-          onRemove: (k) => void closeTab(k), onClearAll: () => void clearAll(),
-          account: accountView(t, status, menu), controls, menu, pendingProposals, onMenuOpen: () => void onMenuOpen(), onSignOut,
-          watch, onWatchToggle, onSetup, onQuit,
-        }}
-        palette={{ sources: { suggestions, mine: settings.characters, history: tabs, region }, yourKey, onRun: onPalette }}
-      >
-        {page === "home" && (
-          // Placeholder until the connected home page (redesign phase 1, task 11): today's empty-state content.
-          <div className="content">
-            <Home envPath={controls.envPath ? status.envPath : null} main={homeMain} />
-          </div>
-        )}
+      <Shell sidebar={sidebar} palette={palette}>
         {page === "candidate" && (
           <div className="content content-result">
             {tabs.length === 0 ? (
@@ -707,7 +702,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           <Forbidden reason="local" handle={null} title={t("admin.forbidden.hostedOnly")} text={t("admin.forbidden.privacyHosted")} />
         )}
       </Shell>
-      <Toast message={toast?.message ?? null} action={toast?.action ?? null} onClose={closeToast} />
+      {toastEl}
     </>
   );
 }

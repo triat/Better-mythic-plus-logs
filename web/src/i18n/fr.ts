@@ -696,6 +696,8 @@ export const fr: Mirror<typeof en> = {
         quota: "quota", budget: "budget de l'instance", quotaRefused: "{what} · {used}/{limit} pts utilisés, reset dans {min} min",
         rateLimited: "{limit} par {window} s · réessai dans {retry} s",
         note: "note : « {note} »", sessionsEnded: "{n} session(s) terminée(s)",
+        bnetLink: "lié à {battletag}", bnetRemoved: "{character} · {reason}",
+        charactersReset: "{count, plural, one {# personnage manuel retiré} other {# personnages manuels retirés}}",
       },
     },
   },

@@ -188,6 +188,20 @@ describe("audit rows", () => {
     expect(auditDetail(tFr, "proposal_approve", { proposalId: 7, patch: { id: 642, cooldownS: 240 }, note: "Matches the tooltip." })).toBe("cd 240 s · note : « Matches the tooltip. »");
     expect(auditDetail(tFr, "user_ban", { sessionsEnded: 2 })).toBe("2 session(s) terminée(s)");
   });
+  test("Battle.net linking actions: kind and detail", () => {
+    for (const a of ["bnet_link", "bnet_unlink", "bnet_character_removed", "characters_reset"] as const) expect(AUDIT_KIND_OF[a]).toBe("login");
+    expect(auditDetail(tEn, "bnet_link", { battletag: "Tom#1234" })).toBe("linked Tom#1234");
+    expect(auditDetail(tEn, "bnet_link", { battletag: null })).toBe("linked —");
+    expect(auditDetail(tFr, "bnet_link", { battletag: "Tom#1234" })).toBe("lié à Tom#1234");
+    expect(auditDetail(tEn, "bnet_character_removed", { character: "Biwaadrood-Nerzhul", reason: "unchecked_30d" })).toBe("Biwaadrood-Nerzhul · unchecked_30d");
+    expect(auditDetail(tFr, "bnet_character_removed", { character: "Biwaadrood-Nerzhul", reason: "other_id" })).toBe("Biwaadrood-Nerzhul · other_id");
+    expect(auditDetail(tEn, "characters_reset", { removed: 1 })).toBe("1 manual character removed");
+    expect(auditDetail(tEn, "characters_reset", { removed: 3 })).toBe("3 manual characters removed");
+    expect(auditDetail(tFr, "characters_reset", { removed: 1 })).toBe("1 personnage manuel retiré");
+    expect(auditDetail(tFr, "characters_reset", { removed: 3 })).toBe("3 personnages manuels retirés");
+    expect(auditDetail(tEn, "bnet_unlink", {})).toBe("");
+    expect(auditDetail(tEn, "bnet_unlink", null)).toBe("");
+  });
   test("every action has a kind and chips cover every kind", () => {
     const kinds = new Set(Object.values(AUDIT_KIND_OF));
     for (const c of auditChips(tEn)) if (c.kind !== "all") expect(kinds.has(c.kind)).toBe(true);

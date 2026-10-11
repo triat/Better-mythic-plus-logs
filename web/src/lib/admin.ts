@@ -163,6 +163,10 @@ export const AUDIT_KIND_OF: Record<AuditAction, AuditKind> = {
   account_delete: "login",
   wcl_client_set: "login",
   wcl_client_remove: "login",
+  bnet_link: "login",
+  bnet_unlink: "login",
+  bnet_character_removed: "login",
+  characters_reset: "login",
   invite_add: "admin",
   invite_remove: "admin",
   role_change: "admin",
@@ -243,10 +247,17 @@ export function auditDetail(t: T, action: AuditAction, detail: Record<string, un
       return t("admin.audit.detail.sessionsEnded", { n: num(detail.sessionsEnded) });
     case "account_delete":
       return str(detail.username); // the row's user is gone (userId null): the name is the only trace
+    case "bnet_link":
+      return t("admin.audit.detail.bnetLink", { battletag: str(detail.battletag) || "—" });
+    case "bnet_character_removed": // reason: not_found | invalid | other_id | unchecked_30d, kept raw
+      return t("admin.audit.detail.bnetRemoved", { character: str(detail.character), reason: str(detail.reason) });
+    case "characters_reset": // written by the launch migration in src/hosted/bnet-db.ts: `{ removed }`
+      return t("admin.audit.detail.charactersReset", { count: num(detail.removed) });
     case "role_change":
     case "logout":
     case "wcl_client_set":
     case "wcl_client_remove":
+    case "bnet_unlink":
     case "user_unban":
     case "ops_denied":
       return "";

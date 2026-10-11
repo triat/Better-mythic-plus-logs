@@ -113,3 +113,25 @@ describe("wcl_run_control", () => {
     expect(store.hasRunControl("AbC", 9, "mn-2.1")).toBe(true);
   });
 });
+
+describe("knownCharacters", () => {
+  const run = (code: string): MPlusRun => ({
+    encounterID: 12923, encounterName: "Voidscar Arena", keyLevel: 18, amount: 1000, parsePercent: 50, spec: "Frost",
+    affixes: [9, 10], reportCode: code, fightID: 1, startTime: 1000, score: 400, timed: true, durationMs: 1_700_000,
+  });
+  test("Raider.IO's casing and class first, then the runs of characters Raider.IO never answered for, newest first", () => {
+    const s = openStore(":memory:");
+    s.putRio("eu", "tarren-mill", "Muleyoxo", { name: "Muleyoxo", realm: "Tarren Mill", class: "Priest", active_spec_name: "Holy" }, 30);
+    s.putRio("us", "area-52", "Mulgrim", { name: "Mulgrim" }, 10);
+    s.upsertSeasonRuns({ region: "eu", realm: "kazzak", name: "Mulanshi" }, 55, "dps", [run("A")], 20);
+    // Known to both tables: listed once, from Raider.IO.
+    s.upsertSeasonRuns({ region: "eu", realm: "tarren-mill", name: "muleyoxo" }, 55, "hps", [run("B")], 40);
+    expect(s.knownCharacters(10)).toEqual([
+      { region: "eu", realm: "tarren-mill", name: "muleyoxo", displayName: "Muleyoxo", displayRealm: "Tarren Mill", className: "Priest", spec: "Holy", seenAt: 30 },
+      { region: "eu", realm: "kazzak", name: "mulanshi", displayName: null, displayRealm: null, className: null, spec: null, seenAt: 20 },
+      { region: "us", realm: "area-52", name: "mulgrim", displayName: "Mulgrim", displayRealm: null, className: null, spec: null, seenAt: 10 },
+    ]);
+    expect(s.knownCharacters(1).map((c) => c.name)).toEqual(["muleyoxo"]);
+    s.close();
+  });
+});

@@ -115,6 +115,13 @@ manual file editing required.
 After that, four screens:
 
 - **Home** — a big search box: paste a `Name-Realm`, hit **Look up**.
+  As you type, the field suggests the characters bmpl already knows: My
+  characters, your history and, locally, every character this bmpl looked up
+  before. The best match completes the field in grey (**Tab** accepts it);
+  **Enter** opens the highlighted row, from its history tab when there is one
+  (0 pts), else with the usual lookup. Suggesting itself never calls Warcraft
+  Logs or Raider.IO. Hosted, the suggestions come from your history and My
+  characters only.
 - **Detail** — the verdict badge and 0–100 score, the six axes (Survival,
   Utility, Throughput, Consistency, Preparation, Experience) each with a
   confidence dot and its evidence, a radar chart, signal tiles, the best run

@@ -59,6 +59,8 @@ describe("hosted mode routes", () => {
     expect((await fetch(h("/api/watch/start"), { method: "POST", body: "{}" })).status).toBe(404);
     expect((await fetch(h("/api/watch/stop"), { method: "POST" })).status).toBe(404);
     expect((await fetch(h("/api/watch/status"))).status).toBe(404);
+    // The shared cache would show what other members looked up: not even signed in.
+    expect((await fetch(h("/api/known-characters"), { headers: { cookie } })).status).toBe(404);
   });
   test("shared routes still answer", async () => {
     expect((await fetch(h("/api/history"), { headers: { cookie } })).status).toBe(200);
@@ -84,6 +86,14 @@ describe("hosted mode routes", () => {
   });
   test("the local server still registers the local routes", async () => {
     expect((await fetch(l("/api/watch/status"))).status).toBe(200);
+  });
+  test("the local server lists the characters its cache has seen", async () => {
+    (await getStore()).putRio("eu", "silvermoon", "Muleyoxo", { name: "Muleyoxo", realm: "Silvermoon", class: "Priest", active_spec_name: "Holy" }, 5);
+    const body = await (await fetch(l("/api/known-characters"))).json();
+    expect(body.ok).toBe(true);
+    expect(body.characters).toContainEqual({
+      region: "eu", realm: "silvermoon", name: "muleyoxo", displayName: "Muleyoxo", displayRealm: "Silvermoon", className: "Priest", spec: "Holy", seenAt: 5,
+    });
   });
 });
 

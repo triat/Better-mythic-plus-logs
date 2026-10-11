@@ -11,6 +11,8 @@ import type { Locale } from "../lib/locale.ts";
 import { useT } from "../locale.tsx";
 import { ChipMenu } from "./ChipMenu.tsx";
 import { LiveChip } from "./LiveChip.tsx";
+import { SearchInput } from "./SearchInput.tsx";
+import type { Suggestion } from "../lib/suggest.ts";
 import { UserMenu } from "./UserMenu.tsx";
 import { track } from "../usage.ts";
 
@@ -50,6 +52,9 @@ interface Props {
   live: { state: LiveState; connect: () => Promise<void> };
   /** How many characters "My characters" holds (the /me link's count). */
   meCount: number;
+  /** What the search field may suggest (`suggestionsOf`), and what choosing a row does. */
+  suggestions: Suggestion[];
+  onSuggest: (s: Suggestion) => void;
 }
 
 export function Header(p: Props) {
@@ -91,13 +96,12 @@ export function Header(p: Props) {
     <form className="search" onSubmit={submit}>
       <div className="search-box">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-        <input
+        <SearchInput
           value={p.form.character}
-          onChange={(e) => set({ character: e.target.value })}
+          onChange={(v) => set({ character: v })}
           placeholder={t("header.searchPlaceholder")}
-          autoFocus
-          autoComplete="off"
-          spellCheck={false}
+          suggestions={p.suggestions}
+          onPick={p.onSuggest}
         />
         {chips}
       </div>

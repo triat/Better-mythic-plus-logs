@@ -43,6 +43,21 @@ export interface SeasonRow {
   failedAt: number | null;
 }
 
+/** A character the database has seen; the display fields come from Raider.IO's own casing when it is cached. */
+export interface KnownCharacter {
+  region: string;
+  /** The realm slug, lower-cased. */
+  realm: string;
+  /** Lower-cased, as the tables key it. */
+  name: string;
+  displayName: string | null;
+  displayRealm: string | null;
+  /** Raider.IO's class name ("Death Knight"); null when only `character_runs` knows the character. */
+  className: string | null;
+  spec: string | null;
+  seenAt: number;
+}
+
 export interface Store {
   getWclRun(code: string, fightID: number): RawRunReport | null;
   putWclRun(code: string, fightID: number, report: RawRunReport): void;
@@ -69,6 +84,11 @@ export interface Store {
   putRunControl(code: string, fightID: number, raw: RawRunControl): void;
   /** Cached at that table version. */
   hasRunControl(code: string, fightID: number, tableVersion: string): boolean;
+  /**
+   * The characters this database has seen (`rio_profile`, then `character_runs` for those Raider.IO did not know),
+   * newest first: the search suggestions' local source. Shared by every member when hosted, so local mode only.
+   */
+  knownCharacters(limit: number): KnownCharacter[];
   close(): void;
   /** Exposed for tests only. */
   _db: Database;
@@ -230,6 +250,18 @@ export function openStore(path: string): Store {
   const hasControlQ = db.query<{ one: number }, [string, number, string]>(
     "SELECT 1 AS one FROM wcl_run_control WHERE report_code = ? AND fight_id = ? AND table_version = ?",
   );
+  // json_extract reads the four fields without parsing the whole profile in JS. A character Raider.IO never answered
+  // for still has its runs: its spec there is WCL's, without the class, so it is left out.
+  const knownQ = db.query<{
+    region: string; realm: string; name: string; dname: string | null; drealm: string | null; cls: string | null; spec: string | null; at: number;
+  }, [number]>(
+    "SELECT region, realm, name, json_extract(json, '$.name') AS dname, json_extract(json, '$.realm') AS drealm, " +
+    "json_extract(json, '$.class') AS cls, json_extract(json, '$.active_spec_name') AS spec, fetched_at AS at FROM rio_profile " +
+    "UNION ALL SELECT region, realm, name, NULL, NULL, NULL, NULL, MAX(seen_at) FROM character_runs c " +
+    "WHERE NOT EXISTS (SELECT 1 FROM rio_profile p WHERE p.region = c.region AND p.realm = c.realm AND p.name = c.name) " +
+    "GROUP BY region, realm, name ORDER BY at DESC LIMIT ?",
+  );
+  const text = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v : null);
   const toSeasonRow = (r: SeasonDbRow): SeasonRow => ({
     reportCode: r.report_code, fightID: r.fight_id, zoneID: r.zone_id, encounterID: r.encounter_id, encounterName: r.encounter_name,
     startTime: r.start_time, durationMs: r.duration_ms, keyLevel: r.key_level, timed: r.timed === null ? null : r.timed === 1,
@@ -288,6 +320,12 @@ export function openStore(path: string): Store {
     },
     hasRunControl(code, fightID, tableVersion) {
       return hasControlQ.get(code, fightID, tableVersion) !== null;
+    },
+    knownCharacters(limit) {
+      return knownQ.all(limit).map((r) => ({
+        region: r.region, realm: r.realm, name: r.name, displayName: text(r.dname), displayRealm: text(r.drealm),
+        className: text(r.cls), spec: text(r.cls) ? text(r.spec) : null, seenAt: r.at,
+      }));
     },
     close() {
       db.close();

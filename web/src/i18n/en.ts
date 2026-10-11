@@ -38,6 +38,11 @@ export const en = {
     me: "My characters",
     meCount: "My characters · {n}",
     searchPlaceholder: "Name-Realm or Raider.IO URL",
+    suggest: {
+      label: "Known characters",
+      keyTab: "Tab", keyEnter: "Enter", keyEsc: "Esc",
+      move: "move", complete: "complete", open: "open", close: "close",
+    },
     specPlaceholder: "e.g. Augmentation",
     metric: { title: "Metric", auto: "auto", dps: "dps", hps: "hps" },
     region: { title: "Region", remembered: "Region · remembered", eu: "Europe", us: "Americas & Oceania", kr: "Korea", tw: "Taiwan" },

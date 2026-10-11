@@ -37,6 +37,7 @@ export type { LiveVerdict } from "@shared/server/routes-live.ts";
 export type { BnetCandidate } from "@shared/hosted/bnet-db.ts";
 export type { BnetCallbackCode } from "@shared/server/routes-bnet.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";
+export type { KnownCharacter } from "@shared/signals/store.ts";
 export type { Metric } from "@shared/roles.ts";
 export type {
   RunDefensives,

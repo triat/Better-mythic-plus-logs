@@ -25,5 +25,6 @@
   --discord: #5865f2; /* Discord brand colour ("blurple") — the hosted sign-in button only, issue #7 */
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --radius: 6px;
+  --radius-sm: 4px; /* keyboard keys in the search suggestions (canvas "suggest", SuggestChosen) */
   --radius-lg: 10px;
 }

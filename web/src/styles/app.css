@@ -68,9 +68,23 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .grow { flex: 1; }
 .search { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 760px; }
 .top-row .search { flex: 1 1 auto; min-width: 720px; max-width: 980px; }
-.search-box { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px; color: var(--muted); }
+.search-box { position: relative; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px; color: var(--muted); }
 .search-box:focus-within { border-color: var(--link); }
 .search-box input { flex: 1; min-width: 0; background: transparent; border: 0; height: 100%; padding: 0; color: var(--text); font-size: 14px; }
+/* The search suggestions under the field (SearchInput.tsx; design: canvas "suggest", SuggestChosen: A + C). */
+.search-field { position: relative; display: flex; align-self: stretch; flex: 1; min-width: 0; }
+.search-field input { width: 100%; }
+.search-ghost { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; white-space: pre; pointer-events: none; font-size: 14px; color: var(--faint); }
+.search-ghost-typed { visibility: hidden; }
+.search-ghost .kbd { margin-left: 8px; font-size: 11px; }
+.kbd { font-family: var(--mono); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 4px; color: var(--muted); }
+.suggest { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 16px; row-gap: 2px; padding: 6px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 4px 16px rgba(0,0,0,.5); color: var(--text); }
+.suggest-row { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; padding: 7px 10px; border-radius: var(--radius); font-size: 13px; cursor: pointer; }
+.suggest-row.on { background: var(--border-soft); }
+.suggest-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggest-realm, .suggest-region, .suggest-class { font-size: 12px; color: var(--muted); }
+.suggest-region, .suggest-class { text-align: right; white-space: nowrap; }
+.suggest-keys { grid-column: 1 / -1; display: flex; gap: 12px; margin-top: 4px; padding: 6px 10px 2px; border-top: 1px solid var(--border-soft); font-size: 11px; color: var(--faint); }
 .chips { display: flex; gap: 6px; }
 .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; background: transparent; cursor: pointer; white-space: nowrap; }
 .chip:hover { color: var(--text); }

@@ -13,6 +13,7 @@ import type {
   DeepdiveRequest,
   DocsResponse,
   HistoryItem,
+  KnownCharacter,
   HistoryRequest,
   LiveVerdict,
   LookupPayload,
@@ -106,6 +107,8 @@ export const api = {
   lookup: (req: LookupRequest) =>
     call<{ result: LookupPayload; key: string; fromCache: boolean; request: HistoryRequest; pointsSpent?: number; quota?: QuotaInfo; ownClient?: OwnClientView | null }>("/api/lookup", post(req)),
   history: () => call<{ items: HistoryItem[] }>("/api/history"),
+  /** Local mode only (the search suggestions' cache source, 0 WCL pts); hosted answers 404. */
+  knownCharacters: () => call<{ characters: KnownCharacter[] }>("/api/known-characters"),
   historyEntry: (key: string) => call<{ result: LookupPayload; key: string }>(historyPath(key)),
   removeHistory: (key: string) => call<Record<never, never>>(historyPath(key), { method: "DELETE" }),
   clearHistory: () => call<Record<never, never>>("/api/history", { method: "DELETE" }),

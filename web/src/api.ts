@@ -170,7 +170,8 @@ export const api = {
   docs: (locale: Locale = "en") => call<Omit<DocsResponse, "ok">>(`/api/docs?lang=${locale}`),
   settings: () => call<{ settings: Settings }>("/api/settings"),
   putSettings: (patch: Partial<Settings>) =>
-    call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),
+    // `keepalive`: a setting chosen right before a navigation (a region picked from a suggestion) still reaches the server.
+    call<{ settings: Settings }>("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch), keepalive: true }),
   me: async (): Promise<MeResult> => {
     let res: Response;
     try {

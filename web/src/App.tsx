@@ -21,7 +21,7 @@ import { useWowCapture } from "./lib/live/useWowCapture.ts";
 import type { Locale } from "./lib/locale.ts";
 import { effectiveRegion, isRegion } from "./lib/regions.ts";
 import type { PaletteAction } from "./lib/palette.ts";
-import { accountView, navItems, recentRows } from "./lib/shell.ts";
+import { accountView, navItems } from "./lib/shell.ts";
 import { parseServerSettings, readLocalSettings, writeLocalSettings } from "./lib/settings.ts";
 import type { KeyValueStore, Settings } from "./lib/settings.ts";
 import { DocsProvider } from "./docs.tsx";
@@ -222,14 +222,21 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       // The failed key is gone from `items` (loadHistory reflects the server's current
       // history). Fall back to the first remaining tab, once — if that also fails,
       // leave `activeKey` null rather than recursing further.
+      // On the candidate page the URL names the profile actually shown, not the evicted one it asked for.
+      const landOn = (shown: string | null) => {
+        if (page === "candidate") history.replaceState({}, "", shown ? candidateHref(shown) : "/candidate");
+      };
       const fallback = items?.[0]?.key ?? null;
       if (!fallback) {
+        if (activeKeyRef.current === key) landOn(null);
         setActiveKey((cur) => (cur === key ? null : cur));
         return;
       }
+      if (activeKeyRef.current === key) landOn(fallback);
       setActiveKey((cur) => (cur === key ? fallback : cur));
       const { payload: fallbackPayload } = await fetchPayload(fallback);
       if (fallbackPayload === null) {
+        if (activeKeyRef.current === fallback) landOn(null);
         setActiveKey((cur) => (cur === fallback ? null : cur));
       }
     }
@@ -405,7 +412,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const activePayload = activeKey ? payloads.current.get(activeKey) ?? null : null;
   // One `page_main_result` per result shown (a tab switch, a lookup, the boot tab), once its payload is in.
   const resultShown = activeKey !== null && activePayload !== null;
-  useEffect(() => { if (resultShown) track("page_main_result"); }, [activeKey, resultShown]);
+  // Only where a result is on screen: a lookup started on another page lands on /candidate, which counts it there.
+  useEffect(() => { if (resultShown && inPlace) track("page_main_result"); }, [activeKey, resultShown]);
 
   // --- Live panel (game-integration Task 7): a single `useWowCapture()` here, shared by the header's
   // Live chip and the panel below (two hook instances would each open their own screen capture). ---
@@ -575,7 +583,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     region, instanceRegion: status.region, onRegionChange, payload: activePayload,
     yourKey, keyFallback: activePayload?.targetLevel ?? null, onKeyChange, sseConnected,
     nav: navItems(t, page, { candidates: tabs.length, liveOn: live.state.kind === "live" }),
-    recent: recentRows(tabs, inPlace ? activeKey : null),
+    recentItems: tabs, recentActive: inPlace ? activeKey : null,
     onRecent: inPlace ? openProfile : null,
     onRemove: (k) => void closeTab(k), onClearAll: () => void clearAll(),
     account: accountView(t, status, menu), controls, menu, pendingProposals, onMenuOpen: () => void onMenuOpen(), onSignOut,
@@ -588,7 +596,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   if (page === "home") {
     return (
       <>
-        <HomePage {...sidebar} palette={palette} history={tabs} liveOn={live.state.kind === "live"} self={selfActions} />
+        <HomePage {...sidebar} palette={palette} history={tabs} liveOn={live.state.kind === "live"} self={selfActions} envPath={status.hosted ? null : status.envPath ?? ""} />
         {toastEl}
       </>
     );

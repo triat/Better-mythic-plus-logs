@@ -207,6 +207,11 @@ export const fr: Mirror<typeof en> = {
   home: {
     nav: "Liens principaux",
     account: "Compte",
+    local: {
+      watch: "Ou active la surveillance du presse-papiers et copie un Nom-Serveur depuis n'importe où.",
+      credentials: "Identifiants : {path}",
+      unknownPath: "inconnu",
+    },
     hero: {
       title: "Juge un candidat en 5 secondes.",
       sub: "Et vois où tu progresses, toi.",
@@ -804,6 +809,8 @@ export const fr: Mirror<typeof en> = {
       more: "Plus d'actions pour {name}",
       remove: "Retirer",
       clearAll: "Tout effacer",
+      showMore: "{count, plural, one {Voir l'autre} other {Voir les # autres}}",
+      showLess: "Réduire",
       clearConfirm: "{count, plural, one {Retirer le seul profil récent ?} other {Retirer les # profils récents ?}}",
     },
     candidate: {

@@ -61,7 +61,7 @@ export function AdminPage({ me }: { me: MeUser }) {
           {t("admin.page.nav.audit")}{data.errors24h > 0 && <span className="chip" style={{ marginLeft: 4, color: "var(--red)" }}>{t("admin.page.errors", { n: data.errors24h })}</span>}
         </a>
       </nav>
-      <main className="content">
+      <div className="content">
         <Gauge usage={data.usage} users={data.users} />
         <Usage />
         <Queue pending={data.pending} decided={data.decided} onDecide={(id, d, note) => act(api.admin.decide(id, d, note))} />
@@ -73,7 +73,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <Invites invites={data.invites} users={data.users} onAdd={(id, note) => act(api.admin.addInvite(id, note))} onRemove={(id) => act(api.admin.removeInvite(id))} />
         <Instance instance={data.instance} usage={data.usage} />
         <Audit kind={auditKind} onKind={setAuditKind} />
-      </main>
+      </div>
       <Toast message={toast} onClose={closeToast} />
     </>
   );

@@ -13,7 +13,7 @@ export interface LocalAccountProps {
   onWatchToggle: (wanted: boolean) => void;
   onSetup: () => void;
   onQuit: () => void;
-  /** The home page's top bar: one row, no title, no watcher line. */
+  /** The home page's top bar: one row, no title; the watcher's line sits in the row. */
   compact?: boolean;
 }
 
@@ -44,7 +44,8 @@ export function LocalAccount(p: LocalAccountProps) {
       {p.controls.quit && <button type="button" className="btn btn-sm" onClick={p.onQuit}>{t("header.quit")}</button>}
     </div>
   );
-  if (p.compact) return <div className="account-local-compact">{chip}{watch}{actions}</div>;
+  const note = p.controls.watch && p.watch.label;
+  if (p.compact) return <div className="account-local-compact">{chip}{watch}{note && <span className="muted account-watch-note">{note}</span>}{actions}</div>;
   return (
     <div className="account-local">
       <div className="account-local-head">
@@ -52,7 +53,7 @@ export function LocalAccount(p: LocalAccountProps) {
         {chip}
       </div>
       {watch}
-      {p.controls.watch && p.watch.label && <span className="side-note muted">{p.watch.label}</span>}
+      {note && <span className="side-note muted">{note}</span>}
       {actions}
     </div>
   );

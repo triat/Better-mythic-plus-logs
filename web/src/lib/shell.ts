@@ -31,9 +31,10 @@ export function navItems(t: T, page: Page, o: { candidates: number; liveOn: bool
   }));
 }
 
-/** Récents = history, newest first, at most `max` rows; the open profile is active. */
-export function recentRows(items: HistoryItem[], activeKey: string | null, max = 8): RecentRow[] {
-  return items.slice(0, max).map((i) => ({
+export interface RecentList { rows: RecentRow[]; /** History entries not shown (0 when expanded). */ hidden: number; /** More than `max` entries: the foot toggle shows. */ toggle: boolean }
+
+function recentRow(i: HistoryItem, activeKey: string | null): RecentRow {
+  return {
     key: i.key,
     href: candidateHref(i.key),
     name: i.label.split("-")[0] ?? i.label,
@@ -41,7 +42,25 @@ export function recentRows(items: HistoryItem[], activeKey: string | null, max =
     score: i.score === null ? "—" : String(Math.round(i.score)),
     active: i.key === activeKey,
     classId: i.charClass,
-  }));
+  };
+}
+
+/** Récents = history, newest first, at most `max` rows; the open profile is active. */
+export function recentRows(items: HistoryItem[], activeKey: string | null, max = 8): RecentRow[] {
+  return items.slice(0, max).map((i) => recentRow(i, activeKey));
+}
+
+/**
+ * The sidebar's Récents list: the first `max` entries, plus the active one as an extra row when it sits further down;
+ * `expanded` shows the whole history (every entry stays reachable and removable).
+ */
+export function recentList(items: HistoryItem[], activeKey: string | null, expanded: boolean, max = 8): RecentList {
+  const toggle = items.length > max;
+  if (expanded || !toggle) return { rows: items.map((i) => recentRow(i, activeKey)), hidden: 0, toggle };
+  const rows = recentRows(items, activeKey, max);
+  const active = activeKey === null ? -1 : items.findIndex((i) => i.key === activeKey);
+  if (active >= max) rows.push(recentRow(items[active]!, activeKey));
+  return { rows, hidden: items.length - rows.length, toggle };
 }
 
 /** The account block: hosted = the user menu's name + quota line; local = "Local mode", no lines. */

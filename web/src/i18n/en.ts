@@ -213,6 +213,11 @@ export const en = {
   home: {
     nav: "Main links",
     account: "Account",
+    local: {
+      watch: "Or turn on clipboard watch and copy a Name-Realm from anywhere.",
+      credentials: "Credentials: {path}",
+      unknownPath: "unknown",
+    },
     hero: {
       title: "Judge an applicant in 5 seconds.",
       sub: "And see where you improve.",
@@ -810,6 +815,8 @@ export const en = {
       more: "More actions for {name}",
       remove: "Remove",
       clearAll: "Clear all",
+      showMore: "{count, plural, one {Show # more} other {Show # more}}",
+      showLess: "Show less",
       clearConfirm: "{count, plural, one {Remove the only recent profile?} other {Remove all # recent profiles?}}",
     },
     candidate: {

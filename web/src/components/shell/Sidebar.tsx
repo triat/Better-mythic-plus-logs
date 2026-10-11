@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, MouseEvent as ReactMouseEvent } from "react";
-import type { LookupPayload, Region } from "../../types.ts";
+import type { HistoryItem, LookupPayload, Region } from "../../types.ts";
 import type { UiControls } from "../../lib/hostedMode.ts";
 import type { MenuModel } from "../../lib/session.ts";
-import type { AccountView, NavItem, RecentRow } from "../../lib/shell.ts";
+import { recentList, type AccountView, type NavItem, type RecentRow } from "../../lib/shell.ts";
 import type { Suggestion } from "../../lib/suggest.ts";
 import { OTHER_SPEC, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../../lib/header.ts";
 import { useT } from "../../locale.tsx";
@@ -39,7 +39,9 @@ export interface SidebarProps {
   sseConnected: boolean;
   // --- navigation and Récents ---
   nav: NavItem[];
-  recent: RecentRow[];
+  /** Récents = the history, newest first; `recentActive` is the profile open in place (null off the candidate/Live pages). */
+  recentItems: HistoryItem[];
+  recentActive: string | null;
   /** Switch profiles in place (the candidate and Live pages); without it a Récents row is a plain link. */
   onRecent: ((key: string) => void) | null;
   onRemove: (key: string) => void;
@@ -64,6 +66,8 @@ export interface SidebarProps {
 export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
   const { t } = useT();
   const [options, setOptions] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const recent = recentList(p.recentItems, p.recentActive, expanded);
   const set = (patch: Partial<LookupForm>) => p.onFormChange({ ...p.form, ...patch });
   const submit = (e: FormEvent) => { e.preventDefault(); if (p.form.character.trim() && !p.busy) p.onLookup(); };
   const pickSpec = (v: string) => {
@@ -144,19 +148,24 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
         ))}
       </nav>
 
-      {p.recent.length > 0 && (
+      {recent.rows.length > 0 && (
         <section className="side-recent" aria-labelledby="side-recent-title">
           <h2 className="side-label" id="side-recent-title">{t("shell.recent.title")}</h2>
           <ul>
-            {p.recent.map((r) => <Recent key={r.key} row={r} onRecent={p.onRecent} onRemove={p.onRemove} />)}
+            {recent.rows.map((r) => <Recent key={r.key} row={r} onRecent={p.onRecent} onRemove={p.onRemove} />)}
           </ul>
+          {recent.toggle && (
+            <button type="button" className="side-clear" aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
+              {expanded ? t("shell.recent.showLess") : t("shell.recent.showMore", { count: recent.hidden })}
+            </button>
+          )}
           <button type="button" className="side-clear" onClick={p.onClearAll}>{t("shell.recent.clearAll")}</button>
         </section>
       )}
 
       <div className="side-account">
         {p.controls.signOut && p.menu ? (
-          <UserMenu m={p.menu} lines={p.menu.exhausted ? [p.menu.exhausted] : p.account.lines} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
+          <UserMenu m={p.menu} lines={p.account.lines} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
         ) : (
           <LocalAccount title={p.account.title} controls={p.controls} watch={p.watch} onWatchToggle={p.onWatchToggle} onSetup={p.onSetup} onQuit={p.onQuit} />
         )}

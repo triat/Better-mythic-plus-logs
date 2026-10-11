@@ -4,7 +4,7 @@ import { makeT, tEn } from "../i18n/t.ts";
 import type { HistoryItem } from "../types.ts";
 import { LOCAL_STATUS, type StatusInfo } from "./hostedMode.ts";
 import { menuModel } from "./session.ts";
-import { accountView, navItems, recentRows } from "./shell.ts";
+import { accountView, navItems, recentList, recentRows } from "./shell.ts";
 
 const tFr = makeT(fr, "fr");
 const hosted: StatusInfo = { ...LOCAL_STATUS, hosted: true };
@@ -70,6 +70,39 @@ describe("recentRows", () => {
     expect(rows[0]!.name).toBe("Vachâman");
     expect(rows[0]!.href).toBe(`/candidate?${new URLSearchParams({ open: "eu|Name1-Realm|12" })}`);
     expect(rows.map((r) => r.active)).toEqual([false, true]);
+  });
+});
+
+describe("recentList", () => {
+  const many = Array.from({ length: 12 }, (_, i) => item(i));
+  test("collapsed: 8 rows, the rest counted, the toggle shown", () => {
+    const l = recentList(many, null, false);
+    expect(l.rows.map((r) => r.name)).toEqual(["Name0", "Name1", "Name2", "Name3", "Name4", "Name5", "Name6", "Name7"]);
+    expect(l.hidden).toBe(4);
+    expect(l.toggle).toBe(true);
+  });
+  test("an active entry beyond the 8th is added as an extra row", () => {
+    const l = recentList(many, "eu|Name10-Realm|12", false);
+    expect(l.rows).toHaveLength(9);
+    expect(l.rows[8]!.name).toBe("Name10");
+    expect(l.rows[8]!.active).toBe(true);
+    expect(l.hidden).toBe(3);
+  });
+  test("an active entry within the 8 adds nothing", () => {
+    const l = recentList(many, "eu|Name3-Realm|12", false);
+    expect(l.rows).toHaveLength(8);
+    expect(l.rows.filter((r) => r.active).map((r) => r.name)).toEqual(["Name3"]);
+  });
+  test("expanded: every entry, none hidden", () => {
+    const l = recentList(many, "eu|Name10-Realm|12", true);
+    expect(l.rows).toHaveLength(12);
+    expect(l.hidden).toBe(0);
+    expect(l.toggle).toBe(true);
+  });
+  test("8 or fewer: no toggle", () => {
+    const l = recentList(many.slice(0, 8), null, false);
+    expect(l).toMatchObject({ hidden: 0, toggle: false });
+    expect(l.rows).toHaveLength(8);
   });
 });
 

@@ -12,7 +12,7 @@ interface Props {
   pendingProposals: number | null;
   onOpen: () => void;
   onSignOut: () => void;
-  /** Under the name in the trigger: `accountView`'s lines (the quota line). */
+  /** Under the name in the trigger: `accountView`'s lines (the quota line); the red exhausted label replaces them. */
   lines: string[];
   /** The home page's top bar: the trigger is the avatar alone and the menu opens downward. */
   compact?: boolean;
@@ -37,15 +37,20 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut, lines, compac
   return (
     <div className="user-menu" ref={ref}>
       {compact ? (
-        <button type="button" className={"account-avatar" + (open ? " active" : "")} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} aria-label={m.name} title={m.handle}>
-          <Avatar src={m.avatarUrl} initials={m.initials} size={34} />
-        </button>
+        <>
+          {m.exhausted && <span className="mono quota-exhausted" title={t("header.quotaShare")}>{m.exhausted}</span>}
+          <button type="button" className={"account-avatar" + (open ? " active" : "")} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} aria-label={m.name} title={m.handle}>
+            <Avatar src={m.avatarUrl} initials={m.initials} size={34} />
+          </button>
+        </>
       ) : (
         <button type="button" className={"account-block" + (open ? " active" : "")} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} title={m.handle}>
           <Avatar src={m.avatarUrl} initials={m.initials} size={32} />
           <span className="account-id">
             <span className="account-name">{m.name}</span>
-            {lines.map((l) => <span key={l} className={"mono account-line " + m.quota.tone}>{l}</span>)}
+            {m.exhausted
+              ? <span className="mono account-line quota-exhausted" title={t("header.quotaShare")}>{m.exhausted}</span>
+              : lines.map((l) => <span key={l} className={"mono account-line " + m.quota.tone}>{l}</span>)}
           </span>
           <span className="account-caret" aria-hidden="true"><Icon name="chevron" size={16} /></span>
         </button>

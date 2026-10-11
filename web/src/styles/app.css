@@ -123,7 +123,12 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
 .live-dot.grey { background: var(--faint); }
 .live-dot.warn { background: var(--warn); }
-.live-dialog { position: absolute; right: 0; top: calc(100% + 8px); width: 420px; z-index: 20; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+.live-dialog { position: absolute; right: 0; top: calc(100% + 8px); width: 420px; max-width: calc(100vw - 32px); z-index: 20; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+/* In a page head the chip sits near the content's left edge: the dialog hangs from the head itself (not the chip),
+   opening rightwards from the content's left edge so it stays on screen at any width. */
+.page-head { position: relative; }
+.page-head .live-chip-wrap { position: static; }
+.page-head .live-dialog { left: 0; right: auto; max-width: 100%; }
 .live-dialog .section-title { margin-bottom: 8px; }
 .live-dialog p { margin: 0 0 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
 .live-dialog p:last-of-type { margin-bottom: 0; }
@@ -697,6 +702,7 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .account-id { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .account-name { font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-line { font-size: 12px; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-line.quota-exhausted { color: var(--red); }
 .account-caret { color: var(--label); transform: rotate(180deg); display: inline-flex; }
 .side-account .user-menu .menu { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; width: 280px; max-width: calc(100vw - 24px); }
 .account-local { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--border); }
@@ -745,6 +751,8 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .compare-pick-row { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 12px; border-radius: var(--radius); cursor: pointer; }
 .compare-pick-row:hover, .compare-pick-row.on { background: var(--card-2); }
 .compare-pick-row input { height: auto; accent-color: var(--link); }
+.compare-pick-row input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.compare-pick-row:has(input:focus-visible) { background: var(--card-2); }
 .compare-pick-row input:disabled + .recent-dot, .compare-pick-row:has(input:disabled) { opacity: .6; cursor: default; }
 .compare-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-soft); }
 
@@ -759,13 +767,18 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .home-top-a { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
 .home-top-a:hover { color: var(--text); }
 .home-top-a .nav-dot { margin-left: 0; width: 7px; height: 7px; }
-.home-top .user-menu .menu { top: calc(100% + 8px); max-width: calc(100vw - 24px); }
+/* The menu hangs from the top row's right edge, not the avatar's: when the nav wraps, the avatar can sit at the left
+   of its line and a menu anchored to it would leave the viewport. */
+.home-top-row { position: relative; }
+.home-top .user-menu { position: static; display: flex; align-items: center; gap: 10px; }
+.home-top .user-menu .menu { top: calc(100% + 8px); right: 0; max-width: calc(100vw - 32px); }
 .account-avatar { display: inline-flex; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
 .account-avatar .avatar { width: 34px; height: 34px; background: var(--card-3); font-size: 13px; }
 .account-avatar:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 .account-local-compact { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
 .account-local-compact .chip { height: 30px; padding: 0 12px; display: inline-flex; align-items: center; font-size: 13px; color: var(--text-soft); background: var(--card-2); border-color: var(--border-2); }
 .account-local-compact .chip-menu .menu { left: auto; right: 0; }
+.account-watch-note { font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-main { padding: 48px 24px 96px; }
 .home-col { display: flex; flex-direction: column; gap: 44px; }
 .home-hero, .home-pair { display: flex; flex-wrap: wrap; gap: 32px; align-items: stretch; }
@@ -781,6 +794,7 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .home-search-foot { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
 .home-search-foot .stepper { height: 34px; max-width: 100%; background: var(--card-2); border-color: var(--border-2); border-radius: var(--radius); }
 .home-hint { font-size: 13px; color: var(--label); min-width: 0; }
+.home-local { margin: 0; color: var(--faint); line-height: 1.6; overflow-wrap: anywhere; }
 .home-self { flex: 1 1 440px; min-width: 0; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
 .home-empty { justify-content: center; }
 .home-empty p { margin: 0; }

@@ -35,6 +35,8 @@ export type HomePageProps = SearchProps & AccountProps & {
   history: HistoryItem[];
   liveOn: boolean;
   self: SelfActions;
+  /** Local mode: where the credentials live (`status.envPath`, "" when unknown); null when hosted. */
+  envPath: string | null;
 };
 
 /**
@@ -157,6 +159,12 @@ function Search(p: HomePageProps) {
       </div>
       {p.busy && <div className="muted home-hint"><span className="spinner" /> {p.busy}</div>}
       {!p.sseConnected && <div className="faint home-hint" title={t("header.reconnecting")}>{t("header.liveDisconnected")}</div>}
+      {p.envPath !== null && (
+        <p className="faint home-hint home-local">
+          {p.controls.watch && <>{t("home.local.watch")}<br /></>}
+          <Around message={t("home.local.credentials")} params={{ path: <span className="mono">{p.envPath || t("home.local.unknownPath")}</span> }} />
+        </p>
+      )}
     </div>
   );
 }

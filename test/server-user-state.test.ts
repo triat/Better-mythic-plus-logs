@@ -36,7 +36,7 @@ beforeAll(async () => {
     index: join(dir, "index.html"),
     appJs: join(dir, "assets", "app.js"),
     appCss: join(dir, "assets", "app.css"),
-    whConfigJs: join(dir, "wh-config.js"),
+    whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2"),
   });
   hosted = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, assets });
   local = await runServer({ port: 0, open: false, hosted: false, assets });
@@ -117,7 +117,7 @@ describe("per-user history (hosted)", () => {
 
   test("history survives a server restart", async () => {
     hosted.stop(true);
-    const assets = async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets", "app.js"), appCss: join(dir, "assets", "app.css"), whConfigJs: join(dir, "wh-config.js") });
+    const assets = async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets", "app.js"), appCss: join(dir, "assets", "app.css"), whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2") });
     hosted = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, assets });
     const mine = await (await fetch(h("/api/history"), as(a))).json();
     expect(mine.items.length).toBe(1);

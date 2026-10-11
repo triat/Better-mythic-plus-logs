@@ -23,7 +23,7 @@ beforeAll(async () => {
   // Dummy credentials: nothing below may reach WCL; a regression fails at OAuth instead of spending points.
   process.env.WCL_CLIENT_ID = "bmpl-test";
   process.env.WCL_CLIENT_SECRET = "bmpl-test";
-  const assets = async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js") });
+  const assets = async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2") });
   local = await runServer({ port: 0, open: false, hosted: false, assets });
   hosted = await runServer({ port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, assets });
   const store = await getStore();

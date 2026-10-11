@@ -39,7 +39,7 @@ beforeAll(async () => {
     hosted: true,
     hostedConfig: { ...TEST_HOSTED_CONFIG, opsTokenSha256: sha256Hex(TOKEN) },
     rateLimits: { security: { limit: 2, windowMs: 60_000 } },
-    assets: async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js") }),
+    assets: async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2") }),
   });
   db = openHosted((await getStore())._db);
   member = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "123456789012345678", role: "member", username: "tom" });

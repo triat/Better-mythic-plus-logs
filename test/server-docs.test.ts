@@ -29,7 +29,7 @@ beforeAll(async () => {
       index: join(dir, "index.html"),
       appJs: join(dir, "assets", "app.js"),
       appCss: join(dir, "assets", "app.css"),
-      whConfigJs: join(dir, "wh-config.js"),
+      whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2"),
     }),
   });
 });
@@ -121,7 +121,7 @@ describe("GET /api/docs (hosted, anonymous)", () => {
         index: join(hdir, "index.html"),
         appJs: join(hdir, "assets/app.js"),
         appCss: join(hdir, "assets/app.css"),
-        whConfigJs: join(hdir, "wh-config.js"),
+        whConfigJs: join(hdir, "wh-config.js"), geistWoff2: join(hdir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(hdir, "fonts/GeistMono-Variable.woff2"),
       }),
     });
   });

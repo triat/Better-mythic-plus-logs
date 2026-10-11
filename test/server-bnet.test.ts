@@ -77,7 +77,7 @@ beforeAll(async () => {
   server = await runServer({
     port: 0, open: false, hosted: true, hostedConfig: TEST_HOSTED_CONFIG, fetchFn: fakeFetch,
     rateLimits: { auth: { limit: 1_000, windowMs: 60_000 } },
-    assets: async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js") }),
+    assets: async () => ({ index: join(dir, "index.html"), appJs: join(dir, "assets/app.js"), appCss: join(dir, "assets/app.css"), whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2") }),
   });
   raw = (await getStore())._db;
   db = openHosted(raw);

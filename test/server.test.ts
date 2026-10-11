@@ -25,7 +25,7 @@ beforeAll(async () => {
       index: join(dir, "index.html"),
       appJs: join(dir, "assets", "app.js"),
       appCss: join(dir, "assets", "app.css"),
-      whConfigJs: join(dir, "wh-config.js"),
+      whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2"),
     }),
   });
 });
@@ -91,8 +91,37 @@ describe("createStaticHandler", () => {
     expect(await handler("/api/status")).toBeNull();
   });
   test("503 when a listed file is missing on disk", async () => {
-    const handler = createStaticHandler(async () => ({ index: "/definitely/missing.html", appJs: "/x.js", appCss: "/x.css", whConfigJs: "/x.js" }));
+    const handler = createStaticHandler(async () => ({ index: "/definitely/missing.html", appJs: "/x.js", appCss: "/x.css", whConfigJs: "/x.js", geistWoff2: "/x.woff2", geistMonoWoff2: "/x.woff2" }));
     expect((await handler("/"))?.status).toBe(503);
+  });
+  test("the two Geist fonts are served as font/woff2 with an immutable cache, and 503 when not built", async () => {
+    const fdir = mkdtempSync(join(tmpdir(), "bmpl-fonts-"));
+    try {
+      const files = {
+        index: join(fdir, "index.html"),
+        appJs: join(fdir, "app.js"),
+        appCss: join(fdir, "app.css"),
+        whConfigJs: join(fdir, "wh-config.js"),
+        geistWoff2: join(fdir, "Geist-Variable.woff2"),
+        geistMonoWoff2: join(fdir, "GeistMono-Variable.woff2"),
+      };
+      for (const [k, p] of Object.entries(files)) writeFileSync(p, k);
+      const handler = createStaticHandler(async () => files);
+      for (const [p, body] of [["/fonts/Geist-Variable.woff2", "geistWoff2"], ["/fonts/GeistMono-Variable.woff2", "geistMonoWoff2"]]) {
+        const res = await handler(p!);
+        expect(res?.status).toBe(200);
+        expect(res?.headers.get("content-type")).toBe("font/woff2");
+        expect(res?.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+        expect(await res?.text()).toBe(body!);
+      }
+      expect((await handler("/"))?.headers.get("cache-control")).toBe("no-cache");
+      const unbuilt = createStaticHandler(async () => null);
+      for (const p of ["/fonts/Geist-Variable.woff2", "/fonts/GeistMono-Variable.woff2"]) {
+        expect((await unbuilt(p))?.status).toBe(503);
+      }
+    } finally {
+      rmSync(fdir, { recursive: true, force: true });
+    }
   });
   test("the pages the front resolves from the pathname are static routes (/me included)", async () => {
     const handler = createStaticHandler(async () => null);

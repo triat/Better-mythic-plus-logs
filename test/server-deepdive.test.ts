@@ -27,7 +27,7 @@ beforeAll(async () => {
       index: join(dir, "index.html"),
       appJs: join(dir, "assets", "app.js"),
       appCss: join(dir, "assets", "app.css"),
-      whConfigJs: join(dir, "wh-config.js"),
+      whConfigJs: join(dir, "wh-config.js"), geistWoff2: join(dir, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(dir, "fonts/GeistMono-Variable.woff2"),
     }),
   });
 });

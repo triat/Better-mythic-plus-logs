@@ -31,7 +31,7 @@ const assets = (d: string) => async () => ({
   index: join(d, "index.html"),
   appJs: join(d, "assets", "app.js"),
   appCss: join(d, "assets", "app.css"),
-  whConfigJs: join(d, "wh-config.js"),
+  whConfigJs: join(d, "wh-config.js"), geistWoff2: join(d, "fonts/Geist-Variable.woff2"), geistMonoWoff2: join(d, "fonts/GeistMono-Variable.woff2"),
 });
 
 beforeAll(async () => {

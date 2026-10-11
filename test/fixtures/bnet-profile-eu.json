@@ -1,0 +1,38 @@
+{
+  "_links": { "self": { "href": "https://eu.api.blizzard.com/profile/user/wow?namespace=profile-eu" } },
+  "id": 900001,
+  "wow_accounts": [
+    {
+      "id": 41001,
+      "characters": [
+        {
+          "character": { "href": "https://eu.api.blizzard.com/profile/wow/character/silverbough/thornwick?namespace=profile-eu" },
+          "name": "Thornwick",
+          "id": 70000101,
+          "realm": { "key": { "href": "https://eu.api.blizzard.com/data/wow/realm/9001?namespace=dynamic-eu" }, "name": "Silverbough", "id": 9001, "slug": "silverbough" },
+          "playable_class": { "key": { "href": "https://eu.api.blizzard.com/data/wow/playable-class/11?namespace=static-eu" }, "name": "Druid", "id": 11 },
+          "playable_race": { "name": "Night Elf", "id": 4 },
+          "gender": { "type": "MALE", "name": "Male" },
+          "faction": { "type": "ALLIANCE", "name": "Alliance" },
+          "level": 80
+        },
+        {
+          "character": { "href": "https://eu.api.blizzard.com/profile/wow/character/mistvale-keep/aelinora?namespace=profile-eu" },
+          "name": "Aelinora",
+          "id": 70000102,
+          "realm": { "name": "Mistvale Keep", "id": 9002, "slug": "mistvale-keep" },
+          "playable_class": { "name": "Priest", "id": 5 },
+          "level": 80
+        },
+        {
+          "character": { "href": "https://eu.api.blizzard.com/profile/wow/character/silverbough/pebblet?namespace=profile-eu" },
+          "name": "Pebblet",
+          "id": 70000103,
+          "realm": { "name": "Silverbough", "id": 9001, "slug": "silverbough" },
+          "playable_class": { "name": "Warrior", "id": 1 },
+          "level": 12
+        }
+      ]
+    }
+  ]
+}

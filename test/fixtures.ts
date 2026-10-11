@@ -40,3 +40,14 @@ export type ControlFixtureName = keyof typeof CONTROL_FILES;
 // Shape: { character: string; report: <raw WCL run report, trimmed to fights + the summary's composition and totalTime>; control: RawRunControl }.
 export const loadControlFixture = async (name: ControlFixtureName): Promise<any> =>
   JSON.parse(await Bun.file(path.join(dir, CONTROL_FILES[name])).text());
+
+const BNET_FILES = {
+  "profile-eu": "bnet-profile-eu.json",
+  "profile-us": "bnet-profile-us.json",
+  "status-valid": "bnet-status-valid.json",
+} as const;
+export type BnetFixtureName = keyof typeof BNET_FILES;
+// Hand-written from Blizzard's documented shapes (fictional names and ids): `/profile/user/wow`
+// (`wow_accounts[].characters[]`) and the character status endpoint (`{ id, is_valid }`).
+export const loadBnetFixture = async (name: BnetFixtureName): Promise<any> =>
+  JSON.parse(await Bun.file(path.join(dir, BNET_FILES[name])).text());

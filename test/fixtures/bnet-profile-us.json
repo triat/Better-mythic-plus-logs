@@ -1,0 +1,37 @@
+{
+  "_links": { "self": { "href": "https://us.api.blizzard.com/profile/user/wow?namespace=profile-us" } },
+  "id": 900001,
+  "wow_accounts": [
+    {
+      "id": 52001,
+      "characters": [
+        {
+          "name": "Brannoc",
+          "id": 80000201,
+          "realm": { "name": "Ironhollow", "id": 3101, "slug": "ironhollow" },
+          "playable_class": { "name": "Paladin", "id": 2 },
+          "level": 80
+        },
+        {
+          "name": "Zephyrine",
+          "id": 80000202,
+          "realm": { "name": "Ironhollow", "id": 3101, "slug": "ironhollow" },
+          "playable_class": { "name": "Mage", "id": 8 },
+          "level": 70
+        }
+      ]
+    },
+    {
+      "id": 52002,
+      "characters": [
+        {
+          "name": "Brannoc",
+          "id": 80000201,
+          "realm": { "name": "Ironhollow", "id": 3101, "slug": "ironhollow" },
+          "playable_class": { "name": "Paladin", "id": 2 },
+          "level": 80
+        }
+      ]
+    }
+  ]
+}

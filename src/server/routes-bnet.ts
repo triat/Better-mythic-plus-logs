@@ -17,6 +17,8 @@ import type { Route } from "./routes.ts";
 import { BNET_PICK_BODY, parseBody } from "./validate.ts";
 
 const BNET_COOKIE_PATH = "/auth/bnet";
+/** What the state store keeps for a nonce: the member's id with it, so the state only works for the member who started. */
+const bound = (userId: number, nonce: string): string => `${userId}:${nonce}`;
 
 /** What `/me?bnet=` tells the member after the callback (the front's `BNET_CODES`). */
 export type BnetCallbackCode = "pick" | "cancelled" | "state" | "scope" | "taken" | "empty" | "down";
@@ -25,9 +27,11 @@ export function bnetRoutes(rt: HostedRuntime): Route[] {
   const nonceCookieOpts = { maxAgeS: OAUTH_COOKIE_MAX_AGE_S, path: BNET_COOKIE_PATH, secure: rt.secure };
 
   return [
-    route("GET", "/auth/bnet/start", () => {
+    route("GET", "/auth/bnet/start", (_req, _url, ctx) => {
       const nonce = newNonce();
-      const state = rt.bnetStates.issue(nonce, Date.now());
+      // The state is bound to the member who started (bound(...)): a callback in a browser where someone else has
+      // signed in since is refused, so nobody links their Battle.net account to another member's bmpl account.
+      const state = rt.bnetStates.issue(bound(ctx.user!.id, nonce), Date.now());
       return redirect(bnetAuthorizeUrl(rt.config, state), [serializeCookie(BNET_COOKIE, nonce, nonceCookieOpts)]);
     }),
 
@@ -50,7 +54,7 @@ export function bnetRoutes(rt: HostedRuntime): Route[] {
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
       const nonce = parseCookies(req.headers.get("cookie")).get(BNET_COOKIE);
-      if (!code || !state || !nonce || !rt.bnetStates.consume(state, nonce, Date.now())) return done("state");
+      if (!code || !state || !nonce || !rt.bnetStates.consume(state, bound(user.id, nonce), Date.now())) return done("state");
 
       const token = await exchangeBnetCode(rt.config, code, rt.fetchFn);
       if (!token.ok) return blizzardFailure(token);
@@ -73,8 +77,15 @@ export function bnetRoutes(rt: HostedRuntime): Route[] {
       }
 
       const now = Date.now();
-      rt.db.bnet.link.put(user.id, account.accountId, account.battletag, now);
-      rt.audit.record("bnet_link", { detail: { battletag: account.battletag } });
+      try {
+        rt.db.bnet.link.put(user.id, account.accountId, account.battletag, now);
+      } catch (err) {
+        // Another member linked the same account while the regions were read (UNIQUE account_id).
+        if (err instanceof Error && err.message.includes("UNIQUE")) return done("taken");
+        throw err;
+      }
+      // No BattleTag in the audit row: an unlink must leave nothing from Blizzard behind (decision 8).
+      rt.audit.record("bnet_link");
       const candidates = mergeCandidates(lists);
       if (candidates.length === 0) {
         // The link stands, with no candidates: an older import must not resurface in the picker.

@@ -248,9 +248,9 @@ export function auditDetail(t: T, action: AuditAction, detail: Record<string, un
     case "account_delete":
       return str(detail.username); // the row's user is gone (userId null): the name is the only trace
     case "bnet_link":
-      return t("admin.audit.detail.bnetLink", { battletag: str(detail.battletag) || "—" });
-    case "bnet_character_removed": // reason: not_found | invalid | other_id | unchecked_30d, kept raw
-      return t("admin.audit.detail.bnetRemoved", { character: str(detail.character), reason: str(detail.reason) });
+      return t("admin.audit.detail.bnetLink");
+    case "bnet_character_removed": // reason: not_found | invalid | other_id | unchecked_30d, kept raw; no name (decision 8)
+      return t("admin.audit.detail.bnetRemoved", { reason: str(detail.reason) });
     case "characters_reset": // written by the launch migration in src/hosted/bnet-db.ts: `{ removed }`
       return t("admin.audit.detail.charactersReset", { count: num(detail.removed) });
     case "role_change":

@@ -150,7 +150,7 @@ describe("GET /auth/bnet/callback", () => {
     const imp = db.bnet.imports.get(user.id, Date.now())!;
     expect(imp.candidates.map((c) => `${c.region}:${c.name}`)).toEqual(["eu:Aelinora", "us:Brannoc", "eu:Thornwick", "us:Zephyrine", "eu:Pebblet"]);
     const row = db.audit.list({ actions: ["bnet_link"], before: null, limit: 1 })[0]!;
-    expect(row).toMatchObject({ userId: user.id, detail: { battletag: "Tom#1234" } });
+    expect(row).toMatchObject({ userId: user.id, detail: null }); // no BattleTag in the audit log (decision 8)
     // The settings are untouched until the pick.
     expect(db.settings.get(user.id).characters).toEqual([]);
   });
@@ -218,6 +218,55 @@ describe("GET /auth/bnet/callback", () => {
     // The owner relinking the same account is not "taken".
     fake.accountId = "777777";
     expect(codeOf((await link(owner.cookie)).cb)).toBe("pick");
+  });
+  test("linking a different account drops the first account's characters, which another member can then link", async () => {
+    const a = member();
+    fake.accountId = "555111";
+    expect(codeOf((await link(a.cookie)).cb)).toBe("pick");
+    expect((await fetch(u("/api/bnet/characters"), json(a.cookie, "PUT", { picks: [{ region: "eu", bnetId: 70000101 }] }))).status).toBe(200);
+    expect(db.settings.get(a.user.id).characters.map((c) => c.bnetId)).toEqual([70000101]);
+    // A links another account that has no characters: the first account's characters leave A's list.
+    fake.accountId = "555222";
+    fake.regions = { eu: 404, us: 404, kr: 404, tw: 404 };
+    expect(codeOf((await link(a.cookie)).cb)).toBe("empty");
+    expect(db.bnet.link.get(a.user.id)?.accountId).toBe("555222");
+    expect(db.settings.get(a.user.id).characters).toEqual([]);
+    // The first account is free again, and only its new holder owns its characters.
+    const b = member();
+    reset();
+    fake.accountId = "555111";
+    expect(codeOf((await link(b.cookie)).cb)).toBe("pick");
+    expect((await fetch(u("/api/bnet/characters"), json(b.cookie, "PUT", { picks: [{ region: "eu", bnetId: 70000101 }] }))).status).toBe(200);
+    expect(db.settings.get(b.user.id).characters.map((c) => c.bnetId)).toEqual([70000101]);
+    expect(db.settings.get(a.user.id).characters).toEqual([]);
+  });
+  test("the state works only for the member who started: another member's session is refused", async () => {
+    const a = member();
+    const start = await fetch(u("/auth/bnet/start"), { ...noRedirect, headers: { cookie: a.cookie } });
+    const state = new URL(start.headers.get("location")!).searchParams.get("state")!;
+    const nonce = cookieOf(start, "bmpl_bnet")!;
+    const b = member();
+    const cb = await fetch(u(`/auth/bnet/callback?code=${CODE}&state=${encodeURIComponent(state)}`), { ...noRedirect, headers: { cookie: `${b.cookie}; ${nonce}` } });
+    expect(codeOf(cb)).toBe("state");
+    expect(db.bnet.link.get(b.user.id)).toBeNull();
+    expect(db.bnet.link.get(a.user.id)).toBeNull();
+  });
+  test("taken when another member links the same account while the regions are read (no 500)", async () => {
+    const other = member();
+    const { cookie, user } = member();
+    fake.accountId = "666333";
+    // The EU answer arrives after another member linked the account.
+    const eu = profiles.eu;
+    profiles.eu = new Proxy(eu as object, { get(t, k) { if (k === "wow_accounts" && !db.bnet.link.get(other.user.id)) db.bnet.link.put(other.user.id, "666333", null, Date.now()); return Reflect.get(t, k); } });
+    try {
+      const { cb } = await link(cookie);
+      expect(codeOf(cb)).toBe("taken");
+      expect(nonceCleared(cb)).toBe(true);
+    } finally {
+      profiles.eu = eu;
+    }
+    expect(db.bnet.link.get(user.id)).toBeNull();
+    expect(db.bnet.link.byAccount("666333")).toBe(other.user.id);
   });
   test("empty: no character in any region; the link is stored, no import", async () => {
     const { cookie, user } = member();

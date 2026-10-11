@@ -14,7 +14,11 @@ export interface BnetRepo {
   link: {
     get(userId: number): BnetLink | null;
     byAccount(accountId: string): number | null;
-    /** Upserts the member's link (a new import refreshes the BattleTag); throws when another member holds `accountId`. */
+    /**
+     * Upserts the member's link (a new import refreshes the BattleTag); throws when another member holds `accountId`.
+     * Linking a different account first unlinks the old one (its import and its `bnet` characters go), so a member
+     * never keeps characters of an account they no longer hold (decision 5).
+     */
     put(userId: number, accountId: string, battletag: string | null, now: number): void;
   };
   imports: {
@@ -78,11 +82,17 @@ export function openBnet(db: Database): BnetRepo {
     if (kept.length !== all.length) charactersSet.run(JSON.stringify(kept), now, userId);
   });
 
+  const put = db.transaction((userId: number, accountId: string, battletag: string | null, now: number) => {
+    const current = linkGet.get(userId);
+    if (current && current.account_id !== accountId) unlink(userId, now);
+    linkPut.run(userId, accountId, battletag, now);
+  });
+
   return {
     link: {
       get(userId) { const r = linkGet.get(userId); return r ? link(r) : null; },
       byAccount: (accountId) => linkByAccount.get(accountId)?.user_id ?? null,
-      put(userId, accountId, battletag, now) { linkPut.run(userId, accountId, battletag, now); },
+      put(userId, accountId, battletag, now) { put(userId, accountId, battletag, now); },
     },
     imports: {
       put(userId, candidates, now) { importPut.run(userId, JSON.stringify(candidates), now); },

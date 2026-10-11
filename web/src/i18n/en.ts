@@ -732,7 +732,7 @@ export const en = {
         quota: "quota", budget: "instance budget", quotaRefused: "{what} · {used}/{limit} pts used, resets in {min} min",
         rateLimited: "{limit} per {window} s · retry in {retry} s",
         note: "note: “{note}”", sessionsEnded: "{n} session(s) ended",
-        bnetLink: "linked {battletag}", bnetRemoved: "{character} · {reason}",
+        bnetLink: "Battle.net account linked", bnetRemoved: "character removed · {reason}",
         charactersReset: "{count, plural, one {# manual character removed} other {# manual characters removed}}",
       },
     },

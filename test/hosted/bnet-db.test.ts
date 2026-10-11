@@ -25,6 +25,19 @@ const auditRows = (db: Database) =>
   ).all();
 
 describe("bnet link", () => {
+  test("put with a different account unlinks the old one first: its import and bnet characters go, other settings stay", () => {
+    const { hosted, bnet, ua } = setup();
+    bnet.link.put(ua.id, "123", "Tom#1234", 1000);
+    hosted.settings.update(ua.id, { characters: [bnetChar("Aelinora", 7), manual("Localone")], yourKey: 18 }, 1000);
+    bnet.imports.put(ua.id, [cand(9, "Pebblet")], 1000);
+    bnet.removed.add(ua.id, ["Gone-hyjal"]);
+    bnet.link.put(ua.id, "456", "Tom#1234", 2000);
+    expect(bnet.link.get(ua.id)).toEqual({ userId: ua.id, accountId: "456", battletag: "Tom#1234", linkedAt: 2000, removed: [] });
+    expect(bnet.link.byAccount("123")).toBeNull();
+    expect(bnet.imports.get(ua.id, 2000)).toBeNull();
+    expect(hosted.settings.get(ua.id).characters).toEqual([manual("Localone")]);
+    expect(hosted.settings.get(ua.id).yourKey).toBe(18);
+  });
   test("put then get; byAccount finds the owner; one account per member", () => {
     const { bnet, ua, ub } = setup();
     expect(bnet.link.get(ua.id)).toBeNull();

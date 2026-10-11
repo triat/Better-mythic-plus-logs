@@ -207,9 +207,12 @@ the data at 30 days, so the server checks: 60 seconds after start and then
 every 6 hours, each Battle.net character last confirmed more than 25 days
 ago is asked of Blizzard's character status endpoint. Still on the account
 with the same id → kept, checked time renewed; not found, `is_valid: false`
-or another character id → removed (audit `bnet_character_removed`, notice on
-`/me`); Blizzard unreachable, 429 or 5xx → kept and retried at the next
-round, until 30 days without a successful check remove it anyway. **Unlink**
+or another character id → removed (audit `bnet_character_removed` with the
+reason only, notice on `/me`); Blizzard unreachable, 429 or 5xx → kept and
+retried at the next round, until 30 days without a successful check remove
+it anyway (at the next round, so at most 6 hours late). The audit log keeps
+no BattleTag and no character name. Linking a different Battle.net account
+first unlinks the old one. **Unlink**
 (`DELETE /api/bnet`) deletes the link, any import and every Battle.net
 character of the list; account deletion does the same through the cascade.
 Nothing read from Battle.net is used for anything but "My characters". Settings → **Delete my account** (typing

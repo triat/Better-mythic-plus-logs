@@ -72,7 +72,7 @@ export async function checkBnetCharacters(deps: {
         counts.failed += r.failed;
         for (const x of r.removed) {
           audit.record("bnet_character_removed", {
-            userId: m.userId, target: `user ${m.userId}`, ip: null, at: now, detail: { character: label(x.c), reason: x.reason },
+            userId: m.userId, target: `user ${m.userId}`, ip: null, at: now, detail: { reason: x.reason }, // no character name: an unlink must leave nothing from Blizzard behind
           });
         }
       } catch (err) {

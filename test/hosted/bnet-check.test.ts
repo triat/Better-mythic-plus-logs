@@ -112,9 +112,9 @@ describe("checkBnetCharacters", () => {
     expect(writes()).toBe(1);
     expect(hosted.bnet.link.get(uid)!.removed).toEqual(["Gone-hyjal", "Invalid-hyjal", "Other-hyjal"]);
     expect(rows()).toEqual([
-      { at: NOW, user_id: uid, action: "bnet_character_removed", target: `user ${uid}`, detail: JSON.stringify({ character: "Gone-hyjal", reason: "not_found" }), ip: null },
-      { at: NOW, user_id: uid, action: "bnet_character_removed", target: `user ${uid}`, detail: JSON.stringify({ character: "Invalid-hyjal", reason: "invalid" }), ip: null },
-      { at: NOW, user_id: uid, action: "bnet_character_removed", target: `user ${uid}`, detail: JSON.stringify({ character: "Other-hyjal", reason: "other_id" }), ip: null },
+      { at: NOW, user_id: uid, action: "bnet_character_removed", target: `user ${uid}`, detail: JSON.stringify({ reason: "not_found" }), ip: null },
+      { at: NOW, user_id: uid, action: "bnet_character_removed", target: `user ${uid}`, detail: JSON.stringify({ reason: "invalid" }), ip: null },
+      { at: NOW, user_id: uid, action: "bnet_character_removed", target: `user ${uid}`, detail: JSON.stringify({ reason: "other_id" }), ip: null },
     ]);
   });
 
@@ -134,7 +134,7 @@ describe("checkBnetCharacters", () => {
     expect(r).toEqual({ checked: 2, kept: 0, removed: 1, failed: 1 });
     expect(hosted.settings.get(uid).characters).toEqual([bnetChar("Noshiidk", 2, 26)]);
     expect(hosted.bnet.link.get(uid)!.removed).toEqual(["Biwaasham-hyjal"]);
-    expect(rows().map((x) => x.detail)).toEqual([JSON.stringify({ character: "Biwaasham-hyjal", reason: "unchecked_30d" })]);
+    expect(rows().map((x) => x.detail)).toEqual([JSON.stringify({ reason: "unchecked_30d" })]);
   });
 
   test("a token failure ends the round: entries kept, except the ones past 30 days", async () => {
@@ -155,8 +155,8 @@ describe("checkBnetCharacters", () => {
     expect(hosted.bnet.link.get(users[0]!.id)!.removed).toEqual(["Stale-hyjal"]);
     expect(hosted.bnet.link.get(users[1]!.id)!.removed).toEqual(["Noshiidk-hyjal"]);
     expect(rows().map((x) => [x.user_id, x.detail])).toEqual([
-      [users[0]!.id, JSON.stringify({ character: "Stale-hyjal", reason: "unchecked_30d" })],
-      [users[1]!.id, JSON.stringify({ character: "Noshiidk-hyjal", reason: "unchecked_30d" })],
+      [users[0]!.id, JSON.stringify({ reason: "unchecked_30d" })],
+      [users[1]!.id, JSON.stringify({ reason: "unchecked_30d" })],
     ]);
   });
 

@@ -84,16 +84,23 @@ equals the WCL realm slug bmpl stores (`realmToSlug`), whether `http://localhost
 5. **One Battle.net account per member.** `user_bnet (user_id PK, account_id UNIQUE, battletag, linked_at)`.
    A callback whose account id is already linked to another member is refused (`bnet_taken`) and nothing is
    imported, so two members cannot both own the same characters. A new import by the same member replaces the
-   candidate list; the BattleTag is refreshed.
+   candidate list; the BattleTag is refreshed. Linking a *different* account first unlinks the old one (its
+   import and its `bnet` characters go, decision 8), so the old account's characters are free for whoever links
+   it next and never owned twice; a race on the same account between two members ends in `taken` (review,
+   2026-10-11). The `state` is bound to the member who started the link: a callback in a browser where another
+   member has signed in since is refused (`state`).
 
 6. **The 30-day rule, checked by the server.** (User, 2026-10-11: "Vérif. serveur".) Every 6 hours the hosted
    process takes the `bnet` characters whose `verifiedAt` is older than **25 days**, gets an application token
    (client credentials, kept in memory until it expires) and calls the character status endpoint. 200 with
    `is_valid: true` and the same id: `verifiedAt` = now. 404, `is_valid: false` or another id: the character
-   leaves the list (audit `bnet_character_removed`). Network error, 429 or 5xx: kept, retried at the next round.
+   leaves the list (audit `bnet_character_removed` with the reason only: no name, no BattleTag in the audit log, so
+   an unlink leaves nothing from Blizzard behind). Network error, 429 or 5xx: kept, retried at the next round.
    A character whose `verifiedAt` passes **30 days** without a successful check leaves the list anyway (the ToU's
    maximum), with the same audit row. The member sees the removal on `/me` ("no longer on your Battle.net
-   account, or not checked for 30 days: link again to bring it back").
+   account, or not checked for 30 days: link again to bring it back"). The rule is applied by the rounds: with
+   the 25-day window an entry is checked several times before 30 days, and one that reaches 30 days only through
+   failed checks leaves at the next round, at most 6 hours later (plus any downtime of the server).
 
 7. **Manual entries are removed at launch.** (User, 2026-10-11: "Supprimés au lancement".) A one-time
    migration deletes every `source: "manual"` entry from `user_settings.characters` on the first hosted start

@@ -25,7 +25,19 @@ describe("suggestionsOf", () => {
     const [a, b] = suggestionsOf([mine("Brewbrew", "tarren-mill")], [item("h1", "noshiidk-kelthuzad", 1, "Blood")],
       [known("noshiidk", "kelthuzad", { displayRealm: "Kel'Thuzad" })]);
     expect(a).toMatchObject({ name: "Brewbrew", realm: "Tarren Mill", fill: "Brewbrew-Tarren Mill", charClass: null, historyKey: null });
-    expect(b).toMatchObject({ name: "Noshiidk", realm: "Kel'Thuzad", fill: "Noshiidk-Kel'Thuzad", historyKey: "h1" });
+    expect(b).toMatchObject({ name: "Noshiidk", realm: "Kel'Thuzad", fill: "Noshiidk-Kelthuzad", historyKey: "h1" });
+  });
+  test("the fill is always rebuilt from the slug; a Raider.IO spelling of another shape is not even shown", () => {
+    const list = suggestionsOf([], [], [
+      known("brew", "azjol-nerub", { displayRealm: "Azjol-Nerub" }),
+      known("aggro", "aggra-portugues", { displayRealm: "Aggra (Português)" }),
+      known("ivan", "gordunni", { displayRealm: "Гордунни" }),
+    ]);
+    expect(list.map((s) => [s.realm, s.fill])).toEqual([
+      ["Azjol-Nerub", "Brew-Azjol Nerub"],
+      ["Aggra (Português)", "Aggro-Aggra Portugues"],
+      ["Gordunni", "Ivan-Gordunni"],
+    ]);
   });
   test("a character without a history tab takes its class from the cache; regions stay apart", () => {
     const list = suggestionsOf([mine("Mulgrim", "kazzak")], [], [
@@ -57,6 +69,10 @@ describe("matchSuggestions", () => {
     expect(fills("https://raider.io/characters/eu/silvermoon/Muleyoxo")).toEqual([]);
     expect(fills("muleyoxo-silvermoon")).toEqual([]);
     expect(fills("Muleyoxo-Tarren Mill")).toEqual([]);
+  });
+  test("the same Name-Realm in two regions stays listed, so the region can be picked", () => {
+    const twins = suggestionsOf([], [], [known("ragna", "ragnaros"), known("ragna", "ragnaros", { region: "us" })]);
+    expect(matchSuggestions(twins, "Ragna-Ragnaros").map((s) => s.region)).toEqual(["eu", "us"]);
   });
   test("at most SUGGEST_MAX rows", () => {
     const many = suggestionsOf([], [], Array.from({ length: 12 }, (_, i) => known(`mul${"abcdefghijkl"[i]}`, "hyjal")));

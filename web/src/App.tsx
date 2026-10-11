@@ -284,12 +284,16 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const [known, setKnown] = useState<KnownCharacter[]>([]);
   useEffect(() => {
     if (status.hosted) return;
-    void api.knownCharacters().then((r) => { if (r.ok) setKnown(r.characters); });
+    let stale = false;
+    void api.knownCharacters().then((r) => { if (r.ok && !stale) setKnown(r.characters); });
+    return () => { stale = true; };
   }, [status.hosted, tabs]);
   const suggestions = useMemo(() => suggestionsOf(settings.characters, tabs, known), [settings.characters, tabs, known]);
-  // A row with a history tab opens it (0 pts); any other is looked up in its own region, as Look up would.
+  // A row with a history tab opens it (0 pts); any other is looked up in its own region, as Look up would. Either way
+  // the region follows the row, so the next Look up of the same text does not search another region.
   const onSuggest = (s: Suggestion) => {
     setForm((f) => ({ ...f, character: s.fill }));
+    if (s.region !== regionRef.current) { updateSettings({ region: s.region }); regionRef.current = s.region; }
     if (s.historyKey) void showTab(s.historyKey);
     else if (!busy) void runLookup(formToRequest({ ...form, character: s.fill }, yourKey, s.region), false);
   };

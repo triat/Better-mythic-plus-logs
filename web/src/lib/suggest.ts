@@ -15,7 +15,7 @@ export interface Suggestion {
   region: Region;
   charClass: number | null;
   spec: string | null;
-  /** What the field gets: "Name-Realm", the form the server parses (a hyphenated slug would split at its last "-"). */
+  /** What the field gets: "Name-Realm" rebuilt from the slug, the form the server parses (it splits at the last "-"). */
   fill: string;
   /** The character's newest history tab: choosing the row opens it (0 pts) instead of looking the character up. */
   historyKey: string | null;
@@ -47,8 +47,10 @@ function fromHistory(it: HistoryItem): Suggestion | null {
 function fromCache(k: KnownCharacter): Suggestion | null {
   if (!isRegion(k.region)) return null;
   const s = make(k.displayName ?? k.name, k.realm, k.region, k.className ? CLASS_IDS.get(k.className) ?? null : null, k.spec, null);
-  // Raider.IO's own spelling of the realm ("Kel'Thuzad") beats the one rebuilt from the slug.
-  return s && k.displayRealm ? { ...s, realm: k.displayRealm, fill: `${s.name}-${k.displayRealm}` } : s;
+  // Raider.IO's own spelling of the realm ("Kel'Thuzad") is shown when it is the same realm in Latin letters; the fill
+  // keeps the one rebuilt from the slug, the only form the server parses back to that slug ("Azjol-Nerub" would split
+  // at its "-", "Aggra (Português)" fails the realm check, a Cyrillic name slugs to another realm).
+  return s && k.displayRealm && slugOf(k.displayRealm) === slugOf(k.realm) ? { ...s, realm: k.displayRealm } : s;
 }
 
 const present = <T>(v: T | null): v is T => v !== null;
@@ -67,9 +69,8 @@ export function suggestionsOf(characters: MyCharacter[], history: HistoryItem[],
     if (out.has(s.id)) continue;
     const h = hist.find((x) => x.id === s.id);
     const k = cache.find((x) => x.id === s.id);
-    const realm = k?.realm ?? s.realm;
     out.set(s.id, {
-      ...s, realm, fill: `${s.name}-${realm}`,
+      ...s, realm: k?.realm ?? s.realm,
       charClass: h?.charClass ?? s.charClass ?? k?.charClass ?? null,
       spec: h?.spec ?? s.spec ?? k?.spec ?? null,
       historyKey: h?.historyKey ?? null,
@@ -80,7 +81,8 @@ export function suggestionsOf(characters: MyCharacter[], history: HistoryItem[],
 
 /**
  * The rows for what is typed: names that start with it, or, past the first "-" or space, that name on realms that start
- * with the rest. No list for a Raider.IO link, nor once the field holds a full Name-Realm of one of them (canvas details).
+ * with the rest. No list for a Raider.IO link, nor once the field holds the full Name-Realm of the only one left (canvas
+ * details); the same Name-Realm in two regions stays listed, so the region can still be picked.
  */
 export function matchSuggestions(all: Suggestion[], typed: string, max = SUGGEST_MAX): Suggestion[] {
   const s = typed.trim();
@@ -89,7 +91,7 @@ export function matchSuggestions(all: Suggestion[], typed: string, max = SUGGEST
   const name = fold(cut < 0 ? s : s.slice(0, cut));
   const realm = cut < 0 ? null : slugOf(s.slice(cut + 1));
   const hits = all.filter((x) => (realm === null ? fold(x.name).startsWith(name) : fold(x.name) === name && slugOf(x.realm).startsWith(realm)));
-  if (realm && hits.some((x) => slugOf(x.realm) === realm)) return [];
+  if (realm && hits.length === 1 && slugOf(hits[0]!.realm) === realm) return [];
   return hits.slice(0, max);
 }
 

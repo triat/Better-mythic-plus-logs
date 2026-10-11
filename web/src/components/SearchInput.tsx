@@ -37,16 +37,20 @@ export function SearchInput(p: Props) {
   const change = (v: string) => { setHl(0); setDismissed(false); p.onChange(v); };
   const pick = (s: Suggestion) => { setAccepted(null); setDismissed(true); p.onPick(s); };
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // The Enter that ends an IME composition (Hangul, Chinese) confirms the text: it never picks a row.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       e.preventDefault();
       setHl((i) => (Math.min(i, rows.length - 1) + (e.key === "ArrowDown" ? 1 : rows.length - 1)) % rows.length);
     } else if (open && e.key === "Enter" && cur) {
       e.preventDefault();
       pick(cur);
-    } else if (open && e.key === "Tab" && !e.shiftKey && cur && ghost !== null) {
+    } else if (open && e.key === "Tab" && !e.shiftKey && cur && cur.fill !== p.value) {
+      // Tab completes with the highlighted row even when no grey rest shows ("ela" for "Élan-Hyjal"), as the footer says.
       e.preventDefault();
       setAccepted(cur);
       change(cur.fill);
+      setDismissed(true);
     } else if (open && e.key === "Escape") {
       setDismissed(true);
     } else if (e.key === "Enter" && accepted && p.value === accepted.fill) {
@@ -62,7 +66,7 @@ export function SearchInput(p: Props) {
           value={p.value}
           onChange={(e) => change(e.target.value)}
           onKeyDown={onKeyDown}
-          onFocus={() => setFocused(true)}
+          onFocus={() => { setFocused(true); setHl(0); }}
           onBlur={() => setFocused(false)}
           placeholder={p.placeholder}
           autoFocus
@@ -90,7 +94,7 @@ export function SearchInput(p: Props) {
               aria-selected={s === cur}
               className={"suggest-row" + (s === cur ? " on" : "")}
               // mousedown, not click: the input keeps its focus, so the list does not close before the pick.
-              onMouseDown={(e) => { e.preventDefault(); pick(s); }}
+              onMouseDown={(e) => { if (e.button !== 0) return; e.preventDefault(); pick(s); }}
               onMouseEnter={() => setHl(i)}
             >
               <span className="suggest-name">

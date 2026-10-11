@@ -130,9 +130,19 @@ describe("collectInputs — throughput / consistency / preparation / experience"
     // no avoidableDamage/damageTaken peer set on any run → damageSpread stays null regardless of sample size
     expect(five.consistency.damageSpread).toBeNull();
   });
+  test("healthstones count only on runs with a Warlock in the group", () => {
+    const stones = (healthstones: number, healthstonesAvailable?: boolean) =>
+      runWith({ consumables: { potions: 0, healthstones, ...(healthstonesAvailable === undefined ? {} : { healthstonesAvailable }) } });
+    // 3 and 1 with a Warlock; the 0s had none to use (no Warlock, or a payload saved before the flag existed).
+    const mixed = collectInputs(payloadWith([stones(3, true), stones(1, true), stones(0, false), stones(0)]), cfg);
+    expect(mixed.preparation.healthstones).toBe(2);
+    expect(mixed.preparation.potions).toBe(0); // potions still count on every run
+    const none = collectInputs(payloadWith([stones(0, false), stones(2, false)]), cfg);
+    expect(none.preparation.healthstones).toBeNull();
+  });
   test("preparation and experience", () => {
     const p = payloadWith(
-      [runWith({ consumables: { potions: 6, healthstones: 2 } }, { keyLevel: 16 }), runWith({ consumables: { potions: 2, healthstones: 0 } }, { keyLevel: 14 }), runWith({})],
+      [runWith({ consumables: { potions: 6, healthstones: 2, healthstonesAvailable: true } }, { keyLevel: 16 }), runWith({ consumables: { potions: 2, healthstones: 0, healthstonesAvailable: true } }, { keyLevel: 14 }), runWith({})],
       { targetLevel: 15 },
     );
     const i = collectInputs(p, cfg);

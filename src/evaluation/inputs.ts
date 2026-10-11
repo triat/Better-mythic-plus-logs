@@ -181,7 +181,9 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
   // --- preparation ---
   const withConsumables = sig.filter((s) => s.consumables !== null);
   const potions = mean(withConsumables.map((s) => s.consumables!.potions));
-  const healthstones = mean(withConsumables.map((s) => s.consumables!.healthstones));
+  // Healthstones come from a Warlock's soulwell: only the runs with one in the group (the player included) had any.
+  const withStones = withConsumables.filter((s) => s.consumables!.healthstonesAvailable === true);
+  const healthstones = mean(withStones.map((s) => s.consumables!.healthstones));
   const ilvl = payload.rio?.itemLevel ?? null;
 
   // --- experience ---

@@ -100,11 +100,14 @@ All inputs already exist in the lookup payload except the consumables:
 
 ```ts
 // RunSignals
-consumables: { potions: number; healthstones: number } | null; // null when player not in playerDetails
+consumables: { potions: number; healthstones: number; healthstonesAvailable?: boolean } | null; // null when player not in playerDetails
 ```
 
 Parsed from `Summary.data.playerDetails.{dps,healers,tanks}[].potionUse /
 healthstoneUse` (fixture S1: Mstercheif has `potionUse 6`, `healthstoneUse 3`).
+`healthstonesAvailable` (amended 2026-10-11, config version 6): a Warlock is in the
+run's `Summary.data.composition`, the character included; absent on payloads saved
+before it.
 
 ## Axes
 
@@ -170,7 +173,7 @@ runs with signals; damage: runs with a peer comparison), so the axis becomes
 | id | input | curve | weights |
 |---|---|---|---|
 | `potions` | mean `consumables.potions` per run (runs with consumables) | `[0,20] [2,55] [4,85] [6,100]` (fixtures: serious players use 5–6 combat potions per key) | 2 |
-| `healthstones` | mean `consumables.healthstones` | `[0,40] [1,70] [2,90] [3,100]` | 1 |
+| `healthstones` | mean `consumables.healthstones` over the runs with `healthstonesAvailable` (only a Warlock's soulwell offers them; n/a without such a run) | `[0,40] [1,70] [2,90] [3,100]` | 1 |
 | `ilvlVsLevel` | `rio.itemLevel − expectedIlvl(targetLevel)` (only if `rio.itemLevel`) | `[-20,10] [-10,45] [0,75] [10,100]` | 2 |
 
 `expectedIlvl` is a curve in the config, per season (unknown/absent slug →

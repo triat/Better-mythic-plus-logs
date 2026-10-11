@@ -35,6 +35,11 @@ export const fr: Mirror<typeof en> = {
     me: "Mes personnages",
     meCount: "Mes personnages · {n}",
     searchPlaceholder: "Nom-Serveur ou lien Raider.IO",
+    suggest: {
+      label: "Personnages connus",
+      keyTab: "Tab", keyEnter: "Entrée", keyEsc: "Échap",
+      move: "déplacer", complete: "compléter", open: "ouvrir", close: "fermer",
+    },
     specPlaceholder: "ex. Augmentation",
     metric: { title: "Métrique", auto: "auto", dps: "dps", hps: "hps" },
     region: { title: "Région", remembered: "Région · mémorisée", eu: "Europe", us: "Amériques & Océanie", kr: "Corée", tw: "Taïwan" },

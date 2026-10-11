@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
-import type { HistoryItem, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
+import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { realmName } from "./lib/format.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
 import { historyKeyFor, lookupQuery, mineRequest } from "./lib/me.ts";
+import { suggestionsOf } from "./lib/suggest.ts";
+import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
@@ -276,6 +278,25 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   }, [loadHistory, updateSettings, t, ownClientAction, settings.characters]);
 
   const onLookup = () => void runLookup(formToRequest(form, yourKey, region), false);
+
+  // The search suggestions (canvas "suggest"): history and My characters, plus, locally, the characters bmpl's own
+  // database has seen, read again whenever history changes. Hosted, that cache is every member's: never asked for.
+  const [known, setKnown] = useState<KnownCharacter[]>([]);
+  useEffect(() => {
+    if (status.hosted) return;
+    let stale = false;
+    void api.knownCharacters().then((r) => { if (r.ok && !stale) setKnown(r.characters); });
+    return () => { stale = true; };
+  }, [status.hosted, tabs]);
+  const suggestions = useMemo(() => suggestionsOf(settings.characters, tabs, known), [settings.characters, tabs, known]);
+  // A row with a history tab opens it (0 pts); any other is looked up in its own region, as Look up would. Either way
+  // the region follows the row, so the next Look up of the same text does not search another region.
+  const onSuggest = (s: Suggestion) => {
+    setForm((f) => ({ ...f, character: s.fill }));
+    if (s.region !== regionRef.current) { updateSettings({ region: s.region }); regionRef.current = s.region; }
+    if (s.historyKey) void showTab(s.historyKey);
+    else if (!busy) void runLookup(formToRequest({ ...form, character: s.fill }, yourKey, s.region), false);
+  };
   const onRefresh = () => {
     const tab = tabs.find((x) => x.key === activeKey);
     if (tab) void runLookup(tab.request, true);
@@ -529,6 +550,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
         menu={menu} pendingProposals={pendingProposals} onMenuOpen={() => void onMenuOpen()} onSignOut={onSignOut}
         live={{ state: live.state, connect: () => { track("live_connect"); return live.connect(); } }}
         meCount={settings.characters.length}
+        suggestions={suggestions} onSuggest={onSuggest}
       />
       {isMainPage && live.roster && (
         <LivePanel

@@ -2,7 +2,7 @@
 // Local single-user routes: they touch the machine (write .env, read the clipboard, exit the
 // process) and are therefore never registered in hosted mode.
 import { config } from "../config.ts";
-import { closeStore } from "../signals/store.ts";
+import { closeStore, getStore } from "../signals/store.ts";
 import { writeCredentials } from "../setup.ts";
 import { resetAuthCache } from "../wcl/auth.ts";
 import { jsonResponse } from "./http.ts";
@@ -35,12 +35,19 @@ async function handleWatchStart(req: Request): Promise<Response> {
   }
 }
 
+/** How many characters the search suggestions get from the cache (newest first); the field filters them in the page. */
+export const KNOWN_CHARACTERS_LIMIT = 500;
+
 export function localRoutes(): Route[] {
   return [
     route("POST", "/api/setup", handleSetup),
     route("POST", "/api/watch/start", handleWatchStart),
     route("POST", "/api/watch/stop", () => { stopWatcher(); return jsonResponse({ ok: true, active: false }); }),
     route("GET", "/api/watch/status", () => jsonResponse({ ok: true, ...watcherStatus() })),
+    // The search suggestions' local source: SQLite only, 0 WCL points. Never hosted: the cache is shared by every
+    // member there, so it would show what the others looked up.
+    route("GET", "/api/known-characters", async () =>
+      jsonResponse({ ok: true, characters: (await getStore()).knownCharacters(KNOWN_CHARACTERS_LIMIT) })),
     route("POST", "/api/quit", () => {
       stopWatcher();
       queueMicrotask(() => setTimeout(() => { closeStore(); process.exit(0); }, 120));

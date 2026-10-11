@@ -355,6 +355,7 @@ are registered in both modes; the local-only routes
 | POST | `/api/watch/start` | local mode only | Start clipboard watch |
 | POST | `/api/watch/stop` | local mode only | Stop clipboard watch |
 | GET | `/api/watch/status` | local mode only | Clipboard watch status |
+| GET | `/api/known-characters` | local mode only | The characters the database has seen (`rio_profile`, then `character_runs`), newest first, up to 500: the search suggestions' local source; 0 pts. Never hosted: that cache holds every member's lookups |
 | POST | `/api/quit` | local mode only | Stop the watcher and exit the process |
 | GET | `/auth/discord` | public | Start the Discord OAuth flow |
 | GET | `/auth/discord/callback` | public | Discord OAuth callback: admits, checks the guild gate, creates the session |

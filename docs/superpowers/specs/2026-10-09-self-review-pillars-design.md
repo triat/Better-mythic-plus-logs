@@ -64,6 +64,11 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    hosted members can no longer add characters by hand (local mode, which has no account, keeps the
    manual list). The first character of the list is the main one: the header links to it, and the home
    page offers to open it (from history at 0 pts; never an automatic lookup, which would spend points).
+   Battle.net linking implemented 2026-10-11 (spec `docs/superpowers/specs/2026-10-11-battlenet-linking-design.md`,
+   plan `docs/superpowers/plans/2026-10-11-battlenet-linking.md`). What changed: the cap is 20 in both modes
+   (was 5); the hosted list comes from Battle.net only (`source: "bnet"`, picked from the account's own list,
+   re-checked every 30 days), and `PUT /api/settings` can only reorder or remove; the manual entries of the
+   hosted lists are removed at launch (first start of the release). Local mode keeps the manual list.
 
 2. **A season of runs per character.** A new table keeps every run WCL's rankings return for a
    character this season (`character_runs`: region, character, encounter, report code, fight id,

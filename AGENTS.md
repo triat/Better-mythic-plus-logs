@@ -61,7 +61,7 @@ src/wcl/              OAuth2 + gql() + queries + meter     src/signals/         
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
 src/self/             self-review: game weeks, season sync, season view, "My characters"
-src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, feature-usage counters, cookie/state/Discord helpers, auth gate
+src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, feature-usage counters, cookie/state/Discord helpers, Battle.net link + 30-day check, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
 addon/bmpl/            in-game addon: draws the Live panel's pixel strip, mirrors web/src/lib/live/codec.ts — addon/README.md
@@ -84,6 +84,9 @@ Self-review phase 2 is implemented (spec
 `docs/superpowers/specs/2026-10-10-self-review-control-design.md`, plan
 `docs/superpowers/plans/2026-10-10-self-review-phase-2.md`; crowd-control table `mn-2.2` audited, per-spec
 reference collected on 894 runs across the eight dungeons, each weighing the same): crowd control in the Control pillar only (`pillarOnly`, never the verdict), `wcl_run_control`,
-fetched only for the member's own characters, and the vetting view for everyone else. Next: phase 3 and
-Battle.net linking (own specs), WCL items in issue #24. Unscheduled ideas live
+fetched only for the member's own characters, and the vetting view for everyone else. Battle.net linking is
+implemented (spec `docs/superpowers/specs/2026-10-11-battlenet-linking-design.md`, plan
+`docs/superpowers/plans/2026-10-11-battlenet-linking.md`; live check pending the release): hosted "My characters"
+(up to 20) come only from the member's linked Battle.net account, re-checked with Blizzard every 30 days, manual
+entries removed at launch; local mode keeps the manual list. Next: phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

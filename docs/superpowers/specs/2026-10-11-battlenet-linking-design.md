@@ -1,7 +1,8 @@
 # Battle.net linking: import My characters from the account — design
 
 Status: approved 2026-10-11 (cap 20 confirmed: "Validé, 20 c'est bien"); the operator added the Blizzard client to
-the production `.env` the same day. Parent spec:
+the production `.env` the same day. Implemented 2026-10-11 (plan
+`docs/superpowers/plans/2026-10-11-battlenet-linking.md`), live check pending the release. Parent spec:
 `docs/superpowers/specs/2026-10-09-self-review-pillars-design.md`, decision 1 ("Linking a Battle.net account
 (`wow.profile` scope, `GET /profile/user/wow`) imports the account's characters as `source: "bnet"` and is its own
 step with its own spec"). The user's answers of 2026-10-11 are decisions 2, 6 and 7.

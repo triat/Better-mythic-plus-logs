@@ -147,7 +147,8 @@ systemctl start bmpl
 
 `PRAGMA foreign_keys=ON` matters because SQLite does not enforce foreign
 keys by default per connection: every dependent table (sessions, history,
-settings, usage, this member's defensives proposals, their own WCL client)
+settings, usage, this member's defensives proposals, their own WCL client,
+their Battle.net link and import)
 is declared `ON DELETE CASCADE`, and without the pragma the `DELETE` would
 silently leave those rows orphaned instead of cascading.
 
@@ -284,6 +285,7 @@ small `backupAgeS`.
 |---|---|---|
 | `BMPL_SESSION_SECRET` | new value in `/opt/bmpl/.env`, `systemctl restart bmpl` | every session cookie stops verifying — everyone is signed out |
 | `BMPL_DISCORD_CLIENT_SECRET` | regenerate in the Discord application, edit `.env`, restart `bmpl` | new sign-ins fail until updated; existing sessions are unaffected |
+| `BMPL_BNET_CLIENT_SECRET` | generate a new secret for the client on https://community.developer.battle.net (API Access), edit `.env`, restart `bmpl` | new Battle.net links and imports fail (`/me?bnet=down`) and the 30-day check's application token is refused until updated; characters already linked stay on the lists — a check failure keeps them, but only until 30 days without a successful check, so update within days |
 | `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` (shared) | new client at https://www.warcraftlogs.com/api/clients, edit `.env`, restart `bmpl` | shared-client lookups and analyses fail (401) until updated; members with their own WCL client are unaffected |
 | `BMPL_ENCRYPTION_KEY` | `openssl rand -base64 32`, edit `.env`, restart `bmpl` | every previously stored member WCL client becomes undecryptable, but silently: `credentials()` returns `null` for the row and logs `wcl client of user N cannot be decrypted (key changed?)` (`src/hosted/wcl-clients.ts:117-126`), so the shared-vs-own scope check falls back to the shared client (`src/server/deepdive.ts:25-26`) — no request fails, and until they re-save their client, their lookups spend the shared budget and their own quota instead of their client. The member is told: the user menu reads "Your WCL client needs re-saving · using the shared budget" and the Settings card "Stored secret cannot be decrypted (the instance key changed) — save the client again" (`OwnClientView.usable`, `wcl-clients.ts`); saving it there fixes that one member |
 | `BMPL_OPS_TOKEN` | `openssl rand -base64 48`, edit `.env`, restart `bmpl`; update the token in the agent environment that reads `/api/ops/*` | only the tooling holding the old token (401 until updated). Unset, bmpl.riat.dev still accepts the bootstrap token from `BOOTSTRAP_OPS` in `src/hosted/config.ts`: set `BMPL_OPS_TOKEN` (or `off`) and then delete that constant |
@@ -303,7 +305,8 @@ ssh <vps> stat -c '%a %U:%G' /opt/bmpl/.env   # expect: 600 bmpl:bmpl
 
 **Check** — for `BMPL_SESSION_SECRET`, a previously signed-in browser tab is
 signed out on its next request; for the WCL secrets, `/api/health` stays
-`ok` and a fresh lookup succeeds; for the bucket key,
+`ok` and a fresh lookup succeeds; for the Blizzard secret, **Import again**
+on your own `/me` comes back to the picker; for the bucket key,
 `just deploy-restore-test` succeeds with the new key.
 
 **Reference** — [deploy/README.md § Deploying on a VPS, part 7](../deploy/README.md#deploying-on-a-vps), [docs/hosted.md § Environment](hosted.md#environment).
@@ -385,6 +388,8 @@ old — expected in the gap, not a bug.
 | Symptom | Cause | Fix |
 |---|---|---|
 | Login loop, lands back on `/?login=failed` | `BMPL_BASE_URL` doesn't match the redirect URL registered in the Discord application (must be exactly `<BMPL_BASE_URL>/auth/discord/callback`) | fix the mismatched one; check `ssh <vps> journalctl -u bmpl` for `discord login: <error>` |
+| A Battle.net link lands on `/me?bnet=down` ("Battle.net did not answer") | the redirect URI registered in the Blizzard client isn't exactly `<BMPL_BASE_URL>/auth/bnet/callback`, `BMPL_BNET_CLIENT_SECRET` is wrong or was rotated on the portal, or Blizzard is down `ssh <vps> journalctl -u bmpl` shows `bnet link: down`; `/api/ops/logs` has the same line with the Blizzard endpoint and its status (no audit row, so not in `/api/ops/errors`) — the token endpoint refusing the code usually means the redirect URI or the secret, a 5xx or a failed request an outage; fix the client or `.env` ([§7](#7-rotate-a-secret)), or wait |
+| A Battle.net link lands on `/me?bnet=empty` ("Battle.net returned no characters") | Blizzard listed no character in any region, usually because the member's Blizzard privacy option ("Game Data And Profile Privacy", account.blizzard.com/privacy) blocks third-party access | the member allows it and links again; the link itself is already stored, nothing to fix server-side |
 | `403 {"error":"Cross-site request refused"}` | the request's `Origin` isn't `BMPL_BASE_URL`'s origin, or `Sec-Fetch-Site` says cross-site/same-site | usually a misconfigured `BMPL_BASE_URL` or a proxy in front of Caddy rewriting `Origin`; fix the env var or the proxy |
 | `429` on a request | which limit: `/auth/*` 10/min/IP, lookups 30/min/member, deep-dive analyses 60/min/member, new-account signups 5/h/IP under open signup | expected under load; if it's one member hitting lookups, that's the per-member limit working as intended |
 | "web UI not built" (503 on `/`) | binary was compiled without `web/dist` | `just build-linux` (runs `web-build` first), then [§1](#1-ship-a-change) |

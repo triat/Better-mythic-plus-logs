@@ -24,10 +24,14 @@ const scoreText = (t: T, s: number | null): string => (s === null ? t("self.pill
 const BAR_PX_PER_POINT = 0.28;
 const pct = (locale: Locale, x: number): string => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(x);
 
-export interface TrendView { text: string; cls: "tone-good" | "tone-bad" | "muted" | "faint" }
+/** `missing`: no trend yet (under 3 scored runs on a side), what the grid's short "too few runs" stands for;
+ *  `hint` then explains the rule (the trend line's tooltip). */
+export interface TrendView { text: string; cls: "tone-good" | "tone-bad" | "muted" | "faint"; missing?: true; hint?: string }
 
 export function trendView(t: T, tr: PillarTrend | undefined): TrendView {
-  if (!tr || tr.direction === null || tr.delta === null) return { text: t("self.trend.notEnough", { count: tr?.recentRuns ?? 0 }), cls: "faint" };
+  if (!tr || tr.direction === null || tr.delta === null) {
+    return { text: t("self.trend.notEnough", { recent: tr?.recentRuns ?? 0, before: tr?.beforeRuns ?? 0 }), cls: "faint", missing: true, hint: t("self.trend.rule") };
+  }
   if (tr.direction === "same") return { text: t("self.trend.same"), cls: "muted" };
   return { text: t(`self.trend.${tr.direction}`, { delta: signed(tr.delta) }), cls: tr.direction === "up" ? "tone-good" : "tone-bad" };
 }
@@ -120,20 +124,26 @@ export function verdictLine(t: T, ev: Evaluation, informational: (key: AxisKey) 
 export const headLine = (t: T, season: SeasonView, now = Date.now()): string =>
   t("self.head.runs", { count: season.state.runs }) + (season.checkedAt !== null ? t("self.head.checked", { age: fmtAge(t, season.checkedAt, now) }) : "");
 
-export interface GridCell { text: string; band: Band; trend?: string }
+/** `hint`: the full sentence behind the short "too few runs" (the cell's tooltip). */
+export interface GridCell { text: string; band: Band; trend?: string; hint?: string }
 
-export function seasonHeader(t: T, season: SeasonView): { cells: GridCell[]; overall: GridCell; runs: string } {
+/** `trendNote`: what a trend is and what "too few runs" means, under the grid while a cell shows it. */
+export function seasonHeader(t: T, season: SeasonView): { cells: GridCell[]; overall: GridCell; runs: string; trendNote: string | null } {
   const pillars = season.season?.pillars ?? [];
+  const cells: GridCell[] = PILLAR_ORDER.map((key) => {
+    const s = pillars.find((p) => p.key === key)?.score ?? null;
+    const tr = trendView(t, season.trends.find((x) => x.key === key));
+    // The grid's cells are narrow: "too few runs" instead of the cards' longer sentence, which becomes the tooltip.
+    if (key === "control" && s === null) return { text: scoreText(t, s), band: scoreBand(s), trend: t("self.pillar.controlNote") };
+    return tr.missing
+      ? { text: scoreText(t, s), band: scoreBand(s), trend: t("self.trend.few"), hint: tr.text }
+      : { text: scoreText(t, s), band: scoreBand(s), trend: tr.text };
+  });
   return {
-    cells: PILLAR_ORDER.map((key) => {
-      const s = pillars.find((p) => p.key === key)?.score ?? null;
-      const tr = trendView(t, season.trends.find((x) => x.key === key));
-      // The grid's cells are narrow: "too few runs" instead of the cards' longer sentence.
-      const trend = key === "control" && s === null ? t("self.pillar.controlNote") : tr.cls === "faint" ? t("self.trend.few") : tr.text;
-      return { text: scoreText(t, s), band: scoreBand(s), trend };
-    }),
+    cells,
     overall: { text: scoreText(t, season.season?.overall ?? null), band: scoreBand(season.season?.overall ?? null) },
     runs: String(season.state.runs),
+    trendNote: cells.some((c) => c.hint) ? t("self.trend.rule") : null,
   };
 }
 
@@ -153,7 +163,7 @@ export interface PanelView {
   sub: string;
   avoidable: { id: number; name: string; pct: string; width: number }[];
   other: { pct: string; width: number } | null;
-  killers: { ability: string; deaths: string }[];
+  killers: { id: number | null; ability: string; deaths: string }[];
   casts: { id: number; name: string; ofText: string; mine: string }[];
   /** "Crowd control here" (canvas control, dungeon panel): most uses first. */
   control: { id: number; name: string; uses: string; enemies: string }[];
@@ -171,7 +181,7 @@ export function dungeonPanel(t: T, locale: Locale, row: DungeonRow): PanelView {
     sub: t("self.panel.sub", { count: row.runs, best }),
     avoidable: d.avoidable.map((a) => ({ id: a.id, name: a.name, pct: pct(locale, share(a.total)), width: Math.round(share(a.total) * 100) })),
     other: d.avoidableOther > 0 ? { pct: pct(locale, share(d.avoidableOther)), width: Math.round(share(d.avoidableOther) * 100) } : null,
-    killers: d.killers.map((k) => ({ ability: k.ability, deaths: t("self.panel.deaths", { count: k.deaths }) })),
+    killers: d.killers.map((k) => ({ id: k.id, ability: k.ability, deaths: t("self.panel.deaths", { count: k.deaths }) })),
     casts: d.casts.map((c) => ({ id: c.id, name: c.name, ofText: t("self.panel.castOf", { completed: c.completed, attempts: c.attempts }), mine: c.mine > 0 ? t("self.panel.mine", { n: c.mine }) : "" })),
     control: d.control.map((c) => ({ id: c.id, name: c.name, uses: t("self.control.uses", { count: c.uses }), enemies: c.enemies > 0 ? t("self.control.enemies", { count: c.enemies }) : "" })),
     controlNote: d.controlRuns === 0
@@ -190,7 +200,7 @@ export const runOf = (v: SeasonRunView): MPlusRun => ({
 });
 
 export interface RunDetailView {
-  deaths: { title: string; hits: { ability: string; share: string }[] }[];
+  deaths: { title: string; hits: { id: number | null; ability: string; share: string }[] }[];
   avoidable: { key: string; name: string; amount: string }[];
   casts: { id: number; name: string; ofText: string }[];
   kicked: string | null;
@@ -242,7 +252,7 @@ export function runDetail(t: T, locale: Locale, v: SeasonRunView): RunDetailView
       title: t("self.detail.deathAt", { at: fmtDuration(d.atMs) }),
       hits: hits.map((h) => {
         const name = h.ability ?? "?";
-        return { ability: h.friendly ? t("self.detail.self", { ability: name }) : name, share: t("self.detail.ofHits", { pct: pct(locale, sum > 0 ? h.amount / sum : 0) }) };
+        return { id: h.ability ? h.abilityId : null, ability: h.friendly ? t("self.detail.self", { ability: name }) : name, share: t("self.detail.ofHits", { pct: pct(locale, sum > 0 ? h.amount / sum : 0) }) };
       }),
     };
   });

@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import {
   MIN_WINDOW_RUNS, RECENT_WEEKS, SAME_BAND, TREND_BEFORE_WEEKS, TREND_RECENT_WEEKS, WEEKLY_BARS, WORK_ON_MAX,
-  changeOf, seasonView, trendOf,
+  changeOf, dungeonDetails, seasonView, trendOf,
 } from "../../src/self/season.ts";
 import type { SeasonRow } from "../../src/signals/store.ts";
+import type { DeathEvent, RunSignals } from "../../src/signals/types.ts";
 import { loadControlFixture, loadWclFixture } from "../fixtures.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
@@ -74,7 +75,7 @@ describe("seasonView", () => {
   test("trends: no arrow without 3 runs before; 8 weekly bars, oldest first", async () => {
     const v = seasonView(await input(), cfg);
     const t = v.trends.find((x) => x.key === "survival")!;
-    expect(t).toMatchObject({ delta: null, direction: null, recentRuns: 4 });
+    expect(t).toMatchObject({ delta: null, direction: null, recentRuns: 4, beforeRuns: 0 });
     expect(t.weekly).toHaveLength(8);
     expect(t.weekly.slice(0, 6)).toEqual([null, null, null, null, null, null]);
     expect(t.weekly[6]).toBe(t.weekly[7]);
@@ -88,7 +89,7 @@ describe("seasonView", () => {
     expect(d.details.avoidable).toEqual([{ id: 1264188, name: "Unstable Singularity", total: 4 * 10_724_909 }]);
     expect(d.details.avoidableOther).toBe(0);
     expect(d.details.avoidableTotal).toBe(4 * 10_724_909);
-    expect(d.details.killers).toEqual([{ ability: "Unstable Singularity", deaths: 4 }]);
+    expect(d.details.killers).toEqual([{ id: 1264188, ability: "Unstable Singularity", deaths: 4 }]);
     expect(d.details.casts.slice(0, 2)).toEqual([
       { id: 1310324, name: "Mending Void", attempts: 168, completed: 100, interrupted: 68, mine: 0 },
       { id: 1228176, name: "Lava Bolt", attempts: 160, completed: 44, interrupted: 108, mine: 4 },
@@ -150,5 +151,26 @@ describe("seasonView — crowd control", () => {
     expect(a.control).toBeNull();
     expect(typeof b.control).toBe("number");
     expect({ ...b, control: null as number | null }).toEqual(a);
+  });
+});
+
+describe("dungeonDetails — killers", () => {
+  const death = (killingHits: DeathEvent["killingHits"], cause: string | null = null): DeathEvent =>
+    ({ atMs: 0, cause, source: null, overkill: 0, inWipe: false, ...(killingHits ? { killingHits } : {}) });
+  const hit = (ability: string | null, abilityId: number | null) =>
+    ({ ability, abilityId, amount: 1, overkill: 0, friendly: false, instakill: false });
+  const run = (events: DeathEvent[]) =>
+    ({ deaths: { count: events.length, groupTotal: events.length, events }, avoidableDamage: null, interrupts: {} }) as unknown as RunSignals;
+
+  test("the killing hit's spell id, kept from the first death that has one; a name-only death has none", () => {
+    const k = dungeonDetails([
+      run([death(undefined, "Void Slash"), death([hit("Void Slash", 5)])]),
+      run([death([hit("Void Slash", 5)]), death(undefined, "Shadow Pool"), death([hit(null, 9)], "Lava Bolt")]),
+    ]).killers;
+    expect(k).toEqual([
+      { id: 5, ability: "Void Slash", deaths: 3 },
+      { id: null, ability: "Lava Bolt", deaths: 1 },
+      { id: null, ability: "Shadow Pool", deaths: 1 },
+    ]);
   });
 });

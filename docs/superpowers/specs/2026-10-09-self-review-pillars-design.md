@@ -102,7 +102,9 @@ computation `scoreAxis` does for an axis. The global score and the verdict are u
    are taken as fixed in UTC; a daylight-saving shift on Blizzard's side would misplace the runs of
    one hour, accepted. A pillar's weekly value is the median of its per-run scores; the trend compares
    the last two weeks with the four before. Fewer than 3 runs in a window: "not enough runs" instead of
-   an arrow.
+   an arrow. Amended 2026-10-11: that line gives both counts ("no trend yet: 4 runs lately and 1
+   before, 3 needed on each side") with the rule as its tooltip; the Dungeons grid keeps the short
+   "too few runs" in its cells, the counts as the cell's tooltip and the rule once under the grid.
 
 6. **Simple first, detail on demand.** Every number opens what it is made of, down to the run, the
    timestamp and the Warcraft Logs link. Wording stays template-based and short; the help page explains

@@ -69,7 +69,7 @@ function Pillar({ c }: { c: PillarCard }) {
     <div className="card pillar">
       <span className="label-caps">{c.title}</span>
       <span className={"pillar-score band-" + c.band}>{c.score}</span>
-      <span className={"pillar-trend " + c.trend.cls}>{c.trend.text}</span>
+      <span className={"pillar-trend " + c.trend.cls} title={c.trend.hint}>{c.trend.text}</span>
       {c.bars.length > 0 && (
         <span className="wk">{c.bars.map((b, i) => <i key={i} className={(b.last ? "last" : "") + (b.empty ? " empty" : "")} style={{ height: b.px }} />)}</span>
       )}

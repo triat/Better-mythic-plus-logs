@@ -27,7 +27,7 @@ const season = (over: Partial<SeasonView> = {}): SeasonView => ({
   character: { name: "Muleyoxo", realm: "silvermoon", region: "eu" }, zoneID: 55, targetLevel: 18, currentWeek: 0, checkedAt: 0,
   state: { runs: 142, analysed: 24, pending: 118, controlOnly: 0, failed: 0, estimate: 1200 },
   runs: [], recent: null, season: null,
-  trends: [{ key: "survival", delta: -9, direction: "down", recentRuns: 6, weekly: [null, null, null, null, null, null, 45, 40] }],
+  trends: [{ key: "survival", delta: -9, direction: "down", recentRuns: 6, beforeRuns: 8, weekly: [null, null, null, null, null, null, 45, 40] }],
   workOn: [], dungeons: [], ...over,
 });
 
@@ -39,11 +39,15 @@ describe("scoreBand (spec: 75 / 55 / 45)", () => {
 
 describe("trendView", () => {
   test("arrows, same, not enough", () => {
-    expect(trendView(tEn, { key: "damage", delta: 6, direction: "up", recentRuns: 5, weekly: [] })).toEqual({ text: "↗ +6", cls: "tone-good" });
-    expect(trendView(tEn, { key: "damage", delta: -9, direction: "down", recentRuns: 5, weekly: [] })).toEqual({ text: "↘ −9", cls: "tone-bad" });
-    expect(trendView(tEn, { key: "damage", delta: 2, direction: "same", recentRuns: 5, weekly: [] }).text).toBe("→ same");
-    expect(trendView(tEn, undefined).text).toBe("not enough runs for a trend (0 recently)");
-    expect(trendView(tFr, { key: "damage", delta: null, direction: null, recentRuns: 2, weekly: [] }).text).toBe("pas assez de runs pour une tendance (2 récemment)");
+    expect(trendView(tEn, { key: "damage", delta: 6, direction: "up", recentRuns: 5, beforeRuns: 7, weekly: [] })).toEqual({ text: "↗ +6", cls: "tone-good" });
+    expect(trendView(tEn, { key: "damage", delta: -9, direction: "down", recentRuns: 5, beforeRuns: 7, weekly: [] })).toEqual({ text: "↘ −9", cls: "tone-bad" });
+    expect(trendView(tEn, { key: "damage", delta: 2, direction: "same", recentRuns: 5, beforeRuns: 7, weekly: [] }).text).toBe("→ same");
+    expect(trendView(tEn, undefined)).toMatchObject({ text: "no trend yet: 0 runs lately and 0 before, 3 needed on each side", cls: "faint", missing: true });
+    expect(trendView(tEn, undefined).hint).toStartWith("Trend: the median score of the last 2 game weeks (lately)");
+    expect(trendView(tEn, { key: "damage", delta: null, direction: null, recentRuns: 1, beforeRuns: 5, weekly: [] }).text)
+      .toBe("no trend yet: 1 run lately and 5 before, 3 needed on each side");
+    expect(trendView(tFr, { key: "damage", delta: null, direction: null, recentRuns: 2, beforeRuns: 0, weekly: [] }).text)
+      .toBe("pas encore de tendance : 2 runs récemment et 0 avant, il en faut 3 de chaque côté");
   });
 });
 
@@ -85,7 +89,7 @@ describe("dungeonPanel", () => {
     pillars: { damage: 62, survival: 28, avoidable: 41, interrupts: 80, control: null }, overall: 53, best: { level: 18, timed: false },
     details: {
       avoidable: [{ id: 1, name: "Shadow Pool", total: 380 }, { id: 2, name: "Void Slash", total: 240 }], avoidableOther: 380, avoidableTotal: 1000,
-      killers: [{ ability: "Void Slash", deaths: 4 }],
+      killers: [{ id: 5, ability: "Void Slash", deaths: 4 }, { id: null, ability: "Shadow Pool", deaths: 1 }],
       casts: [{ id: 3, name: "Lava Bolt", attempts: 40, completed: 11, interrupted: 27, mine: 9 }],
       control: [{ id: 91800, name: "Gnaw", category: "stun", uses: 41, enemies: 44 }, { id: 49576, name: "Death Grip", category: "knock", uses: 33, enemies: 0 }], controlRuns: 9,
     },
@@ -95,7 +99,7 @@ describe("dungeonPanel", () => {
     expect(p.sub).toBe("21 runs · best +18 depleted");
     expect(p.avoidable.map((a) => [a.name, a.pct, a.width])).toEqual([["Shadow Pool", "38%", 38], ["Void Slash", "24%", 24]]);
     expect(p.other).toEqual({ pct: "38%", width: 38 });
-    expect(p.killers).toEqual([{ ability: "Void Slash", deaths: "4 deaths" }]);
+    expect(p.killers).toEqual([{ id: 5, ability: "Void Slash", deaths: "4 deaths" }, { id: null, ability: "Shadow Pool", deaths: "1 death" }]);
     expect(p.control).toEqual([{ id: 91800, name: "Gnaw", uses: "41 uses", enemies: "44 enemies" }, { id: 49576, name: "Death Grip", uses: "33 uses", enemies: "" }]);
     expect(p.controlNote).toBe("over 9 runs with crowd control · 9 analysed runs not measured yet");
     expect(dungeonPanel(tEn, "en", { ...row, details: { ...row.details, control: [], controlRuns: 0 } }).controlNote).toBe("No crowd control measured in this dungeon yet.");
@@ -118,7 +122,7 @@ describe("runDetail", () => {
       },
     } as unknown as SeasonRunView;
     const d = runDetail(tEn, "en", v)!;
-    expect(d.deaths).toEqual([{ title: "Death at 14:02", hits: [{ ability: "Void Slash", share: "71% of the hits" }, { ability: "Shadow Pool (self)", share: "29% of the hits" }] }]);
+    expect(d.deaths).toEqual([{ title: "Death at 14:02", hits: [{ id: 5, ability: "Void Slash", share: "71% of the hits" }, { id: 6, ability: "Shadow Pool (self)", share: "29% of the hits" }] }]);
     expect(d.avoidable.map((a) => a.name)).toEqual(["Shadow Pool", "other avoidable damage"]);
     expect(d.casts).toEqual([{ id: 7, name: "Lava Bolt", ofText: "3 of 12" }]);
     expect(d.kicked).toBe("You kicked 4 of the 9 interrupted.");
@@ -208,12 +212,25 @@ describe("me", () => {
 describe("seasonHeader", () => {
   test("short trend text in the grid's narrow cells; overall on the pillars' scale", () => {
     const s = season({ season: { runs: 40, overall: 62, pillars: [{ key: "survival", score: 41, evidence: [] }] },
-      trends: [{ key: "damage", delta: null, direction: null, recentRuns: 2, weekly: [] }, { key: "survival", delta: -9, direction: "down", recentRuns: 6, weekly: [] }] });
+      trends: [{ key: "damage", delta: null, direction: null, recentRuns: 2, beforeRuns: 0, weekly: [] }, { key: "survival", delta: -9, direction: "down", recentRuns: 6, beforeRuns: 8, weekly: [] }] });
     const h = seasonHeader(tEn, s);
     expect(h.cells[0]!.trend).toBe("too few runs");
     expect(h.cells[1]!.trend).toBe("↘ −9");
     expect(h.overall).toEqual({ text: "62", band: "mid" });
     expect(seasonHeader(tFr, s).cells[0]!.trend).toBe("trop peu de runs");
+  });
+  test("\"too few runs\" carries its counts as a tooltip and the rule under the grid", () => {
+    const keys = ["damage", "survival", "avoidable", "interrupts", "control"] as const;
+    const full = keys.map((key) => ({ key, delta: 4, direction: "up" as const, recentRuns: 6, beforeRuns: 8, weekly: [] }));
+    const all = season({ season: { runs: 40, overall: 62, pillars: keys.map((key) => ({ key, score: 60, evidence: [] })) }, trends: full });
+    expect(seasonHeader(tEn, all).trendNote).toBeNull();
+    expect(seasonHeader(tEn, all).cells.every((c) => c.hint === undefined)).toBe(true);
+    const one = season({ ...all, trends: [{ ...full[0]!, delta: null, direction: null, recentRuns: 4, beforeRuns: 1 }, ...full.slice(1)] });
+    const h = seasonHeader(tEn, one);
+    expect(h.cells[0]).toMatchObject({ trend: "too few runs", hint: "no trend yet: 4 runs lately and 1 before, 3 needed on each side" });
+    expect(h.cells[1]!.hint).toBeUndefined();
+    expect(h.trendNote).toStartWith("Trend: the median score of the last 2 game weeks (lately) against the 4 weeks before them");
+    expect(seasonHeader(tFr, one).trendNote).toStartWith("Tendance : le score médian des 2 dernières semaines de jeu");
   });
 });
 

@@ -50,7 +50,7 @@ describe("season figures", () => {
     checkedAt: 0, state: { runs: 142, analysed: 24, pending: 118, controlOnly: 0, failed: 0, estimate: 1200 },
     recent: { runs: 38, global: 60, pillars: [{ key: "damage", score: 68, evidence: [] }, { key: "survival", score: 41, evidence: [] }] },
     season: null,
-    trends: [{ key: "damage", delta: 6, direction: "up", recentRuns: 5, weekly: [] }],
+    trends: [{ key: "damage", delta: 6, direction: "up", recentRuns: 5, beforeRuns: 7, weekly: [] }],
   } as unknown as SeasonView;
   test("season line", () => {
     expect(seasonLine(tEn, season, 2 * 3_600_000)).toBe("142 runs this season · 118 not analysed · checked 2h ago");
@@ -59,7 +59,7 @@ describe("season figures", () => {
   });
   test("pillars of the main card and cells of a row", () => {
     expect(mainPillars(tEn, season).slice(0, 2).map((p) => [p.title, p.score, p.band, p.trend.text]))
-      .toEqual([["Damage", "68", "mid", "↗ +6"], ["Survival", "41", "bad", "not enough runs for a trend (0 recently)"]]);
+      .toEqual([["Damage", "68", "mid", "↗ +6"], ["Survival", "41", "bad", "no trend yet: 0 runs lately and 0 before, 3 needed on each side"]]);
     expect(rowCells(season).map((x) => x.text)).toEqual(["68", "41", "—", "—", "—"]);
     expect(rowCells(null).every((x) => x.band === "na")).toBe(true);
   });

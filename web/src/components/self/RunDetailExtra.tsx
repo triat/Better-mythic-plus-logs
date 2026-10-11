@@ -13,7 +13,7 @@ export function RunDetailExtra({ d }: { d: RunDetailView }) {
         {d.deaths.map((x, i) => (
           <div key={i}>
             <div className="label-caps" style={{ marginBottom: 4 }}>{x.title}</div>
-            {x.hits.map((h, j) => <div key={j} className="ab-row"><span>{h.ability}</span><span className="faint">{h.share}</span><span /></div>)}
+            {x.hits.map((h, j) => <div key={j} className="ab-row"><SpellLink id={h.id} name={h.ability} /><span className="faint">{h.share}</span><span /></div>)}
           </div>
         ))}
       </div>

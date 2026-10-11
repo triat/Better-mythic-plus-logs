@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Analyse du run — grand panneau latéral (Vachâman) · cadre B</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-p{background:#ECEEF2;color:#0E1014;border-color:#ECEEF2}
+.nd{font-size:10px;font-weight:600;letter-spacing:.04em;color:#B9AFFF;border:1px dashed #5B528F;border-radius:4px;padding:0 4px;white-space:nowrap}
+.stab{display:inline-flex;align-items:center;height:36px;padding:0 12px;border:0;background:transparent;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0A0C10; min-height: 100%; display: flex; flex-wrap: wrap; align-items: stretch">
+
+  <aside style="flex: 28 1 300px; min-width: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 14px; background: #0B0D11">
+    <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid #1E222C; opacity: 0.45">
+      <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 6px">bmpl</strong>
+      <span style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; border-radius: 12px; background: #161920; border: 1px solid #2A2F3B; color: #A0A7B4; font-size: 14px; box-sizing: border-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        Rechercher un joueur…<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #8D95A3; border: 1px solid #2A2F3B; border-radius: 6px; padding: 2px 6px">Ctrl K</span>
+      </span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 6px; opacity: 0.75">
+      <span style="width: 32px; height: 32px; border-radius: 9px; background: #0F2A4D; border: 1px solid #1F4D85; display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column"><strong style="font-size: 15px; color: #4FA3FF">Vachâman</strong><span style="font-size: 12px; color: #8D95A3">Runs · meilleur par donjon</span></span>
+    </div>
+    <span style="font-size: 12px; color: #5A6272; padding: 0 6px">Clique un run pour changer d'analyse</span>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{runs}}" as="r" hint-placeholder-count="8">
+        <button onClick="{{r.select}}" aria-pressed="{{r.on}}" style="display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 8px; border-radius: 10px; border: 1px solid {{r.border}}; background: {{r.bg}}; color: inherit; font: inherit; text-align: left; cursor: pointer; opacity: {{r.op}}">
+          <span style="width: 32px; height: 32px; border-radius: 8px; background: #1C2029; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #A0A7B4">{{r.abbr}}</span>
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <span style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
+            <span style="font-size: 12px; color: #8D95A3"><span class="m" style="color: #C9CED8">{{r.key}}</span> · <span style="color: {{r.deathColor}}">{{r.deaths}}</span></span>
+          </span>
+          <span class="m" style="font-size: 12px; font-weight: 600; color: {{r.parseColor}}">{{r.parse}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </aside>
+
+  <section role="dialog" aria-modal="true" aria-label="Analyse du run" style="flex: 72 1 960px; min-width: 0; box-sizing: border-box; background: #13161C; border-left: 1px solid #2A2F3B; box-shadow: -24px 0 60px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column">
+
+    <header style="padding: 20px 28px; border-bottom: 1px solid #232733; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <span style="width: 40px; height: 40px; border-radius: 10px; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #A0A7B4">{{cur.abbr}}</span>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <strong style="font-size: 22px; letter-spacing: -0.01em">{{cur.name}} <span class="m">{{cur.key}}</span> <span style="color: #3FCF8E; font-size: 16px">✓ +1</span></strong>
+          <span style="font-size: 13px; color: #8D95A3"><span class="m">{{cur.time}}</span> · il y a {{cur.when}} · Chaman Élémentaire</span>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 8px">
+          <a href="#" class="btn">WCL ↗</a>
+          <button class="btn" aria-label="Fermer" style="width: 34px; padding: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+      </div>
+      <sc-if value="{{analysed}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{stats}}" as="s" hint-placeholder-count="6">
+            <span style="display: inline-flex; align-items: baseline; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; background: #1C2029; border: 1px solid #2A2F3B; font-size: 12px; color: #8D95A3">{{s.k}} <strong class="m" style="font-size: 13px; color: {{s.color}}">{{s.v}}</strong></span>
+          </sc-for>
+        </div>
+      </sc-if>
+    </header>
+
+    <sc-if value="{{analysed}}" hint-placeholder-val="{{true}}">
+      <div style="padding: 22px 28px 32px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+        <div style="flex: 1 1 200px; max-width: 220px; display: flex; flex-direction: column; gap: 4px; padding: 14px 10px; border-radius: 14px; background: #0F1216; border: 1px solid #232733; box-sizing: border-box">
+          <span class="lbl" style="padding: 0 6px 8px">Sur la frise</span>
+          <sc-for list="{{chips}}" as="c" hint-placeholder-count="8">
+            <button onClick="{{c.toggle}}" aria-pressed="{{c.on}}" style="display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 6px; border-radius: 8px; border: 0; background: {{c.rowBg}}; color: {{c.fg}}; font: inherit; font-size: 13px; text-align: left; cursor: pointer">
+              <span style="width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid {{c.boxBorder}}; background: {{c.boxBg}}; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #0E1014; font-weight: 800; box-sizing: border-box">{{c.tick}}</span>
+              <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+                <span style="display: flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: {{c.swR}}; background: {{c.sw}}; border: 1.5px {{c.swStyle}} {{c.swB}}; flex-shrink: 0; box-sizing: border-box"></span>{{c.label}}</span>
+                <sc-if value="{{c.nd}}" hint-placeholder-val="{{false}}"><span class="nd" style="align-self: flex-start">nouvelle donnée</span></sc-if>
+              </span>
+              <span class="m" style="font-size: 12px; color: #8D95A3">{{c.count}}</span>
+            </button>
+          </sc-for>
+          <span style="font-size: 11px; color: #5A6272; padding: 8px 6px 0; line-height: 1.4">Les couches en pointillés sont des propositions : bmpl ne récupère pas encore ces données.</span>
+        </div>
+
+        <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+          <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #C9CED8"><strong style="color: #ECEEF2">3 morts, dont une évitable</strong> : à 13:45, Astral Shift était prêt et n'a pas servi. Aucune potion de soin sur le run.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 10px">
+              <span></span>
+              <div style="position: relative; height: 14px">
+                <sc-for list="{{ticks}}" as="t" hint-placeholder-count="7">
+                  <span class="m" style="position: absolute; left: {{t.left}}%; transform: translateX({{t.shift}}); font-size: 11px; color: #5A6272">{{t.label}}</span>
+                </sc-for>
+              </div>
+            </div>
+            <sc-for list="{{lanes}}" as="l" hint-placeholder-count="3">
+              <div style="display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 10px; align-items: center">
+                <span style="font-size: 12px; color: #A0A7B4; line-height: 1.2">{{l.label}}</span>
+                <div style="position: relative; height: 36px; border-radius: 6px; background: #0F1216; border: 1px {{l.bstyle}} #2A2F3B">
+                  <sc-for list="{{ticks}}" as="t" hint-placeholder-count="7"><span style="position: absolute; left: {{t.left}}%; top: 0; bottom: 0; width: 1px; background: #1C2029"></span></sc-for>
+                  <sc-if value="{{l.hasNote}}" hint-placeholder-val="{{false}}"><span style="position: absolute; left: 10px; top: 10px; font-size: 12px; color: #8D95A3">{{l.note}}</span></sc-if>
+                  <sc-for list="{{l.bars}}" as="b" hint-placeholder-count="2">
+                    <span title="{{b.title}}" style="position: absolute; left: {{b.left}}%; width: {{b.w}}%; top: 12px; height: 12px; border-radius: 4px; background: {{b.bg}}; border: 1px {{b.bs}} {{b.bc}}; box-sizing: border-box"></span>
+                  </sc-for>
+                  <sc-for list="{{l.marks}}" as="k" hint-placeholder-count="3">
+                    <button onClick="{{k.select}}" aria-label="{{k.title}}" style="position: absolute; left: calc({{k.left}}% - 9px); top: 8px; width: 18px; height: 18px; padding: 0; border-radius: {{k.r}}; background: {{k.bg}}; border: 2px {{k.bs}} {{k.bc}}; box-shadow: {{k.ring}}; cursor: {{k.cursor}}; box-sizing: border-box"></button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{noLanes}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 13px; color: #8D95A3; padding: 12px 0">Coche au moins une couche à gauche pour remplir la frise.</span>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+            <div style="display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 14px; padding: 14px 16px; border-radius: 12px; background: {{sel.bg}}; border: 1px solid {{sel.border}}">
+              <span class="m" style="font-size: 16px; font-weight: 700; color: {{sel.color}}">{{sel.t}}</span>
+              <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+                <strong style="font-size: 15px">{{sel.title}}</strong>
+                <span style="font-size: 13px; color: #C9CED8">{{sel.hits}}</span>
+                <span style="font-size: 13px; color: #A0A7B4">{{sel.state}}</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 16px">
+            <div style="flex: 3 1 320px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+              <span class="lbl" style="margin-bottom: 2px">Moments clés</span>
+              <sc-for list="{{moments}}" as="mo" hint-placeholder-count="4">
+                <button onClick="{{mo.select}}" style="display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 8px 10px; border-radius: 8px; border: 1px solid {{mo.border}}; background: {{mo.bg}}; color: inherit; font: inherit; text-align: left; cursor: {{mo.cursor}}">
+                  <span class="m" style="font-size: 12px; color: {{mo.color}}">{{mo.t}}</span>
+                  <span style="font-size: 13px; color: #C9CED8; line-height: 1.4">{{mo.text}}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="flex: 2 1 240px; display: flex; flex-direction: column; gap: 10px">
+              <span class="lbl" style="margin-bottom: 2px">Défensifs utilisés / possibles</span>
+              <sc-for list="{{defs}}" as="d" hint-placeholder-count="4">
+                <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 40px; gap: 8px; align-items: center; font-size: 13px">
+                  <span style="color: #C9CED8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.name}}</span>
+                  <span style="height: 6px; border-radius: 999px; background: #232733"><span style="display: block; height: 6px; width: {{d.pct}}%; border-radius: 999px; background: {{d.color}}"></span></span>
+                  <span class="m" style="text-align: right; color: #A0A7B4">{{d.v}}</span>
+                </div>
+              </sc-for>
+              <span class="lbl" style="margin-top: 10px">Ce qui l'a tué</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #1C2029; border: 1px solid #2A2F3B">Ground Pound</span>
+                <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #1E1416; border: 1px solid #4A2228; color: #FF9C94">Storm Strikes</span>
+                <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #1C2029; border: 1px solid #2A2F3B">Spark Step</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; gap: 4px; border-bottom: 1px solid #232733">
+              <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+                <button class="stab" onClick="{{t.pick}}" aria-pressed="{{t.on}}" style="color: {{t.fg}}; border-bottom: 2px solid {{t.line}}">{{t.label}}</button>
+              </sc-for>
+            </div>
+            <span style="font-size: 13px; color: #A0A7B4; line-height: 1.5; padding: 4px 2px">{{tabText}}</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{notAnalysed}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 32px 28px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+        <div style="flex: 1 1 420px; display: flex; flex-direction: column; gap: 6px">
+          <strong style="font-size: 17px">Ce run n'est pas encore analysé</strong>
+          <span style="font-size: 14px; color: #A0A7B4; line-height: 1.5">Déjà connu : {{cur.deaths}} · parse <span class="m">{{cur.parse}}</span>. L'analyse ajoute la frise, la cause de chaque mort et les défensifs disponibles.</span>
+        </div>
+        <button class="btn btn-p" style="height: 40px">Analyser · 3 pts</button>
+      </div>
+    </sc-if>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { run: 'TS', ev: 'd2', tab: 'spells', layers: { deaths: true, dispo: true, cd: true, casts: false, avoid: false, kicks: false, ctrl: false, boss: false } };
+  }
+  renderVals() {
+    const DUR = 1831;
+    const pct = (s) => +(s / DUR * 100).toFixed(2);
+    const pc = (p) => p >= 95 ? '#FF8000' : p >= 75 ? '#A335EE' : p >= 50 ? '#3D8BFF' : p >= 25 ? '#1EFF00' : '#8A8F98';
+    const RUNS = [
+      ['TS', 'Temple of Sethraliss', '+20', '30:31', 3, 72.2, '22 h', true],
+      ['VA', 'Voidscar Arena', '+19', '28:44', 0, 68.3, '4 j'],
+      ['KR', 'Kings’ Rest', '+20', '31:33', 0, 64.4, '1 j'],
+      ['AF', 'Altar of Fangs', '+19', '28:19', 0, 61.0, '7 h'],
+      ['RL', 'Ruby Life Pools', '+19', '26:52', 0, 56.7, '6 j'],
+      ['BV', 'The Blinding Vale', '+20', '28:38', 1, 47.1, '3 h'],
+      ['DN', 'Den of Nalorakk', '+20', '31:22', 1, 38.3, '1 j'],
+      ['MR', 'Murder Row', '+20', '29:32', 0, 23.0, '23 h'],
+    ];
+    const runs = RUNS.map(([id, name, key, time, d, parse, when, analysed]) => {
+      const on = this.state.run === id;
+      return {
+        id, abbr: id, name, key, time, when, on, analysed: !!analysed,
+        deaths: d === 0 ? '0 mort' : d === 1 ? '1 mort' : d + ' morts', deathColor: d >= 2 ? '#F2665C' : d === 1 ? '#C9CED8' : '#8D95A3',
+        parse: String(parse).replace('.', ',') + ' %', parseColor: pc(parse),
+        bg: on ? '#1C2029' : 'transparent', border: on ? '#3A4152' : 'transparent', op: on ? '1' : '0.55',
+        select: () => this.setState({ run: id }),
+      };
+    });
+    const r = runs.find((x) => x.on) || runs[0];
+    const cur = { abbr: r.abbr, name: r.name, key: r.key, time: r.time, when: r.when, deaths: r.deaths, parse: r.parse };
+    const stats = [
+      { k: 'Morts', v: '3', color: '#F2665C' },
+      { k: 'DTPS', v: '+14 %', color: '#F59E5B' },
+      { k: 'Évitable', v: '−100 %', color: '#5AB8F0' },
+      { k: 'Kicks', v: '37/146', color: '#ECEEF2' },
+      { k: 'Dispels', v: '8', color: '#ECEEF2' },
+      { k: 'Parse', v: '72,2 %', color: '#3D8BFF' },
+    ];
+    const L = this.state.layers;
+    const toggle = (k) => () => this.setState({ layers: { ...L, [k]: !L[k] } });
+    const pick = (id) => () => this.setState({ ev: id });
+    const DEATHS = [
+      { id: 'd1', s: 113, t: '1:53', title: 'Mort · Ground Pound', hits: 'Ground Pound 71 % · Slither Strike 29 %', state: 'Astral Shift en recharge (encore 41 s) · dispo : 2 potions de soin, Earth Elemental', bad: false },
+      { id: 'd2', s: 825, t: '13:45', title: 'Mort évitable · Storm Strikes', hits: 'Storm Strikes 100 % du coup fatal', state: 'Astral Shift DISPONIBLE et non utilisé · 2 potions de soin dispo · Earth Elemental en recharge (94 s)', bad: true },
+      { id: 'd3', s: 1070, t: '17:50', title: 'Mort · Spark Step', hits: 'Spark Step 62 % · Release Charge 38 %', state: 'Astral Shift en recharge (encore 32 s) · dispo : 2 potions de soin, Earth Elemental', bad: false },
+    ];
+    const ring = (id) => this.state.ev === id ? '0 0 0 4px #3A4152' : 'none';
+    const LAYERS = [
+      { k: 'deaths', label: 'Morts', count: '3', sw: '#F2665C', swB: '#F2665C', swStyle: 'solid', swR: '50%' },
+      { k: 'dispo', label: 'Défensif dispo à la mort', count: '1/3', sw: '#F59E5B', swB: '#F59E5B', swStyle: 'solid', swR: '50%' },
+      { k: 'cd', label: 'Recharges majeures', count: '3', sw: '#5A6272', swB: '#8D95A3', swStyle: 'solid', swR: '2px' },
+      { k: 'casts', label: 'Casts de défensifs', count: '13', nd: true, sw: 'transparent', swB: '#B9AFFF', swStyle: 'dashed', swR: '50%' },
+      { k: 'avoid', label: 'Dégâts évitables', count: '0', nd: true, sw: 'transparent', swB: '#5AB8F0', swStyle: 'dashed', swR: '2px' },
+      { k: 'kicks', label: 'Sorts passés', count: '—', nd: true, sw: 'transparent', swB: '#F59E5B', swStyle: 'dashed', swR: '50%' },
+      { k: 'ctrl', label: 'Contrôle', count: '—', nd: true, sw: 'transparent', swB: '#8CCBF2', swStyle: 'dashed', swR: '2px' },
+      { k: 'boss', label: 'Boss · Bloodlust', count: '—', nd: true, sw: 'transparent', swB: '#C9CED8', swStyle: 'dashed', swR: '2px' },
+    ];
+    const chips = LAYERS.map((c) => {
+      const on = !!L[c.k];
+      return { ...c, nd: !!c.nd, on, toggle: toggle(c.k), tick: on ? '✓' : '', boxBg: on ? '#ECEEF2' : 'transparent', boxBorder: on ? '#ECEEF2' : '#5A6272', rowBg: on ? '#1C2029' : 'transparent', fg: on ? '#ECEEF2' : '#8D95A3' };
+    });
+    const mk = (o) => ({ r: '50%', bs: 'solid', ring: 'none', cursor: 'pointer', select: () => {}, ...o });
+    const lane = (o) => ({ bstyle: 'solid', hasNote: false, note: '', bars: [], marks: [], ...o });
+    const lanes = [];
+    if (L.deaths) lanes.push(lane({ label: 'Morts', marks: DEATHS.map((d) => mk({ left: pct(d.s), title: d.t + ' ' + d.title, bg: d.bad ? '#F2665C' : '#8D95A3', bc: d.bad ? '#F2665C' : '#8D95A3', ring: ring(d.id), select: pick(d.id) })) }));
+    if (L.dispo) lanes.push(lane({ label: 'Défensif majeur dispo', marks: DEATHS.map((d) => mk({ left: pct(d.s), title: d.bad ? 'Astral Shift disponible' : 'Aucun défensif majeur disponible', bg: d.bad ? '#F59E5B' : 'transparent', bc: d.bad ? '#F59E5B' : '#5A6272', ring: ring(d.id), select: pick(d.id) })) }));
+    if (L.cd) lanes.push(lane({ label: 'Recharges majeures', bars: [
+      { left: pct(113), w: +(41 / DUR * 100).toFixed(2), bg: '#3A4152', bs: 'solid', bc: '#5A6272', title: 'Astral Shift en recharge 41 s après 1:53' },
+      { left: pct(825), w: +(94 / DUR * 100).toFixed(2), bg: '#2A2F3B', bs: 'solid', bc: '#5A6272', title: 'Earth Elemental en recharge 94 s après 13:45' },
+      { left: pct(1070), w: +(32 / DUR * 100).toFixed(2), bg: '#3A4152', bs: 'solid', bc: '#5A6272', title: 'Astral Shift en recharge 32 s après 17:50' },
+    ] }));
+    if (L.casts) lanes.push(lane({ label: 'Casts de défensifs · illustratif', bstyle: 'dashed', marks: [300, 760, 1240, 1600].map((s) => mk({ left: pct(s), title: 'Illustration — position fictive', bg: 'transparent', bc: '#B9AFFF', bs: 'dashed', cursor: 'default' })) }));
+    if (L.avoid) lanes.push(lane({ label: 'Dégâts évitables', bstyle: 'dashed', hasNote: true, note: '0 dégât évitable mesuré sur ce run — horodatage : nouvelle donnée' }));
+    if (L.kicks) lanes.push(lane({ label: 'Sorts passés · illustratif', bstyle: 'dashed', marks: [420, 980, 1500].map((s) => mk({ left: pct(s), title: 'Illustration — position fictive', bg: 'transparent', bc: '#F59E5B', bs: 'dashed', cursor: 'default' })) }));
+    if (L.ctrl) lanes.push(lane({ label: 'Contrôle', bstyle: 'dashed', hasNote: true, note: 'Non récupéré pour un candidat (seulement pour tes persos)' }));
+    if (L.boss) lanes.push(lane({ label: 'Boss · illustratif', bstyle: 'dashed', bars: [[400, 120], [1100, 150], [1650, 150]].map(([s, w]) => ({ left: pct(s), w: +(w / DUR * 100).toFixed(2), bg: 'transparent', bs: 'dashed', bc: '#8D95A3', title: 'Illustration — combat de boss' })) }));
+    const ticks = [0, 300, 600, 900, 1200, 1500, 1800].map((s, j, a) => ({ left: pct(s), label: Math.round(s / 60) + ':00', shift: j === 0 ? '0' : j === a.length - 1 ? '-100%' : '-50%' }));
+    const d = DEATHS.find((x) => x.id === this.state.ev);
+    const sel = d ? { t: d.t, title: d.title, hits: d.hits, state: d.state, color: d.bad ? '#F2665C' : '#C9CED8', bg: d.bad ? '#1E1416' : '#0F1216', border: d.bad ? '#4A2228' : '#2A2F3B' } : {};
+    const moments = [
+      ...DEATHS.map((x) => ({ t: x.t, text: x.title + (x.bad ? ' — Astral Shift était disponible' : ' — aucun défensif majeur disponible'), color: x.bad ? '#F2665C' : '#A0A7B4', select: pick(x.id), cursor: 'pointer', bg: this.state.ev === x.id ? '#1C2029' : 'transparent', border: this.state.ev === x.id ? '#3A4152' : 'transparent' })),
+      { t: 'run', text: 'Aucune potion de soin (0 sur 12 possibles)', color: '#F59E5B', select: () => {}, cursor: 'default', bg: 'transparent', border: 'transparent' },
+    ];
+    const defs = [
+      { name: 'Astral Shift', pct: 67, v: '10/15', color: '#C9CED8' },
+      { name: 'Earth Elemental', pct: 50, v: '3/6', color: '#C9CED8' },
+      { name: 'Silvermoon Health Potion', pct: 0, v: '0/6', color: '#F59E5B' },
+      { name: 'Conc. Silvermoon Health Potion', pct: 0, v: '0/6', color: '#F59E5B' },
+    ];
+    const TABS = [['spells', 'Sorts passés'], ['ctrl', 'Contrôle']];
+    const tabs = TABS.map(([id, label]) => {
+      const on = this.state.tab === id;
+      return { label, on, fg: on ? '#ECEEF2' : '#8D95A3', line: on ? '#ECEEF2' : 'transparent', pick: () => this.setState({ tab: id }) };
+    });
+    const tabText = this.state.tab === 'spells'
+      ? 'Non récupéré pour un candidat : bmpl ne récupère le détail des sorts non interrompus que pour tes propres persos. Sur ce run : 37 kicks sur 146 (pairs 32 %).'
+      : 'Non récupéré pour un candidat : le contrôle des foules n’est mesuré que pour tes propres persos.';
+    return { runs, cur, stats, chips, lanes, noLanes: lanes.length === 0, ticks, sel, hasSel: !!d, moments, defs, tabs, tabText, analysed: r.analysed, notAnalysed: !r.analysed };
+  }
+}
+</script>
+</body>
+</html>

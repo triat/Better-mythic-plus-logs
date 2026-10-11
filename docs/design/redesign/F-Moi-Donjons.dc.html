@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Final · Mon perso — Donjons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:13px;color:#C9CED8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.01em}
+.nav-a{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:10px;color:#A0A7B4;font-size:14px;font-weight:600}
+.nav-on{background:#1C2029;color:#ECEEF2}
+.seg{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:8px;font-size:14px;font-weight:600;color:#A0A7B4}
+.seg-on{background:#232836;color:#ECEEF2}
+.kbd{font-family:'Geist Mono',monospace;font-size:12px;color:#8D95A3;border:1px solid #2A2F3B;border-radius:6px;padding:2px 6px}
+.cell{height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:14px;font-weight:600}
+.hd{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8D95A3;text-align:center}
+.row{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(5,minmax(0,1fr)) 72px 56px;gap:6px;align-items:center}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100%">
+  <aside style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; padding: 20px 12px; border-right: 1px solid #1E222C; display: flex; flex-direction: column; gap: 20px">
+    <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 10px">bmpl</strong>
+    <button class="btn" aria-label="Rechercher un joueur (Ctrl K)" style="height: 48px; justify-content: flex-start; padding: 0 14px; border-radius: 12px; background: #161920; color: #A0A7B4; font-size: 14px; font-weight: 500; width: 100%">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      Rechercher un joueur…<span class="kbd" style="margin-left: auto">Ctrl K</span>
+    </button>
+    <div style="display: flex; gap: 6px; padding: 0 4px"><span class="chip">EU</span><span class="chip">Clé +19</span></div>
+    <nav style="display: flex; flex-direction: column; gap: 2px">
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"></path></svg>Accueil</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.3-5 6.5-5s5.7 1.5 6.5 5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.5 5"></path></svg>Candidats<span class="m" style="margin-left: auto; font-size: 12px; color: #8D95A3; background: #1C2029; border-radius: 999px; padding: 1px 8px">6</span></a>
+      <a href="#" class="nav-a nav-on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4-6 8-6s7 2 8 6"></path></svg>Mes persos</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 4v16M16 4v16M4 8h4M16 16h4"></path></svg>Comparer</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"></path></svg>Live<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"></path></svg>Aide</a>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 0 12px 4px">Récents</span>
+      <sc-for list="{{recents}}" as="r" hint-placeholder-count="6">
+        <a href="#" class="nav-a" style="font-weight: 500"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.c}}"></span>{{r.name}}<span class="m" style="margin-left: auto; font-size: 13px; color: {{r.c}}">{{r.s}}</span></a>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #161920; border: 1px solid #232733">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0">B</span>
+      <div style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 600">Biwaa</span><span style="font-size: 12px; color: #8D95A3">412 / 1000 pts · cette heure</span></div>
+    </div>
+  </aside>
+  <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column">
+    <main style="padding: 32px 32px 96px; box-sizing: border-box">
+      <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: #0F2A4D; border: 1px solid #1F4D85; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path></svg>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: #4FA3FF">Biwaasham</h1>
+            <span class="chip" style="height: 24px; font-size: 12px; color: #3FCF8E; border-color: #24523F; background: #12201B">C'est moi</span>
+          </div>
+          <span style="font-size: 14px; color: #A0A7B4">Élémentaire · Hyjal EU · 94 runs · à jour</span>
+        </div>
+        <div style="display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #161920; border: 1px solid #232733">
+          <a href="#" class="seg">Ma forme</a><a href="#" class="seg seg-on">Donjons</a><a href="#" class="seg">Runs</a>
+        </div>
+        <button class="btn">Synchroniser</button>
+      </section>
+
+      <section class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+          <h2 class="h2" style="font-size: 20px">Mes piliers par donjon</h2>
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8D95A3; flex-wrap: wrap">
+            <span class="cell" style="width: 26px; height: 16px; background: #5A2E14"></span>faible
+            <span class="cell" style="width: 26px; height: 16px; background: #1C2029; border: 1px solid #2A2F3B"></span>moyen
+            <span class="cell" style="width: 26px; height: 16px; background: #16405C"></span>fort
+            <span style="margin-left: 8px">· clique un donjon pour son détail</span>
+          </span>
+        </div>
+        <div class="row" style="padding: 0 8px">
+          <span class="hd" style="text-align: left">Donjon · le plus faible d'abord</span>
+          <span class="hd">Dégâts</span><span class="hd">Survie</span><span class="hd">Évitable</span><span class="hd">Kicks</span><span class="hd">Contrôle</span><span class="hd">Global</span><span class="hd">Runs</span>
+        </div>
+        <div class="row" style="padding: 0 8px">
+          <span style="font-size: 14px; font-weight: 700">Saison · tous</span>
+          <sc-for list="{{season}}" as="c" hint-placeholder-count="5">
+            <span class="cell" style="background: {{c.bg}}; color: {{c.fg}}; height: 34px">{{c.v}}</span>
+          </sc-for>
+          <span class="m" style="text-align: center; font-size: 15px; font-weight: 700">66</span>
+          <span class="m" style="text-align: center; font-size: 13px; color: #8D95A3">94</span>
+        </div>
+        <span style="height: 1px; background: #232733"></span>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{grid}}" as="g" hint-placeholder-count="8">
+            <button class="row" onClick="{{g.pick}}" aria-pressed="{{g.on}}" style="width: 100%; padding: 4px 8px; border-radius: 10px; border: 1px solid {{g.border}}; background: {{g.rowBg}}; color: inherit; font: inherit; text-align: left; cursor: pointer">
+              <span style="display: flex; align-items: center; gap: 10px; color: {{g.nameColor}}; font-size: 14px; font-weight: {{g.weight}}; min-width: 0">
+                <span style="width: 30px; height: 30px; border-radius: 8px; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #A0A7B4; flex-shrink: 0">{{g.abbr}}</span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{g.name}}</span>
+              </span>
+              <sc-for list="{{g.cells}}" as="c" hint-placeholder-count="5">
+                <span class="cell" style="background: {{c.bg}}; color: {{c.fg}}; outline: {{c.ring}}; outline-offset: -2px">{{c.v}}</span>
+              </sc-for>
+              <span class="m" style="text-align: center; font-size: 15px; font-weight: 700">{{g.overall}}</span>
+              <span class="m" style="text-align: center; font-size: 13px; color: #8D95A3">{{g.runs}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <span style="font-size: 13px; color: #8D95A3; line-height: 1.5">Contour = pilier le plus faible du donjon. Global = moyenne pondérée des piliers dans ce donjon.</span>
+      </section>
+
+      <section class="card" style="padding: 28px; display: flex; flex-direction: column; gap: 24px; border-color: #3A4152">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+          <span style="width: 48px; height: 48px; border-radius: 12px; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #A0A7B4">{{sel.abbr}}</span>
+          <div style="display: flex; flex-direction: column; flex: 1 1 240px">
+            <h2 class="h2">{{sel.name}}</h2>
+            <span style="font-size: 14px; color: #8D95A3">{{sel.runs}} runs · global {{sel.overall}}</span>
+          </div>
+          <span class="chip" style="background: {{sel.weakBg}}; border-color: {{sel.weakBorder}}; color: {{sel.weakColor}}">Point faible : {{sel.weak}}</span>
+          <a href="#" class="btn">Les {{sel.runs}} runs</a>
+        </div>
+
+        <sc-if value="{{isKR}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 24px">
+            <div style="display: flex; gap: 12px; padding: 14px; border-radius: 10px; background: #2A1C12; border: 1px solid #5A2E14">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFB27A" stroke-width="2" aria-hidden="true" style="flex-shrink: 0"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>
+              <span style="font-size: 14px; color: #E2C6AE; line-height: 1.45"><strong style="color: #FFB27A">Dégâts 43 ici</strong>, 21 points sous ta moyenne saison (64). Ta Survie (89) y est pourtant ta meilleure.</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px">
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <span class="lbl">Ce qui te touche · part des dégâts évitables</span>
+                <sc-for list="{{hits}}" as="h" hint-placeholder-count="6">
+                  <div style="display: flex; flex-direction: column; gap: 6px">
+                    <div style="display: flex; justify-content: space-between; font-size: 14px"><span style="color: {{h.color}}">{{h.name}}</span><span class="m" style="color: #A0A7B4">{{h.w}} %</span></div>
+                    <div style="height: 8px; border-radius: 999px; background: #232733"><div style="height: 8px; width: {{h.w}}%; border-radius: 999px; background: #F59E5B"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <span class="lbl">Ce qui te tue</span>
+                <sc-for list="{{killers}}" as="k" hint-placeholder-count="5">
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #1C2029; font-size: 14px">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #F2665C"></span>
+                    <span>{{k}}</span>
+                    <span class="m" style="margin-left: auto; font-size: 13px; color: #A0A7B4">1 mort</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+                <span class="lbl">Sorts passés</span>
+                <span style="font-size: 12px; color: #8D95A3">parmi les sorts que ton groupe a coupés au moins une fois</span>
+              </div>
+              <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) 84px 112px; gap: 8px 16px; align-items: center">
+                <span class="lbl" style="font-size: 11px">Sort</span><span class="lbl" style="font-size: 11px">Passés / lancés</span><span class="lbl" style="font-size: 11px; text-align: right">Passés</span><span class="lbl" style="font-size: 11px; text-align: right">Coupés par toi</span>
+                <sc-for list="{{casts}}" as="c" hint-placeholder-count="5">
+                  <span style="font-size: 14px; color: #C9CED8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{c.name}}</span>
+                  <div style="height: 8px; border-radius: 999px; background: #232733"><div style="height: 8px; width: {{c.pct}}%; border-radius: 999px; background: #F59E5B"></div></div>
+                  <span class="m" style="font-size: 13px; text-align: right; color: #A0A7B4">{{c.passed}}</span>
+                  <span class="m" style="font-size: 14px; text-align: right; font-weight: 600">{{c.mine}}</span>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px">
+              <div style="flex: 1 1 240px; padding: 16px; border-radius: 10px; background: #1C2029; display: flex; flex-direction: column; gap: 4px">
+                <span class="lbl">Contrôle · Capacitor Totem</span>
+                <span style="font-size: 15px"><strong class="m">34</strong> utilisations · <strong class="m">176</strong> ennemis touchés</span>
+              </div>
+              <div style="flex: 1 1 240px; padding: 16px; border-radius: 10px; background: #1C2029; display: flex; flex-direction: column; gap: 4px">
+                <span class="lbl">Contrôle · Thunderstorm</span>
+                <span style="font-size: 15px"><strong class="m">21</strong> utilisations</span>
+              </div>
+              <span style="flex: 1 1 100%; font-size: 12px; color: #8D95A3">sur 8 runs avec du contrôle mesuré</span>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{notKR}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 24px; border-radius: 12px; border: 1px dashed #2A2F3B; font-size: 14px; color: #A0A7B4; line-height: 1.5">Mêmes blocs que pour Kings' Rest : ce qui te touche, ce qui te tue, sorts passés, contrôle. Cette maquette n'a les données détaillées que de Kings' Rest.</div>
+        </sc-if>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: 'KR' }; }
+  renderVals() {
+    const V = { invite: '#3FCF8E', maybe: '#F2B544' };
+    const recents = [['Vachâman', 77, 'invite'], ['Obye', 59, 'maybe'], ['Danilaskuf', 76, 'invite'], ['Moadmoad', 82, 'invite'], ['Loutrasse', 59, 'maybe'], ['Circe', 76, 'invite']].map(([name, s, v]) => ({ name, s, c: V[v] }));
+    const cell = (v) => v < 45 ? { bg: '#5A2E14', fg: '#FFB27A' } : v < 55 ? { bg: '#3A2A1C', fg: '#F5C79B' } : v < 70 ? { bg: '#1C2029', fg: '#C9CED8' } : v < 85 ? { bg: '#152A3A', fg: '#8CCBF2' } : { bg: '#16405C', fg: '#BEE4FF' };
+    const P = ['Dégâts', 'Survie', 'Évitable', 'Kicks', 'Contrôle'];
+    const season = [59, 64, 79, 71, 70].map((v) => ({ v, ...cell(v) }));
+    const raw = [
+      ['Kings’ Rest', 'KR', [43, 89, 72, 58, 64], 63, 8],
+      ['The Blinding Vale', 'BV', [39, 83, 82, 77, 81], 66, 8],
+      ['Temple of Sethraliss', 'TS', [47, 69, 91, 69, 94], 68, 12],
+      ['Altar of Fangs', 'AF', [68, 77, 47, 79, 75], 70, 11],
+      ['Ruby Life Pools', 'RL', [49, 91, 90, 71, 63], 70, 10],
+      ['Voidscar Arena', 'VA', [69, 92, 55, 62, 38], 70, 17],
+      ['Murder Row', 'MR', [56, 84, 89, 84, 86], 73, 18],
+      ['Den of Nalorakk', 'DN', [67, 82, 79, 78, 52], 75, 10],
+    ];
+    const grid = raw.map(([name, abbr, vals, overall, runs]) => {
+      const on = this.state.sel === abbr;
+      const min = Math.min(...vals);
+      return {
+        name, abbr, overall, runs, on,
+        weight: on ? 700 : 500, nameColor: on ? '#ECEEF2' : '#C9CED8',
+        rowBg: on ? '#1F2533' : 'transparent', border: on ? '#3A4152' : 'transparent',
+        cells: vals.map((v) => ({ v, ...cell(v), ring: v === min ? '2px solid ' + cell(v).fg : 'none' })),
+        pick: () => this.setState({ sel: abbr }),
+      };
+    });
+    const s = raw.find((r) => r[1] === this.state.sel) || raw[0];
+    const min = Math.min(...s[2]);
+    const wc = cell(min);
+    const sel = { name: s[0], abbr: s[1], overall: s[3], runs: s[4], weak: P[s[2].indexOf(min)] + ' ' + min, weakBg: wc.bg, weakBorder: wc.bg, weakColor: wc.fg };
+    const hits = [['Hunting Leap', 43], ['Whirling Axe', 12], ['Erupting Darkness', 9], ['Bladestorm', 8], ['Hunting Leap (2e sort)', 6], ['autres dégâts évitables', 23]].map(([name, w]) => ({ name, w, color: name.startsWith('autres') ? '#8D95A3' : '#C9CED8' }));
+    const killers = ['Barrel Through', 'Blade Combo', 'Bladestorm', 'Explode', 'Shadow Whirlwind'];
+    const casts = [['Spectral Bolt', 59, 183, 36], ['Shadow Bolt', 20, 69, 14], ['Soul Bolt', 6, 41, 9], ['Hex', 3, 41, 9], ['Wretched Discharge', 3, 182, 47]].map(([name, p, t, mine]) => ({ name, mine, passed: p + ' / ' + t, pct: Math.round(p / t * 100) }));
+    const isKR = this.state.sel === 'KR';
+    return { recents, season, grid, sel, isKR, notKR: !isKR, hits, killers, casts };
+  }
+}
+</script>
+</body>
+</html>

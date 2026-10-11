@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Final · Mon perso — Runs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:13px;color:#C9CED8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.01em}
+.nav-a{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:10px;color:#A0A7B4;font-size:14px;font-weight:600}
+.nav-on{background:#1C2029;color:#ECEEF2}
+.seg{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:8px;font-size:14px;font-weight:600;color:#A0A7B4}
+.seg-on{background:#232836;color:#ECEEF2}
+.kbd{font-family:'Geist Mono',monospace;font-size:12px;color:#8D95A3;border:1px solid #2A2F3B;border-radius:6px;padding:2px 6px}
+.sel{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;background:#1C2029;border:1px solid #2A2F3B;color:#C9CED8;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.sg{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:7px;border:0;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.step{width:28px;height:28px;border-radius:7px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.tile{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box;padding:0}
+.rw{display:grid;grid-template-columns:64px minmax(0,1.6fr) 64px 70px 76px 96px 84px 56px 76px 16px;gap:10px;align-items:center;padding:0 18px}
+.th{font-size:12px;font-weight:600;color:#8D95A3;white-space:nowrap}
+.sub{display:block;font-size:12px;color:#8D95A3;margin-top:2px}
+@media (max-width: 700px){.rw-head{display:none}.rw{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:10px;padding:12px 14px}.rw>:nth-child(2){grid-column:1/-1;order:-1}.rw>:nth-child(1){order:-2;grid-column:1/-1}.rw>:last-child{display:none}}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100%">
+  <aside style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; padding: 20px 12px; border-right: 1px solid #1E222C; display: flex; flex-direction: column; gap: 20px">
+    <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 10px">bmpl</strong>
+    <button class="btn" aria-label="Rechercher un joueur (Ctrl K)" style="height: 48px; justify-content: flex-start; padding: 0 14px; border-radius: 12px; background: #161920; color: #A0A7B4; font-size: 14px; font-weight: 500; width: 100%">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      Rechercher un joueur…<span class="kbd" style="margin-left: auto">Ctrl K</span>
+    </button>
+    <div style="display: flex; gap: 6px; padding: 0 4px"><span class="chip">EU</span><span class="chip">Clé +19</span></div>
+    <nav style="display: flex; flex-direction: column; gap: 2px">
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"></path></svg>Accueil</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.3-5 6.5-5s5.7 1.5 6.5 5"></path><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.5 5"></path></svg>Candidats<span class="m" style="margin-left: auto; font-size: 12px; color: #8D95A3; background: #1C2029; border-radius: 999px; padding: 1px 8px">6</span></a>
+      <a href="#" class="nav-a nav-on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4-6 8-6s7 2 8 6"></path></svg>Mes persos</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 4v16M16 4v16M4 8h4M16 16h4"></path></svg>Comparer</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"></path></svg>Live<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"></path></svg>Aide</a>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 0 12px 4px">Récents</span>
+      <sc-for list="{{recents}}" as="r" hint-placeholder-count="6">
+        <a href="#" class="nav-a" style="font-weight: 500"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.c}}"></span>{{r.name}}<span class="m" style="margin-left: auto; font-size: 13px; color: {{r.c}}">{{r.s}}</span></a>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #161920; border: 1px solid #232733">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0">B</span>
+      <div style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 600">Biwaa</span><span style="font-size: 12px; color: #8D95A3">412 / 1000 pts · cette heure</span></div>
+    </div>
+  </aside>
+  <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column">
+    <main style="padding: 32px 32px 96px; box-sizing: border-box">
+      <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: #0F2A4D; border: 1px solid #1F4D85; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path></svg>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="margin: 0; font-size: 30px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; color: #4FA3FF">Biwaasham</h1>
+            <span class="chip" style="height: 24px; font-size: 12px; color: #3FCF8E; border-color: #24523F; background: #12201B">C'est moi</span>
+          </div>
+          <span style="font-size: 14px; color: #A0A7B4">Élémentaire · Hyjal EU · 94 runs · à jour</span>
+        </div>
+        <div style="display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: #161920; border: 1px solid #232733">
+          <a href="#" class="seg">Ma forme</a><a href="#" class="seg">Donjons</a><a href="#" class="seg seg-on">Runs <span class="m" style="margin-left: 6px; font-size: 12px; color: #8D95A3">94</span></a>
+        </div>
+        <button class="btn">Synchroniser</button>
+      </section>
+
+      <section class="card" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+          <h2 class="h2" style="font-size: 18px">Ma saison, run par run</h2>
+          <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #A0A7B4">
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #152A3A; border: 1px solid #2E5878"></span>timed</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #3A1A1A; border: 1px solid #6A2A2A"></span>depleted</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #1C2029; border: 1px solid #2A2F3B"></span>sans temps</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #1C2029; border: 1px dashed #8D95A3"></span>Amélioration</span>
+            <span>pâle = masqué par les filtres</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch">
+          <div style="flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding-right: 16px; border-right: 1px solid #232733">
+            <span class="m" style="font-size: 32px; font-weight: 700; line-height: 1">{{sum.timed}}<span style="color: #5A6272; font-size: 20px">/{{sum.count}}</span></span>
+            <span style="font-size: 13px; color: #A0A7B4">timed · filtres actifs</span>
+            <span style="font-size: 13px; color: #A0A7B4"><span class="m" style="color: #F2665C">{{sum.dep}}</span> depleted · <span class="m">{{sum.none}}</span> sans temps</span>
+          </div>
+          <sc-for list="{{weeks}}" as="w" hint-placeholder-count="3">
+            <div style="flex: {{w.flex}} 1 150px; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+              <div style="display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; min-height: 77px">
+                <sc-for list="{{w.all}}" as="r" hint-placeholder-count="6">
+                  <button class="tile" onClick="{{r.toggle}}" aria-label="{{r.aria}}" aria-pressed="{{r.open}}" style="background: {{r.tileBg}}; border: {{r.tileBorder}}; color: {{r.tileFg}}; opacity: {{r.op}}; outline: {{r.outline}}; outline-offset: 2px">{{r.keyNum}}</button>
+                </sc-for>
+              </div>
+              <span style="font-size: 12px; color: #8D95A3; border-top: 1px solid #232733; padding-top: 6px">{{w.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+        <div style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 12px; border-radius: 10px; background: #161920; border: 1px solid #2A2F3B">
+          <span style="font-size: 13px; color: #A0A7B4">Clé</span>
+          <button class="step" onClick="{{minDown}}" aria-label="Clé minimum moins un">−</button>
+          <span class="m" style="font-size: 14px; font-weight: 700; min-width: 30px; text-align: center">+{{kmin}}</span>
+          <button class="step" onClick="{{minUp}}" aria-label="Clé minimum plus un">+</button>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6272" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          <button class="step" onClick="{{maxDown}}" aria-label="Clé maximum moins un">−</button>
+          <span class="m" style="font-size: 14px; font-weight: 700; min-width: 30px; text-align: center">+{{kmax}}</span>
+          <button class="step" onClick="{{maxUp}}" aria-label="Clé maximum plus un">+</button>
+        </div>
+        <sc-for list="{{presets}}" as="p" hint-placeholder-count="3">
+          <button class="sg" onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="height: 34px; padding: 0 12px; border-radius: 999px; background: {{p.bg}}; color: {{p.fg}}; border: 1px solid {{p.border}}">{{p.label}}</button>
+        </sc-for>
+        <div role="group" aria-label="Résultat" style="display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: #161920; border: 1px solid #2A2F3B">
+          <sc-for list="{{results}}" as="x" hint-placeholder-count="3">
+            <button class="sg" onClick="{{x.pick}}" aria-pressed="{{x.on}}" style="background: {{x.bg}}; color: {{x.fg}}">{{x.label}}</button>
+          </sc-for>
+        </div>
+        <button class="sel">Donjon : tous <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8D95A3" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+        <button class="sel">Spé : toutes <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8D95A3" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+        <button class="sel">3 dernières semaines <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8D95A3" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      </section>
+
+      <section class="card" style="overflow: hidden">
+        <div class="rw rw-head" style="min-height: 44px; border-bottom: 1px solid #232733">
+          <span class="th">Clé</span><span class="th">Donjon</span><span class="th">Temps</span><span class="th">Morts</span><span class="th">DTPS</span><span class="th">Évitable</span><span class="th">Kicks</span><span class="th">Pots·HS</span><span class="th">Parse</span><span></span>
+        </div>
+        <sc-for list="{{weeks}}" as="w" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 18px 8px; background: #12151B; border-top: 1px solid #232733">
+            <strong style="font-size: 14px">{{w.label}}</strong>
+            <span style="font-size: 13px; color: #A0A7B4"><span class="m">{{w.count}}</span> runs · <span class="m">{{w.timed}}</span> timed · meilleure timée <span class="m" style="color: #ECEEF2">{{w.best}}</span></span>
+            <sc-if value="{{w.old}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 12px; color: #8D95A3">· hors des tendances</span>
+            </sc-if>
+          </div>
+          <sc-for list="{{w.runs}}" as="r" hint-placeholder-count="6">
+            <div style="border-top: 1px solid #1E222C; background: {{r.bg}}">
+              <button class="rw" onClick="{{r.toggle}}" aria-expanded="{{r.open}}" style="width: 100%; min-height: 56px; padding-top: 8px; padding-bottom: 8px; background: transparent; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer">
+                <span class="m" style="font-size: 15px; font-weight: 700">{{r.key}}<span class="sub" style="font-weight: 600; color: {{r.glyphColor}}">{{r.glyph}}</span></span>
+                <span style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                  <span style="width: 28px; height: 28px; border-radius: 8px; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #A0A7B4; flex-shrink: 0">{{r.abbr}}</span>
+                  <span style="min-width: 0"><span style="display: block; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.name}}</span><span class="sub">{{r.spec}} · {{r.dps}} dps</span></span>
+                </span>
+                <span class="m" style="font-size: 13px; color: {{r.timeColor}}">{{r.time}}</span>
+                <span style="font-size: 13px; color: {{r.deathColor}}"><span class="m" style="font-size: 14px; font-weight: 600">{{r.d}}</span><span class="sub">{{r.wipe}}</span></span>
+                <span class="m" style="font-size: 13px; color: {{r.dtpsColor}}">{{r.dtps}}<span class="sub">{{r.dtpsAbs}}</span></span>
+                <span class="m" style="font-size: 13px; color: {{r.avColor}}">{{r.av}}<span class="sub">{{r.avAbs}}</span></span>
+                <span class="m" style="font-size: 13px">{{r.kicks}}<span class="sub">pairs {{r.kpeer}}</span></span>
+                <span class="m" style="font-size: 13px; color: #C9CED8">{{r.cons}}</span>
+                <span class="m" style="font-size: 14px; font-weight: 700; color: {{r.parseColor}}">{{r.parse}}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8D95A3" stroke-width="2" aria-hidden="true"><path d="{{r.chevron}}"></path></svg>
+              </button>
+              <sc-if value="{{r.open}}" hint-placeholder-val="{{false}}">
+                <div style="padding: 6px 18px 22px; display: flex; flex-direction: column; gap: 16px">
+                  <sc-if value="{{r.rich}}" hint-placeholder-val="{{true}}">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+                      <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 10px; background: #1E1416; border: 1px solid #4A2228">
+                        <span class="lbl" style="color: #E39A93">Mort à 17:06 · en wipe</span>
+                        <span style="font-size: 13px; color: #A0A7B4">dégâts reçus juste avant</span>
+                        <sc-for list="{{hitsBeforeDeath}}" as="h" hint-placeholder-count="3">
+                          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px 40px; gap: 10px; align-items: center; font-size: 13px">
+                            <span style="border-bottom: 1px dashed #4A3A3E; justify-self: start">{{h.name}}</span>
+                            <div style="height: 6px; border-radius: 999px; background: #2E2226"><div style="height: 6px; width: {{h.w}}%; border-radius: 999px; background: #F2665C"></div></div>
+                            <span class="m" style="text-align: right; color: #C9CED8">{{h.w}} %</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 10px; background: #12151B; border: 1px solid #232733">
+                        <span class="lbl">Sorts passés (groupe)</span>
+                        <sc-for list="{{passed}}" as="p" hint-placeholder-count="5">
+                          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 70px; gap: 10px; font-size: 13px">
+                            <span style="border-bottom: 1px dashed #3A4152; justify-self: start">{{p.name}}</span>
+                            <span class="m" style="text-align: right; color: {{p.color}}">{{p.v}}</span>
+                          </div>
+                        </sc-for>
+                        <span style="font-size: 13px; color: #C9CED8">Tu en as interrompu <strong class="m">35</strong> sur les <strong class="m">130</strong>.</span>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 10px; background: #12151B; border: 1px solid #232733">
+                        <span class="lbl">Contrôle des foules</span>
+                        <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap">
+                          <span class="m" style="font-size: 26px; font-weight: 700">4,1</span>
+                          <span style="font-size: 13px; color: #A0A7B4">par 10 min</span>
+                          <span class="m" style="font-size: 13px; color: #5AB8F0; font-weight: 600">+59 %</span>
+                        </div>
+                        <div style="position: relative; height: 6px; border-radius: 999px; background: #232733">
+                          <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 82%; border-radius: 999px; background: #5AB8F0"></div>
+                          <div style="position: absolute; left: 52%; top: -4px; bottom: -4px; width: 2px; background: #8D95A3"></div>
+                        </div>
+                        <span style="font-size: 12px; color: #8D95A3">trait = médiane de la spé (2,6)</span>
+                        <span style="font-size: 13px"><span style="color: #8D95A3">Stun ·</span> Capacitor Totem <span class="m" style="color: #A0A7B4">9 · 60 ennemis</span></span>
+                        <span style="font-size: 13px"><span style="color: #8D95A3">Repoussement ·</span> Thunderstorm <span class="m" style="color: #A0A7B4">3</span></span>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{r.plain}}" hint-placeholder-val="{{false}}">
+                    <span style="font-size: 13px; color: #A0A7B4">Morts, sorts passés et contrôle de ce run s'affichent après l'analyse.</span>
+                  </sc-if>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+                    <button class="btn">Analyser les défensifs · ~3 pts</button>
+                    <a href="#" class="btn">Warcraft Logs ↗</a>
+                    <span style="font-size: 13px; color: #8D95A3">{{r.when}} · dispels {{r.dispels}}</span>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+          <sc-if value="{{w.empty}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 14px 18px; border-top: 1px solid #1E222C; font-size: 13px; color: #8D95A3">Aucun run de cette semaine ne correspond aux filtres.</div>
+          </sc-if>
+        </sc-for>
+        <div style="padding: 14px 18px; border-top: 1px solid #232733; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+          <span style="font-size: 13px; color: #8D95A3"><span class="m">{{sum.count}}</span> runs affichés · 24 chargés sur <span class="m">94</span></span>
+          <button class="btn" style="margin-left: auto">Charger les semaines précédentes · 70 runs</button>
+        </div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2050}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: 1, kmin: 12, kmax: 20, res: 'all' }; }
+  renderVals() {
+    const V = { invite: '#3FCF8E', maybe: '#F2B544' };
+    const recents = [['Vachâman', 77, 'invite'], ['Obye', 59, 'maybe'], ['Danilaskuf', 76, 'invite'], ['Moadmoad', 82, 'invite'], ['Loutrasse', 59, 'maybe'], ['Circe', 76, 'invite']].map(([name, s, v]) => ({ name, s, c: V[v] }));
+    const names = { TS: 'Temple of Sethraliss', DN: 'Den of Nalorakk', RL: 'Ruby Life Pools', VA: 'Voidscar Arena', KR: 'Kings’ Rest', MR: 'Murder Row', AF: 'Altar of Fangs', BV: 'The Blinding Vale' };
+    const pc = (p) => p >= 100 ? '#E5CC80' : p >= 99 ? '#E268A8' : p >= 95 ? '#FF8000' : p >= 75 ? '#A335EE' : p >= 50 ? '#3D8BFF' : p >= 25 ? '#1EFF00' : '#8A8F98';
+    const sign = (v) => v > 0 ? '#F59E5B' : v < 0 ? '#5AB8F0' : '#A0A7B4';
+    const fmt = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' %';
+    const fr = (v) => String(v).replace('.', ',');
+    const { kmin, kmax, res } = this.state;
+    const raw = [
+      [1, 1, 'TS', 19, 't', 1, '31:09', 1, 1, '48.7k', 17, '0/min', -100, 35, 148, 24, 13, 5, 1, '315.7k', 18.8, 'Élémentaire'],
+      [2, 1, 'DN', 19, 't', 1, '27:06', 0, 0, '35.1k', -19, '85.8k/min', -10, 50, 132, 17, 6, 5, 1, '321.4k', 70.5, 'Élémentaire'],
+      [3, 1, 'RL', 12, 't', 2, '17:49', 1, 1, '30.9k', 2, '22.9k/min', -46, 21, 84, 22, 3, 3, 0, '309.8k', 96.6, 'Élémentaire'],
+      [4, 1, 'TS', 20, 'd', 0, '32:55', 2, 0, '51.2k', 1, '14.5k/min', -28, 54, 158, 28, 11, 5, 2, '328.2k', 10.7, 'Élémentaire'],
+      [5, 1, 'VA', 12, 't', 1, '24:06', 1, 1, '28.4k', -12, '249.1k/min', 14, 21, 110, 18, 2, 4, 0, '242.2k', 83.9, 'Élémentaire'],
+      [6, 1, 'KR', 12, 'n', 0, '', 1, 0, '21.3k', -16, '213.8k/min', -6, 15, 130, 14, 8, 0, 0, '144.9k', 31.0, 'Amélioration'],
+      [7, 2, 'MR', 18, 't', 1, '29:08', 0, 0, '44.6k', -9, '37.3k/min', -22, 61, 143, 36, 2, 5, 0, '331.0k', 77.0, 'Élémentaire'],
+      [8, 2, 'DN', 19, 't', 1, '31:06', 2, 1, '33.8k', -24, '85.2k/min', 43, 55, 147, 23, 5, 5, 0, '311.7k', 55.5, 'Élémentaire'],
+      [9, 2, 'VA', 18, 't', 1, '27:52', 0, 0, '51.0k', -7, '297.5k/min', 1, 30, 134, 16, 1, 5, 1, '324.1k', 64.0, 'Élémentaire'],
+      [10, 2, 'AF', 18, 't', 1, '27:35', 1, 0, '47.4k', 10, '98.5k/min', 21, 39, 134, 30, 7, 5, 1, '383.8k', 62.2, 'Élémentaire'],
+      [11, 2, 'RL', 18, 'd', 0, '29:02', 2, 0, '48.4k', -4, '35.4k/min', 176, 62, 138, 33, 2, 5, 0, '332.5k', 49.2, 'Élémentaire'],
+      [12, 3, 'TS', 18, 't', 1, '31:20', 2, 0, '45.7k', -7, '0/min', -100, 32, 146, 21, 11, 5, 1, '303.7k', 35.6, 'Élémentaire'],
+      [13, 3, 'KR', 18, 't', 1, '32:20', 0, 0, '37.7k', 2, '104.2k/min', 122, 21, 161, 13, 4, 6, 0, '207.0k', 13.0, 'Élémentaire'],
+      [14, 3, 'VA', 12, 't', 2, '19:45', 1, 1, '37.2k', 15, '333.5k/min', 32, 9, 93, 11, 0, 0, 1, '227.4k', 78.9, 'Amélioration'],
+      [15, 3, 'RL', 12, 'n', 0, '', 0, 0, '29.9k', -11, '46.8k/min', -29, 19, 92, 31, 6, 0, 0, '263.5k', 89.0, 'Amélioration'],
+      [16, 3, 'VA', 18, 't', 1, '27:29', 1, 1, '46.9k', -13, '324.3k/min', 1, 19, 132, 16, 1, 5, 1, '311.9k', 50.7, 'Élémentaire'],
+      [17, 3, 'BV', 18, 't', 1, '29:07', 0, 0, '40.6k', -8, '35.3k/min', -42, 58, 144, 22, 4, 5, 1, '331.9k', 29.2, 'Élémentaire'],
+      [18, 3, 'AF', 18, 't', 1, '28:56', 0, 0, '44.5k', -12, '92.0k/min', -29, 62, 144, 28, 17, 5, 0, '392.4k', 75.1, 'Élémentaire'],
+      [19, 3, 'MR', 18, 't', 1, '32:09', 2, 0, '49.2k', -9, '31.1k/min', -31, 102, 156, 17, 8, 6, 0, '314.2k', 54.0, 'Élémentaire'],
+      [20, 3, 'TS', 18, 't', 1, '30:18', 3, 0, '46.3k', 7, '29.3k/min', 69, 41, 145, 19, 8, 5, 1, '314.2k', 51.8, 'Élémentaire'],
+      [21, 3, 'RL', 18, 't', 1, '27:31', 0, 0, '54.6k', 2, '0/min', -100, 46, 137, 34, 1, 5, 1, '309.5k', 18.8, 'Élémentaire'],
+      [22, 3, 'DN', 18, 'n', 0, '', 1, 1, '38.3k', -10, '41.5k/min', -48, 54, 146, 25, 11, 5, 0, '290.9k', 64.9, 'Élémentaire'],
+      [23, 3, 'MR', 18, 't', 1, '32:12', 0, 0, '54.1k', -2, '26.7k/min', -43, 86, 155, 36, 6, 5, 0, '324.9k', 71.3, 'Élémentaire'],
+      [24, 3, 'MR', 18, 't', 1, '33:09', 1, 1, '39.4k', -17, '38.4k/min', -1, 115, 159, 45, 4, 6, 0, '296.1k', 24.3, 'Élémentaire'],
+    ];
+    const whenOf = { 1: 'il y a 1 semaine', 2: 'il y a 2 semaines', 3: 'il y a 3 semaines' };
+    const runs = raw.map(([id, wk, abbr, key, st, up, time, d, wipe, dtpsAbs, dtps, avAbs, av, k, kt, kp, dispels, pots, hs, dps, parse, spec]) => {
+      const open = this.state.open === id;
+      const shown = key >= kmin && key <= kmax && (res === 'all' || (res === 't' ? st === 't' : st !== 't'));
+      const enh = spec === 'Amélioration';
+      return {
+        id, wk, abbr, st, shown, name: names[abbr], key: '+' + key, keyNum: key,
+        glyph: st === 't' ? '✓ +' + up : st === 'd' ? '✗ depleted' : '– sans temps',
+        glyphColor: st === 't' ? '#3FCF8E' : st === 'd' ? '#F2665C' : '#8D95A3',
+        time: time || '—', timeColor: st === 'd' ? '#F2665C' : '#A0A7B4',
+        d, wipe: wipe ? 'en wipe' : '', deathColor: d >= 2 ? '#F2665C' : d === 1 ? '#ECEEF2' : '#8D95A3',
+        dtpsAbs, dtps: fmt(dtps), dtpsColor: sign(dtps),
+        avAbs, av: fmt(av), avColor: sign(av),
+        kicks: k + '/' + kt, kpeer: kp + ' %', dispels,
+        cons: pots + ' · ' + hs, dps, parse: fr(parse) + ' %', parseColor: pc(parse), spec,
+        open, rich: open && id === 1, plain: open && id !== 1,
+        bg: open ? '#191D25' : 'transparent', chevron: open ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
+        when: whenOf[wk],
+        tileBg: st === 't' ? '#152A3A' : st === 'd' ? '#3A1A1A' : '#1C2029',
+        tileFg: st === 't' ? '#BEE4FF' : st === 'd' ? '#FF9C94' : '#A0A7B4',
+        tileBorder: enh ? '1px dashed #8D95A3' : '1px solid ' + (st === 't' ? '#2E5878' : st === 'd' ? '#6A2A2A' : '#2A2F3B'),
+        op: shown ? '1' : '0.25', outline: open ? '2px solid #ECEEF2' : '0',
+        aria: '+' + key + ' ' + names[abbr],
+        toggle: () => this.setState({ open: open ? null : id }),
+      };
+    });
+    const shownRuns = runs.filter((r) => r.shown);
+    const weeks = [
+      { n: 1, label: 'Il y a 1 semaine', old: false, flex: 6 },
+      { n: 2, label: 'Il y a 2 semaines', old: true, flex: 5 },
+      { n: 3, label: 'Il y a 3 semaines', old: true, flex: 13 },
+    ].map((w) => {
+      const all = runs.filter((r) => r.wk === w.n);
+      const list = all.filter((r) => r.shown);
+      const timedKeys = list.filter((r) => r.st === 't').map((r) => r.keyNum);
+      return { ...w, all, runs: list, count: list.length, timed: timedKeys.length, best: timedKeys.length ? '+' + Math.max(...timedKeys) : '—', empty: list.length === 0 };
+    });
+    const sum = { count: shownRuns.length, timed: shownRuns.filter((r) => r.st === 't').length, dep: shownRuns.filter((r) => r.st === 'd').length, none: shownRuns.filter((r) => r.st === 'n').length };
+    const clamp = (v) => Math.max(2, Math.min(25, v));
+    const minDown = () => this.setState({ kmin: clamp(kmin - 1) });
+    const minUp = () => this.setState({ kmin: Math.min(kmax, clamp(kmin + 1)) });
+    const maxDown = () => this.setState({ kmax: Math.max(kmin, clamp(kmax - 1)) });
+    const maxUp = () => this.setState({ kmax: clamp(kmax + 1) });
+    const presets = [['Niveau cible · +19 et +', 19, 25], ['+18 et +', 18, 25], ['Toutes les clés', 2, 25]].map(([label, a, b]) => {
+      const on = kmin === a && kmax === b;
+      return { label, on, bg: on ? '#232836' : '#1C2029', fg: on ? '#ECEEF2' : '#A0A7B4', border: on ? '#3A4152' : '#2A2F3B', pick: () => this.setState({ kmin: a, kmax: b }) };
+    });
+    const results = [['Tous', 'all'], ['Timed', 't'], ['Non timed', 'n']].map(([label, v]) => {
+      const on = res === v;
+      return { label, on, bg: on ? '#232836' : 'transparent', fg: on ? '#ECEEF2' : '#A0A7B4', pick: () => this.setState({ res: v }) };
+    });
+    const hitsBeforeDeath = [['Spark Step', 51], ['Imbued Conduction', 29], ['Imbued Conduction', 20]].map(([name, w]) => ({ name, w }));
+    const passed = [['Lightning Bolt', '17 sur 107'], ['Venom Bolt', '3 sur 32'], ['Poison Spit', '1 sur 9'], ['Flame Shock', '0 sur 3'], ['Flame Shock', '0 sur 7']].map(([name, v]) => ({ name, v, color: v.startsWith('0 ') ? '#5AB8F0' : '#C9CED8' }));
+    return { recents, weeks, sum, kmin, kmax, minDown, minUp, maxDown, maxUp, presets, results, hitsBeforeDeath, passed };
+  }
+}
+</script>
+</body>
+</html>

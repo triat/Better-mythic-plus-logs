@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>R3 · Page d'accueil non connecté</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-discord{height:52px;padding:0 24px;font-size:16px;background:#5865F2;border-color:#5865F2;color:#FFFFFF;border-radius:12px}
+.top-a{font-size:14px;font-weight:600;color:#A0A7B4}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%">
+  <header style="padding: 16px 24px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; align-items: center; gap: 24px; flex-wrap: wrap">
+      <strong style="font-size: 19px; letter-spacing: -0.02em">bmpl</strong>
+      <nav style="display: flex; gap: 20px; margin-left: auto; align-items: center">
+        <a href="#" class="top-a">Aide</a>
+        <a href="#" class="top-a">Confidentialité</a>
+        <a href="#" class="btn">Se connecter</a>
+      </nav>
+    </div>
+  </header>
+
+  <section style="padding: 72px 24px 64px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+      <div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 22px">
+        <span class="lbl">Mythic+ · World of Warcraft</span>
+        <h1 style="margin: 0; font-size: 54px; line-height: 1.04; font-weight: 800; letter-spacing: -0.03em">Évalue un candidat Mythic+ en quelques secondes.</h1>
+        <p style="margin: 0; font-size: 18px; line-height: 1.55; color: #A0A7B4; max-width: 560px">bmpl lit ses logs Warcraft Logs et son profil Raider.IO, le compare aux joueurs de sa spé au même niveau de clé, et te donne un verdict avec ses forces et ses faiblesses.</p>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+          <a href="#" class="btn btn-discord">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M7 7c3.3-1.3 6.7-1.3 10 0l1.5 9c-1.6 1.3-3.3 2-5 2.3l-1-1.8M7 7L5.5 16c1.6 1.3 3.3 2 5 2.3l1-1.8"></path><circle cx="9.5" cy="12.5" r="1"></circle><circle cx="14.5" cy="12.5" r="1"></circle></svg>
+            Se connecter avec Discord
+          </a>
+          <span style="font-size: 13px; color: #8D95A3">Gratuit · on ne lit que ton pseudo et ton avatar Discord</span>
+        </div>
+      </div>
+
+      <div class="card" style="flex: 1 1 420px; padding: 22px; display: flex; flex-direction: column; gap: 16px; background: #12201B; border-color: #24523F" aria-label="Aperçu d'une synthèse">
+        <div style="display: flex; align-items: center; gap: 14px">
+          <div style="width: 48px; height: 48px; border-radius: 14px; background: #0F2A4D; border: 1px solid #1F4D85; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+            <span style="font-size: 22px; font-weight: 800; color: #4FA3FF">Vachâman</span>
+            <span style="font-size: 13px; color: #A9C2B7">Chaman Élémentaire · pour une +19</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end">
+            <span class="m" style="font-size: 36px; font-weight: 700; line-height: 1; color: #3FCF8E">77</span>
+            <span style="font-size: 13px; font-weight: 800; letter-spacing: .06em; color: #3FCF8E">INVITE</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{axes}}" as="a" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr) 30px; gap: 10px; align-items: center">
+              <span style="font-size: 13px; color: #C9CED8">{{a.n}}</span>
+              <div style="position: relative; height: 6px; border-radius: 999px; background: #1C3A2E">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{a.v}}%; border-radius: 999px; background: {{a.c}}"></div>
+                <div style="position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: #8D95A3"></div>
+              </div>
+              <span class="m" style="font-size: 13px; text-align: right">{{a.v}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid #24523F; font-size: 14px; color: #D5E5DD">
+          <span><span class="m" style="color: #5AB8F0; font-weight: 700">+</span> −40 % de dégâts évitables vs pairs</span>
+          <span><span class="m" style="color: #F59E5B; font-weight: 700">−</span> aucune healthstone (pairs 1,6 / run)</span>
+        </div>
+        <span style="font-size: 12px; color: #7F9A8E">Exemple réel, données du 11 oct.</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding: 24px 24px 64px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+      <h2 style="margin: 0; font-size: 24px; font-weight: 700">Comment ça marche</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+          <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 10px">
+            <span class="m" style="width: 34px; height: 34px; border-radius: 50%; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700">{{s.n}}</span>
+            <strong style="font-size: 18px">{{s.t}}</strong>
+            <span style="font-size: 14px; line-height: 1.55; color: #A0A7B4">{{s.d}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding: 0 24px 72px">
+    <div style="max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px">
+      <div class="card" style="padding: 22px 24px; display: flex; gap: 14px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="1.8" aria-hidden="true" style="flex-shrink: 0"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <strong style="font-size: 16px">Points Warcraft Logs</strong>
+          <span style="font-size: 14px; line-height: 1.55; color: #A0A7B4">Chaque recherche consomme des points de l'API Warcraft Logs, partagés par heure. Le coût est affiché avant chaque action ; un joueur déjà consulté s'ouvre sans rien dépenser.</span>
+        </div>
+      </div>
+      <div class="card" style="padding: 22px 24px; display: flex; gap: 14px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="1.8" aria-hidden="true" style="flex-shrink: 0"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <strong style="font-size: 16px">Tes données</strong>
+          <span style="font-size: 14px; line-height: 1.55; color: #A0A7B4">On garde ton identifiant Discord, ton historique de recherches et tes réglages. Tu peux tout supprimer depuis Réglages. <a href="#">Confidentialité</a></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top: 1px solid #1E222C; padding: 24px">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: #8D95A3">
+      <span>bmpl · Better Mythic+ Logs</span>
+      <a href="#" style="margin-left: auto">Confidentialité</a>
+      <a href="#">Aide</a>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1450}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const col = (s) => s >= 70 ? '#5AB8F0' : s >= 50 ? '#C9CED8' : '#F59E5B';
+    const axes = [['Survie', 90], ['Préparation', 80], ['Utilité', 74], ['Throughput', 68], ['Régularité', 58]].map(([n, v]) => ({ n, v, c: col(v) }));
+    const steps = [
+      { n: 1, t: 'Cherche un joueur', d: 'Son Nom-Serveur ou le lien de son profil Raider.IO, et le niveau de ta clé.' },
+      { n: 2, t: 'Lis le verdict', d: 'INVITE, MAYBE ou PASS, avec ses forces et ses faiblesses chiffrées face aux joueurs de sa spé.' },
+      { n: 3, t: 'Creuse les runs', d: 'Chaque run en détail : morts, défensifs disponibles, dégâts évitables, sur une frise du donjon.' },
+    ];
+    return { axes, steps };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Comparer — duel 1 contre 1 · cadre B</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:13px;color:#C9CED8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-p{background:#ECEEF2;color:#0E1014;border-color:#ECEEF2}
+.h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.01em}
+.nav-a{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:10px;color:#A0A7B4;font-size:14px;font-weight:600}
+.nav-on{background:#1C2029;color:#ECEEF2}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr);gap:16px;align-items:center}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100%">
+  <aside style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; padding: 20px 12px; border-right: 1px solid #1E222C; display: flex; flex-direction: column; gap: 20px">
+    <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 10px">bmpl</strong>
+    <button class="btn" aria-label="Rechercher un joueur (Ctrl K)" style="height: 48px; justify-content: flex-start; gap: 10px; padding: 0 12px; border-radius: 12px; background: #161920; border: 1px solid #2A2F3B; color: #A0A7B4; font-size: 14px; font-weight: 500; width: 100%; box-sizing: border-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      Rechercher un joueur…<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #8D95A3; border: 1px solid #2A2F3B; border-radius: 6px; padding: 2px 6px; white-space: nowrap">Ctrl K</span>
+    </button>
+    <div style="display: flex; gap: 6px; padding: 0 4px; margin-top: -8px"><span class="chip" style="height: 28px">EU</span><span class="chip" style="height: 28px">Clé +19</span></div>
+    <nav style="display: flex; flex-direction: column; gap: 2px">
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"></path></svg>Accueil</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 010 7M21 20c0-2.6-1.6-4.8-4-5.6"></path></svg>Candidats<span class="m" style="margin-left: auto; font-size: 12px; color: #8D95A3">6</span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>Mes persos</a>
+      <a href="#" class="nav-a nav-on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 4v16M16 4v16M3 9h5M16 15h5"></path></svg>Comparer</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>Live<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.7-2.5 2-2.5 4M12 17h.01"></path></svg>Aide</a>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 0 12px 4px">Récents</span>
+      <sc-for list="{{recents}}" as="r" hint-placeholder-count="6">
+        <a href="#" class="nav-a" style="background: {{r.bg}}; color: {{r.fg}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.c}}"></span>{{r.name}}<span class="m" style="margin-left: auto; font-size: 13px; color: {{r.c}}">{{r.s}}</span></a>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #161920; border: 1px solid #232733">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0">B</span>
+      <div style="display: flex; flex-direction: column; font-size: 14px; font-weight: 600">Biwaa<span style="font-size: 12px; font-weight: 400; color: #8D95A3">412 / 1000 pts · cette heure</span></div>
+    </div>
+  </aside>
+  <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column">
+    <main style="padding: 28px 32px 96px; box-sizing: border-box">
+      <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+
+        <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+          <h1 style="margin: 0 12px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em">Comparer</h1>
+          <span class="chip" style="height: 34px; color: #ECEEF2"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span>Vachâman <span class="m" style="color: #8D95A3">+18</span><button aria-label="Retirer Vachâman" style="background: none; border: 0; color: #8D95A3; cursor: pointer; font: inherit; padding: 0 0 0 4px">×</button></span>
+          <span class="chip" style="height: 34px; color: #ECEEF2"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span>Circe <span class="m" style="color: #8D95A3">+18</span><button aria-label="Retirer Circe" style="background: none; border: 0; color: #8D95A3; cursor: pointer; font: inherit; padding: 0 0 0 4px">×</button></span>
+          <button class="btn" style="border-style: dashed">+ Ajouter un candidat</button>
+          <span style="margin-left: auto; font-size: 13px; color: #8D95A3">à 3 candidats et plus, la vue passe en classement</span>
+        </section>
+
+        <section class="card" style="padding: 24px 28px; display: flex; flex-direction: column; gap: 6px">
+          <span class="lbl">En résumé · pour une +18</span>
+          <strong style="font-size: 22px; line-height: 1.35">Circe si tu cherches des dégâts, Vachâman si tu cherches quelqu'un qui ne meurt pas et qui kick.</strong>
+          <span style="font-size: 14px; color: #A0A7B4">Les deux sont INVITE. Écart réel : le parse médian (54 % contre 26 %) et les dégâts évitables (0 % contre −41 % vs pairs).</span>
+        </section>
+
+        <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px">
+          <sc-for list="{{heads}}" as="h" hint-placeholder-count="2">
+            <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px">
+              <div style="display: flex; align-items: center; gap: 14px">
+                <div style="width: 52px; height: 52px; border-radius: 14px; background: {{h.badgeBg}}; border: 1px solid {{h.badgeBorder}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{h.color}}" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="{{h.glyph}}"></path></svg>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                  <strong style="font-size: 26px; color: {{h.color}}">{{h.name}}</strong>
+                  <span style="font-size: 14px; color: #A0A7B4">{{h.sub}}</span>
+                </div>
+                <a href="#" class="btn">Fiche</a>
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; background: #12201B; border: 1px solid #24523F">
+                <span style="font-size: 24px; font-weight: 800; color: #3FCF8E; letter-spacing: 0.02em">INVITE</span>
+                <span class="m" style="font-size: 28px; font-weight: 700">{{h.score}}</span>
+                <span style="margin-left: auto; font-size: 13px; color: #A9C2B7">{{h.runs}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <sc-for list="{{h.notes}}" as="n" hint-placeholder-count="3">
+                  <span style="display: flex; gap: 10px; font-size: 14px; line-height: 1.4"><span style="font-weight: 700; color: {{n.c}}">{{n.s}}</span><span>{{n.t}}</span></span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+
+        <section class="card" style="padding: 24px 28px; display: flex; flex-direction: column; gap: 4px">
+          <div class="cmp" style="padding-bottom: 12px">
+            <span style="font-size: 14px; font-weight: 700; color: #4FA3FF; text-align: right">Vachâman</span>
+            <span class="lbl" style="text-align: center">5 axes</span>
+            <span style="font-size: 14px; font-weight: 700; color: #3FC7EB">Circe</span>
+          </div>
+          <sc-for list="{{axes}}" as="a" hint-placeholder-count="5">
+            <div class="cmp" style="padding: 14px 0; border-top: 1px solid #232733; opacity: {{a.op}}">
+              <div style="display: flex; align-items: center; gap: 12px; justify-content: flex-end; min-width: 0">
+                <span style="font-size: 13px; color: #8D95A3; text-align: right">{{a.lw}}</span>
+                <span class="m" style="font-size: 20px; font-weight: 700; color: {{a.lc}}">{{a.l}}</span>
+                <div style="width: 45%; height: 10px; border-radius: 999px; background: #232733; display: flex; justify-content: flex-end"><div style="width: {{a.l}}%; border-radius: 999px; background: {{a.lfill}}"></div></div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+                <strong style="font-size: 15px">{{a.name}}</strong>
+                <span style="font-size: 12px; color: {{a.winColor}}">{{a.win}}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+                <div style="width: 45%; height: 10px; border-radius: 999px; background: #232733"><div style="width: {{a.r}}%; height: 10px; border-radius: 999px; background: {{a.rfill}}"></div></div>
+                <span class="m" style="font-size: 20px; font-weight: 700; color: {{a.rc}}">{{a.r}}</span>
+                <span style="font-size: 13px; color: #8D95A3">{{a.rw}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+
+        <section style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+          <div class="card" style="flex: 1 1 440px; padding: 24px 28px; display: flex; flex-direction: column">
+            <h2 class="h2" style="margin-bottom: 12px">Chiffres clés</h2>
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 96px; gap: 12px; font-size: 12px; color: #8D95A3; padding-bottom: 8px"><span></span><span style="text-align: right">Vachâman</span><span style="text-align: right">Circe</span></div>
+            <sc-for list="{{facts}}" as="f" hint-placeholder-count="10">
+              <div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 96px; gap: 12px; padding: 11px 0; border-top: 1px solid #232733; font-size: 14px">
+                <span style="color: #A0A7B4">{{f.k}}</span>
+                <span class="m" style="text-align: right; color: {{f.lc}}; font-weight: {{f.lw}}">{{f.l}}</span>
+                <span class="m" style="text-align: right; color: {{f.rc}}; font-weight: {{f.rw}}">{{f.r}}</span>
+              </div>
+            </sc-for>
+            <span style="font-size: 12px; color: #8D95A3; margin-top: 10px">en bleu : le meilleur des deux</span>
+          </div>
+
+          <div class="card" style="flex: 1 1 440px; padding: 24px 28px; display: flex; flex-direction: column; gap: 12px">
+            <h2 class="h2">Meilleure clé par donjon</h2>
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) 112px 112px; gap: 12px; font-size: 12px; color: #8D95A3"><span></span><span style="text-align: right">Vachâman</span><span style="text-align: right">Circe</span></div>
+            <sc-for list="{{dungeons}}" as="d" hint-placeholder-count="8">
+              <div style="display: grid; grid-template-columns: minmax(0, 1fr) 112px 112px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid #232733">
+                <span style="display: flex; align-items: center; gap: 10px; min-width: 0"><span style="width: 32px; height: 32px; border-radius: 8px; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #A0A7B4; flex-shrink: 0">{{d.abbr}}</span><span style="font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{d.name}}</span></span>
+                <span style="text-align: right; font-size: 14px; white-space: nowrap"><span class="m" style="font-weight: 700; color: {{d.lk}}">{{d.l}}</span> <span style="color: {{d.lsc}}">{{d.ls}}</span> <span class="m" style="font-size: 12px; color: {{d.lpc}}">{{d.lp}}</span></span>
+                <span style="text-align: right; font-size: 14px; white-space: nowrap"><span class="m" style="font-weight: 700; color: {{d.rk}}">{{d.r}}</span> <span style="color: {{d.rsc}}">{{d.rs}}</span> <span class="m" style="font-size: 12px; color: {{d.rpc}}">{{d.rp}}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1873}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const recents = [['Vachâman', 77, '#3FCF8E', 1], ['Obye', 59, '#F2B544'], ['Danilaskuf', 76, '#3FCF8E'], ['Moadmoad', 82, '#3FCF8E'], ['Loutrasse', 59, '#F2B544'], ['Circe', 76, '#3FCF8E', 1]]
+      .map(([name, s, c, on]) => ({ name, s, c, bg: on ? '#1C2029' : 'transparent', fg: on ? '#ECEEF2' : '#A0A7B4' }));
+    const fill = (s) => s >= 70 ? '#5AB8F0' : s >= 50 ? '#C9CED8' : '#F59E5B';
+    const heads = [
+      { name: 'Vachâman', sub: 'Chaman Élémentaire · Ysondre EU · RIO 3650', score: 72, runs: '+18 · 9 runs notés', color: '#4FA3FF', badgeBg: '#0F2A4D', badgeBorder: '#1F4D85', glyph: 'M13 2L4 14h7l-1 8 9-12h-7l1-8z',
+        notes: [{ s: '+', c: '#5AB8F0', t: 'Dégâts évitables −41 % vs pairs' }, { s: '+', c: '#5AB8F0', t: 'Kicks +3 pts vs pairs, 32 % de la capacité' }, { s: '−', c: '#F59E5B', t: 'Parse médian 26 %' }] },
+      { name: 'Circe', sub: 'Mage Arcane · Sylvanas EU · RIO 3729', score: 76, runs: '+18 · 9 runs notés', color: '#3FC7EB', badgeBg: '#0E2A33', badgeBorder: '#1E5566', glyph: 'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
+        notes: [{ s: '+', c: '#5AB8F0', t: '10/10 runs récents timés' }, { s: '+', c: '#5AB8F0', t: 'Parse médian 54 %, ilvl +5 vs attendu' }, { s: '−', c: '#F59E5B', t: 'Kicks −6 pts vs pairs' }] },
+    ];
+    const ax = [
+      ['Survie', 86, 78, '0,7 mort/run', '0,6 mort/run'],
+      ['Utilité', 72, 60, 'kicks +3 pts', 'kicks −6 pts'],
+      ['Throughput', 36, 64, 'parse 26 %', 'parse 54 %'],
+      ['Préparation', 84, 85, 'ilvl +3', 'ilvl +5'],
+      ['Régularité', 59, 59, 'morts ±0,7', 'morts ±0,7', 1],
+    ];
+    const axes = ax.map(([name, l, r, lw, rw, info]) => {
+      const tie = Math.abs(l - r) <= 2;
+      return {
+        name, l, r, lw, rw, lfill: fill(l), rfill: fill(r), op: info ? 0.7 : 1,
+        lc: !info && !tie && l > r ? '#5AB8F0' : '#ECEEF2', rc: !info && !tie && r > l ? '#5AB8F0' : '#ECEEF2',
+        win: info ? 'informatif · poids 0' : tie ? 'égalité' : (l > r ? '← Vachâman +' + (l - r) : 'Circe +' + (r - l) + ' →'),
+        winColor: info || tie ? '#8D95A3' : '#5AB8F0',
+      };
+    });
+    const best = (on) => ({ c: on ? '#5AB8F0' : '#ECEEF2', w: on ? 700 : 400 });
+    const facts = [
+      ['Score RIO saison', '3650', '3729', 'r'], ['Saison précédente', '3720', '4178', 'r'], ['ilvl', '323,5', '325,9', 'r'],
+      ['Runs récents timés', '9/10', '10/10', 'r'], ['Morts / run', '0,9', '0,7', 'r'], ['Dégâts évitables vs pairs', '−41 %', '0 %', 'l'],
+      ['Kicks vs pairs', '+2,5 pts', '−5,9 pts', 'l'], ['DPS médian', '299,3k', '340,7k', 'r'], ['Parse médian', '26,0 %', '54,1 %', 'r'],
+      ['Donjons au niveau cible', '6/8', '7/8', 'r'], ['Classement région', '#591', '#331', 'r'],
+    ].map(([k, l, r, w]) => { const L = best(w === 'l'), R = best(w === 'r'); return { k, l, r, lc: L.c, lw: L.w, rc: R.c, rw: R.w }; });
+    const pc = (p) => p >= 95 ? '#FF8000' : p >= 75 ? '#A335EE' : p >= 50 ? '#3D8BFF' : p >= 25 ? '#1EFF00' : '#8A8F98';
+    const ds = [
+      ['Temple of Sethraliss', 'TS', 16, 1, 70.1, 20, 1, 50.1], ['Murder Row', 'MR', 18, 1, 29.8, 20, 1, 41.2],
+      ['The Blinding Vale', 'BV', 18, 1, 16.5, 19, 1, 75.4], ['Den of Nalorakk', 'DN', 17, 1, 19.3, 18, 1, 95.1],
+      ['Altar of Fangs', 'AF', 18, 1, 31.7, 18, 1, 57.2], ['Kings’ Rest', 'KR', 18, 0, 8.4, 18, 1, 51.1],
+      ['Voidscar Arena', 'VA', 18, 1, 31.2, 18, 1, 44.7], ['Ruby Life Pools', 'RL', 18, 1, 22.1, 17, 1, 69.7],
+    ];
+    const dungeons = ds.map(([name, abbr, l, lt, lp, r, rt, rp]) => ({
+      name, abbr, l: '+' + l, r: '+' + r,
+      lk: l > r ? '#5AB8F0' : '#ECEEF2', rk: r > l ? '#5AB8F0' : '#ECEEF2',
+      ls: lt ? '✓' : '✗', lsc: lt ? '#3FCF8E' : '#F2665C', rs: rt ? '✓' : '✗', rsc: rt ? '#3FCF8E' : '#F2665C',
+      lp: String(lp).replace('.', ',') + '%', lpc: pc(lp), rp: String(rp).replace('.', ',') + '%', rpc: pc(rp),
+    }));
+    return { recents, heads, axes, facts, dungeons };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Candidat — Synthèse (Obye) · cadre B</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:13px;color:#C9CED8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-p{background:#ECEEF2;color:#0E1014;border-color:#ECEEF2}
+.h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-0.01em}
+.nav-a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:10px;color:#A0A7B4;font-size:14px;font-weight:600}
+.nav-on{background:#1C2029;color:#ECEEF2}
+.tab{display:inline-flex;align-items:center;height:40px;padding:0 2px;font-size:14px;font-weight:600;color:#8D95A3;border-bottom:2px solid transparent}
+.tab-on{color:#ECEEF2;border-bottom-color:#ECEEF2}
+.kbd{font-family:'Geist Mono',monospace;font-size:12px;color:#8D95A3;border:1px solid #2A2F3B;border-radius:6px;padding:2px 6px;white-space:nowrap}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100%">
+  <aside style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; padding: 20px 12px; border-right: 1px solid #1E222C; display: flex; flex-direction: column; gap: 20px">
+    <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 10px">bmpl</strong>
+    <button class="btn" aria-label="Rechercher un joueur (Ctrl K)" style="height: 48px; justify-content: flex-start; gap: 10px; padding: 0 12px; border-radius: 12px; background: #161920; border: 1px solid #2A2F3B; color: #A0A7B4; font-size: 14px; font-weight: 500; width: 100%; box-sizing: border-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      Rechercher un joueur…<span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 12px; color: #8D95A3; border: 1px solid #2A2F3B; border-radius: 6px; padding: 2px 6px; white-space: nowrap">Ctrl K</span>
+    </button>
+    <div style="display: flex; gap: 6px; padding: 0 4px; margin-top: -8px"><span class="chip" style="height: 28px">EU</span><span class="chip" style="height: 28px">Clé +19</span></div>
+    <nav style="display: flex; flex-direction: column; gap: 2px">
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Accueil</a>
+      <a href="#" class="nav-a nav-on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .7 3.2 2.4 3.6 5.2"></path></svg>Candidats<span class="m" style="margin-left: auto; font-size: 12px; color: #8D95A3; background: #232836; border-radius: 999px; padding: 1px 8px">6</span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"></path></svg>Mes persos</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="1.5"></rect><rect x="14" y="4" width="7" height="16" rx="1.5"></rect></svg>Comparer</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"></path></svg>Live<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5V14M12 17h.01"></path></svg>Aide</a>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 0 12px 4px">Récents</span>
+      <sc-for list="{{side}}" as="s" hint-placeholder-count="6">
+        <a href="#" class="{{s.cls}}" style="font-weight: 500"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{s.vColor}}; flex-shrink: 0"></span><span style="color: #C9CED8">{{s.name}}</span><span class="m" style="margin-left: auto; font-size: 13px; color: {{s.vColor}}">{{s.score}}</span></a>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #161920; border: 1px solid #232733">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0">B</span>
+      <span style="display: flex; flex-direction: column; font-size: 14px; font-weight: 600; min-width: 0">Biwaa<span style="font-size: 12px; font-weight: 400; color: #8D95A3">412 / 1000 pts · cette heure</span></span>
+    </div>
+  </aside>
+
+  <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column">
+
+    <main style="padding: 28px 32px 96px; box-sizing: border-box">
+      <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+        <section style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: #2A1838; border: 1px solid #4A2A60; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#B65CE0" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 4c3 2 5 5 5 9M20 4c-3 2-5 5-5 9M8 21c0-3 1.8-5 4-5s4 2 4 5M9 13h6"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+              <h1 style="margin: 0; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; color: #B65CE0">Obye</h1>
+              <span class="chip" style="background: #1A1812; border-color: #3D3420; color: #F2B544; font-weight: 700">MAYBE <span class="m">59</span></span>
+            </div>
+            <span style="font-size: 14px; color: #A0A7B4">Chasseur de démons Dévoreur · DPS · Hyjal (EU) · RIO 2923 · ilvl 319</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="btn">Comparer</button>
+            <a href="#" class="btn">Raider.IO ↗</a>
+            <a href="#" class="btn">WCL ↗</a>
+          </div>
+        </section>
+
+        <nav style="display: flex; gap: 24px; border-bottom: 1px solid #232733; margin-top: -8px; flex-wrap: wrap">
+          <a href="#" class="tab tab-on">Synthèse</a>
+          <a href="#" class="tab">Runs <span class="m" style="margin-left: 6px; color: #5A6272">8</span></a>
+          <a href="#" class="tab">Donjons</a>
+          <a href="#" class="tab">Méthode</a>
+        </nav>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+
+          <section class="card" style="flex: 1 1 300px; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #1A1812; border-color: #3D3420">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl" style="color: #C2B48F">Verdict pour une +11</span>
+              <div style="display: flex; align-items: baseline; gap: 12px">
+                <span style="font-size: 38px; font-weight: 800; line-height: 1; color: #F2B544">MAYBE</span>
+                <span class="m" style="font-size: 38px; font-weight: 700; line-height: 1">59</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <div style="position: relative; height: 8px; border-radius: 999px; background: #2E2A1E">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 59%; border-radius: 999px; background: #F2B544"></div>
+                <div style="position: absolute; left: 70%; top: -4px; bottom: -4px; width: 2px; background: #ECEEF2"></div>
+              </div>
+              <div style="position: relative; height: 16px; font-size: 12px; color: #A39A80"><span style="position: absolute; left: 70%; transform: translateX(-50%)">INVITE 70</span></div>
+            </div>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #E8DFC6">Bien équipé et dans les temps, mais il meurt souvent et prend beaucoup de dégâts évitables.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid #3D3420">
+              <span class="lbl" style="color: #C2B48F">Pour passer INVITE : +11 pts</span>
+              <sc-for list="{{flip}}" as="f" hint-placeholder-count="3">
+                <div style="display: flex; flex-direction: column; gap: 2px">
+                  <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 14px"><strong>{{f.name}}</strong><span class="m" style="color: #5AB8F0; font-weight: 700; font-size: 13px">{{f.gain}}</span></div>
+                  <span style="font-size: 13px; color: #A39A80">{{f.gap}}</span>
+                </div>
+              </sc-for>
+              <span style="font-size: 12px; color: #8D95A3">gains estimés sur l'axe concerné</span>
+            </div>
+
+            <div style="display: flex; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #14120D; border: 1px solid #3D3420">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2B544" stroke-width="2" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+              <span style="font-size: 13px; color: #C9C0A8; line-height: 1.45"><strong style="color: #ECEEF2">8 runs notés</strong> sur 15 indexés. Le Temple +11 non timé (9 morts) pèse lourd : le verdict peut bouger vite.</span>
+            </div>
+          </section>
+
+          <div style="flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+                <h2 class="h2">Forces et faiblesses</h2>
+                <span style="font-size: 12px; color: #8D95A3">effet sur l'axe, en points</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px">
+                <div style="display: flex; flex-direction: column">
+                  <span class="lbl" style="color: #5AB8F0; margin-bottom: 4px">Ce qui l'aide</span>
+                  <sc-for list="{{pros}}" as="p" hint-placeholder-count="4">
+                    <div style="display: flex; flex-direction: column; gap: 5px; padding: 9px 0; border-top: {{p.border}}">
+                      <div style="display: flex; justify-content: space-between; gap: 10px"><span style="font-size: 14px; font-weight: 600">{{p.name}}</span><span class="m" style="font-size: 13px; font-weight: 700; color: #5AB8F0">{{p.pts}}</span></div>
+                      <div style="height: 5px; border-radius: 999px; background: #1C2029"><div style="height: 5px; width: {{p.w}}%; border-radius: 999px; background: #5AB8F0"></div></div>
+                      <span style="font-size: 12px; color: #8D95A3">{{p.axis}} · {{p.detail}}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display: flex; flex-direction: column">
+                  <span class="lbl" style="color: #F59E5B; margin-bottom: 4px">Ce qui le freine</span>
+                  <sc-for list="{{cons}}" as="c" hint-placeholder-count="4">
+                    <div style="display: flex; flex-direction: column; gap: 5px; padding: 9px 0; border-top: {{c.border}}">
+                      <div style="display: flex; justify-content: space-between; gap: 10px"><span style="font-size: 14px; font-weight: 600">{{c.name}}</span><span class="m" style="font-size: 13px; font-weight: 700; color: #F59E5B">{{c.pts}}</span></div>
+                      <div style="height: 5px; border-radius: 999px; background: #1C2029; display: flex; justify-content: flex-end"><div style="height: 5px; width: {{c.w}}%; border-radius: 999px; background: #F59E5B"></div></div>
+                      <span style="font-size: 12px; color: #8D95A3">{{c.axis}} · {{c.detail}}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: #1C2029; border: 1px solid #2A2F3B">
+                <span class="chip" style="height: 22px; font-size: 11px; flex-shrink: 0">informatif</span>
+                <span style="font-size: 13px; color: #A0A7B4; line-height: 1.45">Très irrégulier : écart de ±2,8 morts d'un run à l'autre, dégâts ±111 % vs pairs. Ne compte pas dans le score.</span>
+              </div>
+            </section>
+
+            <section class="card" style="padding: 4px 20px">
+              <sc-for list="{{axes}}" as="a" hint-placeholder-count="5">
+                <div style="display: grid; grid-template-columns: minmax(96px, 120px) 40px minmax(80px, 1fr) minmax(0, 1.5fr); gap: 14px; align-items: center; padding: 12px 0; border-top: {{a.border}}">
+                  <span style="font-size: 14px; font-weight: 600; display: flex; flex-direction: column; gap: 2px">{{a.name}}<sc-if value="{{a.info}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 500; color: #8D95A3">informatif · poids 0</span></sc-if></span>
+                  <span class="m" style="font-size: 18px; font-weight: 700; color: {{a.fill}}">{{a.score}}</span>
+                  <div style="position: relative; height: 7px; border-radius: 999px; background: #232733">
+                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{a.score}}%; border-radius: 999px; background: {{a.fill}}; opacity: {{a.op}}"></div>
+                    <div style="position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; background: #8D95A3"></div>
+                  </div>
+                  <span style="font-size: 13px; color: #A0A7B4; min-width: 0">{{a.why}}</span>
+                </div>
+              </sc-for>
+            </section>
+            <span style="font-size: 12px; color: #5A6272">Trait = joueur moyen de sa spé.</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1173}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const VC = { INVITE: '#3FCF8E', MAYBE: '#F2B544' };
+    const side = [['Vachâman', 'INVITE', 77], ['Obye', 'MAYBE', 59], ['Danilaskuf', 'INVITE', 76], ['Moadmoad', 'INVITE', 82], ['Loutrasse', 'MAYBE', 59], ['Circe', 'INVITE', 76]]
+      .map(([name, v, score]) => ({ name, score, vColor: VC[v], cls: name === 'Obye' ? 'nav-a nav-on' : 'nav-a' }));
+    const flip = [
+      { name: 'Dégâts évitables', gain: 'Survie, jusqu’à +10', gap: '+46 % vs pairs aujourd’hui : revenir au niveau des pairs' },
+      { name: 'Morts par run', gain: 'Survie, jusqu’à +9', gap: '1,6 mort par run, dont 9 sur un seul Temple +11' },
+      { name: 'Potions et healthstones', gain: 'Préparation, ~+5', gap: '1,3 potion et 0,0 healthstone par run' },
+    ];
+    const scale = (v) => Math.round(Math.abs(v) / 20 * 100);
+    const pros = [
+      ['ilvl au-dessus de la clé', 20.0, 'Préparation', 'ilvl +16 vs attendu en +11'],
+      ['Kicks au niveau des pairs', 9.2, 'Utilité', 'kicks +0 pt vs pairs · 25 % de capacité'],
+      ['Peu de morts en wipe', 6.1, 'Survie', '0,3 mort en wipe par run'],
+      ['Bon parse à la cible', 4.8, 'Throughput', 'parse 53 % en +11'],
+    ].map(([name, d, axis, detail], i) => ({ name, axis, detail, pts: '+' + String(d).replace('.', ','), w: scale(d), border: i === 0 ? '0' : '1px solid #232733' }));
+    const cons = [
+      ['Trop de dégâts évitables', -10.3, 'Survie', '+46 % vs pairs'],
+      ['Meurt souvent', -9.3, 'Survie', '1,6 mort par run'],
+      ['Peu de potions', -3.2, 'Préparation', '1,3 potion par run'],
+      ['Aucune healthstone', -2.0, 'Préparation', '0,0 par run'],
+      ['Aucun dispel', -2.0, 'Utilité', '0,0 dispel par run'],
+    ].map(([name, d, axis, detail], i) => ({ name, axis, detail, pts: '−' + String(Math.abs(d)).replace('.', ','), w: scale(d), border: i === 0 ? '0' : '1px solid #232733' }));
+    const fillOf = (s) => s >= 70 ? '#5AB8F0' : s >= 50 ? '#C9CED8' : '#F59E5B';
+    const axes = [
+      ['Préparation', 65, 'ilvl +16 vs attendu · 1,3 potion/run', false],
+      ['Utilité', 61, 'kicks +0 pt vs pairs · 0 dispel', false],
+      ['Throughput', 56, 'parse 53 % à la cible · médian 43 %', false],
+      ['Survie', 39, 'évitable +46 % vs pairs · 1,6 mort/run', false],
+      ['Régularité', 35, 'morts ±2,8 · dégâts ±111 % vs pairs', true],
+    ].map(([name, score, why, info], i) => ({ name, score, why, info, op: info ? 0.45 : 1, fill: fillOf(score), border: i === 0 ? '0' : '1px solid #232733' }));
+    return { side, flip, pros, cons, axes };
+  }
+}
+</script>
+</body>
+</html>

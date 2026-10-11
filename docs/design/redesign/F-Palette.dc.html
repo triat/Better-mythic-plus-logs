@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>R3 · Cadre B — recherche dans la barre latérale + palette Ctrl K</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:13px;color:#C9CED8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.nav-a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:10px;color:#A0A7B4;font-size:14px;font-weight:600}
+.nav-on{background:#1C2029;color:#ECEEF2}
+.seg{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:8px;font-size:14px;font-weight:600;color:#A0A7B4}
+.kbd{font-family:'Geist Mono',monospace;font-size:12px;color:#8D95A3;border:1px solid #2A2F3B;border-radius:6px;padding:2px 6px}
+.pal-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;color:#ECEEF2}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%; position: relative">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100%">
+  <aside style="flex: 1 1 260px; max-width: 100%; box-sizing: border-box; padding: 20px 12px; border-right: 1px solid #1E222C; display: flex; flex-direction: column; gap: 20px">
+    <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 10px">bmpl</strong>
+    <button class="btn" style="height: 48px; justify-content: flex-start; padding: 0 14px; border-radius: 12px; background: #161920; color: #A0A7B4; font-size: 14px; font-weight: 500; width: 100%">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      Rechercher un joueur…<span class="kbd" style="margin-left: auto">Ctrl K</span>
+    </button>
+    <div style="display: flex; gap: 6px; padding: 0 4px"><span class="chip">EU</span><span class="chip">Clé +19</span></div>
+    <nav style="display: flex; flex-direction: column; gap: 2px" aria-label="Navigation">
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>Accueil</a>
+      <a href="#" class="nav-a nav-on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.5-5 6.5-5s5.7 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.3 3.5 5"></path></svg>Candidats<span class="m" style="margin-left: auto; font-size: 12px; color: #8D95A3; background: #232836; border-radius: 999px; padding: 1px 8px">6</span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"></path></svg>Mes persos</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="7" height="16" rx="1.5"></rect><rect x="14" y="4" width="7" height="16" rx="1.5"></rect></svg>Comparer</a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="2"></circle><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"></path></svg>Live<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #3FCF8E"></span></a>
+      <a href="#" class="nav-a"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5V14M12 17h.01"></path></svg>Aide</a>
+    </nav>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 0 12px 4px">Récents</span>
+      <sc-for list="{{side}}" as="s" hint-placeholder-count="6">
+        <a href="#" class="{{s.cls}}" style="font-weight: 500"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{s.c}}; flex-shrink: 0"></span><span style="color: #C9CED8">{{s.name}}</span><span class="m" style="margin-left: auto; font-size: 13px; color: {{s.c}}">{{s.score}}</span></a>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #161920; border: 1px solid #232733">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #232836; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0">B</span>
+      <div style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 14px; font-weight: 600">Biwaa</span><span class="m" style="font-size: 12px; color: #8D95A3">412 / 1000 pts · cette heure</span></div>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 720px; min-width: 0; padding: 32px 32px 96px; box-sizing: border-box">
+    <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+      <section style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+        <div style="width: 56px; height: 56px; border-radius: 16px; background: #0F2A4D; border: 1px solid #1F4D85; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path></svg>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0">
+          <h1 style="margin: 0; font-size: 34px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; color: #4FA3FF">Vachâman</h1>
+          <span style="font-size: 15px; color: #A0A7B4">Chaman Élémentaire · DPS · Ysondre (EU) · RIO 3852 · ilvl 328</span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap"><button class="btn">Comparer</button><a href="#" class="btn">Raider.IO ↗</a><a href="#" class="btn">WCL ↗</a></div>
+      </section>
+      <nav style="display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: #161920; border: 1px solid #232733; align-self: flex-start; flex-wrap: wrap">
+        <a href="#" class="seg" style="background: #232836; color: #ECEEF2">Synthèse</a><a href="#" class="seg">Runs</a><a href="#" class="seg">Donjons</a><a href="#" class="seg">Méthode</a>
+      </nav>
+      <section class="card" style="padding: 24px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; background: #12201B; border-color: #24523F">
+        <div style="display: flex; align-items: baseline; gap: 14px"><span style="font-size: 44px; font-weight: 800; line-height: 1; color: #3FCF8E">INVITE</span><span class="m" style="font-size: 44px; font-weight: 700; line-height: 1">77</span></div>
+        <span style="font-size: 15px; color: #A9C2B7; flex: 1 1 300px">pour une +19 · 9 runs notés</span>
+      </section>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+        <div class="card" style="height: 160px"></div><div class="card" style="height: 160px"></div><div class="card" style="height: 160px"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div style="position: absolute; inset: 0; background: rgba(8,9,12,0.72); display: flex; justify-content: center; align-items: flex-start; padding: 96px 16px 16px; box-sizing: border-box">
+  <div role="dialog" aria-label="Palette de commandes" style="width: 100%; max-width: 700px; background: #161920; border: 1px solid #2A2F3B; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); overflow: hidden">
+    <label style="display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 18px; border-bottom: 1px solid #232733">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CED8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input aria-label="Rechercher un joueur ou une action" placeholder="Nom-Serveur, lien Raider.IO ou action…" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #ECEEF2; font: inherit; font-size: 17px">
+      <span class="chip">EU</span><span class="chip">Clé +19</span>
+    </label>
+    <div style="padding: 10px; display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 8px 12px 4px; font-size: 11px">Personnages récents</span>
+      <sc-for list="{{recent}}" as="r" hint-placeholder-count="4">
+        <a href="#" class="pal-row" style="background: {{r.bg}}">
+          <span style="width: 28px; height: 28px; border-radius: 8px; background: {{r.badge}}; display: flex; align-items: center; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.cc}}"></span></span>
+          <span style="display: flex; align-items: baseline; gap: 10px; min-width: 0"><span style="font-size: 15px; font-weight: 600; color: {{r.cc}}">{{r.name}}</span><span style="font-size: 13px; color: #8D95A3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{r.sub}}</span></span>
+          <span class="m" style="font-size: 13px; font-weight: 600; color: {{r.vc}}">{{r.verdict}}</span>
+        </a>
+      </sc-for>
+      <span class="lbl" style="padding: 12px 12px 4px; font-size: 11px">Mes persos</span>
+      <sc-for list="{{mine}}" as="r" hint-placeholder-count="2">
+        <a href="#" class="pal-row">
+          <span style="width: 28px; height: 28px; border-radius: 8px; background: #1C2029; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A0A7B4" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"></path></svg></span>
+          <span style="display: flex; align-items: baseline; gap: 10px; min-width: 0"><span style="font-size: 15px; font-weight: 600; color: {{r.cc}}">{{r.name}}</span><span style="font-size: 13px; color: #8D95A3">{{r.sub}}</span></span>
+          <span style="font-size: 12px; color: #8D95A3">{{r.right}}</span>
+        </a>
+      </sc-for>
+      <span class="lbl" style="padding: 12px 12px 4px; font-size: 11px">Actions</span>
+      <sc-for list="{{actions}}" as="a" hint-placeholder-count="3">
+        <a href="#" class="pal-row">
+          <span style="width: 28px; height: 28px; border-radius: 8px; background: #1C2029; display: flex; align-items: center; justify-content: center; color: #A0A7B4; font-size: 14px">›</span>
+          <span style="font-size: 15px">{{a.name}}</span>
+          <span class="kbd">{{a.key}}</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 12px 18px; border-top: 1px solid #232733; font-size: 12px; color: #8D95A3; flex-wrap: wrap">
+      <span><span class="kbd">↑↓</span> naviguer</span><span><span class="kbd">Entrée</span> ouvrir · 0 pt si déjà consulté</span><span><span class="kbd">Échap</span> fermer</span>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const V = { INVITE: '#3FCF8E', MAYBE: '#F2B544' };
+    const side = [['Vachâman', 77, 'INVITE'], ['Obye', 59, 'MAYBE'], ['Danilaskuf', 76, 'INVITE'], ['Moadmoad', 82, 'INVITE'], ['Loutrasse', 59, 'MAYBE'], ['Circe', 76, 'INVITE']]
+      .map(([name, score, v], i) => ({ name, score, c: V[v], cls: i === 0 ? 'nav-a nav-on' : 'nav-a' }));
+    const recent = [
+      ['Vachâman', 'Ysondre · Chaman Élémentaire', '#4FA3FF', '#0F2A4D', 'INVITE 77'],
+      ['Obye', 'Hyjal · DH Dévoreur', '#B65CE0', '#2A1838', 'MAYBE 59'],
+      ['Danilaskuf', 'Silvermoon · DK Sang · tank', '#E0475F', '#3A141C', 'INVITE 76'],
+      ['Moadmoad', 'Kazzak · Prêtre Sacré · soin', '#E6E6E6', '#2A2A2A', 'INVITE 82'],
+    ].map(([name, sub, cc, badge, verdict], i) => ({ name, sub, cc, badge, verdict, vc: V[verdict.split(' ')[0]], bg: i === 0 ? '#1C2029' : 'transparent' }));
+    const mine = [
+      { name: 'Biwaasham', sub: 'principal · Hyjal', cc: '#4FA3FF', right: 'Ma forme' },
+      { name: 'Biwaarlock', sub: 'Nerzhul · 33 runs', cc: '#ECEEF2', right: 'Ouvrir' },
+    ];
+    const actions = [
+      { name: 'Comparer les candidats ouverts…', key: 'C' },
+      { name: 'Ouvrir Live', key: 'L' },
+      { name: 'Aide : comment le verdict est calculé', key: '?' },
+    ];
+    return { side, recent, mine, actions };
+  }
+}
+</script>
+</body>
+</html>

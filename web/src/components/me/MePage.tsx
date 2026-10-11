@@ -38,7 +38,7 @@ export function MePage({ self, history, region, instanceRegion, onRegionChange }
     <div className="me-page">
       <div className="result-head">
         <h2>{t("me.title")}</h2>
-        <span className="muted">{t("me.sub", { max: MAX_ME })}</span>
+        <span className="muted">{t(self.hosted ? "me.subHosted" : "me.subLocal", { max: MAX_ME })}</span>
         <div className="grow" />
         <span className="muted" style={{ fontSize: 12 }}>{t("me.count", { n: list.length, max: MAX_ME })}</span>
       </div>
@@ -82,7 +82,7 @@ export function MePage({ self, history, region, instanceRegion, onRegionChange }
           : <span className={error ? "tone-bad" : "faint"} style={{ fontSize: 12 }}>{error ?? t("me.addHint")}</span>}
       </div>
       {!self.hosted && <p className="faint" style={{ fontSize: 12, margin: 0 }}>{t("me.localNote")}</p>}
-      {self.hosted && <div className="me-bnet"><span className="chip">{t("me.bnetChip")}</span><span>{t("me.bnet")}</span></div>}
+      {self.hosted && <div className="me-bnet"><span className="chip">{t("me.bnet.brand")}</span><span>{t("me.bnet.linkTitle")}</span></div>}
     </div>
   );
 }

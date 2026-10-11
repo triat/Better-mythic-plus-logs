@@ -34,6 +34,8 @@ export type { MPlusRun, SeasonDungeon } from "@shared/mplus.ts";
 export type { ControlSpell, RioProfile, RioRun, RunControl, RunSignals } from "@shared/signals/types.ts";
 export type { CcCategory } from "@shared/signals/control/table.ts";
 export type { LiveVerdict } from "@shared/server/routes-live.ts";
+export type { BnetCandidate } from "@shared/hosted/bnet-db.ts";
+export type { BnetCallbackCode } from "@shared/server/routes-bnet.ts";
 export type { SignalSummary } from "@shared/signals/summary.ts";
 export type { Metric } from "@shared/roles.ts";
 export type {

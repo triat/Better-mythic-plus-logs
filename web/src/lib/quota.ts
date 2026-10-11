@@ -1,6 +1,6 @@
 // "N pts left this hour": the member's share of the shared Warcraft Logs budget (hosted mode).
 import type { T } from "../i18n/t.ts";
-import type { NotFoundInfo, QuotaInfo } from "../api.ts";
+import type { ApiFailureCode, NotFoundInfo, QuotaInfo } from "../api.ts";
 
 export function pointsLeft(q: QuotaInfo | null): number | null {
   if (!q || q.limit === null) return null;
@@ -28,7 +28,7 @@ export function quotaTooltip(t: T, q: QuotaInfo | null): string {
 }
 
 /** A failed call as `api.ts` returns it: the coded kind (null for anything else), the details it carried, the server's English message. */
-export interface QuotaFailure { code: "quota" | "budget" | "not_found" | null; quota?: QuotaInfo; budget?: QuotaInfo; notFound?: NotFoundInfo; error: string }
+export interface QuotaFailure { code: ApiFailureCode; quota?: QuotaInfo; budget?: QuotaInfo; notFound?: NotFoundInfo; error: string }
 
 /**
  * A quota/budget 429's or a not-found 404's dictionary message; falls back to the server's English text for any other failure.

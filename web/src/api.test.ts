@@ -21,6 +21,23 @@ describe("api", () => {
     expect(r).toEqual({ ok: false, error: "Not in history", code: null });
   });
 
+  test("Battle.net: the pick's 410 keeps its code for the dictionary wording; get and unlink hit /api/bnet", async () => {
+    const seen: { url: string; init?: RequestInit }[] = [];
+    mock((url, init) => {
+      seen.push({ url, init });
+      return url === "/api/bnet/characters"
+        ? Response.json({ ok: false, error: "bnet_import_expired", message: "This import expired: link Battle.net again." }, { status: 410 })
+        : Response.json({ ok: true, link: null, removed: [], import: null });
+    });
+    expect(await api.bnet.pick([{ region: "eu", bnetId: 3 }]))
+      .toEqual({ ok: false, error: "This import expired: link Battle.net again.", code: "bnet_import_expired" });
+    expect(seen[0]!.init?.method).toBe("PUT");
+    expect(JSON.parse(String(seen[0]!.init?.body))).toEqual({ picks: [{ region: "eu", bnetId: 3 }] });
+    expect(await api.bnet.get()).toEqual({ ok: true, link: null, removed: [], import: null });
+    await api.bnet.unlink();
+    expect([seen[1]!.url, seen[2]!.url, seen[2]!.init?.method]).toEqual(["/api/bnet", "/api/bnet", "DELETE"]);
+  });
+
   test("HTTP error with non-JSON body", async () => {
     mock(() => new Response("boom", { status: 500 }));
     expect(await api.history()).toEqual({ ok: false, error: "HTTP 500", code: null });

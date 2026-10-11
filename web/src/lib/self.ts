@@ -310,18 +310,21 @@ const sameCharacter = (c: MyCharacter, p: LookupPayload): boolean =>
 export const isMe = (chars: MyCharacter[], p: LookupPayload): boolean => chars.some((c) => sameCharacter(c, p));
 
 /** Phase-2 spec, decision 6: the member's own characters open the self-review tabs, anyone else the vetting view the
- * result page had before phase 1. Until Battle.net linking, "own" means "in My characters". */
+ * result page had before phase 1. "Own" means "in My characters" (from Battle.net only when hosted). */
 export const resultView = (chars: MyCharacter[], p: LookupPayload): "owner" | "vetting" => (isMe(chars, p) ? "owner" : "vetting");
 
-/** Adds or removes the payload's character; null when the list is full and it is not in it. */
-export function toggleMe(chars: MyCharacter[], p: LookupPayload): MyCharacter[] | null {
+/** Adds or removes the payload's character; null when the list is full and it is not in it. Hosted, characters come
+ * from Battle.net only (Battle.net spec, decision 7): the toggle can only remove, so an addition is null too. */
+export function toggleMe(chars: MyCharacter[], p: LookupPayload, hosted: boolean): MyCharacter[] | null {
   if (isMe(chars, p)) return chars.filter((c) => !sameCharacter(c, p));
-  if (chars.length >= MAX_ME) return null;
+  if (hosted || chars.length >= MAX_ME) return null;
   return [...chars, { name: p.character.name, realm: p.character.realmSlug, region: p.character.region, source: "manual" }];
 }
 
-export function meChip(t: T, chars: MyCharacter[], p: LookupPayload): { label: string; on: boolean; disabled: boolean; title?: string } {
+/** "This is me". Hosted, a character not on the list gets no chip at all (canvas "bnet", choice 1). */
+export function meChip(t: T, chars: MyCharacter[], p: LookupPayload, hosted: boolean): { label: string; on: boolean; disabled: boolean; title?: string } | null {
   if (isMe(chars, p)) return { label: t("self.head.meOn"), on: true, disabled: false };
+  if (hosted) return null;
   if (chars.length >= MAX_ME) return { label: t("self.head.me"), on: false, disabled: true, title: t("self.head.meFull", { max: MAX_ME }) };
   return { label: t("self.head.me"), on: false, disabled: false };
 }

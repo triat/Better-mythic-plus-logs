@@ -1,5 +1,6 @@
 import type {
   AdminAudit,
+  BnetCandidate,
   AdminInstance,
   AdminInvite,
   AdminProposal,
@@ -36,7 +37,15 @@ import { budgetFromFailure, notFoundFromFailure, quotaFromFailure } from "./lib/
  * (`errors.quota` / `errors.budget`): `quota` also carries the member's own numbers (and updates the header's
  * quota line), `budget` carries the shared client's numbers for the toast only.
  */
-export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; code: "quota" | "budget" | "not_found" | null; quota?: QuotaInfo; budget?: QuotaInfo; notFound?: NotFoundInfo };
+export type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; code: ApiFailureCode; quota?: QuotaInfo; budget?: QuotaInfo; notFound?: NotFoundInfo };
+/** `bnet_import_expired`: the Battle.net pick's 410, worded by the dictionary (`lib/bnet.ts`'s `pickFailureNotice`). */
+export type ApiFailureCode = "quota" | "budget" | "not_found" | "bnet_import_expired" | null;
+/** GET /api/bnet: the member's link, the labels the 30-day check removed, and a pending import (one hour). */
+export interface BnetState {
+  link: { battletag: string | null; linkedAt: number } | null;
+  removed: string[];
+  import: { candidates: BnetCandidate[]; createdAt: number } | null;
+}
 /** A lookup of a character Warcraft Logs does not know: what was asked for. */
 export interface NotFoundInfo { character: string; region: string }
 
@@ -72,7 +81,7 @@ async function call<T>(path: string, init?: RequestInit): Promise<ApiResult<T>> 
     return {
       ok: false,
       error: data.message ?? data.error ?? `HTTP ${res.status}`,
-      code: quota ? "quota" : budget ? "budget" : notFound ? "not_found" : null,
+      code: quota ? "quota" : budget ? "budget" : notFound ? "not_found" : data.error === "bnet_import_expired" ? "bnet_import_expired" : null,
       ...(quota ? { quota } : {}),
       ...(budget ? { budget } : {}),
       ...(notFound ? { notFound } : {}),
@@ -146,6 +155,13 @@ export const api = {
     verifyWclClient: () => call<{ client: OwnClientView }>("/api/me/wcl-client/verify", post()),
     removeWclClient: () => call<Record<never, never>>("/api/me/wcl-client", { method: "DELETE" }),
     deleteAccount: () => call<Record<never, never>>("/api/me", { method: "DELETE" }),
+  },
+  /** Battle.net linking (hosted only, 0 WCL pts): the link and import, the pick (in order, the first is the main), the unlink. */
+  bnet: {
+    get: () => call<BnetState>("/api/bnet"),
+    pick: (picks: { region: Region; bnetId: number }[]) =>
+      call<{ settings: Settings }>("/api/bnet/characters", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks }) }),
+    unlink: () => call<Record<never, never>>("/api/bnet", { method: "DELETE" }),
   },
   /** The documentation registry in `locale` plus the effective evaluation config (/help): 0 WCL pts, readable signed out. */
   docs: (locale: Locale = "en") => call<Omit<DocsResponse, "ok">>(`/api/docs?lang=${locale}`),

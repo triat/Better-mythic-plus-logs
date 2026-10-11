@@ -1,6 +1,7 @@
 # Battle.net linking: import My characters from the account — design
 
-Status: draft 2026-10-11, for the user's review. Parent spec:
+Status: approved 2026-10-11 (cap 20 confirmed: "Validé, 20 c'est bien"); the operator added the Blizzard client to
+the production `.env` the same day. Parent spec:
 `docs/superpowers/specs/2026-10-09-self-review-pillars-design.md`, decision 1 ("Linking a Battle.net account
 (`wow.profile` scope, `GET /profile/user/wow`) imports the account's characters as `source: "bnet"` and is its own
 step with its own spec"). The user's answers of 2026-10-11 are decisions 2, 6 and 7.
@@ -60,8 +61,8 @@ equals the WCL realm slug bmpl stores (`realmToSlug`), whether `http://localhost
 2. **The member picks from the whole account; the cap rises to 20.** (User, 2026-10-11: "1 et 3".) After
    Battle.net, `/me` lists every character of the account, all four regions, highest level first, then by name;
    the member ticks the ones to keep and marks the main (first of the list, as today). `MAX_CHARACTERS` goes from
-   5 to **20**, in both modes, a bound for the page and the settings row rather than a product limit. The number
-   is a proposal for the review.
+   5 to **20**, in both modes, a bound for the page and the settings row rather than a product limit (confirmed
+   2026-10-11).
 
 3. **One import = one Battle.net visit, nothing kept but the picks.** `GET /auth/bnet/start` (signed-in member,
    same-origin) issues a `state` bound to a nonce cookie (`OAuthStates`, as Discord). The callback consumes it,
@@ -178,8 +179,7 @@ and check that the list empties. Costs no WCL points unless a sync is started.
 - China region.
 - Keeping a token to re-import without a visit (would need refresh tokens, which the docs do not offer).
 
-## Open points for the review
+## Open point
 
-1. The cap: 20 (decision 2).
-2. Whether "This is me" should stay visible in hosted mode for a character not on the list, as a pointer to
-   "Link Battle.net" (decision 7 hides it).
+Whether "This is me" should stay visible in hosted mode for a character not on the list, as a pointer to "Link
+Battle.net" (decision 7 hides it). Settled on the canvas (decision 10).

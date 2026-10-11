@@ -1,6 +1,10 @@
 /* web/src/styles/app.css */
 @import "./tokens.css";
 
+/* Self-hosted fonts (redesign spec 2026-10-11): served by src/web-static.ts, allowed by the hosted CSP's font-src 'self'. */
+@font-face { font-family: Geist; src: url(/fonts/Geist-Variable.woff2) format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url(/fonts/GeistMono-Variable.woff2) format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
 /* Page column (canvas "Wide screens", B + C): header, tabs and content share one centred column; the bars' borders
@@ -8,7 +12,7 @@ html, body { margin: 0; background: var(--bg); color: var(--text); }
    `--gutter` is the side padding that centres a `--col` wide column inside a full-width bar. */
 :root { --col: 1200px; --gutter: max(24px, calc((100% - var(--col)) / 2)); }
 :root:has(.content-result) { --col: 1640px; }
-body { font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; min-width: 960px; }
+body { font: 14px/1.5 var(--font-ui); min-width: 960px; }
 a { color: var(--link); text-decoration: none; }
 a:hover { color: #79b8ff; }
 input, select, button { font: inherit; color: inherit; }
@@ -16,6 +20,7 @@ input, select { background: var(--inset); border: 1px solid var(--border); borde
 input:focus, select:focus { outline: none; border-color: var(--link); }
 
 .mono { font-family: var(--mono); }
+.mono, code { font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
 .label-caps { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
@@ -23,8 +28,8 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--radius); border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .btn:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
 .btn:disabled { opacity: .5; cursor: default; }
-.btn-primary { background: var(--button); border-color: var(--button); color: #fff; font-weight: 600; }
-.btn-primary:hover:not(:disabled) { background: #2ea043; border-color: #2ea043; color: #fff; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 600; }
+.btn-primary:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); filter: brightness(.9); }
 .btn-lg { height: 40px; padding: 0 16px; }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; }

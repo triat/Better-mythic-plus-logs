@@ -1,30 +1,67 @@
-/* web/src/styles/tokens.css — values lifted from the former COMMON_CSS; do not invent new ones */
+/* web/src/styles/tokens.css — the only place colours, radii and fonts are defined; do not invent new ones.
+   Values come from the redesign spec 2026-10-11 ("Visual system", docs/superpowers/specs/2026-10-11-ui-redesign-design.md).
+   Old names are kept and remapped so today's views keep working until phases 2–4 replace them. */
 :root {
-  --bg: #0d1117;
-  --card: #161b22;
-  --inset: #0b0f14;
-  --border: #30363d;
-  --border-soft: #21262d;
-  --text: #e6edf3;
-  --text-soft: #c9d1d9;
-  --muted: #8b949e;
-  --faint: #6e7681;
-  --link: #58a6ff;
-  --green: #56d364;
-  --green-bg: #0a2e1a;
-  --green-border: #1f6f3a;
-  --yellow: #e3b341;
-  --yellow-bg: #2e2a0a;
-  --yellow-border: #7a6a1f;
-  --warn: #d29922;
-  --red: #f85149;
-  --red-bg: #2e0a0a;
-  --red-border: #7a1f1f;
-  --orange: #ffa657;
-  --button: #238636;
+  /* Ground and surfaces */
+  --bg: #0e1014; /* redesign spec 2026-10-11 */
+  --card: #161920; /* redesign spec 2026-10-11 */
+  --card-2: #1c2029; /* redesign spec 2026-10-11 — inner blocks */
+  --card-3: #232836; /* redesign spec 2026-10-11 — selected */
+  --inset: #0e1014; /* redesign spec 2026-10-11 — old name, mapped to the ground */
+
+  /* Borders */
+  --border: #232733; /* redesign spec 2026-10-11 — card border */
+  --border-2: #2a2f3b; /* redesign spec 2026-10-11 — control border */
+  --border-soft: #1e222c; /* redesign spec 2026-10-11 — old name */
+
+  /* Text */
+  --text: #eceef2; /* redesign spec 2026-10-11 */
+  --text-soft: #c9ced8; /* redesign spec 2026-10-11 */
+  --muted: #a0a7b4; /* redesign spec 2026-10-11 */
+  --label: #8d95a3; /* redesign spec 2026-10-11 — labels (never --dim) */
+  --faint: #8d95a3; /* redesign spec 2026-10-11 — old name, mapped to --label */
+  --dim: #5a6272; /* redesign spec 2026-10-11 — decoration only, never text */
+  --link: #7fb4ff; /* redesign spec 2026-10-11 */
+
+  /* Verdicts — each colour is reserved to its verdict (PASS also deaths, depleted) */
+  --invite: #3fcf8e; /* redesign spec 2026-10-11 */
+  --invite-bg: #12201b; /* redesign spec 2026-10-11 */
+  --invite-border: #24523f; /* redesign spec 2026-10-11 */
+  --maybe: #f2b544; /* redesign spec 2026-10-11 */
+  --maybe-bg: #1a1812; /* redesign spec 2026-10-11 */
+  --maybe-border: #3d3420; /* redesign spec 2026-10-11 */
+  --pass: #f2665c; /* redesign spec 2026-10-11 */
+  --pass-bg: #1e1416; /* redesign spec 2026-10-11 */
+  --pass-border: #4a2228; /* redesign spec 2026-10-11 */
+  /* Old names, mapped onto the verdict colours */
+  --green: #3fcf8e; /* redesign spec 2026-10-11 */
+  --green-bg: #12201b; /* redesign spec 2026-10-11 */
+  --green-border: #24523f; /* redesign spec 2026-10-11 */
+  --yellow: #f2b544; /* redesign spec 2026-10-11 */
+  --yellow-bg: #1a1812; /* redesign spec 2026-10-11 */
+  --yellow-border: #3d3420; /* redesign spec 2026-10-11 */
+  --red: #f2665c; /* redesign spec 2026-10-11 */
+  --red-bg: #1e1416; /* redesign spec 2026-10-11 */
+  --red-border: #4a2228; /* redesign spec 2026-10-11 */
+
+  /* Deltas vs peers / vs before (colour-blind safe; never green / red) */
+  --better: #5ab8f0; /* redesign spec 2026-10-11 */
+  --worse: #f59e5b; /* redesign spec 2026-10-11 */
+  --warn: #f59e5b; /* redesign spec 2026-10-11 — old name */
+  --orange: #f59e5b; /* redesign spec 2026-10-11 — old name */
+
+  /* Buttons */
+  --primary: #eceef2; /* redesign spec 2026-10-11 — the single primary button of a view */
+  --on-primary: #0e1014; /* redesign spec 2026-10-11 */
+  --button: #eceef2; /* redesign spec 2026-10-11 — old name, mapped to --primary */
   --discord: #5865f2; /* Discord brand colour ("blurple") — the hosted sign-in button only, issue #7 */
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --radius: 6px;
-  --radius-sm: 4px; /* keyboard keys in the search suggestions (canvas "suggest", SuggestChosen) */
-  --radius-lg: 10px;
+
+  /* Type */
+  --font-ui: Geist, system-ui, sans-serif; /* redesign spec 2026-10-11 */
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* redesign spec 2026-10-11 */
+
+  /* Radii: 16 card · 10 block / button · 999 chip */
+  --radius: 10px; /* redesign spec 2026-10-11 — block / button */
+  --radius-sm: 6px; /* redesign spec 2026-10-11 — keyboard keys in the search suggestions */
+  --radius-lg: 16px; /* redesign spec 2026-10-11 — card */
 }

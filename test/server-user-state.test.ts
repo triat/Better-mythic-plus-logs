@@ -216,21 +216,59 @@ describe("quota on the hosted routes", () => {
   });
 });
 
-describe("PUT /api/settings — characters", () => {
-  test("manual entries are stored; a twenty-first character is refused", async () => {
-    const c = (name: string, source = "manual") => ({ name, realm: "hyjal", region: "eu", source });
-    const put = (characters: unknown[]) => fetch(h("/api/settings"), as(a, { method: "PUT", body: JSON.stringify({ characters }) }));
-    expect((await put([c("Biwaasham")])).status).toBe(200);
-    expect((await (await fetch(h("/api/settings"), as(a))).json()).settings.characters).toEqual([c("Biwaasham")]);
-    expect((await put(Array.from({ length: 21 }, (_, i) => c(`N${String.fromCharCode(97 + i)}`)))).status).toBe(400);
-  });
-});
+describe("PUT /api/settings — characters (Battle.net spec, decision 4)", () => {
+  // Stored `bnet` entries are seeded through the db: hosted members' characters only come from the Battle.net import.
+  const stored = (name: string, bnetId: number) => ({ name, realm: "hyjal", region: "eu" as const, source: "bnet" as const, bnetId, verifiedAt: 1_700_000_000_000 + bnetId });
+  const seed = (...list: ReturnType<typeof stored>[]) => db.settings.update(a.user.id, { characters: list }, Date.now());
+  const put = (characters: unknown[]) => fetch(h("/api/settings"), as(a, { method: "PUT", body: JSON.stringify({ characters }) }));
+  const read = async () => (await (await fetch(h("/api/settings"), as(a))).json()).settings.characters;
+  const refusal = { ok: false, error: "characters_from_bnet", message: "Characters come from your Battle.net account: link it on My characters." };
 
-describe("PUT /api/settings — duplicate characters", () => {
-  test("are dropped before storing, so the answer matches a later GET", async () => {
-    const c = (name: string) => ({ name, realm: "hyjal", region: "eu", source: "manual" });
-    const r = await fetch(h("/api/settings"), as(a, { method: "PUT", body: JSON.stringify({ characters: [c("Biwaasham"), c("biwaasham")] }) }));
-    expect((await r.json()).settings.characters).toEqual([c("Biwaasham")]);
+  test("removing one stored entry: 200", async () => {
+    seed(stored("Biwaasham", 1), stored("Muleyoxo", 2));
+    const r = await put([stored("Muleyoxo", 2)]);
+    expect(r.status).toBe(200);
+    expect(await read()).toEqual([stored("Muleyoxo", 2)]);
+  });
+
+  test("reordering: 200, order kept, bnetId and verifiedAt are the stored ones", async () => {
+    seed(stored("Biwaasham", 1), stored("Muleyoxo", 2));
+    // The front sends back what it received; a client-side change to bnetId/verifiedAt is ignored.
+    const r = await put([{ ...stored("Muleyoxo", 2), bnetId: 99, verifiedAt: 5 }, { ...stored("biwaasham", 1), realm: "Hyjal" }]);
+    expect(r.status).toBe(200);
+    expect((await r.json()).settings.characters).toEqual([stored("Muleyoxo", 2), stored("Biwaasham", 1)]);
+    expect(await read()).toEqual([stored("Muleyoxo", 2), stored("Biwaasham", 1)]);
+  });
+
+  test("adding a manual entry: 400 characters_from_bnet, list unchanged", async () => {
+    seed(stored("Biwaasham", 1));
+    const r = await put([stored("Biwaasham", 1), { name: "Noshiidk", realm: "draenor", region: "eu", source: "manual" }]);
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual(refusal);
+    expect(await read()).toEqual([stored("Biwaasham", 1)]);
+  });
+
+  test("adding a bnet entry that is not stored: 400", async () => {
+    seed(stored("Biwaasham", 1));
+    const r = await put([stored("Biwaasham", 1), stored("Muleyoxo", 2)]);
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual(refusal);
+    expect(await read()).toEqual([stored("Biwaasham", 1)]);
+  });
+
+  test("a twenty-first character is refused by validation", async () => {
+    const list = Array.from({ length: 21 }, (_, i) => stored(`N${String.fromCharCode(97 + i)}`, i + 1));
+    seed(...list.slice(0, 20));
+    const r = await put(list);
+    expect(r.status).toBe(400);
+    expect((await r.json()).error).not.toBe("characters_from_bnet");
+  });
+
+  test("duplicates are dropped before storing, so the answer matches a later GET", async () => {
+    seed(stored("Biwaasham", 1));
+    const r = await put([stored("Biwaasham", 1), stored("biwaasham", 1)]);
+    expect((await r.json()).settings.characters).toEqual([stored("Biwaasham", 1)]);
+    expect(await read()).toEqual([stored("Biwaasham", 1)]);
   });
 });
 

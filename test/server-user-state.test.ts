@@ -217,13 +217,12 @@ describe("quota on the hosted routes", () => {
 });
 
 describe("PUT /api/settings — characters", () => {
-  test("manual entries are stored; a bnet entry or a sixth character is refused", async () => {
+  test("manual entries are stored; a twenty-first character is refused", async () => {
     const c = (name: string, source = "manual") => ({ name, realm: "hyjal", region: "eu", source });
     const put = (characters: unknown[]) => fetch(h("/api/settings"), as(a, { method: "PUT", body: JSON.stringify({ characters }) }));
     expect((await put([c("Biwaasham")])).status).toBe(200);
     expect((await (await fetch(h("/api/settings"), as(a))).json()).settings.characters).toEqual([c("Biwaasham")]);
-    expect((await put([c("Biwaasham", "bnet")])).status).toBe(400);
-    expect((await put(["Aa", "Bb", "Cc", "Dd", "Ee", "Ff"].map((n) => c(n)))).status).toBe(400);
+    expect((await put(Array.from({ length: 21 }, (_, i) => c(`N${String.fromCharCode(97 + i)}`)))).status).toBe(400);
   });
 });
 

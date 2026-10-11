@@ -304,7 +304,7 @@ export function syncCard(t: T, season: SeasonView | null, hosted: boolean, ownCl
 
 export const syncProgress = (t: T, p: { done: number; total: number; pts: number }): string => t("self.sync.progress", p);
 
-export const MAX_ME = 5;
+export const MAX_ME = 20;
 const sameCharacter = (c: MyCharacter, p: LookupPayload): boolean =>
   c.region === p.character.region && c.realm.toLowerCase() === p.character.realmSlug.toLowerCase() && c.name.toLowerCase() === p.character.name.toLowerCase();
 export const isMe = (chars: MyCharacter[], p: LookupPayload): boolean => chars.some((c) => sameCharacter(c, p));

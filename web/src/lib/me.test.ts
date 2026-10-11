@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { HistoryItem, MyCharacter, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
+import { MAX_ME } from "./self.ts";
 import { addCharacter, historyKeyFor, lookupQuery, mainPillars, makeMain, mineRequest, parseEntry, removeAt, rowCells, seasonLine, slugOf } from "./me.ts";
 
 const tFr = makeT(fr, "fr");
@@ -27,7 +28,7 @@ describe("parseEntry", () => {
 describe("list edits", () => {
   test("add: duplicate, full, ok; make main; remove", () => {
     expect(addCharacter([c("Muleyoxo")], c("muleyoxo"))).toEqual({ ok: false, error: "duplicate" });
-    expect(addCharacter(["Aa", "Bb", "Cc", "Dd", "Ee"].map((n) => c(n)), c("Ff"))).toEqual({ ok: false, error: "full" });
+    expect(addCharacter(Array.from({ length: MAX_ME }, (_, i) => c(`N${String.fromCharCode(97 + i)}`)), c("Ff"))).toEqual({ ok: false, error: "full" });
     expect(addCharacter([c("Aa")], c("Bb"))).toEqual({ ok: true, list: [c("Aa"), c("Bb")] });
     expect(makeMain([c("Aa"), c("Bb"), c("Cc")], 2)).toEqual([c("Cc"), c("Aa"), c("Bb")]);
     expect(removeAt([c("Aa"), c("Bb")], 0)).toEqual([c("Bb")]);

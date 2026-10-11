@@ -31,7 +31,10 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   inconsistency). Raise `axisWeights.<role>.consistency` in `evaluation.json`
   if you disagree.
 - **Preparation** — potions and healthstones used per run, and item level
-  vs. the season's expected curve at the target level.
+  vs. the season's expected curve at the target level. Healthstones count
+  only on runs with a Warlock in the group, the player included (config
+  version 6): without a Warlock's soulwell there was no healthstone to use,
+  so those runs neither help nor hurt.
 - **Experience** — dungeon coverage, share of dungeons at/above target,
   median key level vs. target, recent activity (runs in the last 7 days),
   plus a small bonus — never a penalty — for a strong previous-season score.

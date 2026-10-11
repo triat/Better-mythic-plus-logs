@@ -149,8 +149,22 @@ describe("parseRunSignals — consumables", () => {
   test("potions and healthstones from playerDetails", async () => {
     const f = await loadWclFixture("s1-tank");
     const fb = { keyLevel: 18, affixes: f.run.affixes, encounterID: f.run.encounterID };
-    expect(parseRunSignals(f.report, "Mstercheif", fb)!.consumables).toEqual({ potions: 6, healthstones: 3 });
-    expect(parseRunSignals(f.report, "Biwaadrood", fb)!.consumables).toEqual({ potions: 1, healthstones: 0 });
+    // No Warlock in this group: the healthstones used came from elsewhere, and scoring ignores them.
+    expect(parseRunSignals(f.report, "Mstercheif", fb)!.consumables).toEqual({ potions: 6, healthstones: 3, healthstonesAvailable: false });
+    expect(parseRunSignals(f.report, "Biwaadrood", fb)!.consumables).toEqual({ potions: 1, healthstones: 0, healthstonesAvailable: false });
+  });
+  test("healthstonesAvailable when any player of the group is a Warlock, the character included", async () => {
+    const f = await loadWclFixture("s1-tank");
+    const fb = { keyLevel: 18, affixes: f.run.affixes, encounterID: f.run.encounterID };
+    const composition = f.report.summary.data.composition as Array<{ name: string; type: string }>;
+    const withWarlock = (name: string) => ({
+      ...f.report,
+      summary: { ...f.report.summary, data: { ...f.report.summary.data,
+        composition: composition.map((p) => (p.name === name ? { ...p, type: "Warlock" } : p)) } },
+    });
+    const other = composition.find((p) => p.name !== "Mstercheif")!.name;
+    expect(parseRunSignals(withWarlock(other), "Mstercheif", fb)!.consumables!.healthstonesAvailable).toBe(true);
+    expect(parseRunSignals(withWarlock("Mstercheif"), "Mstercheif", fb)!.consumables!.healthstonesAvailable).toBe(true);
   });
   test("player absent from playerDetails → null", async () => {
     const f = await loadWclFixture("s1-tank");

@@ -78,7 +78,9 @@ export interface RunSignals {
     affixes: number[];
   };
   itemLevel: number | null;
-  consumables: { potions: number; healthstones: number } | null;
+  /** healthstonesAvailable: a Warlock (the player included) was in the group, so its soulwell offered healthstones;
+   *  absent on payloads saved before 2026-10-11. */
+  consumables: { potions: number; healthstones: number; healthstonesAvailable?: boolean } | null;
   deaths: { count: number; groupTotal: number; events: DeathEvent[] };
   damageTaken: { total: number; dtps: number; peer: PeerComparison | null };
   interrupts: {

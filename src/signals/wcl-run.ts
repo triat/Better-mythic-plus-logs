@@ -55,10 +55,11 @@ const itemLevelFor = (summary: RawTable | null | undefined, name: string): numbe
   return null;
 };
 
-const consumablesFor = (summary: RawTable | null | undefined, name: string) => {
+const consumablesFor = (summary: RawTable | null | undefined, name: string, players: Player[]) => {
   const p = playerDetailFor(summary, name);
   if (!p) return null;
-  return { potions: p.potionUse ?? 0, healthstones: p.healthstoneUse ?? 0 };
+  const healthstonesAvailable = players.some((q) => q.className === "Warlock");
+  return { potions: p.potionUse ?? 0, healthstones: p.healthstoneUse ?? 0, healthstonesAvailable };
 };
 
 /** Per-player totals from a flat table (DamageTaken); absent players → 0. */
@@ -238,7 +239,7 @@ export function parseRunSignals(
     role,
     keystone,
     itemLevel: itemLevelFor(report.summary, characterName),
-    consumables: consumablesFor(report.summary, characterName),
+    consumables: consumablesFor(report.summary, characterName, players),
     deaths: { count: events.length, groupTotal: allDeaths.length, events },
     damageTaken,
     interrupts,

@@ -25,7 +25,7 @@ Copy both this `deploy/` directory and `.env.hosted.example` to the VPS before r
 
 1. `sudo bash bootstrap.sh bmpl.example.com` on the fresh VPS (the scripts ship with the exec bit set; `bash bootstrap.sh` also works if it was lost in transfer) — installs packages, the `bmpl` and `deploy` users, the firewall rules, and the systemd units (enabled, not started).
 2. Put your public key in `/home/deploy/.ssh/authorized_keys` — `just deploy` logs in as `deploy`, never as root.
-3. Fill `/opt/bmpl/.env` on the VPS (copied from `.env.hosted.example` by bootstrap if absent) with real secrets.
+3. Fill `/opt/bmpl/.env` on the VPS (copied from `.env.hosted.example` by bootstrap if absent) with real secrets: the nine required variables, Discord and Blizzard (Battle.net) clients included.
 4. Fill `/etc/litestream.yml` with the real bucket, endpoint and keys (or a local `type: file` replica).
 5. `BMPL_DEPLOY_HOST=deploy@bmpl.example.com just deploy` from your machine — builds and ships the `bmpl` binary to `/opt/bmpl/bmpl`, then starts/restarts `bmpl.service`.
 6. First deploy only: `sudo systemctl start litestream bmpl-backup-check.timer`.
@@ -49,7 +49,8 @@ administration (`.env`, `litestream.yml`, re-running `bootstrap.sh`).
 DNS `A` record `bmpl.<domain>` pointing at it, live before bootstrap (Caddy
 needs it to obtain the certificate); an S3-compatible bucket (Backblaze B2,
 Hetzner Object Storage, …) with an application key that can read and write
-it; a Discord application (see [Login](../docs/hosted.md#login)); a Warcraft Logs API client
+it; a Discord application and a Blizzard (Battle.net) API client, which needs two-factor
+authentication on the Battle.net account that creates it (both in [Login](../docs/hosted.md#login)); a Warcraft Logs API client
 (see [docs/cli.md](../docs/cli.md#getting-warcraft-logs-api-credentials)). On your machine: this repo,
 Bun, `just`, and an SSH key that opens `root@<vps>` (bootstrap and
 administration) — the same key or a dedicated one goes to `deploy@<vps>` for
@@ -101,12 +102,17 @@ watch `journalctl -u caddy` to see the certificate obtained.
 /home/deploy/.ssh/authorized_keys' < ~/.ssh/id_ed25519.pub` (the file already
 exists with the right owner and mode), then check `ssh deploy@<vps> sudo -n
 -l` lists the two root commands and `(bmpl) ALL`. Then `ssh root@<vps> 'nano
-/opt/bmpl/.env'` and fill every
-variable of [the environment table](../docs/hosted.md#environment): `BMPL_BASE_URL=https://bmpl.<domain>`,
+/opt/bmpl/.env'` and fill the nine required
+variables of [the environment table](../docs/hosted.md#environment): `BMPL_BASE_URL=https://bmpl.<domain>`,
 `BMPL_SESSION_SECRET` from `openssl rand -base64 48`, the Discord client id
 and secret with `https://bmpl.<domain>/auth/discord/callback` registered as
 the redirect URL in the Discord application, your own Discord id in
-`BMPL_ADMIN_DISCORD_IDS`, the WCL client id and secret. Then
+`BMPL_ADMIN_DISCORD_IDS`, the Blizzard client id and secret in
+`BMPL_BNET_CLIENT_ID` / `BMPL_BNET_CLIENT_SECRET` with
+`https://bmpl.<domain>/auth/bnet/callback` registered as the redirect URL of
+the client (https://community.developer.battle.net → API Access → Create New
+Client), the WCL client id and secret. A missing one makes `bmpl serve
+--hosted` exit with code 2 and the list of what to fix. Then
 `ssh root@<vps> 'nano /etc/litestream.yml'`: `bucket`, `endpoint` (B2:
 `https://s3.<region>.backblazeb2.com`; Hetzner:
 `https://<region>.your-objectstorage.com`), `access-key-id`,
@@ -182,7 +188,10 @@ replication and note the date; repeat after changing the bucket or its key.
 **7. Rotate a secret.** `BMPL_SESSION_SECRET`: new value in `/opt/bmpl/.env`,
 `systemctl restart bmpl` — session cookies are signed with it, so every
 cookie stops verifying and everyone signs in again. Discord client secret:
-regenerate it in the Discord application, edit `.env`, restart `bmpl`. WCL
+regenerate it in the Discord application, edit `.env`, restart `bmpl`.
+Blizzard client secret: same, on the developer portal (API Access); until it
+is updated new Battle.net links fail, while characters already linked stay
+(the 30-day check keeps them through failures, for 30 days at most). WCL
 client secret: same, from https://www.warcraftlogs.com/api/clients. Bucket
 key: new key in `/etc/litestream.yml`,
 `systemctl restart litestream`, then `just deploy-restore-test` to prove the
@@ -191,7 +200,9 @@ new key reads the replica.
 **8. Upgrade.** `git pull` on your machine, then
 `BMPL_DEPLOY_HOST=deploy@<vps> just deploy`. The schema is additive
 (`CREATE … IF NOT EXISTS`), there is no migration step, and cached WCL data is
-kept. Downgrade: check out the previous commit and `just deploy` again. If the
+kept; one-time data changes run by themselves at start (the first start of the Battle.net
+linking release removes the manually added "My characters" entries that
+way, once). Downgrade: check out the previous commit and `just deploy` again. If the
 `deploy/` files changed, copy them again and re-run `bootstrap.sh` (it keeps
 your `.env` and `litestream.yml`), then `systemctl restart bmpl litestream`
 if the units changed.

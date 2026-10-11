@@ -5,7 +5,7 @@ Detailed reference; the README has the short version.
 `bmpl serve --hosted` (or `BMPL_MODE=hosted`) runs one instance for several
 people behind a reverse proxy: Discord login (invite-only, an optional open
 signup, or a Discord-server allow-list), per-account lookup history and
-settings, a shared WCL budget with per-member hourly quotas or a member's own
+settings, "My characters" imported from a linked Battle.net account, a shared WCL budget with per-member hourly quotas or a member's own
 Warcraft Logs client, a shared/proposed defensives table, a privacy page and
 self-service account deletion, and an admin page (`/admin`) that can ban
 accounts. It disables the local-only routes (`/api/setup`, `/api/quit`,
@@ -65,12 +65,27 @@ everywhere (`POST /api/admin/users/:id/sessions/revoke`); **Ban** (`POST
 admin, and a banned member's rows stay until they delete their account or an
 admin unbans them.
 
+Battle.net is linked, never used to sign in: a signed-in member links their
+Battle.net account on `/me` to import "My characters" (see [Per-account
+state](#per-account-state)). The instance needs one Blizzard client: on the
+developer portal, https://community.developer.battle.net → API Access →
+**Create New Client** (the portal requires two-factor authentication on the
+Battle.net account that owns the client), register the redirect URL
+`https://<your host>/auth/bnet/callback` and copy the *Client ID* and *Client
+Secret* into `BMPL_BNET_CLIENT_ID` / `BMPL_BNET_CLIENT_SECRET`. The link asks
+for the `wow.profile` scope only and reads the eu, us, kr and tw regions
+(China is not supported); the same client's credentials also get the
+application token of the 30-day check (see [Privacy and account
+deletion](#privacy-and-account-deletion)). A Battle.net account can be linked
+to one bmpl account at a time: a second member's attempt is refused
+(`/me?bnet=taken`, audit `login_denied` reason `bnet_taken`).
+
 ## Per-account state
 
 Each member has their own lookup history (20 tabs, kept
 in `bmpl.db` across restarts), their own "your key", legend preference,
-region, UI language and "My characters" — up to five characters they play, followed on `/me`
-(`GET/PUT /api/settings`) — and their own live-event stream. A member's
+region, UI language and "My characters" — up to 20 characters they play, picked from their
+Battle.net account and followed on `/me` (`GET/PUT /api/settings`) — and their own live-event stream. A member's
 saved region defaults to `null` (the instance's `BMPL_REGION`) until they pick
 one; a pasted Raider.IO URL's own region wins for that one lookup without
 changing the saved preference. Two members looking
@@ -80,6 +95,33 @@ Deep-dive analyses are attached when a tab is opened, so an analysis run by one
 member shows up for everyone who has that run in a tab. Local mode keeps its own
 tabs in `bmpl.db` too (no sharing, no TTL — they survive a `bmpl serve` restart)
 and its settings in the browser.
+
+Hosted, "My characters" come from Battle.net only. **Link Battle.net** on
+`/me` goes to Battle.net (`GET /auth/bnet/start`) and back
+(`/auth/bnet/callback`): with the member's token bmpl reads the account id,
+the BattleTag and the character list of each region, then drops the token.
+The candidates wait one hour; `/me` shows them highest level first, the
+member ticks up to 20 (the first ticked is the main, "make main" moves a
+ticked row first) and saves (`PUT /api/bnet/characters`, which keeps only
+characters of that import). Once linked, `/me` shows the BattleTag with
+**Import again** (another visit to Battle.net; the picker opens with the
+current Battle.net characters ticked) and **Unlink** (the link and every
+Battle.net character leave the list; their cached runs stay).
+`PUT /api/settings` can still reorder or remove characters (make main,
+remove) but never add one (400 `characters_from_bnet`), so the "This is me"
+chip only shows on a character already on the list, where it removes it;
+every other character opens the vetting view. A failed link comes back to
+`/me?bnet=<code>` with a notice: `cancelled` (denied on Battle.net), `state`
+(the link expired or was started in another browser), `scope` (World of
+Warcraft profile access not granted), `taken` (the account is linked to
+another member), `empty` (no character in any region: the account's
+Blizzard privacy settings at account.blizzard.com/privacy must allow
+third-party access) or `down` (Battle.net did not answer); a pick after the
+hour gets "This import expired: link again" (410). Linking and importing
+cost no WCL points. The first start of the release that brings Battle.net linking
+removes every manually added character from the hosted lists, once (one
+`characters_reset` audit row per member touched); local mode keeps the
+manual list — a `Name-Realm`, a Raider.IO link or "This is me", up to 20.
 
 ## WCL budget
 
@@ -133,7 +175,7 @@ sync button on `/me`, `POST /api/season/sync`) runs only this way: without an ow
 refused (`403 { error: "own_client_required" }`) before any WCL call, and the page links to Settings.
 It is also for the member's own characters only: a character outside their "My characters" list is
 refused first (`403 { error: "not_your_character" }`). Only those characters open the self-review tabs;
-any other character opens the vetting view (verdict, signal tiles, runs, Raider.IO) with "This is me".
+any other character opens the vetting view (verdict, signal tiles, runs, Raider.IO), with "This is me" in local mode.
 A lookup of one of the member's own characters also fetches each displayed run's crowd control (~3 pts
 per run, once ever); the server checks the request's `mine` flag against the member's list.
 Without `BMPL_ENCRYPTION_KEY` the
@@ -151,12 +193,33 @@ rate-limited like a lookup (30/min per member).
 and the user menu, readable signed out) lists exactly what a row in `bmpl.db`
 can hold about a member: Discord id/username/avatar, lookup history, settings,
 hourly WCL usage, which features they use (a count per feature and day, 90
-days), defensives proposals, an own WCL client if added, and the
-30-day session and 90-day audit rows. Settings → **Delete my account** (typing
+days), defensives proposals, an own WCL client if added, a Battle.net link if
+added, and the 30-day session and 90-day audit rows.
+
+A Battle.net link stores the account id and BattleTag (`user_bnet`), the
+picked characters in the settings row (name, realm, region, Blizzard
+character id and the time of the last successful check), an import's
+candidate list for one hour (`bnet_imports`, deleted by the pick), and the
+names of characters the check removed, shown on `/me` until the next pick.
+No Blizzard token is stored: the member's token serves one callback, the
+application token stays in memory until it expires. Blizzard's terms cap
+the data at 30 days, so the server checks: 60 seconds after start and then
+every 6 hours, each Battle.net character last confirmed more than 25 days
+ago is asked of Blizzard's character status endpoint. Still on the account
+with the same id → kept, checked time renewed; not found, `is_valid: false`
+or another character id → removed (audit `bnet_character_removed` with the
+reason only, notice on `/me`); Blizzard unreachable, 429 or 5xx → kept and
+retried at the next round, until 30 days without a successful check remove
+it anyway (at the next round, so at most 6 hours late). The audit log keeps
+no BattleTag and no character name. Linking a different Battle.net account
+first unlinks the old one. **Unlink**
+(`DELETE /api/bnet`) deletes the link, any import and every Battle.net
+character of the list; account deletion does the same through the cascade.
+Nothing read from Battle.net is used for anything but "My characters". Settings → **Delete my account** (typing
 the word "delete" to confirm) calls `DELETE /api/me`, which records the
 deletion in the audit log, deletes the user row (cascading to sessions,
-history, settings, usage, their own defensives proposals and their own WCL
-client), clears the session cookie and signs them out. An approved defensives
+history, settings, usage, their own defensives proposals, their own WCL
+client and their Battle.net link and import), clears the session cookie and signs them out. An approved defensives
 correction lives in a separate table keyed by the *deciding* admin, so it
 stays in the shared table regardless of what happens to the account that
 proposed it; if the deleted account had itself approved or decided other
@@ -243,6 +306,7 @@ Required environment (copy `.env.hosted.example`):
 | `BMPL_SESSION_SECRET` | ≥ 32 random bytes (`openssl rand -base64 48`); placeholders and low-variety strings are refused |
 | `BMPL_DISCORD_CLIENT_ID` / `BMPL_DISCORD_CLIENT_SECRET` | Discord OAuth application |
 | `BMPL_ADMIN_DISCORD_IDS` | Comma-separated Discord user ids of the admins |
+| `BMPL_BNET_CLIENT_ID` / `BMPL_BNET_CLIENT_SECRET` | Blizzard (Battle.net) OAuth client, for linking "My characters" (see [Login](#login)) |
 | `WCL_CLIENT_ID` / `WCL_CLIENT_SECRET` | The shared Warcraft Logs client |
 
 Optional:
@@ -266,8 +330,8 @@ never gates a request, so every route below is reachable without signing in
 when it is registered locally at all. Shared routes (`src/server/routes-shared.ts`)
 are registered in both modes; the local-only routes
 (`src/server/routes-local.ts`) are registered only in local mode; the
-`/auth/*`, `/api/me`, `/api/settings`, `/api/me/wcl-client*` and
-`/api/admin/*` routes (`src/server/routes-auth.ts`, `routes-user.ts`,
+`/auth/*`, `/api/me`, `/api/settings`, `/api/me/wcl-client*`, `/api/bnet*` and
+`/api/admin/*` routes (`src/server/routes-auth.ts`, `routes-bnet.ts`, `routes-user.ts`,
 `routes-admin.ts`) are registered only in hosted mode.
 
 | Method | Path | Auth | What |
@@ -295,10 +359,15 @@ are registered in both modes; the local-only routes
 | GET | `/auth/discord` | public | Start the Discord OAuth flow |
 | GET | `/auth/discord/callback` | public | Discord OAuth callback: admits, checks the guild gate, creates the session |
 | POST | `/auth/logout` | public | End the caller's session |
+| GET | `/auth/bnet/start` | user | Start the Battle.net link (`wow.profile`, a single-use `state` bound to the `bmpl_bnet` cookie) |
+| GET | `/auth/bnet/callback` | public | Battle.net callback (the handler checks the session): exchanges the code, reads the account and the four regions' characters, stores the link and the one-hour import; always a 302 to `/me?bnet=pick\|cancelled\|state\|scope\|taken\|empty\|down` |
+| GET | `/api/bnet` | user | The caller's link (`{ battletag, linkedAt }` or `null`), the characters the 30-day check removed, and the pending import (`null` after one hour) |
+| PUT | `/api/bnet/characters` | user | Save the pick, body `{ picks: [{ region, bnetId }] }` (1 to 20, in order, the first is the main): only characters of the caller's import (400 `bnet_unknown_character`; 410 `bnet_import_expired` after one hour); replaces "My characters" and deletes the import |
+| DELETE | `/api/bnet` | user | Unlink: the link, any import and every Battle.net character of "My characters" |
 | GET | `/api/me` | user | The signed-in member, their quota status and own WCL client (if any) |
-| DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, feature-usage counters, proposals, own WCL client) |
+| DELETE | `/api/me` | user | Delete the caller's account (cascades sessions, history, settings, usage, feature-usage counters, proposals, own WCL client, Battle.net link and import) |
 | GET | `/api/settings` | user | The caller's settings ("your key", legend preference, region, UI language, Live panel filters, "My characters") |
-| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale?, liveSort?, liveRoles?, liveClasses?, characters? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser, `liveSort` one of the Live panel's sort orders (`arrival`/`verdict`/`score`/`role`/`class`), `liveRoles` up to 3 of `tank`/`healer`/`dps` and `liveClasses` up to 13 class names — both empty/full means "no filter", `characters` "My characters": up to 5 `{ name, realm, region, source: "manual" }` (`realm` the Warcraft Logs slug, the first one is the main; any other `source` is refused) |
+| PUT | `/api/settings` | user | Update the caller's settings; body `{ yourKey?, legendOpen?, region?, locale?, liveSort?, liveRoles?, liveClasses?, characters? }`, `region` an `eu`/`us`/`kr`/`tw` string or `null` for the instance default, `locale` `en`/`fr` or `null` to follow the browser, `liveSort` one of the Live panel's sort orders (`arrival`/`verdict`/`score`/`role`/`class`), `liveRoles` up to 3 of `tank`/`healer`/`dps` and `liveClasses` up to 13 class names — both empty/full means "no filter", `characters` "My characters" as `GET` returns them (`{ name, realm, region, source, bnetId?, verifiedAt? }`, the first one is the main): a reordering or a subset of the stored list only — the stored entries are kept as stored, and one that is not stored is refused (400 `characters_from_bnet`) |
 | GET | `/api/me/wcl-client` | user | The caller's own WCL client, if set |
 | PUT | `/api/me/wcl-client` | user | Save the caller's own WCL client (verified with a 0-pt PING first) |
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |

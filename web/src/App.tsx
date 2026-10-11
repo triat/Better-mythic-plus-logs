@@ -7,6 +7,7 @@ import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { realmName } from "./lib/format.ts";
+import { bnetCodeOf } from "./lib/bnet.ts";
 import { historyKeyFor, lookupQuery, mineRequest } from "./lib/me.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
@@ -52,6 +53,8 @@ type Screen =
 
 // No router: /admin, /settings, /privacy, /help and /me are full navigations resolved once from the pathname.
 const page = pageOf(location.pathname);
+// The Battle.net callback lands on /me?bnet=<code>; read before the boot effect erases the query string.
+const bnetCode = bnetCodeOf(location.search);
 const PAGE_EVENT = { admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me" } as const;
 
 export function App() {
@@ -154,7 +157,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (r.ok) setPendingProposals(r.proposals.length);
   }, [me]);
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
-  const { settings, update: updateSettings } = useSettings();
+  const { settings, update: updateSettings, adopt: adoptSettings } = useSettings();
   const yourKey = settings.yourKey;
   const onKeyChange = (v: number | null) => { track("key_level_change"); updateSettings({ yourKey: v }); };
   // The region: the saved choice, else the instance default. Not part of the form — it is a setting like "your key".
@@ -491,6 +494,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     setOwnClient,
     characters: settings.characters,
     setCharacters: (characters) => updateSettings({ characters }),
+    adoptCharacters: (characters) => adoptSettings({ characters }),
   };
 
   // The home card (empty history only): the main character, looked up on its button only.
@@ -551,7 +555,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       {page === "me" && (
         <main className="content">
           <MePage
-            self={selfActions} history={tabs} region={region} instanceRegion={status.region}
+            self={selfActions} history={tabs} region={region} instanceRegion={status.region} bnetCode={bnetCode}
             onRegionChange={(r) => { track("region_change"); updateSettings({ region: r }); }}
           />
         </main>

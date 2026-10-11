@@ -1,0 +1,5 @@
+{
+  "_links": { "self": { "href": "https://eu.api.blizzard.com/profile/wow/character/silverbough/thornwick/status?namespace=profile-eu" } },
+  "id": 70000101,
+  "is_valid": true
+}

@@ -13,6 +13,8 @@ export interface SelfActions {
   setOwnClient: (v: OwnClientView | null) => void;
   characters: MyCharacter[];
   setCharacters: (v: MyCharacter[]) => void;
+  /** Replaces the list with what the server already stored (Battle.net pick, unlink): no PUT. */
+  adoptCharacters: (v: MyCharacter[]) => void;
 }
 
 /** Canvas SelfTabs header row: name, realm, "This is me", the season count and the sync button. */

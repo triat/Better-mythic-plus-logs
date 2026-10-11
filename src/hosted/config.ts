@@ -10,6 +10,8 @@ export const HOSTED_ENV_VARS = [
   "BMPL_DISCORD_CLIENT_ID",
   "BMPL_DISCORD_CLIENT_SECRET",
   "BMPL_ADMIN_DISCORD_IDS",
+  "BMPL_BNET_CLIENT_ID",
+  "BMPL_BNET_CLIENT_SECRET",
   "WCL_CLIENT_ID",
   "WCL_CLIENT_SECRET",
 ] as const;
@@ -21,6 +23,9 @@ export interface HostedConfig {
   discordClientId: string;
   discordClientSecret: string;
   adminDiscordIds: string[];
+  /** Blizzard Battle.net OAuth client (Battle.net linking spec, decision 1). */
+  bnetClientId: string;
+  bnetClientSecret: string;
   /** Per-member WCL points per calendar hour (admins are exempt). */
   pointsPerUserHour: number;
   /** Any Discord account may sign in (still subject to a ban or the guild gate); default false = invite-only. */
@@ -141,6 +146,8 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
       discordClientId,
       discordClientSecret: read(env, "BMPL_DISCORD_CLIENT_SECRET"),
       adminDiscordIds,
+      bnetClientId: read(env, "BMPL_BNET_CLIENT_ID"),
+      bnetClientSecret: read(env, "BMPL_BNET_CLIENT_SECRET"),
       pointsPerUserHour,
       openSignup: rawOpen === "true",
       discordGuildId: rawGuild || null,

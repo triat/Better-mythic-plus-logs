@@ -8,6 +8,8 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   discordClientId: "123456789012345678",
   discordClientSecret: "test-client-secret",
   adminDiscordIds: ["111111111111111111", "444444444444444444"],
+  bnetClientId: "bnet-test-client",
+  bnetClientSecret: "bnet-test-secret",
   pointsPerUserHour: 300,
   openSignup: false,
   discordGuildId: null,

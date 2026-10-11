@@ -14,6 +14,8 @@ describe("describeConfig", () => {
       { key: "BMPL_DISCORD_CLIENT_SECRET", value: "•••• (set)", secret: true },
       { key: "BMPL_SESSION_SECRET", value: "•••• (32 bytes)", secret: true },
       { key: "BMPL_ADMIN_DISCORD_IDS", value: "111111111111111111, 444444444444444444", secret: false },
+      { key: "BMPL_BNET_CLIENT_ID", value: "bnet-test-client", secret: false },
+      { key: "BMPL_BNET_CLIENT_SECRET", value: "•••• (set)", secret: true },
       { key: "BMPL_POINTS_PER_USER_HOUR", value: "300", secret: false },
       { key: "BMPL_OPEN_SIGNUP", value: "false", secret: false },
       { key: "BMPL_DISCORD_GUILD_ID", value: "(not set)", secret: false },

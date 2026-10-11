@@ -8,7 +8,7 @@ import type { WclCredentials } from "../wcl/auth.ts";
 import type { Locale } from "../hosted/locale.ts";
 import type { LiveRole, LiveSort } from "../hosted/live.ts";
 import type { Region } from "../wow/regions.ts";
-import { parseCharacters, type MyCharacter } from "../self/characters.ts";
+import { parseCharacters, restrictToStored, type MyCharacter } from "../self/characters.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
@@ -60,6 +60,13 @@ export function userRoutes(rt: HostedRuntime): Route[] {
       if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
       const parsed = parseSettingsPatch(b.value);
       if (!parsed.ok) return jsonResponse({ ok: false, error: parsed.error }, 400);
+      // Battle.net spec, decision 4: hosted characters come only from the import, so this PUT may reorder or remove
+      // stored entries, never add one. The stored objects are kept, so a client cannot change `bnetId` or `verifiedAt`.
+      if (parsed.patch.characters !== undefined) {
+        const kept = restrictToStored(parsed.patch.characters, rt.db.settings.get(ctx.user!.id).characters);
+        if (kept === null) return jsonResponse({ ok: false, error: "characters_from_bnet", message: "Characters come from your Battle.net account: link it on My characters." }, 400);
+        parsed.patch.characters = kept;
+      }
       return jsonResponse({ ok: true, settings: rt.db.settings.update(ctx.user!.id, parsed.patch, ctx.now) });
     }),
 

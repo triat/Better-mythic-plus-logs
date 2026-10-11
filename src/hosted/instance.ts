@@ -18,6 +18,8 @@ export function describeConfig(config: HostedConfig, wcl: { clientId: string | n
     { key: "BMPL_DISCORD_CLIENT_SECRET", value: config.discordClientSecret ? SET : NOT_SET, secret: true },
     { key: "BMPL_SESSION_SECRET", value: `•••• (${Buffer.byteLength(config.sessionSecret)} bytes)`, secret: true },
     { key: "BMPL_ADMIN_DISCORD_IDS", value: config.adminDiscordIds.join(", "), secret: false },
+    { key: "BMPL_BNET_CLIENT_ID", value: config.bnetClientId, secret: false },
+    { key: "BMPL_BNET_CLIENT_SECRET", value: config.bnetClientSecret ? SET : NOT_SET, secret: true },
     { key: "BMPL_POINTS_PER_USER_HOUR", value: String(config.pointsPerUserHour), secret: false },
     { key: "BMPL_OPEN_SIGNUP", value: config.openSignup ? "true" : "false", secret: false },
     { key: "BMPL_DISCORD_GUILD_ID", value: config.discordGuildId ?? NOT_SET, secret: false },

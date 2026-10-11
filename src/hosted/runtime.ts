@@ -5,6 +5,8 @@ import type { HostedConfig } from "./config.ts";
 import { openHosted } from "./db.ts";
 import type { HostedDb } from "./db.ts";
 import { OAuthStates } from "./oauth-state.ts";
+import { BnetAppToken } from "./bnet.ts";
+import { BNET_CHECK_INTERVAL_MS, BNET_FIRST_CHECK_MS, checkBnetCharacters } from "./bnet-check.ts";
 import { setRateLimitObserver, setWclErrorObserver } from "../wcl/client.ts";
 import { PointsMeter } from "../wcl/meter.ts";
 import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
@@ -21,6 +23,10 @@ export interface HostedRuntime {
   config: HostedConfig;
   db: HostedDb;
   states: OAuthStates;
+  /** Battle.net link states, their own instance so a Discord state is never consumed by the Battle.net callback. */
+  bnetStates: OAuthStates;
+  /** Blizzard application token (client credentials) for the 30-day character check. */
+  bnetApp: BnetAppToken;
   fetchFn: typeof fetch;
   secure: boolean;
   meter: PointsMeter;
@@ -40,7 +46,8 @@ const PURGE_INTERVAL_MS = 60 * 60 * 1000;
 
 /**
  * Builds the runtime and starts the hourly purge of expired sessions, audit rows and feature-usage
- * counters older than their retention and idle rate-limit keys (unref'd: never keeps the process alive).
+ * counters older than their retention and idle rate-limit keys, and the Battle.net check round (60 s
+ * after start, then every 6 hours). Both timers are unref'd: they never keep the process alive.
  */
 export function createHostedRuntime(
   config: HostedConfig,
@@ -56,6 +63,8 @@ export function createHostedRuntime(
     config,
     db: hostedDb,
     states: new OAuthStates(),
+    bnetStates: new OAuthStates(),
+    bnetApp: new BnetAppToken(config, fetchFn),
     fetchFn,
     secure: config.baseUrl.startsWith("https:"),
     meter,
@@ -93,5 +102,19 @@ export function createHostedRuntime(
   };
   purge();
   setInterval(purge, PURGE_INTERVAL_MS).unref();
+  // The 30-day Battle.net rule (bnet-check.ts); a round still running when the next is due skips it.
+  let checking = false;
+  const bnetRound = async (): Promise<void> => {
+    if (checking) return;
+    checking = true;
+    try {
+      const r = await checkBnetCharacters({ db: hostedDb, audit, app: runtime.bnetApp, fetchFn, now: Date.now(), errors: runtime.errors });
+      if (r.checked > 0) console.log(`bnet check: ${r.checked} checked, ${r.removed} removed, ${r.failed} failed`);
+    } finally {
+      checking = false;
+    }
+  };
+  setTimeout(() => void bnetRound(), BNET_FIRST_CHECK_MS).unref();
+  setInterval(() => void bnetRound(), BNET_CHECK_INTERVAL_MS).unref();
   return runtime;
 }

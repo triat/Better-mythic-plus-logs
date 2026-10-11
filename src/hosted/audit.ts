@@ -9,6 +9,7 @@ import type { HostedDb } from "./db.ts";
 
 export type AuditAction =
   | "login" | "login_denied" | "logout" | "account_delete" | "wcl_client_set" | "wcl_client_remove"
+  | "bnet_link" | "bnet_unlink" | "bnet_character_removed" | "characters_reset"
   | "invite_add" | "invite_remove" | "role_change" | "sessions_revoke" | "proposal_approve" | "proposal_reject"
   | "user_ban" | "user_unban"
   | "quota_refused"
@@ -25,6 +26,10 @@ export const ACTION_KIND: Record<AuditAction, AuditKind> = {
   account_delete: "login",
   wcl_client_set: "login",
   wcl_client_remove: "login",
+  bnet_link: "login",
+  bnet_unlink: "login",
+  bnet_character_removed: "login",
+  characters_reset: "login",
   invite_add: "admin",
   invite_remove: "admin",
   role_change: "admin",

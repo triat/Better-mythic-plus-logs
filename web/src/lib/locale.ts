@@ -16,6 +16,10 @@ export const effectiveLocale = (saved: Locale | null, navigatorLanguage: string 
 
 const INTL_TAG: Record<Locale, string> = { en: "en-GB", fr: "fr-FR" };
 
+/** A day and short month in local time: "11 Oct" / "11 oct.". */
+export const fmtDayMonth = (locale: Locale, ms: number): string =>
+  new Intl.DateTimeFormat(INTL_TAG[locale], { day: "numeric", month: "short" }).format(ms);
+
 /**
  * Thousands separated by U+202F in both locales (never wraps inside a number — what fmtPts already does),
  * decimal point / comma per locale, at most `maxFractionDigits` decimals, U+2212 for the minus sign.

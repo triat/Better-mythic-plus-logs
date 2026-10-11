@@ -3,7 +3,7 @@ import type { DungeonRow, Evaluation, LookupPayload, MyCharacter, RunControl, Se
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  controlView, dungeonPanel, isMe, meChip, pillarCards, resultView, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
+  MAX_ME, controlView, dungeonPanel, isMe, meChip, pillarCards, resultView, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
 } from "./self.ts";
 
 const tFr = makeT(fr, "fr");
@@ -193,14 +193,23 @@ describe("syncCard", () => {
 describe("me", () => {
   const p = { character: { name: "Muleyoxo", realmSlug: "silvermoon", region: "eu" } } as unknown as LookupPayload;
   const c = (name: string): MyCharacter => ({ name, realm: "silvermoon", region: "eu", source: "manual" });
-  test("toggle, case-insensitive, at most 5", () => {
+  test("toggle, case-insensitive, at most 20", () => {
     expect(isMe([c("muleyoxo")], p)).toBe(true);
-    expect(toggleMe([], p)).toEqual([c("Muleyoxo")]);
-    expect(toggleMe([c("Muleyoxo"), c("Other")], p)).toEqual([c("Other")]);
-    const full = ["Aa", "Bb", "Cc", "Dd", "Ee"].map(c);
-    expect(toggleMe(full, p)).toBeNull();
-    expect(meChip(tEn, full, p)).toEqual({ label: "This is me", on: false, disabled: true, title: "Up to 5 characters: remove one from your list first" });
-    expect(meChip(tEn, [c("Muleyoxo")], p)).toEqual({ label: "This is me ✓", on: true, disabled: false });
+    expect(toggleMe([], p, false)).toEqual([c("Muleyoxo")]);
+    expect(toggleMe([c("Muleyoxo"), c("Other")], p, false)).toEqual([c("Other")]);
+    const full = Array.from({ length: MAX_ME }, (_, i) => c(`N${String.fromCharCode(97 + i)}`));
+    expect(toggleMe(full, p, false)).toBeNull();
+    expect(meChip(tEn, full, p, false)).toEqual({ label: "This is me", on: false, disabled: true, title: "Up to 20 characters: remove one from your list first" });
+    expect(meChip(tEn, [c("Muleyoxo")], p, false)).toEqual({ label: "This is me ✓", on: true, disabled: false });
+    expect(meChip(tEn, [], p, false)).toEqual({ label: "This is me", on: false, disabled: false });
+  });
+  test("hosted: characters come from Battle.net only, so the chip only removes (canvas choice 1)", () => {
+    const b: MyCharacter = { name: "Muleyoxo", realm: "silvermoon", region: "eu", source: "bnet", bnetId: 7, verifiedAt: 1 };
+    expect(toggleMe([], p, true)).toBeNull();
+    expect(toggleMe([b, c("Other")], p, true)).toEqual([c("Other")]);
+    expect(meChip(tEn, [], p, true)).toBeNull();
+    expect(meChip(tEn, [c("Other")], p, true)).toBeNull();
+    expect(meChip(tEn, [b], p, true)).toEqual({ label: "This is me ✓", on: true, disabled: false });
   });
   test("your own characters open the self-review tabs, anyone else the vetting view (phase-2 spec, decision 6)", () => {
     expect(resultView([c("muleyoxo")], p)).toBe("owner");

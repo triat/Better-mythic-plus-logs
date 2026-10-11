@@ -106,4 +106,8 @@ describe("AuditLog", () => {
     expect(kindOf("user_ban")).toBe("admin");
     expect(kindOf("user_unban")).toBe("admin");
   });
+
+  test("Battle.net linking actions are account actions", () => {
+    for (const a of ["bnet_link", "bnet_unlink", "bnet_character_removed", "characters_reset"] as const) expect(kindOf(a)).toBe("login");
+  });
 });

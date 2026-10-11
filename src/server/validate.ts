@@ -110,12 +110,14 @@ export const SEASON_SYNC_BODY = obj({
 });
 export const DEEPDIVE_BODY = obj({ reportCode: str({ min: 1, max: 32, pattern: /^[A-Za-z0-9]+$/ }), fightID: int({ min: 1, max: 100_000 }), character: str({ min: 1, max: 64, trim: true }), force: opt(bool()) });
 export const DEFENSIVES_BODY = obj({ className: str({ min: 1, max: 32, trim: true }), spec: str({ min: 1, max: 32, trim: true }), patch: obj({ id: int({ min: 1 }), name: opt(str({ min: 1, max: 64 })), cooldownS: opt(num({ min: 0 })), durationS: opt(num({ min: 0 })), kind: opt(oneOf(["major", "immunity", "minor"] as const)), ignore: opt(bool()) }) });
-/** A "this is me" entry the member adds by hand; `bnet` entries come only from the Battle.net import. */
+/** A "this is me" entry: the shape the front sends back; the hosted route keeps only stored entries (restrictToStored). */
 const MY_CHARACTER = obj({
   name: str({ min: 2, max: 32, trim: true, pattern: WOW_NAME }),
   realm: str({ min: 2, max: 32, trim: true, pattern: WOW_REALM }),
   region: oneOf(REGIONS),
-  source: oneOf(["manual"] as const),
+  source: oneOf(["manual", "bnet"] as const),
+  bnetId: opt(int({ min: 1 })),
+  verifiedAt: opt(int({ min: 1 })),
 });
 export const SETTINGS_BODY = obj({
   yourKey: opt(nullable(int({ min: KEY_MIN, max: KEY_MAX }))),
@@ -127,6 +129,8 @@ export const SETTINGS_BODY = obj({
   liveClasses: opt(arr(str({ min: 1, max: 20 }), { max: 13 })),
   characters: opt(arr(MY_CHARACTER, { max: MAX_CHARACTERS })),
 });
+/** PUT /api/bnet/characters: the chosen candidates of the member's import, in order (Battle.net spec, decision 4). */
+export const BNET_PICK_BODY = obj({ picks: arr(obj({ region: oneOf(REGIONS), bnetId: int({ min: 1 }) }), { min: 1, max: MAX_CHARACTERS }) });
 export const INVITE_BODY = obj({ discordId: str({ pattern: DISCORD_ID }), note: opt(nullable(str({ max: 200, trim: true }))) });
 export const NOTE_BODY = obj({ note: opt(nullable(str({ max: 500, trim: true }))) });
 export const ROLE_BODY = obj({ role: oneOf(["member", "admin"] as const) });

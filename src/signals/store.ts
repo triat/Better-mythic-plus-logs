@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS local_history (
   target_auto  INTEGER NOT NULL,
   fetched_at   INTEGER NOT NULL,
   seq          INTEGER NOT NULL,
+  verdict      TEXT,
+  score        INTEGER,
   PRIMARY KEY (user_id, key)
 );
 CREATE TABLE IF NOT EXISTS local_history_auto (

@@ -27,9 +27,29 @@ export interface HistoryEntry {
   spec: string | null;
   targetLevel: number;
   targetAutoDetected: boolean;
+  /** The evaluation's verdict (null for INSUFFICIENT DATA or a payload without one), derived from `result`. */
+  verdict: HistoryVerdict | null;
+  /** The evaluation's global score, derived from `result`. */
+  score: number | null;
 }
 
-export type HistoryRecord = Omit<HistoryEntry, "key" | "request" | "fetchedAt">;
+export type HistoryVerdict = "invite" | "maybe" | "pass";
+
+/** What a caller stores: verdict and score are never passed, the stores derive them from `result` (`summaryOf`). */
+export type HistoryRecord = Omit<HistoryEntry, "key" | "request" | "fetchedAt" | "verdict" | "score">;
+
+const VERDICTS: readonly unknown[] = ["invite", "maybe", "pass"] satisfies HistoryVerdict[];
+
+/** `result.evaluation.verdict` / `.global`, read defensively: null when absent or of the wrong type. */
+export function summaryOf(result: unknown): { verdict: HistoryVerdict | null; score: number | null } {
+  const ev = typeof result === "object" && result !== null ? (result as { evaluation?: unknown }).evaluation : undefined;
+  if (typeof ev !== "object" || ev === null) return { verdict: null, score: null };
+  const { verdict, global } = ev as { verdict?: unknown; global?: unknown };
+  return {
+    verdict: VERDICTS.includes(verdict) ? verdict as HistoryVerdict : null,
+    score: typeof global === "number" && Number.isFinite(global) ? global : null,
+  };
+}
 
 /** Cache key: character + effective level + spec + metric + region. `level: null` is the auto-alias key. */
 export const cacheKey = (r: HistoryRequest): string =>
@@ -120,7 +140,7 @@ export class History implements HistoryStore {
       }
       this.autoLevel.set(aliasKey, rec.targetLevel);
     }
-    const entry: HistoryEntry = { key, request: r, fetchedAt: this.now(), ...rec };
+    const entry: HistoryEntry = { key, request: r, fetchedAt: this.now(), ...rec, ...summaryOf(rec.result) };
     this.entries.delete(key);
     this.entries.set(key, entry);
     while (this.entries.size > this.max) {
@@ -150,7 +170,7 @@ export class History implements HistoryStore {
   /** Replace the stored payload of an entry (e.g. after a deep-dive changed its analyses); no-op for unknown keys. */
   updateResult(key: string, result: unknown): void {
     const e = this.entries.get(key);
-    if (e) e.result = result;
+    if (e) Object.assign(e, { result }, summaryOf(result));
   }
 
   private forget(key: string): void {

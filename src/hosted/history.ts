@@ -5,8 +5,8 @@
 // cache hit (copied into the caller's history), so two members vetting the same applicant cost
 // one WCL fetch.
 import type { Database } from "bun:sqlite";
-import { cacheKey, requestFromJson } from "../server-history.ts";
-import type { HistoryEntry, HistoryListItem, HistoryRecord, HistoryRequest, HistoryStore } from "../server-history.ts";
+import { cacheKey, requestFromJson, summaryOf } from "../server-history.ts";
+import type { HistoryEntry, HistoryListItem, HistoryRecord, HistoryRequest, HistoryStore, HistoryVerdict } from "../server-history.ts";
 import type { Region } from "../wow/regions.ts";
 
 export const HISTORY_MAX_PER_USER = 20;
@@ -18,10 +18,11 @@ export interface UserHistoryRepo {
   forUser(userId: number, now?: () => number): HistoryStore;
 }
 
-interface ItemRaw { key: string; request: string; label: string; char_class: number; spec: string | null; target_level: number; target_auto: number; fetched_at: number }
+interface ItemRaw { key: string; request: string; label: string; char_class: number; spec: string | null; target_level: number; target_auto: number; fetched_at: number;
+  verdict: string | null; score: number | null }
 interface EntryRaw extends ItemRaw { payload: string }
 
-const ITEM_COLUMNS = "key, request, label, char_class, spec, target_level, target_auto, fetched_at";
+const ITEM_COLUMNS = "key, request, label, char_class, spec, target_level, target_auto, fetched_at, verdict, score";
 
 const item = (r: ItemRaw, defaultRegion: Region): HistoryListItem => ({
   key: r.key,
@@ -32,6 +33,9 @@ const item = (r: ItemRaw, defaultRegion: Region): HistoryListItem => ({
   spec: r.spec,
   targetLevel: r.target_level,
   targetAutoDetected: r.target_auto === 1,
+  // Written only through `summaryOf`, so the stored text is one of the three verdicts or NULL.
+  verdict: r.verdict as HistoryVerdict | null,
+  score: r.score,
 });
 const entry = (r: EntryRaw, defaultRegion: Region): HistoryEntry => ({ ...item(r, defaultRegion), result: JSON.parse(r.payload) as unknown });
 const asRecord = (e: HistoryEntry): HistoryRecord =>
@@ -71,11 +75,35 @@ function migrateRegionlessKeys(db: Database, tables: HistoryTables, defaultRegio
   })();
 }
 
+/**
+ * Tables created before the history rows carried a verdict and a score lack both columns. Self-detecting
+ * and idempotent: when `PRAGMA table_info` shows no `verdict` column, add `verdict` and `score` and backfill
+ * every row from its stored payload (`summaryOf`), all in one transaction. Once the column exists this is a
+ * single PRAGMA read: rows written since carry both values, so nothing is ever re-read from a payload.
+ */
+function migrateVerdictColumns(db: Database, tables: HistoryTables): void {
+  const T = tables.history;
+  const has = db.query<{ name: string }, []>(`PRAGMA table_info(${T})`).all().some((c) => c.name === "verdict");
+  if (has) return;
+  db.transaction(() => {
+    db.run(`ALTER TABLE ${T} ADD COLUMN verdict TEXT`);
+    db.run(`ALTER TABLE ${T} ADD COLUMN score INTEGER`);
+    const set = db.query(`UPDATE ${T} SET verdict = ?, score = ? WHERE user_id = ? AND key = ?`);
+    for (const row of db.query<{ user_id: number; key: string; payload: string }, []>(`SELECT user_id, key, payload FROM ${T}`).all()) {
+      let result: unknown = null;
+      try { result = JSON.parse(row.payload); } catch { /* an unreadable payload keeps NULLs */ }
+      const s = summaryOf(result);
+      if (s.verdict !== null || s.score !== null) set.run(s.verdict, s.score, row.user_id, row.key);
+    }
+  })();
+}
+
 /** `defaultRegion` (the instance default) completes rows that predate the region — at open, then on read. */
 export function openUserHistory(db: Database, max: number, tables: HistoryTables, defaultRegion: Region): UserHistoryRepo {
   const T = tables.history;
   const A = tables.auto;
   migrateRegionlessKeys(db, tables, defaultRegion);
+  migrateVerdictColumns(db, tables);
   const toItem = (r: ItemRaw) => item(r, defaultRegion);
   const toEntry = (r: EntryRaw) => entry(r, defaultRegion);
   const getOne = db.query<EntryRaw, [number, string]>(`SELECT ${ITEM_COLUMNS}, payload FROM ${T} WHERE user_id = ? AND key = ?`);
@@ -85,13 +113,14 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
   const oldest = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM ${T} WHERE user_id = ? ORDER BY seq ASC LIMIT 1`);
   const touch = db.query(`UPDATE ${T} SET seq = ? WHERE user_id = ? AND key = ?`);
   const upsert = db.query(
-    `INSERT INTO ${T} (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO ${T} (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq, verdict, score)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id, key) DO UPDATE SET request = excluded.request, payload = excluded.payload, label = excluded.label,
        char_class = excluded.char_class, spec = excluded.spec, target_level = excluded.target_level,
-       target_auto = excluded.target_auto, fetched_at = excluded.fetched_at, seq = excluded.seq`,
+       target_auto = excluded.target_auto, fetched_at = excluded.fetched_at, seq = excluded.seq,
+       verdict = excluded.verdict, score = excluded.score`,
   );
-  const setPayload = db.query(`UPDATE ${T} SET payload = ? WHERE user_id = ? AND key = ?`);
+  const setPayload = db.query(`UPDATE ${T} SET payload = ?, verdict = ?, score = ? WHERE user_id = ? AND key = ?`);
   const deleteOne = db.query(`DELETE FROM ${T} WHERE user_id = ? AND key = ?`);
   const deleteAll = db.query(`DELETE FROM ${T} WHERE user_id = ?`);
   const sharedNewest = db.query<EntryRaw, [string, number, number]>(
@@ -124,13 +153,14 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
           }
           autoSet.run(userId, aliasKey, rec.targetLevel, fetchedAt);
         }
-        upsert.run(userId, key, JSON.stringify(r), JSON.stringify(rec.result), rec.label, rec.charClass, rec.spec, rec.targetLevel, rec.targetAutoDetected ? 1 : 0, fetchedAt, nextSeq.get(userId)!.n);
+        const summary = summaryOf(rec.result);
+        upsert.run(userId, key, JSON.stringify(r), JSON.stringify(rec.result), rec.label, rec.charClass, rec.spec, rec.targetLevel, rec.targetAutoDetected ? 1 : 0, fetchedAt, nextSeq.get(userId)!.n, summary.verdict, summary.score);
         while (count.get(userId)!.n > max) {
           const o = oldest.get(userId);
           if (!o) break;
           forget(o);
         }
-        return { key, request: r, fetchedAt, ...rec };
+        return { key, request: r, fetchedAt, ...rec, ...summary };
       };
       const record = db.transaction((r: HistoryRequest, rec: HistoryRecord, fetchedAt: number) => write(r, rec, fetchedAt));
 
@@ -189,7 +219,10 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
           deleteAll.run(userId);
           autoDeleteAll.run(userId);
         },
-        updateResult(key, result) { setPayload.run(JSON.stringify(result), userId, key); },
+        updateResult(key, result) {
+          const s = summaryOf(result);
+          setPayload.run(JSON.stringify(result), s.verdict, s.score, userId, key);
+        },
       };
     },
   };

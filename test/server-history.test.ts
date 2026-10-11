@@ -1,5 +1,11 @@
-import { describe, expect, test } from "bun:test";
-import { History, cacheKey, requestFromJson } from "../src/server-history.ts";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { runServer } from "../src/server.ts";
+import { getLocalHistory } from "../src/server/local-history.ts";
+import { History, cacheKey, requestFromJson, summaryOf } from "../src/server-history.ts";
+import { closeStore } from "../src/signals/store.ts";
 import type { Region } from "../src/wow/regions.ts";
 
 const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null, region: "eu" as Region });
@@ -95,5 +101,67 @@ describe("History — keyed by effective level", () => {
     expect(h.get(e.key)!.result).toEqual({ v: 2 });
     h.updateResult("nope", { v: 3 });
     expect(h.size).toBe(1);
+  });
+});
+
+const evaluated = (verdict: unknown, global: unknown) => ({ evaluation: { verdict, global, axes: [] } });
+
+describe("History — verdict and score", () => {
+  test("summaryOf reads evaluation.verdict / .global defensively", () => {
+    expect(summaryOf(evaluated("invite", 87))).toEqual({ verdict: "invite", score: 87 });
+    expect(summaryOf(evaluated("maybe", 54.6))).toEqual({ verdict: "maybe", score: 54.6 });
+    expect(summaryOf(evaluated("insufficient", null))).toEqual({ verdict: null, score: null });
+    expect(summaryOf(evaluated("nope", "12"))).toEqual({ verdict: null, score: null });
+    expect(summaryOf({ evaluation: null })).toEqual({ verdict: null, score: null });
+    expect(summaryOf({ any: "payload" })).toEqual({ verdict: null, score: null });
+    expect(summaryOf(null)).toEqual({ verdict: null, score: null });
+    expect(summaryOf("x")).toEqual({ verdict: null, score: null });
+  });
+
+  test("record fills verdict/score from the result; list carries them; updateResult refreshes them", () => {
+    const h = new History(5, () => 1000);
+    const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: evaluated("pass", 31) }));
+    expect(e.verdict).toBe("pass");
+    expect(e.score).toBe(31);
+    expect(h.list().map((i) => [i.verdict, i.score])).toEqual([["pass", 31]]);
+    h.updateResult(e.key, evaluated("invite", 90));
+    expect(h.list().map((i) => [i.verdict, i.score])).toEqual([["invite", 90]]);
+    h.updateResult(e.key, { any: "payload" });
+    expect(h.get(e.key)!.verdict).toBeNull();
+    expect(h.get(e.key)!.score).toBeNull();
+  });
+});
+
+describe("GET /api/history — verdict and score", () => {
+  let dir: string;
+  let server: Awaited<ReturnType<typeof runServer>>;
+  const saved = { db: process.env.BMPL_DB_PATH, id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+  const restore = (k: string, v: string | undefined) => { if (v === undefined) delete process.env[k]; else process.env[k] = v; };
+
+  beforeAll(async () => {
+    dir = mkdtempSync(join(tmpdir(), "bmpl-hist-"));
+    closeStore();
+    process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
+    // Nothing here looks up, but never let a stray path reach WCL with the real credentials.
+    process.env.WCL_CLIENT_ID = "dummy";
+    process.env.WCL_CLIENT_SECRET = "dummy";
+    server = await runServer({ port: 0, open: false, assets: async () => null });
+  });
+  afterAll(() => {
+    server.stop(true);
+    closeStore();
+    restore("BMPL_DB_PATH", saved.db);
+    restore("WCL_CLIENT_ID", saved.id);
+    restore("WCL_CLIENT_SECRET", saved.secret);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("each item carries verdict and score", async () => {
+    getLocalHistory().record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: evaluated("maybe", 62) }));
+    getLocalHistory().record(req("C-D", 10), entry({ label: "C-D", targetLevel: 10, result: { any: "payload" } }));
+    const res = await fetch(`http://localhost:${server.port}/api/history`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { items: { label: string; verdict: unknown; score: unknown }[] };
+    expect(body.items.map((i) => [i.label, i.verdict, i.score])).toEqual([["C-D", null, null], ["A-B", "maybe", 62]]);
   });
 });

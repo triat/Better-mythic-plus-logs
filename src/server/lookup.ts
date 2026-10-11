@@ -23,6 +23,8 @@ export const historySummary = (entry: HistoryListItem) => ({
   spec: entry.spec,
   targetLevel: entry.targetLevel,
   targetAutoDetected: entry.targetAutoDetected,
+  verdict: entry.verdict,
+  score: entry.score,
   fetchedAt: entry.fetchedAt,
   request: entry.request,
 });

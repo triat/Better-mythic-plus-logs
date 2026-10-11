@@ -91,7 +91,7 @@ describe("SQLite history — same semantics as the in-memory History", () => {
     const { a: h } = setup(20, () => 4242);
     const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, targetAutoDetected: false, result: { v: 1 } }));
     const [item] = h.list();
-    expect(item).toEqual({ key: e.key, request: req("A-B", 10), fetchedAt: 4242, label: "A-B", charClass: 7, spec: "Holy", targetLevel: 10, targetAutoDetected: false });
+    expect(item).toEqual({ key: e.key, request: req("A-B", 10), fetchedAt: 4242, label: "A-B", charClass: 7, spec: "Holy", targetLevel: 10, targetAutoDetected: false, verdict: null, score: null });
     expect("result" in item!).toBe(false);
     expect(h.get(e.key)).toEqual({ ...item!, result: { v: 1 } });
   });
@@ -273,5 +273,75 @@ describe("SQLite history — per user", () => {
     db.run("DELETE FROM users WHERE id = ?", [ua.id]);
     expect(db.query("SELECT COUNT(*) AS n FROM user_history").get()).toEqual({ n: 0 });
     expect(db.query("SELECT COUNT(*) AS n FROM user_history_auto").get()).toEqual({ n: 0 });
+  });
+});
+
+describe("SQLite history — verdict and score", () => {
+  const evaluated = (verdict: unknown, global: unknown) => ({ evaluation: { verdict, global } });
+  const OLD_SCHEMA = (t: string) => `
+    CREATE TABLE ${t} (
+      user_id INTEGER NOT NULL, key TEXT NOT NULL, request TEXT NOT NULL, payload TEXT NOT NULL, label TEXT NOT NULL,
+      char_class INTEGER NOT NULL, spec TEXT, target_level INTEGER NOT NULL, target_auto INTEGER NOT NULL,
+      fetched_at INTEGER NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (user_id, key));
+    CREATE TABLE ${t}_auto (user_id INTEGER NOT NULL, alias_key TEXT NOT NULL, level INTEGER NOT NULL, set_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, alias_key));`;
+  const insertOld = (db: Database, t: string, name: string, payload: string, seq: number) =>
+    db.run(
+      `INSERT INTO ${t} (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [1, cacheKey(req(name, 18)), JSON.stringify(req(name, 18)), payload, name, 7, null, 18, 0, 500, seq],
+    );
+  const columns = (db: Database, t: string) => db.query<{ name: string }, []>(`PRAGMA table_info(${t})`).all().map((c) => c.name);
+
+  test("a fresh db: record writes them, list/get read them, updateResult refreshes them", () => {
+    const { a } = setup();
+    const e = a.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("invite", 88) }));
+    expect(e.verdict).toBe("invite");
+    expect(e.score).toBe(88);
+    expect(a.list().map((i) => [i.verdict, i.score])).toEqual([["invite", 88]]);
+    a.updateResult(e.key, evaluated("pass", 12));
+    expect(a.list().map((i) => [i.verdict, i.score])).toEqual([["pass", 12]]);
+    expect(a.get(e.key)!.verdict).toBe("pass");
+    a.updateResult(e.key, evaluated("insufficient", null));
+    expect(a.get(e.key)!.verdict).toBeNull();
+    expect(a.get(e.key)!.score).toBeNull();
+  });
+
+  test("another member's copied entry keeps the verdict and score", () => {
+    const { a, b } = setup();
+    a.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("maybe", 50) }));
+    expect(b.cached(req("A-X", 18))?.verdict).toBe("maybe");
+    expect(b.list().map((i) => [i.verdict, i.score])).toEqual([["maybe", 50]]);
+  });
+
+  test("a table with the old schema gains the columns at open and is backfilled from each payload", () => {
+    const db = new Database(":memory:");
+    const tables = { history: "old_history", auto: "old_history_auto" };
+    db.run(OLD_SCHEMA("old_history"));
+    insertOld(db, "old_history", "A-X", JSON.stringify(evaluated("invite", 91)), 1);
+    insertOld(db, "old_history", "B-X", JSON.stringify(evaluated("insufficient", null)), 2);
+    insertOld(db, "old_history", "C-X", JSON.stringify({ any: "payload" }), 3);
+    insertOld(db, "old_history", "D-X", "not json", 4);
+    expect(columns(db, "old_history")).not.toContain("verdict");
+
+    openUserHistory(db, HISTORY_MAX_PER_USER, tables, "eu");
+    expect(columns(db, "old_history")).toEqual(expect.arrayContaining(["verdict", "score"]));
+    const rows = () => db.query<{ key: string; verdict: string | null; score: number | null }, []>("SELECT label AS key, verdict, score FROM old_history ORDER BY seq").all();
+    expect(rows()).toEqual([
+      { key: "A-X", verdict: "invite", score: 91 },
+      { key: "B-X", verdict: null, score: null },
+      { key: "C-X", verdict: null, score: null },
+      { key: "D-X", verdict: null, score: null },
+    ]);
+
+    // A second open is a no-op: the columns exist, so nothing is re-read from the payloads.
+    db.run("UPDATE old_history SET payload = ? WHERE label = 'C-X'", [JSON.stringify(evaluated("pass", 5))]);
+    const h = openUserHistory(db, HISTORY_MAX_PER_USER, tables, "eu").forUser(1);
+    expect(rows().find((r) => r.key === "C-X")).toEqual({ key: "C-X", verdict: null, score: null });
+    expect(h.list().map((i) => [i.label, i.verdict, i.score])[3]).toEqual(["A-X", "invite", 91]);
+  });
+
+  test("the hosted and local schemas carry the columns from the start", () => {
+    const { db } = setup();
+    expect(columns(db, "user_history")).toEqual(expect.arrayContaining(["verdict", "score"]));
   });
 });

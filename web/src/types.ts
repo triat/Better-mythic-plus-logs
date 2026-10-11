@@ -58,6 +58,10 @@ export interface HistoryItem {
   spec: string | null;
   targetLevel: number;
   targetAutoDetected: boolean;
+  /** The evaluation's verdict; null for INSUFFICIENT DATA or an entry without an evaluation. */
+  verdict: "invite" | "maybe" | "pass" | null;
+  /** The evaluation's global score; null when there is none. */
+  score: number | null;
   fetchedAt: number;
   /** The effective request (region included) — what Refresh re-runs. */
   request: HistoryRequest;

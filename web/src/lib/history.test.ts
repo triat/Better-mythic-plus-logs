@@ -21,7 +21,7 @@ describe("history selection", () => {
   });
   test("tab subtitle", () => {
     const item = (over: Partial<HistoryItem>): HistoryItem => ({
-      key: "k", label: "Muleyoxo-Silvermoon", charClass: 7, spec: null, targetLevel: 21, targetAutoDetected: true, fetchedAt: 0,
+      key: "k", label: "Muleyoxo-Silvermoon", charClass: 7, spec: null, targetLevel: 21, targetAutoDetected: true, verdict: null, score: null, fetchedAt: 0,
       request: { character: "Muleyoxo-Silvermoon", level: null, spec: null, metric: null, region: "eu" }, ...over,
     });
     expect(tabSubtitle(tEn, item({}), "eu")).toBe("+21 auto");

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { Database } from "bun:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -56,5 +57,27 @@ describe("local history", () => {
     const key = cacheKey(req("Muleyoxo-Silvermoon", 21));
     expect(h.get(key)?.request.region).toBe("eu");
     expect(h.cached(req("Muleyoxo-Silvermoon"))?.key).toBe(key);
+  });
+});
+
+describe("local history — verdict and score", () => {
+  test("a bmpl.db whose local_history predates the columns is migrated and backfilled at open", async () => {
+    dir = mkdtempSync(join(tmpdir(), "bmpl-lh-"));
+    process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
+    process.env.BMPL_REGION = "eu";
+    const raw = new Database(process.env.BMPL_DB_PATH);
+    raw.run(`CREATE TABLE local_history (
+      user_id INTEGER NOT NULL, key TEXT NOT NULL, request TEXT NOT NULL, payload TEXT NOT NULL, label TEXT NOT NULL,
+      char_class INTEGER NOT NULL, spec TEXT, target_level INTEGER NOT NULL, target_auto INTEGER NOT NULL,
+      fetched_at INTEGER NOT NULL, seq INTEGER NOT NULL, PRIMARY KEY (user_id, key))`);
+    const key = cacheKey(req("Muleyoxo-Silvermoon", 21));
+    raw.run(
+      "INSERT INTO local_history (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [0, key, JSON.stringify(req("Muleyoxo-Silvermoon", 21)), JSON.stringify({ evaluation: { verdict: "maybe", global: 64 } }), rec.label, 7, "Holy", 21, 0, 500, 1],
+    );
+    raw.close();
+
+    const h = await openLocalHistory();
+    expect(h.list().map((i) => [i.verdict, i.score])).toEqual([["maybe", 64]]);
   });
 });

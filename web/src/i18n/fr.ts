@@ -145,8 +145,6 @@ export const fr: Mirror<typeof en> = {
     ownClientAction: "Utiliser ton propre client →",
   },
   signin: {
-    tagline: "Qui a postulé à ta key ?",
-    sub: "Évalue un candidat Mythic+ à partir de son historique Warcraft Logs et Raider.IO.",
     discord: "Se connecter avec Discord",
     failed: "✗ Connexion échouée — Discord n'a pas terminé la connexion. Réessaie.",
     copy: "Copier",
@@ -162,6 +160,33 @@ export const fr: Mirror<typeof en> = {
       open: "Toute personne avec un compte Discord peut se connecter. Seuls ton id et ton nom Discord sont stockés — aucun accès aux messages ni aux serveurs.",
       invite: "Sur invitation uniquement. Seuls ton id et ton nom Discord sont stockés — aucun accès aux messages ni aux serveurs.",
     },
+  },
+  landing: {
+    nav: "Liens",
+    signIn: "Se connecter",
+    kicker: "Mythic+ · World of Warcraft",
+    title: "Évalue un candidat Mythic+ en quelques secondes.",
+    sub: "bmpl lit ses logs Warcraft Logs et son profil Raider.IO, le compare aux joueurs de sa spé au même niveau de clé, et te donne un verdict avec ses forces et ses faiblesses.",
+    free: "Gratuit · on ne lit que ton pseudo et ton avatar Discord",
+    how: "Comment ça marche",
+    steps: {
+      search: { title: "Cherche un joueur", text: "Son Nom-Serveur ou le lien de son profil Raider.IO, et le niveau de ta clé." },
+      verdict: { title: "Lis le verdict", text: "INVITE, MAYBE ou PASS, avec ses forces et ses faiblesses chiffrées face aux joueurs de sa spé." },
+      runs: { title: "Creuse les runs", text: "Chaque run en détail : morts, défensifs disponibles, dégâts évitables, sur une frise du donjon." },
+    },
+    facts: {
+      points: { title: "Points Warcraft Logs", text: "Chaque recherche consomme des points de l'API Warcraft Logs, partagés par heure. Le coût est affiché avant chaque action ; un joueur déjà consulté s'ouvre sans rien dépenser." },
+      data: { title: "Tes données" },
+    },
+    preview: {
+      name: "Vachâman",
+      label: "Aperçu d'une synthèse",
+      who: "Chaman Élémentaire · pour une +{level}",
+      good: "−40 % de dégâts évitables vs pairs",
+      bad: "aucune healthstone (pairs 1,6 / run)",
+      note: "Exemple, chiffres illustratifs.",
+    },
+    footer: "bmpl · Better Mythic+ Logs",
   },
   setup: {
     title: "bmpl · configuration",

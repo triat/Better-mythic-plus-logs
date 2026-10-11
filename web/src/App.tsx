@@ -13,7 +13,7 @@ import { suggestionsOf } from "./lib/suggest.ts";
 import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
-import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, candidateHref, deniedNotice, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./lib/hostedMode.ts";
+import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, candidateHref, pageOf, proposalMode, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
 import { autoQueue, verdictScope } from "./lib/live/panel.ts";
@@ -39,11 +39,11 @@ import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
 import type { SelfActions } from "./components/self/ResultHead.tsx";
 import { HomePage } from "./components/home/HomePage.tsx";
+import { Landing } from "./components/Landing.tsx";
 import { LiveChip } from "./components/LiveChip.tsx";
 import { LivePanel } from "./components/LivePanel.tsx";
 import { MePage } from "./components/me/MePage.tsx";
 import { Setup } from "./components/Setup.tsx";
-import { SignIn } from "./components/SignIn.tsx";
 import { Shell } from "./components/shell/Shell.tsx";
 import { EMPTY_FORM } from "./components/shell/Sidebar.tsx";
 import type { LookupForm, SidebarProps } from "./components/shell/Sidebar.tsx";
@@ -99,7 +99,8 @@ export function App() {
   if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} /></BrowserLocale>;
   // /help is public too: an anonymous hosted visitor gets the bare page (brand line, no search); signed in or local, it renders inside `Main` under the app header.
   if (screen.kind === "signin" && page === "help") return <BrowserLocale><HelpPage status={screen.status} bare /></BrowserLocale>;
-  if (screen.kind === "signin") return <BrowserLocale><SignInScreen status={screen.status} search={location.search} /></BrowserLocale>;
+  // Every other path, signed out: the landing page (redesign spec decision 2).
+  if (screen.kind === "signin") return <BrowserLocale><Landing status={screen.status} search={location.search} /></BrowserLocale>;
   if (screen.kind === "setup") {
     return (
       <BrowserLocale>
@@ -135,13 +136,6 @@ function Loading({ inline = false }: { inline?: boolean }) {
   const { t } = useT();
   return <div className="muted" style={inline ? undefined : { padding: 24 }}><span className="spinner" /> {t("common.loading")}</div>;
 }
-/** `deniedNotice`/`signInNote` need `t`, which only exists inside the `LocaleProvider` subtree — a plain
- * component (not a value computed directly in `App`'s render) so the hook has somewhere to run. */
-function SignInScreen({ status, search }: { status: StatusInfo; search: string }) {
-  const { t } = useT();
-  return <SignIn notice={deniedNotice(t, search)} loginFailed={loginFailed(search)} note={signInNote(t, status)} />;
-}
-
 const formToRequest = (f: LookupForm, level: number | null, region: Region): LookupRequest => ({
   character: f.character.trim(),
   level,

@@ -151,8 +151,6 @@ export const en = {
     ownClientAction: "Use your own client →",
   },
   signin: {
-    tagline: "Who applied to your key?",
-    sub: "Vet a Mythic+ applicant from their Warcraft Logs and Raider.IO history.",
     discord: "Sign in with Discord",
     failed: "✗ Sign-in failed — Discord did not complete the login. Try again.",
     copy: "Copy",
@@ -168,6 +166,33 @@ export const en = {
       open: "Anyone with a Discord account can sign in. Only your Discord id and name are stored — no message or server access.",
       invite: "Invite-only. Only your Discord id and name are stored — no message or server access.",
     },
+  },
+  landing: {
+    nav: "Links",
+    signIn: "Sign in",
+    kicker: "Mythic+ · World of Warcraft",
+    title: "Vet a Mythic+ applicant in a few seconds.",
+    sub: "bmpl reads their Warcraft Logs and their Raider.IO profile, compares them with players of their spec at the same key level, and gives you a verdict with their strengths and weaknesses.",
+    free: "Free · only your Discord name and avatar are read",
+    how: "How it works",
+    steps: {
+      search: { title: "Look a player up", text: "Their Name-Realm or their Raider.IO profile link, and the level of your key." },
+      verdict: { title: "Read the verdict", text: "INVITE, MAYBE or PASS, with their strengths and weaknesses measured against players of their spec." },
+      runs: { title: "Dig into the runs", text: "Each run in detail: deaths, defensives available, avoidable damage, on a timeline of the dungeon." },
+    },
+    facts: {
+      points: { title: "Warcraft Logs points", text: "Each lookup spends Warcraft Logs API points, shared per hour. The cost shows before every action; a player already looked up opens without spending anything." },
+      data: { title: "Your data" },
+    },
+    preview: {
+      name: "Vachâman",
+      label: "Preview of a summary",
+      who: "Elemental Shaman · for a +{level}",
+      good: "−40% avoidable damage vs peers",
+      bad: "no healthstone (peers 1.6 / run)",
+      note: "Example with illustrative numbers.",
+    },
+    footer: "bmpl · Better Mythic+ Logs",
   },
   setup: {
     title: "bmpl · setup",

@@ -312,13 +312,9 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .radar-label { text-decoration: underline dotted var(--faint); text-underline-offset: 3px; }
 @media (max-width: 900px) { .legend-grid { grid-template-columns: 1fr; } }
 
-/* --- hosted: sign-in gate (SignIn.tsx) --- */
-.signin { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: calc(100vh - 65px); padding: 0 24px 40px; text-align: center; }
-.signin h1 { font-size: 26px; font-weight: 700; margin: 0; }
-.signin p { margin: 0; }
-.btn-discord { height: 48px; padding: 0 22px; gap: 8px; font-size: 15px; font-weight: 600; background: var(--discord); border-color: var(--discord); color: #fff; margin-top: 6px; }
+/* --- hosted: the Discord button and the sign-in refusals (Landing.tsx) --- */
+.btn-discord { height: 48px; padding: 0 22px; gap: 8px; font-size: 15px; font-weight: 600; background: var(--discord); border-color: var(--discord); color: #fff; }
 .btn-discord:hover { color: #fff; border-color: var(--discord); filter: brightness(1.1); }
-.signin-note { font-size: 12px; color: var(--faint); margin-top: 16px; }
 .signin-denied { width: 520px; max-width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; font-size: 13px; color: var(--text-soft); }
 .signin-id { display: flex; align-items: center; gap: 10px; margin-top: 2px; font-size: 15px; color: var(--text); }
 
@@ -862,4 +858,62 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
   .home-self, .home-progress { padding: 18px; }
   .home-work-row { grid-template-columns: minmax(0, 1fr) auto; }
   .home-work-past { grid-column: 1 / -1; text-align: left; }
+}
+
+/* landing (redesign phase 1): the signed-out hosted page, mockup F-Landing. */
+.land-row { max-width: 1120px; margin: 0 auto; }
+.land-top { padding: 16px 24px; }
+.land-top .land-row { display: flex; align-items: center; gap: 12px 24px; flex-wrap: wrap; }
+.land-hero { padding: 72px 24px 64px; }
+.land-hero-row { display: flex; flex-wrap: wrap; gap: 48px; align-items: center; }
+.land-hero-left { flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 22px; align-items: flex-start; }
+.land-title { margin: 0; font-size: 54px; line-height: 1.04; font-weight: 800; letter-spacing: -.03em; }
+.land-sub { margin: 0; font-size: 18px; line-height: 1.55; color: var(--muted); max-width: 560px; }
+.land-cta { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+.landing .btn-discord { height: 52px; padding: 0 24px; gap: 10px; font-size: 16px; border-radius: 12px; }
+.land-failed { margin: 0; font-size: 13px; color: var(--pass); }
+.land-small { font-size: 12px; }
+.land-preview { flex: 1 1 420px; min-width: 0; padding: 22px; display: flex; flex-direction: column; gap: 16px; background: var(--invite-bg); border-color: var(--invite-border); }
+.land-preview-head { display: flex; align-items: center; gap: 14px; }
+.land-preview-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--card-2); border: 1px solid var(--border-2); display: flex; align-items: center; justify-content: center; flex: none; color: var(--better); }
+.land-grow { flex: 1; }
+.land-preview-name { font-size: 22px; font-weight: 800; }
+.land-preview-verdict { display: flex; flex-direction: column; align-items: flex-end; }
+.land-preview-score { font-size: 36px; font-weight: 700; line-height: 1; color: var(--invite); }
+.land-preview-verdict .home-verdict { font-size: 13px; }
+.land-axes { display: flex; flex-direction: column; gap: 10px; }
+.land-axis { display: grid; grid-template-columns: 96px minmax(0, 1fr) 30px; gap: 10px; align-items: center; }
+.land-axis-name { font-size: 13px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.land-axis-track { position: relative; height: 6px; border-radius: 999px; background: var(--invite-border); }
+.land-axis-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--text-soft); }
+.land-axis-bar.better { background: var(--better); } .land-axis-bar.worse { background: var(--worse); }
+.land-axis-tick { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--label); }
+.land-axis-v { font-size: 13px; text-align: right; }
+.land-preview-lines { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--invite-border); font-size: 14px; color: var(--text-soft); }
+.land-preview-lines .mono { font-weight: 700; }
+.land-section { padding: 24px 24px 64px; }
+.land-facts-section { padding-top: 0; padding-bottom: 72px; }
+.land-col { display: flex; flex-direction: column; gap: 20px; }
+.land-h2 { margin: 0; font-size: 24px; font-weight: 700; }
+.land-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
+.land-step { padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+.land-step-n { width: 34px; height: 34px; border-radius: 50%; background: var(--card-3); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.land-step-title { font-size: 18px; }
+.land-text { font-size: 14px; line-height: 1.55; color: var(--muted); }
+.land-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; }
+.land-fact { padding: 22px 24px; display: flex; gap: 14px; }
+.land-fact-icon { color: var(--text-soft); flex: none; display: inline-flex; }
+.land-fact-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.land-fact-title { font-size: 16px; }
+.land-foot { border-top: 1px solid var(--border-soft); padding: 24px; }
+.land-foot-row { display: flex; gap: 12px 20px; flex-wrap: wrap; font-size: 13px; color: var(--label); }
+.land-foot-first { margin-left: auto; }
+@media (max-width: 600px) {
+  .land-top { padding: 14px 16px; }
+  .land-hero { padding: 40px 16px 40px; }
+  .land-title { font-size: 34px; }
+  .land-sub { font-size: 16px; }
+  .land-section { padding: 16px 16px 40px; }
+  .land-facts-section { padding-top: 0; }
+  .land-foot { padding: 20px 16px; }
 }

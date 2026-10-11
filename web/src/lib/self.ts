@@ -153,7 +153,7 @@ export interface PanelView {
   sub: string;
   avoidable: { id: number; name: string; pct: string; width: number }[];
   other: { pct: string; width: number } | null;
-  killers: { ability: string; deaths: string }[];
+  killers: { id: number | null; ability: string; deaths: string }[];
   casts: { id: number; name: string; ofText: string; mine: string }[];
   /** "Crowd control here" (canvas control, dungeon panel): most uses first. */
   control: { id: number; name: string; uses: string; enemies: string }[];
@@ -171,7 +171,7 @@ export function dungeonPanel(t: T, locale: Locale, row: DungeonRow): PanelView {
     sub: t("self.panel.sub", { count: row.runs, best }),
     avoidable: d.avoidable.map((a) => ({ id: a.id, name: a.name, pct: pct(locale, share(a.total)), width: Math.round(share(a.total) * 100) })),
     other: d.avoidableOther > 0 ? { pct: pct(locale, share(d.avoidableOther)), width: Math.round(share(d.avoidableOther) * 100) } : null,
-    killers: d.killers.map((k) => ({ ability: k.ability, deaths: t("self.panel.deaths", { count: k.deaths }) })),
+    killers: d.killers.map((k) => ({ id: k.id, ability: k.ability, deaths: t("self.panel.deaths", { count: k.deaths }) })),
     casts: d.casts.map((c) => ({ id: c.id, name: c.name, ofText: t("self.panel.castOf", { completed: c.completed, attempts: c.attempts }), mine: c.mine > 0 ? t("self.panel.mine", { n: c.mine }) : "" })),
     control: d.control.map((c) => ({ id: c.id, name: c.name, uses: t("self.control.uses", { count: c.uses }), enemies: c.enemies > 0 ? t("self.control.enemies", { count: c.enemies }) : "" })),
     controlNote: d.controlRuns === 0
@@ -190,7 +190,7 @@ export const runOf = (v: SeasonRunView): MPlusRun => ({
 });
 
 export interface RunDetailView {
-  deaths: { title: string; hits: { ability: string; share: string }[] }[];
+  deaths: { title: string; hits: { id: number | null; ability: string; share: string }[] }[];
   avoidable: { key: string; name: string; amount: string }[];
   casts: { id: number; name: string; ofText: string }[];
   kicked: string | null;
@@ -242,7 +242,7 @@ export function runDetail(t: T, locale: Locale, v: SeasonRunView): RunDetailView
       title: t("self.detail.deathAt", { at: fmtDuration(d.atMs) }),
       hits: hits.map((h) => {
         const name = h.ability ?? "?";
-        return { ability: h.friendly ? t("self.detail.self", { ability: name }) : name, share: t("self.detail.ofHits", { pct: pct(locale, sum > 0 ? h.amount / sum : 0) }) };
+        return { id: h.ability ? h.abilityId : null, ability: h.friendly ? t("self.detail.self", { ability: name }) : name, share: t("self.detail.ofHits", { pct: pct(locale, sum > 0 ? h.amount / sum : 0) }) };
       }),
     };
   });

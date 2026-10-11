@@ -85,7 +85,7 @@ describe("dungeonPanel", () => {
     pillars: { damage: 62, survival: 28, avoidable: 41, interrupts: 80, control: null }, overall: 53, best: { level: 18, timed: false },
     details: {
       avoidable: [{ id: 1, name: "Shadow Pool", total: 380 }, { id: 2, name: "Void Slash", total: 240 }], avoidableOther: 380, avoidableTotal: 1000,
-      killers: [{ ability: "Void Slash", deaths: 4 }],
+      killers: [{ id: 5, ability: "Void Slash", deaths: 4 }, { id: null, ability: "Shadow Pool", deaths: 1 }],
       casts: [{ id: 3, name: "Lava Bolt", attempts: 40, completed: 11, interrupted: 27, mine: 9 }],
       control: [{ id: 91800, name: "Gnaw", category: "stun", uses: 41, enemies: 44 }, { id: 49576, name: "Death Grip", category: "knock", uses: 33, enemies: 0 }], controlRuns: 9,
     },
@@ -95,7 +95,7 @@ describe("dungeonPanel", () => {
     expect(p.sub).toBe("21 runs · best +18 depleted");
     expect(p.avoidable.map((a) => [a.name, a.pct, a.width])).toEqual([["Shadow Pool", "38%", 38], ["Void Slash", "24%", 24]]);
     expect(p.other).toEqual({ pct: "38%", width: 38 });
-    expect(p.killers).toEqual([{ ability: "Void Slash", deaths: "4 deaths" }]);
+    expect(p.killers).toEqual([{ id: 5, ability: "Void Slash", deaths: "4 deaths" }, { id: null, ability: "Shadow Pool", deaths: "1 death" }]);
     expect(p.control).toEqual([{ id: 91800, name: "Gnaw", uses: "41 uses", enemies: "44 enemies" }, { id: 49576, name: "Death Grip", uses: "33 uses", enemies: "" }]);
     expect(p.controlNote).toBe("over 9 runs with crowd control · 9 analysed runs not measured yet");
     expect(dungeonPanel(tEn, "en", { ...row, details: { ...row.details, control: [], controlRuns: 0 } }).controlNote).toBe("No crowd control measured in this dungeon yet.");
@@ -118,7 +118,7 @@ describe("runDetail", () => {
       },
     } as unknown as SeasonRunView;
     const d = runDetail(tEn, "en", v)!;
-    expect(d.deaths).toEqual([{ title: "Death at 14:02", hits: [{ ability: "Void Slash", share: "71% of the hits" }, { ability: "Shadow Pool (self)", share: "29% of the hits" }] }]);
+    expect(d.deaths).toEqual([{ title: "Death at 14:02", hits: [{ id: 5, ability: "Void Slash", share: "71% of the hits" }, { id: 6, ability: "Shadow Pool (self)", share: "29% of the hits" }] }]);
     expect(d.avoidable.map((a) => a.name)).toEqual(["Shadow Pool", "other avoidable damage"]);
     expect(d.casts).toEqual([{ id: 7, name: "Lava Bolt", ofText: "3 of 12" }]);
     expect(d.kicked).toBe("You kicked 4 of the 9 interrupted.");

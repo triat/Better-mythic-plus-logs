@@ -92,8 +92,9 @@ export interface DungeonDetails {
   avoidable: { id: number; name: string; total: number }[];
   avoidableOther: number;
   avoidableTotal: number;
-  /** The killing blow (newest killing hit, else the death's top ability) of each of the player's deaths. */
-  killers: { ability: string; deaths: number }[];
+  /** The killing blow (newest killing hit, else the death's top ability) of each of the player's deaths; `id` is the
+   *  killing hit's spell id, null when only the top ability's name is known (payloads saved before 2026-10). */
+  killers: { id: number | null; ability: string; deaths: number }[];
   /** Enemy spells the group kicked at least once, most completed first. */
   casts: { id: number; name: string; attempts: number; completed: number; interrupted: number; mine: number }[];
   /** The player's crowd control over the dungeon's runs that have it, most uses first (top five). */
@@ -196,7 +197,7 @@ export const changeOf = (now: number, before: number): "better" | "same" | "wors
 
 export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
   const avoid = new Map<number, { id: number; name: string; total: number }>();
-  const killers = new Map<string, number>();
+  const killers = new Map<string, { id: number | null; deaths: number }>();
   const casts = new Map<number, DungeonDetails["casts"][number]>();
   const control = new Map<number, DungeonDetails["control"][number]>();
   let controlRuns = 0;
@@ -214,8 +215,13 @@ export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
       }
     }
     for (const d of s.deaths.events) {
-      const ability = d.killingHits?.[0]?.ability ?? d.cause;
-      if (ability) killers.set(ability, (killers.get(ability) ?? 0) + 1);
+      const hit = d.killingHits?.[0];
+      const ability = hit?.ability ?? d.cause;
+      if (!ability) continue;
+      const cur = killers.get(ability) ?? { id: null, deaths: 0 };
+      cur.deaths++;
+      cur.id ??= hit?.ability ? hit.abilityId : null;
+      killers.set(ability, cur);
     }
     for (const c of s.interrupts.enemyCasts ?? []) {
       const cur = casts.get(c.id) ?? { id: c.id, name: c.name, attempts: 0, completed: 0, interrupted: 0, mine: 0 };
@@ -240,7 +246,7 @@ export function dungeonDetails(signals: RunSignals[]): DungeonDetails {
     avoidable: abilities.slice(0, TOP_DETAILS),
     avoidableOther: other + abilities.slice(TOP_DETAILS).reduce((s, a) => s + a.total, 0),
     avoidableTotal: total,
-    killers: [...killers].map(([ability, deaths]) => ({ ability, deaths }))
+    killers: [...killers].map(([ability, k]) => ({ id: k.id, ability, deaths: k.deaths }))
       .sort((a, b) => b.deaths - a.deaths || a.ability.localeCompare(b.ability)).slice(0, TOP_DETAILS),
     casts: [...casts.values()].sort((a, b) => b.completed - a.completed || a.name.localeCompare(b.name)).slice(0, TOP_DETAILS),
     control: [...control.values()].sort((a, b) => b.uses - a.uses || a.name.localeCompare(b.name)).slice(0, TOP_DETAILS),

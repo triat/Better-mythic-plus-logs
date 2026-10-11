@@ -449,6 +449,42 @@
       "h": 1700,
       "title": "Battle.net — link card, linked, unlink, removal, notices, result chip, privacy, local mode",
       "page": "bnet"
+    },
+    {
+      "file": "SuggestA.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 760,
+      "title": "Suggestions A — one list, what Enter does on each row",
+      "page": "suggest"
+    },
+    {
+      "file": "SuggestB.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 760,
+      "title": "Suggestions B — grouped by source",
+      "page": "suggest"
+    },
+    {
+      "file": "SuggestC.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 760,
+      "title": "Suggestions C — inline completion + list",
+      "page": "suggest"
+    },
+    {
+      "file": "SuggestDetails.dc.html",
+      "x": 0,
+      "y": 900,
+      "w": 1440,
+      "h": 900,
+      "title": "Suggestions — no match, full Name-Realm or link, hosted, what choosing does",
+      "page": "suggest"
     }
   ],
   "annotations": [
@@ -587,11 +623,19 @@
       "w": 560,
       "page": "bnet",
       "text": "Battle.net linking (spec 2026-10-11-battlenet-linking-design.md). Hosted only.\nTop: the picker after the round trip to Battle.net (pick A, B or C): every character of the account, up to 20 kept, the first is the main.\nBelow: the link card, the linked state, unlink, the 30-day removal notice, the notices after the round trip, the result-page chip for a character not on your list (pick 1 or 2), the privacy line and local mode. Sample data is fictional."
+    },
+    {
+      "id": "suggest-brief",
+      "x": 0,
+      "y": -170,
+      "w": 560,
+      "page": "suggest",
+      "text": "Search suggestions (user's choice 2026-10-11: history + My characters everywhere, plus the shared cache in local mode only). 0 Warcraft Logs points, no external call: the list is filtered in the page (history, My characters) and, locally, from bmpl's own database.\nPick A, B or C. The details board is shared. Sample data is fictional."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "bnet"
+    "page": "suggest"
   },
   "pages": [
     {
@@ -637,6 +681,10 @@
     {
       "id": "bnet",
       "name": "Battle.net linking"
+    },
+    {
+      "id": "suggest",
+      "name": "Search suggestions"
     }
   ]
 }

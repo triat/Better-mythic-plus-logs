@@ -181,7 +181,7 @@ export const en = {
       runs: { title: "Dig into the runs", text: "Each run in detail: deaths, defensives available, avoidable damage, on a timeline of the dungeon." },
     },
     facts: {
-      points: { title: "Warcraft Logs points", text: "Each lookup spends Warcraft Logs API points, shared per hour. The cost shows before every action; a player already looked up opens without spending anything." },
+      points: { title: "Warcraft Logs points", text: "Each lookup spends Warcraft Logs API points, shared per hour. A player already looked up opens without spending anything; run analyses show their cost before they start." },
       data: { title: "Your data" },
     },
     preview: {
@@ -191,6 +191,7 @@ export const en = {
       good: "−40% avoidable damage vs peers",
       bad: "no healthstone (peers 1.6 / run)",
       note: "Example with illustrative numbers.",
+      informational: "informational",
     },
     footer: "bmpl · Better Mythic+ Logs",
   },

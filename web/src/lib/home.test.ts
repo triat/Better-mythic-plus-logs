@@ -85,6 +85,12 @@ describe("homeSelf · pillars, strengths, costs", () => {
     const h = homeSelf(tEn, "en", season({ recent: { runs: 5, pillars: withEvidence, overall: 40 }, dungeons: [] }), titleOf);
     expect(h.costs).toEqual([{ kind: "pillar", label: "Control", detail: "x", score: 40 }]);
   });
+  test("a pillar's detail is the evidence line in the UI language, not the server's English label", () => {
+    const evidence = [{ label: "server English label", delta: 4, source: "survival.avoidableVsPeers", value: -8.2 }];
+    const s = season({ recent: { runs: 5, pillars: [{ ...pillar("avoidable", 80), evidence }], overall: 80 }, dungeons: [] });
+    expect(homeSelf(tEn, "en", s, titleOf).strengths[0]!.detail).toBe("avoidable −8% vs peers");
+    expect(homeSelf(tFr, "fr", s, titleOf).strengths[0]!.detail).toBe("évitable −8\u202F% vs pairs");
+  });
 });
 
 describe("homeSelf · bestPerWeek", () => {

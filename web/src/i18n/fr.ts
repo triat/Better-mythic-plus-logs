@@ -175,7 +175,7 @@ export const fr: Mirror<typeof en> = {
       runs: { title: "Creuse les runs", text: "Chaque run en détail : morts, défensifs disponibles, dégâts évitables, sur une frise du donjon." },
     },
     facts: {
-      points: { title: "Points Warcraft Logs", text: "Chaque recherche consomme des points de l'API Warcraft Logs, partagés par heure. Le coût est affiché avant chaque action ; un joueur déjà consulté s'ouvre sans rien dépenser." },
+      points: { title: "Points Warcraft Logs", text: "Chaque recherche consomme des points de l'API Warcraft Logs, partagés par heure. Un joueur déjà consulté s'ouvre sans rien dépenser ; les analyses de runs affichent leur coût avant de partir." },
       data: { title: "Tes données" },
     },
     preview: {
@@ -185,6 +185,7 @@ export const fr: Mirror<typeof en> = {
       good: "−40 % de dégâts évitables vs pairs",
       bad: "aucune healthstone (pairs 1,6 / run)",
       note: "Exemple, chiffres illustratifs.",
+      informational: "informatif",
     },
     footer: "bmpl · Better Mythic+ Logs",
   },

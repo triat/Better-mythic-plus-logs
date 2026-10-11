@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { LOCAL_STATUS, type StatusInfo } from "./hostedMode.ts";
-import { landingView } from "./landing.ts";
+import { PREVIEW_AXES, landingView } from "./landing.ts";
 
 const tFr = makeT(fr, "fr");
 const hosted: StatusInfo = { ...LOCAL_STATUS, hosted: true };
@@ -27,5 +27,14 @@ describe("landingView", () => {
     expect(guild.facts[1]!.text).toBe(guild.note);
     expect(landingView(tEn, { ...hosted, openSignup: true }, "").note).toStartWith("Anyone with a Discord account can sign in.");
     expect(landingView(tFr, hosted, "").facts[0]!.text).toStartWith("Chaque recherche consomme des points de l'API Warcraft Logs");
+  });
+});
+
+describe("preview", () => {
+  test("only consistency is marked informational (weight 0, spec decision 5)", () => {
+    expect(PREVIEW_AXES.filter((a) => a.informational).map((a) => a.key)).toEqual(["consistency"]);
+  });
+  test("the points fact does not claim a lookup's cost shows beforehand", () => {
+    expect(landingView(tEn, LOCAL_STATUS, "").facts[0]!.text).not.toContain("before every action");
   });
 });

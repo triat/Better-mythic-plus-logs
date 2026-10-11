@@ -30,9 +30,10 @@ export function landingView(t: T, status: StatusInfo, search: string): LandingVi
   };
 }
 
-/** The static preview's axes (illustrative numbers, no data fetch): label and score. */
-export const PREVIEW_AXES: readonly { key: AxisKey; score: number }[] = [
+/** The static preview's axes (illustrative numbers, no data fetch): label and score. Consistency weighs 0 for every
+ *  role by default (redesign spec decision 5), so the preview marks it informational. */
+export const PREVIEW_AXES: readonly { key: AxisKey; score: number; informational?: true }[] = [
   { key: "survival", score: 90 }, { key: "preparation", score: 80 }, { key: "utility", score: 74 },
-  { key: "throughput", score: 68 }, { key: "consistency", score: 58 },
+  { key: "throughput", score: 68 }, { key: "consistency", score: 58, informational: true },
 ];
 export const PREVIEW_SCORE = 77;

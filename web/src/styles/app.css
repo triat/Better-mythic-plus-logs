@@ -884,6 +884,7 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .land-axes { display: flex; flex-direction: column; gap: 10px; }
 .land-axis { display: grid; grid-template-columns: 96px minmax(0, 1fr) 30px; gap: 10px; align-items: center; }
 .land-axis-name { font-size: 13px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.land-axis-info { display: block; font-size: 11px; color: var(--faint); }
 .land-axis-track { position: relative; height: 6px; border-radius: 999px; background: var(--invite-border); }
 .land-axis-bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--text-soft); }
 .land-axis-bar.better { background: var(--better); } .land-axis-bar.worse { background: var(--worse); }

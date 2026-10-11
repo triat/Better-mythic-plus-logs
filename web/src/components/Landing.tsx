@@ -132,7 +132,10 @@ function Preview() {
       <div className="land-axes">
         {PREVIEW_AXES.map((a) => (
           <div key={a.key} className="land-axis">
-            <span className="land-axis-name">{t(`verdict.axes.${a.key}`)}</span>
+            <span className="land-axis-name">
+              {t(`verdict.axes.${a.key}`)}
+              {a.informational && <span className="land-axis-info">{t("landing.preview.informational")}</span>}
+            </span>
             <span className="land-axis-track">
               <span className={"land-axis-bar " + scoreTone(a.score)} style={{ width: `${a.score}%` }} />
               <span className="land-axis-tick" />

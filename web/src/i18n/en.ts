@@ -742,4 +742,8 @@ export const en = {
       },
     },
   },
+  shell: {
+    nav: { home: "Home", candidate: "Candidates", me: "My characters", compare: "Compare", live: "Live", help: "Help" },
+    account: { local: "Local mode" },
+  },
 } as const;

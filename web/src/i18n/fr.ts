@@ -736,4 +736,8 @@ export const fr: Mirror<typeof en> = {
       },
     },
   },
+  shell: {
+    nav: { home: "Accueil", candidate: "Candidats", me: "Mes persos", compare: "Comparer", live: "Live", help: "Aide" },
+    account: { local: "Mode local" },
+  },
 };

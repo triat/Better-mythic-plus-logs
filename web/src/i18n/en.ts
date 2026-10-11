@@ -189,6 +189,13 @@ export const en = {
     hint: "Paste a Raider.IO URL or a Name-Realm above.",
     hintWatch: "Paste a Raider.IO URL or a Name-Realm above, or turn on clipboard watch and copy one from anywhere.",
     unknownPath: "unknown",
+    self: { thisWeek: "this week", lastWeek: "last week" },
+    progress: {
+      overall: "overall",
+      none: "No timed key over the last {weeks} weeks.",
+      same: "Best timed key: +{level} over the last {weeks} weeks.",
+      fromTo: "Best timed key: from +{from} to +{to} over the last {weeks} weeks.",
+    },
   },
   verdict: {
     axes: { survival: "Survival", utility: "Utility", throughput: "Throughput", consistency: "Consistency", preparation: "Preparation", experience: "Experience" },

@@ -183,6 +183,13 @@ export const fr: Mirror<typeof en> = {
     hint: "Colle un lien Raider.IO ou un Nom-Serveur ci-dessus.",
     hintWatch: "Colle un lien Raider.IO ou un Nom-Serveur ci-dessus, ou active la surveillance du presse-papiers et copies-en un depuis n'importe où.",
     unknownPath: "inconnu",
+    self: { thisWeek: "cette semaine", lastWeek: "la semaine dernière" },
+    progress: {
+      overall: "global",
+      none: "Aucune clé timée sur les {weeks} dernières semaines.",
+      same: "Meilleure clé timée : +{level} sur les {weeks} dernières semaines.",
+      fromTo: "Meilleure clé timée : de +{from} à +{to} sur les {weeks} dernières semaines.",
+    },
   },
   verdict: {
     axes: { survival: "Survie", utility: "Utilité", throughput: "Throughput", consistency: "Régularité", preparation: "Préparation", experience: "Expérience" },

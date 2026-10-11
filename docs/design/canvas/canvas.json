@@ -485,6 +485,15 @@
       "h": 900,
       "title": "Suggestions — no match, full Name-Realm or link, hosted, what choosing does",
       "page": "suggest"
+    },
+    {
+      "file": "SuggestChosen.dc.html",
+      "x": 1560,
+      "y": 900,
+      "w": 1440,
+      "h": 760,
+      "title": "Suggestions, chosen: A + C (inline completion, one list, no source on the rows)",
+      "page": "suggest"
     }
   ],
   "annotations": [
@@ -630,7 +639,7 @@
       "y": -170,
       "w": 560,
       "page": "suggest",
-      "text": "Search suggestions (user's choice 2026-10-11: history + My characters everywhere, plus the shared cache in local mode only). 0 Warcraft Logs points, no external call: the list is filtered in the page (history, My characters) and, locally, from bmpl's own database.\nPick A, B or C. The details board is shared. Sample data is fictional."
+      "text": "Search suggestions (user's choice 2026-10-11: history + My characters everywhere, plus the shared cache in local mode only). 0 Warcraft Logs points, no external call: the list is filtered in the page (history, My characters) and, locally, from bmpl's own database.\nChosen 2026-10-11: A + C (SuggestChosen): C's grey completion with Tab, A's single list without the source or cost notes, region and class / spec aligned right. The details board is shared. Sample data is fictional."
     }
   ],
   "launch": {

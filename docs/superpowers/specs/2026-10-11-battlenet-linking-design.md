@@ -114,7 +114,10 @@ equals the WCL realm slug bmpl stores (`realmToSlug`), whether `http://localhost
 10. **Design first.** The `/me` link card, the picker (list, ticks, main, the count against 20), the linked
     state (BattleTag, "Import again", "Unlink"), the removal notice, the errors of section "Error handling" and the
     `/privacy` paragraph go through the Claude Design canvas as a new page "bnet", 2–3 variants for the picker,
-    before any front code.
+    before any front code. Chosen 2026-10-11 ("A et 1", canvas version 25): picker **A** (`BnetPickA`, one list
+    with ticks, highest level first, "make main" on a ticked row, the main is the first ticked) and result chip
+    **1** (no chip in hosted mode for a character not on the list; the chip stays as the remove toggle for one that
+    is). The details board `BnetDetails` holds the other screens.
 
 ## Data flow
 
@@ -180,7 +183,3 @@ and check that the list empties. Costs no WCL points unless a sync is started.
 - China region.
 - Keeping a token to re-import without a visit (would need refresh tokens, which the docs do not offer).
 
-## Open point
-
-Whether "This is me" should stay visible in hosted mode for a character not on the list, as a pointer to "Link
-Battle.net" (decision 7 hides it). Settled on the canvas (decision 10).

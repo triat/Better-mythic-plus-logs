@@ -506,8 +506,7 @@ Follow `docs/agents/web-front.md` "Design first" exactly:
   - `removedNotice(t, removed)`.
 - `lib/self.ts`:
   - `toggleMe(chars, p, hosted)`: hosted can only remove (returns `null` for an addition).
-  - `meChip(t, chars, p, hosted)`: hidden (`null`) in hosted mode for a character not on the list, unless the canvas
-    answer keeps it as a pointer.
+  - `meChip(t, chars, p, hosted)`: hidden (`null`) in hosted mode for a character not on the list (canvas choice 1).
 - `lib/me.ts`: `addCharacter` is unchanged (local only).
 - Strings:
   - New `me.bnet.*` keys: link card, picker, linked line, unlink confirmation, notices, removal notice.
@@ -536,7 +535,15 @@ Gate, commit `feat(web): Battle.net linking view models and strings`.
   link: a top-level navigation, allowed by the CSP.
 - Errors: a page-local `Toast` (pattern `SettingsPage.tsx:23-44`).
 - `MeChip` and its two call sites pass `self.hosted`.
-- Markup exactly as the chosen canvas variant (Task 9 amends this task).
+- Markup exactly as the chosen canvas variants (2026-10-11: picker **A** and chip **1**). Sources:
+  `docs/design/canvas/BnetPickA.dc.html` and `BnetDetails.dc.html`. Reuse the existing classes (`.card`, `.inset`,
+  `.chip`, `.btn`, `.btn-sm`, `.btn-primary`, `.btn-danger`, `.confirm`, `.main-badge`/`.me-main-badge`, `.label-caps`)
+  and add only what the boards need, from tokens:
+  - `.bnet-pick`: the five-column row of A — checkbox, name in class colour + class, realm, region chip, level,
+    "main" badge or "make main".
+  - `.bnet-note` with `--bad` / `--warn` / `--muted`, for the notices.
+  - `.bnet-linked`: the linked line.
+  The checkbox is a real `<input type="checkbox">` with a label, so it is keyboard-usable.
 
 Verify in a browser before committing:
 - Local mode: `just build`, then `./bmpl serve`, and check `/me` (unchanged).

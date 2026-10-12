@@ -1,6 +1,6 @@
 # UI redesign: one shell, answer first, a run timeline with layers — design
 
-Status: approved 2026-10-11 ("go"), with the two open points as proposed: the Experience axis leaves the model (config version bump), and the redesign canvas replaces the old project canvas for this work. Mockups chosen over three rounds on the redesign canvas
+Status: approved 2026-10-11 ("go"), with the two open points as proposed: the Experience axis leaves the model (config version bump), and the redesign canvas replaces the old project canvas for this work. Phase 1 implemented 2026-10-11; phase 2 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`, see "Phase 2 notes"). Mockups chosen over three rounds on the redesign canvas
 (https://claude.ai/artifact/WeznnnDkrDGMPyAsuSKBeE, page "4 · Final"); the chosen artboards are checked in under
 `docs/design/redesign/` (`F-*.dc.html`) with the mockup rules (`mockup-rules-round2.md`, `mockup-rules-round3.md`).
 This spec supersedes the visual parts of `2026-09-16-web-front-design.md` (screens, header, tabs) and the layout
@@ -140,6 +140,28 @@ are replaced by the sidebar's Récents list (remove = the row's "⋯" menu) and 
 Docs per phase: `docs/agents/web-front.md` (components map, design canvas pointer → the redesign canvas and
 `docs/design/redesign/`), `README.md` screenshots, `docs/scoring.md` (Experience removed, Régularité informatif),
 `docs/deep-dive.md` (cast times).
+
+## Phase 2 notes
+
+What phase 2 (the candidate profile) settled while it was planned and built; these override the sections above.
+
+1. **Contrôle layer**: `RunControl` (`src/signals/types.ts`) has counts per spell, no timestamps. The Contrôle layer is
+   shown disabled, reason "not fetched for a candidate" (vetting view); timed crowd control joins the "new WCL data"
+   follow-up below.
+2. **Par times** are not in the payload (only Raider.IO's recent runs carry `parMs`): the Donjons tab shows the upgrade
+   (`✓ +2`, depleted) and the clear time instead of a "marge timer" column.
+3. **"Tous les runs"** is not available for a candidate (the payload holds the best run per dungeon only): the Runs
+   filters are "Meilleur par donjon" and "Avec morts".
+4. `GET /api/docs` `config` gains `globalCurve` and `reference` (the Méthode tab's curve and average player).
+5. A user `evaluation.json` written before the change may still name `experience` (axes, weights, references): those
+   keys are dropped with a warning instead of failing the config.
+6. **Cached analyses on every read**: a local history read (`GET /api/history/:key`) and a local lookup cache hit go
+   through `withCachedAnalyses` like hosted reads do — today's cached analyses re-attached and the evaluation re-run
+   with today's config, 0 WCL pts, the stored payload untouched — so an entry saved before `castsAtMs` existed gains
+   it. The history row's verdict and score follow that re-evaluated result (`HistoryStore.syncSummary`; the front
+   patches its Récents item on load), so Récents and the profile header always agree.
+7. **Class and spec names stay English in the French UI**: the app has no localized class or spec names
+   (`src/wow/classes.ts` is English, WCL's names); the profile header and the run rows show them as WCL does.
 
 ## Out of scope / follow-ups
 

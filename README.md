@@ -12,7 +12,7 @@ season, death by death, kick by kick — and answers that one question.
 [![latest release](https://img.shields.io/github/v/release/triat/Better-mythic-plus-logs?label=release&color=2ea043)](https://github.com/triat/Better-mythic-plus-logs/releases/latest)
 [![in-game addon](https://img.shields.io/badge/in--game%20addon-download-5865F2)](https://github.com/triat/Better-mythic-plus-logs/releases/latest/download/bmpl-addon.zip)
 
-<img src="docs/images/verdict.png" alt="bmpl's verdict for a character: INVITE 78, the six axes with their evidence lines, and the radar" width="860">
+<img src="docs/images/verdict.png" alt="The Summary tab of a candidate profile: MAYBE 63 for a +18, what it would take to reach INVITE, strengths and weaknesses, and the five axes, Consistency marked informational" width="860">
 
 </div>
 
@@ -42,10 +42,11 @@ run per dungeon, not their one lucky +20.
 > verdict rather than inventing one. That is a real answer: this character has not logged enough for
 > anyone to judge them from logs.
 
-Underneath the verdict, every run is there on its own line — what killed them, how much avoidable
-damage they ate, how many interrupts they landed against how many they could have:
+Underneath the verdict, every run is there on its own row — how many times they died, how much avoidable
+damage they ate, how many interrupts they landed against how many they could have — and the run you
+pick opens on a timeline of its deaths, with what killed them and which defensives were ready:
 
-<img src="docs/images/runs.png" alt="Per-run detail: deaths, damage taken versus peers, avoidable damage, interrupts, dispels and consumables for each dungeon" width="860">
+<img src="docs/images/runs.png" alt="The Runs tab: the best run per dungeon with time, deaths, damage taken and avoidable damage versus peers, kicks and parse, and below it the selected run on a timeline with its death, the defensive state at that moment and the key moments" width="860">
 
 Pick the characters you play to follow them on [My characters](https://bmpl.riat.dev/me): from your linked
 Battle.net account on the hosted site, with "This is me" when you run bmpl yourself.

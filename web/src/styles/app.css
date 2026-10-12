@@ -366,6 +366,17 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .faq q::before, .faq q::after { content: ""; }
 .faq .help-p { margin-top: 2px; }
 @media (max-width: 900px) { .help-toc { display: none; } }
+/* Phone widths: the sub-signal cards stack their curve under the text, and a table wider than its card (the role
+   weights) scrolls inside it rather than the page. */
+@media (max-width: 640px) {
+  .sub-card { grid-template-columns: minmax(0, 1fr); }
+  .sub-head { flex-wrap: wrap; }
+  .sub-head .mono { min-width: 0; overflow-wrap: anywhere; }
+  .help-row { flex-direction: column; }
+  .curve { max-width: 100%; overflow-x: auto; }
+  .budget-pills { flex-wrap: wrap; }
+  .budget-pill { min-width: 0; }
+}
 
 
 /* --- hosted: admin feature usage (Usage.tsx; canvas "usage", A table + B cards) --- */

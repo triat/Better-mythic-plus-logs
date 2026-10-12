@@ -57,6 +57,8 @@ type Screen =
 
 // No router: every page (/, /candidate, /compare, /live, /admin, /settings, /privacy, /help, /me) is a full navigation resolved once from the pathname.
 const page = pageOf(location.pathname);
+/** The URL's query as the page loaded: the boot strips it, and StrictMode (dev) runs the boot effect twice. */
+const BOOT_SEARCH = location.search;
 // The Battle.net callback lands on /me?bnet=<code>; read before the boot effect erases the query string.
 const bnetCode = bnetCodeOf(location.search);
 const PAGE_EVENT = {
@@ -275,8 +277,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // the URL naming the profile shown. ?q= only fills the search field (a Raider.IO link carries its own region): a URL
   // never starts a lookup by itself, and never writes a setting. A pre-redesign /?open= link lands on the candidate page.
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const boot = candState(location.search);
+    const params = new URLSearchParams(BOOT_SEARCH);
+    const boot = candState(BOOT_SEARCH);
     const legacyOpen = page === "home" ? params.get("open") : null;
     if (legacyOpen) { location.replace(candidateHref(legacyOpen)); return; }
     const q = params.get("q");

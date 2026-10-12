@@ -34,7 +34,11 @@ export function ComparePage({ tabs, selected, onSelect, loadEntry, onLoadFailed,
   const inFlight = useRef(new Set<string>());
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  // Set on every mount: StrictMode (dev) mounts, cleans up and mounts again, and a ref left false would drop every result.
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
   const open = selected.length >= 2;
   // Counted once per opening of a comparison.
   useEffect(() => { if (open) track("compare_open"); }, [open]);

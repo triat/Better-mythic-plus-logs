@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { LookupPayload } from "../../types.ts";
 import type { ReevalHint } from "../../lib/keyLevel.ts";
 import { CAND_TABS, CAND_TAB_EVENT, candHref, candInitial, profileHeader, runKeyOf, tabAfter } from "../../lib/profile.ts";
 import type { CandState, CandTab } from "../../lib/profile.ts";
+import { analysisFor } from "../../lib/deepdive.ts";
+import { DEFAULT_LAYERS, shownEvent } from "../../lib/timeline.ts";
+import type { EventPick, LayerKey } from "../../lib/timeline.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
 import type { DeepdiveActions } from "../Detail.tsx";
@@ -12,6 +15,7 @@ import { VerdictHero } from "../VerdictHero.tsx";
 import { MeChip } from "../self/MeChip.tsx";
 import type { SelfActions } from "../self/ResultHead.tsx";
 import { ProfileHeader } from "./ProfileHeader.tsx";
+import { RunSheet } from "./RunSheet.tsx";
 import { RunsTab } from "./RunsTab.tsx";
 import type { ProfileFetch } from "./ProfileHeader.tsx";
 import { SynthesisTab } from "./SynthesisTab.tsx";
@@ -42,6 +46,23 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
   }, [urlKey, state]);
   const header = useMemo(() => profileHeader(t, locale, payload), [t, locale, payload]);
   const tabRefs = useRef(new Map<CandTab, HTMLButtonElement>());
+  // The timeline's ticked layers and picked death: per page view, shared by the Runs tab and the run sheet.
+  const [layers, setLayers] = useState<Record<LayerKey, boolean>>(DEFAULT_LAYERS);
+  const [eventPick, setEventPick] = useState<EventPick | null>(null);
+  const toggleLayer = useCallback((k: LayerKey) => setLayers((l) => ({ ...l, [k]: !l[k] })), []);
+  // The sheet opened from "Analyse détaillée" starts on its deep-dive section.
+  const [sheetDd, setSheetDd] = useState(false);
+  const openRef = useRef<HTMLButtonElement>(null);
+  const tabRef = useRef(state.tab);
+  tabRef.current = state.tab;
+  const sheetRun = state.sheet && state.run !== null ? payload.perDungeon.runs.find((r) => runKeyOf(r) === state.run) ?? null : null;
+  const sheetAnalysis = sheetRun ? analysisFor(payload, sheetRun) : null;
+  const closeSheet = () => {
+    setState((s) => ({ ...s, sheet: false }));
+    setSheetDd(false);
+    // Back to "Ouvrir en grand" (the Runs tab), else the current tab (a reload with &sheet=1 on another tab).
+    requestAnimationFrame(() => (openRef.current ?? tabRefs.current.get(tabRef.current))?.focus());
+  };
 
   const pick = (tab: CandTab) => {
     if (tab === state.tab) return;
@@ -81,13 +102,23 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
           <RunsTab
             payload={payload} deepdive={deepdive} run={state.run}
             onRun={(run) => setState((s) => ({ ...s, run }))}
-            onSheet={(run) => setState((s) => ({ ...s, run, sheet: true }))}
+            onSheet={(run, dd) => { setSheetDd(!!dd); setState((s) => ({ ...s, run, sheet: true })); }}
+            layers={layers} onToggle={toggleLayer} pick={eventPick} onPick={setEventPick} openRef={openRef}
           />
         )}
-        {/* Until their own views land (phase 2, tasks 13–14), the other tabs show the vetting view's pieces. */}
+        {/* Until their own views land (phase 2, task 14), the other tabs show the vetting view's pieces. */}
         {state.tab === "dungeons" && <SignalTiles payload={payload} />}
         {state.tab === "method" && <VerdictHero payload={payload} hint={null} onReevaluate={onReevaluate} />}
       </div>
+      {sheetRun && (
+        <RunSheet
+          payload={payload} run={sheetRun} analysis={sheetAnalysis} deepdive={deepdive}
+          layers={layers} onToggle={toggleLayer}
+          event={shownEvent(eventPick, state.run!, sheetRun, sheetAnalysis)} onSelect={(id) => setEventPick({ run: state.run!, id })}
+          onRun={(run) => { setSheetDd(false); setState((s) => ({ ...s, run })); }}
+          onClose={closeSheet} focusDeepdive={sheetDd}
+        />
+      )}
     </div>
   );
 }

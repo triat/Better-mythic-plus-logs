@@ -229,3 +229,11 @@ export function stepEvent(events: readonly string[], current: string | null, key
   if (key === "End") return events[events.length - 1]!;
   return null;
 }
+
+/** A death picked by the reader, tagged with the run it was picked on. */
+export interface EventPick { run: string; id: string }
+
+/** The death shown for the run `runKey`: the reader's pick when it was made on this run, else the run's default. */
+export function shownEvent(pick: EventPick | null, runKey: string, run: MPlusRun, analysis: RunDefensives | null): string | null {
+  return pick !== null && pick.run === runKey ? pick.id : defaultEvent(run, analysis);
+}

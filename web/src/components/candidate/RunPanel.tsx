@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { Ref } from "react";
 import type { LookupPayload, MPlusRun, RunDefensives } from "../../types.ts";
 import { costText } from "../../lib/deepdive.ts";
 import { dungeonAbbr } from "../../lib/runList.ts";
@@ -8,7 +9,8 @@ import type { LayerKey } from "../../lib/timeline.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
 import type { DeepdiveActions } from "../Detail.tsx";
-import { SpellLink, useWowheadRefresh } from "../SpellLink.tsx";
+import { useWowheadRefresh } from "../SpellLink.tsx";
+import { DefensivesUsed, Moments } from "./RunFacts.tsx";
 import { Timeline } from "./Timeline.tsx";
 
 export interface RunPanelProps {
@@ -22,10 +24,14 @@ export interface RunPanelProps {
   onSelect: (id: string) => void;
   /** "Ouvrir en grand": opens the run sheet. */
   onOpen: () => void;
+  /** "Analyse détaillée": opens the run sheet on its deep-dive section (re-analyse, audit, table editing). */
+  onDeepdive: () => void;
+  /** The "Ouvrir en grand" button: the sheet gives the focus back to it when it closes. */
+  openRef: Ref<HTMLButtonElement>;
 }
 
 /** The selected run under the list (mockup F-Runs): header, the layered timeline, key moments, defensives used. */
-export function RunPanel({ payload, run, analysis, deepdive, layers, onToggle, event, onSelect, onOpen }: RunPanelProps) {
+export function RunPanel({ payload, run, analysis, deepdive, layers, onToggle, event, onSelect, onOpen, onDeepdive, openRef }: RunPanelProps) {
   const { t, locale } = useT();
   const d = useMemo(() => runDetail(t, locale, payload, run, analysis), [t, locale, payload, run, analysis]);
   const view = useMemo(
@@ -54,12 +60,15 @@ export function RunPanel({ payload, run, analysis, deepdive, layers, onToggle, e
           </span>
         </div>
         <div className="rp-actions">
-          <button type="button" className="btn btn-primary rp-btn" onClick={onOpen}>
+          <button type="button" ref={openRef} className="btn btn-primary rp-btn" onClick={onOpen}>
             {t("cand.run.open")}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M14 4h6v6M20 4l-8 8M10 20H4v-6" />
             </svg>
           </button>
+          {analysis !== null && (
+            <button type="button" className="link-btn rp-dd-link" onClick={onDeepdive}>{t("cand.run.deepdiveLink")}</button>
+          )}
           <a className="btn rp-btn" href={d.wcl} target="_blank" rel="noopener" onClick={() => track("external_log")}>
             {t("cand.header.wclLink")}
           </a>
@@ -89,35 +98,10 @@ export function RunPanel({ payload, run, analysis, deepdive, layers, onToggle, e
 
       {view !== null && (view.moments.length > 0 || d.defensives.length > 0 || d.also) && (
         <div className="rp-foot">
-          {view.moments.length > 0 && (
-            <div className="rp-moments">
-              <span className="tl-lbl">{t("cand.run.moments")}</span>
-              {view.moments.map((m, i) => m.id !== null
-                ? (
-                  <button
-                    key={m.id} type="button" className={"rp-moment" + (m.bad ? " bad" : "") + (m.id === event ? " on" : "")}
-                    aria-pressed={m.id === event} onClick={() => onSelect(m.id!)}
-                  >
-                    <span className="mono rp-moment-time">{m.time}</span><span>{m.text}</span>
-                  </button>
-                )
-                : (
-                  <div key={`run-${i}`} className="rp-moment rp-moment-run">
-                    <span className="mono rp-moment-time">{m.time}</span><span>{m.text}</span>
-                  </div>
-                ))}
-            </div>
-          )}
+          {view.moments.length > 0 && <Moments moments={view.moments} event={event} onSelect={onSelect} />}
           {(d.defensives.length > 0 || d.also) && (
             <div className="rp-defs">
-              {d.defensives.length > 0 && <span className="tl-lbl">{t("cand.run.defensives")}</span>}
-              {d.defensives.map((x) => (
-                <div key={x.name} className={"rp-def" + (x.pct === 0 ? " none" : "")}>
-                  <span className="rp-def-name"><SpellLink id={x.id} name={x.name} /></span>
-                  {x.pct !== null ? <span className="rp-def-bar"><span style={{ width: `${x.pct}%` }} /></span> : <span />}
-                  <span className="mono rp-def-v">{x.used}</span>
-                </div>
-              ))}
+              {d.defensives.length > 0 && <DefensivesUsed rows={d.defensives} />}
               {d.also && <span className="rp-also">{d.also}</span>}
             </div>
           )}

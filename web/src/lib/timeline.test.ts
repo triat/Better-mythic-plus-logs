@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { DefensiveUse, RunDefensives } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { DEFAULT_LAYERS, defaultEvent, stepEvent, timelineView } from "./timeline.ts";
+import { DEFAULT_LAYERS, defaultEvent, shownEvent, stepEvent, timelineView } from "./timeline.ts";
 import type { LayerKey } from "./timeline.ts";
 import { sig, temple, templeAnalysis } from "./vachaman.fixture.ts";
 
@@ -180,5 +180,14 @@ describe("selection helpers", () => {
     expect(stepEvent(ev, "d1", "Home")).toBe("d0");
     expect(stepEvent(ev, "d1", "Enter")).toBeNull();
     expect(stepEvent([], null, "ArrowRight")).toBeNull();
+  });
+});
+
+describe("shownEvent", () => {
+  test("the reader's pick on this run, else the run's default (the avoidable death, else the first)", () => {
+    expect(shownEvent(null, "TS:1", temple, templeAnalysis)).toBe(defaultEvent(temple, templeAnalysis));
+    expect(shownEvent({ run: "TS:1", id: "d0" }, "TS:1", temple, templeAnalysis)).toBe("d0");
+    expect(shownEvent({ run: "VA:1", id: "d0" }, "TS:1", temple, templeAnalysis)).toBe(defaultEvent(temple, templeAnalysis));
+    expect(shownEvent(null, "TS:1", temple, null)).toBe("d0");
   });
 });

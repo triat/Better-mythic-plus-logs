@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
+import type { Ref } from "react";
 import type { LookupPayload } from "../../types.ts";
 import { analysisFor, tableWarningText } from "../../lib/deepdive.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
 import { pickRun, runListView } from "../../lib/runList.ts";
 import type { RunFilter, RunListRow, RunSort } from "../../lib/runList.ts";
-import { DEFAULT_LAYERS, defaultEvent } from "../../lib/timeline.ts";
-import type { LayerKey } from "../../lib/timeline.ts";
+import { shownEvent } from "../../lib/timeline.ts";
+import type { EventPick, LayerKey } from "../../lib/timeline.ts";
 import type { MessageKey } from "../../i18n/t.ts";
 import { useT } from "../../locale.tsx";
 import type { DeepdiveActions } from "../Detail.tsx";
@@ -18,8 +19,14 @@ export interface RunsTabProps {
   /** The profile's `run` (URL state); null: the list's first row. */
   run: string | null;
   onRun: (key: string) => void;
-  /** "Ouvrir en grand" on the run `key`: opens the run sheet. */
-  onSheet: (key: string) => void;
+  /** "Ouvrir en grand" on the run `key`: opens the run sheet; `deepdive`: on its deep-dive section. */
+  onSheet: (key: string, deepdive?: boolean) => void;
+  /** The timeline's ticked layers and picked death, shared with the run sheet (per page view, not in the URL). */
+  layers: Record<LayerKey, boolean>;
+  onToggle: (key: LayerKey) => void;
+  pick: EventPick | null;
+  onPick: (pick: EventPick) => void;
+  openRef: Ref<HTMLButtonElement>;
 }
 
 const FILTERS: readonly RunFilter[] = ["best", "deaths"];
@@ -28,18 +35,16 @@ const COLS: readonly Col[] = ["dungeon", "key", "time", "deaths", "dtps", "avoid
 const SORT_OF: Partial<Record<Col, RunSort>> = { key: "key", deaths: "deaths", parse: "parse", when: "when" };
 
 /** The Runs tab (mockup F-Runs): the filters and the batch analysis, the run grid, the selected run with its timeline. */
-export function RunsTab({ payload, deepdive, run: runKey, onRun, onSheet }: RunsTabProps) {
+export function RunsTab({ payload, deepdive, run: runKey, onRun, onSheet, layers, onToggle, pick, onPick, openRef }: RunsTabProps) {
   const { t, locale } = useT();
   const [filter, setFilter] = useState<RunFilter>("best");
   const [sort, setSort] = useState<RunSort>("parse");
-  const [layers, setLayers] = useState<Record<LayerKey, boolean>>(DEFAULT_LAYERS);
   const view = useMemo(() => runListView(t, locale, payload, filter, sort), [t, locale, payload, filter, sort]);
   const run = pickRun(payload, view.rows, runKey);
   const analysis = run ? analysisFor(payload, run) : null;
   const selKey = run ? `${run.reportCode}:${run.fightID}` : null;
-  // The selected death belongs to one run: another run opens on its own default.
-  const [sel, setSel] = useState<{ run: string | null; id: string | null } | null>(null);
-  const event = sel !== null && sel.run === selKey ? sel.id : run ? defaultEvent(run, analysis) : null;
+  // The picked death belongs to one run: another run opens on its own default.
+  const event = run && selKey ? shownEvent(pick, selKey, run, analysis) : null;
   const tableWarning = tableWarningText(t, payload.deepdiveSummary.tableWarning);
   const colLabel = (c: Col) => t(`cand.runs.col.${c === "util" ? view.util : c}` as MessageKey);
 
@@ -94,8 +99,8 @@ export function RunsTab({ payload, deepdive, run: runKey, onRun, onSheet }: Runs
       {run && (
         <RunPanel
           key={selKey} payload={payload} run={run} analysis={analysis} deepdive={deepdive}
-          layers={layers} onToggle={(k) => setLayers((l) => ({ ...l, [k]: !l[k] }))}
-          event={event} onSelect={(id) => setSel({ run: selKey, id })} onOpen={() => onSheet(selKey!)}
+          layers={layers} onToggle={onToggle} event={event} onSelect={(id) => onPick({ run: selKey!, id })}
+          onOpen={() => onSheet(selKey!)} onDeepdive={() => onSheet(selKey!, true)} openRef={openRef}
         />
       )}
     </div>

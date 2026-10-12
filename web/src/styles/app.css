@@ -989,6 +989,66 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
   .tl-row > span:empty { display: none; }
   .rp-moment { grid-template-columns: 40px minmax(0, 1fr); }
 }
+.rp-dd-link { height: 32px; padding: 0 4px; font-size: 13px; font-weight: 600; }
+
+/* The run sheet (spec decision 7, mockup F-Run): a modal over the page, panel at the right, run list dimmed at its left. */
+.sheet { position: fixed; inset: 0; z-index: 40; display: flex; justify-content: flex-end; }
+.sheet-scrim { position: absolute; inset: 0; background: var(--scrim); }
+.sheet-list { position: relative; flex: 1 1 0; min-width: 0; overflow-y: auto; background: var(--bg); padding: 24px 16px; display: flex; flex-direction: column; gap: 2px; }
+.sheet-list > * { max-width: 400px; }
+.sheet-list-title { padding: 0 8px; font-size: 15px; font-weight: 600; color: var(--text); }
+.sheet-list-hint { padding: 0 8px 12px; font-size: 12px; color: var(--label); }
+.sheet-run { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 8px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left; cursor: pointer; opacity: .55; }
+.sheet-run:hover, .sheet-run:focus-visible { opacity: .85; }
+.sheet-run.on { opacity: 1; background: var(--card-2); border-color: var(--border-2); cursor: default; }
+.sheet-run-abbr { width: 32px; height: 32px; border-radius: 8px; background: var(--card-2); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); }
+.sheet-run-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sheet-run-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet-run-sub { font-size: 12px; color: var(--label); }
+.sheet-run-key { color: var(--text-soft); }
+.sheet-run-parse { font-size: 12px; font-weight: 600; }
+.sheet-deaths-pass { color: var(--pass); } .sheet-deaths-neutral { color: var(--text-soft); } .sheet-deaths-dim { color: var(--label); }
+.sheet-panel { position: relative; width: min(100vw, max(960px, 72vw)); max-width: 100vw; height: 100%; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; background: var(--card); border-left: 1px solid var(--border-2); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+.sheet-panel.full { border-left: 0; }
+.sheet-head { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+.sheet-head-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sheet-abbr { width: 40px; height: 40px; border-radius: 10px; background: var(--card-3); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.sheet-name { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.sheet-upgrade { font-size: 16px; }
+.sheet-actions { margin-left: auto; display: flex; gap: 8px; }
+.sheet-btn { height: 34px; font-size: 13px; font-weight: 600; }
+.sheet-close { width: 34px; padding: 0; justify-content: center; }
+.sheet-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.sheet-stat { display: inline-flex; align-items: baseline; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); font-size: 12px; color: var(--label); box-sizing: border-box; line-height: 28px; }
+.sheet-stat strong { font-size: 13px; }
+.sheet-stat-pass { color: var(--pass); }
+.sheet-body { padding: 22px 28px 32px; display: flex; flex-direction: column; gap: 20px; min-width: 0; container-type: inline-size; }
+.sheet-summary { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-soft); }
+.sheet-killers-lbl { margin-top: 10px; }
+.sheet-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sheet-chip { display: inline-flex; gap: 6px; align-items: baseline; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); color: var(--text-soft); }
+.sheet-tabs-wrap { display: flex; flex-direction: column; gap: 10px; }
+.sheet-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.sheet-tab { height: 36px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; font-size: 14px; font-weight: 600; color: var(--label); cursor: pointer; }
+.sheet-tab:hover { color: var(--text); }
+.sheet-tab.on { color: var(--text); border-bottom-color: var(--text); }
+.sheet-tabpanel { display: flex; flex-direction: column; gap: 8px; }
+.sheet-rows { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.sheet-rows li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; font-size: 13px; padding: 6px 2px; border-bottom: 1px solid var(--border-soft); }
+.sheet-row-name { min-width: 0; color: var(--text-soft); overflow-wrap: anywhere; }
+.sheet-row-v { color: var(--muted); text-align: right; }
+.sheet-note { margin: 0; font-size: 13px; line-height: 1.5; }
+.sheet-dd { border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 16px; }
+.sheet-dd-toggle { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px; border: 0; border-radius: var(--radius); background: transparent; font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer; }
+.sheet-dd-toggle:hover { background: var(--card-2); }
+.sheet-dd-chev { width: 12px; color: var(--label); }
+@media (max-width: 640px) {
+  .sheet-head { padding: 16px; }
+  .sheet-body { padding: 16px 16px 24px; }
+  .sheet-name { font-size: 18px; }
+  .sheet-rows li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .sheet-row-v { text-align: left; }
+}
 .cand-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .cand-empty h1, .page-head h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
 .cand-empty p { margin: 0; }

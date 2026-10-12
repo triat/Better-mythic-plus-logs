@@ -41,6 +41,8 @@ export interface RunListRow {
 
 export interface RunListView {
   rows: RunListRow[];
+  /** The utility column's header: dispels for a healer, kicks otherwise. */
+  util: "kicks" | "dispels";
   /** "1/8 analysé". */
   analysedLine: string;
   /** Runs that can still be analysed (`unanalyzedRuns`). */
@@ -161,9 +163,16 @@ export function runListView(t: T, locale: Locale, p: LookupPayload, filter: RunF
     : t(analysed === 0 ? "cand.runs.analyseAll" : "cand.runs.analyseOthers", { count: pending, cost: costText(t, pending) });
   return {
     rows,
+    util: (p.evaluation?.role ?? (all[0] ? roleOf(p, all[0]) : "dps")) === "healer" ? "dispels" : "kicks",
     analysedLine: t("cand.runs.analysed", { n: analysed, total: all.length }),
     pending,
     batchLabel,
     missing: missingDungeons(p),
   };
+}
+
+/** The run the panel shows: the one `key` names when the payload holds it, else the list's first row; null for none. */
+export function pickRun(p: LookupPayload, rows: readonly RunListRow[], key: string | null): MPlusRun | null {
+  const byKey = (k: string) => p.perDungeon.runs.find((r) => `${r.reportCode}:${r.fightID}` === k) ?? null;
+  return (key !== null ? byKey(key) : null) ?? (rows[0] ? byKey(rows[0].key) : null);
 }

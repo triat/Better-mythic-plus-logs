@@ -210,3 +210,22 @@ function summaryText(t: T, deaths: Death[]): string | null {
   const params = { count, time: mmss(b.ev.atMs), names: b.majors.join(", "), n: b.majors.length };
   return t(count === 1 ? "cand.timeline.summary.single" : "cand.timeline.summary.one", params);
 }
+
+/** The death a run opens on: its first avoidable one, else its first one; null without deaths (or signals). */
+export function defaultEvent(run: MPlusRun, analysis: RunDefensives | null): string | null {
+  const events = [...(run.signals?.deaths.events ?? [])].sort((x, y) => x.atMs - y.atMs);
+  if (events.length === 0) return null;
+  const bad = analysis ? events.findIndex((ev) => { const a = matchAnalysis(ev, analysis.deaths); return a !== null && BAD.has(a.verdict); }) : -1;
+  return `d${bad >= 0 ? bad : 0}`;
+}
+
+/** The death a key moves to from `current` (← → between neighbours, Home / End to the ends); null: the key is not ours. */
+export function stepEvent(events: readonly string[], current: string | null, key: string): string | null {
+  if (events.length === 0) return null;
+  const i = current === null ? -1 : events.indexOf(current);
+  if (key === "ArrowRight" || key === "ArrowDown") return events[i < 0 ? 0 : Math.min(events.length - 1, i + 1)]!;
+  if (key === "ArrowLeft" || key === "ArrowUp") return events[i < 0 ? 0 : Math.max(0, i - 1)]!;
+  if (key === "Home") return events[0]!;
+  if (key === "End") return events[events.length - 1]!;
+  return null;
+}

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { DefensiveUse, RunDefensives } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { DEFAULT_LAYERS, timelineView } from "./timeline.ts";
+import { DEFAULT_LAYERS, defaultEvent, stepEvent, timelineView } from "./timeline.ts";
 import type { LayerKey } from "./timeline.ts";
 import { sig, temple, templeAnalysis } from "./vachaman.fixture.ts";
 
@@ -159,5 +159,26 @@ describe("timelineView", () => {
   test("an analysis that matches none of the deaths does not make the summary \"analysed\"", () => {
     const other = { ...templeAnalysis, deaths: templeAnalysis.deaths.map((d) => ({ ...d, atMs: d.atMs + 60_000 })) };
     expect(timelineView(tEn, "en", temple, other, false, DEFAULT_LAYERS, null)!.summary).toBe("3 deaths");
+  });
+});
+
+describe("selection helpers", () => {
+  test("a run opens on its first avoidable death, else its first death", () => {
+    expect(defaultEvent(temple, templeAnalysis)).toBe("d1");
+    expect(defaultEvent(temple, null)).toBe("d0");
+    expect(defaultEvent({ ...temple, signals: sig() }, null)).toBeNull();
+    expect(defaultEvent({ ...temple, signals: undefined }, null)).toBeNull();
+  });
+  test("arrow keys walk the deaths and stop at the ends", () => {
+    const ev = ["d0", "d1", "d2"];
+    expect(stepEvent(ev, "d1", "ArrowRight")).toBe("d2");
+    expect(stepEvent(ev, "d2", "ArrowRight")).toBe("d2");
+    expect(stepEvent(ev, "d1", "ArrowLeft")).toBe("d0");
+    expect(stepEvent(ev, "d0", "ArrowLeft")).toBe("d0");
+    expect(stepEvent(ev, null, "ArrowRight")).toBe("d0");
+    expect(stepEvent(ev, "d1", "End")).toBe("d2");
+    expect(stepEvent(ev, "d1", "Home")).toBe("d0");
+    expect(stepEvent(ev, "d1", "Enter")).toBeNull();
+    expect(stepEvent([], null, "ArrowRight")).toBeNull();
   });
 });

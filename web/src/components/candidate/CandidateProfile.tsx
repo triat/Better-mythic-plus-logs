@@ -7,12 +7,12 @@ import type { CandState, CandTab } from "../../lib/profile.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
 import type { DeepdiveActions } from "../Detail.tsx";
-import { DungeonRuns } from "../DungeonRuns.tsx";
 import { SignalTiles } from "../SignalTiles.tsx";
 import { VerdictHero } from "../VerdictHero.tsx";
 import { MeChip } from "../self/MeChip.tsx";
 import type { SelfActions } from "../self/ResultHead.tsx";
 import { ProfileHeader } from "./ProfileHeader.tsx";
+import { RunsTab } from "./RunsTab.tsx";
 import type { ProfileFetch } from "./ProfileHeader.tsx";
 import { SynthesisTab } from "./SynthesisTab.tsx";
 
@@ -77,8 +77,14 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
       </div>
       <div id="cand-panel" role="tabpanel" aria-labelledby={`cand-tab-${state.tab}`} className="cand-panel">
         {state.tab === "synthesis" && <SynthesisTab payload={payload} />}
-        {/* Until their own views land (phase 2, tasks 12–14), the other tabs show the vetting view's pieces. */}
-        {state.tab === "runs" && <DungeonRuns payload={payload} deepdive={deepdive} />}
+        {state.tab === "runs" && (
+          <RunsTab
+            payload={payload} deepdive={deepdive} run={state.run}
+            onRun={(run) => setState((s) => ({ ...s, run }))}
+            onSheet={(run) => setState((s) => ({ ...s, run, sheet: true }))}
+          />
+        )}
+        {/* Until their own views land (phase 2, tasks 13–14), the other tabs show the vetting view's pieces. */}
         {state.tab === "dungeons" && <SignalTiles payload={payload} />}
         {state.tab === "method" && <VerdictHero payload={payload} hint={null} onReevaluate={onReevaluate} />}
       </div>

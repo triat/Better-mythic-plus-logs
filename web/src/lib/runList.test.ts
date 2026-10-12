@@ -3,7 +3,7 @@ import type { LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { rowOf, signalParts } from "./runs.ts";
-import { dungeonAbbr, runListView, signedPct } from "./runList.ts";
+import { dungeonAbbr, pickRun, runListView, signedPct } from "./runList.ts";
 import { NOW, payload, runs, sig, temple } from "./vachaman.fixture.ts";
 
 const tFr = makeT(fr, "fr");
@@ -77,6 +77,8 @@ describe("runListView", () => {
     const p = payload({ evaluation: { role: "healer" } as LookupPayload["evaluation"], perDungeon: { ...payload().perDungeon, runs: [runs[0]!, bare] }, deepdive: [] });
     const v = runListView(tEn, "en", p, "best", "parse", NOW);
     expect(v.rows[0]!.util).toEqual({ label: "dispels", text: "8" });
+    expect(v.util).toBe("dispels");
+    expect(runListView(tEn, "en", payload(), "best", "parse", NOW).util).toBe("kicks");
     expect(v.rows[1]).toMatchObject({
       hasSignals: false, analysed: false, upgrade: { text: "✗ depleted", timed: false }, time: "28:44",
       deaths: { text: "—", tone: "dim" }, dtps: null, avoidable: null, util: null, parse: { text: "unranked", tier: null },
@@ -93,5 +95,13 @@ describe("runListView", () => {
     expect(v.rows[0]!.avoidable).toEqual({ text: "362.0k/min", tone: "neutral" });
     expect(v.pending).toBe(0);
     expect(v.batchLabel).toBeNull();
+  });
+  test("pickRun: the URL's run when the payload holds it, else the first row", () => {
+    const p = payload();
+    const v = runListView(tEn, "en", p, "best", "parse", NOW);
+    expect(pickRun(p, v.rows, `${runs[3]!.reportCode}:${runs[3]!.fightID}`)).toBe(runs[3]!);
+    expect(pickRun(p, v.rows, "nope:9")!.encounterName).toBe(v.rows[0]!.dungeon);
+    expect(pickRun(p, v.rows, null)!.encounterName).toBe(v.rows[0]!.dungeon);
+    expect(pickRun(p, [], null)).toBeNull();
   });
 });

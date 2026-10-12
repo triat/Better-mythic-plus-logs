@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { Evaluation, PillarKey, PillarScore, PillarTrend, SeasonRunView, SeasonView, WorkOnRow } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { CHART, formView } from "./form.ts";
+import { CHART, CHART_WEEKS_NARROW, chartBox, formView } from "./form.ts";
 import type { SynthesisDocs } from "./synthesis.ts";
 
 const tFr = makeT(fr, "fr");
@@ -160,6 +160,35 @@ describe("formView · chart", () => {
     const half = (CHART.right - CHART.left) / 2;
     expect(Math.max(...xs) - 520).toBeLessThanOrEqual(half - 10);
     expect(520 - Math.min(...xs)).toBeLessThanOrEqual(half - 10);
+  });
+});
+
+describe("chartBox · readable on a phone", () => {
+  test("the full-width box is the mockup's; one user unit per px below 1000", () => {
+    expect(chartBox(1000)).toEqual({ ...CHART, narrow: false });
+    expect(chartBox(1400)).toEqual({ ...CHART, narrow: false });
+    expect(chartBox(700)).toEqual({ width: 700, height: 300, left: 50, right: 690, top: 40, bottom: 240, narrow: false });
+    expect(chartBox(560).narrow).toBe(false);
+  });
+  test("under 560 px: a shorter plot, clamped at 280", () => {
+    expect(chartBox(326)).toEqual({ width: 326, height: 240, left: 40, right: 318, top: 24, bottom: 196, narrow: true });
+    expect(chartBox(559).narrow).toBe(true);
+    expect(chartBox(100).width).toBe(280);
+  });
+  test("a phone chart: 3 weeks, short labels, columns inside the box", () => {
+    const c = formView(tFr, "fr", ev(), season(), docs, KEY, 326).chart!;
+    expect(c.box.narrow).toBe(true);
+    expect(c.weeks).toHaveLength(CHART_WEEKS_NARROW);
+    // (318 − 40) / 3 = 92.7 px per column.
+    expect(c.weeks).toEqual([{ label: "−3 sem.", x: 86 }, { label: "−2 sem.", x: 179 }, { label: "−1 sem.", x: 272 }]);
+    expect(c.levels[0]!.y).toBe(24);
+    expect(c.levels.at(-1)!.y).toBe(196);
+    for (const d of c.dots) {
+      expect(d.x).toBeGreaterThanOrEqual(c.box.left);
+      expect(d.x).toBeLessThanOrEqual(c.box.right);
+    }
+    const en = formView(tEn, "en", ev(), season({ runs: [run(10, 15, true)] }), docs, KEY, 326).chart!;
+    expect(en.weeks.map((w) => w.label)).toEqual(["this wk"]);
   });
 });
 

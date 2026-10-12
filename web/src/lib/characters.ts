@@ -91,8 +91,11 @@ export interface CharactersInput {
   history: HistoryItem[];
   hosted: boolean;
   ownClient: OwnClientView | null;
-  /** A sub-signal's title from the docs (`docs.axes[axis].subSignals[id].title`). */
-  titleOf: (source: string) => string;
+  /**
+   * A sub-signal's title from the docs (`sourceTitleOf(docs)`), null while the docs are not loaded: the note then
+   * leaves the title out rather than print the raw source key ("preparation.healthstones").
+   */
+  titleOf: ((source: string) => string) | null;
   now?: number;
 }
 
@@ -117,10 +120,18 @@ function lineOf(t: T, season: SeasonView, now: number): string {
     + (season.checkedAt !== null ? t("chars.line.checked", { age: fmtAge(t, season.checkedAt, now) }) : "");
 }
 
-function noteOf(t: T, locale: Locale, season: SeasonView, titleOf: (source: string) => string): CharCard["note"] {
-  const first = workOnRows(t, locale, null, season, titleOf)[0];
+function noteOf(t: T, locale: Locale, season: SeasonView, titleOf: ((source: string) => string) | null): CharCard["note"] {
+  // A title equal to its source is the resolver's "unknown" fallback: never shown either.
+  const known = (source: string): string => {
+    const title = titleOf?.(source) ?? "";
+    return title === source ? "" : title;
+  };
+  const first = workOnRows(t, locale, null, season, known)[0];
   const w = season.workOn[0];
-  if (first && w) return { text: t("chars.note.workOn", { title: first.title, detail: first.detail, impact: signed(w.impact) }), tone: "worse" };
+  if (first && w) {
+    const vars = { title: first.title, detail: first.detail, impact: signed(w.impact) };
+    return { text: t(first.title ? "chars.note.workOn" : "chars.note.workOnUntitled", vars), tone: "worse" };
+  }
   const window = season.recent ?? season.season;
   return { text: window ? t("chars.note.basis", { count: window.runs }) : t("chars.note.few"), tone: "neutral" };
 }

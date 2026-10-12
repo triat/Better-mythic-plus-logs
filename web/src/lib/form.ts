@@ -31,8 +31,11 @@ export interface FormWeek {
   note: string | null;
 }
 export interface FormPillarRow { key: PillarKey; name: string; score: number | null; band: Band; trend: string | null }
+/** The chart's viewBox and plot area, in px: `chartBox(width)` matches the rendered width so text stays readable. */
+export interface ChartBox { width: number; height: number; left: number; right: number; top: number; bottom: number; narrow: boolean }
 export interface FormChart {
-  /** Week columns, oldest left, in the CHART viewBox. */
+  box: ChartBox;
+  /** Week columns, oldest left, in the box. */
   weeks: { label: string; x: number }[];
   dots: { x: number; y: number; timed: boolean | null; title: string }[];
   target: { y: number; label: string } | null;
@@ -60,10 +63,24 @@ export interface FormView {
   chef: ChefCard;
 }
 
-/** The key chart's viewBox and plot area (the mockup's: grid from y 40 to 240, labels left of x 50). */
+/** The key chart's viewBox and plot area at full width (the mockup's: grid from y 40 to 240, labels left of x 50). */
 export const CHART = { width: 1000, height: 300, left: 50, right: 990, top: 40, bottom: 240 } as const;
-/** Weeks with runs the chart shows. */
+/** Weeks with runs the chart shows; fewer on a phone so the week labels fit their column. */
 export const CHART_WEEKS = 4;
+export const CHART_WEEKS_NARROW = 3;
+/** Under this width (px) the chart is a phone's: a shorter plot, short week labels, 3 weeks. */
+export const CHART_NARROW = 560;
+const CHART_MIN = 280;
+
+/**
+ * The viewBox for a chart drawn `width` px wide (clamped to 280–1000): one user unit is one CSS pixel up to 1000 px, so
+ * the 12–13 px labels stay 12–13 px on a phone instead of shrinking with a fixed 1000-wide viewBox (≈ 7 px at 390).
+ */
+export function chartBox(width: number): ChartBox {
+  const w = Math.round(Math.min(CHART.width, Math.max(CHART_MIN, width)));
+  if (w >= CHART_NARROW) return { ...CHART, width: w, right: w - (CHART.width - CHART.right), narrow: false };
+  return { width: w, height: 240, left: 40, right: w - 8, top: 24, bottom: 196, narrow: true };
+}
 /** Horizontal gap between runs at the same level in a week (the mockup's 20), narrowed to stay in the column. */
 const DOT_SPREAD = 20;
 const DOT_MARGIN = 10;
@@ -76,9 +93,10 @@ const PATH_ITEMS = 2;
 
 export const resultOf = (r: Pick<SeasonRunView, "timed">): RunResult => (r.timed === true ? "timed" : r.timed === false ? "depleted" : "none");
 
-const weekLabel = (t: T, current: number, week: number): string => {
+const weekLabel = (t: T, current: number, week: number, short = false): string => {
   const ago = current - week;
-  return ago <= 0 ? t("owner.form.chart.thisWeek") : ago === 1 ? t("owner.form.chart.lastWeek") : t("owner.form.chart.weeksAgo", { n: ago });
+  const k = short ? "Short" : "";
+  return ago <= 0 ? t(`owner.form.chart.thisWeek${k}`) : ago === 1 ? t(`owner.form.chart.lastWeek${k}`) : t(`owner.form.chart.weeksAgo${k}`, { n: ago });
 };
 
 function weekView(t: T, season: SeasonView): FormWeek | null {
@@ -135,24 +153,26 @@ function pillarsView(t: T, season: SeasonView | null): FormView["pillars"] {
 }
 
 /**
- * The last 4 game weeks that have runs, evenly spaced; one dot per run at its key level (y between the lowest and the
+ * The last 4 game weeks that have runs (3 in a narrow box), evenly spaced in `chartBox(width)`; one dot per run at its key level (y between the lowest and the
  * highest level seen, the target included, ±1 when they are all equal); runs of one week at the same level spread
  * sideways in play order (0, −20, +20, −40 …, narrowed to stay inside the column).
  */
-function chartView(t: T, season: SeasonView): FormChart | null {
+function chartView(t: T, season: SeasonView, width: number): FormChart | null {
   if (season.runs.length === 0) return null;
-  const weeks = [...new Set(season.runs.map((r) => r.week))].sort((a, b) => b - a).slice(0, CHART_WEEKS).reverse();
+  const box = chartBox(width);
+  const count = box.narrow ? CHART_WEEKS_NARROW : CHART_WEEKS;
+  const weeks = [...new Set(season.runs.map((r) => r.week))].sort((a, b) => b - a).slice(0, count).reverse();
   const shown = season.runs.filter((r) => weeks.includes(r.week));
   const target = season.targetLevel > 0 ? season.targetLevel : null;
   const levels = [...shown.map((r) => r.keyLevel), ...(target !== null ? [target] : [])];
   let lo = Math.min(...levels);
   let hi = Math.max(...levels);
   if (lo === hi) { lo -= 1; hi += 1; }
-  const y = (l: number) => Math.round(CHART.bottom - ((l - lo) / (hi - lo)) * (CHART.bottom - CHART.top));
-  const col = (CHART.right - CHART.left) / weeks.length;
+  const y = (l: number) => Math.round(box.bottom - ((l - lo) / (hi - lo)) * (box.bottom - box.top));
+  const col = (box.right - box.left) / weeks.length;
   const dots: FormChart["dots"] = [];
   const columns = weeks.map((w, i) => {
-    const x = Math.round(CHART.left + (i + 0.5) * col);
+    const x = Math.round(box.left + (i + 0.5) * col);
     const runs = shown.filter((r) => r.week === w).reverse(); // oldest first
     const perLevel = new Map<number, number>();
     for (const r of runs) perLevel.set(r.keyLevel, (perLevel.get(r.keyLevel) ?? 0) + 1);
@@ -170,12 +190,13 @@ function chartView(t: T, season: SeasonView): FormChart | null {
         title: t("owner.form.chart.dot", { level: r.keyLevel, dungeon: r.encounterName, result: t(`owner.form.week.result.${resultOf(r)}`) }),
       });
     }
-    return { label: weekLabel(t, season.currentWeek, w), x };
+    return { label: weekLabel(t, season.currentWeek, w, box.narrow), x };
   });
   const step = Math.max(1, Math.ceil((hi - lo) / MAX_LEVEL_LABELS));
   const ticks: FormChart["levels"] = [];
   for (let l = lo; l <= hi; l += step) ticks.unshift({ y: y(l), label: t("owner.form.chart.level", { level: l }) });
   return {
+    box,
     weeks: columns,
     dots,
     target: target === null ? null : { y: y(target), label: t("owner.form.chart.target", { level: target }) },
@@ -220,11 +241,13 @@ function chefView(t: T, locale: Locale, ev: Evaluation, docs: SynthesisDocs, key
 
 /** Ma forme for the owner page `key` (its history key: the chef card links to `as=vetting` on it). Without a season
  * (none stored yet): no week, no chart, unscored pillars, the checklist from the lookup's verdict. */
-export function formView(t: T, locale: Locale, ev: Evaluation, season: SeasonView | null, docs: SynthesisDocs, key: string): FormView {
+export function formView(
+  t: T, locale: Locale, ev: Evaluation, season: SeasonView | null, docs: SynthesisDocs, key: string, chartWidth: number = CHART.width,
+): FormView {
   return {
     week: season ? weekView(t, season) : null,
     pillars: pillarsView(t, season),
-    chart: season ? chartView(t, season) : null,
+    chart: season ? chartView(t, season, chartWidth) : null,
     checklist: checklistView(t, locale, ev, season, docs),
     checklistNote: t(season?.recent ? "owner.form.check.recent" : "owner.form.check.lookup"),
     chef: chefView(t, locale, ev, docs, key),

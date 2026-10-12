@@ -83,6 +83,17 @@ describe("characterCards", () => {
     expect(characterCards(tEn, "en", input()).withSeason[1]!.line).toBe("33 runs · 25 not analysed · checked 7h ago");
   });
 
+  test("note: never the raw source key while the docs are not loaded (or the source is unknown)", () => {
+    const main = (titleOf: CharactersInput["titleOf"]) => characterCards(tEn, "en", input({ titleOf })).withSeason[0]!.note;
+    for (const n of [main(null), main((s) => s)]) {
+      expect(n.tone).toBe("worse");
+      expect(n.text).not.toContain("preparation.healthstones");
+      expect(n.text).toBe("Work on: 0.0 healthstones/run (−4 pts)");
+    }
+    expect(main(titleOf).text).toStartWith("Work on: Healthstones (");
+    expect(characterCards(tFr, "fr", input({ titleOf: null })).withSeason[0]!.note.text).toStartWith("À travailler : 0,0 ");
+  });
+
   test("open: the history entry at 0 pts, else the lookup link; Raider.IO", () => {
     const v = characterCards(tEn, "en", input());
     expect(v.withSeason[0]!.open).toEqual({ href: "/candidate?open=h1", label: "Open", hint: "from history · 0 pts" });

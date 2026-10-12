@@ -1127,6 +1127,9 @@ export const en = {
         thisWeek: "this week",
         lastWeek: "last week",
         weeksAgo: "{n} wk ago",
+        thisWeekShort: "this wk",
+        lastWeekShort: "−1 wk",
+        weeksAgoShort: "−{n} wk",
         dot: "+{level} {dungeon} · {result}",
         aria: "Key level of each run over the last {count, plural, one {week} other {# weeks}} with runs",
         empty: "No run to chart yet.",
@@ -1209,6 +1212,7 @@ export const en = {
     },
     note: {
       workOn: "Work on: {title} ({detail}, {impact} pts)",
+      workOnUntitled: "Work on: {detail} ({impact} pts)",
       basis: "Pillars computed on {count, plural, one {# analysed run} other {# analysed runs}}",
       few: "The pillars need 3 analysed runs: sync the season",
     },

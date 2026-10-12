@@ -1121,6 +1121,9 @@ export const fr: Mirror<typeof en> = {
         thisWeek: "cette semaine",
         lastWeek: "la semaine dernière",
         weeksAgo: "il y a {n} sem.",
+        thisWeekShort: "cette sem.",
+        lastWeekShort: "−1 sem.",
+        weeksAgoShort: "−{n} sem.",
         dot: "+{level} {dungeon} · {result}",
         aria: "Niveau de clé de chaque run sur {count, plural, one {la dernière semaine} other {les # dernières semaines}} avec des runs",
         empty: "Pas encore de run à tracer.",
@@ -1203,6 +1206,7 @@ export const fr: Mirror<typeof en> = {
     },
     note: {
       workOn: "À travailler : {title} ({detail}, {impact} pts)",
+      workOnUntitled: "À travailler : {detail} ({impact} pts)",
       basis: "Piliers calculés sur {count, plural, one {# run analysé} other {# runs analysés}}",
       few: "Les piliers demandent 3 runs analysés : synchronise la saison",
     },

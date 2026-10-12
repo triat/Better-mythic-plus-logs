@@ -148,7 +148,10 @@ describe("ownerRunsView", () => {
     expect(all.footer).toBe("8 runs shown · 8 loaded of 8");
     const fil = ownerRunsView(tFr, "fr", season(), { ...ALL_RUNS, result: "timed" }, null, 1, NOW);
     expect(fil.footer).toBe("2 runs affichés · 2 chargés sur 8");
-    expect(fil.more!.label).toBe("Charger les semaines précédentes · 6 runs");
+    // Only the earlier weeks' runs the filters show (4 timed of their 6).
+    expect(fil.more).toEqual({ label: "Charger les semaines précédentes · 4 runs", weeks: 3 });
+    // Nothing the filters show in the earlier weeks: no button.
+    expect(ownerRunsView(tEn, "en", season(), { ...ALL_RUNS, dungeon: 1 }, null, 1, NOW).more).toBeNull();
     // The period filter drops the weeks outside it from the list, not only their rows.
     const p = ownerRunsView(tEn, "en", season(), { ...ALL_RUNS, weeks: 3 }, null, 3, NOW);
     expect(p.weeks.map((w) => w.week)).toEqual([10, 9]);

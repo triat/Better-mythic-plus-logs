@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Evaluation, SeasonView } from "../../types.ts";
-import { formView } from "../../lib/form.ts";
+import { CHART, formView } from "../../lib/form.ts";
 import type { ChefCard, FormView, RunResult } from "../../lib/form.ts";
 import { synthesisDocs } from "../../lib/synthesis.ts";
 import { useDocs } from "../../docs.tsx";
@@ -20,9 +20,21 @@ export function FormTab({ evaluation, season, historyKey, onVetting }: {
 }) {
   const { t, locale } = useT();
   const { docs } = useDocs();
+  // The chart's drawn width (px): its viewBox follows it so the labels keep their size on a phone (`chartBox`).
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState<number>(CHART.width);
+  useLayoutEffect(() => {
+    const el = chartRef.current;
+    if (!el) return;
+    const measure = () => { const w = Math.round(el.clientWidth); if (w > 0) setChartWidth(w); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [docs]);
   const v = useMemo(
-    () => (docs ? formView(t, locale, evaluation, season, synthesisDocs(docs), historyKey) : null),
-    [t, locale, evaluation, season, docs, historyKey],
+    () => (docs ? formView(t, locale, evaluation, season, synthesisDocs(docs), historyKey, chartWidth) : null),
+    [t, locale, evaluation, season, docs, historyKey, chartWidth],
   );
   if (!v) return <p className="muted">{t("self.loading")}</p>;
   return (
@@ -43,7 +55,9 @@ export function FormTab({ evaluation, season, historyKey, onVetting }: {
             )}
           </span>
         </div>
-        {v.chart ? <KeyChart chart={v.chart} /> : <p className="muted form-none">{t("owner.form.chart.empty")}</p>}
+        <div ref={chartRef}>
+          {v.chart ? <KeyChart chart={v.chart} /> : <p className="muted form-none">{t("owner.form.chart.empty")}</p>}
+        </div>
       </section>
       <section className="card form-card">
         <div className="form-card-head">
@@ -51,9 +65,10 @@ export function FormTab({ evaluation, season, historyKey, onVetting }: {
           <span className="synth-note">{v.checklistNote}</span>
         </div>
         {v.checklist.length === 0 && <p className="muted form-none">{t("owner.form.check.none")}</p>}
-        {v.checklist.map((c) => (
+        {v.checklist.map((c, i) => (
           <div key={c.title} className="form-check">
-            <span className="form-check-box" aria-hidden="true" />
+            {/* A rank, not a checkbox: nothing here is ticked off (the mockup's square read as an action). */}
+            <span className="form-check-n mono" aria-hidden="true">{i + 1}</span>
             <div className="form-check-main">
               <div className="form-check-title"><strong>{c.title}</strong><span>{c.goal}</span></div>
               <div className="form-check-values mono">

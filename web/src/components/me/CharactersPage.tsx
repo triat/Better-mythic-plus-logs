@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../api.ts";
 import type { BnetState } from "../../api.ts";
-import type { AxisKey, HistoryItem, Region } from "../../types.ts";
+import type { HistoryItem, Region } from "../../types.ts";
 import { bnetNotice, pickFailureNotice, picksBody, picksFromList, removedNotice, type BnetCode, type BnetNotice } from "../../lib/bnet.ts";
 import { characterCards, charKey, filterCards, seasonsLoaded, type CharAction, type CharsFilter } from "../../lib/characters.ts";
 import { regionChipLabel, regionMenu } from "../../lib/header.ts";
 import { addCharacter, makeMain, moveUp, parseEntry, removeAt } from "../../lib/me.ts";
 import { MAX_ME } from "../../lib/self.ts";
 import { parseServerSettings } from "../../lib/settings.ts";
+import { sourceTitleOf } from "../../lib/synthesis.ts";
 import { useDocs } from "../../docs.tsx";
 import { useT } from "../../locale.tsx";
 import type { SeasonState } from "../../useSeason.ts";
@@ -106,10 +107,7 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
     self.setCharacters(a === "main" ? makeMain(list, index) : moveUp(list, index));
   };
   const remove = (index: number) => () => { self.setCharacters(removeAt(list, index)); setRemoving(null); };
-  const titleOf = (source: string): string => {
-    const [axis, id] = source.split(".") as [AxisKey, string];
-    return docs?.docs.axes[axis]?.subSignals[id]?.title ?? source;
-  };
+  const titleOf = docs ? sourceTitleOf(docs) : null;
 
   const codeNote = self.hosted && bnetCode ? bnetNotice(t, bnetCode) : null;
   const removed = bnet ? removedNotice(t, bnet.removed) : null;

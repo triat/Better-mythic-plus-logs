@@ -346,7 +346,8 @@ export function ownerRunsView(
 
   const loadedRuns = loaded.reduce((n, w) => n + byWeek.get(w)!.length, 0);
   const rest = eligible.slice(loaded.length);
-  const restRuns = rest.reduce((n, w) => n + byWeek.get(w)!.length, 0);
+  // The button counts what loading would add to the list: the earlier weeks' runs the filters show, not all of them.
+  const restRuns = rest.reduce((n, w) => n + byWeek.get(w)!.filter((v) => shownKeys.has(keyOf(v))).length, 0);
   const shownInList = weeks.reduce((n, w) => n + w.count, 0);
 
   const others = [...new Set(season.runs.filter((v) => main !== null && v.spec !== main).map((v) => specWords(v.spec)))];
@@ -366,7 +367,7 @@ export function ownerRunsView(
     tiles,
     weeks,
     util: firstWithSignals && roleOfRun(firstWithSignals) === "healer" ? "dispels" : "kicks",
-    more: rest.length > 0 ? { label: t("owner.runs.more", { count: restRuns }), weeks: Math.min(WEEKS_PAGE, rest.length) } : null,
+    more: restRuns > 0 ? { label: t("owner.runs.more", { count: restRuns }), weeks: Math.min(WEEKS_PAGE, rest.length) } : null,
     footer: t("owner.runs.footer", { shown: shownInList, loaded: loadedRuns, total: season.runs.length }),
     expanded: ov ? expandedRun(t, locale, ov, now) : null,
   };

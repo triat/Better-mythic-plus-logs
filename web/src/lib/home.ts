@@ -3,7 +3,7 @@
 // Pure: no React, no fetch.
 import { className } from "@shared/wow/classes.ts";
 import type { T } from "../i18n/t.ts";
-import type { HistoryItem, PillarKey, SeasonView } from "../types.ts";
+import type { HistoryItem, PillarKey, SeasonRunView, SeasonView } from "../types.ts";
 import { evidenceText } from "./axes.ts";
 import type { Locale } from "./locale.ts";
 import { PILLAR_ORDER, workOnRows } from "./self.ts";
@@ -32,7 +32,7 @@ export const DUNGEON_COST_BELOW = 45;
 export const POINTS_MAX = 3;
 export const PROGRESS_WEEKS = 4;
 
-const bestTimedOf = (runs: SeasonView["runs"]): number | null =>
+export const bestTimedOf = (runs: SeasonView["runs"]): number | null =>
   runs.reduce<number | null>((best, r) => (r.timed === true && (best === null || r.keyLevel > best) ? r.keyLevel : best), null);
 
 /**
@@ -47,14 +47,24 @@ const bestTimedOf = (runs: SeasonView["runs"]): number | null =>
  *   dungeon's detail names that pillar.
  * - `bestPerWeek`: weeks `currentWeek − 3 … currentWeek`, the highest timed key of each, null without one.
  */
-export function homeSelf(t: T, locale: Locale, season: SeasonView, titleOf: (source: string) => string): HomeSelf {
+/** The game week the home page and Ma forme show: the current one if it has runs, else the previous one (`current`
+ * false), with that week's runs newest first; null when the season has no run. */
+export function playWeek(season: SeasonView): { week: number; current: boolean; runs: SeasonRunView[] } | null {
+  if (season.runs.length === 0) return null;
   const runsOf = (w: number) => season.runs.filter((r) => r.week === w);
+  const current = runsOf(season.currentWeek);
+  return current.length > 0
+    ? { week: season.currentWeek, current: true, runs: current }
+    : { week: season.currentWeek - 1, current: false, runs: runsOf(season.currentWeek - 1) };
+}
+
+export function homeSelf(t: T, locale: Locale, season: SeasonView, titleOf: (source: string) => string): HomeSelf {
   let week: WeekView | null = null;
-  if (season.runs.length > 0) {
-    const current = runsOf(season.currentWeek);
-    const runs = current.length > 0 ? current : runsOf(season.currentWeek - 1);
+  const played = playWeek(season);
+  if (played) {
+    const { runs } = played;
     week = {
-      label: current.length > 0 ? t("home.self.thisWeek") : t("home.self.lastWeek"),
+      label: played.current ? t("home.self.thisWeek") : t("home.self.lastWeek"),
       runs: runs.length,
       bestTimed: bestTimedOf(runs),
       timed: runs.filter((r) => r.timed === true).length,

@@ -89,14 +89,17 @@ export interface WorkOnView {
 const pillarOfSource = (ev: Evaluation, source: string): PillarKey | null =>
   ev.pillars?.find((p) => p.evidence.some((e) => e.source === source))?.key ?? null;
 
-/** `ev` is null on the personal page, which has no lookup payload: only the season's window counts there. */
-export function workOnRows(t: T, locale: Locale, ev: Evaluation | null, season: SeasonView | null, titleOf: (source: string) => string): WorkOnView[] {
-  const rows: WorkOnRow[] = season?.recent
+/** The points to work on: the season window's when it has one, else the lookup's first three costs (no past then).
+ * `ev` is null on the personal page, which has no lookup payload: only the season's window counts there. */
+export const workOnSource = (ev: Evaluation | null, season: SeasonView | null): WorkOnRow[] =>
+  season?.recent
     ? season.workOn
     : !ev ? [] : (ev.drivers ?? []).filter((d) => d.impact < 0).slice(0, 3).map((d) => ({
         source: d.source, pillar: pillarOfSource(ev, d.source), impact: d.impact, value: d.value, reference: d.reference, label: d.label, past: null,
       }));
-  return rows.map((w, i) => ({
+
+export function workOnRows(t: T, locale: Locale, ev: Evaluation | null, season: SeasonView | null, titleOf: (source: string) => string): WorkOnView[] {
+  return workOnSource(ev, season).map((w, i) => ({
     n: i + 1,
     title: titleOf(w.source),
     pillar: w.pillar ? t(`self.pillars.${w.pillar}`) : "",

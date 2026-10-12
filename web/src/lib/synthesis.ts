@@ -2,7 +2,7 @@
 // decision 6, mockup docs/design/redesign/F-Synthese.dc.html): the verdict block, "what would flip it", strengths and
 // weaknesses, the informational axes and the axes table. An axis whose role weight is 0 is informational: never a
 // strength, a weakness or a step towards the next verdict.
-import type { AxisKey, AxisScore, DocsResponse, Evaluation, Evidence, Role } from "../types.ts";
+import type { AxisKey, AxisScore, DocsResponse, Driver, Evaluation, Evidence, Role } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { evidenceText } from "./axes.ts";
@@ -129,7 +129,7 @@ export function synthesisView(t: T, locale: Locale, ev: Evaluation, docs: Synthe
 
   return {
     verdict,
-    flip: insufficient ? null : flipView(t, locale, ev, docs, counted),
+    flip: insufficient ? null : flipView(t, locale, ev, docs),
     pros,
     cons,
     informational: AXIS_ORDER.filter((k) => !counted(k) && byKey.get(k)?.score != null && byKey.get(k)!.evidence.length > 0)
@@ -150,20 +150,27 @@ export function synthesisView(t: T, locale: Locale, ev: Evaluation, docs: Synthe
   };
 }
 
+/** The drivers on the shortest path to the next verdict, in its order, without weight-0 or unknown axes. */
+export function flipDrivers(ev: Evaluation, docs: Pick<SynthesisDocs, "axisWeights">): Driver[] {
+  const counted = (k: string): boolean => (AXIS_ORDER as readonly string[]).includes(k) && (docs.axisWeights[ev.role]?.[k as AxisKey] ?? 0) > 0;
+  return (ev.nextVerdict?.sources ?? []).flatMap((source) => {
+    const d = (ev.drivers ?? []).find((x) => x.source === source);
+    return d && counted(axisOf(source)) ? [d] : [];
+  });
+}
+
 /** "To reach INVITE: +11 pts" and one row per source of the shortest path; null for INVITE (no next verdict). */
-function flipView(t: T, locale: Locale, ev: Evaluation, docs: SynthesisDocs, counted: (axis: string) => boolean): FlipView | null {
+function flipView(t: T, locale: Locale, ev: Evaluation, docs: SynthesisDocs): FlipView | null {
   const nv = ev.nextVerdict;
   if (!nv || ev.global === null) return null;
-  const rows = nv.sources.flatMap((source): FlipRow[] => {
-    const d = (ev.drivers ?? []).find((x) => x.source === source);
-    const axis = axisOf(source);
-    if (!d || !counted(axis)) return [];
+  const rows = flipDrivers(ev, docs).map((d): FlipRow => {
+    const axis = axisOf(d.source) as AxisKey;
     const { value, reference } = driverValues(t, locale, d);
-    return [{
-      name: docs.titleOf(source),
-      gain: t("cand.synth.flip.gain", { axis: axisTitle(t, axis as AxisKey), pts: String(Math.abs(Math.round(d.impact))) }),
+    return {
+      name: docs.titleOf(d.source),
+      gain: t("cand.synth.flip.gain", { axis: axisTitle(t, axis), pts: String(Math.abs(Math.round(d.impact))) }),
       gap: t("cand.synth.flip.gap", { value, reference }),
-    }];
+    };
   });
   if (rows.length === 0) return null;
   return {

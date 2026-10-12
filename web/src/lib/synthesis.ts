@@ -108,9 +108,9 @@ export function synthesisView(t: T, locale: Locale, ev: Evaluation, docs: Synthe
     : pros.length ? t("cand.synth.summary.pros", { pros: list(pros) })
     : cons.length ? t("cand.synth.summary.cons", { cons: list(cons) })
     : t("cand.synth.summary.none");
-  const scored = t("cand.synth.confidence.scored", { count: ev.runsUsed, indexed: runsIndexed });
+  const low = !insufficient && ev.runsUsed < docs.confidence.high;
   const confidence = runsIndexed === 0 ? null
-    : !insufficient && ev.runsUsed < docs.confidence.high ? `${scored}${t("cand.synth.confidence.low")}` : scored;
+    : t(low ? "cand.synth.confidence.scoredLow" : "cand.synth.confidence.scored", { count: ev.runsUsed, indexed: runsIndexed });
   const level = String(ev.targetLevel);
   const verdict: VerdictBlock = {
     cls: v.cls,

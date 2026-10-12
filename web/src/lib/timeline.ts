@@ -37,7 +37,12 @@ const TICK_MS = 5 * 60_000;
 const round2 = (x: number): number => Math.round(x * 100) / 100;
 const clampPct = (x: number): number => round2(Math.min(100, Math.max(0, x)));
 
-/** A death of the signals with its analysis counterpart (same fight-relative ms), when the run is analysed. */
+/**
+ * A death of the signals with its analysis counterpart (same fight-relative ms), when the run is analysed. `bad`: the
+ * analysis' verdict is "defensive available" or "immunity available" (an avoidable death); `majors` the defensives
+ * that make it so — empty for any other verdict, so the dispo lane, its count and the moments say what the verdict says
+ * (a "covered" death had a defensive up: it is not "available", whatever else was off cooldown).
+ */
 interface Death { id: string; ev: DeathEvent; a: DeathAnalysis | null; bad: boolean; majors: string[] }
 
 const BAD: ReadonlySet<DeathAnalysis["verdict"]> = new Set(["immunity available", "defensive available"]);
@@ -71,7 +76,7 @@ export function timelineView(
     const a = analysis ? matchAnalysis(ev, analysis.deaths) : null;
     const bad = a !== null && BAD.has(a.verdict);
     // A name missing from the defensives list (table edited since) still counts when the verdict says it was available.
-    const majors = a ? a.available.filter(isMajor) : [];
+    const majors = bad ? a!.available.filter(isMajor) : [];
     return { id: `d${i}`, ev, a, bad, majors: bad && majors.length === 0 ? a!.available : majors };
   });
   const causeOf = (d: Death): string => d.ev.cause ?? d.a?.killingBlow ?? t("cand.timeline.unknownCause");
@@ -103,7 +108,7 @@ export function timelineView(
   };
   const counts: Record<LayerKey, string> = {
     deaths: String(deaths.length),
-    dispo: analysis ? `${analysed.filter((d) => d.majors.length > 0).length}/${analysed.length}` : "—",
+    dispo: analysis ? `${analysed.filter((d) => d.bad).length}/${analysed.length}` : "—",
     cd: analysis ? String(cdBars.length) : "—",
     casts: castsOk ? String(casts.length) : "—",
     control: "—",
@@ -129,8 +134,10 @@ export function timelineView(
   }
   if (isOn("dispo")) {
     lane("dispo", analysed.map((d) => ({
-      id: d.id, leftPct: pct(d.ev.atMs), kind: d.majors.length > 0 ? "dispo" : "none",
-      title: d.majors.length > 0 ? t("cand.timeline.available", { names: d.majors.join(", ") }) : t("cand.timeline.noneAvailable"),
+      id: d.id, leftPct: pct(d.ev.atMs), kind: d.bad ? "dispo" : "none",
+      title: d.bad ? t("cand.timeline.available", { names: d.majors.join(", "), count: d.majors.length })
+        : d.a!.verdict === "covered" ? t("cand.timeline.covered", { names: d.a!.active.join(", ") })
+        : t("cand.timeline.noneAvailable"),
     })));
   }
   if (isOn("cd")) lane("cd", [], cdBars);
@@ -147,7 +154,7 @@ export function timelineView(
     time: mmss(sel.ev.atMs),
     title: titleOf(sel),
     hits: hitsText(t, sel),
-    state: sel.a ? stateText(t, sel.a, isMajor) : t("cand.timeline.state.analyse"),
+    state: sel.a ? stateText(t, sel.a, sel.majors) : t("cand.timeline.state.analyse"),
     bad: sel.bad,
   };
 
@@ -158,15 +165,16 @@ export function timelineView(
       ? titleOf(d)
       : t("cand.timeline.moment.line", {
           title: titleOf(d),
-          detail: d.majors.length > 0
+          detail: d.bad
             ? t("cand.timeline.moment.wasAvailable", { names: d.majors.join(", "), count: d.majors.length })
+            : d.a.verdict === "covered" ? t("cand.timeline.moment.covered", { names: d.a.active.join(", ") })
             : t("cand.timeline.moment.noneAvailable"),
         }),
     bad: d.bad,
   }));
   if (s.consumables?.potions === 0) moments.push({ id: null, time: t("cand.timeline.moment.run"), text: t("cand.timeline.moment.noPotion"), bad: false });
 
-  return { durationMs: dur, ticks, chips, lanes, events: deaths.map((d) => d.id), callout, moments, summary: summaryText(t, deaths, analysis !== null) };
+  return { durationMs: dur, ticks, chips, lanes, events: deaths.map((d) => d.id), callout, moments, summary: summaryText(t, deaths) };
 }
 
 function hitsText(t: T, d: Death): string {
@@ -178,22 +186,23 @@ function hitsText(t: T, d: Death): string {
   return d.ev.cause ?? "";
 }
 
-function stateText(t: T, a: DeathAnalysis, isMajor: (name: string) => boolean): string {
-  const majors = a.available.filter(isMajor);
-  const minors = a.available.filter((n) => !isMajor(n));
+/** `unused`: the defensives that make the death avoidable (empty unless the verdict says so); the rest of `available` is listed plainly. */
+function stateText(t: T, a: DeathAnalysis, unused: string[]): string {
+  const minors = a.available.filter((n) => !unused.includes(n));
   const parts = [
-    ...(a.active.length > 0 ? [t("cand.timeline.state.active", { names: a.active.join(", ") })] : []),
-    ...(majors.length > 0 ? [t("cand.timeline.state.unused", { names: majors.join(", ") })] : []),
+    ...(a.active.length > 0 ? [t("cand.timeline.state.active", { names: a.active.join(", "), count: a.active.length })] : []),
+    ...(unused.length > 0 ? [t("cand.timeline.state.unused", { names: unused.join(", "), count: unused.length })] : []),
     ...a.onCooldown.map((c) => t("cand.timeline.state.onCd", { name: c.name, s: String(c.readyInS) })),
     ...(minors.length > 0 ? [t("cand.timeline.state.minor", { names: minors.join(", ") })] : []),
   ];
   return parts.length > 0 ? parts.join(" · ") : t("cand.timeline.state.nothing");
 }
 
-function summaryText(t: T, deaths: Death[], analysed: boolean): string | null {
+function summaryText(t: T, deaths: Death[]): string | null {
   const count = deaths.length;
   if (count === 0) return null;
-  if (!analysed) return t("runs.deaths", { count });
+  // "Analysed" = the analysis judged at least one of these deaths, not merely that an analysis exists.
+  if (!deaths.some((d) => d.a !== null)) return t("runs.deaths", { count });
   const bad = deaths.filter((d) => d.bad);
   if (bad.length === 0) return t("cand.timeline.summary.none", { count });
   if (bad.length > 1) return t("cand.timeline.summary.many", { count, bad: bad.length });

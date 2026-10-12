@@ -106,10 +106,10 @@ describe("profileHeader", () => {
     expect(classInitials(1)).toBe("DK");
     expect(classInitials(3)).toBe("Hu");
     expect(classToken(99)).toBeNull();
-    const h = profileHeader(tEn, "en", payload({ character: { id: 2, name: "Vachâman", classID: 1, spec: null, realmSlug: "kel'thuzad", region: "us", scoreTop: null } as unknown as LookupPayload["character"] }));
+    const h = profileHeader(tEn, "en", payload({ character: { id: 2, name: "Vachâman", classID: 1, spec: null, realmSlug: "kelthuzad", region: "us", scoreTop: null } as unknown as LookupPayload["character"] }));
     expect(h.iconUrl).toBe("https://wow.zamimg.com/images/wow/icons/medium/classicon_deathknight.jpg");
-    expect(h.line).toBe("Death Knight · DPS · Kel'Thuzad (US)");
-    expect(h.links.wcl).toBe("https://www.warcraftlogs.com/character/us/kel'thuzad/vach%C3%A2man");
+    expect(h.line).toBe("Death Knight · DPS · Kelthuzad (US)");
+    expect(h.links.wcl).toBe("https://www.warcraftlogs.com/character/us/kelthuzad/vach%C3%A2man");
   });
   test("no Raider.IO profile: no RIO link, no RIO or activity fact", () => {
     const h = profileHeader(tEn, "en", payload({ rio: null }));

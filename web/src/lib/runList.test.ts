@@ -3,11 +3,18 @@ import type { LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { rowOf, signalParts } from "./runs.ts";
-import { dungeonAbbr, runListView } from "./runList.ts";
+import { dungeonAbbr, runListView, signedPct } from "./runList.ts";
 import { NOW, payload, runs, sig, temple } from "./vachaman.fixture.ts";
 
 const tFr = makeT(fr, "fr");
 const NB = " ";
+
+describe("signedPct", () => {
+  test("rounds before choosing the sign: no −0", () => {
+    expect([-0.3, -0.49, 0, 0.4, -0.6, 12.4, -3.5].map((d) => signedPct(tEn, d))).toEqual(["+0%", "+0%", "+0%", "+0%", "−1%", "+12%", "−4%"]);
+    expect(signedPct(tFr, -0.2)).toBe(`+0${NB}%`);
+  });
+});
 
 describe("dungeonAbbr", () => {
   test("first letters of the words that matter", () => {

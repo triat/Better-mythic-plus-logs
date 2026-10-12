@@ -110,7 +110,7 @@ export function profileHeader(t: T, _locale: Locale, p: LookupPayload): ProfileH
   const ev = p.evaluation;
   const v = verdictView(t, ev, p.targetAutoDetected);
   const token = classToken(c.classID);
-  const klass = CLASS_NAMES[c.classID] ?? `class #${c.classID}`;
+  const klass = CLASS_NAMES[c.classID] ?? t("cand.header.unknownClass", { id: String(c.classID) });
   const rioScore = p.rio?.seasons[0]?.all;
   const scoreLabel = t("verdict.stats.score", { metric: p.metric.toUpperCase() });
   const facts: HeaderFact[] = [

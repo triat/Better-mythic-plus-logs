@@ -130,7 +130,8 @@ describe("dungeonGrid", () => {
       ["Median DPS parse", "58.0%"],
     ]);
     expect(v.notes[0]!.sub).toBe("most in Temple of Sethraliss +20: 5 · timed 8/8 · Raider.IO recent runs 18/20 timed");
-    expect(v.notes[1]).toMatchObject({ sub: "peak 85 (Murder Row) · kicks +1pts vs peers", tone: "better" });
+    expect(v.notes[0]!.tone).toBe("neutral");
+    expect(v.notes[1]).toMatchObject({ sub: "peak 85 (Murder Row) · kicks +1 pts vs peers", tone: "better" });
     expect(v.notes[2]).toMatchObject({ sub: "avoidable −33% vs peers · DTPS −1% vs peers", tone: "better" });
     expect(v.notes[3]).toMatchObject({ sub: "median DPS 400.0k", tone: "tier-blue" });
   });
@@ -146,17 +147,23 @@ describe("dungeonGrid", () => {
   test("every value the signal tiles show is in the notes strip or a row's facts (the header keeps ilvl and last season)", () => {
     const p = full();
     const v = dungeonGrid(tEn, "en", p);
-    const shown = [
+    const fields = [
       ...v.notes.flatMap((n) => [n.value, n.sub]),
       ...v.rows.flatMap((r) => r.facts.map((f) => f.value)),
-    ].join(" | ");
+    ];
+    const escape = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // A whole field, or a run of words inside one: never a fragment of a longer number or word.
+    const inField = (value: string) => {
+      const re = new RegExp(`(^|[\\s(])${escape(value)}($|[\\s)·,])`);
+      return fields.some((f) => f === value || re.test(f));
+    };
     const header = profileHeader(tEn, "en", p).facts.map((f) => f.value);
     const ts = tiles(tEn, p).filter((x) => !x.empty);
     expect(ts.length).toBe(10);
     for (const tile of ts) {
       const inHeader = tile.label === tEn("tiles.ilvl") || tile.label === tEn("tiles.prevSeason");
       if (inHeader) expect(header).toContain(tile.value);
-      else expect(shown).toContain(tile.value);
+      else expect({ tile: tile.label, found: inField(tile.value) }).toEqual({ tile: tile.label, found: true });
     }
   });
 });

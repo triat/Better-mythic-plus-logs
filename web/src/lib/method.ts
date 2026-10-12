@@ -94,7 +94,7 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
       label: t("cand.method.path.axes"),
       value: infoKeys.length ? `${scored.length} + ${infoKeys.length}` : String(scored.length),
       sub: infoKeys.length
-        ? t("cand.method.path.axesSubInfo", { counted: scored.length, names: list(infoKeys) })
+        ? t("cand.method.path.axesSubInfo", { counted: scored.length, names: list(infoKeys), n: infoKeys.length })
         : t("cand.method.path.axesSub", { counted: scored.length }),
     },
     { label: t("cand.method.path.raw"), value: raw === null ? DASH : fixed1(locale, raw), sub: t("cand.method.path.rawSub", { role: t(`cand.method.roleOne.${role}`) }) },

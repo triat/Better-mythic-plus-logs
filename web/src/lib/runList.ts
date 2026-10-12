@@ -71,7 +71,11 @@ export const parseCell = (t: T, locale: Locale, pct: number): { text: string; ti
   pct > 0 ? { text: t("cand.runs.pct", { v: fixed1(locale, pct) }), tier: parseTier(pct) } : { text: t("runs.unranked"), tier: null };
 
 /** A signed whole percent vs peers ("+14 %", "−100 %"), the sign as the run rows write it. */
-export const signedPct = (t: T, d: number): string => t("cand.runs.pct", { v: signed(d, 0) });
+/**
+ * "+12 %", "−3 %": rounded (as `toFixed`, half away from zero, like the tiles) before the sign is chosen, so −0.3 reads
+ * "+0 %", never "−0 %".
+ */
+export const signedPct = (t: T, d: number): string => t("cand.runs.pct", { v: signed(Number(d.toFixed(0)) || 0, 0) });
 
 export function upgradeOf(t: T, r: MPlusRun): { text: string; timed: boolean } | null {
   const s = r.signals;

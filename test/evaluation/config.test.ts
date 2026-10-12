@@ -6,7 +6,8 @@ import {
   configVersion,
   deepMerge,
   dropLegacyExperience,
-  LEGACY_EXPERIENCE_WARNING,
+  LEGACY_EXPERIENCE_NOTICE,
+  legacyExperienceWarning,
   loadConfig,
   validateConfig,
 } from "../../src/evaluation/config.ts";
@@ -142,8 +143,8 @@ describe("loadConfig", () => {
       reference: { dps: { "experience.coverage": { x: 1, value: 1 }, "survival.wipeDeaths": { x: 0.5, value: 0.5 } }, tank: { "experience.activity": { x: 8, value: 8 } } },
     }));
     const r = await loadConfig(p);
-    expect(r.warning).toBe(LEGACY_EXPERIENCE_WARNING);
-    expect(r.warning).toBe("evaluation.json: the experience axis was removed — its keys are ignored");
+    expect(r.warning).toBe(legacyExperienceWarning(p));
+    expect(r.warning).toBe(`bmpl: ${p}: the experience axis was removed — its keys are ignored`);
     expect(r.config.verdict.invite).toBe(75);
     expect(r.config.axisWeights.dps.survival).toBe(4);
     expect(r.config.reference.dps["survival.wipeDeaths"]).toEqual({ x: 0.5, value: 0.5 });
@@ -152,6 +153,14 @@ describe("loadConfig", () => {
       expect("experience" in r.config.axisWeights[role]).toBe(false);
       expect(Object.keys(r.config.reference[role]).some((k) => k.startsWith("experience."))).toBe(false);
     }
+  });
+  test("a pre-v7 file that fails validation for another reason keeps the experience notice in its warning", async () => {
+    const p = tmp("legacy-and-broken.json");
+    await Bun.write(p, JSON.stringify({ verdict: { invite: "high" }, axisWeights: { dps: { experience: 2 } } }));
+    const r = await loadConfig(p);
+    expect(r.config.verdict.invite).toBe(70);
+    expect(r.warning!.startsWith(`bmpl: ignoring ${p}: `)).toBe(true);
+    expect(r.warning!.endsWith(`; also, ${LEGACY_EXPERIENCE_NOTICE}`)).toBe(true);
   });
   test("dropLegacyExperience leaves a current file alone and never mutates its input", () => {
     const current = { verdict: { invite: 75 } };

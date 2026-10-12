@@ -56,7 +56,7 @@ describe("methodView", () => {
     expect(m.path).toEqual([
       { label: "1 · Runs", value: "9", sub: "runs notés en +19, le meilleur par donjon" },
       { label: "2 · Signaux", value: "12", sub: "chacun noté 0–100 par une courbe" },
-      { label: "3 · Axes", value: "4 + 1", sub: "4 comptés, Régularité informatif" },
+      { label: "3 · Axes", value: "4 + 1", sub: "4 comptés, Régularité informative" },
       { label: "4 · Brut", value: "78,0", sub: "axes pondérés pour un DPS" },
       { label: "5 · Verdict", value: "77", sub: "rang parmi les DPS de référence" },
     ]);

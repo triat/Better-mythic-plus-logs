@@ -29,7 +29,7 @@ export function tiles(t: T, p: LookupPayload): TileModel[] {
   out.push(sm.avoidableDeltaPct === null ? empty(t("tiles.avoidable"))
     : { label: t("tiles.avoidable"), value: signed(sm.avoidableDeltaPct, 0, "%"), cls: toneClass(lowerTone(sm.avoidableDeltaPct)), empty: false });
   out.push(sm.kicksDeltaPts === null ? empty(t("tiles.kicks"))
-    : { label: t("tiles.kicks"), value: signed(sm.kicksDeltaPts, 0, "pts"), cls: toneClass(higherTone(sm.kicksDeltaPts)), empty: false });
+    : { label: t("tiles.kicks"), value: signed(sm.kicksDeltaPts, 0, " pts"), cls: toneClass(higherTone(sm.kicksDeltaPts)), empty: false });
   out.push(sm.ilvl === null ? empty(t("tiles.ilvl")) : { label: t("tiles.ilvl"), value: String(Math.round(sm.ilvl)), cls: "", empty: false });
   if (sm.recentTotal === null || sm.recentTimed === null) out.push(empty(t("tiles.rioRecent")));
   else {

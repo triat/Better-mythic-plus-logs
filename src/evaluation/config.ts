@@ -158,7 +158,9 @@ const canonical = (v: unknown): string => {
 export const configVersion = (cfg: EvaluationConfig): string =>
   new Bun.CryptoHasher("sha256").update(canonical(cfg)).digest("hex").slice(0, 8);
 
-export const LEGACY_EXPERIENCE_WARNING = "evaluation.json: the experience axis was removed — its keys are ignored";
+export const LEGACY_EXPERIENCE_NOTICE = "the experience axis was removed — its keys are ignored";
+/** The warning of a pre-v7 user file that validated once its experience keys were dropped (the loader's other warnings' style). */
+export const legacyExperienceWarning = (userPath: string): string => `bmpl: ${userPath}: ${LEGACY_EXPERIENCE_NOTICE}`;
 
 /** Drops a pre-v7 user file's `experience` keys (`axes.experience`, `axisWeights.<role>.experience`,
  * `reference.<role>["experience.<id>"]`) instead of failing validation on them. Never mutates its input. */
@@ -193,9 +195,11 @@ export async function loadConfig(userPath: string | null): Promise<{ config: Eva
   const legacy = dropLegacyExperience(override);
   try {
     const config = validateConfig(deepMerge(DEFAULT_CONFIG, legacy.override));
-    return legacy.dropped ? { config, warning: LEGACY_EXPERIENCE_WARNING } : { config };
+    return legacy.dropped ? { config, warning: legacyExperienceWarning(userPath) } : { config };
   } catch (e) {
-    return { config: base, warning: `bmpl: ignoring ${userPath}: ${e instanceof Error ? e.message : String(e)}` };
+    // The file is ignored for another reason: the experience notice still goes with it, so it is not lost on the fix.
+    const also = legacy.dropped ? `; also, ${LEGACY_EXPERIENCE_NOTICE}` : "";
+    return { config: base, warning: `bmpl: ignoring ${userPath}: ${e instanceof Error ? e.message : String(e)}${also}` };
   }
 }
 

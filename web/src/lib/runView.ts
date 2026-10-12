@@ -29,7 +29,10 @@ export interface RunDetail {
   also: string | null;
   /** "Ce qui l'a tué": the killing hits summed over the run's deaths, largest first. */
   killers: { id: number | null; name: string; share: string }[];
-  /** Enemy spells the group kicked at least once (`signals.interrupts.enemyCasts`); null when not measured. */
+  /**
+   * Enemy spells of the run (`signals.interrupts.enemyCasts`, unfiltered): the five that went through most, "passés 4 / 12
+   * · tes kicks 3"; null when not measured.
+   */
   enemySpells: { id: number; name: string; text: string }[] | null;
   /** The avoidable abilities that hit the player, "other" last (`id` null); null when not measured. */
   avoidable: { id: number | null; name: string; amount: string }[] | null;

@@ -156,13 +156,14 @@ function notesOf(t: T, locale: Locale, p: LookupPayload, role: Role): DungeonNot
       sm.recentTotal !== null && sm.recentTimed !== null
         ? t("cand.dungeons.notes.rioRecent", { n: sm.recentTimed, total: sm.recentTotal }) : null,
     ]),
-    tone: groupMean !== null && groupMean >= 5 ? "worse" : "neutral",
+    // The group's deaths are not a "vs peers" delta: `worse` is reserved for those, so the card stays neutral.
+    tone: "neutral",
   };
 
   // 2 · Kicks (dispels for a healer) per run, the peak dungeon, the kicks' median gap vs peers (the tiles').
   const utilOf = (r: MPlusRun) => utilCount(r, role)!;
   const peak = maxBy(utilOf);
-  const kicksVs = sm.kicksDeltaPts === null ? null : t("cand.dungeons.notes.kicksVsPeers", { delta: signed(sm.kicksDeltaPts, 0, "pts") });
+  const kicksVs = sm.kicksDeltaPts === null ? null : t("cand.dungeons.notes.kicksVsPeers", { delta: t("drivers.unit.pts", { value: signed(sm.kicksDeltaPts, 0) }) });
   const util: DungeonNote = {
     label: t(role === "healer" ? "cand.dungeons.util.dispels" : "cand.dungeons.util.kicks"),
     value: perRun(mean(utilOf)),

@@ -126,4 +126,38 @@ describe("timelineView", () => {
     const bar = timelineView(tEn, "en", run, late, false, DEFAULT_LAYERS, null)!.lanes.find((l) => l.key === "cd")!.bars[0]!;
     expect(bar.leftPct + bar.widthPct).toBeLessThanOrEqual(100);
   });
+  test("a covered death is not \"available\": dispo lane, count, moment and callout follow the verdict", () => {
+    // Astral Shift up at 1:53 (covered) while Earth Elemental was off cooldown: no avoidable death there.
+    const covered = {
+      ...templeAnalysis,
+      deaths: templeAnalysis.deaths.map((d, i) => (i === 0
+        ? { ...d, verdict: "covered" as const, active: ["Astral Shift"], available: ["Earth Elemental", "Silvermoon Health Potion"], onCooldown: [] }
+        : d)),
+    };
+    const v = timelineView(tFr, "fr", temple, covered, false, DEFAULT_LAYERS, "d0")!;
+    expect(v.chips.find((c) => c.key === "dispo")!.count).toBe("1/3");
+    expect(v.lanes.find((l) => l.key === "dispo")!.markers[0]).toMatchObject({ id: "d0", kind: "none", title: "Couvert par Astral Shift" });
+    expect(v.moments[0]!.text).toBe("Mort · Ground Pound — couvert par Astral Shift");
+    expect(v.callout).toMatchObject({ bad: false, state: "Astral Shift actif · dispo : Earth Elemental, Silvermoon Health Potion" });
+    expect(v.summary).toBe("3 morts, dont une évitable : à 13:45, Astral Shift était prêt et n'a pas servi.");
+  });
+
+  test("French agreement with several names", () => {
+    const two = {
+      ...templeAnalysis,
+      deaths: templeAnalysis.deaths.map((d, i) => (i === 1
+        ? { ...d, verdict: "covered" as const, active: ["Astral Shift", "Earth Elemental"], available: [], onCooldown: [] }
+        : i === 2 ? { ...d, verdict: "defensive available" as const, available: ["Astral Shift", "Earth Elemental"], onCooldown: [] } : d)),
+    };
+    const v = timelineView(tFr, "fr", temple, two, false, DEFAULT_LAYERS, "d1")!;
+    expect(v.callout!.state).toBe("Astral Shift, Earth Elemental actifs");
+    expect(v.lanes.find((l) => l.key === "dispo")!.markers[2]!.title).toBe("Astral Shift, Earth Elemental disponibles");
+    const sel = timelineView(tFr, "fr", temple, two, false, DEFAULT_LAYERS, "d2")!;
+    expect(sel.callout!.state).toBe("Astral Shift, Earth Elemental disponibles et non utilisés");
+  });
+
+  test("an analysis that matches none of the deaths does not make the summary \"analysed\"", () => {
+    const other = { ...templeAnalysis, deaths: templeAnalysis.deaths.map((d) => ({ ...d, atMs: d.atMs + 60_000 })) };
+    expect(timelineView(tEn, "en", temple, other, false, DEFAULT_LAYERS, null)!.summary).toBe("3 deaths");
+  });
 });

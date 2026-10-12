@@ -1064,6 +1064,7 @@ export const fr: Mirror<typeof en> = {
     empty: "Pas encore de run synchronisé cette saison : Synchroniser remplit ces pages. En attendant, ta fiche de vetting montre ton meilleur run par donjon.",
     dungeons: {
       title: "Mes piliers par donjon",
+      empty: "Pas encore de donjon avec un run cette saison.",
       legend: { weak: "faible", mid: "moyen", strong: "fort", hint: "clique un donjon pour son détail" },
       col: {
         dungeon: "Donjon · le plus faible d'abord", damage: "Dégâts", survival: "Survie", avoidable: "Évitable", interrupts: "Kicks",
@@ -1160,6 +1161,8 @@ export const fr: Mirror<typeof en> = {
         resultGroup: "Résultat",
       },
       title: "Ma saison, run par run",
+      filters: "Filtres des runs",
+      list: "Les runs de la saison par semaine de jeu",
       legend: { timed: "timed", depleted: "depleted", none: "sans temps", dimmed: "pâle = masqué par les filtres" },
       summary: { label: "timed · filtres actifs", rest: "{depleted} depleted · {none} sans temps" },
       tile: "+{level} {dungeon} · {result}",

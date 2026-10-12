@@ -3,7 +3,7 @@ import type { MPlusRun, SeasonRunView, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  ALL_RUNS, filterLabels, filterOptions, keyPresets, mainSpec, matches, normFilters, ownerRunsView, stepKey, targetFilters, weekLabel, weeksFor,
+  ALL_RUNS, filterLabels, filterMenus, filterOptions, keyPresets, pickMenu, revealRun, mainSpec, matches, normFilters, ownerRunsView, stepKey, targetFilters, weekLabel, weeksFor,
   type RunFilters,
 } from "./ownerRuns.ts";
 import { runListRow } from "./runList.ts";
@@ -248,5 +248,34 @@ describe("ownerRunsView", () => {
     expect(v.util).toBe("dispels");
     expect(v.weeks[0]!.rows[0]!.util).toEqual({ label: "dispels", text: "8" });
     expect(v.weeks[0]!.rows[0]!.kicksPeers).toBeNull();
+  });
+});
+
+describe("filter menus", () => {
+  test("rows with counts, the current choice ticked, values as text", () => {
+    const o = filterOptions(tEn, season());
+    const m = filterMenus({ ...o.defaults, spec: "Enhancement", weeks: 3 }, o);
+    expect(m.dungeon[0]).toEqual({ value: "", label: "Dungeon: all", hint: null, on: true });
+    expect(m.dungeon[1]).toEqual({ value: String(runs[3]!.encounterID), label: "Altar of Fangs", hint: "1", on: false });
+    expect(m.spec.filter((x) => x.on).map((x) => x.value)).toEqual(["Enhancement"]);
+    expect(m.weeks.map((x) => [x.value, x.on])).toEqual([["1", false], ["3", true], ["8", false], ["", false]]);
+  });
+  test("a pick sets that filter; empty is all", () => {
+    expect(pickMenu(ALL_RUNS, "dungeon", "12").dungeon).toBe(12);
+    expect(pickMenu({ ...ALL_RUNS, dungeon: 12 }, "dungeon", "").dungeon).toBeNull();
+    expect(pickMenu(ALL_RUNS, "spec", "Elemental").spec).toBe("Elemental");
+    expect(pickMenu(ALL_RUNS, "weeks", "8").weeks).toBe(8);
+    expect(pickMenu({ ...ALL_RUNS, weeks: 3 }, "weeks", "").weeks).toBeNull();
+  });
+  test("revealRun: a hidden tile resets the filters, the weeks to load cover its row", () => {
+    const s = season();
+    const o = filterOptions(tEn, s);
+    const old = seasonRuns[7]!; // MR +20, week 5: the 4th week with runs
+    const key = `${old.reportCode}:${old.fightID}`;
+    expect(revealRun(s, o.defaults, o, key, 3)).toEqual({ filters: o.defaults, loaded: 4 });
+    const hidden = { ...o.defaults, result: "depleted" as const };
+    expect(revealRun(s, hidden, o, key, 3)).toEqual({ filters: o.defaults, loaded: 4 });
+    const recent = `${seasonRuns[0]!.reportCode}:${seasonRuns[0]!.fightID}`;
+    expect(revealRun(s, o.defaults, o, recent, 3)).toEqual({ filters: o.defaults, loaded: 3 });
   });
 });

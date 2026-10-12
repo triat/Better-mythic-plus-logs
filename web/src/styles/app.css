@@ -1492,3 +1492,165 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
 .form-chef-title { font-size: 14px; color: var(--muted); }
 .form-chef-line { font-size: 20px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
 .form-chef-verdict { color: var(--vt); }
+/* Donjons (mockup F-Moi-Donjons): the heatmap (cells on the heat scale, the weakest pillar ringed), the detail below. */
+.odg { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.odg-card { padding: 24px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.odg-card > .form-card-head { margin-bottom: 8px; }
+.odg-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) 40px 34px; gap: 6px; align-items: center; }
+.odg-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 14px; font-weight: 600; }
+.odg-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.odg-abbr { width: 30px; height: 30px; border-radius: 8px; font-size: 11px; }
+.odg-head { padding: 0 8px; }
+.odg-th { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--label); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.odg-th-name { display: none; text-align: left; }
+.odg-season { padding: 0 8px; }
+.odg-season .odg-cell { height: 34px; }
+.odg-rows { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 6px; }
+.odg-btn { width: 100%; padding: 6px 8px; border-radius: var(--radius); border: 1px solid transparent; background: transparent; color: var(--text-soft); font: inherit; text-align: left; cursor: pointer; }
+.odg-btn:hover { background: var(--card-2); }
+.odg-btn.on { background: var(--card-3); border-color: var(--dim); color: var(--text); }
+.odg-cell { height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; background: var(--card-2); color: var(--label); min-width: 0; }
+.odg-cell.weakest { outline: 2px solid currentColor; outline-offset: -2px; }
+.odg-overall { text-align: center; font-size: 15px; font-weight: 700; color: var(--text); }
+.odg-runs { text-align: center; font-size: 13px; color: var(--label); }
+.odg-k { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.odg-foot { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--label); }
+@container (min-width: 760px) {
+  .odg-row { grid-template-columns: minmax(0, 1.8fr) repeat(5, minmax(0, 1fr)) 72px 56px; }
+  .odg-name { grid-column: auto; }
+  .odg-th { font-size: 11px; }
+  .odg-th-name { display: block; }
+}
+.odg-detail { padding: 28px; display: flex; flex-direction: column; gap: 24px; min-width: 0; border-color: var(--dim); }
+.odg-detail-head { display: flex; align-items: center; gap: 12px 14px; flex-wrap: wrap; }
+.odg-detail-abbr { width: 48px; height: 48px; border-radius: 12px; background: var(--card-3); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.odg-detail-title { display: flex; flex-direction: column; gap: 2px; flex: 1 1 220px; min-width: 0; }
+.odg-weak { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13px; white-space: nowrap; background: var(--card-2); color: var(--text-soft); }
+/* The shared .heat-N colours, over the cell's and the chip's own default background. */
+.odg-cell.heat-1, .odg-weak.heat-1 { background: var(--heat-1-bg); color: var(--heat-1-fg); }
+.odg-cell.heat-2, .odg-weak.heat-2 { background: var(--heat-2-bg); color: var(--heat-2-fg); }
+.odg-cell.heat-3, .odg-weak.heat-3 { background: var(--heat-3-bg); color: var(--heat-3-fg); }
+.odg-cell.heat-4, .odg-weak.heat-4 { background: var(--heat-4-bg); color: var(--heat-4-fg); }
+.odg-cell.heat-5, .odg-weak.heat-5 { background: var(--heat-5-bg); color: var(--heat-5-fg); }
+.odg-detail-head .btn, .oruns-btn { height: 34px; background: var(--card-2); border-color: var(--border-2); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; }
+.odg-detail-head .btn:hover, .oruns-btn:hover:not(:disabled) { border-color: var(--muted); color: var(--text); }
+.odg-compare { margin: 0; padding: 14px; border-radius: var(--radius); background: var(--heat-2-bg); border: 1px solid var(--heat-1-bg); font-size: 14px; line-height: 1.45; color: var(--heat-2-fg); }
+.odg-compare strong { color: var(--heat-1-fg); }
+.odg-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 28px; }
+.odg-block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.odg-hit { display: flex; flex-direction: column; gap: 6px; }
+.odg-hit-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--text-soft); }
+.odg-hit-top .mono { color: var(--muted); }
+.odg-hit-other .odg-hit-top > span:first-child { color: var(--label); }
+.odg-bar { display: block; height: 8px; border-radius: 999px; background: var(--border); min-width: 0; }
+.odg-bar > span { display: block; height: 8px; border-radius: 999px; background: var(--worse); }
+.odg-killer { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--card-2); font-size: 14px; min-width: 0; }
+.odg-killer-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pass); flex-shrink: 0; }
+.odg-killer-n { margin-left: auto; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.odg-casts-head { justify-content: flex-start; }
+.odg-casts { display: flex; flex-direction: column; gap: 8px; }
+.odg-cast { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name name name" "bar n mine"; gap: 6px 16px; align-items: center; font-size: 14px; }
+.odg-cast-name { grid-area: name; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.odg-cast > .odg-bar { grid-area: bar; }
+.odg-cast-n { grid-area: n; font-size: 13px; text-align: right; color: var(--muted); }
+.odg-cast-mine { grid-area: mine; text-align: right; font-weight: 600; }
+.odg-cast-head { display: none; }
+.odg-cast-head > span { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--label); }
+@container (min-width: 760px) {
+  .odg-cast { grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) 84px 112px; grid-template-areas: none; }
+  .odg-cast > * { grid-area: auto !important; }
+  .odg-cast-head { display: grid; }
+  .odg-cast-head > span:nth-child(n + 3) { text-align: right; }
+}
+.odg-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+.odg-control { flex: 1 1 240px; padding: 16px; border-radius: var(--radius); background: var(--card-2); display: flex; flex-direction: column; gap: 4px; font-size: 15px; min-width: 0; }
+.odg-control-note { flex: 1 1 100%; }
+
+/* Runs (mockup F-Moi-Runs): the season's tiles, the filter bar, the week groups (cards under 900 px), the expanded run. */
+.oruns { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.oruns-season { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.oruns-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.oruns-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.oruns-sw { display: inline-block; width: 12px; height: 12px; border-radius: 4px; border: 1px solid var(--border-2); background: var(--card-2); box-sizing: border-box; }
+.oruns-sw.timed { background: var(--heat-4-bg); border-color: var(--heat-5-bg); }
+.oruns-sw.depleted { background: var(--pass-bg); border-color: var(--pass-border); }
+.oruns-sw.other { border-style: dashed; border-color: var(--label); }
+.oruns-strip { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+.oruns-sum { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding-right: 16px; border-right: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+.oruns-sum-big { font-size: 32px; font-weight: 700; line-height: 1; color: var(--text); }
+.oruns-sum-of { font-size: 20px; color: var(--label); }
+.oruns-tweek { flex: 1 1 150px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.oruns-tiles { display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; flex: 1; }
+.oruns-tile { width: 36px; height: 36px; padding: 0; border-radius: 8px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; box-sizing: border-box; }
+.oruns-tile.timed { background: var(--heat-4-bg); border-color: var(--heat-5-bg); color: var(--heat-5-fg); }
+.oruns-tile.depleted { background: var(--pass-bg); border-color: var(--pass-border); color: var(--pass); }
+.oruns-tile.other { border-style: dashed; border-color: var(--label); }
+.oruns-tile.dim { opacity: .25; }
+.oruns-tile.open { outline: 2px solid var(--text); outline-offset: 2px; }
+.oruns-tile:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.oruns-tweek-label { font-size: 12px; color: var(--label); border-top: 1px solid var(--border); padding-top: 6px; }
+.oruns-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oruns-keys { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 4px 0 12px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--border-2); font-size: 13px; color: var(--muted); box-sizing: border-box; }
+.oruns-keys svg { color: var(--dim); flex-shrink: 0; }
+.oruns-step { width: 32px; height: 32px; padding: 0; border-radius: 7px; border: 1px solid var(--border-2); background: var(--card-2); color: var(--text); font: inherit; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.oruns-step:hover { border-color: var(--muted); }
+.oruns-key { min-width: 30px; text-align: center; font-size: 14px; font-weight: 700; color: var(--text); }
+.oruns-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--border-2); }
+.oruns-seg-btn { height: 32px; padding: 0 10px; border-radius: 7px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.oruns-seg-btn:hover { color: var(--text); }
+.oruns-seg-btn.on { background: var(--card-3); color: var(--text); }
+.oruns-sel { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border-radius: var(--radius); background: var(--card-2); border: 1px solid var(--border-2); color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.oruns-sel:hover { color: var(--text); }
+.oruns-sel.on { color: var(--text); border-color: var(--muted); }
+.oruns-filters .chip-menu .menu { max-width: calc(100vw - 32px); }
+.oruns-filters .chip-menu:last-child .menu { left: auto; right: 0; }
+.oruns-list { padding: 0; overflow: hidden; container-type: inline-size; min-width: 0; }
+.oruns-head { display: none; }
+.oruns-th { font-size: 12px; font-weight: 600; color: var(--label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oruns-week { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; padding: 12px 18px 8px; background: var(--bg); border-top: 1px solid var(--border); }
+.oruns-week strong { font-size: 14px; }
+.oruns-week span { font-size: 13px; color: var(--muted); }
+.oruns-run { border-top: 1px solid var(--border-soft); }
+.oruns-run.open { background: var(--card-2); }
+.oruns-rowbtn { width: 100%; background: transparent; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.oruns-rowbtn:hover { background: var(--card-2); }
+.oruns-rowbtn:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; }
+.oruns-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; align-items: start; padding: 12px 14px; font-size: 13px; }
+.oruns-row > * { min-width: 0; }
+.oruns-c-dungeon { grid-column: 1 / 3; order: -2; display: flex; align-items: center; gap: 10px; }
+.oruns-c-key { order: -1; text-align: right; }
+.oruns-chev { display: none; color: var(--label); }
+.oruns-k { display: block; font-family: var(--font-ui); font-size: 11px; color: var(--label); }
+.oruns-sub { display: block; font-family: var(--font-ui); font-size: 12px; font-weight: 400; color: var(--label); margin-top: 2px; }
+.oruns-level { font-size: 15px; font-weight: 700; }
+.oruns-res-timed { color: var(--invite); } .oruns-res-depleted { color: var(--pass); } .oruns-res-none { color: var(--label); }
+.oruns-c-key .oruns-sub { font-weight: 600; }
+.oruns-c-key .oruns-res-timed { color: var(--invite); } .oruns-c-key .oruns-res-depleted { color: var(--pass); }
+.oruns-abbr { width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
+.oruns-name { min-width: 0; display: flex; flex-direction: column; }
+.oruns-name-text { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oruns-c-time { color: var(--muted); }
+.oruns-c-consumables { color: var(--text-soft); }
+.oruns-c-parse { font-size: 14px; font-weight: 700; }
+.oruns-empty { margin: 0; padding: 14px 18px; border-top: 1px solid var(--border-soft); font-size: 13px; color: var(--label); }
+.oruns-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid var(--border); font-size: 13px; color: var(--label); }
+.oruns-foot .btn { margin-left: auto; }
+@container (min-width: 900px) {
+  .oruns-head, .oruns-row { display: grid; grid-template-columns: 64px minmax(0, 1.6fr) 64px 70px 76px 96px 84px 56px 76px 16px; gap: 10px; align-items: center; padding: 8px 18px; }
+  .oruns-head { min-height: 44px; border-bottom: 1px solid var(--border); padding-top: 0; padding-bottom: 0; }
+  .oruns-row { min-height: 56px; box-sizing: border-box; }
+  .oruns-c-dungeon, .oruns-c-key { grid-column: auto; order: 0; text-align: left; }
+  .oruns-k { display: none; }
+  .oruns-chev { display: block; }
+}
+.oruns-ex { padding: 6px 18px 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.oruns-note { margin: 0; font-size: 13px; }
+.oruns-blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+.oruns-block { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); min-width: 0; }
+.oruns-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; font-size: 13px; color: var(--text-soft); }
+.oruns-line > .mono { text-align: right; color: var(--muted); }
+.oruns-block-note { font-size: 13px; color: var(--text-soft); }
+.oruns-rate { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.oruns-rate-v { font-size: 26px; font-weight: 700; color: var(--text); }
+.oruns-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oruns-facts { font-size: 13px; color: var(--label); }

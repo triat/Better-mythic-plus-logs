@@ -181,6 +181,15 @@ describe("formView · season without runs", () => {
   });
 });
 
+describe("formView · no season stored", () => {
+  test("the same as a season without runs", () => {
+    const s = season({ runs: [], recent: null, season: null, trends: [], workOn: [], state: { runs: 0, analysed: 0, pending: 0, controlOnly: 0, failed: 0, estimate: 0 } });
+    const { chef: _a, ...none } = formView(tEn, "en", ev(), null, docs, KEY);
+    const { chef: _b, ...empty } = formView(tEn, "en", ev(), s, docs, KEY);
+    expect(none).toEqual(empty);
+  });
+});
+
 describe("formView · checklist", () => {
   test("the window's points, costliest first, goal, before → now (French)", () => {
     const f = formView(tFr, "fr", ev(), season(), docs, KEY);

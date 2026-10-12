@@ -1070,6 +1070,7 @@ export const en = {
     empty: "No synced run this season yet: Sync fills these pages. Until then your vetting profile shows your best run per dungeon.",
     dungeons: {
       title: "My pillars per dungeon",
+      empty: "No dungeon with a run this season yet.",
       legend: { weak: "weak", mid: "average", strong: "strong", hint: "click a dungeon for its detail" },
       col: {
         dungeon: "Dungeon · weakest first", damage: "Damage", survival: "Survival", avoidable: "Avoidable", interrupts: "Kicks",
@@ -1166,6 +1167,8 @@ export const en = {
         resultGroup: "Result",
       },
       title: "My season, run by run",
+      filters: "Run filters",
+      list: "The season's runs by game week",
       legend: { timed: "timed", depleted: "depleted", none: "no time", dimmed: "pale = hidden by the filters" },
       summary: { label: "timed · active filters", rest: "{depleted} depleted · {none} no time" },
       tile: "+{level} {dungeon} · {result}",

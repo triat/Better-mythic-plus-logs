@@ -7,6 +7,7 @@ import type { MPlusRun, Role, RunDefensives, SeasonRunView, SeasonView } from ".
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { costText } from "./deepdive.ts";
+import type { MenuItem } from "./header.ts";
 import { fmtAge, fmtAmount, wclUrl } from "./format.ts";
 import { specWords } from "./profile.ts";
 import { kickFigures, vsPeers } from "./runs.ts";
@@ -128,6 +129,33 @@ export function filterLabels(t: T, f: RunFilters, o: FilterOptions): { dungeon: 
     spec: f.spec === null || !s ? t("owner.runs.filter.specAll") : t("owner.runs.filter.spec", { name: s.label }),
     weeks: f.weeks === null ? t("owner.runs.filter.season") : t("owner.runs.filter.weeks", { count: f.weeks }),
   };
+}
+
+export type FilterMenu = "dungeon" | "spec" | "weeks";
+
+/** The three select menus (`ChipMenu` rows): a value is the option's value as text, "" for "all". */
+export function filterMenus(f: RunFilters, o: FilterOptions): Record<FilterMenu, MenuItem[]> {
+  const item = <V extends number | string | null>(x: FilterOption<V>, on: boolean): MenuItem =>
+    ({ value: x.value === null ? "" : String(x.value), label: x.label, hint: x.count === undefined ? null : String(x.count), on });
+  return {
+    dungeon: o.dungeons.map((x) => item(x, x.value === f.dungeon)),
+    spec: o.specs.map((x) => item(x, x.value === f.spec)),
+    weeks: o.weeks.map((x) => item(x, x.value === f.weeks)),
+  };
+}
+
+/** A pick in one of the select menus: "" is "all" (the whole season for the period). */
+export function pickMenu(f: RunFilters, menu: FilterMenu, value: string): RunFilters {
+  if (menu === "spec") return { ...f, spec: value === "" ? null : value };
+  const n = value === "" ? null : Number(value);
+  return menu === "dungeon" ? { ...f, dungeon: n } : { ...f, weeks: n };
+}
+
+/** A picked tile: the filters to show its row (unchanged when it passes them, else the defaults) and the weeks to load. */
+export function revealRun(season: SeasonView, f: RunFilters, o: FilterOptions, key: string, loaded: number): { filters: RunFilters; loaded: number } {
+  const v = season.runs.find((r) => keyOf(r) === key);
+  const filters = v && !matches(v, f, season.currentWeek) ? o.defaults : f;
+  return { filters, loaded: Math.max(loaded, weeksFor(season, filters, key) ?? 0) };
 }
 
 const inPeriod = (v: SeasonRunView, f: RunFilters, currentWeek: number): boolean => f.weeks === null || v.week > currentWeek - f.weeks;

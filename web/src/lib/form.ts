@@ -113,17 +113,18 @@ function weekView(t: T, season: SeasonView): FormWeek | null {
   };
 }
 
-function pillarsView(t: T, season: SeasonView): FormView["pillars"] {
-  const window = season.recent ?? season.season;
+function pillarsView(t: T, season: SeasonView | null): FormView["pillars"] {
+  const window = season?.recent ?? season?.season ?? null;
+  const trends = season?.trends ?? [];
   const rows = PILLAR_ORDER.map((key): FormPillarRow & { missing: boolean } => {
     const p = window?.pillars.find((x) => x.key === key);
     const score = p?.score == null ? null : Math.round(p.score);
-    const tr = trendView(t, season.trends.find((x) => x.key === key));
+    const tr = trendView(t, trends.find((x) => x.key === key));
     return { key, name: t(`self.pillars.${key}`), score, band: scoreBand(score), trend: tr.missing ? null : tr.text, missing: tr.missing === true };
   });
   // Only a scored pillar without a trend calls for the rule (an unmeasured Control pillar has neither).
   const missing = rows.some((r) => r.score !== null && r.missing);
-  const most = (f: (x: SeasonView["trends"][number]) => number) => season.trends.reduce((m, x) => Math.max(m, f(x)), 0);
+  const most = (f: (x: SeasonView["trends"][number]) => number) => trends.reduce((m, x) => Math.max(m, f(x)), 0);
   return {
     global: window?.overall == null ? null : t("owner.form.pillars.global", { score: Math.round(window.overall) }),
     rows: rows.map(({ missing: _m, ...r }) => r),
@@ -183,7 +184,7 @@ function chartView(t: T, season: SeasonView): FormChart | null {
   };
 }
 
-function checklistView(t: T, locale: Locale, ev: Evaluation, season: SeasonView, docs: SynthesisDocs): ChecklistRow[] {
+function checklistView(t: T, locale: Locale, ev: Evaluation, season: SeasonView | null, docs: SynthesisDocs): ChecklistRow[] {
   return [...workOnSource(ev, season)].sort((a, b) => a.impact - b.impact).slice(0, CHECKLIST_MAX).map((w) => ({
     title: docs.titleOf(w.source),
     // The goal is the average player's value with its unit ("1.6 / run"); before / now read short ("0.7").
@@ -217,14 +218,15 @@ function chefView(t: T, locale: Locale, ev: Evaluation, docs: SynthesisDocs, key
   };
 }
 
-/** Ma forme for the owner page `key` (its history key: the chef card links to `as=vetting` on it). */
-export function formView(t: T, locale: Locale, ev: Evaluation, season: SeasonView, docs: SynthesisDocs, key: string): FormView {
+/** Ma forme for the owner page `key` (its history key: the chef card links to `as=vetting` on it). Without a season
+ * (none stored yet): no week, no chart, unscored pillars, the checklist from the lookup's verdict. */
+export function formView(t: T, locale: Locale, ev: Evaluation, season: SeasonView | null, docs: SynthesisDocs, key: string): FormView {
   return {
-    week: weekView(t, season),
+    week: season ? weekView(t, season) : null,
     pillars: pillarsView(t, season),
-    chart: chartView(t, season),
+    chart: season ? chartView(t, season) : null,
     checklist: checklistView(t, locale, ev, season, docs),
-    checklistNote: t(season.recent ? "owner.form.check.recent" : "owner.form.check.lookup"),
+    checklistNote: t(season?.recent ? "owner.form.check.recent" : "owner.form.check.lookup"),
     chef: chefView(t, locale, ev, docs, key),
   };
 }

@@ -262,8 +262,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       if (page !== "candidate" || items.length === 0) return;
       const want = params.get("open");
       const key = (want && items.some((i) => i.key === want) ? want : null) ?? items[0]!.key;
-      // The tab, run and sheet survive the boot; a run of the asked-for profile means nothing on the fallback one.
-      history.replaceState({}, "", key === want ? candHref(key, boot) : candHref(key, { tab: boot.tab }));
+      // The tab, run, sheet and `as=vetting` survive the boot; a run of the asked-for profile means nothing on the
+      // fallback one.
+      history.replaceState({}, "", key === want ? candSwitchHref(key, `?${params}`) : candHref(key, { tab: boot.tab }));
       void showTab(key);
     });
     // Once per page load: the URL is read at boot only.

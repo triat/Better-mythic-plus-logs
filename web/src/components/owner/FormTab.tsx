@@ -12,7 +12,8 @@ const GLYPH: Record<RunResult, string> = { timed: "✓", depleted: "✗", none: 
 /** Ma forme (mockup F-Moi-Forme): last week and pillars side by side, the key chart, the checklist, the group leader's card. */
 export function FormTab({ evaluation, season, historyKey, onVetting }: {
   evaluation: Evaluation;
-  season: SeasonView;
+  /** null: no season stored yet (the checklist and the chef card come from the lookup). */
+  season: SeasonView | null;
   /** The owner page's history key (the chef card's vetting link); "" on the Live page. */
   historyKey: string;
   onVetting: () => void;
@@ -37,7 +38,7 @@ export function FormTab({ evaluation, season, historyKey, onVetting }: {
             <span><i className="form-sw form-dot-timed" aria-hidden="true" />{t("owner.form.chart.timed")}</span>
             <span><i className="form-sw form-dot-depleted" aria-hidden="true" />{t("owner.form.chart.depleted")}</span>
             <span><i className="form-sw form-dot-none" aria-hidden="true" />{t("owner.form.chart.none")}</span>
-            {season.targetLevel > 0 && (
+            {season !== null && season.targetLevel > 0 && (
               <span><i className="form-sw-target" aria-hidden="true" />{t("owner.form.chart.target", { level: season.targetLevel })}</span>
             )}
           </span>

@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { filterOptions } from "../../lib/ownerRuns.ts";
+import type { RunFilters } from "../../lib/ownerRuns.ts";
+import { DEFAULT_LAYERS } from "../../lib/timeline.ts";
+import type { EventPick, LayerKey } from "../../lib/timeline.ts";
 import { OWNER_TABS, OWNER_TAB_EVENT, ownerHeader, ownerHref, ownerState, ownerTabAfter, runKeyOf, viewSwitchHref } from "../../lib/profile.ts";
 import type { OwnerState, OwnerTab } from "../../lib/profile.ts";
 import { useT } from "../../locale.tsx";
@@ -7,11 +11,11 @@ import { track } from "../../usage.ts";
 import { seasonWho, useSeason } from "../../useSeason.ts";
 import { CandidateProfile } from "../candidate/CandidateProfile.tsx";
 import type { DetailProps } from "../Detail.tsx";
-import { DungeonsTab } from "../self/DungeonsTab.tsx";
-import { RunsTab } from "../self/RunsTab.tsx";
 import { SyncCard } from "../self/SyncCard.tsx";
 import { FormTab } from "./FormTab.tsx";
+import { OwnerDungeons } from "./OwnerDungeons.tsx";
 import { OwnerHeader } from "./OwnerHeader.tsx";
+import { OwnerRuns } from "./OwnerRuns.tsx";
 
 const START: OwnerState = { tab: "form", run: null, vetting: false };
 
@@ -40,6 +44,11 @@ export function OwnerProfile(props: DetailProps) {
   }, [urlKey, state]);
   const header = useMemo(() => ownerHeader(t, locale, payload, season.view), [t, locale, payload, season.view]);
   const tabRefs = useRef(new Map<OwnerTab, HTMLButtonElement>());
+  // Per page view (not in the URL): the Runs filters, the timeline's ticked layers and picked death.
+  const [filters, setFilters] = useState<RunFilters | null>(null);
+  const [layers, setLayers] = useState<Record<LayerKey, boolean>>(DEFAULT_LAYERS);
+  const [eventPick, setEventPick] = useState<EventPick | null>(null);
+  const toggleLayer = useCallback((k: LayerKey) => setLayers((l) => ({ ...l, [k]: !l[k] })), []);
 
   const switchView = (vetting: boolean) => {
     if (urlKey === null) { setState((s) => ({ ...s, run: null, vetting })); return; }
@@ -73,7 +82,8 @@ export function OwnerProfile(props: DetailProps) {
   }
 
   const v = season.view;
-  const empty = v !== null && v.runs.length === 0;
+  // No season stored yet, or no run in it: the notice; Ma forme still shows the lookup's checklist and verdict.
+  const empty = !season.loading && (v === null || v.runs.length === 0);
   return (
     <div className="cand owner">
       <OwnerHeader view={header} payload={payload} self={self} season={season} fetch={fetch} hint={hint} onReevaluate={onReevaluate} />
@@ -92,20 +102,28 @@ export function OwnerProfile(props: DetailProps) {
         ))}
       </div>
       <div id="owner-panel" role="tabpanel" aria-labelledby={`owner-tab-${state.tab}`} className="cand-panel">
-        {v === null && <p className="muted">{season.loading ? t("self.loading") : t("self.sync.nothing")}</p>}
+        {v === null && season.loading && <p className="muted">{t("self.loading")}</p>}
         {empty && (
           <div className="owner-empty">
             <span>{t("owner.empty")}</span>
             <button type="button" className="btn" onClick={() => switchView(true)}>{t("owner.form.chef.vetting")}</button>
           </div>
         )}
-        {v !== null && state.tab === "form" && (
+        {!season.loading && state.tab === "form" && (
           <FormTab evaluation={payload.evaluation} season={v} historyKey={urlKey ?? ""} onVetting={() => switchView(true)} />
         )}
-        {v !== null && state.tab === "dungeons" && (
-          <DungeonsTab payload={payload} season={v} loading={false} onRuns={() => pick("runs")} />
+        {v !== null && !empty && state.tab === "dungeons" && (
+          <OwnerDungeons
+            season={v}
+            onRuns={(dungeon) => { setFilters({ ...filterOptions(t, v).defaults, dungeon }); setState((s) => ({ ...s, run: null })); pick("runs"); }}
+          />
         )}
-        {state.tab === "runs" && <RunsTab payload={payload} season={v} deepdive={props.deepdive} encounterID={null} onClearFilter={() => {}} />}
+        {v !== null && !empty && state.tab === "runs" && (
+          <OwnerRuns
+            payload={payload} season={v} deepdive={props.deepdive} run={state.run} onRun={(run) => setState((s) => ({ ...s, run }))}
+            filters={filters} onFilters={setFilters} layers={layers} onToggle={toggleLayer} pick={eventPick} onPick={setEventPick}
+          />
+        )}
       </div>
     </div>
   );

@@ -191,6 +191,8 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   // sees the starter's pending layer). Local: on a cache hit, so an entry saved before an analysis field existed gains
   // it like a history read does; a fresh local lookup already attached them in performLookup.
   const payload = ctx.hosted || result.fromCache ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
+  // The row's verdict/score follow the re-run evaluation the member sees (payload, date and order untouched).
+  if (payload !== result.result) historyOf(ctx).syncSummary(result.key, payload);
   // A member's own client charges nothing to the shared meter/usage (issue #11 Task 3).
   const accounting = runtime && user
     ? scope.own

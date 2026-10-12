@@ -306,6 +306,22 @@ describe("SQLite history — verdict and score", () => {
     expect(a.get(e.key)!.score).toBeNull();
   });
 
+  test("syncSummary sets only this member's verdict and score: payload, date and order stay", () => {
+    const { a, b, db } = setup();
+    const e = a.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("invite", 78) }));
+    a.record(req("B-X", 18), entry({ label: "B-X", targetLevel: 18 }));
+    b.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("invite", 78) }));
+    const row = () => db.query<{ seq: number; fetched_at: number; payload: string }, [string]>(
+      "SELECT seq, fetched_at, payload FROM user_history WHERE key = ? ORDER BY user_id LIMIT 1").get(e.key)!;
+    const before = row();
+    a.syncSummary(e.key, evaluated("maybe", 63));
+    expect(a.list().map((i) => [i.label, i.verdict, i.score])).toEqual([["B-X", null, null], ["A-X", "maybe", 63]]);
+    expect(row()).toEqual(before);
+    expect(b.list().map((i) => [i.verdict, i.score])).toEqual([["invite", 78]]);
+    a.syncSummary("nope", evaluated("pass", 1));
+    expect(a.size).toBe(2);
+  });
+
   test("another member's copied entry keeps the verdict and score", () => {
     const { a, b } = setup();
     a.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("maybe", 50) }));

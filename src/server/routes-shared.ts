@@ -129,9 +129,11 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
       if (key === null) return jsonResponse({ ok: false, error: "Invalid history key" }, 400);
       const entry = historyOf(rc).get(key);
       if (!entry) return jsonResponse({ ok: false, error: "Not in history" }, 404);
-      // Attach today's cached analyses on the way out (0 pts, SQLite only; the stored entry is not rewritten):
+      // Attach today's cached analyses on the way out (0 pts, SQLite only; the stored payload is not rewritten):
       // hosted payloads are stored raw, and a local entry saved before an analysis field existed gains it.
+      // The re-run evaluation is the one shown, so the row's verdict/score (the Récents list) follow it.
       const result = await withCachedAnalyses(entry.result as LookupPayload, await tablesOf(rc, ctx.runtime));
+      historyOf(rc).syncSummary(key, result);
       return jsonResponse({ ok: true, result, key, fromCache: true });
     }),
     prefixRoute("DELETE", "/api/history/", (_req, url, rc) => {

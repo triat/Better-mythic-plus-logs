@@ -138,6 +138,17 @@ describe("History — verdict and score", () => {
     expect(h.get(e.key)!.verdict).toBeNull();
     expect(h.get(e.key)!.score).toBeNull();
   });
+
+  test("syncSummary sets only verdict and score", () => {
+    const h = new History(5, () => 1000);
+    const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: evaluated("invite", 78) }));
+    h.record(req("C-D", 10), entry({ label: "C-D", targetLevel: 10 }));
+    h.syncSummary(e.key, evaluated("maybe", 63));
+    expect(h.list().map((i) => [i.label, i.verdict, i.score])).toEqual([["C-D", null, null], ["A-B", "maybe", 63]]);
+    expect(h.get(e.key)!.result).toEqual(evaluated("invite", 78));
+    h.syncSummary("nope", evaluated("pass", 1));
+    expect(h.size).toBe(2);
+  });
 });
 
 describe("GET /api/history — verdict and score", () => {
@@ -233,5 +244,49 @@ describe("GET /api/history — verdict and score", () => {
     expect(body.key).toBe(e.key);
     expectAttached(body.result);
     expect((getLocalHistory().get(e.key)!.result as LookupPayload).deepdive).toEqual([]);
+  });
+
+  // An entry saved under an older config: the stored evaluation says INVITE 99, today's rules say otherwise.
+  const savedStale = async (): Promise<{ payload: LookupPayload; fresh: ReturnType<typeof summaryOf> }> => {
+    const payload = await savedWithoutAnalyses();
+    const fresh = summaryOf(payload);
+    return { payload: { ...payload, evaluation: { ...payload.evaluation, verdict: "invite", global: 99 } } as LookupPayload, fresh };
+  };
+  const listed = async (label: string) => {
+    const body = await (await fetch(`http://localhost:${server.port}/api/history`)).json() as { items: { label: string; verdict: unknown; score: unknown; fetchedAt: number }[] };
+    return { item: body.items.find((i) => i.label === label)!, order: body.items.map((i) => i.label) };
+  };
+
+  test("a history read brings the row's verdict and score in step with the re-evaluated payload", async () => {
+    const { payload, fresh } = await savedStale();
+    expect(fresh.verdict === "invite" && fresh.score === 99).toBe(false);
+    const e = getLocalHistory().record(req("Stale-Read", 10), entry({ label: "Stale-Read", targetLevel: 10, result: payload }));
+    getLocalHistory().record(req("Newer-Read", 10), entry({ label: "Newer-Read", targetLevel: 10, result: evaluated("pass", 20) }));
+    const before = await listed("Stale-Read");
+    expect([before.item.verdict, before.item.score]).toEqual(["invite", 99]);
+    const res = await fetch(`http://localhost:${server.port}/api/history/${encodeURIComponent(e.key)}`);
+    const body = await res.json() as { result: LookupPayload };
+    expect(summaryOf(body.result)).toEqual(fresh);
+    const after = await listed("Stale-Read");
+    expect({ verdict: after.item.verdict, score: after.item.score }).toEqual(fresh);
+    expect(after.item.fetchedAt).toBe(before.item.fetchedAt);
+    expect(after.order).toEqual(before.order); // a read never reorders
+    expect(summaryOf(getLocalHistory().get(e.key)!.result)).toEqual({ verdict: "invite", score: 99 }); // payload untouched
+  });
+
+  test("a lookup cache hit brings the row's verdict and score in step too (0 pts)", async () => {
+    const { payload, fresh } = await savedStale();
+    const e = getLocalHistory().record(req("Stale-Hit", 10), entry({ label: "Stale-Hit", targetLevel: 10, result: payload }));
+    const res = await fetch(`http://localhost:${server.port}/api/lookup`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ character: "Stale-Hit", level: 10, region: "eu" }),
+    });
+    const body = await res.json() as { fromCache: boolean; result: LookupPayload };
+    expect(body.fromCache).toBe(true);
+    expect(summaryOf(body.result)).toEqual(fresh);
+    const after = await listed("Stale-Hit");
+    expect({ verdict: after.item.verdict, score: after.item.score }).toEqual(fresh);
+    expect(summaryOf(getLocalHistory().get(e.key)!.result)).toEqual({ verdict: "invite", score: 99 });
   });
 });

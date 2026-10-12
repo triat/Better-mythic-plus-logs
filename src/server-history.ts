@@ -88,6 +88,11 @@ export interface HistoryStore {
   clear(): void;
   /** Replace the stored payload of an entry (e.g. after a deep-dive changed its analyses); no-op for unknown keys. */
   updateResult(key: string, result: unknown): void;
+  /**
+   * Set only the row's verdict and score from `result` (a re-evaluated copy of the stored payload): the payload,
+   * `fetchedAt` and the order stay as they are. No-op for unknown keys or when nothing changed.
+   */
+  syncSummary(key: string, result: unknown): void;
 }
 
 /**
@@ -171,6 +176,11 @@ export class History implements HistoryStore {
   updateResult(key: string, result: unknown): void {
     const e = this.entries.get(key);
     if (e) Object.assign(e, { result }, summaryOf(result));
+  }
+
+  syncSummary(key: string, result: unknown): void {
+    const e = this.entries.get(key);
+    if (e) Object.assign(e, summaryOf(result));
   }
 
   private forget(key: string): void {

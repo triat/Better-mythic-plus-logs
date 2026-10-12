@@ -4,7 +4,7 @@ import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
-import { MAX_COMPARE, initialPick, pruneSelection, toggleSelection } from "./lib/history.ts";
+import { MAX_COMPARE, initialPick, pruneSelection, toggleSelection, withPayloadSummary } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { fmtAge } from "./lib/format.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
@@ -212,6 +212,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       return { payload: null, items };
     }
     payloads.current.set(key, r.result);
+    // The server re-evaluated the entry with today's rules: Récents shows the same verdict and score as the page.
+    setTabs((items) => withPayloadSummary(items, key, r.result));
     touch();
     return { payload: r.result, items: null };
   }, [loadHistory]);

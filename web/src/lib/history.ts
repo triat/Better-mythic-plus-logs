@@ -1,5 +1,5 @@
 import type { T } from "../i18n/t.ts";
-import type { HistoryItem, Region } from "../types.ts";
+import type { HistoryItem, LookupPayload, Region } from "../types.ts";
 import { regionLabel } from "./regions.ts";
 
 export const MAX_COMPARE = 3;
@@ -29,3 +29,17 @@ export const tabLevel = (item: HistoryItem, instanceRegion: Region): string =>
 
 export const tabSubtitle = (t: T, item: HistoryItem, instanceRegion: Region): string =>
   `${tabLevel(item, instanceRegion)}${item.targetAutoDetected ? ` ${t("tabs.auto")}` : ""}${item.spec ? ` · ${item.spec}` : ""}`;
+
+/**
+ * The history list with the entry `key` carrying the verdict and score of its loaded payload. The server re-evaluates
+ * a history entry on read with today's rules (and updates its row), so Récents follows without a reload. Same array
+ * when nothing changes.
+ */
+export function withPayloadSummary(items: HistoryItem[], key: string, payload: Pick<LookupPayload, "evaluation">): HistoryItem[] {
+  const ev = payload.evaluation;
+  const verdict = ev.verdict === "insufficient" ? null : ev.verdict;
+  const score = ev.global;
+  const i = items.findIndex((it) => it.key === key);
+  if (i < 0 || (items[i]!.verdict === verdict && items[i]!.score === score)) return items;
+  return items.map((it, j) => (j === i ? { ...it, verdict, score } : it));
+}

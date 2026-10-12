@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import type { HistoryItem } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { MAX_COMPARE, initialPick, pruneSelection, tabLevel, tabSubtitle, toggleSelection } from "./history.ts";
+import { MAX_COMPARE, initialPick, pruneSelection, tabLevel, tabSubtitle, toggleSelection, withPayloadSummary } from "./history.ts";
+import type { LookupPayload } from "../types.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -42,5 +43,24 @@ describe("history selection", () => {
   test("tabSubtitle in French", () => {
     const item = { targetLevel: 21, targetAutoDetected: true, spec: null, request: { character: "Muleyoxo-Silvermoon", level: null, spec: null, metric: null, region: "eu" } } as never;
     expect(tabSubtitle(tFr, item, "eu")).toBe("+21 auto");
+  });
+});
+
+describe("withPayloadSummary", () => {
+  const item = (key: string, verdict: HistoryItem["verdict"], score: number | null) => ({ key, verdict, score }) as HistoryItem;
+  const ev = (verdict: string, global: number | null) => ({ evaluation: { verdict, global } }) as unknown as Pick<LookupPayload, "evaluation">;
+  test("patches the matching entry's verdict and score from the re-evaluated payload", () => {
+    const items = [item("a", "invite", 78), item("b", "pass", 20)];
+    const next = withPayloadSummary(items, "a", ev("maybe", 63));
+    expect(next.map((i) => [i.key, i.verdict, i.score])).toEqual([["a", "maybe", 63], ["b", "pass", 20]]);
+    expect(next[1]).toBe(items[1]!);
+  });
+  test("INSUFFICIENT DATA is a null verdict", () => {
+    expect(withPayloadSummary([item("a", "maybe", 50)], "a", ev("insufficient", null))[0]).toMatchObject({ verdict: null, score: null });
+  });
+  test("same array when unchanged or unknown", () => {
+    const items = [item("a", "maybe", 63)];
+    expect(withPayloadSummary(items, "a", ev("maybe", 63))).toBe(items);
+    expect(withPayloadSummary(items, "z", ev("pass", 1))).toBe(items);
   });
 });

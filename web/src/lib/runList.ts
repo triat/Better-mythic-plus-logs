@@ -100,7 +100,12 @@ export function clearTime(r: MPlusRun): string {
   return r.durationMs !== undefined ? fmtDuration(r.durationMs) : "—";
 }
 
-export function runListRow(t: T, locale: Locale, p: LookupPayload, r: MPlusRun, role: Role, now: number): RunListRow {
+export const runListRow = (t: T, locale: Locale, p: LookupPayload, r: MPlusRun, role: Role, now: number): RunListRow =>
+  runRow(t, locale, r, role, analysisFor(p, r) !== null, now);
+
+/** One row without a payload: `analysed` says whether the run has a deep-dive (the owner's season list knows it per
+ * run). `runListRow` is this with the payload's analyses. */
+export function runRow(t: T, locale: Locale, r: MPlusRun, role: Role, analysed: boolean, now: number): RunListRow {
   const s = r.signals;
   let dtps: RunListRow["dtps"] = null;
   let avoidable: RunListRow["avoidable"] = null;
@@ -126,7 +131,7 @@ export function runListRow(t: T, locale: Locale, p: LookupPayload, r: MPlusRun, 
     key: `${r.reportCode}:${r.fightID}`,
     abbr: dungeonAbbr(r.encounterName),
     dungeon: r.encounterName,
-    analysed: analysisFor(p, r) !== null,
+    analysed,
     hasSignals: s !== undefined,
     level: `+${r.keyLevel}`,
     upgrade: upgradeOf(t, r),

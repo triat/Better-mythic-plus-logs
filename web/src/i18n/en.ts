@@ -1060,6 +1060,14 @@ export const en = {
     },
   },
   owner: {
+    tabs: { label: "My character's sections", form: "My form", dungeons: "Dungeons", runs: "Runs" },
+    header: {
+      line: "{spec} · {realm} ({region})",
+      sync: "Sync",
+      syncTitle: "Sync the season's runs from Warcraft Logs: the cost shows before anything is spent",
+    },
+    vetting: { bar: "You are looking at your profile as a group leader sees it", back: "Back to my form" },
+    empty: "No synced run this season yet: Sync fills these pages. Until then your vetting profile shows your best run per dungeon.",
     dungeons: {
       title: "My pillars per dungeon",
       legend: { weak: "weak", mid: "average", strong: "strong", hint: "click a dungeon for its detail" },
@@ -1100,6 +1108,7 @@ export const en = {
         result: { timed: "timed", depleted: "depleted", none: "no time" },
         first: "First +{level} attempted ({dungeon}, {result}).",
         resultTime: "{result} {time}",
+        none: "No run this season yet.",
       },
       pillars: {
         title: "My pillars",
@@ -1119,6 +1128,7 @@ export const en = {
         weeksAgo: "{n} wk ago",
         dot: "+{level} {dungeon} · {result}",
         aria: "Key level of each run over the last {count, plural, one {week} other {# weeks}} with runs",
+        empty: "No run to chart yet.",
       },
       check: {
         title: "Work on · checklist",

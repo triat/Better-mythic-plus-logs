@@ -1,18 +1,11 @@
-import { useState } from "react";
 import type { LookupPayload, OverrideEntry } from "../types.ts";
 import type { ReevalHint } from "../lib/keyLevel.ts";
 import type { ProposalMode } from "../lib/hostedMode.ts";
-import { RESULT_TABS, resultView, type ResultTab } from "../lib/self.ts";
-import { useT } from "../locale.tsx";
-import { track } from "../usage.ts";
-import { seasonWho, useSeason } from "../useSeason.ts";
+import { resultView } from "../lib/self.ts";
 import { CandidateProfile } from "./candidate/CandidateProfile.tsx";
 import type { ProfileFetch } from "./candidate/ProfileHeader.tsx";
-import { DungeonsTab } from "./self/DungeonsTab.tsx";
-import { Overview } from "./self/Overview.tsx";
-import { ResultHead, type SelfActions } from "./self/ResultHead.tsx";
-import { RunsTab } from "./self/RunsTab.tsx";
-import { SyncCard } from "./self/SyncCard.tsx";
+import { OwnerProfile } from "./owner/OwnerProfile.tsx";
+import type { SelfActions } from "./self/ResultHead.tsx";
 
 /** Deep-dive callbacks owned by App (they touch the payload cache). */
 export interface DeepdiveActions {
@@ -47,47 +40,11 @@ export interface DetailProps {
 }
 
 /**
- * The result page. One of the member's own characters opens the self-review (canvas "self-review", variants A + C);
- * anyone else opens the candidate profile (redesign phase 2: header, Synthèse · Runs · Donjons · Méthode), with "This
- * is me" in its header (canvas "control", ControlVettingA). Toggling the chip switches between the two in place.
+ * The result page. One of the member's own characters opens the owner page (redesign phase 3: header, Ma forme ·
+ * Donjons · Runs); anyone else opens the candidate profile (redesign phase 2: header, Synthèse · Runs · Donjons ·
+ * Méthode), with "This is me" in its header (canvas "control", ControlVettingA). Toggling the chip switches between the
+ * two in place.
  */
 export function Detail(props: DetailProps) {
-  return resultView(props.self.characters, props.payload) === "owner" ? <OwnerDetail {...props} /> : <VettingDetail {...props} />;
-}
-
-function VettingDetail(props: DetailProps) {
-  return <CandidateProfile {...props} />;
-}
-
-/** Header, three tabs; the season (GET /api/season) is loaded only here. */
-function OwnerDetail({ payload, hint, onReevaluate, deepdive, self }: DetailProps) {
-  const { t } = useT();
-  const [tab, setTab] = useState<ResultTab>("overview");
-  const [runsOf, setRunsOf] = useState<number | null>(null);
-  const season = useSeason(seasonWho(payload), self, payload);
-  const pick = (next: ResultTab) => {
-    if (next === "dungeons") track("self_tab_dungeons");
-    if (next === "runs") track("self_tab_runs");
-    setTab(next);
-  };
-  return (
-    <>
-      <ResultHead payload={payload} season={season} self={self} />
-      {season.syncOpen && <SyncCard season={season} self={self} />}
-      <div className="rtabs" role="tablist">
-        {RESULT_TABS.map((k) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} className={"rtab" + (tab === k ? " on" : "")} onClick={() => pick(k)}>
-            {t(`self.tabs.${k}`)}
-          </button>
-        ))}
-      </div>
-      {tab === "overview" && <Overview payload={payload} season={season.view} hint={hint} onReevaluate={onReevaluate} />}
-      {tab === "dungeons" && (
-        <DungeonsTab payload={payload} season={season.view} loading={season.loading} onRuns={(id) => { setRunsOf(id); pick("runs"); }} />
-      )}
-      {tab === "runs" && (
-        <RunsTab payload={payload} season={season.view} deepdive={deepdive} encounterID={runsOf} onClearFilter={() => setRunsOf(null)} />
-      )}
-    </>
-  );
+  return resultView(props.self.characters, props.payload) === "owner" ? <OwnerProfile {...props} /> : <CandidateProfile {...props} />;
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { LookupPayload } from "../../types.ts";
 import type { ReevalHint } from "../../lib/keyLevel.ts";
-import { CAND_TABS, CAND_TAB_EVENT, candHref, candInitial, profileHeader, runKeyOf, tabAfter } from "../../lib/profile.ts";
+import { CAND_TABS, CAND_TAB_EVENT, candHref, candInitial, profileHeader, runKeyOf, tabAfter, vettingHref } from "../../lib/profile.ts";
 import type { CandState, CandTab } from "../../lib/profile.ts";
 import { analysisFor } from "../../lib/deepdive.ts";
 import { DEFAULT_LAYERS, shownEvent } from "../../lib/timeline.ts";
@@ -32,18 +32,20 @@ export interface CandidateProfileProps {
   /** The candidate page: the history key the URL names, and the tab / run / sheet are mirrored into the URL. Null on
    * the Live page, where the state lives in memory only and the URL is never touched. */
   urlKey: string | null;
+  /** The member's own vetting profile, shown from their owner page (`as=vetting`): the URL keeps that mode. */
+  vetting?: boolean;
 }
 
 const CLOSED: CandState = { tab: "synthesis", run: null, sheet: false };
 
 /** The candidate profile (redesign phase 2, mockup F-Synthese): the header, four tabs, the tab shown. */
-export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, fetch, compareHref, urlKey }: CandidateProfileProps) {
+export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, fetch, compareHref, urlKey, vetting = false }: CandidateProfileProps) {
   const { t, locale } = useT();
   const [state, setState] = useState<CandState>(() =>
     urlKey === null ? CLOSED : candInitial(location.search, urlKey, payload.perDungeon.runs.map(runKeyOf)));
   useEffect(() => {
-    if (urlKey !== null) history.replaceState({}, "", candHref(urlKey, state));
-  }, [urlKey, state]);
+    if (urlKey !== null) history.replaceState({}, "", (vetting ? vettingHref : candHref)(urlKey, state));
+  }, [urlKey, state, vetting]);
   const header = useMemo(() => profileHeader(t, locale, payload), [t, locale, payload]);
   const tabRefs = useRef(new Map<CandTab, HTMLButtonElement>());
   // The timeline's ticked layers and picked death: per page view, shared by the Runs tab and the run sheet.

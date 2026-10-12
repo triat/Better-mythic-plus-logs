@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import type { LookupPayload } from "../types.ts";
+import type { LookupPayload, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { candidateHref, pageOf } from "./hostedMode.ts";
 import {
-  CAND_TABS, CAND_TAB_EVENT, OWNER_TABS, candHref, candInitial, candState, candSwitchHref, classInitials, classToken, compareHref, ownerHref,
+  CAND_TABS, CAND_TAB_EVENT, OWNER_TABS, OWNER_TAB_EVENT, ownerHeader, candHref, candInitial, candState, candSwitchHref, classInitials, classToken, compareHref, ownerHref,
   ownerState, ownerTabAfter, profileHeader, runKeyOf, tabAfter, vettingHref, viewSwitchHref,
 } from "./profile.ts";
 
@@ -148,6 +148,7 @@ describe("profile state helpers", () => {
   });
   test("one usage event per tab; the compare link names the key", () => {
     expect(CAND_TABS.map((k) => CAND_TAB_EVENT[k])).toEqual(["cand_tab_synthesis", "cand_tab_runs", "cand_tab_dungeons", "cand_tab_method"]);
+    expect(OWNER_TABS.map((k) => OWNER_TAB_EVENT[k])).toEqual(["owner_tab_form", "owner_tab_dungeons", "owner_tab_runs"]);
     const href = compareHref(`eu|Élise-Kel'Thas "x"|12`);
     expect(new URL(href, "http://x").searchParams.get("pick")).toBe(`eu|Élise-Kel'Thas "x"|12`);
     expect(href.startsWith("/compare?pick=")).toBe(true);
@@ -210,5 +211,23 @@ describe("profileHeader", () => {
     const h = profileHeader(tEn, "en", payload({ rio: null }));
     expect(h.links.rio).toBeNull();
     expect(h.facts.map((f) => f.label)).toEqual(["ilvl", "DPS score", "region", "server", "prev season"]);
+  });
+});
+
+describe("ownerHeader", () => {
+  const season = { state: { runs: 94 }, checkedAt: null, runs: new Array(94).fill({}) } as unknown as SeasonView;
+  test("the identity of the candidate header, the season line once loaded", () => {
+    const h = ownerHeader(tEn, "en", payload(), season);
+    expect(h.head.name).toBe("Obye");
+    expect(h.line).toBe("Devourer Demon Hunter · Hyjal (EU) · 94 runs this season");
+    expect(h.runCount).toBe(94);
+  });
+  test("while the season loads: no season part, no count; checked age in French", () => {
+    const h = ownerHeader(tFr, "fr", payload(), null);
+    expect(h.line).toBe("Devourer Demon Hunter · Hyjal (EU)");
+    expect(h.runCount).toBeNull();
+    const now = Date.UTC(2026, 9, 12, 12);
+    const checked = ownerHeader(tFr, "fr", payload(), { ...season, checkedAt: now - 2 * 3_600_000 }, now);
+    expect(checked.line.startsWith("Devourer Demon Hunter · Hyjal (EU) · 94 runs cette saison · ")).toBe(true);
   });
 });

@@ -79,7 +79,7 @@ export function ProfileHeader({ view, hint, onReevaluate, fetch, compareHref, me
 }
 
 /** Wowhead's class icon, the 2-letter tile when it does not load (blocked, offline, unknown class). */
-function ClassIcon({ view }: { view: ProfileHeaderView }) {
+export function ClassIcon({ view }: { view: ProfileHeaderView }) {
   const [failed, setFailed] = useState(false);
   if (view.iconUrl && !failed) {
     return <img className="cand-icon" src={view.iconUrl} width={40} height={40} alt="" onError={() => setFailed(true)} />;

@@ -1,11 +1,12 @@
 // The candidate profile (redesign phase 2, spec docs/superpowers/specs/2026-10-11-ui-redesign-design.md decisions 5–6,
 // mockup docs/design/redesign/F-Synthese.dc.html): its URL state and the compact profile header.
 import { CLASS_NAMES, classHex } from "@shared/wow/classes.ts";
-import type { LookupPayload, UiEvent } from "../types.ts";
+import type { LookupPayload, SeasonView, UiEvent } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { heroStats } from "./axes.ts";
 import { realmName, rioHref } from "./format.ts";
+import { headLine } from "./self.ts";
 import { verdictView } from "./verdict.ts";
 
 export type CandTab = "synthesis" | "runs" | "dungeons" | "method";
@@ -135,6 +136,11 @@ export const CAND_TAB_EVENT = {
   synthesis: "cand_tab_synthesis", runs: "cand_tab_runs", dungeons: "cand_tab_dungeons", method: "cand_tab_method",
 } as const satisfies Record<CandTab, UiEvent>;
 
+/** The usage event an owner tab click counts (catalogue `src/hosted/usage-catalog.ts`). */
+export const OWNER_TAB_EVENT = {
+  form: "owner_tab_form", dungeons: "owner_tab_dungeons", runs: "owner_tab_runs",
+} as const satisfies Record<OwnerTab, UiEvent>;
+
 /** The compare page with this profile ticked. */
 export const compareHref = (key: string): string => `/compare?${new URLSearchParams({ pick: key })}`;
 
@@ -214,4 +220,24 @@ export function profileHeader(t: T, _locale: Locale, p: LookupPayload): ProfileH
     meta,
     runCount: p.perDungeon.runs.length,
   };
+}
+
+export interface OwnerHeaderView {
+  /** Name, class colour, icon, links: the candidate header's. */
+  head: ProfileHeaderView;
+  /** "Elemental Shaman · Hyjal (EU) · 94 runs this season · checked 2 h ago" (the season part once it is loaded). */
+  line: string;
+  /** The Runs tab's count: the season's runs; null while the season loads. */
+  runCount: number | null;
+}
+
+/** The owner page's header (redesign phase 3, mockup F-Moi-Forme): the candidate header's identity, the season line. */
+export function ownerHeader(t: T, locale: Locale, p: LookupPayload, season: SeasonView | null, now = Date.now()): OwnerHeaderView {
+  const head = profileHeader(t, locale, p);
+  const c = p.character;
+  const klass = CLASS_NAMES[c.classID] ?? t("cand.header.unknownClass", { id: String(c.classID) });
+  const base = t("owner.header.line", {
+    spec: c.spec ? `${specWords(c.spec)} ${klass}` : klass, realm: realmName(c.realmSlug), region: c.region.toUpperCase(),
+  });
+  return { head, line: season ? `${base} · ${headLine(t, season, now)}` : base, runCount: season ? season.runs.length : null };
 }

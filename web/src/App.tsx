@@ -6,7 +6,6 @@ import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, Overrid
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { MAX_COMPARE, initialPick, pruneSelection, toggleSelection, withPayloadSummary } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
-import { fmtAge } from "./lib/format.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
 import { mineRequest } from "./lib/me.ts";
 import { suggestionsOf } from "./lib/suggest.ts";
@@ -14,7 +13,6 @@ import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
 import { candHref, candState, candSwitchHref, compareHref } from "./lib/profile.ts";
-import { resultView } from "./lib/self.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, candidateHref, pageOf, proposalMode, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
@@ -596,8 +594,6 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       />
     )
     : <Loading inline />);
-  // The candidate profile carries its own fetch line and Refresh; the owner's view (phase 3) still has the bar above it.
-  const ownerShown = activePayload !== null && resultView(settings.characters, activePayload) === "owner";
 
   const sidebar: SidebarProps = {
     form, onFormChange: setForm, onLookup, busy, suggestions, onSuggest,
@@ -635,16 +631,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
                 <a href="/">{t("shell.candidate.home")}</a>
               </section>
             ) : (
-              <>
-                {ownerShown && <div className="cand-bar">
-                  <span className="muted">
-                    {activeTab ? t("shell.candidate.fetched", { age: fmtAge(t, activeTab.fetchedAt) }) : ""}
-                    {activeTab && fromCache ? ` · ${t("shell.candidate.cached")}` : ""}
-                  </span>
-                  <button type="button" className="btn" onClick={onRefresh} disabled={!activeTab || !!busy} title={t("shell.candidate.refreshTitle")}>{t("shell.candidate.refresh")}</button>
-                </div>}
-                {result}
-              </>
+              result
             )}
           </div>
         )}

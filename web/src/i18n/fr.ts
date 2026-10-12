@@ -1054,6 +1054,14 @@ export const fr: Mirror<typeof en> = {
     },
   },
   owner: {
+    tabs: { label: "Sections de mon personnage", form: "Ma forme", dungeons: "Donjons", runs: "Runs" },
+    header: {
+      line: "{spec} · {realm} ({region})",
+      sync: "Synchroniser",
+      syncTitle: "Synchronise les runs de la saison depuis Warcraft Logs : le coût s'affiche avant toute dépense",
+    },
+    vetting: { bar: "Tu regardes ta fiche telle qu'un chef de groupe la voit", back: "Revenir à ma forme" },
+    empty: "Pas encore de run synchronisé cette saison : Synchroniser remplit ces pages. En attendant, ta fiche de vetting montre ton meilleur run par donjon.",
     dungeons: {
       title: "Mes piliers par donjon",
       legend: { weak: "faible", mid: "moyen", strong: "fort", hint: "clique un donjon pour son détail" },
@@ -1094,6 +1102,7 @@ export const fr: Mirror<typeof en> = {
         result: { timed: "timed", depleted: "depleted", none: "sans temps" },
         first: "Première +{level} tentée ({dungeon}, {result}).",
         resultTime: "{result} {time}",
+        none: "Pas encore de run cette saison.",
       },
       pillars: {
         title: "Mes piliers",
@@ -1113,6 +1122,7 @@ export const fr: Mirror<typeof en> = {
         weeksAgo: "il y a {n} sem.",
         dot: "+{level} {dungeon} · {result}",
         aria: "Niveau de clé de chaque run sur {count, plural, one {la dernière semaine} other {les # dernières semaines}} avec des runs",
+        empty: "Pas encore de run à tracer.",
       },
       check: {
         title: "À travailler · checklist",

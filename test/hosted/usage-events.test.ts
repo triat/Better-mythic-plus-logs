@@ -41,7 +41,7 @@ describe("catalogue", () => {
     expect(USAGE_CATALOG.page_compare.category).toBe("history");
   });
   test("each candidate profile tab has a ui result event", () => {
-    for (const e of ["cand_tab_synthesis", "cand_tab_runs", "cand_tab_dungeons", "cand_tab_method"]) {
+    for (const e of ["cand_tab_synthesis", "cand_tab_runs", "cand_tab_dungeons", "cand_tab_method", "owner_tab_form", "owner_tab_dungeons", "owner_tab_runs"]) {
       expect(isUiEvent(e)).toBe(true);
       expect(USAGE_CATALOG[e as keyof typeof USAGE_CATALOG].category).toBe("result");
     }

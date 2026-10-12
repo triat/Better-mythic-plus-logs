@@ -848,4 +848,14 @@ export const en = {
     empty: "Nothing matches.",
     keys: { move: "navigate", open: "open · 0 pts if already seen", close: "close", arrows: "↑↓" },
   },
+  cand: {
+    header: {
+      line: "{spec} · {role} · {realm} ({region})",
+      role: { dps: "DPS", healer: "Healer", tank: "Tank" },
+      target: "for a +{level}",
+      rio: "RIO",
+      last7d: "runs · 7 days",
+      runsIndexed: "{count, plural, one {# run indexed} other {# runs indexed}}",
+    },
+  },
 } as const;

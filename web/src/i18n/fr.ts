@@ -842,4 +842,14 @@ export const fr: Mirror<typeof en> = {
     empty: "Aucun résultat.",
     keys: { move: "naviguer", open: "ouvrir · 0 pt si déjà consulté", close: "fermer", arrows: "↑↓" },
   },
+  cand: {
+    header: {
+      line: "{spec} · {role} · {realm} ({region})",
+      role: { dps: "DPS", healer: "Heal", tank: "Tank" },
+      target: "pour une +{level}",
+      rio: "RIO",
+      last7d: "runs · 7 jours",
+      runsIndexed: "{count, plural, one {# run indexé} other {# runs indexés}}",
+    },
+  },
 };

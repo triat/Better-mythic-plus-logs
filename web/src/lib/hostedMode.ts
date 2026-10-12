@@ -1,6 +1,7 @@
 import type { MeResult, MeUser } from "../api.ts";
 import type { T } from "../i18n/t.ts";
 import type { Region } from "../types.ts";
+import { candHref } from "./profile.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
 export interface StatusInfo {
@@ -28,8 +29,8 @@ const PAGES: Record<string, Page> = {
   "/admin": "admin", "/settings": "settings", "/privacy": "privacy", "/help": "help", "/me": "me",
 };
 export const pageOf = (pathname: string): Page => PAGES[pathname] ?? "home";
-/** The candidate page's URL for a history entry (phase 2 adds the tab). */
-export const candidateHref = (key: string): string => `/candidate?${new URLSearchParams({ open: key })}`;
+/** The candidate page's URL for a history entry, on its default tab (`candHref` in lib/profile.ts names a tab or a run). */
+export const candidateHref = (key: string): string => candHref(key, {});
 
 export function uiControls(status: StatusInfo): UiControls {
   const local = !status.hosted;

@@ -13,6 +13,7 @@ import { suggestionsOf } from "./lib/suggest.ts";
 import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
+import { candHref, candState, candSwitchHref } from "./lib/profile.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, candidateHref, pageOf, proposalMode, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
@@ -224,7 +225,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       // leave `activeKey` null rather than recursing further.
       // On the candidate page the URL names the profile actually shown, not the evicted one it asked for.
       const landOn = (shown: string | null) => {
-        if (page === "candidate") history.replaceState({}, "", shown ? candidateHref(shown) : "/candidate");
+        if (page === "candidate") history.replaceState({}, "", shown ? candSwitchHref(shown, location.search) : "/candidate");
       };
       const fallback = items?.[0]?.key ?? null;
       if (!fallback) {
@@ -247,6 +248,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // never starts a lookup by itself, and never writes a setting. A pre-redesign /?open= link lands on the candidate page.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    const boot = candState(location.search);
     const legacyOpen = page === "home" ? params.get("open") : null;
     if (legacyOpen) { location.replace(candidateHref(legacyOpen)); return; }
     const q = params.get("q");
@@ -256,7 +258,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       if (page !== "candidate" || items.length === 0) return;
       const want = params.get("open");
       const key = (want && items.some((i) => i.key === want) ? want : null) ?? items[0]!.key;
-      history.replaceState({}, "", candidateHref(key));
+      // The tab, run and sheet survive the boot; a run of the asked-for profile means nothing on the fallback one.
+      history.replaceState({}, "", key === want ? candHref(key, boot) : candHref(key, { tab: boot.tab }));
       void showTab(key);
     });
     // Once per page load: the URL is read at boot only.
@@ -291,7 +294,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   /** Shows a history profile: in place on the candidate page (the URL follows) and on Live, else on the candidate page. */
   const openProfile = useCallback((key: string) => {
     if (!inPlace) { location.assign(candidateHref(key)); return; }
-    if (page === "candidate") history.replaceState({}, "", candidateHref(key));
+    if (page === "candidate") history.replaceState({}, "", candSwitchHref(key, location.search));
     void showTab(key);
   }, [showTab]);
 
@@ -301,7 +304,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     const key = await runLookup(req, refresh);
     if (key === null) return;
     if (!inPlace) location.assign(candidateHref(key));
-    else if (page === "candidate") history.replaceState({}, "", candidateHref(key));
+    else if (page === "candidate") history.replaceState({}, "", candSwitchHref(key, location.search));
   }, [runLookup]);
 
   const onLookup = () => void lookupAndLand(formToRequest(form, yourKey, region));
@@ -344,7 +347,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (activeKey === key) {
       const next = items[0]?.key ?? null;
       setActiveKey(next);
-      if (page === "candidate") history.replaceState({}, "", next ? candidateHref(next) : "/candidate");
+      if (page === "candidate") history.replaceState({}, "", next ? candSwitchHref(next, location.search) : "/candidate");
       if (next) void showTab(next);
     }
   };
@@ -356,7 +359,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     track("reevaluate");
     const oldKey = tab.key;
     if (await runLookup({ ...tab.request, level: yourKey }, false) === null) return;
-    if (page === "candidate" && activeKeyRef.current) history.replaceState({}, "", candidateHref(activeKeyRef.current));
+    if (page === "candidate" && activeKeyRef.current) history.replaceState({}, "", candSwitchHref(activeKeyRef.current, location.search));
     // runLookup activated the new key; the old entry is redundant now.
     await api.removeHistory(oldKey);
     payloads.current.delete(oldKey);
@@ -383,7 +386,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       if (!d.fromCache) payloads.current.delete(d.key);
       if (page === "home") { location.assign(candidateHref(d.key)); return; }
       if (!inPlace) return;
-      if (page === "candidate") history.replaceState({}, "", candidateHref(d.key));
+      if (page === "candidate") history.replaceState({}, "", candSwitchHref(d.key, location.search));
       await showTab(d.key);
       setFromCache(d.fromCache);
     },

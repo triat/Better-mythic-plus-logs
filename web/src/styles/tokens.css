@@ -50,6 +50,27 @@
   --warn: #f59e5b; /* redesign spec 2026-10-11 — old name */
   --orange: #f59e5b; /* redesign spec 2026-10-11 — old name */
 
+  /* Heat scale: tinted cells (Donjons grid), score bands < 45 · 45–54 · 55–69 · 70–84 · ≥ 85 */
+  --heat-1-bg: #5a2e14; /* redesign spec 2026-10-11 — heat < 45 */
+  --heat-1-fg: #ffb27a; /* redesign spec 2026-10-11 — heat < 45 */
+  --heat-2-bg: #3a2a1c; /* redesign spec 2026-10-11 — heat 45–54 */
+  --heat-2-fg: #f5c79b; /* redesign spec 2026-10-11 — heat 45–54 */
+  --heat-3-bg: #1c2029; /* redesign spec 2026-10-11 — heat 55–69 */
+  --heat-3-fg: #c9ced8; /* redesign spec 2026-10-11 — heat 55–69 */
+  --heat-4-bg: #152a3a; /* redesign spec 2026-10-11 — heat 70–84 */
+  --heat-4-fg: #8ccbf2; /* redesign spec 2026-10-11 — heat 70–84 */
+  --heat-5-bg: #16405c; /* redesign spec 2026-10-11 — heat ≥ 85 */
+  --heat-5-fg: #bee4ff; /* redesign spec 2026-10-11 — heat ≥ 85 */
+
+  /* Parse scale (Warcraft Logs colours): only on a parse % */
+  --parse-gray: #8a8f98; /* redesign spec 2026-10-11 — parse < 25 */
+  --parse-green: #1eff00; /* redesign spec 2026-10-11 — parse 25–49 */
+  --parse-blue: #3d8bff; /* redesign spec 2026-10-11 — parse 50–74 */
+  --parse-purple: #a335ee; /* redesign spec 2026-10-11 — parse 75–94 */
+  --parse-orange: #ff8000; /* redesign spec 2026-10-11 — parse 95–98 */
+  --parse-pink: #e268a8; /* redesign spec 2026-10-11 — parse 99 */
+  --parse-gold: #e5cc80; /* redesign spec 2026-10-11 — parse 100 */
+
   /* Buttons */
   --primary: #eceef2; /* redesign spec 2026-10-11 — the single primary button of a view */
   --on-primary: #0e1014; /* redesign spec 2026-10-11 */

@@ -39,11 +39,18 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .tone-warn { color: var(--warn); font-weight: 600; }
 .tone-bad { color: var(--red); font-weight: 700; }
 .tone-neutral { color: var(--text); }
-.tier-legendary { color: #ff8000; }
-.tier-magenta { color: #a35fe0; }
-.tier-blue { color: #58a6ff; }
-.tier-green { color: #56d364; }
-.tier-gray { color: #8b949e; }
+.tier-gold { color: var(--parse-gold); }
+.tier-pink { color: var(--parse-pink); }
+.tier-legendary { color: var(--parse-orange); }
+.tier-magenta { color: var(--parse-purple); }
+.tier-blue { color: var(--parse-blue); }
+.tier-green { color: var(--parse-green); }
+.tier-gray { color: var(--parse-gray); }
+.heat-1 { background: var(--heat-1-bg); color: var(--heat-1-fg); }
+.heat-2 { background: var(--heat-2-bg); color: var(--heat-2-fg); }
+.heat-3 { background: var(--heat-3-bg); color: var(--heat-3-fg); }
+.heat-4 { background: var(--heat-4-bg); color: var(--heat-4-fg); }
+.heat-5 { background: var(--heat-5-bg); color: var(--heat-5-fg); }
 
 .badge { display: inline-flex; align-items: baseline; gap: 10px; border-radius: 8px; padding: 8px 14px; border: 1px solid; }
 .badge .badge-label { font-size: 20px; font-weight: 800; letter-spacing: .04em; }

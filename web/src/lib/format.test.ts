@@ -42,7 +42,12 @@ describe("format", () => {
     expect(signed(-3.14, 1, "%")).toBe("−3.1%");
   });
   test("parseTier thresholds", () => {
+    expect(parseTier(100)).toBe("gold");
+    expect(parseTier(99)).toBe("pink");
+    expect(parseTier(99.9)).toBe("pink");
+    expect(parseTier(98.9)).toBe("legendary");
     expect(parseTier(95)).toBe("legendary");
+    expect(parseTier(94.9)).toBe("magenta");
     expect(parseTier(75)).toBe("magenta");
     expect(parseTier(50)).toBe("blue");
     expect(parseTier(25)).toBe("green");

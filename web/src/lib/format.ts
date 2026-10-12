@@ -2,7 +2,8 @@ import type { T } from "../i18n/t.ts";
 
 export const STALE_DAYS = 14;
 export type Tone = "good" | "warn" | "bad" | "neutral";
-export type ParseTier = "legendary" | "magenta" | "blue" | "green" | "gray";
+/** Warcraft Logs parse colours: gray < 25, green, blue, magenta (purple) from 75, legendary (orange) from 95, pink 99, gold 100. */
+export type ParseTier = "gold" | "pink" | "legendary" | "magenta" | "blue" | "green" | "gray";
 
 export const fmtAmount = (n: number): string => {
   if (n >= 1e6) return (n / 1e6).toFixed(2) + "m";
@@ -39,7 +40,7 @@ export const signed = (n: number, digits = 0, unit = ""): string => {
 };
 
 export const parseTier = (p: number): ParseTier =>
-  p >= 95 ? "legendary" : p >= 75 ? "magenta" : p >= 50 ? "blue" : p >= 25 ? "green" : "gray";
+  p >= 100 ? "gold" : p >= 99 ? "pink" : p >= 95 ? "legendary" : p >= 75 ? "magenta" : p >= 50 ? "blue" : p >= 25 ? "green" : "gray";
 
 export const deathsTone = (n: number): Tone => (n === 0 ? "good" : n <= 2 ? "warn" : "bad");
 /** Lower is better (DTPS, avoidable damage): percent delta vs peers. */

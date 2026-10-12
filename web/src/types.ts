@@ -23,7 +23,7 @@ export type { PillarKey, PillarScore } from "@shared/evaluation/types.ts";
 export type { DungeonDetails, DungeonRow, PillarRecord, PillarTrend, SeasonRunView, SeasonView, WindowView, WorkOnRow } from "@shared/self/season.ts";
 export type { SyncState } from "@shared/self/sync.ts";
 export type { CharacterSource, MyCharacter } from "@shared/self/characters.ts";
-export type { AbilityDamage, EnemyCast, KillingHit } from "@shared/signals/types.ts";
+export type { AbilityDamage, DeathEvent, EnemyCast, KillingHit, PeerComparison } from "@shared/signals/types.ts";
 export type { Role } from "@shared/evaluation/types.ts";
 export type { EvidenceSource } from "@shared/evaluation/axes/index.ts";
 export type { EvaluationDocs, AxisDoc, SubSignalDoc, ExtraDoc, FaqEntry, SourceDoc, TextBlock } from "@shared/evaluation/docs.ts";

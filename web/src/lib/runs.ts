@@ -1,10 +1,38 @@
-import type { LookupPayload, MPlusRun, RunSignals } from "../types.ts";
+import type { LookupPayload, MPlusRun, PeerComparison, RunSignals } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import { STALE_DAYS, ageDays, deathsTone, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, signed, toneClass, wclUrl } from "./format.ts";
 
 export interface Part { text: string; cls: string }
 
 const pctDelta = (mine: number, median: number) => ((mine - median) / median) * 100;
+
+/** Percent delta against the peers' median (lower is better for DTPS and avoidable damage); null without a usable median. */
+export const vsPeers = (mine: number, peer: PeerComparison | null): number | null =>
+  peer && peer.median > 0 ? pctDelta(mine, peer.median) : null;
+
+/** Kicks as the run rows count them: capacity rounded, the usage gap vs peers in points (higher is better). */
+export function kickFigures(i: RunSignals["interrupts"]): { count: number; noKick: boolean; cap: number | null; peerPct: number | null; deltaPts: number | null } {
+  const cap = i.kickCooldownS !== null && i.capacity !== null && i.usage !== null ? Math.round(i.capacity) : null;
+  const peer = cap !== null && i.peer ? i.peer.median : null;
+  return {
+    count: i.count, noKick: i.kickCooldownS === null, cap,
+    peerPct: peer === null ? null : Math.round(peer * 100),
+    deltaPts: peer === null ? null : (i.usage! - peer) * 100,
+  };
+}
+
+/** The kicks part of a run row ("kicks 8/20 (peer 30%)"). */
+export function kicksPart(t: T, i: RunSignals["interrupts"]): Part {
+  const k = kickFigures(i);
+  if (k.noKick) return { text: t("runs.kicksNoSpec", { n: k.count }), cls: "faint" };
+  if (k.cap === null) return { text: t("runs.kicks", { n: k.count }), cls: "" };
+  if (k.peerPct !== null) return { text: t("runs.kicksCap", { n: k.count, cap: k.cap, peer: k.peerPct }), cls: toneClass(higherTone(k.deltaPts!)) };
+  return { text: t("runs.kicksCapNoPeer", { n: k.count, cap: k.cap }), cls: "" };
+}
+
+/** The dispels part of a run row ("dispels 9"). */
+export const dispelsPart = (t: T, d: RunSignals["dispels"]): Part =>
+  d.available ? { text: t("runs.dispels", { n: d.count }), cls: "" } : { text: t("runs.dispelsNoSpec", { n: d.count }), cls: "faint" };
 
 export function signalParts(t: T, s: RunSignals): Part[] {
   const parts: Part[] = [];
@@ -13,36 +41,25 @@ export function signalParts(t: T, s: RunSignals): Part[] {
     text: t("runs.deaths", { count: s.deaths.count }) + (wipes ? t("runs.wipes", { n: wipes }) : ""),
     cls: toneClass(deathsTone(s.deaths.count)),
   });
-  const peer = s.damageTaken.peer;
   const dtps = fmtAmount(s.damageTaken.dtps);
-  if (peer && peer.median > 0) {
-    const d = pctDelta(s.damageTaken.dtps, peer.median);
-    parts.push({ text: t("runs.dtpsVs", { dtps, delta: signed(d, 0, "%"), n: peer.count }), cls: toneClass(lowerTone(d)) });
+  const dd = vsPeers(s.damageTaken.dtps, s.damageTaken.peer);
+  if (dd !== null) {
+    parts.push({ text: t("runs.dtpsVs", { dtps, delta: signed(dd, 0, "%"), n: s.damageTaken.peer!.count }), cls: toneClass(lowerTone(dd)) });
   } else {
     parts.push({ text: t("runs.dtps", { dtps }), cls: "" });
   }
   if (s.avoidableDamage) {
     const a = s.avoidableDamage;
     const perMin = fmtAmount(a.perMinute);
-    if (a.peer && a.peer.median > 0) {
-      const d = pctDelta(a.perMinute, a.peer.median);
-      parts.push({ text: t("runs.avoidableVs", { perMin, delta: signed(d, 0, "%") }), cls: toneClass(lowerTone(d)) });
+    const ad = vsPeers(a.perMinute, a.peer);
+    if (ad !== null) {
+      parts.push({ text: t("runs.avoidableVs", { perMin, delta: signed(ad, 0, "%") }), cls: toneClass(lowerTone(ad)) });
     } else {
       parts.push({ text: t("runs.avoidable", { perMin }), cls: "" });
     }
   }
-  const i = s.interrupts;
-  if (i.kickCooldownS === null) parts.push({ text: t("runs.kicksNoSpec", { n: i.count }), cls: "faint" });
-  else if (i.capacity === null || i.usage === null) parts.push({ text: t("runs.kicks", { n: i.count }), cls: "" });
-  else if (i.peer) {
-    const d = (i.usage - i.peer.median) * 100;
-    parts.push({ text: t("runs.kicksCap", { n: i.count, cap: Math.round(i.capacity), peer: Math.round(i.peer.median * 100) }), cls: toneClass(higherTone(d)) });
-  } else {
-    parts.push({ text: t("runs.kicksCapNoPeer", { n: i.count, cap: Math.round(i.capacity) }), cls: "" });
-  }
-  parts.push(s.dispels.available
-    ? { text: t("runs.dispels", { n: s.dispels.count }), cls: "" }
-    : { text: t("runs.dispelsNoSpec", { n: s.dispels.count }), cls: "faint" });
+  parts.push(kicksPart(t, s.interrupts));
+  parts.push(dispelsPart(t, s.dispels));
   if (s.consumables) parts.push({ text: t("runs.consumables", { pots: s.consumables.potions, hs: s.consumables.healthstones }), cls: "" });
   return parts;
 }

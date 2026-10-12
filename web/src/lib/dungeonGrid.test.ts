@@ -6,7 +6,6 @@ import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { dungeonGrid, heatOfDeaths, heatOfDelta } from "./dungeonGrid.ts";
 import { profileHeader } from "./profile.ts";
-import { tiles } from "./tiles.ts";
 import { payload, runs, sig } from "./vachaman.fixture.ts";
 
 const tFr = makeT(fr, "fr");
@@ -158,12 +157,16 @@ describe("dungeonGrid", () => {
       return fields.some((f) => f === value || re.test(f));
     };
     const header = profileHeader(tEn, "en", p).facts.map((f) => f.value);
-    const ts = tiles(tEn, p).filter((x) => !x.empty);
-    expect(ts.length).toBe(10);
-    for (const tile of ts) {
-      const inHeader = tile.label === tEn("tiles.ilvl") || tile.label === tEn("tiles.prevSeason");
-      if (inHeader) expect(header).toContain(tile.value);
-      else expect({ tile: tile.label, found: inField(tile.value) }).toEqual({ tile: tile.label, found: true });
+    // Values the pre-redesign tiles (`lib/tiles.ts`, removed in phase 4) showed for this fixture: [label, value].
+    const ts: [string, string][] = [
+      ["Median DPS", "400.0k"], ["Median parse", "58.0%"], ["Timed (shown)", "8/8"], ["Avg deaths", "0.6"],
+      ["Δ DTPS vs peers", "−1%"], ["Avoidable vs peers", "−33%"], ["Kicks vs peers", "+1 pts"], ["ilvl", "328"],
+      ["RIO recent timed", "18/20"], ["Prev season", "3102"],
+    ];
+    for (const [label, value] of ts) {
+      const inHeader = label === "ilvl" || label === "Prev season";
+      if (inHeader) expect(header).toContain(value);
+      else expect({ tile: label, found: inField(value) }).toEqual({ tile: label, found: true });
     }
   });
 });

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  ageDays, deathsTone, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, realmName, rioHref, signed, toneClass, wclUrl,
+  ageDays, fmtAge, fmtAmount, fmtDuration, higherTone, lowerTone, parseTier, realmName, rioHref, signed, toneClass, wclUrl,
 } from "./format.ts";
 
 const tFr = makeT(fr, "fr");
@@ -54,9 +54,6 @@ describe("format", () => {
     expect(parseTier(24.9)).toBe("gray");
   });
   test("tones", () => {
-    expect(deathsTone(0)).toBe("good");
-    expect(deathsTone(2)).toBe("warn");
-    expect(deathsTone(3)).toBe("bad");
     expect(lowerTone(-10)).toBe("good");
     expect(lowerTone(10)).toBe("neutral");
     expect(lowerTone(30)).toBe("warn");

@@ -101,7 +101,7 @@ export function dungeonPanel(t: T, locale: Locale, row: DungeonRow): PanelView {
   };
 }
 
-/** A season run as the run list's `MPlusRun` (`rowOf` in runs.ts renders both). */
+/** A season run as the run list's `MPlusRun` (the owner and candidate run views render both). */
 export const runOf = (v: SeasonRunView): MPlusRun => ({
   encounterID: v.encounterID, encounterName: v.encounterName, keyLevel: v.keyLevel, amount: v.amount, parsePercent: v.parse,
   spec: v.spec, affixes: v.affixes, reportCode: v.reportCode, fightID: v.fightID, startTime: v.startTime, score: v.score,

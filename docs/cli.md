@@ -122,14 +122,17 @@ After that, four screens:
   (0 pts), else with the usual lookup. Suggesting itself never calls Warcraft
   Logs or Raider.IO. Hosted, the suggestions come from your history and My
   characters only.
-- **Detail** — the verdict badge and 0–100 score, the five axes (Survival,
-  Utility, Throughput, Consistency, Preparation) each with a
-  confidence dot and its evidence, a radar chart, signal tiles, the best run
-  per dungeon with that run's own signals, and a collapsed Raider.IO section.
-- **Compare** — 2–3 characters side by side: their radars overlaid in their
-  class colors, and a pivoted table (one row per stat, one column per
-  character) with verdict badges in the header and the best value in each row
-  highlighted.
+- **Detail** — the candidate profile: the verdict and 0–100 score, what would
+  flip it, strengths and weaknesses and the five axes (Survival, Utility,
+  Throughput, Consistency, Preparation) with their evidence, then the runs on a
+  timeline, the best run per dungeon and the method behind the score.
+- **Compare** — two to five profiles from your history (`/compare?pick=…`, one
+  `pick` per profile). Two make a duel: a summary of who leads where, the two
+  heads, the axes mirrored with the winner of each, the key figures and the best
+  key per dungeon. Three to five make a ranking: one card per profile ranked by
+  global score (ties share their rank), the axes and figures as a grid with the
+  best of each row marked, and the best key per dungeon. Reading history costs
+  nothing.
 - **Setup** — the first-run flow above, also reachable any time via the
   **Re-configure** button.
 

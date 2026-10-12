@@ -1,7 +1,7 @@
 // The candidate profile's Donjons tab (redesign phase 2, spec docs/superpowers/specs/2026-10-11-ui-redesign-design.md
 // decision 6, mockup docs/design/redesign/F-Donjons.dc.html): one row per dungeon's best run with role-aware two-line
 // cells tinted on the heat scale, the inline detail, and the notes strip that replaces the signal tiles on the
-// candidate page. The figures are the run rows' (`runs.ts`, `runList.ts`) and the tiles' (`tiles.ts`) own.
+// candidate page. The figures are the run list's (`runList.ts`) and the pre-redesign signal tiles' own.
 import type { LookupPayload, MPlusRun, Role } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";

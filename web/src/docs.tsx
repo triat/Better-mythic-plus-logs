@@ -19,7 +19,7 @@ const Ctx = createContext<DocsContext>({ docs: null, axes: null, failed: false, 
 
 /**
  * GET /api/docs?lang= once per page load and again when the UI language changes (public, 0 WCL pts): the registry and
- * the effective config that the callouts and the radar tooltips print. The previous language's docs stay up while the
+ * the effective config that the callouts, the synthesis and the method tab print. The previous language's docs stay up while the
  * next ones load, so a switch never blanks the callouts.
  */
 export function DocsProvider({ children }: { children: ReactNode }) {

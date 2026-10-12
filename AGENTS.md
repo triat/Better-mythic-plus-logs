@@ -95,7 +95,8 @@ the Ctrl K palette around every page, the pages `/candidate`, `/compare` and `/l
 hosted landing. Redesign phase 2 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`): the
 candidate profile — compact header, Synthèse, Runs with the layered timeline, the run sheet, Donjons, Méthode — and the
 Experience axis removed. Redesign phase 3 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`):
-the owner pages — Ma forme, Donjons, Runs with filters and week groups, `as=vetting` — and Mes personnages as cards;
-redesign phase 4 (Compare 2–5, Live, removal of the old CSS and components) next. Also next: self-review phase 3 (own
-spec), WCL items in issue #24. Unscheduled ideas live
+the owner pages — Ma forme, Donjons, Runs with filters and week groups, `as=vetting` — and Mes personnages as cards.
+Redesign phase 4 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md`): Compare 2–5 (duel /
+ranking), the Live page in the frame, the old CSS and components removed — the redesign is complete. Next: self-review
+phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

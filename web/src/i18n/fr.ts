@@ -8,7 +8,6 @@ export const fr: Mirror<typeof en> = {
     loading: "chargement…",
     close: "Fermer",
     cancel: "Annuler",
-    save: "Enregistrer",
     back: "← retour",
     backToLookups: "← retour aux recherches",
     help: "Aide",
@@ -155,9 +154,6 @@ export const fr: Mirror<typeof en> = {
     role: { tank: "Tank", healer: "Heal", dps: "DPS" },
     class: { all: "toutes" },
   },
-  tabs: {
-    auto: "auto",
-  },
   errors: {
     quota: "Quota horaire atteint ({used}/{limit} pts) — reset dans {min} min",
     quotaShort: "Il faut environ {needed} pts et il t'en reste {left} sur {limit} cette heure — reset dans {min} min",
@@ -293,7 +289,6 @@ export const fr: Mirror<typeof en> = {
     replaces: " (remplace cet onglet · données en cache)",
     metricAuto: " · métrique auto-sélectionnée ; il y a aussi des données {other}",
     filter: "filtre : {spec}",
-    na: "n/a",
     noEvidence: "aucun indice",
     notEnough: "pas assez de données pour cet axe",
     weight: {
@@ -342,21 +337,12 @@ export const fr: Mirror<typeof en> = {
     avg: "moy. {value}",
     unit: { perRun: "{value} / run", vsPeers: "{value} % vs pairs", pct: "{value} %", plain: "{value}", ptsVsPeers: "{value} pts vs pairs", pts: "{value} pts" },
   },
-  tiles: {
-    median: "{metric} médian", medianParse: "Parse médian", timed: "Timed (affichés)", avgDeaths: "Morts moy.", inWipes: "{n} en wipe",
-    dtps: "Δ DTPS vs pairs", avoidable: "Évitable vs pairs", kicks: "Kicks vs pairs", ilvl: "ilvl", rioRecent: "RIO récents timed",
-    prevSeason: "Saison préc.", noData: "— pas de données (reroll ?)",
-  },
   runs: {
     analyze: "Analyser · {cost}", reanalyze: "Ré-analyser · {cost}", analyzing: "Analyse {done}/{total}…",
     cost: "~{pts} pts",
-    deaths: "{count, plural, one {# mort} other {# morts}}", wipes: " ({n} en wipe)",
-    dtpsVs: "{dtps} dtps {delta} vs {n} dps", dtps: "{dtps} dtps",
-    avoidableVs: "évitable {perMin}/min ({delta})", avoidable: "évitable {perMin}/min",
+    deaths: "{count, plural, one {# mort} other {# morts}}",
     kicksNoSpec: "kicks {n} (pas de kick sur cette spec)", kicks: "kicks {n}", kicksCap: "kicks {n}/{cap} (pairs {peer} %)", kicksCapNoPeer: "kicks {n}/{cap}",
     dispels: "dispels {n}", dispelsNoSpec: "dispels {n} (pas de dispel sur cette spec)",
-    consumables: "{pots} pots · {hs} hs",
-    timed: "✓+{chests} {time}", depleted: "✗ depleted {time}",
     unranked: "non classé",
     missing: "aucun run dans : {list}",
   },
@@ -658,7 +644,7 @@ export const fr: Mirror<typeof en> = {
     reading: {
       labels: { verdict: "Verdict", tiles: "Tuiles", runs: "Runs", deepdive: "Panneau deep-dive", compare: "Comparer", stale: "Ancien", cached: "En cache" },
       lines: {
-        verdict: "{label} — le badge avec le score global et la confiance ; le radar a un point par axe, un axe n/a est creux au centre plutôt qu'à 0 ; chaque ligne d'axe se déplie sur ses lignes d'indice.",
+        verdict: "{label} — le verdict avec le score global et la confiance, ce qui le ferait basculer, les forces et les faiblesses, puis une ligne par axe avec son score et ses principaux indices ; un axe n/a affiche un tiret plutôt que 0.",
         tiles: "{label} — DPS/HPS médian et Parse médian (classements), Timed (affichés) en runs timed / enrichis, Morts moy. (avec la part en wipe), Δ DTPS vs pairs, Évitable vs pairs et Kicks vs pairs (médianes par run), ilvl, RIO récents timed (les 10 derniers runs Raider.IO) et Saison préc. (score Raider.IO de la saison précédente). Un tiret veut dire que la donnée manque, pas zéro.",
         runs: "{label} — une ligne par run affiché : niveau de key, timed / depleted, parse, morts, DTPS et évitable vs pairs, kicks, dispels, avec un lien vers le report Warcraft Logs. Chaque ligne a un bouton Analyser pour le deep-dive.",
         deepdive: "{label} — utilisation vs capacité par defensive et une ligne par mort ; un point jaune marque une correction de table que tu as proposée et encore en attente, un bleu une entrée de la table partagée.",
@@ -770,7 +756,7 @@ export const fr: Mirror<typeof en> = {
   },
   shell: {
     nav: { home: "Accueil", candidate: "Candidats", me: "Mes persos", compare: "Comparer", live: "Live", help: "Aide" },
-    account: { local: "Mode local", menu: "Compte" },
+    account: { local: "Mode local" },
     navLabel: "Navigation",
     paletteKey: "Ctrl K",
     paletteOpen: "Ouvrir la palette de commandes",

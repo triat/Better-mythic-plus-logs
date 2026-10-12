@@ -42,7 +42,6 @@ export const signed = (n: number, digits = 0, unit = ""): string => {
 export const parseTier = (p: number): ParseTier =>
   p >= 100 ? "gold" : p >= 99 ? "pink" : p >= 95 ? "legendary" : p >= 75 ? "magenta" : p >= 50 ? "blue" : p >= 25 ? "green" : "gray";
 
-export const deathsTone = (n: number): Tone => (n === 0 ? "good" : n <= 2 ? "warn" : "bad");
 /** Lower is better (DTPS, avoidable damage): percent delta vs peers. */
 export const lowerTone = (pct: number): Tone => (pct <= -10 ? "good" : pct <= 10 ? "neutral" : pct <= 30 ? "warn" : "bad");
 /** Higher is better (kick usage): points delta vs peers. */

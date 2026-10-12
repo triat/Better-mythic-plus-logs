@@ -1,15 +1,8 @@
 import type { T } from "../i18n/t.ts";
-import type { HistoryItem, LookupPayload, Region } from "../types.ts";
+import type { HistoryItem, LookupPayload } from "../types.ts";
 import type { MenuItem } from "./header.ts";
-import { regionLabel } from "./regions.ts";
 
 export const MAX_COMPARE = 5;
-
-export function toggleSelection(selected: string[], key: string): string[] {
-  if (selected.includes(key)) return selected.filter((k) => k !== key);
-  const next = [...selected, key];
-  return next.length > MAX_COMPARE ? next.slice(next.length - MAX_COMPARE) : next;
-}
 
 /**
  * `/compare?pick=a&pick=b…`: every `pick` param in order, each kept only once and only when it is a history key, capped
@@ -56,17 +49,6 @@ export function pickMenu(t: T, items: readonly HistoryItem[], selected: readonly
 
 export const pruneSelection = (selected: string[], existingKeys: string[]): string[] =>
   selected.filter((k) => existingKeys.includes(k));
-
-/** "US · " when the tab's region is not the instance default, else nothing (design: canvas "RegionSpec", tabs row). */
-const regionPrefix = (item: HistoryItem, instanceRegion: Region): string =>
-  item.request.region !== instanceRegion ? `${regionLabel(item.request.region)} · ` : "";
-
-/** The visible level on the tab: "+18", or "US · +18" off the instance region. */
-export const tabLevel = (item: HistoryItem, instanceRegion: Region): string =>
-  `${regionPrefix(item, instanceRegion)}+${item.targetLevel}`;
-
-export const tabSubtitle = (t: T, item: HistoryItem, instanceRegion: Region): string =>
-  `${tabLevel(item, instanceRegion)}${item.targetAutoDetected ? ` ${t("tabs.auto")}` : ""}${item.spec ? ` · ${item.spec}` : ""}`;
 
 /**
  * The history list with the entry `key` carrying the verdict and score of its loaded payload. The server re-evaluates

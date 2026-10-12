@@ -1,6 +1,6 @@
 # UI redesign: one shell, answer first, a run timeline with layers — design
 
-Status: approved 2026-10-11 ("go"), with the two open points as proposed: the Experience axis leaves the model (config version bump), and the redesign canvas replaces the old project canvas for this work. Phase 1 implemented 2026-10-11; phase 2 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`, see "Phase 2 notes"); phase 3 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`, see "Phase 3 notes"). Mockups chosen over three rounds on the redesign canvas
+Status: approved 2026-10-11 ("go"), with the two open points as proposed: the Experience axis leaves the model (config version bump), and the redesign canvas replaces the old project canvas for this work. Phase 1 implemented 2026-10-11; phase 2 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`, see "Phase 2 notes"); phase 3 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`, see "Phase 3 notes"); phase 4 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md`, see "Phase 4 notes"). Mockups chosen over three rounds on the redesign canvas
 (https://claude.ai/artifact/WeznnnDkrDGMPyAsuSKBeE, page "4 · Final"); the chosen artboards are checked in under
 `docs/design/redesign/` (`F-*.dc.html`) with the mockup rules (`mockup-rules-round2.md`, `mockup-rules-round3.md`).
 This spec supersedes the visual parts of `2026-09-16-web-front-design.md` (screens, header, tabs) and the layout
@@ -196,6 +196,39 @@ What phase 3 (the owner pages and Mes personnages) settled while it was built; t
    (`VerdictHero`, `ScoreDrivers`, `AxisRows`, `AxisLegend`, `SignalTiles`, `DungeonRuns`) are gone with their view
    models, CSS and strings. `lib/tiles.ts` and `lib/runs.ts`'s `rowOf` stay as the references of phase 2's
    "nothing lost" tests; phase 4 removes the rest of the old CSS.
+
+## Phase 4 notes
+
+What phase 4 (Compare 2–5, the Live page, the cleanup) settled while it was built; these override the sections above.
+
+1. **Compare URL**: the selection is `/compare?pick=<key>&pick=<key>…` (one repeated `pick` per profile, up to five,
+   in selection order), rewritten with `history.replaceState` only once `GET /api/history` answered — a reload before
+   that, or after it failed, keeps the picks. The profile header's Compare is the one-pick case.
+2. **Duel summary**: built from the counted axes' winners (a gap of 2 points or less is a tie) and the two largest
+   real gaps told through each axis's headline fact (deaths per run, kicks vs peers, median parse, item level).
+3. **Best key per dungeon**: `top` marks the highest *timed* key of the row in both layouts; a depleted higher key is
+   never top.
+4. **No radar**: the overlaid radars are gone (`Radar`, `lib/radar.ts` removed); the duel's mirrored axes and the
+   ranking's per-card bars replace them.
+5. **Ranking**: tied global scores share their rank (1, 1, 3) and every rank-1 card takes the top border; an
+   insufficient card is ranked last and never top. The cards keep the target's "auto" marker, as the duel's heads.
+   Under 900 px the axis, figure and dungeon grids restack, each cell carrying its column's series square and name.
+   The series squares use the `--series-1` … `--series-5` tokens.
+6. **Loading**: a pick that fails to load is named with a Retry and the comparison shows the others when two or more
+   loaded; fewer than two, a failed `GET /api/docs` or a failed history call show an error with Retry. One failed
+   batch reloads history once and shows one toast. Two picks with the same name carry their realm (and region when
+   the realm is the same too) in column heads, mirror labels and win texts.
+7. **Live verdicts**: `POST /api/live/cached` answers each verdict with its `spec` and `ilvl` (`LiveVerdict.spec` /
+   `ilvl`), so a row shows them without another fetch.
+8. **"Évaluer · ~10 pts"**: the Live row's button shows a lookup's cost (`LOOKUP_PTS`), not the deep-dive's 3 pts.
+9. **"Ta clé"**: the dungeon name of the member's own key is not available (only "your key" level is known), so the
+   line shows the level and its age only.
+10. **One Déconnecter**: a single button in the page header, next to the Live chip (the chip itself only connects).
+11. **Live rows** stack into two lines under 760 px instead of hiding columns.
+12. **Cleanup**: `lib/tiles.ts` and `lib/runs.ts`'s `rowOf` / `RunRowModel` / `signalParts` are gone; the "nothing
+    lost" tests keep the values they produced as literal constants. Phase 4 also removed the rest of the old CSS
+    (the pre-redesign hero, axis rows, tiles, radar legend, result tabs, badge sizes …), the unused view-model
+    functions and their strings.
 
 ## Out of scope / follow-ups
 

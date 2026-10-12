@@ -11,7 +11,6 @@ export const en = {
     loading: "loading…",
     close: "Close",
     cancel: "Cancel",
-    save: "Save",
     back: "← back",
     backToLookups: "← back to lookups",
     help: "Help",
@@ -161,9 +160,6 @@ export const en = {
     role: { tank: "Tank", healer: "Heal", dps: "DPS" },
     class: { all: "all" },
   },
-  tabs: {
-    auto: "auto",
-  },
   errors: {
     quota: "Hourly quota reached ({used}/{limit} pts) — resets in {min} min",
     quotaShort: "This needs about {needed} pts and {left} of your {limit} are left this hour — resets in {min} min",
@@ -299,7 +295,6 @@ export const en = {
     replaces: " (replaces this tab · cached data)",
     metricAuto: " · metric auto-selected; {other} data exists too",
     filter: "filter: {spec}",
-    na: "n/a",
     noEvidence: "no evidence",
     notEnough: "not enough data for this axis",
     weight: {
@@ -348,21 +343,12 @@ export const en = {
     avg: "avg {value}",
     unit: { perRun: "{value} / run", vsPeers: "{value}% vs peers", pct: "{value}%", plain: "{value}", ptsVsPeers: "{value} pts vs peers", pts: "{value} pts" },
   },
-  tiles: {
-    median: "Median {metric}", medianParse: "Median parse", timed: "Timed (shown)", avgDeaths: "Avg deaths", inWipes: "{n} in wipes",
-    dtps: "Δ DTPS vs peers", avoidable: "Avoidable vs peers", kicks: "Kicks vs peers", ilvl: "ilvl", rioRecent: "RIO recent timed",
-    prevSeason: "Prev season", noData: "— no data (reroll?)",
-  },
   runs: {
     analyze: "Analyze · {cost}", reanalyze: "Re-analyze · {cost}", analyzing: "Analyzing {done}/{total}…",
     cost: "~{pts} pts",
-    deaths: "{count, plural, one {# death} other {# deaths}}", wipes: " ({n} in wipe)",
-    dtpsVs: "{dtps} dtps {delta} vs {n} dps", dtps: "{dtps} dtps",
-    avoidableVs: "avoidable {perMin}/min ({delta})", avoidable: "avoidable {perMin}/min",
+    deaths: "{count, plural, one {# death} other {# deaths}}",
     kicksNoSpec: "kicks {n} (no kick on spec)", kicks: "kicks {n}", kicksCap: "kicks {n}/{cap} (peer {peer}%)", kicksCapNoPeer: "kicks {n}/{cap}",
     dispels: "dispels {n}", dispelsNoSpec: "dispels {n} (no dispel on spec)",
-    consumables: "{pots} pots · {hs} hs",
-    timed: "✓+{chests} {time}", depleted: "✗ depleted {time}",
     unranked: "unranked",
     missing: "no run in: {list}",
   },
@@ -664,7 +650,7 @@ export const en = {
     reading: {
       labels: { verdict: "Verdict", tiles: "Tiles", runs: "Runs", deepdive: "Deep-dive panel", compare: "Compare", stale: "Stale", cached: "Cached" },
       lines: {
-        verdict: "{label} — the badge with the global score and the confidence; the radar has one point per axis, an n/a axis sits hollow at the centre rather than at 0; each axis row expands to its evidence lines.",
+        verdict: "{label} — the verdict with the global score and the confidence, what would flip it, the strengths and weaknesses, then one row per axis with its score and its main evidence; an n/a axis shows a dash rather than 0.",
         tiles: "{label} — Median DPS/HPS and Median parse (rankings), Timed (shown) as timed / enriched runs, Avg deaths (with the wipe share), Δ DTPS vs peers, Avoidable vs peers and Kicks vs peers (per-run medians), ilvl, RIO recent timed (last 10 Raider.IO runs) and Prev season (previous-season Raider.IO score). A dash means the data is missing, not zero.",
         runs: "{label} — one row per shown run: key level, timed / depleted, parse, deaths, DTPS and avoidable vs peers, kicks, dispels, with a link to the Warcraft Logs report. Each row has an Analyze button for the deep-dive.",
         deepdive: "{label} — usage vs capacity per defensive and one line per death; a yellow dot marks a table correction you proposed and still pending, a blue one an entry from the shared table.",
@@ -776,7 +762,7 @@ export const en = {
   },
   shell: {
     nav: { home: "Home", candidate: "Candidates", me: "My characters", compare: "Compare", live: "Live", help: "Help" },
-    account: { local: "Local mode", menu: "Account" },
+    account: { local: "Local mode" },
     navLabel: "Navigation",
     paletteKey: "Ctrl K",
     paletteOpen: "Open the command palette",

@@ -2,10 +2,9 @@ import { describe, expect, test } from "bun:test";
 import type { LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { rowOf, signalParts } from "./runs.ts";
 import { unanalyzedRuns } from "./deepdive.ts";
 import { dungeonAbbr, pickRun, runListView, signedPct } from "./runList.ts";
-import { NOW, payload, runs, sig, temple } from "./vachaman.fixture.ts";
+import { NOW, payload, runs, sig } from "./vachaman.fixture.ts";
 
 const tFr = makeT(fr, "fr");
 const NB = " ";
@@ -54,14 +53,10 @@ describe("runListView", () => {
 
   test("numbers match today's run rows", () => {
     const row = runListView(tEn, "en", payload(), "best", "parse", NOW).rows[0]!;
-    const old = rowOf(tEn, temple, "dps", NOW);
-    expect(old.parse).toBe("72.2%");
+    // Values the pre-redesign run row (`rowOf` in runs.ts, removed in phase 4) showed for `temple`: parse "72.2%",
+    // keystone "✓+1 30:31", "114.0k dtps +14% vs 4 dps", "avoidable 0/min (−100%)", "kicks 37/146 (peer 32%)".
     expect(row.parse.text).toBe("72.2%");
-    expect(old.keystone!.text).toBe("✓+1 30:31");
-    const parts = signalParts(tEn, temple.signals!).map((p) => p.text);
-    expect(parts).toContain("114.0k dtps +14% vs 4 dps");
-    expect(parts).toContain("avoidable 0/min (−100%)");
-    expect(parts).toContain("kicks 37/146 (peer 32%)");
+    expect([row.upgrade?.timed, row.time]).toEqual([true, "30:31"]);
     expect([row.dtps!.text, row.avoidable!.text, row.util!.text]).toEqual(["+14%", "−100%", "37/146"]);
   });
 

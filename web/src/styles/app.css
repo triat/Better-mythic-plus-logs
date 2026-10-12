@@ -30,7 +30,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 600; }
 .btn-primary:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); filter: brightness(.9); }
-.btn-lg { height: 40px; padding: 0 16px; }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; }
 .inset { background: var(--inset); border: 1px solid var(--border-soft); border-radius: var(--radius); }
@@ -52,10 +51,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .heat-4 { background: var(--heat-4-bg); color: var(--heat-4-fg); }
 .heat-5 { background: var(--heat-5-bg); color: var(--heat-5-fg); }
 
-.badge { display: inline-flex; align-items: baseline; gap: 10px; border-radius: 8px; padding: 8px 14px; border: 1px solid; }
-.badge .badge-label { font-size: 20px; font-weight: 800; letter-spacing: .04em; }
-.badge .badge-score { font-size: 26px; font-weight: 800; }
-.badge-sm .badge-label { font-size: 12px; } .badge-sm .badge-score { font-size: 14px; } .badge-sm { padding: 3px 8px; gap: 6px; }
 .badge-invite { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
 .badge-maybe { background: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow); }
 .badge-pass { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
@@ -64,8 +59,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .err { color: var(--red); background: #490202; padding: .6rem .8rem; border-radius: var(--radius); }
 .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--link); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* radar */
 
 /* bare-page brand bar (sign-in, privacy, signed-out help) and the search field's box (the sidebar's, see "shell") */
 .top { border-bottom: 1px solid var(--border-soft); padding: 12px var(--gutter); display: flex; flex-direction: column; gap: 10px; }
@@ -90,7 +83,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .suggest-realm, .suggest-region, .suggest-class { font-size: 12px; color: var(--muted); }
 .suggest-region, .suggest-class { text-align: right; white-space: nowrap; }
 .suggest-keys { grid-column: 1 / -1; display: flex; gap: 12px; margin-top: 4px; padding: 6px 10px 2px; border-top: 1px solid var(--border-soft); font-size: 11px; color: var(--faint); }
-.chips { display: flex; gap: 6px; }
 .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; background: transparent; cursor: pointer; white-space: nowrap; }
 .chip:hover { color: var(--text); }
 /* The region / spec chips open a menu under themselves (ChipMenu.tsx; design: canvas "RegionSpec", option B). */
@@ -149,8 +141,6 @@ button.live-chip:focus-visible { outline: 2px solid var(--link); outline-offset:
 .sw-knob { position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; border-radius: 50%; background: var(--faint); display: block; transition: left .15s, background .15s; }
 .sw.on .sw-track { background: var(--green-bg); border-color: var(--green-border); }
 .sw.on .sw-knob { left: 13px; background: var(--green); }
-.sw.off-disabled { color: var(--faint); cursor: default; }
-.sw.off-disabled .sw-track { opacity: .6; }
 
 /* your-key stepper */
 .stepper { display: inline-flex; align-items: center; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--inset); overflow: hidden; flex: none; }
@@ -165,15 +155,6 @@ button.live-chip:focus-visible { outline: 2px solid var(--link); outline-offset:
 
 /* content */
 .content { display: flex; flex-direction: column; gap: 16px; padding: 20px var(--gutter); }
-/* The vetting view on a wide screen (canvas "Wide screens" C, kept for characters outside My characters since phase 2):
-   the runs on the left, the signal tiles and Raider.IO beside them. */
-.detail-rest { display: flex; flex-direction: column; gap: 16px; }
-@media (min-width: 1700px) {
-  .detail-rest { display: grid; grid-template-columns: minmax(0, 1fr) 560px; grid-template-areas: "runs tiles" "runs rio"; grid-template-rows: auto 1fr; align-items: start; }
-  .detail-tiles { grid-area: tiles; }
-  .detail-runs { grid-area: runs; }
-  .detail-rio { grid-area: rio; }
-}
 .stopped { max-width: 500px; margin: 4rem auto; text-align: center; }
 .toast { position: fixed; right: 24px; bottom: 24px; display: flex; gap: 12px; align-items: center; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
 .toast-close { background: transparent; border: 0; color: inherit; font-size: 18px; cursor: pointer; }
@@ -189,28 +170,13 @@ button.live-chip:focus-visible { outline: 2px solid var(--link); outline-offset:
 /* verdict hero */
 .reeval { display: inline-flex; align-items: center; gap: 4px; border: 1px dashed var(--yellow-border); background: var(--yellow-bg); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: var(--yellow); }
 .reeval a { color: var(--yellow); text-decoration: underline; }
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; }
-.identity { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.identity .name { font-size: 22px; font-weight: 700; }
-.stats { display: flex; gap: 18px; font-size: 13px; flex-wrap: wrap; }
-.stats b { color: var(--text); font-weight: 600; }
-.metaline { font-size: 12px; }
-.metaline b { color: var(--text-soft); }
-.axes { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-.axis { display: grid; grid-template-columns: 150px 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 10px; cursor: pointer; }
-.axis:hover { border-color: var(--border); }
 
 /* contextual "?" links to /help (HelpLink.tsx, canvas HelpDetails variant a) */
 .help-link { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); color: var(--faint); font-size: 10px; line-height: 1; margin-left: 6px; vertical-align: 1px; text-decoration: none; }
 .help-link:hover { color: var(--text); border-color: var(--muted); }
 /* In a flex row with its own `gap`, the glyph's inline margin-left would compound with that gap: cancel it there
-   (verdict badge, the runs section row, the deep-dive head); evidence lines stay inline text, 6px kept. */
-.badge .help-link, .section-row .help-link, .dd-head .help-link { margin-left: 0; }
-
-/* tiles */
-.tiles { display: flex; flex-wrap: wrap; gap: 8px; }
-.tile { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; min-width: 120px; }
-.tile .label-caps { font-size: 10px; }
+   (the runs section row, the deep-dive head); evidence lines stay inline text, 6px kept. */
+.section-row .help-link, .dd-head .help-link { margin-left: 0; }
 
 /* sections */
 .section { padding: 14px 20px; display: flex; flex-direction: column; gap: 8px; }
@@ -255,10 +221,6 @@ button.live-chip:focus-visible { outline: 2px solid var(--link); outline-offset:
 /* Spell names link to Wowhead (tooltip on hover via tooltips.js). */
 a.spell { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--faint); }
 a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
-
-/* --- axis explainers (B: callout in the expanded row, C: legend under the radar) --- */
-.legend { grid-column: 1 / -1; border-top: 1px solid var(--border-soft); padding-top: 12px; }
-.radar-label { text-decoration: underline dotted var(--faint); text-underline-offset: 3px; }
 
 /* --- hosted: the Discord button and the sign-in refusals (Landing.tsx) --- */
 .btn-discord { height: 48px; padding: 0 22px; gap: 8px; font-size: 15px; font-weight: 600; background: var(--discord); border-color: var(--discord); color: #fff; }
@@ -448,27 +410,12 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 
 /* Self-review result tabs (canvas "self-review", variants A + C; spec 2026-10-09-self-review-pillars-design.md) */
 .chip-me { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
-.rtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-soft); }
-.rtab { padding: 8px 14px; font-size: 13px; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; }
-.rtab.on { color: var(--text); border-bottom-color: var(--link); font-weight: 600; }
-.pillars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.pillar { display: flex; flex-direction: column; gap: 6px; }
 .pillar-text { font-size: 13px; color: var(--text-soft); }
-.band-good { color: var(--green); }
-.band-mid { color: var(--text-soft); }
-.band-warn { color: var(--yellow); }
-.band-bad { color: var(--red); }
-.band-na { color: var(--faint); }
-.side { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 16px; align-items: start; }
 .bar2 { display: block; height: 6px; background: var(--border-soft); border-radius: 3px; overflow: hidden; }
 .bar2 > span { display: block; height: 100%; background: var(--yellow); }
 .bar2.progress > span { background: var(--link); }
 .sync-card { display: flex; flex-direction: column; gap: 8px; max-width: 520px; }
 .link-btn { background: transparent; border: 0; padding: 0; color: var(--link); font: inherit; font-size: 12px; cursor: pointer; text-align: left; }
-@media (max-width: 1100px) {
-  .pillars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .side { grid-template-columns: minmax(0, 1fr); }
-}
 
 /* Personal page leftovers still used by /me: the add field, the confirmations, the picker's main badge */
 .me-main-badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--link); border: 1px solid var(--border); border-radius: 999px; padding: 0 7px; line-height: 18px; }

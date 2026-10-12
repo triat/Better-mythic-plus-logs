@@ -134,7 +134,7 @@ describe("EVIDENCE_SOURCES", () => {
       expect(EVIDENCE_SOURCES as readonly string[]).toContain(e.source);
       expect(Number.isFinite(e.value), e.source).toBe(true);
     }
-    expect(all.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl −4 vs expected");
+    expect(all.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl −4 vs expected for the key");
   });
   test("survival.defensiveUsage carries extra.runs when a deep-dive exists", () => {
     const a = scoreSurvival(baseInputs({ analyzedRuns: 1, survival: { ...baseInputs().survival, defensiveUsage: 0.5 } }), cfg);
@@ -184,7 +184,7 @@ describe("preparation", () => {
     const p = scorePreparation(baseInputs({ targetLevel: 20, preparation: { potions: 6, healthstones: 3, ilvl: 335 } }), cfg);
     // expected at +20 = 325 → +10 → 100 ; potions 6 → 100 ; hs 3 → 100
     expect(p.score).toBe(100);
-    expect(p.evidence.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl +10 vs expected");
+    expect(p.evidence.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl +10 vs expected for the key");
   });
   test("unknown season slug falls back to the last expectedIlvl curve", () => {
     const p = scorePreparation(baseInputs({ seasonSlug: "season-xx-9", targetLevel: 20, preparation: { potions: null, healthstones: null, ilvl: 315 } }), cfg);

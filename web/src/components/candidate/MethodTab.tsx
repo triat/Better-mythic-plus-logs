@@ -125,7 +125,7 @@ function Axis({ a }: { a: AxisCard }) {
           </div>
           {a.signals.map((s) => (
             <div key={s.name} className="mt-sig" role="row">
-              <span role="cell" className="mt-sig-name">{s.name}</span>
+              <span role="cell" className="mt-sig-name">{s.name}{s.hint && <span className="signal-hint">{s.hint}</span>}</span>
               <span role="cell" className="mono">{s.value}</span>
               <span role="cell" className="mono mt-sig-ref">{s.ref}</span>
               <span role="cell" className="mono mt-sig-w">{s.weight}</span>

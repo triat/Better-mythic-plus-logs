@@ -88,21 +88,21 @@ describe("methodView", () => {
     ]);
     expect(m.axes[0]!.confidence).toBe("confiance haute · 9 runs");
     expect(m.axes[4]!.note).toBe("Montré pour lire le profil, sans effet sur le verdict.");
-    expect(m.axes[0]!.note).toBe("Les signaux du deep-dive (utilisation des defensives et morts avec un defensive dispo) comptent dès 2 runs analysés : 1 pour l'instant.");
+    expect(m.axes[0]!.note).toBe("Les signaux du deep-dive (utilisation des défensifs et morts avec un défensif dispo) comptent dès 2 runs analysés : 1 pour l'instant.");
     expect(m.axes[1]!.note).toBeNull();
   });
 
   test("signal rows: value and the average player formatted alike, weight, signed effect", () => {
     const m = methodView(tFr, "fr", vachaman(), docsFr)!;
     const survival = m.axes[0]!.signals;
-    expect(survival[0]).toEqual({ name: "Morts individuelles", value: "0,6", ref: "0,7", weight: "×3", effect: "+16,0", tone: "better" });
-    expect(survival[1]).toMatchObject({ name: "Dégâts évitables vs pairs", weight: "×2", effect: "+14,0" });
+    expect(survival[0]).toEqual({ name: "Morts hors wipe", hint: "Ses morts quand le groupe n'a pas wipe, par run, pondérées par le niveau de la clé.", value: "0,6", ref: "0,7", weight: "×3", effect: "+16,0", tone: "better" });
+    expect(survival[1]).toMatchObject({ name: "Dégâts évitables vs le groupe", weight: "×2", effect: "+14,0" });
     expect(survival[1]!.value).toBe(tFr("drivers.unit.pct", { value: "−40" }));
     expect(survival[1]!.ref).toBe(tFr("drivers.unit.pct", { value: "−3" }));
     const prep = m.axes[3]!.signals;
-    expect(prep[2]).toMatchObject({ name: "Healthstones", effect: "−2,0", tone: "worse" });
+    expect(prep[2]).toMatchObject({ name: "Pierres de soins", effect: "−2,0", tone: "worse" });
     // No reference and no weight: "—".
-    expect(prep[3]).toMatchObject({ name: "preparation.unknown", ref: "—", weight: "—", effect: "0,0", tone: "neutral" });
+    expect(prep[3]).toMatchObject({ name: "preparation.unknown", hint: null, ref: "—", weight: "—", effect: "0,0", tone: "neutral" });
   });
 
   test("a missing reference reads —", () => {

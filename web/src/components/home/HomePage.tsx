@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { classHex } from "@shared/wow/classes.ts";
-import type { AxisKey, HistoryItem, MyCharacter, Region } from "../../types.ts";
+import type { HistoryItem, MyCharacter, Region } from "../../types.ts";
 import { realmName } from "../../lib/format.ts";
 import { regionChipLabel, regionMenu } from "../../lib/header.ts";
 import { LINE, candidateRows, homeSelf, progressPoints, progressText, scoreTone } from "../../lib/home.ts";
@@ -10,6 +10,7 @@ import { candidateHref } from "../../lib/hostedMode.ts";
 import { historyKeyFor, seasonLine } from "../../lib/me.ts";
 import { useDocs } from "../../docs.tsx";
 import { useT } from "../../locale.tsx";
+import { sourceTitleOf } from "../../lib/synthesis.ts";
 import { useSeason } from "../../useSeason.ts";
 import type { SeasonState } from "../../useSeason.ts";
 import { Around } from "../Around.tsx";
@@ -91,10 +92,7 @@ function MainSeason({ main, p }: { main: MyCharacter; p: HomePageProps }) {
 function HomeBody({ p, main, season }: { p: HomePageProps; main: MyCharacter | null; season: SeasonState | null }) {
   const { t, locale } = useT();
   const { docs } = useDocs();
-  const titleOf = (source: string): string => {
-    const [axis, id] = source.split(".") as [AxisKey, string];
-    return docs?.docs.axes[axis]?.subSignals[id]?.title ?? source;
-  };
+  const titleOf = sourceTitleOf(t, docs);
   const view = season?.view ?? null;
   const model = view && view.runs.length > 0 ? homeSelf(t, locale, view, titleOf) : null;
   const mainKey = main ? historyKeyFor(p.history, main) : null;
@@ -206,7 +204,7 @@ function SelfCard({ main, item, model, line, spec, href }: { main: MyCharacter; 
           <span className="home-work-title">{t("home.self.workOn")}</span>
           {model.workOn.map((r) => (
             <div key={r.n} className="home-work-row">
-              <span className="home-work-name">{r.title} <span className="home-sub">{r.detail}</span></span>
+              <span className="home-work-name">{r.title} <span className="home-sub">{r.detail}</span>{r.hint && <span className="signal-hint">{r.hint}</span>}</span>
               <span className="mono home-worse">{r.impact}</span>
               <span className={"home-work-past " + PAST_CLASS[r.past.cls]}>{r.past.text}</span>
             </div>

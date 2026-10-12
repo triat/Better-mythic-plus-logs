@@ -11,6 +11,7 @@ import { bestTimedOf, playWeek } from "./home.ts";
 import { ownerHref } from "./profile.ts";
 import { dungeonAbbr } from "./runList.ts";
 import { PILLAR_ORDER, trendView, workOnSource } from "./self.ts";
+import { signalHint } from "./signals.ts";
 import { flipDrivers, scoreBand, synthesisView } from "./synthesis.ts";
 import type { Band, SynthesisDocs } from "./synthesis.ts";
 import { verdictView } from "./verdict.ts";
@@ -44,7 +45,7 @@ export interface FormChart {
   /** The chart's accessible name. */
   aria: string;
 }
-export interface ChecklistRow { title: string; goal: string; before: string | null; now: string; nowTone: "better" | "worse" | "neutral"; cost: string }
+export interface ChecklistRow { title: string; hint: string | null; goal: string; before: string | null; now: string; nowTone: "better" | "worse" | "neutral"; cost: string }
 export interface ChefCard {
   verdict: { cls: string; label: string; score: string | null };
   /** "How a group leader sees you at +19". */
@@ -208,6 +209,7 @@ function chartView(t: T, season: SeasonView, width: number): FormChart | null {
 function checklistView(t: T, locale: Locale, ev: Evaluation, season: SeasonView | null, docs: SynthesisDocs): ChecklistRow[] {
   return [...workOnSource(ev, season)].sort((a, b) => a.impact - b.impact).slice(0, CHECKLIST_MAX).map((w) => ({
     title: docs.titleOf(w.source),
+    hint: signalHint(t, w.source),
     // The goal is the average player's value with its unit ("1.6 / run"); before / now read short ("0.7").
     goal: t("owner.form.check.goal", { value: driverValues(t, locale, { source: w.source, value: w.reference, reference: w.reference }).value }),
     before: w.past ? t("owner.form.check.before", { value: shortValue(t, locale, w.source, w.past.value) }) : null,

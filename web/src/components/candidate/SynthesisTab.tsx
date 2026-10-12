@@ -14,7 +14,7 @@ export function SynthesisTab({ payload }: { payload: LookupPayload }) {
   const { t, locale } = useT();
   const { docs } = useDocs();
   const view = useMemo(
-    () => (docs ? synthesisView(t, locale, payload.evaluation, synthesisDocs(docs), payload.runsIndexed) : null),
+    () => (docs ? synthesisView(t, locale, payload.evaluation, synthesisDocs(t, docs), payload.runsIndexed) : null),
     [docs, t, locale, payload],
   );
   if (!view) return <div className="muted"><span className="spinner" /> {t("common.loading")}</div>;
@@ -79,6 +79,7 @@ function VerdictCard({ verdict: v, flip }: { verdict: VerdictBlock; flip: Return
           {flip.rows.map((r) => (
             <div key={r.name} className="synth-flip-row">
               <div className="synth-flip-name"><strong>{r.name}</strong><span className="mono">{r.gain}</span></div>
+              {r.hint && <span className="signal-hint">{r.hint}</span>}
               <span className="synth-flip-gap">{r.gap}</span>
             </div>
           ))}
@@ -104,6 +105,7 @@ function ForceList({ title, tone, rows, empty }: { title: string; tone: "better"
       {rows.map((r) => (
         <div key={r.name + r.axis} className="synth-force-row">
           <div className="synth-force-name"><span>{r.name}</span><span className="mono">{r.pts}</span></div>
+          {r.hint && <span className="signal-hint">{r.hint}</span>}
           <div className="synth-force-bar"><div style={{ width: `${r.widthPct}%` }} /></div>
           <span className="synth-note">{r.axis} · {r.detail}</span>
         </div>

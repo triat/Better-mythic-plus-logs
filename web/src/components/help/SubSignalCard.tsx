@@ -1,5 +1,6 @@
 import type { AxisKey, DocsResponse, SubSignalDoc } from "../../types.ts";
 import { curveTable, roleWeights } from "../../lib/help.ts";
+import { signalHint, signalName } from "../../lib/signals.ts";
 import { useT } from "../../locale.tsx";
 import { CurveChart } from "./CurveChart.tsx";
 
@@ -11,14 +12,18 @@ interface Props { axis: AxisKey; id: string; doc: SubSignalDoc; cfg: SubSignalCo
 export function SubSignalCard({ axis, id, doc, cfg }: Props) {
   const { t } = useT();
   const rows = curveTable(cfg.curve, doc.unit);
+  const source = `${axis}.${id}`;
+  const name = signalName(t, source);
+  const hint = signalHint(t, source);
   return (
     <div className="inset sub-card" id={`${axis}.${id}`}>
       <div>
         <div className="sub-head">
-          <h3>{doc.title}</h3>
+          <h3>{name === source ? doc.title : name}</h3>
           <span className="faint mono" style={{ fontSize: 11 }}>{axis}.{id}</span>
           {doc.scaledByLevel && <a href="#level-scale" className="chip chip-warn">{t("help.scaledByLevel")}</a>}
         </div>
+        {hint && <p className="signal-hint sub-hint">{hint}</p>}
         <div className="kv">
           <span className="k">{t("help.kv.what")}</span><span>{doc.what}</span>
           <span className="k">{t("help.kv.source")}</span><span>{doc.source}</span>

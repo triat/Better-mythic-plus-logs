@@ -8,6 +8,7 @@ import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { shortValue } from "./drivers.ts";
 import { fixed1 } from "./runList.ts";
+import { signalHint } from "./signals.ts";
 import { scoreBand, sourceTitleOf } from "./synthesis.ts";
 import type { Band } from "./synthesis.ts";
 import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
@@ -15,7 +16,7 @@ import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 export interface PathStep { label: string; value: string; sub: string }
 /** An axis' contribution to the raw score: `pct` = w × score / Σw, so the parts sum to the raw score. */
 export interface WaterfallPart { key: AxisKey; label: string; pct: number }
-export interface SignalRow { name: string; value: string; ref: string; weight: string; effect: string; tone: "better" | "worse" | "neutral" }
+export interface SignalRow { name: string; hint: string | null; value: string; ref: string; weight: string; effect: string; tone: "better" | "worse" | "neutral" }
 export interface AxisCard {
   key: AxisKey; name: string; weightLabel: string; confidence: string; score: string; band: Band; informational: boolean;
   signals: SignalRow[]; note: string | null;
@@ -71,7 +72,7 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
   const role: Role = ev.role;
   const cfg = docs.config;
   const weights = cfg.axisWeights[role];
-  const titleOf = sourceTitleOf(docs);
+  const titleOf = sourceTitleOf(t, docs);
   const known = (k: string): k is AxisKey => (AXIS_ORDER as readonly string[]).includes(k);
   const weightOf = (k: AxisKey): number => weights?.[k] ?? 0;
   // A payload saved before the Experience axis left may still carry it: AXIS_ORDER drops it.
@@ -115,6 +116,7 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
     const ref = cfg.reference?.[role]?.[e.source];
     return {
       name: titleOf(e.source),
+      hint: signalHint(t, e.source),
       value: typeof e.value === "number" ? shortValue(t, locale, e.source, e.value) : DASH,
       ref: ref ? shortValue(t, locale, e.source, ref.value) : DASH,
       weight: e.weight !== undefined ? `×${number.format(e.weight)}` : DASH,

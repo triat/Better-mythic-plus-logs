@@ -106,8 +106,8 @@ export function ComparePage({ tabs, selected, onSelect, loadEntry, onLoadFailed,
   else if (docs === null) body = <div className="muted"><span className="spinner" /> {t("compare.building")}</div>;
   else {
     const view = entries.length >= 3
-      ? <CompareRanking view={rankingView(t, locale, entries, synthesisDocs(docs))} />
-      : <CompareDuel view={duelView(t, locale, entries, synthesisDocs(docs))} />;
+      ? <CompareRanking view={rankingView(t, locale, entries, synthesisDocs(t, docs))} />
+      : <CompareDuel view={duelView(t, locale, entries, synthesisDocs(t, docs))} />;
     const names = new Intl.ListFormat(locale, { type: "conjunction" }).format(failedKeys.map(labelOf));
     body = (
       <>

@@ -33,7 +33,7 @@ export function FormTab({ evaluation, season, historyKey, onVetting }: {
     return () => ro.disconnect();
   }, [docs]);
   const v = useMemo(
-    () => (docs ? formView(t, locale, evaluation, season, synthesisDocs(docs), historyKey, chartWidth) : null),
+    () => (docs ? formView(t, locale, evaluation, season, synthesisDocs(t, docs), historyKey, chartWidth) : null),
     [t, locale, evaluation, season, docs, historyKey, chartWidth],
   );
   if (!v) return <p className="muted">{t("self.loading")}</p>;
@@ -71,6 +71,7 @@ export function FormTab({ evaluation, season, historyKey, onVetting }: {
             <span className="form-check-n mono" aria-hidden="true">{i + 1}</span>
             <div className="form-check-main">
               <div className="form-check-title"><strong>{c.title}</strong><span>{c.goal}</span></div>
+              {c.hint && <span className="signal-hint">{c.hint}</span>}
               <div className="form-check-values mono">
                 {c.before && (
                   <>

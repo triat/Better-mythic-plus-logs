@@ -7,6 +7,7 @@ import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { evidenceText } from "./axes.ts";
 import { driverValues } from "./drivers.ts";
+import { signalHint, signalName } from "./signals.ts";
 import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 
 const MAX_PROS = 4;
@@ -25,14 +26,14 @@ export interface SynthesisDocs {
   subSignals?: Partial<Record<AxisKey, readonly string[]>>;
 }
 
-/** A sub-signal's title from the registry ("survival.individualDeaths" → "Individual deaths"), the source itself when unknown. */
-export const sourceTitleOf = (d: Pick<DocsResponse, "docs">) => (source: string): string => {
-  const [axis, id] = source.split(".") as [AxisKey, string];
-  return d.docs.axes[axis]?.subSignals[id]?.title ?? source;
-};
+/**
+ * A sub-signal's name in the UI language ("survival.individualDeaths" → "Deaths outside wipes", `lib/signals.ts`),
+ * then the registry's title, then the source itself when unknown.
+ */
+export const sourceTitleOf = (t: T, d: Pick<DocsResponse, "docs"> | null) => (source: string): string => signalName(t, source, d);
 
-export const synthesisDocs = (d: Pick<DocsResponse, "docs" | "config">): SynthesisDocs => ({
-  titleOf: sourceTitleOf(d),
+export const synthesisDocs = (t: T, d: Pick<DocsResponse, "docs" | "config">): SynthesisDocs => ({
+  titleOf: sourceTitleOf(t, d),
   axisWeights: d.config.axisWeights,
   verdict: d.config.verdict,
   confidence: d.config.confidence,
@@ -55,9 +56,9 @@ export interface VerdictBlock {
   summary: string;
   confidence: string | null;
 }
-export interface FlipRow { name: string; gain: string; gap: string }
+export interface FlipRow { name: string; hint: string | null; gain: string; gap: string }
 export interface FlipView { title: string; rows: FlipRow[]; reachable: boolean; note: string | null }
-export interface ForceRow { name: string; pts: string; axis: string; detail: string; widthPct: number }
+export interface ForceRow { name: string; hint: string | null; pts: string; axis: string; detail: string; widthPct: number }
 export type Band = "better" | "neutral" | "worse";
 export interface AxisLine { key: AxisKey; name: string; score: number | null; band: Band; why: string; informational: boolean }
 export interface SynthesisView {
@@ -96,6 +97,7 @@ export function synthesisView(t: T, locale: Locale, ev: Evaluation, docs: Synthe
   const evidence = [...byKey.values()].filter((a) => counted(a.key) && a.score !== null).flatMap((a) => a.evidence.map((e) => ({ e, axis: a.key })));
   const force = ({ e, axis }: { e: Evidence; axis: AxisKey }): ForceRow => ({
     name: docs.titleOf(e.source),
+    hint: signalHint(t, e.source),
     pts: signedPts(locale, e.delta),
     axis: axisTitle(t, axis),
     detail: text(e),
@@ -173,6 +175,7 @@ function flipView(t: T, locale: Locale, ev: Evaluation, docs: SynthesisDocs): Fl
     const { value, reference } = driverValues(t, locale, d);
     return {
       name: docs.titleOf(d.source),
+      hint: signalHint(t, d.source),
       gain: t("cand.synth.flip.gain", { axis: axisTitle(t, axis), pts: String(Math.abs(Math.round(d.impact))) }),
       gap: t("cand.synth.flip.gap", { value, reference }),
     };

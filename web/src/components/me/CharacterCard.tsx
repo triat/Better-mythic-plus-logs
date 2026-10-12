@@ -138,7 +138,7 @@ export function CharacterCard({ card, season, removing, onAction, onRemove, onKe
       </div>
       <div className="chars-lines">
         <span className="muted">{card.line}</span>
-        <span className={"chars-note-" + card.note.tone}>{card.note.text}</span>
+        <span className={"chars-note-" + card.note.tone} title={card.note.hint ?? undefined}>{card.note.text}</span>
         {card.status && <span className="tone-bad chars-small" role="status">{card.status}</span>}
       </div>
       {removing ? <RemoveConfirm name={card.name} onRemove={onRemove} onKeep={onKeep} /> : (

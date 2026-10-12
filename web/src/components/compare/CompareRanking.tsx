@@ -30,7 +30,7 @@ export function CompareRanking({ view }: { view: RankingView }) {
           <div key={row.key} className={"cmp-g5 cmp-g5-row" + (row.informational ? " is-info" : "")} style={grid}>
             <span className="cmp-g5-label">
               <strong>{row.name}</strong>
-              <span className="cmp-g5-sub">{row.sub}</span>
+              <span className="cmp-g5-sub" title={row.subHint ?? undefined}>{row.sub}</span>
             </span>
             {row.cells.map((c, i) => (
               <span key={view.columns[i]!.key} className={`cmp-g5-cell band-${c.band}`}>

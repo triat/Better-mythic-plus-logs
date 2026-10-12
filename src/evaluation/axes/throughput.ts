@@ -7,6 +7,6 @@ export function scoreThroughput(i: EvalInputs, cfg: EvaluationConfig, override?:
   const t = i.throughput;
   return scoreAxis("throughput", [
     { id: "medianParse", value: t.medianParse, label: (r) => `median parse ${r.toFixed(0)}%` },
-    { id: "parseAtTarget", value: t.parseAtTarget, label: (r) => `parse ${r.toFixed(0)}% at target level` },
+    { id: "parseAtTarget", value: t.parseAtTarget, label: (r) => `parse ${r.toFixed(0)}% on target-level keys` },
   ], i.role, cfg, i.runsUsed, override);
 }

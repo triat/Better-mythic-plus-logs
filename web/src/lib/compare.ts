@@ -12,6 +12,7 @@ import { candidateHref } from "./hostedMode.ts";
 import { classInitials, classToken, specWords } from "./profile.ts";
 import { dungeonAbbr, fixed1, parseCell, signedPct } from "./runList.ts";
 import type { Band, SynthesisDocs } from "./synthesis.ts";
+import { signalHint } from "./signals.ts";
 import { scoreBand, synthesisView } from "./synthesis.ts";
 import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 
@@ -199,7 +200,8 @@ const listOf = (locale: Locale, items: string[]): string => new Intl.ListFormat(
 
 // Duel ------------------------------------------------------------------------------------------------------------------
 
-export interface DuelNote { sign: "+" | "−"; tone: "better" | "worse"; text: string }
+/** `hint`: the sub-signal's name and plain-language hint, for the `title` tooltip. */
+export interface DuelNote { sign: "+" | "−"; tone: "better" | "worse"; text: string; hint: string }
 export interface DuelHead {
   key: string; href: string; name: string; classId: number; classColor: string; iconUrl: string | null; initials: string;
   /** "Elemental Shaman · Ysondre EU · RIO 3650" (the RIO part only when present). */
@@ -243,9 +245,10 @@ function duelHead(t: T, locale: Locale, e: CompareEntry, docs: SynthesisDocs): D
   const pros = syn.pros.slice(0, 2);
   const cons = syn.cons.slice(0, MAX_NOTES - pros.length);
   const morePros = syn.pros.slice(pros.length, pros.length + MAX_NOTES - pros.length - cons.length);
+  const hint = (r: { name: string; hint: string | null }): string => (r.hint ? t("compare.multi.subHint", { name: r.name, hint: r.hint }) : r.name);
   const notes: DuelNote[] = [
-    ...[...pros, ...morePros].map((r): DuelNote => ({ sign: "+", tone: "better", text: r.detail })),
-    ...cons.map((r): DuelNote => ({ sign: "−", tone: "worse", text: r.detail })),
+    ...[...pros, ...morePros].map((r): DuelNote => ({ sign: "+", tone: "better", text: r.detail, hint: hint(r) })),
+    ...cons.map((r): DuelNote => ({ sign: "−", tone: "worse", text: r.detail, hint: hint(r) })),
   ];
   return {
     key: e.key,
@@ -382,6 +385,8 @@ export interface RankCard {
 }
 export interface AxisGridRow {
   key: AxisKey; name: string; sub: string; informational: boolean;
+  /** The listed sub-signals' names and hints, one per line, for the `title` tooltip; null when informational. */
+  subHint: string | null;
   cells: { text: string; value: number | null; band: Band; best: boolean }[];
 }
 export interface RankingView {
@@ -453,6 +458,7 @@ export function rankingView(t: T, locale: Locale, entries: CompareEntry[], docs:
       key: k,
       name: axisTitle(t, k),
       sub: informational ? t("compare.duel.informational") : sources.map((s) => lower(locale, docs.titleOf(s))).join(", "),
+      subHint: informational ? null : sources.map((s) => t("compare.multi.subHint", { name: docs.titleOf(s), hint: signalHint(t, s) ?? "" })).join("\n") || null,
       informational,
       cells: values.map((v, i) => ({ text: v === null ? DASH : String(v), value: v, band: scoreBand(v), best: best.has(i) })),
     };

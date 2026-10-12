@@ -354,6 +354,7 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .sub-card { display: grid; grid-template-columns: 1fr 260px; gap: 12px 24px; padding: 14px 16px; }
 .extra-card { padding: 14px 16px; }
 .sub-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sub-hint { margin: 0 0 8px; }
 .sub-head h3 { font-size: 14px; font-weight: 600; margin: 0; }
 .sub-card .kv, .extra-card .kv { display: grid; grid-template-columns: 64px 1fr; gap: 3px 12px; font-size: 12.5px; }
 .sub-card .kv .k, .extra-card .kv .k { color: var(--muted); }
@@ -607,6 +608,8 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .synth-side { flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .synth-lbl { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--label); }
 .synth-note { font-size: 12px; color: var(--label); }
+/* A sub-signal's one-line explanation under its name (lib/signals.ts), wherever the name is shown. */
+.signal-hint { font-size: 12px; line-height: 1.4; color: var(--muted); font-weight: 400; overflow-wrap: anywhere; }
 .synth-verdict { flex: 1 1 300px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: var(--vt-bg); border-color: var(--vt-border); }
 .synth-verdict-head { display: flex; flex-direction: column; gap: 4px; }
 .synth-verdict-score { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; font-size: 38px; line-height: 1; }
@@ -1225,6 +1228,7 @@ button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset:
 .mt-sig-head > span:first-child { text-align: left; }
 .mt-sig-head { border-top: 0; padding-bottom: 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--label); }
 .mt-sig-name { color: var(--text-soft); min-width: 0; }
+.mt-sig-name .signal-hint { display: block; margin-top: 2px; }
 .mt-sig-ref { color: var(--label); }
 .mt-sig-w { color: var(--muted); }
 .mt-sig-eff { font-weight: 600; }
@@ -1311,6 +1315,7 @@ button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset:
 .home-work { display: flex; flex-direction: column; gap: 8px; }
 .home-work-title { font-size: 13px; font-weight: 600; color: var(--text-soft); }
 .home-work-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 120px); gap: 10px; align-items: center; font-size: 14px; }
+.home-work-name .signal-hint { display: block; margin-top: 2px; }
 .home-work-row .mono { font-weight: 700; text-align: right; white-space: nowrap; }
 .home-work-past { font-size: 12px; text-align: right; }
 .home-better { color: var(--better); }

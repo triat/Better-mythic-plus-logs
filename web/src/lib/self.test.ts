@@ -48,7 +48,8 @@ describe("trendView", () => {
 describe("workOnRows", () => {
   test("the lookup's costs when the season has no window; no past", () => {
     const r = workOnRows(tEn, "en", ev(), season(), titleOf);
-    expect(r).toEqual([{ n: 1, title: "survival.individualDeaths", pillar: "Survival", impact: "−9 pts of score", past: { text: "no past yet", cls: "muted" }, detail: expect.any(String) }]);
+    expect(r).toEqual([{ n: 1, title: "survival.individualDeaths", pillar: "Survival", impact: "−9 pts of score", past: { text: "no past yet", cls: "muted" }, detail: expect.any(String),
+      hint: "Deaths when the group did not wipe, per run, weighted by key level." }]);
   });
   test("the window's rows with the own-past column", () => {
     const s = season({

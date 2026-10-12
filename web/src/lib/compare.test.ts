@@ -265,9 +265,9 @@ describe("duelView", () => {
     const h = duel(vach(), circe()).heads;
     const pros = synthesisView(tEn, "en", vach().evaluation, docs, 12);
     expect(h[0].notes).toEqual([
-      { sign: "+", tone: "better", text: pros.pros[0]!.detail },
-      { sign: "+", tone: "better", text: pros.pros[1]!.detail },
-      { sign: "−", tone: "worse", text: pros.cons[0]!.detail },
+      { sign: "+", tone: "better", text: pros.pros[0]!.detail, hint: `${pros.pros[0]!.name}: ${pros.pros[0]!.hint}` },
+      { sign: "+", tone: "better", text: pros.pros[1]!.detail, hint: `${pros.pros[1]!.name}: ${pros.pros[1]!.hint}` },
+      { sign: "−", tone: "worse", text: pros.cons[0]!.detail, hint: `${pros.cons[0]!.name}: ${pros.cons[0]!.hint}` },
     ]);
     // Circe has no pros: three cons.
     expect(h[1].notes.map((n) => n.sign)).toEqual(["−", "−", "−"]);

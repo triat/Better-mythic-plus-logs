@@ -68,8 +68,9 @@ describe("synthesisView", () => {
       ["Parse à la cible", "+4,8", "Throughput", 24],
     ]);
     expect(s.cons.map((c) => c.pts)).toEqual(["−10,3", "−9,3", "−3,2", "−2,0", "−2,0"]);
-    expect(s.cons[0]!.detail).toBe("évitable +46\u202f% vs pairs");
-    expect(s.cons[1]).toMatchObject({ name: "Morts individuelles", axis: "Survie", detail: "1,6 mort(s) individuelle(s) / run" });
+    expect(s.cons[0]!.detail).toBe("dégâts évitables +46\u202f% vs le groupe");
+    expect(s.cons[1]).toMatchObject({ name: "Morts individuelles", axis: "Survie", detail: "1,6 mort(s) hors wipe / run" });
+    expect(s.cons[1]!.hint).toBe("Ses morts quand le groupe n'a pas wipe, par run, pondérées par le niveau de la clé.");
     // Régularité (weight 0) and the legacy Experience axis never show up as a strength or a weakness.
     const names = [...s.pros, ...s.cons].map((r) => r.name);
     expect(names).not.toContain("Écart de morts");
@@ -82,9 +83,9 @@ describe("synthesisView", () => {
     expect(f.reachable).toBe(true);
     expect(f.note).toBeNull();
     expect(f.rows).toEqual([
-      { name: "Dégâts évitables vs pairs", gain: "Survie, jusqu'à +10", gap: "+46 % vs pairs aujourd'hui · moy. +0 %" },
-      { name: "Morts individuelles", gain: "Survie, jusqu'à +9", gap: "1,6 / run aujourd'hui · moy. 0,7" },
-      { name: "Potions", gain: "Préparation, jusqu'à +5", gap: "1,3 / run aujourd'hui · moy. 2,0" },
+      { name: "Dégâts évitables vs pairs", hint: "Dégâts pris sur les mécaniques évitables, comparés aux autres joueurs du même run.", gain: "Survie, jusqu'à +10", gap: "+46 % vs le groupe aujourd'hui · moy. +0 %" },
+      { name: "Morts individuelles", hint: "Ses morts quand le groupe n'a pas wipe, par run, pondérées par le niveau de la clé.", gain: "Survie, jusqu'à +9", gap: "1,6 / run aujourd'hui · moy. 0,7" },
+      { name: "Potions", hint: "Potions de combat utilisées par run.", gain: "Préparation, jusqu'à +5", gap: "1,3 / run aujourd'hui · moy. 2,0" },
     ]);
   });
   test("out of reach: a note under the rows", () => {
@@ -92,7 +93,7 @@ describe("synthesisView", () => {
     const f = synthesisView(tEn, "en", ev, docs, 15).flip!;
     expect(f.title).toBe("To reach MAYBE: +18 pts");
     expect(f.note).toBe("Bringing these 2 signals to the average player's level is not enough.");
-    expect(f.rows[1]).toEqual({ name: "Morts individuelles", gain: "Survival, up to +9", gap: "1.6 / run today · avg 0.7" });
+    expect(f.rows[1]).toEqual({ name: "Morts individuelles", hint: "Deaths when the group did not wipe, per run, weighted by key level.", gain: "Survival, up to +9", gap: "1.6 / run today · avg 0.7" });
   });
   test("INVITE: no flip block", () => {
     const s = synthesisView(tEn, "en", obye({ global: 78, verdict: "invite", nextVerdict: null, runsUsed: 12 }), docs, 15);
@@ -110,7 +111,7 @@ describe("synthesisView", () => {
   });
   test("informational axes: weight 0 for the role", () => {
     const s = synthesisView(tFr, "fr", obye(), docs, 15);
-    expect(s.informational).toEqual([{ name: "Régularité", text: "écart de morts ±2,8 · écart de dégâts vs pairs ±111\u202f%. Ne compte pas dans le score." }]);
+    expect(s.informational).toEqual([{ name: "Régularité", text: "les morts varient de ±2,8 / run · les dégâts subis vs le groupe varient de ±111\u202f%. Ne compte pas dans le score." }]);
   });
   test("axes table: AXIS_ORDER, bands, why, informational chip; Experience dropped", () => {
     const axes = synthesisView(tFr, "fr", obye(), docs, 15).axes;
@@ -121,7 +122,7 @@ describe("synthesisView", () => {
       ["consistency", 35, "worse", true],
       ["preparation", 65, "neutral", false],
     ]);
-    expect(axes[0]!.why).toBe("évitable +46\u202f% vs pairs · 1,6 mort(s) individuelle(s) / run");
+    expect(axes[0]!.why).toBe("dégâts évitables +46\u202f% vs le groupe · 1,6 mort(s) hors wipe / run");
     const sparse = synthesisView(tEn, "en", obye({ axes: [axis("utility", 72, []), axis("survival", null, [])] }), docs, 15).axes;
     expect(sparse.find((a) => a.key === "utility")).toMatchObject({ band: "better", why: "no evidence" });
     expect(sparse.find((a) => a.key === "survival")).toMatchObject({ score: null, band: "neutral", why: "not enough data for this axis" });
@@ -135,14 +136,19 @@ describe("synthesisView", () => {
   test("scoreBand thresholds", () => {
     expect([70, 69, 50, 49, null].map(scoreBand)).toEqual(["better", "neutral", "neutral", "worse", "neutral"]);
   });
-  test("synthesisDocs picks the registry titles and the config", () => {
+  test("synthesisDocs names sub-signals in the UI language, then the registry title, then the source", () => {
     const d = {
       docs: { axes: { survival: { subSignals: { individualDeaths: { title: "Individual deaths" } } } } },
       config: { axisWeights: docs.axisWeights, verdict: docs.verdict, confidence: { high: 6, medium: 3, consistencyMinRuns: 5, deepdiveMinRuns: 2 } },
     } as unknown as DocsResponse;
-    const s = synthesisDocs(d);
-    expect(s.titleOf("survival.individualDeaths")).toBe("Individual deaths");
-    expect(sourceTitleOf(d)("utility.unknown")).toBe("utility.unknown");
+    const s = synthesisDocs(tEn, d);
+    expect(s.titleOf("survival.individualDeaths")).toBe("Deaths outside wipes");
+    expect(synthesisDocs(tFr, d).titleOf("survival.individualDeaths")).toBe("Morts hors wipe");
+    expect(synthesisDocs(tFr, d).titleOf("preparation.ilvlVsLevel")).toBe("Équipement pour la clé visée");
+    expect(sourceTitleOf(tEn, d)("survival.unknownSignal")).toBe("survival.unknownSignal");
+    const registryOnly = { docs: { axes: { survival: { subSignals: { futureSignal: { title: "Future signal" } } } } } } as unknown as DocsResponse;
+    expect(sourceTitleOf(tEn, registryOnly)("survival.futureSignal")).toBe("Future signal");
+    expect(sourceTitleOf(tEn, null)("utility.unknown")).toBe("utility.unknown");
     expect(s.confidence.high).toBe(6);
   });
 });

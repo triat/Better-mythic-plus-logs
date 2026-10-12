@@ -46,7 +46,8 @@ export interface CharCard {
   /** "94 runs this season · up to date" / "33 runs · 25 not analysed · checked 7h ago". */
   line: string;
   /** The first point to work on with its cost; else what the pillars are computed on. */
-  note: { text: string; tone: "worse" | "neutral" };
+  /** `hint`: the point to work on's plain-language explanation, for the `title` tooltip (null otherwise). */
+  note: { text: string; tone: "worse" | "neutral"; hint: string | null };
   open: CharLink;
   /** "Sync 25 runs · ~335 pts"; null when nothing is pending, or hosted without a usable own client. */
   sync: string | null;
@@ -100,8 +101,8 @@ export interface CharactersInput {
   hosted: boolean;
   ownClient: OwnClientView | null;
   /**
-   * A sub-signal's title from the docs (`sourceTitleOf(docs)`), null while the docs are not loaded: the note then
-   * leaves the title out rather than print the raw source key ("preparation.healthstones").
+   * A sub-signal's name (`sourceTitleOf(t, docs)`), null to leave it out: the note then never prints the raw source
+   * key ("preparation.healthstones").
    */
   titleOf: ((source: string) => string) | null;
   now?: number;
@@ -139,10 +140,10 @@ function noteOf(t: T, locale: Locale, season: SeasonView, titleOf: ((source: str
   const w = season.workOn[0];
   if (first && w) {
     const vars = { title: first.title, detail: first.detail, impact: signed(w.impact) };
-    return { text: t(first.title ? "chars.note.workOn" : "chars.note.workOnUntitled", vars), tone: "worse" };
+    return { text: t(first.title ? "chars.note.workOn" : "chars.note.workOnUntitled", vars), tone: "worse", hint: first.title ? first.hint : null };
   }
   const window = season.recent ?? season.season;
-  return { text: window ? t("chars.note.basis", { count: window.runs }) : t("chars.note.few"), tone: "neutral" };
+  return { text: window ? t("chars.note.basis", { count: window.runs }) : t("chars.note.few"), tone: "neutral", hint: null };
 }
 
 export function characterCards(t: T, locale: Locale, input: CharactersInput): CharactersView {

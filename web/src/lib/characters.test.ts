@@ -74,12 +74,13 @@ describe("characterCards", () => {
     expect(main!.note.tone).toBe("worse");
     expect(main!.note.text).toStartWith("À travailler : Healthstones (");
     expect(main!.note.text).toEndWith(", −4 pts)");
+    expect(main!.note.hint).toBe("Pierres de soins utilisées par run (seulement les runs avec un démoniste).");
     expect([other!.sub, other!.initials, other!.classColor, other!.global]).toEqual(["Nerzhul EU", "Bi", null, "—"]);
     expect(other!.bars.map((b) => b.band)).toEqual(["neutral", "better", "better", "worse", "na"]);
     expect(other!.line).toBe("33 runs · 25 non analysés · vérifié il y a 7 h");
-    expect(other!.note).toEqual({ text: "Piliers calculés sur 8 runs analysés", tone: "neutral" });
+    expect(other!.note).toEqual({ text: "Piliers calculés sur 8 runs analysés", tone: "neutral", hint: null });
     const few = characterCards(tEn, "en", input({ seasonOf: () => season({ recent: null, season: null, workOn: [] }) })).withSeason[0]!;
-    expect(few.note).toEqual({ text: "The pillars need 3 analysed runs: sync the season", tone: "neutral" });
+    expect(few.note).toEqual({ text: "The pillars need 3 analysed runs: sync the season", tone: "neutral", hint: null });
     expect(characterCards(tEn, "en", input()).withSeason[1]!.line).toBe("33 runs · 25 not analysed · checked 7h ago");
   });
 

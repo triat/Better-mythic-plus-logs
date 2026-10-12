@@ -89,7 +89,7 @@ describe("homeSelf · pillars, strengths, costs", () => {
     const evidence = [{ label: "server English label", delta: 4, source: "survival.avoidableVsPeers", value: -8.2 }];
     const s = season({ recent: { runs: 5, pillars: [{ ...pillar("avoidable", 80), evidence }], overall: 80 }, dungeons: [] });
     expect(homeSelf(tEn, "en", s, titleOf).strengths[0]!.detail).toBe("avoidable −8% vs peers");
-    expect(homeSelf(tFr, "fr", s, titleOf).strengths[0]!.detail).toBe("évitable −8\u202F% vs pairs");
+    expect(homeSelf(tFr, "fr", s, titleOf).strengths[0]!.detail).toBe("dégâts évitables −8\u202F% vs le groupe");
   });
 });
 

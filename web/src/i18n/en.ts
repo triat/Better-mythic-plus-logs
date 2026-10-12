@@ -6,6 +6,9 @@ import type { AxisKey, EvidenceSource } from "../types.ts";
 /** One message per evidence source, nested by axis: `evidence.<axis>.<id>` is `t`'s key for `Evidence.source`. */
 type EvidenceMessages = { [A in AxisKey]: { [S in EvidenceSource as S extends `${A}.${infer Id}` ? Id : never]: string } };
 
+/** One name + hint per evidence source, nested by axis: `signals.<axis>.<id>.name` / `.hint`. */
+type SignalMessages = { [A in AxisKey]: { [S in EvidenceSource as S extends `${A}.${infer Id}` ? Id : never]: { name: string; hint: string } } };
+
 export const en = {
   common: {
     loading: "loading…",
@@ -328,7 +331,7 @@ export const en = {
     },
     throughput: {
       medianParse: "median parse {value}%",
-      parseAtTarget: "parse {value}% at target level",
+      parseAtTarget: "parse {value}% on target-level keys",
     },
     consistency: {
       parseSpread: "parse spread ±{value}%",
@@ -338,13 +341,45 @@ export const en = {
     preparation: {
       potions: "{value} potions/run",
       healthstones: "{value} healthstones/run",
-      ilvlVsLevel: "ilvl {value} vs expected",
+      ilvlVsLevel: "ilvl {value} vs expected for the key",
     },
   } satisfies EvidenceMessages,
   drivers: {
     avg: "avg {value}",
     unit: { perRun: "{value} / run", vsPeers: "{value}% vs peers", pct: "{value}%", plain: "{value}", ptsVsPeers: "{value} pts vs peers", pts: "{value} pts" },
   },
+  /** Each sub-signal's plain-language name and one-line hint: `signals.<axis>.<id>` for `Evidence.source`. */
+  signals: {
+    survival: {
+      individualDeaths: { name: "Deaths outside wipes", hint: "Deaths when the group did not wipe, per run, weighted by key level." },
+      wipeDeaths: { name: "Deaths in group wipes", hint: "Deaths when 3+ players died within 15 s; counts little." },
+      avoidableVsPeers: { name: "Avoidable damage vs the group", hint: "Damage from avoidable mechanics, compared with the other players of the same run." },
+      dtpsVsPeers: { name: "Damage taken vs the DPS", hint: "All damage taken per second, compared with the DPS of the same run." },
+      groupDeaths: { name: "Teammate deaths", hint: "Deaths of the other 4 players per run; mostly counts for a healer." },
+      defensiveUsage: { name: "Defensive usage", hint: "Share of the possible uses of major defensives actually cast (analysed runs)." },
+      avoidableDeaths: { name: "Deaths with a defensive ready", hint: "Share of deaths where an immunity or major defensive was ready and unused (analysed runs)." },
+    },
+    utility: {
+      kicksVsPeers: { name: "Interrupts vs the group", hint: "Kicks cast against what the cooldown allows, compared with the DPS and tanks of the same run." },
+      kicksAbsolute: { name: "Kicks used out of possible", hint: "Share of the kicks the spec could cast during the run." },
+      dispels: { name: "Dispels", hint: "Dispels, purges, spellsteals and soothes per run." },
+      crowdControl: { name: "Crowd control", hint: "Stuns, fears, knockbacks… per 10 min, compared with the spec's average player." },
+    },
+    throughput: {
+      medianParse: { name: "Median parse", hint: "Warcraft Logs ranking of their damage (or healing) against players of the same spec, on their best run per dungeon: 50% = better than half." },
+      parseAtTarget: { name: "Parse on target-level keys", hint: "The same parse, only on runs at the target key level or one below." },
+    },
+    consistency: {
+      parseSpread: { name: "Parse variation", hint: "How much the parse moves from run to run." },
+      deathsSpread: { name: "Deaths variation", hint: "Dies a little every run, or a lot in one." },
+      damageSpread: { name: "Damage-taken variation", hint: "Whether damage taken vs the group is a habit or a one-off." },
+    },
+    preparation: {
+      potions: { name: "Potions", hint: "Combat potions used per run." },
+      healthstones: { name: "Healthstones", hint: "Healthstones used per run (only runs with a Warlock)." },
+      ilvlVsLevel: { name: "Gear for the target key", hint: "Item level compared with what the season expects at the target key: +3 = 3 above." },
+    },
+  } satisfies SignalMessages,
   runs: {
     analyze: "Analyze · {cost}", reanalyze: "Re-analyze · {cost}", analyzing: "Analyzing {done}/{total}…",
     cost: "~{pts} pts",
@@ -533,6 +568,7 @@ export const en = {
     },
     multi: {
       spec: "{spec} · {realm}",
+      subHint: "{name}: {hint}",
       short: { survival: "SUR", utility: "UTI", throughput: "THR", consistency: "CON", preparation: "PRE" },
       line: "+ {pro} · − {con}", linePro: "+ {pro}", lineCon: "− {con}",
       target: "target", targetValue: "+{level}{auto}", axes: "Axis by axis", bestNote: "in blue: the best of the row",

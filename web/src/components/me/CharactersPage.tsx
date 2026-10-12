@@ -120,7 +120,7 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
     setFocusKey(null);
   }, [focusKey, list]);
   const remove = (index: number) => () => { self.setCharacters(removeAt(list, index)); setRemoving(null); };
-  const titleOf = docs ? sourceTitleOf(docs) : null;
+  const titleOf = sourceTitleOf(t, docs);
 
   const codeNote = self.hosted && bnetCode ? bnetNotice(t, bnetCode) : null;
   const removed = bnet ? removedNotice(t, bnet.removed) : null;

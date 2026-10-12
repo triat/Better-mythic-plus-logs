@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api.ts";
 import type { StatusInfo } from "../../lib/hostedMode.ts";
-import type { AxisKey, DocsResponse, TextBlock } from "../../types.ts";
+import type { DocsResponse, TextBlock } from "../../types.ts";
 import { READING_KEYS, axisIsInformational, curveTable, faqEntries, fmtThresholds, hashAnchor, toc } from "../../lib/help.ts";
 import { PILLAR_ORDER } from "../../lib/self.ts";
+import { sourceTitleOf } from "../../lib/synthesis.ts";
 import { AXIS_ORDER } from "../../lib/verdict.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
 import { useT } from "../../locale.tsx";
@@ -169,10 +170,7 @@ function Axes({ t }: { t: T }) {
 }
 
 function Pillars({ t, data }: SectionProps) {
-  const title = (source: string): string => {
-    const [axis, id] = source.split(".") as [AxisKey, string];
-    return data.docs.axes[axis]?.subSignals[id]?.title ?? source;
-  };
+  const title = sourceTitleOf(t, data);
   return (
     <section className="card help-card" id="pillars">
       <h2>{t("help.toc.pillars")}</h2>

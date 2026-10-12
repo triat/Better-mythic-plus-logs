@@ -224,9 +224,9 @@ describe("formView · checklist", () => {
     const f = formView(tFr, "fr", ev(), season(), docs, KEY);
     expect(f.checklistNote).toBe("4 dernières semaines vs 4 d'avant");
     expect(f.checklist).toEqual([
-      { title: "Healthstones", goal: "objectif 1,6 / run", before: "avant 0,7", now: "maintenant 0,0", nowTone: "worse", cost: "−4" },
-      { title: "Parse à la cible", goal: "objectif 59", before: null, now: "maintenant 51", nowTone: "neutral", cost: "−3" },
-      { title: "Potions", goal: "objectif 5,0 / run", before: "avant 4,1", now: "maintenant 4,1", nowTone: "neutral", cost: "−1" },
+      { title: "Healthstones", hint: "Pierres de soins utilisées par run (seulement les runs avec un démoniste).", goal: "objectif 1,6 / run", before: "avant 0,7", now: "maintenant 0,0", nowTone: "worse", cost: "−4" },
+      { title: "Parse à la cible", hint: "Le même parse, mais seulement sur ses runs au niveau de clé cible ou un niveau en dessous.", goal: "objectif 59", before: null, now: "maintenant 51", nowTone: "neutral", cost: "−3" },
+      { title: "Potions", hint: "Potions de combat utilisées par run.", goal: "objectif 5,0 / run", before: "avant 4,1", now: "maintenant 4,1", nowTone: "neutral", cost: "−1" },
     ]);
   });
   test("better than before reads in the better tone", () => {

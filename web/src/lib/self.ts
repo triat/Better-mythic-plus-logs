@@ -9,6 +9,7 @@ import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { evidenceText, formatEvidenceValue } from "./axes.ts";
 import { fmtAge, fmtAmount, fmtDuration, signed } from "./format.ts";
+import { signalHint } from "./signals.ts";
 
 /** Same order as src/evaluation/types.ts PILLAR_KEYS (the front cannot import runtime values from src/). */
 export const PILLAR_ORDER: readonly PillarKey[] = ["damage", "survival", "avoidable", "interrupts", "control"];
@@ -30,6 +31,8 @@ export function trendView(t: T, tr: PillarTrend | undefined): TrendView {
 export interface WorkOnView {
   n: number;
   title: string;
+  /** The sub-signal's plain-language hint (`lib/signals.ts`), null for an unknown source. */
+  hint: string | null;
   pillar: string;
   detail: string;
   impact: string;
@@ -53,6 +56,7 @@ export function workOnRows(t: T, locale: Locale, ev: Evaluation | null, season: 
   return workOnSource(ev, season).map((w, i) => ({
     n: i + 1,
     title: titleOf(w.source),
+    hint: signalHint(t, w.source),
     pillar: w.pillar ? t(`self.pillars.${w.pillar}`) : "",
     detail: evidenceText(t, locale, { label: w.label, delta: 0, source: w.source, value: w.value }),
     impact: t("self.workOn.impact", { value: signed(w.impact) }),

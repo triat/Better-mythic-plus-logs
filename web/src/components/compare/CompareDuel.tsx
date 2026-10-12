@@ -86,7 +86,7 @@ function Head({ head }: { head: DuelHead }) {
       {head.notes.length > 0 && (
         <ul className="cmp-notes">
           {head.notes.map((n, i) => (
-            <li key={i}><span className={"cmp-note-sign " + n.tone}>{n.sign}</span><span>{n.text}</span></li>
+            <li key={i}><span className={"cmp-note-sign " + n.tone}>{n.sign}</span><span title={n.hint}>{n.text}</span></li>
           ))}
         </ul>
       )}

@@ -24,7 +24,7 @@ A verdict — **INVITE**, **MAYBE** or **PASS** — with a score out of 100, and
 plain sentences. It never just says "good player": every line tells you what it saw, so you can
 disagree with it.
 
-The score comes from six axes:
+The score comes from five axes:
 
 | | Axis | What it looks at |
 |---|---|---|
@@ -33,7 +33,6 @@ The score comes from six axes:
 | ⚔️ | **Throughput** | Their damage or healing, as a percentile against everyone else playing that spec at that key level |
 | 📉 | **Consistency** | Whether they play the same way every run, or had one good night — shown, not counted in the score |
 | 🎒 | **Preparation** | Item level for the key you are asking about, and whether they bring consumables |
-| 🗺️ | **Experience** | How much of the season they have actually done at that level, and how recently — shown, not counted in the score |
 
 Healers are read on healing, everyone else on damage, automatically. If you do not say which key level
 you are vetting for, bmpl works it out from the level they actually play — the median of their best

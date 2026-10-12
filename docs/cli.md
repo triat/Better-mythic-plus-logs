@@ -122,8 +122,8 @@ After that, four screens:
   (0 pts), else with the usual lookup. Suggesting itself never calls Warcraft
   Logs or Raider.IO. Hosted, the suggestions come from your history and My
   characters only.
-- **Detail** — the verdict badge and 0–100 score, the six axes (Survival,
-  Utility, Throughput, Consistency, Preparation, Experience) each with a
+- **Detail** — the verdict badge and 0–100 score, the five axes (Survival,
+  Utility, Throughput, Consistency, Preparation) each with a
   confidence dot and its evidence, a radar chart, signal tiles, the best run
   per dungeon with that run's own signals, and a collapsed Raider.IO section.
 - **Compare** — 2–3 characters side by side: their radars overlaid in their

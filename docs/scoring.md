@@ -8,7 +8,7 @@ curves; `GET /api/docs` returns the registry with the effective config.
 
 On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
 **verdict** — `INVITE` / `MAYBE` / `PASS` / `INSUFFICIENT DATA` — with a
-0–100 global score, from six axes:
+0–100 global score, from five axes:
 
 - **Survival** — deaths (individual and in wipes), damage taken vs. the
   group's peers, avoidable damage vs. peers, and (for healers) teammate
@@ -26,7 +26,7 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   it is shown as `unranked` and excluded from every parse-based signal.
 - **Consistency** — spread (variance) of parse, deaths, and damage taken
   across runs. Needs at least 5 runs; below that it's `n/a`. **Informational
-  only**: its weight in the verdict is 0 by default, because variance punishes
+  only** (shown as "informational · weight 0"): its weight in the verdict is 0 by default, because variance punishes
   players who push keys (a depleted +21 next to a timed +20 is not
   inconsistency). Raise `axisWeights.<role>.consistency` in `evaluation.json`
   if you disagree.
@@ -35,15 +35,14 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   only on runs with a Warlock in the group, the player included (config
   version 6): without a Warlock's soulwell there was no healthstone to use,
   so those runs neither help nor hurt.
-- **Experience** — dungeon coverage, share of dungeons at/above target,
-  median key level vs. target, recent activity (runs in the last 7 days),
-  plus a small bonus — never a penalty — for a strong previous-season score.
-  **Informational only** since config version 4: it rewarded volume over
-  quality (a player with every dungeon timed at +18 scored below one with a
-  handful of average +19s), and on the calibration sample dropping it from
-  the global left the ranking against WCL's ladder unchanged. Raise
-  `axisWeights.<role>.experience` in `evaluation.json` to count it again (and
-  refit `globalCurve`).
+
+An **Experience** axis (coverage, keys at target, recent activity) weighed 0
+since config version 4 and was removed in config version 7: no score
+changed. Last season's score and recent activity stay visible as plain facts,
+outside the score; an `evaluation.json` that still names `experience`
+keys loads with a warning and those keys are ignored. Any axis whose role
+weight is 0 is informational: shown, never counted in "what would flip the
+verdict".
 
 The **global score** is a percentile. The weighted mean of the axes (the
 role's `axisWeights`) goes through the role's `globalCurve`, fitted on 1,081

@@ -2,7 +2,8 @@ export const CENTER = 150;
 export const R = 110;
 export const LABEL_R = 132;
 export const RADAR_VIEWBOX = "-70 -5 440 310";
-export const ANGLES_DEG: readonly number[] = [-90, -30, 30, 90, 150, 210];
+/** One spoke per axis (AXIS_ORDER), the first at the top, clockwise: a pentagon since the experience axis left. */
+export const ANGLES_DEG: readonly number[] = [-90, -18, 54, 126, 198];
 export type Point = [number, number];
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -18,7 +19,7 @@ export function axisPoint(i: number, score: number | null): Point {
 export const polygonPoints = (scores: readonly (number | null)[]): string =>
   scores.map((s, i) => axisPoint(i, s).join(",")).join(" ");
 
-export const ringPoints = (ring: number): string => polygonPoints([ring, ring, ring, ring, ring, ring]);
+export const ringPoints = (ring: number): string => polygonPoints(ANGLES_DEG.map(() => ring));
 
 export function axisLabelPos(i: number): { x: number; y: number; anchor: "start" | "middle" | "end" } {
   const c = Math.cos(rad(i));

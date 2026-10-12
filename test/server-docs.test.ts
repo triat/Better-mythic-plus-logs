@@ -55,6 +55,10 @@ describe("GET /api/docs", () => {
       expect(Object.keys(b.docs.axes[k].subSignals).sort()).toEqual(Object.keys(b.config.axes[k].subSignals).sort());
     }
     expect(b.config.verdict).toEqual((await getEvalConfig()).verdict);
+    // The Méthode tab draws the raw → percentile curve and the average player from these two.
+    expect(b.config.globalCurve).toEqual((await getEvalConfig()).globalCurve);
+    expect(b.config.reference).toEqual((await getEvalConfig()).reference);
+    expect(Object.keys(b.config.globalCurve).sort()).toEqual(["dps", "healer", "tank"]);
     expect(typeof b.defensives.version).toBe("string");
     expect(b.season).toBe(Object.keys(b.config.expectedIlvl).at(-1));
     expect(JSON.stringify(b)).not.toContain(process.env.WCL_CLIENT_ID!);

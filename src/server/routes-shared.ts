@@ -37,6 +37,10 @@ export interface DocsResponse {
     expectedIlvl: Record<string, CurvePoints>;
     axes: EvaluationConfig["axes"];
     axisWeights: EvaluationConfig["axisWeights"];
+    /** Raw weighted mean → percentile, per role (the Méthode tab's curve). */
+    globalCurve: EvaluationConfig["globalCurve"];
+    /** The average player's value per sub-signal and role (the Méthode tab's "joueur moyen"). */
+    reference: EvaluationConfig["reference"];
     verdict: EvaluationConfig["verdict"];
     confidence: EvaluationConfig["confidence"];
   };
@@ -63,6 +67,8 @@ export function docsResponse(cfg: EvaluationConfig, hosted: boolean, pointsPerUs
       expectedIlvl: cfg.expectedIlvl,
       axes: cfg.axes,
       axisWeights: cfg.axisWeights,
+      globalCurve: cfg.globalCurve,
+      reference: cfg.reference,
       verdict: cfg.verdict,
       confidence: cfg.confidence,
     },

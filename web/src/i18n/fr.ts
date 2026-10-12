@@ -261,7 +261,7 @@ export const fr: Mirror<typeof en> = {
     others: { title: "Mes autres persos", more: "+{n}", all: "Mes persos · {n}" },
   },
   verdict: {
-    axes: { survival: "Survie", utility: "Utilité", throughput: "Throughput", consistency: "Régularité", preparation: "Préparation", experience: "Expérience" },
+    axes: { survival: "Survie", utility: "Utilité", throughput: "Throughput", consistency: "Régularité", preparation: "Préparation" },
     words: { invite: "INVITE", maybe: "MAYBE", pass: "PASS", insufficient: "PAS ASSEZ DE DONNÉES" },
     confidence: { high: "haute", medium: "moyenne", low: "basse" },
     role: { dps: "dps", healer: "heal", tank: "tank" },
@@ -274,14 +274,14 @@ export const fr: Mirror<typeof en> = {
     metricAuto: " · métrique auto-sélectionnée ; il y a aussi des données {other}",
     filter: "filtre : {spec}",
     rings: "anneaux = 25 / 50 / 75 / 100 · point creux = non applicable",
-    radar: "Radar à six axes",
+    radar: "Radar à cinq axes",
     na: "n/a",
     notApplicable: "non applicable",
     confidenceOf: "confiance {c}",
     more: " · +{n} de plus",
     axisClick: "Clique pour voir ce qui est mesuré et chaque indice",
     deepdiveFeeds: "Les analyses deep-dive alimentent cet axe",
-    legend: { title: "Comment le verdict est construit", sub: "six axes notés de 0 à 100, pondérés par rôle · le point est la confiance de l'axe" },
+    legend: { title: "Comment le verdict est construit", sub: "cinq axes notés de 0 à 100, pondérés par rôle · le point est la confiance de l'axe" },
     measured: "Ce qui est mesuré",
     noEvidence: "aucun indice",
     notEnough: "pas assez de données pour cet axe",
@@ -326,13 +326,6 @@ export const fr: Mirror<typeof en> = {
       potions: "{value} potions / run",
       healthstones: "{value} healthstones / run",
       ilvlVsLevel: "ilvl {value} vs attendu",
-    },
-    experience: {
-      coverage: "{value} % des donjons couverts",
-      atTarget: "{value} % des donjons au niveau cible ou plus",
-      medianVsTarget: "key médiane {value} vs cible",
-      activity: "{value} runs sur les 7 derniers jours",
-      prevSeasonBonus: "saison précédente {value}",
     },
   },
   drivers: {
@@ -654,7 +647,7 @@ export const fr: Mirror<typeof en> = {
   help: {
     title: "Aide", sub: "ce qui est analysé, comment chaque nombre est calculé, et pourquoi certains ne le sont pas",
     toc: {
-      what: "Ce que bmpl regarde", verdict: "Le verdict", axes: "Les six axes", levelScale: "Pondération par niveau de key", expectedIlvl: "Item level attendu",
+      what: "Ce que bmpl regarde", verdict: "Le verdict", axes: "Les cinq axes", levelScale: "Pondération par niveau de key", expectedIlvl: "Item level attendu",
       runs: "Signaux par run", peers: "Pairs", deepdive: "Deep-dive", wclClient: "Ton propre client WCL", liveAddon: "L'addon en jeu", reading: "Lire la page", faq: "FAQ",
       pillars: "Les cinq piliers",
     },

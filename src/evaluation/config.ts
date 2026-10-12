@@ -158,6 +158,26 @@ const canonical = (v: unknown): string => {
 export const configVersion = (cfg: EvaluationConfig): string =>
   new Bun.CryptoHasher("sha256").update(canonical(cfg)).digest("hex").slice(0, 8);
 
+export const LEGACY_EXPERIENCE_WARNING = "evaluation.json: the experience axis was removed — its keys are ignored";
+
+/** Drops a pre-v7 user file's `experience` keys (`axes.experience`, `axisWeights.<role>.experience`,
+ * `reference.<role>["experience.<id>"]`) instead of failing validation on them. Never mutates its input. */
+export function dropLegacyExperience(override: unknown): { override: unknown; dropped: boolean } {
+  if (!isObj(override)) return { override, dropped: false };
+  const out = structuredClone(override);
+  let dropped = false;
+  if (isObj(out.axes) && "experience" in out.axes) { delete out.axes.experience; dropped = true; }
+  for (const section of ["axisWeights", "reference"] as const) {
+    const byRole = out[section];
+    if (!isObj(byRole)) continue;
+    for (const r of Object.values(byRole)) {
+      if (!isObj(r)) continue;
+      for (const k of Object.keys(r)) if (k === "experience" || k.startsWith("experience.")) { delete r[k]; dropped = true; }
+    }
+  }
+  return { override: out, dropped };
+}
+
 /** Default config, deep-merged with the user's file when it exists and is valid. */
 export async function loadConfig(userPath: string | null): Promise<{ config: EvaluationConfig; warning?: string }> {
   const base = validateConfig(DEFAULT_CONFIG);
@@ -170,8 +190,10 @@ export async function loadConfig(userPath: string | null): Promise<{ config: Eva
   } catch (e) {
     return { config: base, warning: `bmpl: ignoring ${userPath}: not valid JSON (${e instanceof Error ? e.message : String(e)})` };
   }
+  const legacy = dropLegacyExperience(override);
   try {
-    return { config: validateConfig(deepMerge(DEFAULT_CONFIG, override)) };
+    const config = validateConfig(deepMerge(DEFAULT_CONFIG, legacy.override));
+    return legacy.dropped ? { config, warning: LEGACY_EXPERIENCE_WARNING } : { config };
   } catch (e) {
     return { config: base, warning: `bmpl: ignoring ${userPath}: ${e instanceof Error ? e.message : String(e)}` };
   }

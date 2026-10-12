@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { LookupPayload } from "../types.ts";
+import type { AxisKey, LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { bestIndices, compareSections } from "./compare.ts";
@@ -29,7 +29,7 @@ const payload = (over: Record<string, unknown>): LookupPayload =>
     deepdive: [],
     deepdiveSummary: { tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
     evaluation: { role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
-      axes: [{ key: "survival", score: 82, confidence: "high", evidence: [] }, { key: "utility", score: 61, confidence: "high", evidence: [] }, { key: "throughput", score: 88, confidence: "high", evidence: [] }, { key: "consistency", score: null, confidence: "low", evidence: [] }, { key: "preparation", score: 55, confidence: "medium", evidence: [] }, { key: "experience", score: 74, confidence: "high", evidence: [] }] },
+      axes: [{ key: "survival", score: 82, confidence: "high", evidence: [] }, { key: "utility", score: 61, confidence: "high", evidence: [] }, { key: "throughput", score: 88, confidence: "high", evidence: [] }, { key: "consistency", score: null, confidence: "low", evidence: [] }, { key: "preparation", score: 55, confidence: "medium", evidence: [] }, { key: "experience" as AxisKey, score: 74, confidence: "high", evidence: [] }] },
     ...over,
   }) as unknown as LookupPayload;
 
@@ -40,7 +40,7 @@ describe("compareSections", () => {
     perDungeon: { runs: [{ encounterID: 1, keyLevel: 18, parsePercent: 90, signals: undefined }, { encounterID: 2, keyLevel: 18, parsePercent: 50, signals: undefined }], dungeonsCovered: 2, totalDungeonsInSeason: 2, dungeonsAtOrAboveTarget: 0, medianLevel: 18, medianAmount: 1_200_000, medianParse: 70 },
     summary: { runsWithSignals: 2, timedShown: 2, avgDeaths: 0.2, deathsInWipes: 0, dtpsDeltaPct: null, kicksDeltaPts: 3, avoidableDeltaPct: 5, ilvl: 318, recentTimed: 4, recentTotal: 10, prevSeason: { slug: "s1", all: 2900, best: { role: "tank", score: 2900 } } },
     evaluation: { role: "tank", targetLevel: 18, global: 66, verdict: "maybe", runsUsed: 5, configVersion: "x",
-      axes: [{ key: "survival", score: 100, confidence: "high", evidence: [] }, { key: "utility", score: 71, confidence: "high", evidence: [] }, { key: "throughput", score: 66, confidence: "high", evidence: [] }, { key: "consistency", score: 72, confidence: "medium", evidence: [] }, { key: "preparation", score: 38, confidence: "medium", evidence: [] }, { key: "experience", score: 58, confidence: "high", evidence: [] }] },
+      axes: [{ key: "survival", score: 100, confidence: "high", evidence: [] }, { key: "utility", score: 71, confidence: "high", evidence: [] }, { key: "throughput", score: 66, confidence: "high", evidence: [] }, { key: "consistency", score: 72, confidence: "medium", evidence: [] }, { key: "preparation", score: 38, confidence: "medium", evidence: [] }, { key: "experience" as AxisKey, score: 58, confidence: "high", evidence: [] }] },
   });
   const sections = compareSections(tEn, [a, b]);
   const row = (title: string, label: string) => sections.find((s) => s.title === title)!.rows.find((r) => r.label === label)!;
@@ -73,7 +73,7 @@ describe("compareSections", () => {
   test("French: section titles, row labels, cells", () => {
     const s = compareSections(tFr, [a, b]);
     expect(s.map((x) => x.title)).toEqual(["Évaluation", "Résumé", "Par donjon (meilleur run)"]);
-    expect(s[0]!.rows.map((r) => r.label)).toEqual(["Score", "Survie", "Utilité", "Throughput", "Régularité", "Préparation", "Expérience"]);
+    expect(s[0]!.rows.map((r) => r.label)).toEqual(["Score", "Survie", "Utilité", "Throughput", "Régularité", "Préparation"]);
     expect(s[0]!.rows[4]!.cells[0]!.text).toBe("n/a");
     const rowFr = (label: string) => s[1]!.rows.find((r) => r.label === label)!;
     expect(rowFr("Niveau cible").cells.map((c) => c.text)).toEqual(["+21 auto", "+18 auto"]);

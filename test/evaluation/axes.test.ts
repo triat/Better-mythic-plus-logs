@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { scoreAxis } from "../../src/evaluation/axis.ts";
 import { EVIDENCE_SOURCES, scoreAllAxes } from "../../src/evaluation/axes/index.ts";
 import { scoreConsistency } from "../../src/evaluation/axes/consistency.ts";
-import { scoreExperience } from "../../src/evaluation/axes/experience.ts";
 import { scorePreparation } from "../../src/evaluation/axes/preparation.ts";
 import { scoreSurvival } from "../../src/evaluation/axes/survival.ts";
 import { scoreUtility } from "../../src/evaluation/axes/utility.ts";
@@ -21,7 +20,6 @@ const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
   preparation: { potions: null, healthstones: null, ilvl: null },
-  experience: { coverage: null, atTarget: null, medianVsTarget: null, activity: null, prevSeasonAll: null },
   ...over,
 });
 
@@ -123,19 +121,19 @@ describe("survival", () => {
 });
 
 describe("EVIDENCE_SOURCES", () => {
-  test("lists the default config's sub-signals plus the previous-season bonus, nothing else", () => {
+  test("lists the default config's sub-signals, nothing else; no experience source", () => {
     const fromConfig = AXIS_KEYS.flatMap((k) => Object.keys(DEFAULT_CONFIG.axes[k].subSignals).map((id) => `${k}.${id}`));
-    expect([...(EVIDENCE_SOURCES as readonly string[])].sort()).toEqual([...fromConfig, "experience.prevSeasonBonus"].sort());
+    expect([...(EVIDENCE_SOURCES as readonly string[])].sort()).toEqual([...fromConfig].sort());
+    expect(EVIDENCE_SOURCES.some((s) => s.startsWith("experience."))).toBe(false);
   });
   test("every evidence entry of the fixture evaluations has a listed source, a finite value, and extra where the label needs it", async () => {
     const all = [evaluate(await fixturePayload("s1-tank", false), cfg), evaluate(await fixturePayload("s2-healer", true), cfg)]
       .flatMap((e) => e.axes.flatMap((a) => a.evidence));
-    expect(all.length).toBeGreaterThan(20);
+    expect(all.length).toBeGreaterThan(15);
     for (const e of all) {
       expect(EVIDENCE_SOURCES as readonly string[]).toContain(e.source);
       expect(Number.isFinite(e.value), e.source).toBe(true);
     }
-    expect(all.find((e) => e.source === "experience.prevSeasonBonus")).toMatchObject({ label: "previous season 4153", value: 4152.7 });
     expect(all.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl −4 vs expected");
   });
   test("survival.defensiveUsage carries extra.runs when a deep-dive exists", () => {
@@ -194,32 +192,10 @@ describe("preparation", () => {
   });
 });
 
-describe("experience", () => {
-  test("previous season is a capped bonus; absent adds nothing", () => {
-    const base = { coverage: 1, atTarget: 1, medianVsTarget: 0, activity: null };
-    // weights coverage=2, atTarget=3, medianVsTarget=2 (activity null → skipped) → Σw 7
-    // (2×100 + 3×100 + 2×70)/7 = 640/7 = 91.4285… → base axis score rounds to 91 (I1).
-    const none = scoreExperience(baseInputs({ experience: { ...base, prevSeasonAll: null } }), cfg);
-    expect(none.score).toBe(91);
-    expect(none.evidence.find((e) => e.source === "experience.prevSeasonBonus")).toBeUndefined();
-    // bonus = min(10, 2000/400) = 5 ; 91 + 5 = 96
-    const some = scoreExperience(baseInputs({ experience: { ...base, prevSeasonAll: 2000 } }), cfg);
-    expect(some.score).toBe(96);
-    // bonus = min(10, 9000/400) = 10 ; 91 + 10 = 101 → clamped to 100
-    const big = scoreExperience(baseInputs({ experience: { ...base, prevSeasonAll: 9000 } }), cfg);
-    expect(big.score).toBe(100);
-    expect(big.evidence.find((e) => e.source === "experience.prevSeasonBonus")!.delta).toBe(10);
-  });
-  test("bonus is clamped to 100", () => {
-    const e = scoreExperience(baseInputs({ experience: { coverage: 1, atTarget: 1, medianVsTarget: 2, activity: 10, prevSeasonAll: 4000 } }), cfg);
-    expect(e.score).toBe(100);
-  });
-});
-
 describe("scoreAllAxes", () => {
-  test("six axes in radar order", () => {
+  test("five axes in radar order", () => {
     const axes = scoreAllAxes(baseInputs(), cfg);
-    expect(axes.map((a) => a.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
+    expect(axes.map((a) => a.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation"]);
   });
 });
 

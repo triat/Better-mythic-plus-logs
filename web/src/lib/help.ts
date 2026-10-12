@@ -8,7 +8,7 @@ import { AXIS_ORDER } from "./verdict.ts";
 
 export type Anchor = string;
 
-/** "survival.individualDeaths" → "survival.individualDeaths"; an axis key → "axis-survival"; "experience.prevSeasonBonus" stays as is. */
+/** "survival.individualDeaths" → "survival.individualDeaths"; an axis key → "axis-survival"; an extra's source (axis.id) stays as is. */
 export function anchorOf(source: string): Anchor {
   return source.includes(".") ? source : `axis-${source}`;
 }
@@ -26,7 +26,7 @@ export function hashAnchor(hash: string): Anchor | null {
 
 export interface TocEntry { anchor: Anchor; label: string; sub?: boolean }
 
-/** what, verdict, axes (+ six sub entries, titled by the registry), pillars, level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), live-addon, reading, faq. */
+/** what, verdict, axes (+ one sub entry per axis, titled by the registry), pillars, level-scale, expected-ilvl, runs, peers, deep-dive, (hosted: wcl-client), live-addon, reading, faq. */
 export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
   return [
     { anchor: "what", label: t("help.toc.what") },

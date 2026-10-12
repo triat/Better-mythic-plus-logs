@@ -12,7 +12,6 @@ const docs = {
     throughput: { title: "Throughput", summary: "", why: "", subSignals: {} },
     consistency: { title: "Consistency", summary: "", why: "", subSignals: {} },
     preparation: { title: "Preparation", summary: "", why: "", subSignals: {} },
-    experience: { title: "Experience", summary: "", why: "", subSignals: {} },
   },
   faq: [{ q: "a", a: "b" }, { q: "c", a: "d", hostedOnly: true }],
 } as never;
@@ -21,7 +20,7 @@ describe("anchorOf", () => {
   test("sub-signal sources, axis keys, extras", () => {
     expect(anchorOf("survival.individualDeaths")).toBe("survival.individualDeaths");
     expect(anchorOf("survival")).toBe("axis-survival");
-    expect(anchorOf("experience.prevSeasonBonus")).toBe("experience.prevSeasonBonus");
+    expect(anchorOf("survival.someExtra")).toBe("survival.someExtra");
   });
 });
 
@@ -37,15 +36,15 @@ describe("hashAnchor", () => {
 });
 
 describe("toc", () => {
-  test("order and the six axis sub-entries", () => {
+  test("order and the five axis sub-entries", () => {
     const t = toc(tEn, docs, false);
     expect(t.map((e) => e.anchor)).toEqual([
-      "what", "verdict", "axes", "axis-survival", "axis-utility", "axis-throughput", "axis-consistency", "axis-preparation", "axis-experience", "pillars",
+      "what", "verdict", "axes", "axis-survival", "axis-utility", "axis-throughput", "axis-consistency", "axis-preparation", "pillars",
       "level-scale", "expected-ilvl", "runs", "peers", "deep-dive", "live-addon", "reading", "faq",
     ]);
-    expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation", "Experience"]);
+    expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation"]);
     expect(t.filter((e) => !e.sub).map((e) => e.label)).toEqual([
-      "What bmpl looks at", "The verdict", "The six axes", "The five pillars", "Key-level scaling", "Expected item level", "Per-run signals", "Peers", "Deep-dive",
+      "What bmpl looks at", "The verdict", "The five axes", "The five pillars", "Key-level scaling", "Expected item level", "Per-run signals", "Peers", "Deep-dive",
       "The in-game addon", "Reading the page", "FAQ",
     ]);
   });
@@ -63,11 +62,11 @@ describe("toc", () => {
     const t = toc(tFr, docs, true);
     expect(t.map((e) => e.anchor)).toEqual(toc(tEn, docs, true).map((e) => e.anchor));
     expect(t.filter((e) => !e.sub).map((e) => e.label)).toEqual([
-      "Ce que bmpl regarde", "Le verdict", "Les six axes", "Les cinq piliers", "Pondération par niveau de key", "Item level attendu", "Signaux par run", "Pairs", "Deep-dive",
+      "Ce que bmpl regarde", "Le verdict", "Les cinq axes", "Les cinq piliers", "Pondération par niveau de key", "Item level attendu", "Signaux par run", "Pairs", "Deep-dive",
       "Ton propre client WCL", "L'addon en jeu", "Lire la page", "FAQ",
     ]);
     // The registry is fetched in the UI language (api.docs(locale)); the toc prints whatever titles it carries.
-    expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation", "Experience"]);
+    expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation"]);
   });
 });
 

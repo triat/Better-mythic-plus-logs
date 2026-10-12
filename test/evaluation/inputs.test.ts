@@ -79,7 +79,7 @@ describe("collectInputs — utility", () => {
   });
 });
 
-describe("collectInputs — throughput / consistency / preparation / experience", () => {
+describe("collectInputs — throughput / consistency / preparation", () => {
   test("parseAtTarget uses runs ≥ target-1 (with or without signals)", () => {
     const p = payloadWith([runWith({}, { keyLevel: 15, parsePercent: 90 }), runWith(null, { keyLevel: 14, parsePercent: 50 }), runWith(null, { keyLevel: 10, parsePercent: 10 })]);
     const i = collectInputs(p, cfg);
@@ -140,7 +140,7 @@ describe("collectInputs — throughput / consistency / preparation / experience"
     const none = collectInputs(payloadWith([stones(0, false), stones(2, false)]), cfg);
     expect(none.preparation.healthstones).toBeNull();
   });
-  test("preparation and experience", () => {
+  test("preparation", () => {
     const p = payloadWith(
       [runWith({ consumables: { potions: 6, healthstones: 2, healthstonesAvailable: true } }, { keyLevel: 16 }), runWith({ consumables: { potions: 2, healthstones: 0, healthstonesAvailable: true } }, { keyLevel: 14 }), runWith({})],
       { targetLevel: 15 },
@@ -149,11 +149,6 @@ describe("collectInputs — throughput / consistency / preparation / experience"
     expect(i.preparation.potions).toBe(4);
     expect(i.preparation.healthstones).toBe(1);
     expect(i.preparation.ilvl).toBeNull();
-    expect(i.experience.coverage).toBe(3 / 8);
-    expect(i.experience.atTarget).toBe(2 / 8);
-    expect(i.experience.medianVsTarget).toBe(0);
-    expect(i.experience.activity).toBeNull();
-    expect(i.experience.prevSeasonAll).toBeNull();
   });
 });
 
@@ -204,8 +199,7 @@ describe("collectInputs — fixtures", () => {
     expect(i.utility.dispels).toBe(9);
     expect(i.preparation.ilvl).toBe(322);
     expect(i.preparation.potions).toBe(5);
-    expect(i.experience.activity).toBe(10);
-    expect(i.experience.prevSeasonAll).toBe(4152.7);
+    expect("experience" in i).toBe(false);
     expect(i.seasonSlug).toBe("season-mn-2");
   });
 });

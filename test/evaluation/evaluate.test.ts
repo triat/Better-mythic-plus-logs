@@ -9,13 +9,13 @@ const ax = (key: AxisScore["key"], score: number | null): AxisScore => ({ key, s
 
 describe("globalScore / verdictFor", () => {
   test("weighted mean excludes null axes; all null → null", () => {
-    const axes = [ax("survival", 100), ax("utility", null), ax("throughput", 50), ax("consistency", null), ax("preparation", null), ax("experience", null)];
+    const axes = [ax("survival", 100), ax("utility", null), ax("throughput", 50), ax("consistency", null), ax("preparation", null)];
     expect(globalScore(axes, "dps", cfg)).toBeCloseTo((3 * 100 + 3 * 50) / 6, 6);
     expect(globalScore(axes.map((a) => ({ ...a, score: null })), "dps", cfg)).toBeNull();
   });
   test("consistency is informational: zero weight in the global for every role", () => {
     for (const role of ["dps", "healer", "tank"] as const) expect(cfg.axisWeights[role].consistency).toBe(0);
-    const axes = [ax("survival", 80), ax("utility", null), ax("throughput", null), ax("consistency", 10), ax("preparation", null), ax("experience", null)];
+    const axes = [ax("survival", 80), ax("utility", null), ax("throughput", null), ax("consistency", 10), ax("preparation", null)];
     expect(globalScore(axes, "dps", cfg)).toBe(80);
   });
   test("thresholds at the boundaries and insufficient", () => {
@@ -28,10 +28,10 @@ describe("globalScore / verdictFor", () => {
   });
   test("display and verdict agree at the rounding boundary (I1)", () => {
     // A single scored axis makes the raw weighted mean equal to that axis's score exactly,
-    // regardless of its weight — the other five axes are null and excluded from the mean.
+    // regardless of its weight — the other four axes are null and excluded from the mean.
     const axesAt = (score: number): AxisScore[] => [
       ax("survival", score), ax("utility", null), ax("throughput", null),
-      ax("consistency", null), ax("preparation", null), ax("experience", null),
+      ax("consistency", null), ax("preparation", null),
     ];
     const raw696 = globalScore(axesAt(69.6), "dps", cfg);
     expect(raw696).toBeCloseTo(69.6, 6);
@@ -55,13 +55,13 @@ describe("evaluate", () => {
     damageTaken: { total: 0, dtps: 90, peer: { median: 100, count: 2 } },
   }, { parsePercent: 90, keyLevel: 16 });
 
-  test("a strong DPS profile is invited, six axes, config version present", () => {
+  test("a strong DPS profile is invited, five axes, config version present", () => {
     const p = payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 });
     const e = evaluate(p, cfg);
     expect(e.role).toBe("dps");
     expect(e.targetLevel).toBe(16);
     expect(e.runsUsed).toBe(8);
-    expect(e.axes.map((a) => a.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
+    expect(e.axes.map((a) => a.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation"]);
     expect(e.axes.every((a) => a.confidence === "high")).toBe(true);
     expect(e.global!).toBeGreaterThan(85);
     expect(e.verdict).toBe("invite");
@@ -119,6 +119,34 @@ describe("evaluate", () => {
     expect(heal.role).toBe("healer");
     expect(heal.axes[1]!.evidence.map((e) => e.source)).toEqual(["utility.dispels"]);
     expect(heal.axes[4]!.evidence.map((e) => e.source)).toContain("preparation.ilvlVsLevel");
-    expect(heal.axes[5]!.evidence.map((e) => e.source)).toContain("experience.prevSeasonBonus");
+    expect(heal.axes.length).toBe(5);
+  });
+});
+
+describe("experience axis removed (config v7)", () => {
+  // The experience axis weighed 0 for every role, so removing it changes no global and no verdict. These are the
+  // values the default config gave before the removal; any drift means a weight or curve moved with it.
+  const good = () => runWith({
+    deaths: deaths(0), consumables: { potions: 6, healthstones: 3 },
+    interrupts: { count: 30, kickCooldownS: 15, capacity: 100, usage: 0.3, peer: { median: 0.2, count: 3 } },
+    avoidableDamage: { total: 0, perMinute: 60, peer: { median: 100, count: 4 }, spellCount: 10 },
+    damageTaken: { total: 0, dtps: 90, peer: { median: 100, count: 2 } },
+  }, { parsePercent: 90, keyLevel: 16 });
+  const bad = () => runWith({ deaths: deaths(3, 1), avoidableDamage: { total: 0, perMinute: 150, peer: { median: 100, count: 4 }, spellCount: 10 } }, { parsePercent: 10, keyLevel: 10 });
+
+  test("globals and verdicts unchanged on every evaluation fixture, no experience axis", async () => {
+    const cases: Array<[string, Promise<ReturnType<typeof evaluate>>, number, string]> = [
+      ["good", Promise.resolve(evaluate(payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 }), cfg)), 99, "invite"],
+      ["bad", Promise.resolve(evaluate(payloadWith(Array.from({ length: 6 }, bad), { targetLevel: 16 }), cfg)), 1, "pass"],
+      ["s1-tank", fixturePayload("s1-tank", false).then((p) => evaluate(p, cfg)), 59, "insufficient"],
+      ["s1-tank + rio", fixturePayload("s1-tank", true).then((p) => evaluate(p, cfg)), 70, "insufficient"],
+      ["s2-healer", fixturePayload("s2-healer", false).then((p) => evaluate(p, cfg)), 59, "insufficient"],
+      ["s2-healer + rio", fixturePayload("s2-healer", true).then((p) => evaluate(p, cfg)), 48, "insufficient"],
+    ];
+    for (const [name, pending, global, verdict] of cases) {
+      const e = await pending;
+      expect([name, e.global, e.verdict]).toEqual([name, global, verdict]);
+      expect(e.axes.some((a) => (a.key as string) === "experience"), name).toBe(false);
+    }
   });
 });

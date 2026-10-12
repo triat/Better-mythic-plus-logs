@@ -100,7 +100,6 @@ const evalFixture = (over: Partial<Evaluation> = {}): Evaluation => ({
     { key: "throughput", score: 88, confidence: "high", evidence: [] },
     { key: "consistency", score: null, confidence: "low", evidence: [] },
     { key: "preparation", score: 55, confidence: "medium", evidence: [] },
-    { key: "experience", score: 74, confidence: "high", evidence: [] },
   ],
   ...over,
 });
@@ -138,11 +137,11 @@ describe("renderEvaluation", () => {
     const out = strip(renderEvaluation(evalFixture({
       verdict: "maybe", global: 47,
       drivers: [
-        { source: "experience.atTarget", impact: 4, value: 1, reference: 0.625, label: "100% dungeons at/above target" },
+        { source: "utility.kicksAbsolute", impact: 4, value: 1, reference: 0.625, label: "100% of kick capacity used" },
       ],
       nextVerdict: null,
     })));
-    expect(out).toContain("+4 100% dungeons at/above target (avg 63%)");
+    expect(out).toContain("+4 100% of kick capacity used (avg 63%)");
     expect(out).not.toContain("avg 0.6");
   });
   test("out of reach: three sources, no score reached", () => {

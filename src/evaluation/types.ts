@@ -1,6 +1,6 @@
 export type Role = "dps" | "healer" | "tank";
-export type AxisKey = "survival" | "utility" | "throughput" | "consistency" | "preparation" | "experience";
-export const AXIS_KEYS: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation", "experience"];
+export type AxisKey = "survival" | "utility" | "throughput" | "consistency" | "preparation";
+export const AXIS_KEYS: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation"];
 /** The five pillars of the self-review (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md). */
 export type PillarKey = "damage" | "survival" | "avoidable" | "interrupts" | "control";
 export const PILLAR_KEYS: readonly PillarKey[] = ["damage", "survival", "avoidable", "interrupts", "control"];

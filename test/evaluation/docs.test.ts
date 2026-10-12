@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
+import { EVIDENCE_SOURCES } from "../../src/evaluation/axes/index.ts";
 import { DEFAULT_CONFIG } from "../../src/evaluation/config.ts";
 import { EVALUATION_DOCS, EVALUATION_DOCS_BY_LOCALE } from "../../src/evaluation/docs.ts";
 import { EVALUATION_DOCS_FR } from "../../src/evaluation/docs.fr.ts";
-import { AXIS_KEYS, PILLAR_KEYS } from "../../src/evaluation/types.ts";
+import { AXIS_KEYS, PILLAR_KEYS, type AxisKey } from "../../src/evaluation/types.ts";
 import { LOCALES } from "../../src/hosted/locale.ts";
 
 const nonEmpty = (o: object, path: string) => {
@@ -35,7 +36,7 @@ describe("EVALUATION_DOCS_BY_LOCALE", () => {
     expect(targets(EVALUATION_DOCS_FR)).toEqual(targets(EVALUATION_DOCS));
   });
   test("the axis titles are translated", () => {
-    expect(AXIS_KEYS.map((k) => EVALUATION_DOCS_FR.axes[k].title)).toEqual(["Survie", "Utilité", "Throughput", "Régularité", "Préparation", "Expérience"]);
+    expect(AXIS_KEYS.map((k) => EVALUATION_DOCS_FR.axes[k].title)).toEqual(["Survie", "Utilité", "Throughput", "Régularité", "Préparation"]);
   });
   test("French keeps the narrow no-break space before every %", () => {
     expect(JSON.stringify(EVALUATION_DOCS_FR)).not.toMatch(/ %/);
@@ -71,8 +72,12 @@ for (const locale of LOCALES) {
       const scaled = AXIS_KEYS.flatMap((k) => Object.entries(DOCS.axes[k].subSignals).filter(([, d]) => d.scaledByLevel).map(([id]) => `${k}.${id}`));
       expect(scaled.sort()).toEqual(["survival.groupDeaths", "survival.individualDeaths"]);
     });
-    test("the previous-season bonus (an evidence source outside the config) is documented", () => {
-      expect(DOCS.axes.experience.extras?.prevSeasonBonus?.title).toBe(locale === "en" ? "Previous season bonus" : "Bonus saison précédente");
+    test("no experience axis; every evidence source is documented", () => {
+      expect("experience" in DOCS.axes).toBe(false);
+      for (const src of EVIDENCE_SOURCES) {
+        const [axis, id] = src.split(".") as [AxisKey, string];
+        expect(DOCS.axes[axis]?.subSignals[id] ?? DOCS.axes[axis]?.extras?.[id], src).toBeDefined();
+      }
     });
     test("prose never hard-codes config numbers", () => {
       const text = JSON.stringify(DOCS);

@@ -172,7 +172,7 @@ interface Run {
  * The payload as it would have looked with only the older half of the runs: `perDungeon.runs` cut,
  * and `perDungeon.medianParse` recomputed from them (it is precomputed over every run, so leaving it
  * would leak the newer runs into the score meant to predict them). Raider.IO's recent-runs block is
- * left as is; it only feeds Experience's activity count, not the outcomes measured here.
+ * left as is; no scored signal reads it.
  */
 function olderHalf(s: Sample): { payload: Sample["payload"]; newer: Run[] } | null {
   const runs = [...((s.payload as unknown as { perDungeon: { runs: Run[] } }).perDungeon.runs)].filter((r) => r.signals).sort((a, b) => a.startTime - b.startTime);

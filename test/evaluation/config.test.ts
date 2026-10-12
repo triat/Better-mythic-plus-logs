@@ -5,6 +5,8 @@ import {
   DEFAULT_CONFIG,
   configVersion,
   deepMerge,
+  dropLegacyExperience,
+  LEGACY_EXPERIENCE_WARNING,
   loadConfig,
   validateConfig,
 } from "../../src/evaluation/config.ts";
@@ -17,7 +19,8 @@ describe("default config", () => {
   test("validates and has every axis, role and threshold", () => {
     const cfg = validateConfig(DEFAULT_CONFIG);
     for (const k of AXIS_KEYS) expect(Object.keys(cfg.axes[k].subSignals).length).toBeGreaterThan(0);
-    expect(cfg.axisWeights.tank.experience).toBe(0); // informational since config version 4
+    for (const role of ["dps", "healer", "tank"] as const) expect(Object.keys(cfg.axisWeights[role])).toEqual([...AXIS_KEYS]);
+    expect(cfg.version).toBe("7"); // the experience axis left in version 7
     expect(cfg.verdict).toEqual({ invite: 70, maybe: 30, minRuns: 3 });
     for (const role of ["dps", "healer", "tank"] as const) {
       expect(cfg.globalCurve[role][0]).toEqual([0, 0]);
@@ -129,5 +132,32 @@ describe("loadConfig", () => {
     const r = await loadConfig(p);
     expect(r.config.verdict.invite).toBe(70);
     expect(r.warning).toMatch(/broken\.json/);
+  });
+  test("a pre-v7 file's experience keys are dropped with one warning, the rest of it applies", async () => {
+    const p = tmp("legacy-experience.json");
+    await Bun.write(p, JSON.stringify({
+      verdict: { invite: 75 },
+      axes: { experience: { subSignals: { coverage: { curve: [[0, 0], [1, 100]], weights: { dps: 1, healer: 1, tank: 1 } } } } },
+      axisWeights: { dps: { experience: 2, survival: 4 }, healer: { experience: 0 }, tank: { experience: 0 } },
+      reference: { dps: { "experience.coverage": { x: 1, value: 1 }, "survival.wipeDeaths": { x: 0.5, value: 0.5 } }, tank: { "experience.activity": { x: 8, value: 8 } } },
+    }));
+    const r = await loadConfig(p);
+    expect(r.warning).toBe(LEGACY_EXPERIENCE_WARNING);
+    expect(r.warning).toBe("evaluation.json: the experience axis was removed — its keys are ignored");
+    expect(r.config.verdict.invite).toBe(75);
+    expect(r.config.axisWeights.dps.survival).toBe(4);
+    expect(r.config.reference.dps["survival.wipeDeaths"]).toEqual({ x: 0.5, value: 0.5 });
+    expect("experience" in r.config.axes).toBe(false);
+    for (const role of ["dps", "healer", "tank"] as const) {
+      expect("experience" in r.config.axisWeights[role]).toBe(false);
+      expect(Object.keys(r.config.reference[role]).some((k) => k.startsWith("experience."))).toBe(false);
+    }
+  });
+  test("dropLegacyExperience leaves a current file alone and never mutates its input", () => {
+    const current = { verdict: { invite: 75 } };
+    expect(dropLegacyExperience(current)).toEqual({ override: current, dropped: false });
+    const legacy = { axes: { experience: {} } };
+    expect(dropLegacyExperience(legacy)).toEqual({ override: { axes: {} }, dropped: true });
+    expect(legacy).toEqual({ axes: { experience: {} } });
   });
 });

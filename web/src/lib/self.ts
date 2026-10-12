@@ -112,7 +112,7 @@ export function workOnRows(t: T, locale: Locale, ev: Evaluation | null, season: 
 
 /** "Verdict for a group leader: INVITE 72 · context: …": the verdict as today, the context axes beside it. */
 export function verdictLine(t: T, ev: Evaluation, informational: (key: AxisKey) => boolean): { badge: ReturnType<typeof verdictView>; context: string } {
-  const items = AXIS_ORDER.filter((k) => k === "preparation" || k === "consistency" || k === "experience").flatMap((k) => {
+  const items = AXIS_ORDER.filter((k) => k === "preparation" || k === "consistency").flatMap((k) => {
     const a = ev.axes.find((x) => x.key === k);
     if (!a || a.score === null) return [];
     const item = t("self.contextItem", { name: axisTitle(t, k).toLocaleLowerCase(), score: a.score });

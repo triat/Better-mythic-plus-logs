@@ -28,8 +28,8 @@ describe("evidenceText against the server", () => {
   test("English is byte-identical to the server label for every evidence entry of the fixture evaluations", async () => {
     const all = [evaluate(await fixturePayload("s1-tank", false), cfg), evaluate(await fixturePayload("s2-healer", true), cfg)]
       .flatMap((e) => e.axes.flatMap((a) => a.evidence));
-    expect(all.length).toBeGreaterThan(20);
-    expect(new Set(all.map((e) => e.source)).size).toBeGreaterThan(15);
+    expect(all.length).toBeGreaterThan(15);
+    expect(new Set(all.map((e) => e.source)).size).toBeGreaterThan(10);
     for (const e of all) expect(evidenceText(tEn, "en", e), e.source).toBe(e.label);
   });
 });

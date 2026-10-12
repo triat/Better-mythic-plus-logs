@@ -22,15 +22,17 @@ const ev: Evaluation = {
       { label: "DTPS −3% vs peers", delta: 1, source: "survival.dtpsVsPeers", value: -3 },
     ]),
     axis("consistency", null, [], "low"),
-    axis("utility", 61), axis("preparation", 55), axis("experience", 74),
+    axis("utility", 61), axis("preparation", 55),
+    // A payload saved before the experience axis left (config v7): never displayed.
+    axis("experience" as AxisScore["key"], 74),
   ],
 };
 
 describe("axes view model", () => {
   test("rows follow AXIS_ORDER and carry top-2 evidence by |delta|", () => {
     const rows = axisRows(tEn, "en", ev);
-    expect(rows.map((r) => r.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
-    expect(rows.map((r) => r.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation", "Experience"]);
+    expect(rows.map((r) => r.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation"]);
+    expect(rows.map((r) => r.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation"]);
     expect(rows[0]!.top).toEqual([
       { label: "0.2 individual deaths/run", delta: "+18", tone: "good", source: "survival.individualDeaths" },
       { label: "avoidable +12% vs peers", delta: "−6", tone: "bad", source: "survival.avoidableVsPeers" },
@@ -50,7 +52,7 @@ describe("axes view model", () => {
     expect(axisRows(tEn, "en", ev)[1]!.note).toBe("no evidence");
   });
   test("radarPoints in AXIS_ORDER", () => {
-    expect(radarPoints(ev)).toEqual([82, 61, 88, null, 55, 74]);
+    expect(radarPoints(ev)).toEqual([82, 61, 88, null, 55]);
   });
   test("survival carries an analyzed-runs badge when deep-dive evidence exists", () => {
     const rows = axisRows(tEn, "en", { ...ev, analyzedRuns: 3 });
@@ -61,7 +63,7 @@ describe("axes view model", () => {
   });
   test("French rows: axis names, notes, badge and evidence lines", () => {
     const rows = axisRows(tFr, "fr", { ...ev, analyzedRuns: 3 });
-    expect(rows.map((r) => r.label)).toEqual(["Survie", "Utilité", "Throughput", "Régularité", "Préparation", "Expérience"]);
+    expect(rows.map((r) => r.label)).toEqual(["Survie", "Utilité", "Throughput", "Régularité", "Préparation"]);
     expect(rows[0]!.badge).toBe("3 runs analysés");
     expect(rows[0]!.top.map((e) => e.label)).toEqual(["0,2 mort(s) individuelle(s) / run", "évitable +12 % vs pairs"]);
     expect(rows[3]!.note).toBe("pas assez de données pour cet axe");
@@ -86,15 +88,15 @@ describe("axes view model", () => {
   });
   test("axisWeightLabel reproduces the callout phrasing from the live axisWeights", () => {
     const w = {
-      dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 },
-      healer: { survival: 3, utility: 2.5, throughput: 2, consistency: 0, preparation: 1, experience: 2 },
-      tank: { survival: 3, utility: 2, throughput: 2, consistency: 0, preparation: 1, experience: 2.5 },
+      dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 },
+      healer: { survival: 3, utility: 2.5, throughput: 2, consistency: 0, preparation: 1 },
+      tank: { survival: 3, utility: 2, throughput: 2, consistency: 0, preparation: 1.5 },
     };
     expect(axisWeightLabel(tEn, w, "survival")).toBe("weight 3 for every role");
     expect(axisWeightLabel(tEn, w, "utility")).toBe("weight 2 (healer 2.5)");
     expect(axisWeightLabel(tEn, w, "throughput")).toBe("weight 3 for dps, 2 for healer and tank");
     expect(axisWeightLabel(tEn, w, "consistency")).toBe("weight 0 · informational");
-    expect(axisWeightLabel(tEn, w, "experience")).toBe("weight 2 (tank 2.5)");
+    expect(axisWeightLabel(tEn, w, "preparation")).toBe("weight 1 (tank 1.5)");
     const three = { ...w, healer: { ...w.healer, preparation: 2 }, tank: { ...w.tank, preparation: 3 } };
     expect(axisWeightLabel(tEn, three, "preparation")).toBe("dps 1 · healer 2 · tank 3");
     expect(axisWeightLabel(tFr, w, "utility")).toBe("poids 2 (heal 2.5)");
@@ -103,8 +105,8 @@ describe("axes view model", () => {
   });
   test("axisInfo pairs the registry summary with the weight label; rows fall back to placeholders without it", () => {
     const docs = {
-      docs: { axes: { survival: { summary: "Deaths and damage taken." }, utility: { summary: "Kicks." }, throughput: { summary: "P." }, consistency: { summary: "C." }, preparation: { summary: "Pr." }, experience: { summary: "E." } } },
-      config: { axisWeights: { dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 }, healer: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 }, tank: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1, experience: 2 } } },
+      docs: { axes: { survival: { summary: "Deaths and damage taken." }, utility: { summary: "Kicks." }, throughput: { summary: "P." }, consistency: { summary: "C." }, preparation: { summary: "Pr." } } },
+      config: { axisWeights: { dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 }, healer: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 }, tank: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 } } },
     } as never;
     const info = axisInfo(tEn, docs);
     expect(info.survival).toEqual({ description: "Deaths and damage taken.", weight: "weight 3 for every role" });
@@ -134,10 +136,6 @@ describe("evidenceText", () => {
     expect(line("throughput.medianParse", 66.6)[0]).not.toContain(" %");
     expect(line("consistency.deathsSpread", 1.25)).toEqual(["deaths spread ±1.3", "écart de morts ±1,3"]);
     expect(line("preparation.ilvlVsLevel", -4)).toEqual(["ilvl −4 vs expected", "ilvl −4 vs attendu"]);
-    expect(line("experience.coverage", 1)).toEqual(["100% dungeons covered", "100 % des donjons couverts"]);
-    expect(line("experience.medianVsTarget", 0)).toEqual(["median key +0 vs target", "key médiane +0 vs cible"]);
-    expect(line("experience.activity", 10)).toEqual(["10 runs in last 7 days", "10 runs sur les 7 derniers jours"]);
-    expect(line("experience.prevSeasonBonus", 4152.7)).toEqual(["previous season 4153", "saison précédente 4153"]);
   });
   test("an unknown source or a payload without value falls back to the server label", () => {
     expect(evidenceText(tEn, "en", { source: "survival.unknown", value: 1, delta: 0, label: "server text" })).toBe("server text");

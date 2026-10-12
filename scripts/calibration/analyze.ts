@@ -38,8 +38,8 @@ export function curveInputs(payload: EvalPayload, cfg: EvaluationConfig): Record
   const ev = evaluate(payload, probe);
   const out: Record<string, number> = {};
   for (const axis of ev.axes) {
-    // Only configured sub-signals share the axis's Σw; an extra such as experience.prevSeasonBonus
-    // shows up as evidence without being one of them, and counting it would skew every inversion.
+    // Only configured sub-signals share the axis's Σw; an evidence entry that is not one of them
+    // would skew every inversion.
     const configured = probe.axes[axis.key].subSignals;
     const subs = axis.evidence.filter((e) => e.source.split(".")[1]! in configured);
     for (const e of subs) out[e.source] = (e.delta * subs.length + 50) / SLOPE;
@@ -90,7 +90,7 @@ export function report(samples: Sample[], cfg: EvaluationConfig): string {
 
   lines.push("", "## Axis scores (median, p10 → p90)", "", "| Role | Axis | n | p10 | median | p90 |", "|---|---|---|---|---|---|");
   for (const role of ["dps", "healer", "tank"] as Role[]) {
-    for (const axis of ["survival", "utility", "throughput", "consistency", "preparation", "experience"]) {
+    for (const axis of ["survival", "utility", "throughput", "consistency", "preparation"]) {
       const v = scored.filter(({ s }) => s.study.role === role).map(({ ev }) => ev.axes.find((a) => a.key === axis)?.score).filter((x): x is number => typeof x === "number");
       if (v.length) lines.push(`| ${role} | ${axis} | ${v.length} | ${fmt(quantile(v, 0.1))} | ${fmt(quantile(v, 0.5))} | ${fmt(quantile(v, 0.9))} |`);
     }

@@ -1,7 +1,7 @@
 import type { AxisKey, Confidence, Evaluation } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 
-export const AXIS_ORDER: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation", "experience"];
+export const AXIS_ORDER: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation"];
 /** "Survival" / "Survie" — the axis name as the UI shows it. */
 export const axisTitle = (t: T, key: AxisKey): string => t(`verdict.axes.${key}`);
 

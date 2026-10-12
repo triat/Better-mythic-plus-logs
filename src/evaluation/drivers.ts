@@ -17,7 +17,7 @@ export function scoreDrivers(inputs: EvalInputs, axes: AxisScore[], global: numb
   const drivers: Driver[] = [];
   for (const e of axes.flatMap((a) => a.evidence)) {
     const r = ref[e.source];
-    if (!r) continue; // no reference: deep-dive signals, experience.prevSeasonBonus
+    if (!r) continue; // no reference: deep-dive signals
     const impact = global - globalWith({ [e.source]: r.x });
     if (Math.abs(impact) >= 1) drivers.push({ source: e.source, impact, value: e.value, reference: r.value, label: e.label });
   }

@@ -5,7 +5,7 @@ import { makeT, tEn } from "../i18n/t.ts";
 import { BAR_MAX_PX, driversView } from "./drivers.ts";
 
 const tFr = makeT(fr, "fr");
-const titles: Record<string, string> = { "survival.individualDeaths": "Individual deaths", "throughput.medianParse": "Median parse", "throughput.parseAtTarget": "Parse at target", "survival.avoidableVsPeers": "Avoidable damage", "experience.atTarget": "Dungeons at target", "utility.dispels": "Dispels", "utility.kicksVsPeers": "Kicks" };
+const titles: Record<string, string> = { "survival.individualDeaths": "Individual deaths", "throughput.medianParse": "Median parse", "throughput.parseAtTarget": "Parse at target", "survival.avoidableVsPeers": "Avoidable damage", "utility.kicksAbsolute": "Kick usage", "utility.dispels": "Dispels", "utility.kicksVsPeers": "Kicks" };
 const titleOf = (s: string) => titles[s] ?? s;
 const ev = (over: Partial<Evaluation>): Evaluation => ({
   role: "dps", targetLevel: 16, axes: [], global: 47, verdict: "maybe", runsUsed: 8, analyzedRuns: 0, configVersion: "x",
@@ -14,7 +14,7 @@ const ev = (over: Partial<Evaluation>): Evaluation => ({
     { source: "throughput.medianParse", impact: -13, value: 40.7, reference: 58.5, label: "" },
     { source: "throughput.parseAtTarget", impact: -6, value: 45.7, reference: 57.2, label: "" },
     { source: "utility.dispels", impact: -2, value: 1, reference: 2, label: "" },
-    { source: "experience.atTarget", impact: 4, value: 1, reference: 0.625, label: "" },
+    { source: "utility.kicksAbsolute", impact: 4, value: 1, reference: 0.625, label: "" },
     { source: "survival.avoidableVsPeers", impact: 6, value: -29.4, reference: -3.2, label: "" },
   ],
   nextVerdict: { verdict: "invite", threshold: 70, sources: ["survival.individualDeaths", "throughput.medianParse"], score: 72, reachable: true },

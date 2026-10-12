@@ -17,7 +17,6 @@ export const PILLAR_SOURCES: Record<PillarKey, readonly EvidenceSource[]> = {
 export const CONTEXT_SOURCES: readonly EvidenceSource[] = [
   "preparation.potions", "preparation.healthstones", "preparation.ilvlVsLevel",
   "consistency.parseSpread", "consistency.deathsSpread", "consistency.damageSpread",
-  "experience.coverage", "experience.atTarget", "experience.medianVsTarget", "experience.activity", "experience.prevSeasonBonus",
 ];
 
 export const pillarOf = (source: string): PillarKey | null =>

@@ -12,7 +12,7 @@ const ev = (over: Partial<Evaluation>): Evaluation => ({
 
 describe("verdict", () => {
   test("axis order and labels", () => {
-    expect(AXIS_ORDER).toEqual(["survival", "utility", "throughput", "consistency", "preparation", "experience"]);
+    expect(AXIS_ORDER).toEqual(["survival", "utility", "throughput", "consistency", "preparation"]);
     expect(axisTitle(tEn, "throughput")).toBe("Throughput");
     expect(axisTitle(tEn, "survival")).toBe("Survival");
     expect(axisTitle(tFr, "consistency")).toBe("Régularité");

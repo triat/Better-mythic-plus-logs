@@ -196,7 +196,7 @@ export const renderSummaryLine = (summary: SignalSummary): string => {
 
 const AXIS_LABEL: Record<AxisKey, string> = {
   survival: "Survival", utility: "Utility", throughput: "Throughput",
-  consistency: "Consistency", preparation: "Preparation", experience: "Experience",
+  consistency: "Consistency", preparation: "Preparation",
 };
 const CONF_RANK = { low: 0, medium: 1, high: 2 } as const;
 
@@ -209,8 +209,6 @@ const refSignedPts = (v: number): string => `${v >= 0 ? "+" : "−"}${Math.abs(M
 const refInt = (v: number): string => String(Math.round(v));
 const refDecimal = (v: number): string => { const s = String(Math.round(v * 10) / 10); return s.startsWith("-") ? `−${s.slice(1)}` : s; };
 const REF_FORMAT: Partial<Record<string, (v: number) => string>> = {
-  "experience.coverage": refRatioPct,
-  "experience.atTarget": refRatioPct,
   "utility.kicksAbsolute": refRatioPct,
   "survival.avoidableVsPeers": refSignedPct,
   "survival.dtpsVsPeers": refSignedPct,

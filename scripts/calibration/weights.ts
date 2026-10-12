@@ -27,17 +27,13 @@ const RELIABILITY: Variant["subs"] = {
 };
 const VARIANTS: Record<string, Variant> = {
   "today's weights": {},
-  "experience ×0 (informational)": { axes: { experience: 0 } },
-  "experience ×0.5": { axes: { experience: 0.5 } },
   "survival ×2": { axes: { survival: 2 } },
   "survival ×3": { axes: { survival: 3 } },
-  "survival ×2, experience ×0.5": { axes: { survival: 2, experience: 0.5 } },
-  "survival ×3, experience ×0.5, preparation ×0.5": { axes: { survival: 3, experience: 0.5, preparation: 0.5 } },
-  "S×2 E×0.5 + reliability": { axes: { survival: 2, experience: 0.5 }, subs: RELIABILITY },
+  "survival ×3, preparation ×0.5": { axes: { survival: 3, preparation: 0.5 } },
+  "survival ×2 + reliability": { axes: { survival: 2 }, subs: RELIABILITY },
   "reliability only": { subs: RELIABILITY },
   "survival ×1.5 + reliability": { axes: { survival: 1.5 }, subs: RELIABILITY },
-  "S×1.5 E×0.75 + reliability": { axes: { survival: 1.5, experience: 0.75 }, subs: RELIABILITY },
-  "S×2 E×0.5 + reliability + avoidable ×1.5": { axes: { survival: 2, experience: 0.5 }, subs: { ...RELIABILITY, "survival.avoidableVsPeers": { dps: 1.5, healer: 1.5, tank: 1.5 } } },
+  "survival ×2 + reliability + avoidable ×1.5": { axes: { survival: 2 }, subs: { ...RELIABILITY, "survival.avoidableVsPeers": { dps: 1.5, healer: 1.5, tank: 1.5 } } },
 };
 
 interface Run { startTime: number; parsePercent: number; signals?: { deaths?: { events?: { inWipe: boolean }[] }; avoidableDamage?: { perMinute: number; peer?: { median: number } | null } | null } }

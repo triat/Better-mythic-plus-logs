@@ -20,7 +20,7 @@ describe("bmpl evaluate <payload.json>", () => {
     expect(js.exitCode).toBe(0);
     const ev = JSON.parse(js.stdout.toString());
     expect(ev.role).toBe("healer");
-    expect(ev.axes.length).toBe(6);
+    expect(ev.axes.length).toBe(5);
   });
   test("missing file → exit 1 with a message", () => {
     const proc = Bun.spawnSync(["bun", "src/cli.ts", "evaluate", path.join(tmp, "nope.json")], { cwd: path.join(import.meta.dir, "..", "..") });

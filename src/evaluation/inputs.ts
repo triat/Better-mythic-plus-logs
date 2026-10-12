@@ -71,7 +71,6 @@ export interface EvalInputs {
   throughput: { medianParse: number | null; parseAtTarget: number | null };
   consistency: { sample: number; parseSpread: number | null; deathsSpread: number | null; damageSpread: number | null };
   preparation: { potions: number | null; healthstones: number | null; ilvl: number | null };
-  experience: { coverage: number | null; atTarget: number | null; medianVsTarget: number | null; activity: number | null; prevSeasonAll: number | null };
 }
 
 const pct = (mine: number, peerMedian: number): number | null => (peerMedian > 0 ? ((mine - peerMedian) / peerMedian) * 100 : null);
@@ -186,14 +185,6 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
   const healthstones = mean(withStones.map((s) => s.consumables!.healthstones));
   const ilvl = payload.rio?.itemLevel ?? null;
 
-  // --- experience ---
-  const { dungeonsCovered, totalDungeonsInSeason, dungeonsAtOrAboveTarget, medianLevel } = payload.perDungeon;
-  const coverage = totalDungeonsInSeason > 0 ? dungeonsCovered / totalDungeonsInSeason : null;
-  const atTarget = totalDungeonsInSeason > 0 ? dungeonsAtOrAboveTarget / totalDungeonsInSeason : null;
-  const medianVsTarget = payload.perDungeon.runs.length > 0 ? medianLevel - payload.targetLevel : null;
-  const activity = payload.rio?.derived.runsLast7d ?? null;
-  const prevSeasonAll = payload.summary.prevSeason?.all ?? null;
-
   return {
     role,
     targetLevel: payload.targetLevel,
@@ -208,6 +199,5 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },
     preparation: { potions, healthstones, ilvl },
-    experience: { coverage, atTarget, medianVsTarget, activity, prevSeasonAll },
   };
 }

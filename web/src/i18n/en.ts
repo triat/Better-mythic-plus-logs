@@ -267,7 +267,7 @@ export const en = {
     others: { title: "My other characters", more: "+{n}", all: "My characters · {n}" },
   },
   verdict: {
-    axes: { survival: "Survival", utility: "Utility", throughput: "Throughput", consistency: "Consistency", preparation: "Preparation", experience: "Experience" },
+    axes: { survival: "Survival", utility: "Utility", throughput: "Throughput", consistency: "Consistency", preparation: "Preparation" },
     words: { invite: "INVITE", maybe: "MAYBE", pass: "PASS", insufficient: "NOT ENOUGH DATA" },
     confidence: { high: "high", medium: "medium", low: "low" },
     role: { dps: "dps", healer: "healer", tank: "tank" },
@@ -280,14 +280,14 @@ export const en = {
     metricAuto: " · metric auto-selected; {other} data exists too",
     filter: "filter: {spec}",
     rings: "rings = 25 / 50 / 75 / 100 · hollow point = not applicable",
-    radar: "Six-axis radar",
+    radar: "Five-axis radar",
     na: "n/a",
     notApplicable: "not applicable",
     confidenceOf: "{c} confidence",
     more: " · +{n} more",
     axisClick: "Click to see what is measured and every piece of evidence",
     deepdiveFeeds: "Deep-dive analyses feed this axis",
-    legend: { title: "How the verdict is built", sub: "six axes scored 0–100, weighted by role · the dot is the axis confidence" },
+    legend: { title: "How the verdict is built", sub: "five axes scored 0–100, weighted by role · the dot is the axis confidence" },
     measured: "What's measured",
     noEvidence: "no evidence",
     notEnough: "not enough data for this axis",
@@ -332,13 +332,6 @@ export const en = {
       potions: "{value} potions/run",
       healthstones: "{value} healthstones/run",
       ilvlVsLevel: "ilvl {value} vs expected",
-    },
-    experience: {
-      coverage: "{value}% dungeons covered",
-      atTarget: "{value}% dungeons at/above target",
-      medianVsTarget: "median key {value} vs target",
-      activity: "{value} runs in last 7 days",
-      prevSeasonBonus: "previous season {value}",
     },
   } satisfies EvidenceMessages,
   drivers: {
@@ -660,7 +653,7 @@ export const en = {
   help: {
     title: "Help", sub: "what is analysed, how every number is computed, and why some are not",
     toc: {
-      what: "What bmpl looks at", verdict: "The verdict", axes: "The six axes", levelScale: "Key-level scaling", expectedIlvl: "Expected item level",
+      what: "What bmpl looks at", verdict: "The verdict", axes: "The five axes", levelScale: "Key-level scaling", expectedIlvl: "Expected item level",
       runs: "Per-run signals", peers: "Peers", deepdive: "Deep-dive", wclClient: "Your own WCL client", liveAddon: "The in-game addon", reading: "Reading the page", faq: "FAQ",
       pillars: "The five pillars",
     },

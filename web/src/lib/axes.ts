@@ -56,11 +56,6 @@ const VALUE_FORMAT: Record<EvidenceSource, ValueFormat> = {
   "preparation.potions": fixed(1),
   "preparation.healthstones": fixed(1),
   "preparation.ilvlVsLevel": signed0,
-  "experience.coverage": pctFixed,
-  "experience.atTarget": pctFixed,
-  "experience.medianVsTarget": signed0,
-  "experience.activity": fixed(0),
-  "experience.prevSeasonBonus": fixed(0),
 };
 
 const isKnownSource = (s: string): s is EvidenceSource => s in VALUE_FORMAT;
@@ -138,7 +133,7 @@ export function axisRows(t: T, locale: Locale, ev: Evaluation, info: Record<Axis
   });
 }
 
-/** Six scores in AXIS_ORDER; null = not applicable. No prose, hence no `t`. */
+/** One score per axis, in AXIS_ORDER; null = not applicable. No prose, hence no `t`. */
 export const radarPoints = (ev: Evaluation): (number | null)[] => {
   const byKey = new Map(ev.axes.map((a) => [a.key, a.score ?? null]));
   return AXIS_ORDER.map((key) => byKey.get(key) ?? null);

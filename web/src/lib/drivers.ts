@@ -19,7 +19,6 @@ const UNIT: Record<string, Unit> = {
   "survival.avoidableVsPeers": "vsPeers", "survival.dtpsVsPeers": "vsPeers", "utility.kicksVsPeers": "ptsVsPeers",
   "utility.kicksAbsolute": "pct", "utility.dispels": "perRun",
   "preparation.potions": "perRun", "preparation.healthstones": "perRun",
-  "experience.coverage": "pct", "experience.atTarget": "pct",
 };
 const REF_UNIT: Record<Unit, Unit> = { perRun: "plain", vsPeers: "pct", pct: "pct", plain: "plain", ptsVsPeers: "pts", pts: "pts" };
 

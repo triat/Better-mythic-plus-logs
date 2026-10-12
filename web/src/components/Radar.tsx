@@ -5,7 +5,7 @@ import { useDocs } from "../docs.tsx";
 import { useT } from "../locale.tsx";
 
 export interface RadarSeries {
-  /** Six scores in AXIS_ORDER; null = not applicable. */
+  /** One score per axis, in AXIS_ORDER; null = not applicable. */
   points: readonly (number | null)[];
   color: string;
   label: string;

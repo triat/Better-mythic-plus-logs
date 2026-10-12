@@ -3,7 +3,10 @@ import type { LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { candidateHref, pageOf } from "./hostedMode.ts";
-import { CAND_TABS, CAND_TAB_EVENT, candHref, candInitial, candState, candSwitchHref, classInitials, classToken, compareHref, profileHeader, runKeyOf, tabAfter } from "./profile.ts";
+import {
+  CAND_TABS, CAND_TAB_EVENT, OWNER_TABS, candHref, candInitial, candState, candSwitchHref, classInitials, classToken, compareHref, ownerHref,
+  ownerState, ownerTabAfter, profileHeader, runKeyOf, tabAfter, vettingHref, viewSwitchHref,
+} from "./profile.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -44,6 +47,79 @@ describe("candidate URL state", () => {
     const href = candSwitchHref("k2", "?open=k&tab=runs&run=abc:3&sheet=1", true);
     expect(candState(new URL(href, "http://x").search)).toEqual({ tab: "runs", run: "abc:3", sheet: true });
     expect(new URL(href, "http://x").searchParams.get("open")).toBe("k2");
+  });
+});
+
+describe("owner URL state", () => {
+  const key = `eu|Biwaasham-Hyjal "x"|19`;
+  const search = (href: string) => new URL(href, "http://x").search;
+  test("round trip on every tab, with a run and with the vetting view", () => {
+    for (const tab of OWNER_TABS) {
+      for (const vetting of [false, true]) {
+        const s = { tab, run: "aBc123XyZ:7", vetting };
+        const href = ownerHref(key, s);
+        const url = new URL(href, "http://x");
+        expect(pageOf(url.pathname)).toBe("candidate");
+        expect(url.searchParams.get("open")).toBe(key);
+        // With the vetting view, "form" is left out: it reads back as the owner default all the same.
+        expect(ownerState(url.search, key, ["aBc123XyZ:7"])).toEqual(s);
+      }
+    }
+  });
+  test("defaults are left out", () => {
+    expect(ownerHref("k", {})).toBe("/candidate?open=k");
+    expect(ownerHref("k", { tab: "form", run: null, vetting: false })).toBe("/candidate?open=k");
+    expect(ownerHref("k", { tab: "dungeons" })).toBe("/candidate?open=k&tab=dungeons");
+    expect(ownerHref("k", { vetting: true })).toBe("/candidate?open=k&as=vetting");
+    expect(ownerHref("k", { tab: "runs", run: "abc:3" })).toBe("/candidate?open=k&tab=runs&run=abc%3A3");
+  });
+  test("unknown and candidate-only tabs read as the form; runs and dungeons keep their meaning", () => {
+    expect(ownerState("", "k", [])).toEqual({ tab: "form", run: null, vetting: false });
+    expect(ownerState("?open=k&tab=synthesis", "k", [])).toEqual({ tab: "form", run: null, vetting: false });
+    expect(ownerState("?open=k&tab=method", "k", [])).toEqual({ tab: "form", run: null, vetting: false });
+    expect(ownerState("?open=k&tab=nope", "k", [])).toEqual({ tab: "form", run: null, vetting: false });
+    expect(ownerState("?open=k&tab=runs", "k", []).tab).toBe("runs");
+    expect(ownerState("?open=k&tab=dungeons", "k", []).tab).toBe("dungeons");
+    expect(ownerState("?open=k&as=other", "k", []).vetting).toBe(false);
+    // The other way round: the owner's "form" on the vetting profile is its Synthèse.
+    expect(candState("?open=k&tab=form&as=vetting").tab).toBe("synthesis");
+  });
+  test("a run is kept only when the URL names this profile and the season holds it", () => {
+    expect(ownerState("?open=k&tab=runs&run=abc:3", "k", ["abc:3"]).run).toBe("abc:3");
+    expect(ownerState("?open=k&tab=runs&run=abc:3", "k", ["abc:4"]).run).toBeNull();
+    expect(ownerState("?open=old&tab=runs&run=abc:3", "k", ["abc:3"])).toEqual({ tab: "runs", run: null, vetting: false });
+    expect(ownerState("?tab=runs&run=abc:3", "k", ["abc:3"]).run).toBeNull();
+    expect(ownerState("?open=k&run=nofight", "k", ["nofight"]).run).toBeNull();
+  });
+  test("switching views keeps the tab the target view has, else its default; run and sheet go", () => {
+    expect(viewSwitchHref("k", "?open=k&tab=runs&run=abc:3", true)).toBe("/candidate?open=k&tab=runs&as=vetting");
+    expect(viewSwitchHref("k", "?open=k&tab=dungeons", true)).toBe("/candidate?open=k&tab=dungeons&as=vetting");
+    expect(viewSwitchHref("k", "?open=k&tab=form", true)).toBe("/candidate?open=k&as=vetting");
+    expect(viewSwitchHref("k", "?open=k&tab=method&as=vetting", false)).toBe("/candidate?open=k");
+    expect(viewSwitchHref("k", "?open=k&tab=synthesis&as=vetting", false)).toBe("/candidate?open=k");
+    expect(viewSwitchHref("k", "?open=k&tab=runs&run=abc:3&sheet=1&as=vetting", false)).toBe("/candidate?open=k&tab=runs");
+    expect(viewSwitchHref("k", "?open=k&tab=dungeons&as=vetting", false)).toBe("/candidate?open=k&tab=dungeons");
+  });
+  test("the vetting profile writes its own state with as=vetting; Refresh of the same profile keeps it", () => {
+    const href = vettingHref(key, { tab: "method" });
+    expect(candState(search(href))).toEqual({ tab: "method", run: null, sheet: false });
+    expect(ownerState(search(href), key, []).vetting).toBe(true);
+    expect(vettingHref("k", { tab: "runs", run: "abc:3", sheet: true })).toBe("/candidate?open=k&tab=runs&run=abc%3A3&sheet=1&as=vetting");
+    expect(candSwitchHref("k", "?open=k&tab=method&as=vetting")).toBe("/candidate?open=k&tab=method&as=vetting");
+    // Another profile, or a re-evaluation under a new key, opens that profile's own default view.
+    expect(candSwitchHref("other", "?open=k&tab=method&as=vetting")).toBe("/candidate?open=other&tab=method");
+    expect(candSwitchHref("k2", "?open=k&tab=runs&as=vetting", true)).toBe("/candidate?open=k2&tab=runs");
+    // An owner page's state survives Refresh: "form" is the default, "runs" with its run is kept.
+    expect(candSwitchHref("k", "?open=k&tab=form")).toBe("/candidate?open=k");
+    expect(ownerState(search(candSwitchHref("k", "?open=k&tab=runs&run=abc:3")), "k", ["abc:3"])).toEqual({ tab: "runs", run: "abc:3", vetting: false });
+  });
+  test("owner tab keyboard wraps around and jumps", () => {
+    expect(ownerTabAfter("form", "ArrowRight")).toBe("dungeons");
+    expect(ownerTabAfter("runs", "ArrowRight")).toBe("form");
+    expect(ownerTabAfter("form", "ArrowLeft")).toBe("runs");
+    expect(ownerTabAfter("runs", "Home")).toBe("form");
+    expect(ownerTabAfter("form", "End")).toBe("runs");
+    expect(ownerTabAfter("form", "a")).toBeNull();
   });
 });
 

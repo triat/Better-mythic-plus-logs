@@ -47,7 +47,13 @@ export const candOpen = (search: string): string | null => new URLSearchParams(s
  */
 export function candSwitchHref(key: string, search: string, sameCharacter = false): string {
   const s = candState(search);
-  return candOpen(search) === key || sameCharacter ? candHref(key, s) : candHref(key, { tab: s.tab });
+  if (candOpen(search) === key || sameCharacter) {
+    // The owner page's "form" tab reads as the default here, and "form" is the owner page's default too; `as=vetting`
+    // stays on the same profile (Refresh while a member looks at their own vetting profile).
+    const href = candHref(key, s);
+    return candOpen(search) === key && isVetting(search) ? `${href}&${VETTING}` : href;
+  }
+  return candHref(key, { tab: s.tab });
 }
 
 /** The state the profile `key` opens with: the URL's, with its run and sheet only when the URL names this profile
@@ -58,19 +64,71 @@ export function candInitial(search: string, key: string, runKeys: readonly strin
   return s.run !== null && (candOpen(search) !== key || !runKeys.includes(s.run)) ? { ...s, run: null, sheet: false } : s;
 }
 
+// The owner page (redesign phase 3, plan docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md task 1): the member's
+// own character on the same URL, `/candidate?open=<key>&tab=form|dungeons|runs[&run=<report:fight>][&as=vetting]`.
+// `as=vetting` shows the member their own vetting profile (`CandidateProfile`, whose tab is then a `CandTab` in the
+// same `tab` parameter). "runs" and "dungeons" mean the same in both views; "synthesis" / "method" on an owner page
+// read as "form", "form" on the vetting profile as its "synthesis".
+
+export type OwnerTab = "form" | "dungeons" | "runs";
+export const OWNER_TABS: readonly OwnerTab[] = ["form", "dungeons", "runs"];
+/** `vetting`: the member looks at their own vetting profile (`as=vetting`). */
+export interface OwnerState { tab: OwnerTab; run: string | null; vetting: boolean }
+
+const VETTING = "as=vetting";
+const isOwnerTab = (v: string | null): v is OwnerTab => v !== null && (OWNER_TABS as readonly string[]).includes(v);
+const isVetting = (search: string): boolean => new URLSearchParams(search).get("as") === "vetting";
+
+/** The owner page's state for the profile `key`: an unknown or candidate-only tab is "form"; the run follows
+ * `candInitial`'s rule (kept only when `open` is `key` and `runKeys` — the season's runs — holds it). */
+export function ownerState(search: string, key: string, runKeys: readonly string[]): OwnerState {
+  const p = new URLSearchParams(search);
+  const tab = p.get("tab");
+  const raw = p.get("run");
+  const run = raw !== null && RUN.test(raw) && candOpen(search) === key && runKeys.includes(raw) ? raw : null;
+  return { tab: isOwnerTab(tab) ? tab : "form", run, vetting: isVetting(search) };
+}
+
+/** `/candidate?open=<key>[&tab=…][&run=…][&as=vetting]`, defaults left out. With `vetting`, a "form" tab is left out
+ * (the vetting profile then opens on its Synthèse). */
+export function ownerHref(key: string, s: Partial<OwnerState>): string {
+  const p = new URLSearchParams({ open: key });
+  if (s.tab && s.tab !== "form") p.set("tab", s.tab);
+  if (s.run) p.set("run", s.run);
+  if (s.vetting) p.set("as", "vetting");
+  return `/candidate?${p}`;
+}
+
+/** The member's own vetting profile's URL (`CandidateProfile` writing its state while `as=vetting`). */
+export const vettingHref = (key: string, s: Partial<CandState>): string => `${candHref(key, s)}&${VETTING}`;
+
+/** Switching between the owner view and its vetting profile (`toVetting`): the tab is kept when the target view has
+ * it ("runs", "dungeons"), else that view's default; the run and the sheet are dropped. */
+export function viewSwitchHref(key: string, search: string, toVetting: boolean): string {
+  const tab = new URLSearchParams(search).get("tab");
+  if (toVetting) return vettingHref(key, { tab: isTab(tab) ? tab : "synthesis" });
+  return ownerHref(key, { tab: isOwnerTab(tab) ? tab : "form" });
+}
+
+/** The owner tab strip's keyboard: ← → wrap around, Home / End jump; null for any other key. */
+export const ownerTabAfter = (tab: OwnerTab, key: string): OwnerTab | null => stepTab(OWNER_TABS, tab, key);
+
 /** "<report code>:<fight id>", the key of a run in `CandState.run`. */
 export const runKeyOf = (r: { reportCode: string; fightID: number }): string => `${r.reportCode}:${r.fightID}`;
 
-/** The tab strip's keyboard (WAI-ARIA tabs): ← → wrap around, Home / End jump; null for any other key. */
-export function tabAfter(tab: CandTab, key: string): CandTab | null {
-  const i = CAND_TABS.indexOf(tab);
-  const n = CAND_TABS.length;
-  if (key === "ArrowRight") return CAND_TABS[(i + 1) % n]!;
-  if (key === "ArrowLeft") return CAND_TABS[(i - 1 + n) % n]!;
-  if (key === "Home") return CAND_TABS[0]!;
-  if (key === "End") return CAND_TABS[n - 1]!;
+/** A tab strip's keyboard (WAI-ARIA tabs) over `tabs`: ← → wrap around, Home / End jump; null for any other key. */
+function stepTab<K extends string>(tabs: readonly K[], tab: K, key: string): K | null {
+  const i = tabs.indexOf(tab);
+  const n = tabs.length;
+  if (key === "ArrowRight") return tabs[(i + 1) % n]!;
+  if (key === "ArrowLeft") return tabs[(i - 1 + n) % n]!;
+  if (key === "Home") return tabs[0]!;
+  if (key === "End") return tabs[n - 1]!;
   return null;
 }
+
+/** The candidate tab strip's keyboard: ← → wrap around, Home / End jump; null for any other key. */
+export const tabAfter = (tab: CandTab, key: string): CandTab | null => stepTab(CAND_TABS, tab, key);
 
 /** The usage event a tab click counts (catalogue `src/hosted/usage-catalog.ts`). */
 export const CAND_TAB_EVENT = {

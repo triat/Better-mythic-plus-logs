@@ -124,9 +124,12 @@ export function linkSegments(text: string): TextSegment[] {
 
 export interface BudgetPill { pts: string; lookups: string }
 
-/** "100 pts / h" + "about 10 uncached lookups", at roughly 10 pts per lookup (the rankings query); null when the instance has no per-member quota. */
+/** Roughly what one uncached lookup costs in WCL points (the rankings query) — the Live "Evaluate" button and `budgetPill`. */
+export const LOOKUP_PTS = 10;
+
+/** "100 pts / h" + "about 10 uncached lookups", at roughly LOOKUP_PTS per lookup; null when the instance has no per-member quota. */
 export function budgetPill(t: T, pointsPerHour: number | null): BudgetPill | null {
   if (pointsPerHour === null) return null;
-  const n = Math.max(1, Math.round(pointsPerHour / 10));
+  const n = Math.max(1, Math.round(pointsPerHour / LOOKUP_PTS));
   return { pts: t("help.guide.pts", { pts: fmtPts(pointsPerHour) }), lookups: t("help.guide.lookups", { count: n }) };
 }

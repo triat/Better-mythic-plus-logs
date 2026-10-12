@@ -36,8 +36,33 @@ describe("POST /api/live/cached", () => {
     const ctx = ctxWith([{ character: "Biwaadrood-Nerzhul", level: 18, verdict: "invite", global: 78.4 }]);
     const { status, json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }, { character: "Nobody-Hyjal", region: "eu" }] });
     expect(status).toBe(200);
-    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "invite", score: 78.4, targetLevel: 18, fetchedAt: 1_000 });
+    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "invite", score: 78.4, targetLevel: 18, fetchedAt: 1_000, spec: null, ilvl: null });
     expect(json.verdicts![1]).toBeNull();
+  });
+
+  test("spec and ilvl come from the cached payload (character.spec, summary.ilvl)", async () => {
+    const history = new History(20, () => 1_000);
+    history.record(
+      { character: "Biwaadrood-Nerzhul", level: 18, spec: null, metric: null, region: "eu" },
+      {
+        result: { ...payload("invite", 78.4, 18), character: { name: "Biwaadrood", realmSlug: "nerzhul", region: "eu", spec: "Restoration" }, summary: { ilvl: 662.4 } },
+        label: "Biwaadrood-Nerzhul", charClass: 11, spec: null, targetLevel: 18, targetAutoDetected: false,
+      },
+    );
+    const ctx = { hosted: false, history, user: null, now: 1_000 } as unknown as RequestContext;
+    const { json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] });
+    expect(json.verdicts![0]).toMatchObject({ spec: "Restoration", ilvl: 662.4 });
+  });
+
+  test("a payload without spec or a finite ilvl gives null for both", async () => {
+    const history = new History(20, () => 1_000);
+    history.record(
+      { character: "Biwaadrood-Nerzhul", level: 18, spec: null, metric: null, region: "eu" },
+      { result: { ...payload("invite", 78.4, 18), summary: { ilvl: "662" } }, label: "Biwaadrood-Nerzhul", charClass: 11, spec: null, targetLevel: 18, targetAutoDetected: false },
+    );
+    const ctx = { hosted: false, history, user: null, now: 1_000 } as unknown as RequestContext;
+    const { json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] });
+    expect(json.verdicts![0]).toMatchObject({ spec: null, ilvl: null });
   });
 
   test("a lookup made for another key level is not a hit", async () => {
@@ -58,7 +83,7 @@ describe("POST /api/live/cached", () => {
     // Today's rules re-evaluated the stored payload to a MAYBE 61 (a history read): Récents shows that, Live too.
     ctx.history!.syncSummary(e.key, payload("maybe", 61, 18), e.fetchedAt);
     const { json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] });
-    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "maybe", score: 61, targetLevel: 18, fetchedAt: 1_000 });
+    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "maybe", score: 61, targetLevel: 18, fetchedAt: 1_000, spec: null, ilvl: null });
     ctx.history!.syncSummary(e.key, payload("insufficient", null, 18), e.fetchedAt);
     expect((await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] })).json.verdicts![0])
       .toMatchObject({ verdict: "insufficient", score: null, targetLevel: 18 });
@@ -86,7 +111,7 @@ describe("POST /api/live/cached", () => {
     try {
       const { status, json } = await post(spied, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] });
       expect(status).toBe(200);
-      expect(json.verdicts![0]).toMatchObject({ verdict: "pass" });
+      expect(json.verdicts![0]).toMatchObject({ verdict: "pass", spec: null, ilvl: null });
     } finally {
       globalThis.fetch = realFetch;
     }

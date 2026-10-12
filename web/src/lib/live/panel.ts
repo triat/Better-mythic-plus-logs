@@ -1,41 +1,191 @@
-// The Live panel's view model: the roster turned into rows the component renders (filtered, sorted,
-// verdict/age attached) plus the auto-lookup queue. Pure; tested (panel.test.ts).
+// The Live page's view model (mockup F-Live): the status card, the role chips, the applicants grouped by role,
+// "Ton groupe", plus the auto-lookup queue and the head-row menus. Pure; tested (panel.test.ts).
+import { CLASS_NAMES, classHex } from "@shared/wow/classes.ts";
 import type { T } from "../../i18n/t.ts";
+import type { Locale } from "../locale.ts";
 import { fmtShortAge } from "../admin.ts";
-import { LIVE_SORTS, filterApplicants, sortApplicants } from "./roster.ts";
+import { LOOKUP_PTS } from "../help.ts";
+import { classInitials, specWords } from "../profile.ts";
+import { LIVE_ROLES, LIVE_SORTS, filterApplicants, sortApplicants } from "./roster.ts";
 import type { CachedVerdict, LiveRole, LiveSort, Roster, RosterPlayer } from "./roster.ts";
 
-export interface PanelRow {
-  player: RosterPlayer;
-  verdict: CachedVerdict | null;
-  /** `null` when there is no cached verdict yet — the row shows "not vetted yet" / "queued" / "you" instead. */
-  ageLabel: string | null;
-}
-
-export interface PanelView {
-  applicants: PanelRow[];
-  party: PanelRow[];
-  /** "showing {shown} of {total}" — `total` counts every applicant before the role/class filter. */
-  countLine: string;
-  hiddenCount: number;
-}
-
-interface PanelFilter {
+export interface PanelFilter {
   liveSort: LiveSort;
   liveRoles: readonly LiveRole[];
   liveClasses: readonly string[];
 }
+
+export type LiveAction = { kind: "open" | "evaluate"; label: string } | null;
+
+export interface LiveRowView {
+  /** `${kind}:${index}` — unique across applicants and party (someone can be in both). */
+  id: string;
+  character: string;
+  name: string;
+  realm: string;
+  classColor: string;
+  initials: string;
+  /** "—" when unknown; the spec in English (redesign phase 2 note 7). */
+  spec: string;
+  ilvl: string;
+  rio: string;
+  verdict: { cls: string; label: string; score: string | null } | null;
+  /** "2 d ago", from the cached verdict's fetch time. */
+  age: string | null;
+  state: "vetted" | "queued" | "unvetted" | "self";
+  action: LiveAction;
+  /** "you · DPS" on the player's own row, null on every other. */
+  you: string | null;
+}
+
+export interface LiveGroupView { role: LiveRole; label: string; count: number; rows: LiveRowView[] }
+
+export interface LiveView {
+  status: { title: string; key: string; counts: { label: string; value: string; tone: "invite" | null }[] };
+  roleChips: { value: "all" | LiveRole; label: string; on: boolean }[];
+  columns: { verdict: string };
+  /** Tank, healer, DPS; only the non-empty groups; rows keep `sortApplicants`' order. */
+  groups: LiveGroupView[];
+  /** Applicants the role and class filters hide. */
+  hidden: number;
+  party: { line: string; members: LiveRowView[]; missing: LiveRole[] };
+  note: string;
+}
+
+/** `DeathKnight` → 6 … — the roster's spacing-free names back to `CLASS_NAMES` ids, built once. */
+const CLASS_ID_BY_NAME: Record<string, number> = Object.fromEntries(
+  Object.entries(CLASS_NAMES).map(([id, name]) => [name.replace(/\s+/g, ""), Number(id)]),
+);
+
+/** One tank, one healer, three DPS: the group "Ton groupe" is measured against. */
+const GROUP_SHAPE: Record<LiveRole, number> = { tank: 1, healer: 1, dps: 3 };
+const GROUP_SIZE = 5;
+
+function rowOf(t: T, o: { verdicts: Map<string, CachedVerdict>; now: number; queued: ReadonlySet<string> }, p: RosterPlayer): LiveRowView {
+  // The player's own row never shows a verdict or an action, even when they once looked themselves up.
+  const v = p.kind === "self" ? null : o.verdicts.get(p.character) ?? null;
+  const classId = CLASS_ID_BY_NAME[p.className] ?? -1;
+  const state: LiveRowView["state"] =
+    p.kind === "self" ? "self" : v ? "vetted" : o.queued.has(p.character) ? "queued" : "unvetted";
+  const action: LiveAction =
+    state === "vetted" ? { kind: "open", label: t("live.panel.open") }
+    : state === "unvetted" ? { kind: "evaluate", label: t("live.panel.evaluate", { pts: LOOKUP_PTS }) }
+    : null;
+  return {
+    id: `${p.kind}:${p.index}`,
+    character: p.character,
+    name: p.name,
+    realm: p.realm,
+    classColor: classHex(classId),
+    initials: classInitials(classId),
+    spec: v?.spec ? specWords(v.spec) : "—",
+    ilvl: v?.ilvl != null ? String(Math.round(v.ilvl)) : "—",
+    rio: p.score > 0 ? String(p.score) : "—",
+    verdict: v
+      ? { cls: `badge-${v.verdict}`, label: t(`verdict.words.${v.verdict}`), score: v.score === null ? null : String(Math.round(v.score)) }
+      : null,
+    age: v ? fmtShortAge(t, v.fetchedAt, o.now) : null,
+    state,
+    action,
+    you: p.kind === "self" ? t("live.panel.group.self", { role: t(`live.role.${p.role}`) }) : null,
+  };
+}
+
+/** The role chips' choice mapped onto the stored `liveRoles`: "all" → all three; a role → [role]. */
+export const rolesFor = (v: "all" | LiveRole): LiveRole[] => (v === "all" ? [...LIVE_ROLES] : [v]);
+
+/**
+ * Applicants are filtered then sorted, then grouped by role; the party (`party` and the player's own `self`
+ * row) is never filtered or sorted and stays in the roster's order.
+ */
+export function liveView(t: T, locale: Locale, o: {
+  roster: Roster;
+  verdicts: Map<string, CachedVerdict>;
+  settings: PanelFilter;
+  now: number;
+  queued: ReadonlySet<string>;
+  yourKey: number | null;
+}): LiveView {
+  const applicants = o.roster.players.filter((p) => p.kind === "applicant");
+  const partyPlayers = o.roster.players.filter((p) => p.kind === "party" || p.kind === "self");
+  const byClass = filterApplicants(applicants, { roles: LIVE_ROLES, classes: o.settings.liveClasses });
+  const shown = sortApplicants(
+    filterApplicants(byClass, { roles: o.settings.liveRoles, classes: [] }),
+    o.settings.liveSort,
+    (character) => o.verdicts.get(character) ?? null,
+  );
+  const row = (p: RosterPlayer) => rowOf(t, o, p);
+
+  const roles = o.settings.liveRoles;
+  const allOn = roles.length === 0 || LIVE_ROLES.every((r) => roles.includes(r));
+  const roleChips: LiveView["roleChips"] = [
+    { value: "all", label: t("live.panel.all", { count: byClass.length }), on: allOn },
+    ...LIVE_ROLES.map((r) => ({
+      value: r,
+      label: t("live.panel.roleChip", { role: t(`live.role.${r}`), count: byClass.filter((p) => p.role === r).length }),
+      on: roles.length === 1 && roles[0] === r,
+    })),
+  ];
+
+  const groups = LIVE_ROLES.map((role): LiveGroupView => {
+    const rows = shown.filter((p) => p.role === role).map(row);
+    return { role, label: t(`live.role.${role}`), count: rows.length, rows };
+  }).filter((g) => g.rows.length > 0);
+
+  const vetted = applicants.filter((p) => o.verdicts.has(p.character));
+  const invites = vetted.filter((p) => o.verdicts.get(p.character)!.verdict === "invite");
+  const updated = fmtShortAge(t, o.roster.at, o.now);
+
+  const missing = LIVE_ROLES.flatMap((role) => {
+    const n = Math.max(0, GROUP_SHAPE[role] - partyPlayers.filter((p) => p.role === role).length);
+    return Array.from({ length: n }, () => role);
+  });
+  const size = Math.min(partyPlayers.length, GROUP_SIZE);
+  const parts = LIVE_ROLES.map((role) => ({ role, n: missing.filter((r) => r === role).length }))
+    .filter((x) => x.n > 0)
+    .map((x) => t(`live.panel.group.missing.${x.role}`, { count: x.n }));
+  const line = partyPlayers.length >= GROUP_SIZE || parts.length === 0
+    ? t("live.panel.group.full", { n: size, max: GROUP_SIZE })
+    : t("live.panel.group.line", { n: size, max: GROUP_SIZE, list: new Intl.ListFormat(locale, { type: "conjunction" }).format(parts) });
+
+  return {
+    status: {
+      title: t("live.status.title"),
+      key: o.yourKey === null ? t("live.status.keyAuto") : t("live.status.key", { level: o.yourKey, age: updated }),
+      counts: [
+        { label: t("live.status.applicants", { count: applicants.length }), value: String(applicants.length), tone: null },
+        { label: t("live.status.vetted", { count: vetted.length }), value: String(vetted.length), tone: null },
+        { label: t("verdict.words.invite"), value: String(invites.length), tone: "invite" },
+      ],
+    },
+    roleChips,
+    columns: { verdict: o.yourKey === null ? t("live.panel.columns.verdict") : t("live.panel.columns.verdictAt", { level: o.yourKey }) },
+    groups,
+    hidden: applicants.length - shown.length,
+    party: {
+      line,
+      members: partyPlayers.map(row),
+      missing,
+    },
+    note: t("live.panel.note"),
+  };
+}
+
+// --- Pre-redesign panel model: LivePanel.tsx's, removed with it in the Live page task (phase 4, Task 5). ---
+
+export interface PanelRow {
+  player: RosterPlayer;
+  verdict: CachedVerdict | null;
+  ageLabel: string | null;
+}
+
+export interface PanelView { applicants: PanelRow[]; party: PanelRow[]; countLine: string; hiddenCount: number }
 
 const toRow = (t: T, verdicts: Map<string, CachedVerdict>, now: number, player: RosterPlayer): PanelRow => {
   const verdict = verdicts.get(player.character) ?? null;
   return { player, verdict, ageLabel: verdict ? t("live.panel.vetted", { age: fmtShortAge(t, verdict.fetchedAt, now) }) : null };
 };
 
-/**
- * `applicants` is filtered then sorted (so `countLine` reports the filtered count); `party` — `kind ===
- * "party"` and the player's own `"self"` row together — is never filtered or sorted: it stays in the
- * roster's own order (the addon lists your group, not applicants).
- */
 export function panelView(t: T, o: { roster: Roster; verdicts: Map<string, CachedVerdict>; settings: PanelFilter; now: number }): PanelView {
   const applicants = o.roster.players.filter((p) => p.kind === "applicant");
   const party = o.roster.players.filter((p) => p.kind === "party" || p.kind === "self");

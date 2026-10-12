@@ -474,7 +474,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       if (!alive) return;
       setLiveVerdicts((prev) => {
         const next = new Map(prev);
-        verdicts.forEach((v, i) => { if (v) next.set(players[i]!.character, { verdict: v.verdict, score: v.score, targetLevel: v.targetLevel, fetchedAt: v.fetchedAt }); });
+        verdicts.forEach((v, i) => { if (v) next.set(players[i]!.character, { verdict: v.verdict, score: v.score, targetLevel: v.targetLevel, fetchedAt: v.fetchedAt, spec: v.spec, ilvl: v.ilvl }); });
         return next;
       });
     });
@@ -512,7 +512,10 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       if (liveScopeRef.current === dispatchedIn) {
         setLiveVerdicts((prev) => {
           const merged = new Map(prev);
-          merged.set(next, { verdict: ev.verdict, score: ev.global, targetLevel: ev.targetLevel, fetchedAt: Date.now() });
+          merged.set(next, {
+            verdict: ev.verdict, score: ev.global, targetLevel: ev.targetLevel, fetchedAt: Date.now(),
+            spec: r.result.character.spec ?? null, ilvl: r.result.summary.ilvl,
+          });
           return merged;
         });
       }

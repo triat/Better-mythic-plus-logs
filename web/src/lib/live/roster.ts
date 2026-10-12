@@ -43,6 +43,10 @@ export interface CachedVerdict {
   score: number | null;
   targetLevel: number;
   fetchedAt: number;
+  /** The evaluated spec (WCL's spacing-free name), null without one — the game itself never gives it. */
+  spec: string | null;
+  /** The equipped item level from the cached payload, null when absent. */
+  ilvl: number | null;
 }
 
 const ROLE_OF: Record<string, LiveRole> = { T: "tank", H: "healer", D: "dps" };

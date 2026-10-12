@@ -15,6 +15,10 @@ export interface LiveVerdict {
   score: number | null;
   targetLevel: number;
   fetchedAt: number;
+  /** The spec the cached lookup was for, else the payload's character spec. */
+  spec: string | null;
+  /** The payload's equipped item level, when it holds a finite number. */
+  ilvl: number | null;
 }
 
 export function liveRoutes(): Route[] {
@@ -47,8 +51,14 @@ export function liveRoutes(): Route[] {
           metric: null,
           region: p.region ?? config.region,
         });
-        const evaluation = (entry?.result as { evaluation?: Evaluation } | undefined)?.evaluation;
+        const result = entry?.result as
+          | { evaluation?: Evaluation; character?: { spec?: unknown }; summary?: { ilvl?: unknown } }
+          | undefined;
+        const evaluation = result?.evaluation;
         if (!entry || !evaluation) return null;
+        // Spec and ilvl come from the payload already in memory (no new read, 0 WCL pts); read defensively.
+        const payloadSpec = result?.character?.spec;
+        const ilvl = result?.summary?.ilvl;
         // The verdict and score are the history row's (kept in step with today's re-evaluation by `syncSummary`), so
         // Live shows what Récents shows; a row without a verdict is INSUFFICIENT DATA. The level is the payload's.
         return {
@@ -57,6 +67,8 @@ export function liveRoutes(): Route[] {
           score: entry.score,
           targetLevel: evaluation.targetLevel,
           fetchedAt: entry.fetchedAt,
+          spec: entry.spec ?? (typeof payloadSpec === "string" ? payloadSpec : null),
+          ilvl: typeof ilvl === "number" && Number.isFinite(ilvl) ? ilvl : null,
         };
       });
       return jsonResponse({ ok: true, verdicts });

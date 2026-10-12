@@ -83,8 +83,8 @@ describe("sortApplicants / filterApplicants", () => {
   const players = parseRoster(TEXT);
   const applicants = players.filter((p) => p.kind === "applicant");
   const verdicts: Record<string, CachedVerdict> = {
-    "Biwaadrood-Nerzhul": { verdict: "maybe", score: 54, targetLevel: 18, fetchedAt: 0 },
-    "Tankadin-Hyjal": { verdict: "invite", score: 78, targetLevel: 18, fetchedAt: 0 },
+    "Biwaadrood-Nerzhul": { verdict: "maybe", score: 54, targetLevel: 18, fetchedAt: 0, spec: null, ilvl: null },
+    "Tankadin-Hyjal": { verdict: "invite", score: 78, targetLevel: 18, fetchedAt: 0, spec: null, ilvl: null },
   };
   const verdictOf = (c: string): CachedVerdict | null => verdicts[c] ?? null;
   const names = (list: RosterPlayer[]) => list.map((p) => p.name);

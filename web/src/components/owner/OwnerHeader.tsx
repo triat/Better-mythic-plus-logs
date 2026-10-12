@@ -7,7 +7,7 @@ import type { SeasonState } from "../../useSeason.ts";
 import { ClassIcon } from "../candidate/ProfileHeader.tsx";
 import type { ProfileFetch } from "../candidate/ProfileHeader.tsx";
 import { MeChip } from "../self/MeChip.tsx";
-import type { SelfActions } from "../self/ResultHead.tsx";
+import type { SelfActions } from "./types.ts";
 
 /** The owner page's header (mockup F-Moi-Forme): class icon, name, "This is me", the season line, Sync, Refresh. */
 export function OwnerHeader({ view, payload, self, season, fetch, hint, onReevaluate }: {

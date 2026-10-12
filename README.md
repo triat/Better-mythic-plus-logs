@@ -50,9 +50,10 @@ pick opens on a timeline of its deaths, with what killed them and which defensiv
 
 Pick the characters you play to follow them on [My characters](https://bmpl.riat.dev/me): from your linked
 Battle.net account on the hosted site, with "This is me" when you run bmpl yourself.
-Your own characters open three tabs — Overview, Dungeons, Runs — and a **Sync season** button that fetches
+Your own characters open three tabs — My form, Dungeons, Runs — and a **Sync** button that fetches
 the rest of the season's logs (on your own Warcraft Logs client) for five pillars, weekly trends, the points
-to work on and the crowd control you land. Anyone else opens the vetting view: the verdict, the signals, the
+to work on, every run of the season grouped by week and the crowd control you land; "See my vetting profile"
+shows you what a group leader sees. Anyone else opens the vetting view: the verdict, the signals, the
 runs and Raider.IO.
 
 Every number has a **?** next to it that opens the [Help page](https://bmpl.riat.dev/help), which

@@ -94,6 +94,8 @@ mockups `docs/design/redesign/`): new tokens, self-hosted Geist fonts, the sideb
 the Ctrl K palette around every page, the pages `/candidate`, `/compare` and `/live`, the connected home page and the
 hosted landing. Redesign phase 2 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`): the
 candidate profile — compact header, Synthèse, Runs with the layered timeline, the run sheet, Donjons, Méthode — and the
-Experience axis removed; redesign phases 3–4 (owner, compare and Live) next. Also next: self-review phase 3 (own
+Experience axis removed. Redesign phase 3 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`):
+the owner pages — Ma forme, Donjons, Runs with filters and week groups, `as=vetting` — and Mes personnages as cards;
+redesign phase 4 (Compare 2–5, Live, removal of the old CSS and components) next. Also next: self-review phase 3 (own
 spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

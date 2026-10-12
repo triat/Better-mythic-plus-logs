@@ -1,25 +1,8 @@
-import type { AxisKey, AxisScore, Confidence, DocsResponse, Evaluation, Evidence, EvidenceSource, LookupPayload, Role } from "../types.ts";
+import type { AxisKey, DocsResponse, Evaluation, Evidence, EvidenceSource, LookupPayload, Role } from "../types.ts";
 import type { MessageKey, T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { signed } from "./format.ts";
-import { AXIS_ORDER, axisTitle } from "./verdict.ts";
-
-export interface EvidenceView { label: string; delta: string; tone: "good" | "bad"; source: string }
-
-export interface AxisRowModel {
-  key: AxisKey;
-  label: string;
-  /** What the axis measures and its verdict weight — from GET /api/docs (`axisInfo`); placeholders until it arrives. */
-  description: string;
-  weight: string;
-  score: number | null;
-  confidence: Confidence | null;
-  /** Up to two strongest evidence entries (by |delta|). */
-  top: EvidenceView[];
-  all: EvidenceView[];
-  note: string | null;
-  badge: string | null;
-}
+import { AXIS_ORDER } from "./verdict.ts";
 
 /** `toFixed` output localized: U+2212 for a negative, the decimal comma in French. Never groups thousands (the server does not). */
 const localizeFixed = (locale: Locale, s: string): string => {
@@ -76,13 +59,6 @@ export function evidenceText(t: T, locale: Locale, e: Evidence): string {
   return out === key ? e.label : out;
 }
 
-const view = (t: T, locale: Locale, e: AxisScore["evidence"][number]): EvidenceView => ({
-  label: evidenceText(t, locale, e),
-  delta: signed(e.delta),
-  tone: e.delta >= 0 ? "good" : "bad",
-  source: e.source,
-});
-
 /** The "What's measured" callout text per axis: the registry's summary and the live axis weight. */
 export interface AxisInfo { description: string; weight: string }
 
@@ -110,28 +86,6 @@ export function axisWeightLabel(t: T, axisWeights: DocsResponse["config"]["axisW
 
 export const axisInfo = (t: T, d: Pick<DocsResponse, "docs" | "config">): Record<AxisKey, AxisInfo> =>
   Object.fromEntries(AXIS_ORDER.map((k) => [k, { description: d.docs.axes[k].summary, weight: axisWeightLabel(t, d.config.axisWeights, k) }])) as Record<AxisKey, AxisInfo>;
-
-export function axisRows(t: T, locale: Locale, ev: Evaluation, info: Record<AxisKey, AxisInfo> | null = null): AxisRowModel[] {
-  const byKey = new Map(ev.axes.map((a) => [a.key, a]));
-  return AXIS_ORDER.map((key) => {
-    const a = byKey.get(key);
-    const sorted = [...(a?.evidence ?? [])].sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta));
-    const all = sorted.map((e) => view(t, locale, e));
-    const score = a?.score ?? null;
-    return {
-      key,
-      label: axisTitle(t, key),
-      description: info?.[key].description ?? "",
-      weight: info?.[key].weight ?? "…",
-      score,
-      confidence: score === null ? null : a?.confidence ?? null,
-      top: all.slice(0, 2),
-      all,
-      note: score === null ? t("verdict.notEnough") : all.length === 0 ? t("verdict.noEvidence") : null,
-      badge: key === "survival" && ev.analyzedRuns > 0 ? t("verdict.analyzed", { count: ev.analyzedRuns }) : null,
-    };
-  });
-}
 
 /** One score per axis, in AXIS_ORDER; null = not applicable. No prose, hence no `t`. */
 export const radarPoints = (ev: Evaluation): (number | null)[] => {

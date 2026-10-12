@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
 import type { LookupPayload, Region, SeasonView } from "./types.ts";
-import type { SelfActions } from "./components/self/ResultHead.tsx";
+import type { SelfActions } from "./components/owner/types.ts";
 
 /** Whose season: the result page passes the payload's character and target level, the personal page `level: null`. */
 export interface SeasonWho { name: string; realm: string; region: Region; level: number | null }

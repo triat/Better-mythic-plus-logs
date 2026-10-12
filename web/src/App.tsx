@@ -37,7 +37,7 @@ import { HelpPage } from "./components/help/HelpPage.tsx";
 import { Compare } from "./components/Compare.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
-import type { SelfActions } from "./components/self/ResultHead.tsx";
+import type { SelfActions } from "./components/owner/types.ts";
 import { HomePage } from "./components/home/HomePage.tsx";
 import { Landing } from "./components/Landing.tsx";
 import { LiveChip } from "./components/LiveChip.tsx";

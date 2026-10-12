@@ -3,7 +3,7 @@ import type { HistoryItem, MyCharacter, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { MAX_ME } from "./self.ts";
-import { addCharacter, historyKeyFor, lookupQuery, mainPillars, makeMain, mineRequest, parseEntry, removeAt, rowCells, seasonLine, slugOf } from "./me.ts";
+import { addCharacter, historyKeyFor, lookupQuery, makeMain, mineRequest, parseEntry, removeAt, seasonLine, slugOf } from "./me.ts";
 
 const tFr = makeT(fr, "fr");
 const c = (name: string, realm = "silvermoon", region: MyCharacter["region"] = "eu"): MyCharacter => ({ name, realm, region, source: "manual" });
@@ -58,20 +58,7 @@ describe("season figures", () => {
     expect(seasonLine(tEn, null)).toBe("No season stored yet: open or look it up once");
     expect(seasonLine(tFr, { ...season, state: { ...season.state, pending: 0, analysed: 142 } }, 2 * 3_600_000)).toContain("tous analysés");
   });
-  test("pillars of the main card and cells of a row", () => {
-    expect(mainPillars(tEn, season).slice(0, 2).map((p) => [p.title, p.score, p.band, p.trend.text]))
-      .toEqual([["Damage", "68", "mid", "↗ +6"], ["Survival", "41", "bad", "no trend yet: 0 runs lately and 0 before, 3 needed on each side"]]);
-    expect(rowCells(season).map((x) => x.text)).toEqual(["68", "41", "—", "—", "—"]);
-    expect(rowCells(null).every((x) => x.band === "na")).toBe(true);
-  });
 });
-
-describe("mainPillars without a season", () => {
-  test("no trend text in any tile", () => {
-    expect(mainPillars(tEn, null).map((p) => [p.score, p.trend.text])).toEqual([["n/a", ""], ["n/a", ""], ["n/a", ""], ["n/a", ""], ["n/a", ""]]);
-  });
-});
-
 
 describe("mineRequest", () => {
   const list: MyCharacter[] = [{ name: "Noshiidk", realm: "argent-dawn", region: "eu", source: "manual" }];

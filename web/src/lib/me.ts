@@ -1,9 +1,9 @@
 // The personal page (self-review spec, decision 8; canvas MeMainFirst, variant C). Pure: no React, no fetch.
-import type { HistoryItem, MyCharacter, PillarKey, Region, SeasonView } from "../types.ts";
+import type { HistoryItem, MyCharacter, Region, SeasonView } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import { fmtAge } from "./format.ts";
 import { isRegion } from "./regions.ts";
-import { MAX_ME, PILLAR_ORDER, scoreBand, trendView, type Band, type TrendView } from "./self.ts";
+import { MAX_ME } from "./self.ts";
 
 // The front's copy of src/util.ts realmToSlug (runtime code from src/ cannot be imported here); me.test.ts pins the
 // two on the same samples.
@@ -89,28 +89,3 @@ export function seasonLine(t: T, season: SeasonView | null, now = Date.now()): s
     checked: season.checkedAt !== null ? t("me.checked", { age: fmtAge(t, season.checkedAt, now) }) : "",
   });
 }
-
-const pillarsOf = (season: SeasonView | null) => season?.recent?.pillars ?? season?.season?.pillars ?? [];
-
-export interface MainPillar { key: PillarKey; title: string; score: string; band: Band; trend: TrendView }
-
-/** The main card's five tiles: the 4-week window when there is one, else the whole season. */
-export const mainPillars = (t: T, season: SeasonView | null): MainPillar[] =>
-  PILLAR_ORDER.map((key) => {
-    const s = pillarsOf(season).find((p) => p.key === key)?.score ?? null;
-    return {
-      key,
-      title: t(`self.pillars.${key}`),
-      score: s === null ? t("self.pillar.na") : String(s),
-      band: scoreBand(s),
-      // No stored season yet: no trend line at all, rather than five "not enough runs (0)".
-      trend: !season ? { text: "", cls: "faint" } : key === "control" && s === null ? { text: t("self.pillar.controlNote"), cls: "faint" } : trendView(t, season?.trends.find((x) => x.key === key)),
-    };
-  });
-
-/** An other character's five small cells; "—" until a season is stored or a pillar has data. */
-export const rowCells = (season: SeasonView | null): { text: string; band: Band }[] =>
-  PILLAR_ORDER.map((key) => {
-    const s = pillarsOf(season).find((p) => p.key === key)?.score ?? null;
-    return { text: s === null ? "—" : String(s), band: scoreBand(s) };
-  });

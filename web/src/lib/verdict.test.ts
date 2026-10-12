@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { Evaluation } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { AXIS_ORDER, axisTitle, confidenceColor, verdictView } from "./verdict.ts";
+import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -38,11 +38,5 @@ describe("verdict", () => {
     expect(v.label).toBe("PAS ASSEZ DE DONNÉES");
     expect(v.sub).toBe("seulement 2 runs notés");
     expect(verdictView(tFr, ev({}), true)).toEqual({ label: "INVITE", score: "78", cls: "badge-invite", sub: "pour une +21 (auto) · 9 runs notés · confiance par axe" });
-  });
-  test("confidence colors", () => {
-    expect(confidenceColor("high")).toBe("#56d364");
-    expect(confidenceColor("medium")).toBe("#e3b341");
-    expect(confidenceColor("low")).toBe("#f85149");
-    expect(confidenceColor(null)).toBe("#6e7681");
   });
 });

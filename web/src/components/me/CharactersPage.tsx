@@ -13,7 +13,7 @@ import { useDocs } from "../../docs.tsx";
 import { useT } from "../../locale.tsx";
 import type { SeasonState } from "../../useSeason.ts";
 import { ChipMenu } from "../ChipMenu.tsx";
-import type { SelfActions } from "../self/ResultHead.tsx";
+import type { SelfActions } from "../owner/types.ts";
 import { Toast } from "../Toast.tsx";
 import { BnetLinkCard, BnetLinked, BnetNote } from "./BnetCard.tsx";
 import { BnetPicker } from "./BnetPicker.tsx";

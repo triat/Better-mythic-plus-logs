@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { AxisScore, Evaluation, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { axisInfo, axisRows, axisWeightLabel, evidenceText, heroStats, radarPoints } from "./axes.ts";
+import { axisInfo, axisWeightLabel, evidenceText, heroStats, radarPoints } from "./axes.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -29,45 +29,8 @@ const ev: Evaluation = {
 };
 
 describe("axes view model", () => {
-  test("rows follow AXIS_ORDER and carry top-2 evidence by |delta|", () => {
-    const rows = axisRows(tEn, "en", ev);
-    expect(rows.map((r) => r.key)).toEqual(["survival", "utility", "throughput", "consistency", "preparation"]);
-    expect(rows.map((r) => r.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation"]);
-    expect(rows[0]!.top).toEqual([
-      { label: "0.2 individual deaths/run", delta: "+18", tone: "good", source: "survival.individualDeaths" },
-      { label: "avoidable +12% vs peers", delta: "−6", tone: "bad", source: "survival.avoidableVsPeers" },
-    ]);
-    expect(rows[0]!.all).toHaveLength(3);
-    expect(rows[0]!.all[0]!.source).toBe("survival.individualDeaths");
-    expect(rows[2]!.top[0]).toEqual({ label: "median parse 86%", delta: "+27", tone: "good", source: "throughput.medianParse" });
-  });
-  test("null axis: no confidence, hollow note", () => {
-    const c = axisRows(tEn, "en", ev)[3]!;
-    expect(c.score).toBeNull();
-    expect(c.confidence).toBeNull();
-    expect(c.note).toBe("not enough data for this axis");
-    expect(c.top).toEqual([]);
-  });
-  test("axis with score but no evidence notes it", () => {
-    expect(axisRows(tEn, "en", ev)[1]!.note).toBe("no evidence");
-  });
   test("radarPoints in AXIS_ORDER", () => {
     expect(radarPoints(ev)).toEqual([82, 61, 88, null, 55]);
-  });
-  test("survival carries an analyzed-runs badge when deep-dive evidence exists", () => {
-    const rows = axisRows(tEn, "en", { ...ev, analyzedRuns: 3 });
-    expect(rows.find((r) => r.key === "survival")!.badge).toBe("3 runs analyzed");
-    expect(rows.find((r) => r.key === "utility")!.badge).toBeNull();
-    expect(axisRows(tEn, "en", { ...ev, analyzedRuns: 1 }).find((r) => r.key === "survival")!.badge).toBe("1 run analyzed");
-    expect(axisRows(tEn, "en", ev).find((r) => r.key === "survival")!.badge).toBeNull();
-  });
-  test("French rows: axis names, notes, badge and evidence lines", () => {
-    const rows = axisRows(tFr, "fr", { ...ev, analyzedRuns: 3 });
-    expect(rows.map((r) => r.label)).toEqual(["Survie", "Utilité", "Throughput", "Régularité", "Préparation"]);
-    expect(rows[0]!.badge).toBe("3 runs analysés");
-    expect(rows[0]!.top.map((e) => e.label)).toEqual(["0,2 mort(s) individuelle(s) / run", "évitable +12 % vs pairs"]);
-    expect(rows[3]!.note).toBe("pas assez de données pour cet axe");
-    expect(rows[1]!.note).toBe("aucun indice");
   });
   test("heroStats", () => {
     const payload = {
@@ -103,15 +66,13 @@ describe("axes view model", () => {
     expect(axisWeightLabel(tFr, w, "throughput")).toBe("poids 3 pour dps, 2 pour heal et tank");
     expect(axisWeightLabel(tFr, three, "preparation")).toBe("dps 1 · heal 2 · tank 3");
   });
-  test("axisInfo pairs the registry summary with the weight label; rows fall back to placeholders without it", () => {
+  test("axisInfo pairs the registry summary with the weight label", () => {
     const docs = {
       docs: { axes: { survival: { summary: "Deaths and damage taken." }, utility: { summary: "Kicks." }, throughput: { summary: "P." }, consistency: { summary: "C." }, preparation: { summary: "Pr." } } },
       config: { axisWeights: { dps: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 }, healer: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 }, tank: { survival: 3, utility: 2, throughput: 3, consistency: 0, preparation: 1 } } },
     } as never;
     const info = axisInfo(tEn, docs);
     expect(info.survival).toEqual({ description: "Deaths and damage taken.", weight: "weight 3 for every role" });
-    expect(axisRows(tEn, "en", ev, info)[0]).toMatchObject({ description: "Deaths and damage taken.", weight: "weight 3 for every role" });
-    expect(axisRows(tEn, "en", ev)[0]).toMatchObject({ description: "", weight: "…" });
   });
 });
 

@@ -6,7 +6,7 @@ import { useT } from "../../locale.tsx";
 import { useSeason, type SeasonState } from "../../useSeason.ts";
 import { Around } from "../Around.tsx";
 import { Icon } from "../Icon.tsx";
-import type { SelfActions } from "../self/ResultHead.tsx";
+import type { SelfActions } from "../owner/types.ts";
 
 /**
  * Loads one character's season (`GET /api/season`, 0 pts) through `useSeason` and hands its state to the page, which

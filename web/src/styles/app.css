@@ -55,7 +55,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .badge { display: inline-flex; align-items: baseline; gap: 10px; border-radius: 8px; padding: 8px 14px; border: 1px solid; }
 .badge .badge-label { font-size: 20px; font-weight: 800; letter-spacing: .04em; }
 .badge .badge-score { font-size: 26px; font-weight: 800; }
-.badge .badge-sub { font-size: 12px; color: var(--muted); }
 .badge-sm .badge-label { font-size: 12px; } .badge-sm .badge-score { font-size: 14px; } .badge-sm { padding: 3px 8px; gap: 6px; }
 .badge-invite { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
 .badge-maybe { background: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow); }
@@ -211,11 +210,9 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .setup-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 
 /* verdict hero */
-.verdict-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .reeval { display: inline-flex; align-items: center; gap: 4px; border: 1px dashed var(--yellow-border); background: var(--yellow-bg); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: var(--yellow); }
 .reeval a { color: var(--yellow); text-decoration: underline; }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; }
-.hero-left { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .identity { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .identity .name { font-size: 22px; font-weight: 700; }
 .stats { display: flex; gap: 18px; font-size: 13px; flex-wrap: wrap; }
@@ -225,28 +222,18 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .axes { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .axis { display: grid; grid-template-columns: 150px 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 10px; cursor: pointer; }
 .axis:hover { border-color: var(--border); }
-.axis-na { border-style: dashed; }
-.axis-na .label-caps, .axis-na .axis-score { color: var(--faint); }
-.axis-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.conf { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-.axis-score { font-size: 16px; font-weight: 700; text-align: right; }
-.axis-na .axis-score { font-size: 13px; font-weight: 600; }
-.axis-evidence { font-size: 12px; color: var(--text-soft); }
 
 /* contextual "?" links to /help (HelpLink.tsx, canvas HelpDetails variant a) */
 .help-link { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); color: var(--faint); font-size: 10px; line-height: 1; margin-left: 6px; vertical-align: 1px; text-decoration: none; }
 .help-link:hover { color: var(--text); border-color: var(--muted); }
 /* In a flex row with its own `gap`, the glyph's inline margin-left would compound with that gap: cancel it there
-   (axis name, verdict badge, the runs section row, the deep-dive head); evidence lines stay inline text, 6px kept. */
-.axis-name .help-link, .badge .help-link, .section-row .help-link, .dd-head .help-link { margin-left: 0; }
+   (verdict badge, the runs section row, the deep-dive head); evidence lines stay inline text, 6px kept. */
+.badge .help-link, .section-row .help-link, .dd-head .help-link { margin-left: 0; }
 
 /* tiles */
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; }
 .tile { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; min-width: 120px; }
 .tile .label-caps { font-size: 10px; }
-.tile-value { font-size: 15px; font-weight: 600; }
-.tile-empty .tile-value { color: var(--faint); font-weight: 400; }
-.tile-sub { font-size: 11px; color: var(--faint); font-weight: 400; margin-left: 6px; font-family: ui-sans-serif, system-ui, sans-serif; }
 
 /* sections */
 .section { padding: 14px 20px; display: flex; flex-direction: column; gap: 8px; }
@@ -259,8 +246,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .run { display: grid; grid-template-columns: 150px minmax(0, 1fr) 80px 70px 100px 110px 140px 24px; gap: 12px; align-items: center; padding: 8px 10px; font-size: 13px; }
 .run-rio { grid-template-columns: 60px minmax(0, 1fr) 100px 110px 80px 24px; }
 .run .level { color: var(--orange); font-weight: 700; }
-.run-main { min-width: 0; }
-.run-signals { font-size: 12px; color: var(--muted); }
 
 /* compare */
 .compare { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; }
@@ -307,22 +292,8 @@ a.spell { color: inherit; text-decoration: none; border-bottom: 1px dotted var(-
 a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 
 /* --- axis explainers (B: callout in the expanded row, C: legend under the radar) --- */
-.axis-open { border-color: var(--border); }
-.axis-name .chev { font-size: 16px; }
-.axis-detail { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding-top: 2px; cursor: default; }
-.axis-callout { border-left: 2px solid var(--link); background: var(--inset); border-radius: 0 6px 6px 0; padding: 8px 12px; font-size: 12px; color: var(--text-soft); line-height: 1.45; }
-.axis-callout-title { color: var(--link); margin-bottom: 2px; }
-.axis-evidence-grid { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 8px; row-gap: 3px; font-size: 12px; color: var(--text-soft); padding: 0 4px; }
-.axis-evidence-grid .contents { display: contents; }
-.axis-evidence-grid .mono { text-align: right; }
 .legend { grid-column: 1 / -1; border-top: 1px solid var(--border-soft); padding-top: 12px; }
-.legend-title { font-size: 13px; font-weight: 600; }
-.legend-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 18px; margin-top: 10px; }
-.legend-item { font-size: 12px; line-height: 1.45; }
-.legend-item-title { color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
-.legend-weight { text-transform: none; letter-spacing: 0; font-weight: 400; }
 .radar-label { text-decoration: underline dotted var(--faint); text-underline-offset: 3px; }
-@media (max-width: 900px) { .legend-grid { grid-template-columns: 1fr; } }
 
 /* --- hosted: the Discord button and the sign-in refusals (Landing.tsx) --- */
 .btn-discord { height: 48px; padding: 0 22px; gap: 8px; font-size: 15px; font-weight: 600; background: var(--discord); border-color: var(--discord); color: #fff; }
@@ -469,24 +440,6 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .faq .help-p { margin-top: 2px; }
 @media (max-width: 900px) { .help-toc { display: none; } }
 
-/* Score drivers — canvas variant B (docs/design/canvas/ScoreDriversBars.dc.html) */
-.drivers { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; }
-.drivers-row { display: grid; grid-template-columns: 150px 150px 1px 150px minmax(0, 1fr); align-items: center; font-size: 13px; min-height: 22px; }
-.drivers-title { display: flex; align-items: center; gap: 6px; }
-.drivers-caption { font-size: 11px; color: var(--faint); }
-.drivers-caption.cost { text-align: right; padding-right: 8px; }
-.drivers-caption.earn { padding-left: 8px; }
-.drivers-side { display: flex; align-items: center; gap: 6px; }
-.drivers-side.cost { justify-content: flex-end; }
-.drivers-axis { width: 1px; height: 22px; background: var(--border); }
-.drivers-bar { height: 10px; }
-.drivers-side.cost .drivers-bar { background: var(--red); border-radius: 2px 0 0 2px; }
-.drivers-side.earn .drivers-bar { background: var(--green); border-radius: 0 2px 2px 0; }
-.drivers-impact { font-family: var(--mono); font-size: 12px; }
-.drivers-value { font-size: 12px; color: var(--text-soft); padding-left: 12px; }
-.drivers-path { font-size: 12px; color: var(--muted); border-top: 1px solid var(--border-soft); padding-top: 8px; margin-top: 4px; }
-.drivers-path b { color: var(--text); font-weight: 600; }
-.drivers-path .badge-invite, .drivers-path .badge-maybe { background: none; border: 0; }
 
 /* --- hosted: admin feature usage (Usage.tsx; canvas "usage", A table + B cards) --- */
 .usage-head { flex-wrap: wrap; }
@@ -529,19 +482,12 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 }
 
 /* Self-review result tabs (canvas "self-review", variants A + C; spec 2026-10-09-self-review-pillars-design.md) */
-.result-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.result-head h2 { margin: 0; font-size: 20px; font-weight: 700; }
 .chip-me { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
 .rtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-soft); }
 .rtab { padding: 8px 14px; font-size: 13px; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; }
 .rtab.on { color: var(--text); border-bottom-color: var(--link); font-weight: 600; }
-.work-on { display: flex; flex-direction: column; gap: 4px; }
-.work-on-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) 170px 170px; gap: 12px; align-items: center; font-size: 13px; padding: 8px 10px; }
-.work-on-num { width: 20px; height: 20px; border-radius: 50%; background: var(--border-soft); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
 .pillars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .pillar { display: flex; flex-direction: column; gap: 6px; }
-.pillar-score { font-size: 28px; font-weight: 800; font-family: var(--mono); }
-.pillar-trend { font-size: 12px; font-weight: 600; }
 .pillar-text { font-size: 13px; color: var(--text-soft); }
 .band-good { color: var(--green); }
 .band-mid { color: var(--text-soft); }
@@ -552,29 +498,16 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .wk i { display: block; width: 8px; background: var(--border); }
 .wk i.last { background: var(--link); }
 .wk i.empty { opacity: .4; }
-.verdict-line { font-size: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.overview-rest { display: flex; flex-direction: column; gap: 16px; }
 .side { display: grid; grid-template-columns: minmax(0, 1fr) 440px; gap: 16px; align-items: start; }
-.grid5 { display: grid; grid-template-columns: 210px repeat(5, minmax(0, 1fr)) 90px 60px; gap: 4px; font-size: 13px; align-items: center; }
-.grid5-name { background: transparent; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.grid5-name.on { color: var(--link); font-weight: 600; }
 .cell { border-radius: var(--radius); padding: 6px 0; text-align: center; font-family: var(--mono); font-weight: 700; }
-.cell-big { font-size: 18px; }
 .cell-good { background: var(--green-bg); color: var(--green); }
 .cell-mid { background: var(--card); color: var(--text-soft); border: 1px solid var(--border-soft); }
 .cell-warn { background: var(--yellow-bg); color: var(--yellow); }
 .cell-bad { background: var(--red-bg); color: var(--red); }
 .cell-na { color: var(--faint); border: 1px dashed var(--border-soft); }
-.ab-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 110px; gap: 10px; font-size: 13px; align-items: center; }
 .bar2 { display: block; height: 6px; background: var(--border-soft); border-radius: 3px; overflow: hidden; }
 .bar2 > span { display: block; height: 100%; background: var(--yellow); }
 .bar2.progress > span { background: var(--link); }
-.run-detail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 4px 10px 8px; }
-@media (max-width: 1100px) { .run-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* Crowd control in a run's detail (canvas "control", run detail B): the rate first, then the spells by category. */
-.cc-rate { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-.cc-rate .mono { font-size: 18px; font-weight: 700; }
-.cc-cat { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-top: 6px; }
 .sync-card { display: flex; flex-direction: column; gap: 8px; max-width: 520px; }
 .link-btn { background: transparent; border: 0; padding: 0; color: var(--link); font: inherit; font-size: 12px; cursor: pointer; text-align: left; }
 @media (max-width: 1100px) {

@@ -1,7 +1,7 @@
 import type { LookupPayload } from "../../types.ts";
 import { meChip, toggleMe } from "../../lib/self.ts";
 import { useT } from "../../locale.tsx";
-import type { SelfActions } from "./ResultHead.tsx";
+import type { SelfActions } from "../owner/types.ts";
 
 /** "This is me": adds the payload's character to My characters, or removes it (canvas SelfDetails, ControlVettingA). */
 export function MeChip({ payload, self }: { payload: LookupPayload; self: SelfActions }) {

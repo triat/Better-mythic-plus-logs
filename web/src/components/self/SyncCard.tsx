@@ -1,7 +1,7 @@
 import { syncCard, syncProgress } from "../../lib/self.ts";
 import { useT } from "../../locale.tsx";
 import type { SeasonState } from "../../useSeason.ts";
-import type { SelfActions } from "./ResultHead.tsx";
+import type { SelfActions } from "../owner/types.ts";
 
 /** Canvas SelfDetails "SYNC": the estimate before spending, the progress, the no-client guide. */
 export function SyncCard({ season, self }: { season: SeasonState; self: SelfActions }) {

@@ -1,4 +1,4 @@
-import type { AxisKey, Confidence, Evaluation } from "../types.ts";
+import type { AxisKey, Evaluation } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 
 export const AXIS_ORDER: readonly AxisKey[] = ["survival", "utility", "throughput", "consistency", "preparation"];
@@ -25,5 +25,3 @@ export function verdictView(t: T, ev: Evaluation, autoTarget = false): VerdictVi
   };
 }
 
-export const confidenceColor = (c: Confidence | null): string =>
-  c === "high" ? "#56d364" : c === "medium" ? "#e3b341" : c === "low" ? "#f85149" : "#6e7681";

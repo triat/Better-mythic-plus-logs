@@ -11,7 +11,7 @@ import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
 import type { DeepdiveActions } from "../Detail.tsx";
 import { MeChip } from "../self/MeChip.tsx";
-import type { SelfActions } from "../self/ResultHead.tsx";
+import type { SelfActions } from "../owner/types.ts";
 import { CandDungeons } from "./CandDungeons.tsx";
 import { MethodTab } from "./MethodTab.tsx";
 import { ProfileHeader } from "./ProfileHeader.tsx";

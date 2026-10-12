@@ -1,6 +1,6 @@
 # UI redesign: one shell, answer first, a run timeline with layers — design
 
-Status: approved 2026-10-11 ("go"), with the two open points as proposed: the Experience axis leaves the model (config version bump), and the redesign canvas replaces the old project canvas for this work. Phase 1 implemented 2026-10-11; phase 2 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`, see "Phase 2 notes"). Mockups chosen over three rounds on the redesign canvas
+Status: approved 2026-10-11 ("go"), with the two open points as proposed: the Experience axis leaves the model (config version bump), and the redesign canvas replaces the old project canvas for this work. Phase 1 implemented 2026-10-11; phase 2 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-2.md`, see "Phase 2 notes"); phase 3 implemented 2026-10-12 (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`, see "Phase 3 notes"). Mockups chosen over three rounds on the redesign canvas
 (https://claude.ai/artifact/WeznnnDkrDGMPyAsuSKBeE, page "4 · Final"); the chosen artboards are checked in under
 `docs/design/redesign/` (`F-*.dc.html`) with the mockup rules (`mockup-rules-round2.md`, `mockup-rules-round3.md`).
 This spec supersedes the visual parts of `2026-09-16-web-front-design.md` (screens, header, tabs) and the layout
@@ -166,6 +166,36 @@ What phase 2 (the candidate profile) settled while it was planned and built; the
    Synthèse.
 9. **The profile header's facts** keep the WCL metric score ("DPS score") next to the region / server ranks it holds:
    RIO, ilvl, the WCL score, region, server, previous season, runs in the last 7 days.
+
+## Phase 3 notes
+
+What phase 3 (the owner pages and Mes personnages) settled while it was built; these override the sections above.
+
+1. **Owner tabs** sit in a tab strip under the header (same strip and keys as the candidate profile), not the
+   mockup's segmented control. The URL is `/candidate?open=<key>&tab=form|dungeons|runs&run=<report:fight>`, plus
+   `as=vetting` for "Voir ma fiche de vetting" (the member's own vetting profile, with a bar to come back); a tab that
+   exists in both views is kept when switching.
+2. **"Niveau cible"** sets the key filter to min = max = the target level; "Toutes les clés" restores the full range.
+3. **Key chart**: the target line is `--text-soft`, not `--maybe` (verdict colours stay for verdicts). The viewBox
+   follows the drawn width so its labels keep 12–13 px; under 560 px it shows 3 weeks with short week labels.
+4. **Checklist marker**: the mockup's empty square read as a checkbox with nothing to tick; the rows show their rank
+   (1, 2, 3) instead.
+5. **Mes personnages**: no "sort" button — the list order is the member's own (main first, "Monter dans la liste" in
+   the "⋯" menu). A card's "à travailler" note names the sub-signal once `GET /api/docs` is loaded and leaves the
+   name out until then, never the raw source key. The compact "Pas encore de saison" rows sit in 340 px columns so a
+   usual name fits.
+6. **Runs**: "Charger les semaines précédentes · N runs" counts only the earlier weeks' runs the filters show, and is
+   hidden when there are none. An analysed owner run keeps the `RunDeepDive` panel (table corrections, proposals) under
+   its timeline.
+7. **Not built**: the mockup's "· hors des tendances" marker on runs outside the trend windows (no rule for it in the
+   data yet).
+8. **Empty states**: a local database without season data (no sync ever run) shows Ma forme, Donjons and Runs empty
+   states and the "Pas encore de saison" group; nothing fetches until the member clicks Synchroniser.
+9. **Cleanup**: the pre-redesign owner view (`Overview`, `self/DungeonsTab`, `DungeonPanel`, `self/RunsTab`,
+   `RunDetailExtra`, `ResultHead`), `/me`'s `MePage` / `MainCard` / `OtherRow`, and the components only they used
+   (`VerdictHero`, `ScoreDrivers`, `AxisRows`, `AxisLegend`, `SignalTiles`, `DungeonRuns`) are gone with their view
+   models, CSS and strings. `lib/tiles.ts` and `lib/runs.ts`'s `rowOf` stay as the references of phase 2's
+   "nothing lost" tests; phase 4 removes the rest of the old CSS.
 
 ## Out of scope / follow-ups
 

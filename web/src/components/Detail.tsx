@@ -5,7 +5,7 @@ import { resultView } from "../lib/self.ts";
 import { CandidateProfile } from "./candidate/CandidateProfile.tsx";
 import type { ProfileFetch } from "./candidate/ProfileHeader.tsx";
 import { OwnerProfile } from "./owner/OwnerProfile.tsx";
-import type { SelfActions } from "./self/ResultHead.tsx";
+import type { SelfActions } from "./owner/types.ts";
 
 /** Deep-dive callbacks owned by App (they touch the payload cache). */
 export interface DeepdiveActions {

@@ -1,27 +1,18 @@
-// View models of the self-review result tabs (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md;
-// canvas page "self-review": SelfTabs, SelfDungeonFirst, SelfDetails). Pure: no React, no fetch.
+// Self-review view models shared by the owner pages, "My characters" and the home page
+// (docs/superpowers/specs/2026-10-09-self-review-pillars-design.md): trends, points to work on, the dungeon panel, a
+// season run's detail and control, the sync card, "This is me". Pure: no React, no fetch.
 import type {
-  AxisKey, CcCategory, DungeonRow, Evaluation, LookupPayload, MPlusRun, MyCharacter, OwnClientView, PillarKey, PillarScore, PillarTrend,
+  CcCategory, DungeonRow, Evaluation, LookupPayload, MPlusRun, MyCharacter, OwnClientView, PillarKey, PillarTrend,
   RunControl, SeasonRunView, SeasonView, WorkOnRow,
 } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { evidenceText, formatEvidenceValue } from "./axes.ts";
 import { fmtAge, fmtAmount, fmtDuration, signed } from "./format.ts";
-import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 
 /** Same order as src/evaluation/types.ts PILLAR_KEYS (the front cannot import runtime values from src/). */
 export const PILLAR_ORDER: readonly PillarKey[] = ["damage", "survival", "avoidable", "interrupts", "control"];
-export type ResultTab = "overview" | "dungeons" | "runs";
-export const RESULT_TABS: readonly ResultTab[] = ["overview", "dungeons", "runs"];
 
-export type Band = "good" | "mid" | "warn" | "bad" | "na";
-/** Spec "Numbers (phase 1)", read off the canvas: 75 / 55 / 45. */
-export const scoreBand = (s: number | null): Band => (s === null ? "na" : s >= 75 ? "good" : s >= 55 ? "mid" : s >= 45 ? "warn" : "bad");
-const scoreText = (t: T, s: number | null): string => (s === null ? t("self.pillar.na") : String(s));
-
-/** Weekly bars: 0.28 px per point, so 100 fills the 28 px row; an empty week is a 2 px stub. */
-const BAR_PX_PER_POINT = 0.28;
 const pct = (locale: Locale, x: number): string => new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(x);
 
 /** `missing`: no trend yet (under 3 scored runs on a side), what the grid's short "too few runs" stands for;
@@ -35,46 +26,6 @@ export function trendView(t: T, tr: PillarTrend | undefined): TrendView {
   if (tr.direction === "same") return { text: t("self.trend.same"), cls: "muted" };
   return { text: t(`self.trend.${tr.direction}`, { delta: signed(tr.delta) }), cls: tr.direction === "up" ? "tone-good" : "tone-bad" };
 }
-
-export interface PillarCard {
-  key: PillarKey;
-  title: string;
-  score: string;
-  band: Band;
-  trend: TrendView;
-  bars: { px: number; last: boolean; empty: boolean }[];
-  /** One sentence: the pillar's two strongest evidence lines. */
-  sentence: string;
-  /** Every evidence line, for "details". */
-  lines: string[];
-}
-
-/** The window's pillars when the season has one (4 weeks, 3+ runs), else the lookup's own evaluation. */
-const pillarsOf = (ev: Evaluation, season: SeasonView | null): PillarScore[] => season?.recent?.pillars ?? ev.pillars ?? [];
-
-export function pillarCards(t: T, locale: Locale, ev: Evaluation, season: SeasonView | null): PillarCard[] {
-  const source = pillarsOf(ev, season);
-  return PILLAR_ORDER.map((key) => {
-    const p = source.find((x) => x.key === key) ?? null;
-    const score = p?.score ?? null;
-    const tr = season?.trends.find((x) => x.key === key);
-    const weekly = tr?.weekly ?? [];
-    const lines = (p?.evidence ?? []).map((e) => evidenceText(t, locale, e));
-    return {
-      key,
-      title: t(`self.pillars.${key}`),
-      score: scoreText(t, score),
-      band: scoreBand(score),
-      trend: key === "control" && score === null ? { text: t("self.pillar.controlNote"), cls: "faint" } : trendView(t, tr),
-      bars: weekly.map((w, i) => ({ px: w === null ? 2 : Math.max(2, Math.round(w * BAR_PX_PER_POINT)), last: i === weekly.length - 1, empty: w === null })),
-      sentence: score === null ? (key === "control" ? t("self.pillar.naControl") : t("self.pillar.naGeneric")) : lines.slice(0, 2).join(" · "),
-      lines,
-    };
-  });
-}
-
-export const basisText = (t: T, ev: Evaluation, season: SeasonView | null): string =>
-  season?.recent ? t("self.basis.recent", { count: season.recent.runs }) : t("self.basis.lookup", { count: ev.runsUsed });
 
 export interface WorkOnView {
   n: number;
@@ -113,53 +64,8 @@ export function workOnRows(t: T, locale: Locale, ev: Evaluation | null, season: 
   }));
 }
 
-/** "Verdict for a group leader: INVITE 72 · context: …": the verdict as today, the context axes beside it. */
-export function verdictLine(t: T, ev: Evaluation, informational: (key: AxisKey) => boolean): { badge: ReturnType<typeof verdictView>; context: string } {
-  const items = AXIS_ORDER.filter((k) => k === "preparation" || k === "consistency").flatMap((k) => {
-    const a = ev.axes.find((x) => x.key === k);
-    if (!a || a.score === null) return [];
-    const item = t("self.contextItem", { name: axisTitle(t, k).toLocaleLowerCase(), score: a.score });
-    return [informational(k) ? t("self.informational", { item }) : item];
-  });
-  return { badge: verdictView(t, ev), context: items.length > 0 ? t("self.context", { list: items.join(" · ") }) : "" };
-}
-
 export const headLine = (t: T, season: SeasonView, now = Date.now()): string =>
   t("self.head.runs", { count: season.state.runs }) + (season.checkedAt !== null ? t("self.head.checked", { age: fmtAge(t, season.checkedAt, now) }) : "");
-
-/** `hint`: the full sentence behind the short "too few runs" (the cell's tooltip). */
-export interface GridCell { text: string; band: Band; trend?: string; hint?: string }
-
-/** `trendNote`: what a trend is and what "too few runs" means, under the grid while a cell shows it. */
-export function seasonHeader(t: T, season: SeasonView): { cells: GridCell[]; overall: GridCell; runs: string; trendNote: string | null } {
-  const pillars = season.season?.pillars ?? [];
-  const cells: GridCell[] = PILLAR_ORDER.map((key) => {
-    const s = pillars.find((p) => p.key === key)?.score ?? null;
-    const tr = trendView(t, season.trends.find((x) => x.key === key));
-    // The grid's cells are narrow: "too few runs" instead of the cards' longer sentence, which becomes the tooltip.
-    if (key === "control" && s === null) return { text: scoreText(t, s), band: scoreBand(s), trend: t("self.pillar.controlNote") };
-    return tr.missing
-      ? { text: scoreText(t, s), band: scoreBand(s), trend: t("self.trend.few"), hint: tr.text }
-      : { text: scoreText(t, s), band: scoreBand(s), trend: tr.text };
-  });
-  return {
-    cells,
-    overall: { text: scoreText(t, season.season?.overall ?? null), band: scoreBand(season.season?.overall ?? null) },
-    runs: String(season.state.runs),
-    trendNote: cells.some((c) => c.hint) ? t("self.trend.rule") : null,
-  };
-}
-
-export interface GridRow { encounterID: number; name: string; cells: GridCell[]; overall: GridCell; runs: string }
-
-export const dungeonRows = (t: T, season: SeasonView): GridRow[] =>
-  season.dungeons.map((d) => ({
-    encounterID: d.encounterID,
-    name: d.name,
-    cells: PILLAR_ORDER.map((k) => ({ text: scoreText(t, d.pillars[k]), band: scoreBand(d.pillars[k]) })),
-    overall: { text: scoreText(t, d.overall), band: scoreBand(d.overall) },
-    runs: String(d.runs),
-  }));
 
 export interface PanelView {
   title: string;

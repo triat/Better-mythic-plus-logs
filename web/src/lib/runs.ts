@@ -105,20 +105,7 @@ export const rowOf = (t: T, r: MPlusRun, metric: string, now: number): RunRowMod
   };
 };
 
-export const runRows = (t: T, p: LookupPayload, now = Date.now()): RunRowModel[] =>
-  p.perDungeon.runs.map((r) => rowOf(t, r, p.metric, now));
-
 export function missingDungeons(p: LookupPayload): string[] {
   const covered = new Set(p.perDungeon.runs.map((r) => r.encounterID));
   return p.seasonDungeons.filter((d) => !covered.has(d.id)).map((d) => d.name);
-}
-
-export function runsHeadline(t: T, p: LookupPayload): string {
-  const pd = p.perDungeon;
-  let s = t("runs.headline", {
-    covered: pd.dungeonsCovered, total: pd.totalDungeonsInSeason, level: pd.medianLevel,
-    amount: fmtAmount(pd.medianAmount), metric: p.metric, parse: pd.medianParse.toFixed(1),
-  });
-  if (pd.dungeonsAtOrAboveTarget > 0) s += t("runs.atTarget", { n: pd.dungeonsAtOrAboveTarget, total: pd.totalDungeonsInSeason, level: p.targetLevel });
-  return s;
 }

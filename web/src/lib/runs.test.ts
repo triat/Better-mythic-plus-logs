@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { LookupPayload, MPlusRun, RunSignals } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { missingDungeons, runRows, runsHeadline, signalParts } from "./runs.ts";
+import { missingDungeons, rowOf, signalParts } from "./runs.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -67,11 +67,12 @@ describe("signalParts", () => {
   });
 });
 
-describe("runRows", () => {
+describe("rowOf", () => {
   const payload = (runs: MPlusRun[]): LookupPayload =>
     ({ metric: "hps", targetLevel: 21, seasonDungeons: [{ id: 12923, name: "Voidscar Arena" }, { id: 12825, name: "Den of Nalorakk" }],
        perDungeon: { runs, dungeonsCovered: runs.length, totalDungeonsInSeason: 2, dungeonsAtOrAboveTarget: 1, medianLevel: 21, medianAmount: 312_000, medianParse: 79.4 } }) as unknown as LookupPayload;
 
+  const runRows = (t: typeof tEn, p: LookupPayload, now: number) => p.perDungeon.runs.map((r) => rowOf(t, r, p.metric, now));
   test("row with signals", () => {
     const r = runRows(tEn, payload([run({ signals: sig(), startTime: NOW - 2 * 86400e3 })]), NOW)[0]!;
     expect(r).toMatchObject({
@@ -98,11 +99,9 @@ describe("runRows", () => {
     expect(rows[2]!.keystone).toBeNull();
     expect(rows[2]!.parts).toEqual([]);
   });
-  test("missing dungeons and headline", () => {
+  test("missing dungeons", () => {
     const p = payload([run()]);
     expect(missingDungeons(p)).toEqual(["Den of Nalorakk"]);
-    expect(runsHeadline(tEn, p)).toBe("1/2 dungeons · median +21, 312.0k hps, 79.4% · 1/2 at or above +21");
-    expect(runsHeadline(tFr, p)).toBe("1/2 donjons · médiane +21, 312.0k hps, 79.4 % · 1/2 au niveau +21 ou plus");
   });
   test("French rows: keystone, unranked, age", () => {
     const rows = runRows(tFr, payload([

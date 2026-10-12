@@ -18,7 +18,7 @@ import { Icon } from "../Icon.tsx";
 import { KeyStepper } from "../KeyStepper.tsx";
 import { SearchInput } from "../SearchInput.tsx";
 import { UserMenu } from "../UserMenu.tsx";
-import type { SelfActions } from "../self/ResultHead.tsx";
+import type { SelfActions } from "../owner/types.ts";
 import { LocalAccount } from "../shell/LocalAccount.tsx";
 import { Palette } from "../shell/Palette.tsx";
 import { usePaletteKey } from "../shell/Shell.tsx";

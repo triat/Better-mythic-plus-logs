@@ -3,7 +3,7 @@ import type { DungeonRow, Evaluation, LookupPayload, MyCharacter, RunControl, Se
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  MAX_ME, controlView, dungeonPanel, isMe, meChip, pillarCards, resultView, runDetail, scoreBand, seasonHeader, syncCard, toggleMe, trendView, workOnRows,
+  MAX_ME, controlView, dungeonPanel, isMe, meChip, resultView, runDetail, syncCard, toggleMe, trendView, workOnRows,
 } from "./self.ts";
 
 const tFr = makeT(fr, "fr");
@@ -31,12 +31,6 @@ const season = (over: Partial<SeasonView> = {}): SeasonView => ({
   workOn: [], dungeons: [], ...over,
 });
 
-describe("scoreBand (spec: 75 / 55 / 45)", () => {
-  test("bands", () => {
-    expect([80, 75, 74, 55, 54, 45, 44, null].map(scoreBand)).toEqual(["good", "good", "mid", "mid", "warn", "warn", "bad", "na"]);
-  });
-});
-
 describe("trendView", () => {
   test("arrows, same, not enough", () => {
     expect(trendView(tEn, { key: "damage", delta: 6, direction: "up", recentRuns: 5, beforeRuns: 7, weekly: [] })).toEqual({ text: "↗ +6", cls: "tone-good" });
@@ -48,23 +42,6 @@ describe("trendView", () => {
       .toBe("no trend yet: 1 run lately and 5 before, 3 needed on each side");
     expect(trendView(tFr, { key: "damage", delta: null, direction: null, recentRuns: 2, beforeRuns: 0, weekly: [] }).text)
       .toBe("pas encore de tendance : 2 runs récemment et 0 avant, il en faut 3 de chaque côté");
-  });
-});
-
-describe("pillarCards", () => {
-  test("from the lookup's evaluation when the season has no window", () => {
-    const c = pillarCards(tEn, "en", ev(), season());
-    expect(c.map((x) => [x.key, x.score, x.band])).toEqual([
-      ["damage", "68", "mid"], ["survival", "41", "bad"], ["avoidable", "57", "mid"], ["interrupts", "82", "good"], ["control", "n/a", "na"],
-    ]);
-    expect(c[1]!.trend.text).toBe("↘ −9");
-    expect(c[1]!.bars.map((b) => [b.px, b.last, b.empty])).toEqual([[2, false, true], [2, false, true], [2, false, true], [2, false, true], [2, false, true], [2, false, true], [13, false, false], [11, true, false]]);
-    expect(c[4]!.trend.text).toBe("no dispel, no crowd control measured yet");
-    expect(c[4]!.sentence).toBe("No dispel for this spec and no crowd control measured yet: n/a, not 0.");
-  });
-  test("from the 4-week window when there is one", () => {
-    const s = season({ recent: { runs: 38, overall: 60, pillars: [{ key: "damage", score: 70, evidence: [] }] } });
-    expect(pillarCards(tEn, "en", ev(), s)[0]!.score).toBe("70");
   });
 });
 
@@ -217,29 +194,3 @@ describe("me", () => {
     expect(resultView([], p)).toBe("vetting");
   });
 });
-
-describe("seasonHeader", () => {
-  test("short trend text in the grid's narrow cells; overall on the pillars' scale", () => {
-    const s = season({ season: { runs: 40, overall: 62, pillars: [{ key: "survival", score: 41, evidence: [] }] },
-      trends: [{ key: "damage", delta: null, direction: null, recentRuns: 2, beforeRuns: 0, weekly: [] }, { key: "survival", delta: -9, direction: "down", recentRuns: 6, beforeRuns: 8, weekly: [] }] });
-    const h = seasonHeader(tEn, s);
-    expect(h.cells[0]!.trend).toBe("too few runs");
-    expect(h.cells[1]!.trend).toBe("↘ −9");
-    expect(h.overall).toEqual({ text: "62", band: "mid" });
-    expect(seasonHeader(tFr, s).cells[0]!.trend).toBe("trop peu de runs");
-  });
-  test("\"too few runs\" carries its counts as a tooltip and the rule under the grid", () => {
-    const keys = ["damage", "survival", "avoidable", "interrupts", "control"] as const;
-    const full = keys.map((key) => ({ key, delta: 4, direction: "up" as const, recentRuns: 6, beforeRuns: 8, weekly: [] }));
-    const all = season({ season: { runs: 40, overall: 62, pillars: keys.map((key) => ({ key, score: 60, evidence: [] })) }, trends: full });
-    expect(seasonHeader(tEn, all).trendNote).toBeNull();
-    expect(seasonHeader(tEn, all).cells.every((c) => c.hint === undefined)).toBe(true);
-    const one = season({ ...all, trends: [{ ...full[0]!, delta: null, direction: null, recentRuns: 4, beforeRuns: 1 }, ...full.slice(1)] });
-    const h = seasonHeader(tEn, one);
-    expect(h.cells[0]).toMatchObject({ trend: "too few runs", hint: "no trend yet: 4 runs lately and 1 before, 3 needed on each side" });
-    expect(h.cells[1]!.hint).toBeUndefined();
-    expect(h.trendNote).toStartWith("Trend: the median score of the last 2 game weeks (lately) against the 4 weeks before them");
-    expect(seasonHeader(tFr, one).trendNote).toStartWith("Tendance : le score médian des 2 dernières semaines de jeu");
-  });
-});
-

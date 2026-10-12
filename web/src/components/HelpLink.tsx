@@ -2,7 +2,7 @@ import { useT } from "../locale.tsx";
 import { track } from "../usage.ts";
 
 /** Small "?" affordance linking to /help#<anchor> (canvas HelpDetails, variant a). `stopPropagation` so it never
- * triggers the click handler of a surrounding clickable row (AxisRows' axis toggle). */
+ * triggers the click handler of a surrounding clickable row (a candidate run row, say). */
 export function HelpLink({ anchor, title }: { anchor: string; title?: string }) {
   const { t } = useT();
   return (

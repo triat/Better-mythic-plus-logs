@@ -71,6 +71,13 @@
   --parse-pink: #e268a8; /* redesign spec 2026-10-11 — parse 99 */
   --parse-gold: #e5cc80; /* redesign spec 2026-10-11 — parse 100 */
 
+  /* Compare ranking: column identity squares, F-Comparer-Multi (decoration only, never a meaning) */
+  --series-1: #9d8cff; /* mockup F-Comparer-Multi */
+  --series-2: #ec7fb6; /* mockup F-Comparer-Multi */
+  --series-3: #b5d86a; /* mockup F-Comparer-Multi */
+  --series-4: #4dd4c6; /* mockup F-Comparer-Multi */
+  --series-5: #d9b38c; /* mockup F-Comparer-Multi */
+
   /* Buttons */
   --primary: #eceef2; /* redesign spec 2026-10-11 — the single primary button of a view */
   --on-primary: #0e1014; /* redesign spec 2026-10-11 */

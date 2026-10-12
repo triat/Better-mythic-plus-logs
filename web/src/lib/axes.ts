@@ -87,12 +87,6 @@ export function axisWeightLabel(t: T, axisWeights: DocsResponse["config"]["axisW
 export const axisInfo = (t: T, d: Pick<DocsResponse, "docs" | "config">): Record<AxisKey, AxisInfo> =>
   Object.fromEntries(AXIS_ORDER.map((k) => [k, { description: d.docs.axes[k].summary, weight: axisWeightLabel(t, d.config.axisWeights, k) }])) as Record<AxisKey, AxisInfo>;
 
-/** One score per axis, in AXIS_ORDER; null = not applicable. No prose, hence no `t`. */
-export const radarPoints = (ev: Evaluation): (number | null)[] => {
-  const byKey = new Map(ev.axes.map((a) => [a.key, a.score ?? null]));
-  return AXIS_ORDER.map((key) => byKey.get(key) ?? null);
-};
-
 export interface HeroStat { label: string; value: string; sub?: string }
 
 export function heroStats(t: T, p: LookupPayload): HeroStat[] {

@@ -4,7 +4,7 @@ import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
-import { MAX_COMPARE, compareKeys, compareSearch, pruneSelection, toggleSelection, withPayloadSummary } from "./lib/history.ts";
+import { compareKeys, compareSearch, pruneSelection, withPayloadSummary } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
 import { mineRequest } from "./lib/me.ts";
@@ -34,7 +34,7 @@ import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
 import { Forbidden } from "./components/admin/Forbidden.tsx";
 import { HelpPage } from "./components/help/HelpPage.tsx";
-import { Compare } from "./components/Compare.tsx";
+import { ComparePage } from "./components/compare/ComparePage.tsx";
 import { Detail } from "./components/Detail.tsx";
 import type { DeepdiveActions } from "./components/Detail.tsx";
 import type { SelfActions } from "./components/owner/types.ts";
@@ -585,10 +585,6 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     adoptCharacters: (characters) => adoptSettings({ characters }),
   };
 
-  // The Compare page opens a comparison as soon as two profiles are ticked; counted once per opening.
-  const showCompare = page === "compare" && selected.length >= 2;
-  useEffect(() => { if (showCompare) track("compare_open"); }, [showCompare]);
-
   if (stopped) return <main className="stopped"><h2>{t("header.stopped")}</h2><p className="muted">{t("header.stoppedSub")}</p></main>;
 
   const access = adminAccess(status, me);
@@ -647,35 +643,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           </div>
         )}
         {page === "compare" && (
-          <div className={"content" + (showCompare ? " content-result" : "")}>
-            <div className="page-head">
-              <h1>{t("shell.compare.title")}</h1>
-              <span className="muted">{tabs.length === 0 ? t("shell.compare.empty") : t("shell.compare.sub")}</span>
-            </div>
-            {tabs.length > 0 && (
-              <fieldset className="card compare-pick">
-                <legend className="side-label">{t("shell.compare.count", { sel: selected.length, max: MAX_COMPARE })}</legend>
-                {tabs.map((item) => {
-                  const on = selected.includes(item.key);
-                  return (
-                    <label key={item.key} className={"compare-pick-row" + (on ? " on" : "")}>
-                      <input
-                        type="checkbox" checked={on} disabled={!on && selected.length >= MAX_COMPARE}
-                        onChange={() => setSelected((s) => toggleSelection(s, item.key))}
-                      />
-                      <span className={"recent-dot " + (item.verdict ?? "none")} aria-hidden="true" />
-                      <span className="compare-pick-name">{item.label}</span>
-                      <span className={"recent-score mono " + (item.verdict ?? "none")}>{item.score === null ? "—" : Math.round(item.score)}</span>
-                    </label>
-                  );
-                })}
-              </fieldset>
-            )}
-            {tabs.length > 0 && !showCompare && <p className="faint">{t("shell.compare.pick")}</p>}
-            {showCompare && (
-              <CompareLoader keys={selected} tabs={tabs} fetchPayload={fetchPayload} cache={payloads.current} onJump={(k) => location.assign(candidateHref(k))} />
-            )}
-          </div>
+          <ComparePage tabs={tabs} selected={selected} onSelect={setSelected} fetchPayload={fetchPayload} cache={payloads.current} />
         )}
         {page === "live" && (
           <div className={"content" + (activeKey ? " content-result" : "")}>
@@ -726,25 +694,4 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       {toastEl}
     </>
   );
-}
-
-function CompareLoader(p: {
-  keys: string[];
-  tabs: HistoryItem[];
-  cache: Map<string, LookupPayload>;
-  fetchPayload: (key: string) => Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }>;
-  onJump: (key: string) => void;
-}) {
-  const { t } = useT();
-  const [, bump] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    Promise.all(p.keys.map((k) => p.fetchPayload(k))).then(() => { if (alive) bump((n) => n + 1); });
-    return () => { alive = false; };
-  }, [p.keys.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
-  const entries = p.keys
-    .map((k) => ({ item: p.tabs.find((x) => x.key === k), payload: p.cache.get(k) }))
-    .filter((e): e is { item: HistoryItem; payload: LookupPayload } => !!e.item && !!e.payload);
-  if (entries.length < 2) return <div className="muted"><span className="spinner" /> {t("compare.building")}</div>;
-  return <Compare entries={entries} onJump={p.onJump} />;
 }

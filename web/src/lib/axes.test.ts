@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { AxisScore, Evaluation, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { axisInfo, axisWeightLabel, evidenceText, heroStats, radarPoints } from "./axes.ts";
+import { axisInfo, axisWeightLabel, evidenceText, heroStats } from "./axes.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -29,9 +29,6 @@ const ev: Evaluation = {
 };
 
 describe("axes view model", () => {
-  test("radarPoints in AXIS_ORDER", () => {
-    expect(radarPoints(ev)).toEqual([82, 61, 88, null, 55]);
-  });
   test("heroStats", () => {
     const payload = {
       metric: "hps",

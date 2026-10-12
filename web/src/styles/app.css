@@ -66,10 +66,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* radar */
-.radar-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
-.compare .radar-wrap { justify-content: flex-start; padding-top: 8px; }
-.radar-legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
-.radar-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 
 /* bare-page brand bar (sign-in, privacy, signed-out help) and the search field's box (the sidebar's, see "shell") */
 .top { border-bottom: 1px solid var(--border-soft); padding: 12px var(--gutter); display: flex; flex-direction: column; gap: 10px; }
@@ -246,18 +242,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .run { display: grid; grid-template-columns: 150px minmax(0, 1fr) 80px 70px 100px 110px 140px 24px; gap: 12px; align-items: center; padding: 8px 10px; font-size: 13px; }
 .run-rio { grid-template-columns: 60px minmax(0, 1fr) 100px 110px 80px 24px; }
 .run .level { color: var(--orange); font-weight: 700; }
-
-/* compare */
-.compare { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; }
-.compare-table-wrap { overflow-x: auto; }
-.compare-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-.compare-table th, .compare-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
-.compare-table th { font-weight: 600; }
-.compare-table .row-label { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; width: 180px; }
-.compare-table .section-row td { color: var(--faint); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding-top: 14px; border-bottom: 1px solid var(--border); }
-.compare-table td { font-family: var(--mono); }
-.compare-table td.row-label { font-family: inherit; }
-.cell-best { background: var(--green-bg); color: var(--green); font-weight: 700; border-radius: 4px; }
 
 /* --- deep-dive panel --- */
 .btn-sm { height: 26px; padding: 0 9px; font-size: 12px; }
@@ -961,15 +945,172 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
 .page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .page-head .muted { flex: 1 1 280px; font-size: 13px; }
 .live-intro { margin: 0; max-width: 640px; }
-.compare-pick { margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.compare-pick legend { padding: 0 4px; }
-.compare-pick-row { display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 12px; border-radius: var(--radius); cursor: pointer; }
-.compare-pick-row:hover, .compare-pick-row.on { background: var(--card-2); }
-.compare-pick-row input { height: auto; accent-color: var(--link); }
-.compare-pick-row input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
-.compare-pick-row:has(input:focus-visible) { background: var(--card-2); }
-.compare-pick-row input:disabled + .recent-dot, .compare-pick-row:has(input:disabled) { opacity: .6; cursor: default; }
-.compare-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-soft); }
+/* The Compare page (redesign phase 4, mockups F-Comparer-Duel and F-Comparer-Multi): the picker, the duel (two
+   profiles) and the ranking (three to five). Grids fit their column; the ranking's grids restack under 900 px. */
+.cmp { gap: 24px; }
+.cmp-series { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: var(--dim); }
+.cmp-series.series-1 { background: var(--series-1); }
+.cmp-series.series-2 { background: var(--series-2); }
+.cmp-series.series-3 { background: var(--series-3); }
+.cmp-series.series-4 { background: var(--series-4); }
+.cmp-series.series-5 { background: var(--series-5); }
+.cmp-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.cmp-picker h1 { margin: 0 12px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.cmp-pick { display: inline-flex; align-items: center; gap: 6px; height: 34px; max-width: 100%; min-width: 0; padding: 0 4px 0 12px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); font-size: 13px; color: var(--text); white-space: nowrap; box-sizing: border-box; }
+.cmp-pick-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.cmp-pick-key { color: var(--label); }
+.cmp-pick-x { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 0; border-radius: 999px; background: transparent; color: var(--label); font: inherit; font-size: 16px; cursor: pointer; }
+.cmp-pick-x:hover { color: var(--text); background: var(--card-3); }
+.cmp-pick-x:focus-visible, .cmp-add:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.btn.cmp-add { height: 34px; border-style: dashed; border-color: var(--border-2); color: var(--text-soft); font-size: 13px; font-weight: 600; }
+.cmp-hint { margin-left: auto; font-size: 13px; color: var(--label); }
+.cmp-none { margin: 0; }
+.cmp-warning { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--maybe); }
+.cmp-warning svg { flex-shrink: 0; }
+.cmp-duel, .cmp-rank { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cmp-bar { display: flex; height: 6px; border-radius: 999px; background: var(--border); }
+.cmp-bar-fill { height: 100%; border-radius: 999px; background: var(--text-soft); }
+.band-better .cmp-bar-fill { background: var(--better); }
+.band-worse .cmp-bar-fill { background: var(--worse); }
+.cmp-fact.best { font-weight: 700; }
+.cmp-fact.best:not(.has-tier) { color: var(--better); }
+.cmp-timed { color: var(--invite); }
+.cmp-depleted { color: var(--pass); }
+.cmp-dname { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cmp-dtile { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: var(--card-3); font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.cmp-dname-text { min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-dkey { font-weight: 700; }
+.cmp-dparse { font-size: 12px; }
+/* Duel: summary, heads, mirrored axes, then "Key figures" beside "Best key per dungeon" from 900 px. */
+.cmp-summary { padding: 24px 28px; display: flex; flex-direction: column; gap: 6px; }
+.cmp-summary-lead { font-size: 22px; line-height: 1.35; }
+.cmp-summary-detail { font-size: 14px; line-height: 1.5; color: var(--muted); }
+.cmp-heads { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 16px; }
+.cmp-head { padding: 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.cmp-head-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cmp-head-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.cmp-head-name { font-size: 26px; line-height: 1.1; overflow-wrap: anywhere; }
+.cmp-head-sub { font-size: 14px; color: var(--muted); }
+.btn.cmp-btn { height: 34px; background: var(--card-2); border-color: var(--border-2); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; }
+.cmp-verdict { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 14px 16px; border-radius: var(--radius); background: var(--vt-bg); border: 1px solid var(--vt-border); }
+.cmp-verdict-label { font-size: 24px; font-weight: 800; letter-spacing: .02em; color: var(--vt); }
+.cmp-verdict-score { font-size: 28px; font-weight: 700; }
+.cmp-verdict-runs { margin-left: auto; font-size: 13px; color: var(--muted); }
+.cmp-notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cmp-notes li { display: flex; gap: 10px; font-size: 14px; line-height: 1.4; }
+.cmp-note-sign { font-weight: 700; }
+.cmp-note-sign.better { color: var(--better); }
+.cmp-note-sign.worse { color: var(--worse); }
+.cmp-mirror-card { padding: 24px 28px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cmp-mirror { display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 16px; align-items: center; }
+.cmp-mirror-head { padding-bottom: 12px; }
+.cmp-mirror-head .synth-lbl { text-align: center; }
+.cmp-mirror-name { min-width: 0; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-mirror-name.left { text-align: right; }
+.cmp-mirror-row { padding: 14px 0; border-top: 1px solid var(--border); }
+.cmp-mirror-row.is-info { opacity: .7; }
+.cmp-mirror-axis { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; }
+.cmp-mirror-axis strong { font-size: 15px; }
+.cmp-win { font-size: 12px; color: var(--label); }
+.cmp-win.on { color: var(--better); }
+.cmp-side { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; }
+.cmp-side.right { flex-direction: row-reverse; }
+.cmp-who-side { display: none; min-width: 0; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-side-why { min-width: 0; font-size: 13px; color: var(--label); }
+.cmp-side.left .cmp-side-why { text-align: right; }
+.cmp-side-score { font-size: 20px; font-weight: 700; }
+.cmp-side-score.win { color: var(--better); }
+.cmp-side .cmp-bar { width: 45%; height: 10px; flex-shrink: 0; }
+.cmp-side.left .cmp-bar { justify-content: flex-end; }
+.cmp-pair { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.cmp-pair-card { flex: 1 1 440px; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; }
+.cmp-pair-card .synth-h2 { margin-bottom: 12px; }
+.cmp-facts, .cmp-dgrid { display: grid; grid-template-columns: minmax(0, 1fr) 96px 96px; gap: 12px; align-items: center; padding: 11px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.cmp-dgrid { grid-template-columns: minmax(0, 1fr) 112px 112px; padding: 8px 0; }
+.cmp-facts-head { padding: 0 0 8px; border-top: 0; font-size: 12px; color: var(--label); }
+.cmp-facts-head > span { min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-facts-label { min-width: 0; color: var(--muted); }
+.cmp-facts .cmp-fact { text-align: right; overflow-wrap: anywhere; }
+.cmp-foot { margin-top: 10px; }
+.cmp-dcell { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; text-align: right; }
+.cmp-dcell-line { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+.cmp-dcell .cmp-dkey.is-top { color: var(--better); }
+.cmp-dsub { font-size: 11px; color: var(--label); }
+@media (max-width: 640px) {
+  .cmp-summary, .cmp-head, .cmp-mirror-card, .cmp-pair-card { padding: 16px; }
+  .cmp-summary-lead { font-size: 18px; }
+  .cmp-mirror { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .cmp-mirror-head { display: none; }
+  .cmp-mirror-axis { order: -1; flex-direction: row; justify-content: space-between; align-items: baseline; gap: 12px; text-align: left; }
+  .cmp-side, .cmp-side.right { display: grid; grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); grid-template-areas: "who score bar" "why why why"; gap: 2px 10px; }
+  .cmp-who-side { display: block; grid-area: who; }
+  .cmp-side-score { grid-area: score; font-size: 16px; text-align: right; }
+  .cmp-side .cmp-bar, .cmp-side.left .cmp-bar { grid-area: bar; width: auto; height: 8px; justify-content: flex-start; }
+  .cmp-side-why, .cmp-side.left .cmp-side-why { grid-area: why; text-align: left; font-size: 12px; }
+}
+@media (max-width: 480px) {
+  .cmp-facts { gap: 8px; }
+  .cmp-dgrid { grid-template-columns: minmax(0, 1fr) 96px 96px; gap: 8px; }
+  .cmp-dcell-line { gap: 3px; }
+  .cmp-dname-text { white-space: normal; overflow-wrap: anywhere; }
+}
+/* Ranking: the ranked cards, "Axis by axis" and the dungeons on `150px repeat(N, 1fr)` grids (N = --n). */
+.cmp-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.cmp-card { padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cmp-card.is-top { border-color: var(--vt-border); }
+.cmp-card-top { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.cmp-card-rank { color: var(--label); }
+.cmp-card-target { margin-left: auto; font-size: 12px; color: var(--label); }
+.cmp-card-target .mono { color: var(--text-soft); }
+.cmp-card-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cmp-card-name { font-size: 18px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.cmp-card-spec { font-size: 12px; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-card-score { display: flex; align-items: baseline; gap: 8px; }
+.cmp-card-score .mono { font-size: 32px; font-weight: 700; line-height: 1; }
+.cmp-card-verdict { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--vt); }
+.cmp-card-bars { display: flex; align-items: flex-end; gap: 5px; height: 44px; }
+.cmp-card-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--text-soft); }
+.cmp-card-bar.band-better { background: var(--better); }
+.cmp-card-bar.band-worse { background: var(--worse); }
+.cmp-card-bar.is-info { opacity: .4; }
+.cmp-card-short { display: flex; gap: 5px; margin-top: -6px; font-size: 10px; color: var(--label); }
+.cmp-card-short span { flex: 1; text-align: center; }
+.cmp-card-line { font-size: 13px; line-height: 1.4; color: var(--muted); }
+.cmp-bars-note { margin: -8px 0 0; }
+.cmp-grid-card { padding: 22px 24px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cmp-grid-card .synth-card-head { margin-bottom: 10px; }
+.cmp-g5 { display: grid; grid-template-columns: 150px repeat(var(--n, 5), minmax(0, 1fr)); gap: 10px; align-items: center; }
+.cmp-g5-head { padding-bottom: 8px; }
+.cmp-col, .cmp-who { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; font-weight: 700; }
+.cmp-col .cmp-series, .cmp-who .cmp-series { width: 8px; height: 8px; border-radius: 2px; }
+.cmp-col-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-who { display: none; font-size: 12px; font-weight: 600; color: var(--muted); }
+.cmp-g5-row { padding: 12px 0; border-top: 1px solid var(--border); }
+.cmp-g5-row.is-info { opacity: .7; }
+.cmp-g5-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 14px; }
+.cmp-g5-sub { font-size: 11px; color: var(--label); }
+.cmp-g5-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cmp-axis-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cmp-axis-value { width: 26px; flex-shrink: 0; font-size: 16px; font-weight: 700; }
+.cmp-axis-value.best { color: var(--better); }
+.cmp-axis-cell .cmp-bar { flex: 1; }
+.cmp-g5-fact .cmp-fact { font-size: 14px; }
+.cmp-more { border-top: 1px solid var(--border-2); }
+.cmp-more > summary { padding: 12px 0; font-size: 14px; color: var(--text-soft); cursor: pointer; }
+.cmp-keybox { display: flex; align-items: center; gap: 6px; height: 32px; min-width: 0; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-2); background: var(--bg); font-size: 13px; white-space: nowrap; overflow: hidden; box-sizing: border-box; }
+.cmp-keybox .cmp-dparse { margin-left: auto; }
+.cmp-keybox.is-top { border-color: var(--better); }
+.cmp-keybox.empty { color: var(--label); }
+@media (max-width: 900px) {
+  .cmp-g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+  .cmp-g5-head { display: none; }
+  .cmp-g5-label { grid-column: 1 / -1; }
+  .cmp-who { display: flex; }
+}
+@media (max-width: 640px) {
+  .cmp-grid-card { padding: 16px; }
+  .cmp-cards { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* The Donjons tab (redesign phase 2, mockup F-Donjons): notes strip, the best run per dungeon as a heat-tinted grid
    (≥ 680 px of card), stacked cards with labelled cells below that, the inline detail. */

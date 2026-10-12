@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { AxisKey, AxisScore, LookupPayload, MPlusRun } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { bestIndices, compareFacts, compareSections, dungeonCompare, duelView, rankingView, targetWarning } from "./compare.ts";
+import { bestIndices, compareFacts, dungeonCompare, duelView, rankingView, targetWarning } from "./compare.ts";
 import type { CompareEntry, DuelView, RankingView } from "./compare.ts";
 import type { SynthesisDocs } from "./synthesis.ts";
 import { synthesisView } from "./synthesis.ts";
@@ -354,9 +354,26 @@ const FORMAT_CHANGES: Record<string, string> = {
   "1d": "1 death", "0d": "0 deaths", // a dungeon's deaths: words
   "+14%": "+14% DTPS", "+0%": "+0% DTPS", // a dungeon's DTPS delta: named
 };
-const oldTexts = (ps: LookupPayload[]): string[] =>
-  compareSections(tEn, ps).flatMap((s, si) =>
-    s.rows.flatMap((r) => r.cells.flatMap((c) => (si === 2 ? c.text.replace(/^[✓✗] /, "").split(" · ") : [c.text]))));
+// Values the pre-redesign compare table (`compareSections`, removed in phase 4) showed for the same payloads: its
+// Evaluation, Summary and Per-dungeon sections in order, a dungeon cell split on " · " with its ✓ / ✗ left out (now
+// `timed`).
+const OLD_TWO: string[] = [
+  "78", "66", "82", "100", "61", "71", "88", "66", "n/a", "72", "55", "38", "+21 auto", "+18 auto", "1/2", "2/2",
+  "1/2", "0/2", "+21", "+18", "312.0k hps", "1.20m dps", "79.4%", "70.0%", "0.7", "0.2", "−12%", "—", "1/1", "2/2",
+  "—", "+5%", "—", "+3 pts", "—", "—", "322", "318", "9/10", "4/10", "— no data (reroll?)", "2900 tank", "—", "—",
+  "+21", "79%", "1d", "+14%", "+18", "90%", "0d", "+0%", "—", "+18", "50%", "0d", "+0%",
+];
+const OLD_FIVE: string[] = [
+  "78", "66", "78", "66", "78", "82", "100", "82", "100", "82", "61", "71", "61", "71", "61", "88", "66", "88", "66",
+  "88", "n/a", "72", "n/a", "72", "n/a", "55", "38", "55", "38", "55", "+21 auto", "+18 auto", "+21 auto",
+  "+18 auto", "+21 auto", "1/2", "2/2", "1/2", "2/2", "1/2", "1/2", "0/2", "1/2", "0/2", "1/2", "+21", "+18", "+21",
+  "+18", "+21", "312.0k hps", "1.20m dps", "312.0k hps", "1.20m dps", "312.0k hps", "79.4%", "70.0%", "79.4%",
+  "70.0%", "79.4%", "0.7", "0.2", "0.7", "0.2", "0.7", "−12%", "—", "−12%", "—", "−12%", "1/1", "2/2", "1/1", "2/2",
+  "1/1", "—", "+5%", "—", "+5%", "—", "—", "+3 pts", "—", "+3 pts", "—", "—", "—", "—", "—", "—", "322", "318",
+  "322", "318", "322", "9/10", "4/10", "9/10", "4/10", "9/10", "— no data (reroll?)", "2900 tank",
+  "— no data (reroll?)", "2900 tank", "3100 dps", "—", "—", "—", "—", "—", "+21", "79%", "1d", "+14%", "+18", "90%",
+  "0d", "+0%", "+21", "79%", "—", "+21", "79%", "—", "+18", "50%", "0d", "+0%", "—", "—", "—",
+];
 const duelTexts = (v: DuelView): string[] => [
   ...v.facts.flatMap((f) => f.cells.map((c) => c.text)),
   ...v.axes.flatMap((x) => [x.left.text, x.right.text]),
@@ -377,11 +394,11 @@ describe("nothing lost from the old compare table", () => {
   const sa = withRuns(a, [run(1, 21, 79.4, true, 1, 114_000)]);
   const sb = withRuns(b, [run(1, 18, 90, true), run(2, 18, 50, false)]);
   test("two profiles: every old cell is in the duel", () => {
-    expect(missing(oldTexts([sa, sb]), duelTexts(duel(sa, sb)))).toEqual([]);
+    expect(missing(OLD_TWO, duelTexts(duel(sa, sb)))).toEqual([]);
   });
   test("five profiles: every old cell is in the ranking", () => {
     const five = [sa, sb, payload({ character: { ...a.character, name: "C" } }), withRuns(b, []), payload({ summary: { ...a.summary, prevSeason: { slug: "s1", all: 3100, best: { role: "dps", score: 3100 } } } })];
     const view = rankingView(tEn, "en", five.map((p, i) => ({ key: `k${i}`, payload: p })), docs);
-    expect(missing(oldTexts(five), rankingTexts(view))).toEqual([]);
+    expect(missing(OLD_FIVE, rankingTexts(view))).toEqual([]);
   });
 });

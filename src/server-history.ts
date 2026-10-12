@@ -90,9 +90,11 @@ export interface HistoryStore {
   updateResult(key: string, result: unknown): void;
   /**
    * Set only the row's verdict and score from `result` (a re-evaluated copy of the stored payload): the payload,
-   * `fetchedAt` and the order stay as they are. No-op for unknown keys or when nothing changed.
+   * `fetchedAt` and the order stay as they are. `fetchedAt` is the stored entry's the caller re-evaluated: when the row
+   * was replaced since (a Refresh landing in between), its summary is the newer payload's and stays. No-op for unknown
+   * keys or when nothing changed.
    */
-  syncSummary(key: string, result: unknown): void;
+  syncSummary(key: string, result: unknown, fetchedAt: number): void;
 }
 
 /**
@@ -178,9 +180,9 @@ export class History implements HistoryStore {
     if (e) Object.assign(e, { result }, summaryOf(result));
   }
 
-  syncSummary(key: string, result: unknown): void {
+  syncSummary(key: string, result: unknown, fetchedAt: number): void {
     const e = this.entries.get(key);
-    if (e) Object.assign(e, summaryOf(result));
+    if (e && e.fetchedAt === fetchedAt) Object.assign(e, summaryOf(result));
   }
 
   private forget(key: string): void {

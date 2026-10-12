@@ -50,6 +50,8 @@ export interface LookupSuccess {
   joined: boolean;
   /** The effective request — the region may differ from the one asked for when a Raider.IO URL carried its own. */
   request: HistoryRequest;
+  /** The history entry's `fetchedAt` (the payload `result` is), for `HistoryStore.syncSummary`'s guard. */
+  fetchedAt: number;
 }
 export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup; tables?: LoadedTables }
 
@@ -116,7 +118,7 @@ export async function runLookupWithCache(opts: {
 
   if (!opts.refresh) {
     const hit = history.cached(request);
-    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true, joined: false, request };
+    if (hit) return { ok: true, key: hit.key, result: hit.result, fromCache: true, joined: false, request, fetchedAt: hit.fetchedAt };
   }
 
   try {
@@ -153,7 +155,7 @@ export async function runLookupWithCache(opts: {
       targetAutoDetected: o.result.targetAutoDetected,
     });
 
-    return { ok: true, key: entry.key, result: payload, fromCache: false, joined, request };
+    return { ok: true, key: entry.key, result: payload, fromCache: false, joined, request, fetchedAt: entry.fetchedAt };
   } catch (e) {
     if (e instanceof WclError) return { ok: false, status: 502, error: e.message, wcl: e.publicMessage };
     if (e instanceof CharacterNotFoundError) {
@@ -192,7 +194,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   // it like a history read does; a fresh local lookup already attached them in performLookup.
   const payload = ctx.hosted || result.fromCache ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
   // The row's verdict/score follow the re-run evaluation the member sees (payload, date and order untouched).
-  if (payload !== result.result) historyOf(ctx).syncSummary(result.key, payload);
+  if (payload !== result.result) historyOf(ctx).syncSummary(result.key, payload, result.fetchedAt);
   // A member's own client charges nothing to the shared meter/usage (issue #11 Task 3).
   const accounting = runtime && user
     ? scope.own

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import type { Database } from "bun:sqlite";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -272,3 +273,37 @@ describe("PUT /api/settings — characters (Battle.net spec, decision 4)", () =>
   });
 });
 
+
+describe("a hosted read re-evaluates and syncs only the reader's history row", () => {
+  let raw: Database;
+  const row = (userId: number, key: string) =>
+    raw.query<{ verdict: string | null; score: number | null }, [number, string]>("SELECT verdict, score FROM user_history WHERE user_id = ? AND key = ?").get(userId, key)!;
+  // A row whose verdict/score went stale (written under older rules); the payload itself is unchanged.
+  const setStale = (userId: number, key: string) =>
+    raw.query("UPDATE user_history SET verdict = 'pass', score = 1.5 WHERE user_id = ? AND key = ?").run(userId, key);
+
+  test("GET /api/history/:key and a lookup cache hit correct the caller's row, never another member's", async () => {
+    raw = (await getStore())._db;
+    const c = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "200000000000000031", role: "member" });
+    const d = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "200000000000000032", role: "member" });
+    const rec = { result: seedPayload("Staleo"), label: "Staleo-Silvermoon", charClass: 7, spec: "Holy", targetLevel: 19, targetAutoDetected: false };
+    const key = db.history.forUser(c.user.id).record(request("Staleo-Silvermoon", 19), rec).key;
+    db.history.forUser(d.user.id).record(request("Staleo-Silvermoon", 19), rec);
+    setStale(c.user.id, key);
+    setStale(d.user.id, key);
+
+    const read = await (await fetch(h(`/api/history/${encodeURIComponent(key)}`), as(c))).json();
+    expect(read.ok).toBe(true);
+    const want = { verdict: read.result.evaluation.verdict === "insufficient" ? null : read.result.evaluation.verdict, score: read.result.evaluation.global };
+    expect(row(c.user.id, key)).toEqual(want);
+    expect(row(d.user.id, key)).toEqual({ verdict: "pass", score: 1.5 });
+    const listed = await (await fetch(h("/api/history"), as(c))).json();
+    expect(listed.items.map((i: { verdict: unknown; score: unknown }) => ({ verdict: i.verdict, score: i.score }))).toEqual([want]);
+
+    // A hosted lookup served from history (dummy credentials, no fetch) syncs the same way, for its caller only.
+    const hit = await (await fetch(h("/api/lookup"), as(d, { method: "POST", body: JSON.stringify({ character: "Staleo-Silvermoon", level: 19 }) }))).json();
+    expect(hit.ok).toBe(true);
+    expect(hit.fromCache).toBe(true);
+    expect(row(d.user.id, key)).toEqual(want);
+  });
+});

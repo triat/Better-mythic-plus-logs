@@ -13,8 +13,10 @@ import type { LoadedTables, RunDefensives } from "./types.ts";
 /** Analysis from the two cached rows (run report + raw deep-dive); null when either is missing. 0 pts. */
 export function analyzeCached(store: Store, tables: LoadedTables, run: { reportCode: string; fightID: number }, character: string): RunDefensives | null {
   const raw = store.getDeepDive(run.reportCode, run.fightID, character);
+  // Most displayed runs were never analysed: stop before parsing the run's whole raw report.
+  if (!raw) return null;
   const report = store.getWclRun(run.reportCode, run.fightID);
-  if (!raw || !report) return null;
+  if (!report) return null;
   const player = playerOf(report, character);
   if (!player) return null;
   // The fallback is only used when the fight is missing from the report; a cached run has it.

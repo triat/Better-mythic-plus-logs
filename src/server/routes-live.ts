@@ -49,10 +49,12 @@ export function liveRoutes(): Route[] {
         });
         const evaluation = (entry?.result as { evaluation?: Evaluation } | undefined)?.evaluation;
         if (!entry || !evaluation) return null;
+        // The verdict and score are the history row's (kept in step with today's re-evaluation by `syncSummary`), so
+        // Live shows what Récents shows; a row without a verdict is INSUFFICIENT DATA. The level is the payload's.
         return {
           character: p.character,
-          verdict: evaluation.verdict,
-          score: evaluation.global,
+          verdict: entry.verdict ?? "insufficient",
+          score: entry.score,
           targetLevel: evaluation.targetLevel,
           fetchedAt: entry.fetchedAt,
         };

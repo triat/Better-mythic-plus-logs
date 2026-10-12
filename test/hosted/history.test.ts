@@ -314,12 +314,19 @@ describe("SQLite history — verdict and score", () => {
     const row = () => db.query<{ seq: number; fetched_at: number; payload: string }, [string]>(
       "SELECT seq, fetched_at, payload FROM user_history WHERE key = ? ORDER BY user_id LIMIT 1").get(e.key)!;
     const before = row();
-    a.syncSummary(e.key, evaluated("maybe", 63));
+    a.syncSummary(e.key, evaluated("maybe", 63), e.fetchedAt);
     expect(a.list().map((i) => [i.label, i.verdict, i.score])).toEqual([["B-X", null, null], ["A-X", "maybe", 63]]);
     expect(row()).toEqual(before);
     expect(b.list().map((i) => [i.verdict, i.score])).toEqual([["invite", 78]]);
-    a.syncSummary("nope", evaluated("pass", 1));
+    a.syncSummary("nope", evaluated("pass", 1), e.fetchedAt);
     expect(a.size).toBe(2);
+  });
+
+  test("syncSummary leaves a row whose fetched_at moved since the payload was read", () => {
+    const { a } = setup();
+    const e = a.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("invite", 78) }));
+    a.syncSummary(e.key, evaluated("maybe", 63), e.fetchedAt - 1);
+    expect(a.list().map((i) => [i.verdict, i.score])).toEqual([["invite", 78]]);
   });
 
   test("another member's copied entry keeps the verdict and score", () => {

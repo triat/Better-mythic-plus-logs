@@ -133,7 +133,7 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
       // hosted payloads are stored raw, and a local entry saved before an analysis field existed gains it.
       // The re-run evaluation is the one shown, so the row's verdict/score (the Récents list) follow it.
       const result = await withCachedAnalyses(entry.result as LookupPayload, await tablesOf(rc, ctx.runtime));
-      historyOf(rc).syncSummary(key, result);
+      historyOf(rc).syncSummary(key, result, entry.fetchedAt);
       return jsonResponse({ ok: true, result, key, fromCache: true });
     }),
     prefixRoute("DELETE", "/api/history/", (_req, url, rc) => {

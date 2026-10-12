@@ -143,11 +143,23 @@ describe("History — verdict and score", () => {
     const h = new History(5, () => 1000);
     const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: evaluated("invite", 78) }));
     h.record(req("C-D", 10), entry({ label: "C-D", targetLevel: 10 }));
-    h.syncSummary(e.key, evaluated("maybe", 63));
+    h.syncSummary(e.key, evaluated("maybe", 63), e.fetchedAt);
     expect(h.list().map((i) => [i.label, i.verdict, i.score])).toEqual([["C-D", null, null], ["A-B", "maybe", 63]]);
     expect(h.get(e.key)!.result).toEqual(evaluated("invite", 78));
-    h.syncSummary("nope", evaluated("pass", 1));
+    h.syncSummary("nope", evaluated("pass", 1), 1000);
     expect(h.size).toBe(2);
+  });
+
+  test("syncSummary leaves a row replaced since the payload was read (a Refresh in between)", () => {
+    let now = 1000;
+    const h = new History(5, () => now);
+    const old = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: evaluated("invite", 78) }));
+    now = 2000;
+    h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, result: evaluated("pass", 20) }));
+    h.syncSummary(old.key, evaluated("maybe", 63), old.fetchedAt);
+    expect(h.list().map((i) => [i.verdict, i.score])).toEqual([["pass", 20]]);
+    h.syncSummary(old.key, evaluated("maybe", 63), 2000);
+    expect(h.list().map((i) => [i.verdict, i.score])).toEqual([["maybe", 63]]);
   });
 });
 

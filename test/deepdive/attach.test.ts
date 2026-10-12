@@ -47,6 +47,16 @@ describe("analyzeCached", () => {
     expect(r.defensives.find((d) => d.id === 498)!.casts).toBe(27);
     store.close();
   });
+  test("without a deep-dive row the run report is never read", async () => {
+    const { store, fixtures } = await payloadFor(["s2-healer"]);
+    const f = fixtures[0]!;
+    let reads = 0;
+    const getWclRun = store.getWclRun.bind(store);
+    store.getWclRun = (code, fight) => { reads++; return getWclRun(code, fight); };
+    expect(analyzeCached(store, tables, { reportCode: f.run.reportCode as string, fightID: f.run.fightID as number }, f.character)).toBeNull();
+    expect(reads).toBe(0);
+    store.close();
+  });
 });
 
 describe("attachDeepdive", () => {

@@ -122,8 +122,9 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
        verdict = excluded.verdict, score = excluded.score`,
   );
   const setPayload = db.query(`UPDATE ${T} SET payload = ?, verdict = ?, score = ? WHERE user_id = ? AND key = ?`);
-  // Guarded so an unchanged row is not rewritten (every history read and cache hit calls it).
-  const setSummary = db.query(`UPDATE ${T} SET verdict = ?, score = ? WHERE user_id = ? AND key = ? AND (verdict IS NOT ? OR score IS NOT ?)`);
+  // Guarded so an unchanged row is not rewritten (every history read and cache hit calls it), and so a row replaced
+  // since the payload was read (`fetched_at` moved: a Refresh in between) keeps the newer payload's summary.
+  const setSummary = db.query(`UPDATE ${T} SET verdict = ?, score = ? WHERE user_id = ? AND key = ? AND fetched_at = ? AND (verdict IS NOT ? OR score IS NOT ?)`);
   const deleteOne = db.query(`DELETE FROM ${T} WHERE user_id = ? AND key = ?`);
   const deleteAll = db.query(`DELETE FROM ${T} WHERE user_id = ?`);
   const sharedNewest = db.query<EntryRaw, [string, number, number]>(
@@ -226,9 +227,9 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
           const s = summaryOf(result);
           setPayload.run(JSON.stringify(result), s.verdict, s.score, userId, key);
         },
-        syncSummary(key, result) {
+        syncSummary(key, result, fetchedAt) {
           const s = summaryOf(result);
-          setSummary.run(s.verdict, s.score, userId, key, s.verdict, s.score);
+          setSummary.run(s.verdict, s.score, userId, key, fetchedAt, s.verdict, s.score);
         },
       };
     },

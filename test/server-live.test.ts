@@ -52,6 +52,18 @@ describe("POST /api/live/cached", () => {
     expect(json.verdicts![0]).toMatchObject({ verdict: "insufficient", score: null });
   });
 
+  test("the verdict and score are the history row's (kept in step by syncSummary), not the stored payload's", async () => {
+    const ctx = ctxWith([{ character: "Biwaadrood-Nerzhul", level: 18, verdict: "invite", global: 78.4 }]);
+    const e = ctx.history!.list()[0]!;
+    // Today's rules re-evaluated the stored payload to a MAYBE 61 (a history read): Récents shows that, Live too.
+    ctx.history!.syncSummary(e.key, payload("maybe", 61, 18), e.fetchedAt);
+    const { json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] });
+    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "maybe", score: 61, targetLevel: 18, fetchedAt: 1_000 });
+    ctx.history!.syncSummary(e.key, payload("insufficient", null, 18), e.fetchedAt);
+    expect((await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] })).json.verdicts![0])
+      .toMatchObject({ verdict: "insufficient", score: null, targetLevel: 18 });
+  });
+
   test("refuses more than 40 players, an empty list and a malformed character", async () => {
     const ctx = ctxWith([]);
     const many = Array.from({ length: 41 }, (_, i) => ({ character: `A${i}-Hyjal`, region: "eu" as const }));

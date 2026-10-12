@@ -503,6 +503,11 @@ export const en = {
   },
   compare: {
     building: "building compare view…",
+    sameName: "{name} ({realm})",
+    failed: {
+      some: "Could not load {names}: the comparison shows the others.", all: "Could not load enough profiles to compare.",
+      history: "Could not load the history.", docs: "Could not load the scoring rules.", retry: "Retry",
+    },
     pick: {
       add: "+ Add a candidate", addFull: "+ Add ({max} max)", remove: "Remove {name}", head: "Recent lookups",
       hint: "From three candidates on, the view becomes a ranking", none: "Pick at least two profiles.",
@@ -542,7 +547,7 @@ export const en = {
       spec: "{spec} · {realm}",
       short: { survival: "SUR", utility: "UTI", throughput: "THR", consistency: "CON", preparation: "PRE" },
       line: "+ {pro} · − {con}", linePro: "+ {pro}", lineCon: "− {con}",
-      target: "target", axes: "Axis by axis", bestNote: "in blue: the best of the row",
+      target: "target", targetValue: "+{level}{auto}", axes: "Axis by axis", bestNote: "in blue: the best of the row",
       allFacts: "All figures ({count})",
       barsNote: "Bars: one per axis, in the order of the rows below; a pale bar is informational (weight 0).",
       dungeonNote: "blue outline: the highest timed key of the dungeon · —: no run",

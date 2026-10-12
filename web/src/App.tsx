@@ -172,6 +172,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const [activeKey, setActiveKey] = useState<string | null>(null);
   // The Compare page's selection (up to MAX_COMPARE), mirrored into the URL as repeated `pick` params.
   const [selected, setSelected] = useState<string[]>([]);
+  // The Compare page's boot: the URL's picks are rewritten only once history answered (a failure keeps them for Retry).
+  const compareBooted = useRef(false);
+  const [compareHistoryFailed, setCompareHistoryFailed] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToastState] = useState<{ message: string; action: ToastAction | null } | null>(null);
   const setToast = useCallback((message: string, action: ToastAction | null = null) => setToastState({ message, action }), []);
@@ -187,34 +190,50 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const activeKeyRef = useRef(activeKey);
   activeKeyRef.current = activeKey;
 
-  const loadHistory = useCallback(async (): Promise<HistoryItem[]> => {
+  /** GET /api/history; null when it failed (tabs, selection and cache are then left as they were). */
+  const fetchHistory = useCallback(async (): Promise<HistoryItem[] | null> => {
     const r = await api.history();
-    if (!r.ok) return [];
+    if (!r.ok) return null;
     setTabs(r.items);
     setSelected((s) => pruneSelection(s, r.items.map((i) => i.key)));
     const keep = new Set(r.items.map((i) => i.key));
     for (const k of [...payloads.current.keys()]) if (!keep.has(k)) payloads.current.delete(k);
     return r.items;
   }, []);
+  const loadHistory = useCallback(async (): Promise<HistoryItem[]> => (await fetchHistory()) ?? [], [fetchHistory]);
+
+  /** One history entry into the payload cache (0 pts), or the server's error — no toast, no history reload. `fresh`
+   * asks the server even when the cache holds the key, and replaces the cached payload only once the new one is in. */
+  const loadEntry = useCallback(async (key: string, fresh = false): Promise<{ payload: LookupPayload } | { error: string }> => {
+    const cached = fresh ? undefined : payloads.current.get(key);
+    if (cached) return { payload: cached };
+    const r = await api.historyEntry(key);
+    if (!r.ok) return { error: r.error };
+    payloads.current.set(key, r.result);
+    // The server re-evaluated the entry with today's rules: Récents shows the same verdict and score as the page.
+    setTabs((items) => withPayloadSummary(items, key, r.result));
+    touch();
+    return { payload: r.result };
+  }, []);
+
+  /** A Compare batch had failures: one history reload (an evicted key leaves the selection) and one toast. */
+  const compareLoadFailed = useCallback((error: string) => {
+    void loadHistory();
+    setToast(error);
+  }, [loadHistory, setToast]);
 
   /** On a 404 (server restarted / key evicted), `items` is the fresh (already reloaded) tab list. `fresh` asks the server
    * even when the cache holds the key, and replaces the cached payload only once the new one is in. */
   const fetchPayload = useCallback(async (key: string, fresh = false): Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }> => {
-    const cached = fresh ? undefined : payloads.current.get(key);
-    if (cached) return { payload: cached, items: null };
-    const r = await api.historyEntry(key);
-    if (!r.ok) {
+    const r = await loadEntry(key, fresh);
+    if ("error" in r) {
       // Server restarted or key evicted: drop the stale tab.
       const items = await loadHistory();
       setToast(r.error);
       return { payload: null, items };
     }
-    payloads.current.set(key, r.result);
-    // The server re-evaluated the entry with today's rules: Récents shows the same verdict and score as the page.
-    setTabs((items) => withPayloadSummary(items, key, r.result));
-    touch();
-    return { payload: r.result, items: null };
-  }, [loadHistory]);
+    return { payload: r.payload, items: null };
+  }, [loadEntry, loadHistory]);
 
   const showTab = useCallback(async (key: string) => {
     setActiveKey(key);
@@ -244,6 +263,14 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     }
   }, [fetchPayload]);
 
+  /** `/compare?pick=a&pick=b…` (the profile header's Compare is the one-key case): the picks that are history entries. */
+  function bootCompare(items: HistoryItem[]) {
+    const keys = compareKeys(location.search, items.map((i) => i.key));
+    compareBooted.current = true;
+    history.replaceState({}, "", "/compare" + compareSearch(keys));
+    setSelected(keys);
+  }
+
   // Boot: history, then on the candidate page ?open=<key> when it names a tab, else the most recent one (0 pts), with
   // the URL naming the profile shown. ?q= only fills the search field (a Raider.IO link carries its own region): a URL
   // never starts a lookup by itself, and never writes a setting. A pre-redesign /?open= link lands on the candidate page.
@@ -254,14 +281,15 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (legacyOpen) { location.replace(candidateHref(legacyOpen)); return; }
     const q = params.get("q");
     if (q) setForm((f) => ({ ...f, character: q }));
-    if (location.search) history.replaceState({}, "", location.pathname);
-    loadHistory().then((items) => {
-      // `/compare?pick=a&pick=b…` (the profile header's Compare is the one-key case): the picks that are history entries.
+    // The Compare page keeps its `pick`s until history answered (bootCompare rewrites them).
+    if (location.search && page !== "compare") history.replaceState({}, "", location.pathname);
+    fetchHistory().then((fetched) => {
       if (page === "compare") {
-        const keys = compareKeys(params.toString(), items.map((i) => i.key));
-        history.replaceState({}, "", "/compare" + compareSearch(keys));
-        setSelected(keys);
+        if (fetched === null) setCompareHistoryFailed(true);
+        else bootCompare(fetched);
+        return;
       }
+      const items = fetched ?? [];
       if (page !== "candidate" || items.length === 0) return;
       const want = params.get("open");
       const key = (want && items.some((i) => i.key === want) ? want : null) ?? items[0]!.key;
@@ -271,13 +299,21 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
       void showTab(key);
     });
     // Once per page load: the URL is read at boot only.
-  }, [loadHistory, showTab]);
+  }, [fetchHistory, showTab]);
 
-  // The Compare page keeps its selection in the URL (a reload keeps it), including loadHistory's pruning. The boot
-  // effect above has already read (and cleared) the arriving query, so this first run writes nothing it needs.
+  // The Compare page keeps its selection in the URL (a reload keeps it), including loadHistory's pruning — only once
+  // bootCompare has read the arriving `pick`s, so a reload before history answers (or after it failed) keeps them.
   useEffect(() => {
-    if (page === "compare") history.replaceState({}, "", "/compare" + compareSearch(selected));
+    if (page === "compare" && compareBooted.current) history.replaceState({}, "", "/compare" + compareSearch(selected));
   }, [selected]);
+
+  /** Compare's Retry after the boot's history call failed: the URL still holds the picks. */
+  const retryCompareHistory = useCallback(async () => {
+    const items = await fetchHistory();
+    if (items === null) return;
+    setCompareHistoryFailed(false);
+    bootCompare(items);
+  }, [fetchHistory]);
 
   // Self-heal: whenever the cache was cleared (e.g. by a reload that raced a tab switch),
   // re-fetch the active tab so it never sits on "loading…". `tick` re-runs this after touch().
@@ -645,7 +681,10 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           </div>
         )}
         {page === "compare" && (
-          <ComparePage tabs={tabs} selected={selected} onSelect={setSelected} fetchPayload={fetchPayload} cache={payloads.current} />
+          <ComparePage
+            tabs={tabs} selected={selected} onSelect={setSelected} loadEntry={loadEntry} onLoadFailed={compareLoadFailed}
+            cache={payloads.current} historyFailed={compareHistoryFailed} onRetryHistory={retryCompareHistory}
+          />
         )}
         {page === "live" && (
           <LivePage

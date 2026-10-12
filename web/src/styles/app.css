@@ -1027,6 +1027,7 @@ button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset:
 .cmp-none { margin: 0; }
 .cmp-warning { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--maybe); }
 .cmp-warning svg { flex-shrink: 0; }
+.cmp-failure { flex-wrap: wrap; }
 .cmp-duel, .cmp-rank { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .cmp-bar { display: flex; height: 6px; border-radius: 999px; background: var(--border); }
 .cmp-bar-fill { height: 100%; border-radius: 999px; background: var(--text-soft); }

@@ -180,6 +180,21 @@ const specClass = (t: T, p: LookupPayload): string => {
   return p.character.spec ? `${specWords(p.character.spec)} ${klass}` : klass;
 };
 const lower = (locale: Locale, s: string): string => s.toLocaleLowerCase(locale);
+
+/**
+ * The name each pick goes by in column heads, mirror labels and win texts: the character's name, with its realm when
+ * another pick has the same name (and its region too when the realm is the same as well).
+ */
+export function compareNames(t: T, locale: Locale, ps: LookupPayload[]): string[] {
+  const nameKey = (p: LookupPayload) => lower(locale, p.character.name);
+  return ps.map((p) => {
+    const twins = ps.filter((q) => q !== p && nameKey(q) === nameKey(p));
+    if (twins.length === 0) return p.character.name;
+    const realm = realmName(p.character.realmSlug);
+    const sameRealm = twins.some((q) => q.character.realmSlug === p.character.realmSlug);
+    return t("compare.sameName", { name: p.character.name, realm: sameRealm ? `${realm} ${p.character.region.toUpperCase()}` : realm });
+  });
+}
 const listOf = (locale: Locale, items: string[]): string => new Intl.ListFormat(locale, { type: "conjunction" }).format(items);
 
 // Duel ------------------------------------------------------------------------------------------------------------------
@@ -201,6 +216,8 @@ export interface MirrorRow {
   win: { text: string; side: "left" | "right" | null };
 }
 export interface DuelView {
+  /** The two picks' names for the mirror and the grids (`compareNames`: the realm added when both share a name). */
+  names: [string, string];
   summary: { title: string; lead: string; detail: string };
   warning: string | null;
   heads: [DuelHead, DuelHead];
@@ -276,6 +293,7 @@ export function duelView(t: T, locale: Locale, entries: CompareEntry[], docs: Sy
   const a = ea.payload;
   const b = eb.payload;
   const ps = [a, b];
+  const [nameA, nameB] = compareNames(t, locale, ps) as [string, string];
   const synA = synthesisView(t, locale, a.evaluation, docs, a.runsIndexed);
   const synB = synthesisView(t, locale, b.evaluation, docs, b.runsIndexed);
   const whyOf = (syn: typeof synA, k: AxisKey) => (syn.axes.find((x) => x.key === k)?.why ?? "").split(" · ")[0]!;
@@ -288,8 +306,8 @@ export function duelView(t: T, locale: Locale, entries: CompareEntry[], docs: Sy
     if (informational) win = { text: t("compare.duel.informational"), side: null };
     else if (l === null || r === null) win = { text: DASH, side: null };
     else if (Math.abs(l - r) <= TIE) win = { text: t("compare.duel.tie"), side: null };
-    else if (l > r) win = { text: t("compare.duel.winLeft", { name: a.character.name, d: String(l - r) }), side: "left" };
-    else win = { text: t("compare.duel.winRight", { name: b.character.name, d: String(r - l) }), side: "right" };
+    else if (l > r) win = { text: t("compare.duel.winLeft", { name: nameA, d: String(l - r) }), side: "left" };
+    else win = { text: t("compare.duel.winRight", { name: nameB, d: String(r - l) }), side: "right" };
     const side = (score: number | null, wins: boolean, why: string): MirrorSide =>
       ({ score, text: score === null ? DASH : String(score), band: scoreBand(score), wins, why });
     return {
@@ -307,19 +325,19 @@ export function duelView(t: T, locale: Locale, entries: CompareEntry[], docs: Sy
   const names = (side: "left" | "right") => listOf(locale, counted.filter((x) => x.win.side === side).map((x) => lower(locale, x.name)));
   const leftWins = counted.filter((x) => x.win.side === "left").length;
   const rightWins = counted.filter((x) => x.win.side === "right").length;
-  const short = [a, b].find(insufficientOf);
+  const short = insufficientOf(a) ? nameA : insufficientOf(b) ? nameB : null;
   let lead: string;
-  if (short) lead = t("compare.duel.summary.insufficient", { name: short.character.name });
-  else if (leftWins && rightWins) lead = t("compare.duel.summary.both", { a: a.character.name, aAxes: names("left"), b: b.character.name, bAxes: names("right") });
+  if (short) lead = t("compare.duel.summary.insufficient", { name: short });
+  else if (leftWins && rightWins) lead = t("compare.duel.summary.both", { a: nameA, aAxes: names("left"), b: nameB, bAxes: names("right") });
   else if (!leftWins && !rightWins) lead = t("compare.duel.summary.none");
   else {
-    const [who, side, n] = leftWins ? [a.character.name, "left" as const, leftWins] : [b.character.name, "right" as const, rightWins];
+    const [who, side, n] = leftWins ? [nameA, "left" as const, leftWins] : [nameB, "right" as const, rightWins];
     lead = n === counted.length ? t("compare.duel.summary.all", { name: who }) : t("compare.duel.summary.some", { name: who, axes: names(side) });
   }
   const verdictWord = (p: LookupPayload) => verdictView(t, p.evaluation).label;
   const verdictLine = verdictWord(a) === verdictWord(b)
     ? t("compare.duel.summary.sameVerdict", { verdict: verdictWord(a) })
-    : t("compare.duel.summary.verdicts", { a: a.character.name, va: verdictWord(a), b: b.character.name, vb: verdictWord(b) });
+    : t("compare.duel.summary.verdicts", { a: nameA, va: verdictWord(a), b: nameB, vb: verdictWord(b) });
   const gaps = counted
     .filter((x) => Math.abs(x.left.score! - x.right.score!) > TIE)
     .sort((x, y) => Math.abs(y.left.score! - y.right.score!) - Math.abs(x.left.score! - x.right.score!))
@@ -331,6 +349,7 @@ export function duelView(t: T, locale: Locale, entries: CompareEntry[], docs: Sy
   const gapLine = gaps.length === 0 ? null : t(gaps.length === 1 ? "compare.duel.summary.gapOne" : "compare.duel.summary.gapMany", { gaps: listOf(locale, gaps) });
 
   return {
+    names: [nameA, nameB],
     summary: { title, lead, detail: gapLine ? `${verdictLine} ${gapLine}` : verdictLine },
     warning: targetWarning(t, ps),
     heads: [duelHead(t, locale, ea, docs), duelHead(t, locale, eb, docs)],
@@ -350,10 +369,10 @@ export interface RankCard {
   name: string; classColor: string;
   /** "Elemental Shaman · Hyjal". */
   spec: string;
-  /** "+18". */
+  /** "+18", "+18 auto" when the target was detected (as the duel's heads). */
   target: string;
   score: string | null; verdict: { cls: string; label: string };
-  /** Rank 1: its border takes the verdict's border token. */
+  /** Rank 1 (every card tied there, never an insufficient one): its border takes the verdict's border token. */
   top: boolean;
   bars: RankBar[];
   /** "Survival 80, Utility 80, …". */
@@ -380,18 +399,19 @@ const MAIN_FACTS: readonly FactId[] = ["rio", "parse", "recentTimed"];
 const SUB_SIGNALS_SHOWN = 3;
 
 export function rankingView(t: T, locale: Locale, entries: CompareEntry[], docs: SynthesisDocs): RankingView {
-  // Global score descending, insufficient (null) last; ties keep the selection order.
+  // Global score descending, insufficient (null) last; ties keep the selection order and share their rank (1, 1, 3).
+  const globalOf = (p: LookupPayload): number | null => (insufficientOf(p) ? null : p.evaluation.global);
   const ranked = entries
-    .map((e, i) => ({ e, series: (i + 1) as RankCard["series"] }))
+    .map((e, i) => ({ e, series: (i + 1) as RankCard["series"], global: globalOf(e.payload) }))
     .sort((x, y) => {
-      const gx = insufficientOf(x.e.payload) ? null : x.e.payload.evaluation.global;
-      const gy = insufficientOf(y.e.payload) ? null : y.e.payload.evaluation.global;
-      if (gx === null || gy === null) return gx === gy ? 0 : gx === null ? 1 : -1;
-      return gy - gx;
+      if (x.global === null || y.global === null) return x.global === y.global ? 0 : x.global === null ? 1 : -1;
+      return y.global - x.global;
     });
   const ps = ranked.map((x) => x.e.payload);
+  const names = compareNames(t, locale, ps);
+  const rankOf = (i: number): number => ranked.findIndex((x) => x.global === ranked[i]!.global) + 1;
 
-  const cards = ranked.map(({ e, series }, i): RankCard => {
+  const cards = ranked.map(({ e, series, global }, i): RankCard => {
     const p = e.payload;
     const ev = p.evaluation;
     const v = verdictView(t, ev);
@@ -409,15 +429,15 @@ export function rankingView(t: T, locale: Locale, entries: CompareEntry[], docs:
     return {
       key: e.key,
       href: candidateHref(e.key),
-      rank: i + 1,
+      rank: rankOf(i),
       series,
       name: p.character.name,
       classColor: classHex(p.character.classID),
       spec: t("compare.multi.spec", { spec: specClass(t, p), realm: realmName(p.character.realmSlug) }),
-      target: `+${ev.targetLevel}`,
+      target: t("compare.multi.targetValue", { level: String(ev.targetLevel), auto: p.targetAutoDetected ? t("compare.duel.auto") : "" }),
       score: v.score,
       verdict: { cls: v.cls, label: v.label },
-      top: i === 0,
+      top: global !== null && rankOf(i) === 1,
       bars,
       aria: AXIS_ORDER.map((k, j) => `${axisTitle(t, k)} ${bars[j]!.value ?? DASH}`).join(", "),
       line,
@@ -442,7 +462,7 @@ export function rankingView(t: T, locale: Locale, entries: CompareEntry[], docs:
   return {
     warning: targetWarning(t, ps),
     cards,
-    columns: ranked.map(({ e, series }) => ({ key: e.key, name: e.payload.character.name, series })),
+    columns: ranked.map(({ e, series }, i) => ({ key: e.key, name: names[i]!, series })),
     axes,
     main: MAIN_FACTS.map((id) => facts.find((f) => f.id === id)).filter((f): f is FactRow => f !== undefined),
     more: facts.filter((f) => !MAIN_FACTS.includes(f.id)),

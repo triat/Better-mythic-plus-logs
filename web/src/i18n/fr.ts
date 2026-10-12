@@ -497,6 +497,11 @@ export const fr: Mirror<typeof en> = {
   },
   compare: {
     building: "construction de la vue de comparaison…",
+    sameName: "{name} ({realm})",
+    failed: {
+      some: "Impossible de charger {names} : la comparaison montre les autres.", all: "Impossible de charger assez de profils pour comparer.",
+      history: "Impossible de charger l'historique.", docs: "Impossible de charger les règles de notation.", retry: "Réessayer",
+    },
     pick: {
       add: "+ Ajouter un candidat", addFull: "+ Ajouter ({max} max)", remove: "Retirer {name}", head: "Recherches récentes",
       hint: "À partir de trois candidats, la vue devient un classement", none: "Choisis au moins deux profils.",
@@ -536,7 +541,7 @@ export const fr: Mirror<typeof en> = {
       spec: "{spec} · {realm}",
       short: { survival: "SUR", utility: "UTI", throughput: "THR", consistency: "RÉG", preparation: "PRÉ" },
       line: "+ {pro} · − {con}", linePro: "+ {pro}", lineCon: "− {con}",
-      target: "cible", axes: "Axe par axe", bestNote: "en bleu : le meilleur de la ligne",
+      target: "cible", targetValue: "+{level}{auto}", axes: "Axe par axe", bestNote: "en bleu : le meilleur de la ligne",
       allFacts: "Tous les chiffres ({count})",
       barsNote: "Barres : une par axe, dans l'ordre des lignes ci-dessous ; une barre pâle est informative (poids 0).",
       dungeonNote: "contour bleu : la plus haute clé timée du donjon · — : pas de run",

@@ -9,7 +9,7 @@ const vtOf = (cls: string): string => cls.replace(/^badge-/, "vt-");
 
 export function CompareDuel({ view }: { view: DuelView }) {
   const { t } = useT();
-  const names = view.heads.map((h) => h.name) as [string, string];
+  const names = view.names;
   return (
     <div className="cmp-duel">
       <section className="card cmp-summary">

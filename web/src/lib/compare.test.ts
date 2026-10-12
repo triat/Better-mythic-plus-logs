@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { AxisKey, AxisScore, LookupPayload, MPlusRun } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { bestIndices, compareFacts, dungeonCompare, duelView, rankingView, targetWarning } from "./compare.ts";
+import { bestIndices, compareFacts, compareNames, dungeonCompare, duelView, rankingView, targetWarning } from "./compare.ts";
 import type { CompareEntry, DuelView, RankingView } from "./compare.ts";
 import type { SynthesisDocs } from "./synthesis.ts";
 import { synthesisView } from "./synthesis.ts";
@@ -301,15 +301,26 @@ describe("rankingView", () => {
     { key: "e5", payload: withGlobal(glob("Biwaasham", 80, [80, 80, 61, 51, 80]), 80) },
   ];
   const v: RankingView = rankingView(tEn, "en", entries, docs);
-  test("rank order: global descending, ties in selection order, insufficient last", () => {
+  test("rank order: global descending, ties in selection order sharing their rank, insufficient last", () => {
     expect(v.cards.map((c) => [c.rank, c.name, c.series, c.top])).toEqual([
-      [1, "Biwaasham", 5, true], [2, "Circe", 3, false], [3, "Loutrasse", 1, false], [4, "Lights", 4, false], [5, "Obye", 2, false],
+      [1, "Biwaasham", 5, true], [2, "Circe", 3, false], [3, "Loutrasse", 1, false], [3, "Lights", 4, false], [5, "Obye", 2, false],
     ]);
     expect(v.columns.map((c) => [c.name, c.series])).toEqual([["Biwaasham", 5], ["Circe", 3], ["Loutrasse", 1], ["Lights", 4], ["Obye", 2]]);
   });
+  test("tied at the top: both rank 1 with the top style; an insufficient card is never top", () => {
+    const tied = rankingView(tEn, "en", [entries[1]!, entries[4]!, { key: "e6", payload: withGlobal(glob("Kael", 80, [70, 70, 70, 70, 70]), 80) }], docs);
+    expect(tied.cards.map((c) => [c.rank, c.name, c.top])).toEqual([[1, "Biwaasham", true], [1, "Kael", true], [3, "Obye", false]]);
+    const none = rankingView(tEn, "en", [entries[1]!, { key: "e7", payload: withGlobal(glob("Zed", null, [50, 50, 50, 50, 50]), null) }, entries[1]!], docs);
+    expect(none.cards.map((c) => [c.rank, c.top])).toEqual([[1, false], [1, false], [1, false]]);
+  });
+  test("the target keeps the auto marker", () => {
+    expect(v.cards[0]!.target).toBe("+18 auto");
+    const typed = rankingView(tEn, "en", [{ key: "x", payload: { ...entries[0]!.payload, targetAutoDetected: false } as LookupPayload }, ...entries.slice(1, 3)], docs);
+    expect(typed.cards.find((c) => c.key === "x")!.target).toBe("+18");
+  });
   test("the cards: target, score, verdict, bars, aria", () => {
     const c = v.cards[0]!;
-    expect(c).toMatchObject({ href: "/candidate?open=e5", target: "+18", score: "80", verdict: { cls: "badge-invite", label: "INVITE" }, spec: "Elemental Shaman · Ysondre" });
+    expect(c).toMatchObject({ href: "/candidate?open=e5", score: "80", verdict: { cls: "badge-invite", label: "INVITE" }, spec: "Elemental Shaman · Ysondre" });
     expect(c.bars.map((x) => [x.short, x.value, x.band, x.informational])).toEqual([
       ["SUR", 80, "better", false], ["UTI", 80, "better", false], ["THR", 61, "neutral", false], ["CON", 51, "neutral", true], ["PRE", 80, "better", false],
     ]);
@@ -341,6 +352,23 @@ describe("rankingView", () => {
   });
   test("French short labels", () => {
     expect(rankingView(tFr, "fr", entries, docs).cards[0]!.bars.map((x) => x.short)).toEqual(["SUR", "UTI", "THR", "RÉG", "PRÉ"]);
+  });
+});
+
+describe("two picks with the same name", () => {
+  const on = (realmSlug: string, region = "eu") => (p: LookupPayload) =>
+    ({ ...p, character: { ...p.character, realmSlug, region } }) as LookupPayload;
+  test("compareNames: the realm, then the region too when the realm is the same; a unique name stays bare", () => {
+    expect(compareNames(tEn, "en", [on("hyjal")(vach()), on("ysondre")(vach()), circe()])).toEqual(["Vachâman (Hyjal)", "Vachâman (Ysondre)", "Circe"]);
+    expect(compareNames(tEn, "en", [vach(), on("ysondre", "us")(vach())])).toEqual(["Vachâman (Ysondre EU)", "Vachâman (Ysondre US)"]);
+  });
+  test("the duel's mirror labels and win texts, the ranking's columns", () => {
+    const v = duel(on("hyjal")(vach()), vach([50, 50, 50, 50, 50]));
+    expect(v.names).toEqual(["Vachâman (Hyjal)", "Vachâman (Ysondre)"]);
+    expect(v.axes[0]!.win.text).toBe("← Vachâman (Hyjal) +36");
+    expect(v.heads.map((h) => h.name)).toEqual(["Vachâman", "Vachâman"]);
+    const r = rankingView(tEn, "en", [{ key: "a", payload: on("hyjal")(vach()) }, { key: "b", payload: vach() }, { key: "c", payload: circe() }], docs);
+    expect(r.columns.map((c) => c.name).sort()).toEqual(["Circe", "Vachâman (Hyjal)", "Vachâman (Ysondre)"]);
   });
 });
 
@@ -386,9 +414,7 @@ const rankingTexts = (v: RankingView): string[] => [
   ...[...v.main, ...v.more].flatMap((f) => f.cells.map((c) => c.text)),
   ...v.dungeons.flatMap((d) => d.cells.flatMap((c) => (c ? [c.level, c.parse.text, ...c.sub.split(" · ")] : [DASH]))),
 ];
-// The ranking's card shows the target without the " auto" suffix ("+21 auto" → "+21"); the duel's head keeps it.
-const missing = (old: string[], now: string[]): string[] =>
-  old.map((x) => FORMAT_CHANGES[x] ?? x).filter((x) => !now.includes(x) && !now.includes(x.replace(/ auto$/, "")));
+const missing = (old: string[], now: string[]): string[] => old.map((x) => FORMAT_CHANGES[x] ?? x).filter((x) => !now.includes(x));
 
 describe("nothing lost from the old compare table", () => {
   const sa = withRuns(a, [run(1, 21, 79.4, true, 1, 114_000)]);

@@ -112,6 +112,6 @@ describe("sortApplicants / filterApplicants", () => {
   test("filters by role and by class; empty classes means every class", () => {
     expect(names(filterApplicants(applicants, { roles: ["tank", "healer"], classes: [] }))).toEqual(["Biwaadrood", "Tankadin"]);
     expect(names(filterApplicants(applicants, { roles: ["tank", "healer", "dps"], classes: ["Druid", "DemonHunter"] }))).toEqual(["Biwaadrood", "Sombrelame"]);
-    expect(filterApplicants(applicants, { roles: [], classes: [] })).toEqual([]);
+    expect(filterApplicants(applicants, { roles: [], classes: [] })).toEqual(applicants);
   });
 });

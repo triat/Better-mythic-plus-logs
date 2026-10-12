@@ -95,6 +95,14 @@ function rowOf(t: T, o: { verdicts: Map<string, CachedVerdict>; now: number; que
 export const rolesFor = (v: "all" | LiveRole): LiveRole[] => (v === "all" ? [...LIVE_ROLES] : [v]);
 
 /**
+ * The stored `liveRoles` as the page applies it. The chips only ever store one role or all three, but an older build
+ * stored free toggles: anything that is not exactly one role (none, two, all three) reads as "all", so the filter and
+ * the lit chip always agree and no saved list hides rows with no chip lit.
+ */
+export const effectiveRoles = (roles: readonly LiveRole[]): readonly LiveRole[] =>
+  roles.length === 1 && LIVE_ROLES.includes(roles[0]!) ? roles : LIVE_ROLES;
+
+/**
  * Applicants are filtered then sorted, then grouped by role; the party (`party` and the player's own `self`
  * row) is never filtered or sorted and stays in the roster's order.
  */
@@ -109,15 +117,15 @@ export function liveView(t: T, locale: Locale, o: {
   const applicants = o.roster.players.filter((p) => p.kind === "applicant");
   const partyPlayers = o.roster.players.filter((p) => p.kind === "party" || p.kind === "self");
   const byClass = filterApplicants(applicants, { roles: LIVE_ROLES, classes: o.settings.liveClasses });
+  const roles = effectiveRoles(o.settings.liveRoles);
   const shown = sortApplicants(
-    filterApplicants(byClass, { roles: o.settings.liveRoles, classes: [] }),
+    filterApplicants(byClass, { roles, classes: [] }),
     o.settings.liveSort,
     (character) => o.verdicts.get(character) ?? null,
   );
   const row = (p: RosterPlayer) => rowOf(t, o, p);
 
-  const roles = o.settings.liveRoles;
-  const allOn = roles.length === 0 || LIVE_ROLES.every((r) => roles.includes(r));
+  const allOn = roles.length !== 1;
   const roleChips: LiveView["roleChips"] = [
     { value: "all", label: t("live.panel.all", { count: byClass.length }), on: allOn },
     ...LIVE_ROLES.map((r) => ({
@@ -136,10 +144,11 @@ export function liveView(t: T, locale: Locale, o: {
   const invites = vetted.filter((p) => o.verdicts.get(p.character)!.verdict === "invite");
   const updated = fmtShortAge(t, o.roster.at, o.now);
 
+  // Per-role gaps against the shape, capped at the free seats: two tanks + a healer + a DPS leave one seat, not two.
   const missing = LIVE_ROLES.flatMap((role) => {
     const n = Math.max(0, GROUP_SHAPE[role] - partyPlayers.filter((p) => p.role === role).length);
     return Array.from({ length: n }, () => role);
-  });
+  }).slice(0, Math.max(0, GROUP_SIZE - partyPlayers.length));
   const size = Math.min(partyPlayers.length, GROUP_SIZE);
   const parts = LIVE_ROLES.map((role) => ({ role, n: missing.filter((r) => r === role).length }))
     .filter((x) => x.n > 0)

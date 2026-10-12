@@ -123,7 +123,9 @@ export const en = {
     status: {
       title: "Game connected · Group Finder open",
       waiting: "Game connected · waiting for the Group Finder",
-      key: "Your key: +{level} · updated {age}",
+      key: "Your key: +{level} · group read {age}",
+      reconnect: "Window sharing stopped",
+      reconnectSub: "bmpl no longer receives the game window. Click the Live chip to pick the World of Warcraft window again.",
       keyAuto: "Your key: auto",
       applicants: "{count, plural, one {applicant} other {applicants}}",
       vetted: "{count, plural, one {evaluated} other {evaluated}}",
@@ -648,11 +650,11 @@ export const en = {
     shownNotScored: "Shown, not scored",
     tableVersion: "table version ",
     reading: {
-      labels: { verdict: "Verdict", tiles: "Tiles", runs: "Runs", deepdive: "Deep-dive panel", compare: "Compare", stale: "Stale", cached: "Cached" },
+      labels: { header: "Header", verdict: "Summary", runs: "Runs", deepdive: "Deep-dive panel", compare: "Compare", stale: "Stale", cached: "Cached" },
       lines: {
         verdict: "{label} — the verdict with the global score and the confidence, what would flip it, the strengths and weaknesses, then one row per axis with its score and its main evidence; an n/a axis shows a dash rather than 0.",
-        tiles: "{label} — Median DPS/HPS and Median parse (rankings), Timed (shown) as timed / enriched runs, Avg deaths (with the wipe share), Δ DTPS vs peers, Avoidable vs peers and Kicks vs peers (per-run medians), ilvl, RIO recent timed (last 10 Raider.IO runs) and Prev season (previous-season Raider.IO score). A dash means the data is missing, not zero.",
-        runs: "{label} — one row per shown run: key level, timed / depleted, parse, deaths, DTPS and avoidable vs peers, kicks, dispels, with a link to the Warcraft Logs report. Each row has an Analyze button for the deep-dive.",
+        header: "{label} — the name, the verdict and its score for the target key, class, spec, role and realm, then the key facts (item level, Raider.IO score, recent runs); Compare, the Raider.IO and Warcraft Logs links, and Refresh. Under it, four tabs: Summary, Runs, Dungeons and Method. A dash means the data is missing, not zero.",
+        runs: "{label} — one row per shown run (key level, timed / depleted, parse, deaths, DTPS and avoidable vs peers, kicks), filtered and sorted. A click opens the run sheet: the run's timeline in layers, the Warcraft Logs report and the Analyze button for the deep-dive.",
         deepdive: "{label} — usage vs capacity per defensive and one line per death; a yellow dot marks a table correction you proposed and still pending, a blue one an entry from the shared table.",
         compare: "{label} — pick two to five profiles: two side by side, three or more as a ranking.",
         stale: "{stale} — a run older than {days} days carries a stale badge. {cached} — on a shared instance, a lookup already made by another member in the last 6 hours is reused; the tab says so and it costs nothing.",

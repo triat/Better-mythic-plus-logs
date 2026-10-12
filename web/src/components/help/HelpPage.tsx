@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../api.ts";
 import type { StatusInfo } from "../../lib/hostedMode.ts";
 import type { AxisKey, DocsResponse, TextBlock } from "../../types.ts";
-import { axisIsInformational, curveTable, faqEntries, fmtThresholds, hashAnchor, toc } from "../../lib/help.ts";
+import { READING_KEYS, axisIsInformational, curveTable, faqEntries, fmtThresholds, hashAnchor, toc } from "../../lib/help.ts";
 import { PILLAR_ORDER } from "../../lib/self.ts";
 import { AXIS_ORDER } from "../../lib/verdict.ts";
 import { STALE_DAYS } from "../../lib/format.ts";
@@ -251,15 +251,13 @@ function DeepDive({ t, data }: SectionProps) {
   );
 }
 
-const READING = ["verdict", "tiles", "runs", "deepdive", "compare"] as const;
-
 function Reading({ t }: { t: T }) {
   // Static prose: what each block of the lookup page shows; the numbers of the evaluation live in the sections above.
   return (
     <section className="card help-card" id="reading">
       <h2>{t("help.toc.reading")}</h2>
       <ul className="help-ul">
-        {READING.map((k) => <li key={k}><Around message={t(`help.reading.lines.${k}`)} params={{ label: <b>{t(`help.reading.labels.${k}`)}</b> }} /></li>)}
+        {READING_KEYS.map((k) => <li key={k}><Around message={t(`help.reading.lines.${k}`)} params={{ label: <b>{t(`help.reading.labels.${k}`)}</b> }} /></li>)}
         <li>
           <Around
             message={t("help.reading.lines.stale", { days: STALE_DAYS })}

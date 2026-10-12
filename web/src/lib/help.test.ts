@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { anchorOf, axisIsInformational, hashAnchor, axisNote, budgetPill, curvePath, curveTable, faqEntries, fmtThresholds, linkSegments, roleWeights, toc } from "./help.ts";
+import { READING_KEYS, anchorOf, axisIsInformational, hashAnchor, axisNote, budgetPill, curvePath, curveTable, faqEntries, fmtThresholds, linkSegments, roleWeights, toc } from "./help.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -131,4 +131,18 @@ test("axisNote: the minimum-runs line of Survival and Consistency, from the conf
   expect(axisNote(tFr, "survival", { ...c, deepdiveMinRuns: 1 })).toBe("Les deux sous-signaux deep-dive apparaissent une fois qu'au moins 1 run affiché a été analysé.");
   expect(axisNote(tFr, "consistency", c)).toBe("Chaque sous-signal demande au moins 5 runs ; en dessous l'axe est n/a.");
   expect(axisNote(tFr, "utility", c)).toBeNull();
+});
+
+describe("READING_KEYS", () => {
+  test("today's blocks only: the header replaced the pre-redesign tiles, and every entry has a label and a line in both locales", () => {
+    expect([...READING_KEYS]).toEqual(["header", "verdict", "runs", "deepdive", "compare"]);
+    for (const k of READING_KEYS) {
+      for (const t of [tEn, tFr]) {
+        expect(t(`help.reading.labels.${k}`)).not.toBe(`help.reading.labels.${k}`);
+        expect(t(`help.reading.lines.${k}`, { label: "X" })).toStartWith("X — ");
+      }
+    }
+    expect(tEn("help.reading.labels.header")).toBe("Header");
+    expect(tFr("help.reading.labels.verdict")).toBe("Synthèse");
+  });
 });

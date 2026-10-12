@@ -117,7 +117,9 @@ export const fr: Mirror<typeof en> = {
     status: {
       title: "Jeu connecté · Group Finder ouvert",
       waiting: "Jeu connecté · en attente du Group Finder",
-      key: "Ta clé : +{level} · mis à jour {age}",
+      key: "Ta clé : +{level} · groupe actualisé {age}",
+      reconnect: "Partage de la fenêtre interrompu",
+      reconnectSub: "bmpl ne reçoit plus la fenêtre du jeu. Clique sur la puce Live pour choisir à nouveau la fenêtre de World of Warcraft.",
       keyAuto: "Ta clé : auto",
       applicants: "{count, plural, one {candidat} other {candidats}}",
       vetted: "{count, plural, one {évalué} other {évalués}}",
@@ -642,11 +644,11 @@ export const fr: Mirror<typeof en> = {
     shownNotScored: "Affiché, pas noté",
     tableVersion: "version de la table ",
     reading: {
-      labels: { verdict: "Verdict", tiles: "Tuiles", runs: "Runs", deepdive: "Panneau deep-dive", compare: "Comparer", stale: "Ancien", cached: "En cache" },
+      labels: { header: "En-tête", verdict: "Synthèse", runs: "Runs", deepdive: "Panneau deep-dive", compare: "Comparer", stale: "Ancien", cached: "En cache" },
       lines: {
         verdict: "{label} — le verdict avec le score global et la confiance, ce qui le ferait basculer, les forces et les faiblesses, puis une ligne par axe avec son score et ses principaux indices ; un axe n/a affiche un tiret plutôt que 0.",
-        tiles: "{label} — DPS/HPS médian et Parse médian (classements), Timed (affichés) en runs timed / enrichis, Morts moy. (avec la part en wipe), Δ DTPS vs pairs, Évitable vs pairs et Kicks vs pairs (médianes par run), ilvl, RIO récents timed (les 10 derniers runs Raider.IO) et Saison préc. (score Raider.IO de la saison précédente). Un tiret veut dire que la donnée manque, pas zéro.",
-        runs: "{label} — une ligne par run affiché : niveau de key, timed / depleted, parse, morts, DTPS et évitable vs pairs, kicks, dispels, avec un lien vers le report Warcraft Logs. Chaque ligne a un bouton Analyser pour le deep-dive.",
+        header: "{label} — le nom, le verdict et son score pour la key visée, la classe, la spé, le rôle et le serveur, puis les faits clés (ilvl, score Raider.IO, runs récents) ; Comparer, les liens Raider.IO et Warcraft Logs, et Rafraîchir. Dessous, quatre onglets : Synthèse, Runs, Donjons et Méthode. Un tiret veut dire que la donnée manque, pas zéro.",
+        runs: "{label} — une ligne par run affiché (niveau de key, timed / depleted, parse, morts, DTPS et évitable vs pairs, kicks), filtrées et triées. Un clic ouvre la fiche du run : sa frise par couches, le report Warcraft Logs et le bouton Analyser pour le deep-dive.",
         deepdive: "{label} — utilisation vs capacité par defensive et une ligne par mort ; un point jaune marque une correction de table que tu as proposée et encore en attente, un bleu une entrée de la table partagée.",
         compare: "{label} — choisis de deux à cinq profils : deux côte à côte, trois ou plus en classement.",
         stale: "{stale} — un run de plus de {days} jours porte un badge « ancien ». {cached} — sur une instance partagée, une recherche déjà faite par un autre membre dans les 6 dernières heures est réutilisée ; l'onglet l'indique et ça ne coûte rien.",

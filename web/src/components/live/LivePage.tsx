@@ -1,6 +1,7 @@
 // The /live page (mockup F-Live): the page header with the connection chip, then the status card, the Group Finder
 // roster and "Your group" while a roster is on screen; the selected profile below. App owns every piece of state.
 import type { ReactNode } from "react";
+import type { T } from "../../i18n/t.ts";
 import { useT } from "../../locale.tsx";
 import { liveView } from "../../lib/live/panel.ts";
 import type { CachedVerdict, LiveRole, LiveSort, Roster } from "../../lib/live/roster.ts";
@@ -37,6 +38,13 @@ export interface LivePageProps {
   result: ReactNode;
 }
 
+/** The card shown while no roster is on screen, worded after the capture state (the chip's error strings reused). */
+function captureCard(t: T, state: LiveState): { title: string; sub: string } {
+  if (state.kind === "error") return { title: t(`live.error.${state.code}`), sub: t(`live.error.${state.code}Sub`) };
+  if (state.kind === "reconnect") return { title: t("live.status.reconnect"), sub: t("live.status.reconnectSub") };
+  return { title: t("live.status.waiting"), sub: t("shell.live.sub") };
+}
+
 export function LivePage(p: LivePageProps) {
   const { t, locale } = useT();
   const view = p.roster
@@ -66,12 +74,12 @@ export function LivePage(p: LivePageProps) {
       ) : p.state.kind === "off" ? (
         <p className="muted live-intro">{t("shell.live.sub")}</p>
       ) : (
-        <section className="card lv-status">
+        <section className={"card lv-status" + (p.state.kind === "error" || p.state.kind === "reconnect" ? " lv-status-warn" : "")}>
           <div className="lv-status-id">
             <LiveIcon />
             <div className="lv-status-text">
-              <span className="lv-status-title">{t("live.status.waiting")}</span>
-              <span className="lv-status-key">{t("shell.live.sub")}</span>
+              <span className="lv-status-title">{captureCard(t, p.state).title}</span>
+              <span className="lv-status-key">{captureCard(t, p.state).sub}</span>
             </div>
           </div>
         </section>

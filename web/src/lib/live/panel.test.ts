@@ -3,7 +3,7 @@ import { fr } from "../../i18n/fr.ts";
 import { makeT, tEn } from "../../i18n/t.ts";
 import { parseRoster } from "./roster.ts";
 import type { CachedVerdict } from "./roster.ts";
-import { autoQueue, classMenu, liveView, rolesFor, sortMenu, verdictScope } from "./panel.ts";
+import { autoQueue, classMenu, effectiveRoles, liveView, rolesFor, sortMenu, verdictScope } from "./panel.ts";
 
 const roster = {
   seq: 1,
@@ -136,8 +136,11 @@ describe("liveView", () => {
     const one = view({ settings: { ...all, liveRoles: ["dps"] } });
     expect(one.roleChips.filter((c) => c.on).map((c) => c.value)).toEqual(["dps"]);
     expect(one.roleChips.map((c) => c.label)).toEqual(["All · 7", "Tank · 1", "Heal · 1", "DPS · 5"]);
+    // A two-role list saved by an older build reads as "all": the chip lit and the rows shown agree.
     const two = view({ settings: { ...all, liveRoles: ["tank", "dps"] } });
-    expect(two.roleChips.some((c) => c.on)).toBe(false);
+    expect(two.roleChips.filter((c) => c.on).map((c) => c.value)).toEqual(["all"]);
+    expect(two.hidden).toBe(0);
+    expect(view({ settings: { ...all, liveRoles: [] } }).hidden).toBe(0);
     const hunters = view({ settings: { ...all, liveRoles: ["tank"], liveClasses: ["Hunter"] } });
     expect(hunters.roleChips.map((c) => c.label)).toEqual(["All · 2", "Tank · 0", "Heal · 0", "DPS · 2"]);
     expect(view({}, tFr, "fr").roleChips[0]!.label).toBe("Tous · 7");
@@ -146,6 +149,13 @@ describe("liveView", () => {
   test("rolesFor maps the chips onto the stored liveRoles", () => {
     expect(rolesFor("all")).toEqual(["tank", "healer", "dps"]);
     expect(rolesFor("healer")).toEqual(["healer"]);
+  });
+
+  test("effectiveRoles: exactly one role filters, anything else is all three", () => {
+    expect(effectiveRoles(["dps"])).toEqual(["dps"]);
+    expect(effectiveRoles([])).toEqual(["tank", "healer", "dps"]);
+    expect(effectiveRoles(["tank", "healer"])).toEqual(["tank", "healer", "dps"]);
+    expect(effectiveRoles(["tank", "healer", "dps"])).toEqual(["tank", "healer", "dps"]);
   });
 
   test("row states and actions: vetted, queued, unvetted", () => {
@@ -175,7 +185,7 @@ describe("liveView", () => {
   test("status: title, key line, counts", () => {
     const v = view();
     expect(v.status.title).toBe("Game connected · Group Finder open");
-    expect(v.status.key).toBe("Your key: +19 · updated just now");
+    expect(v.status.key).toBe("Your key: +19 · group read just now");
     expect(v.status.counts).toEqual([
       { label: "applicants", value: "7", tone: null },
       { label: "evaluated", value: "6", tone: null },
@@ -183,7 +193,7 @@ describe("liveView", () => {
     ]);
     expect(view({ yourKey: null }).status.key).toBe("Your key: auto");
     const fv = view({ now: NOW + 2 * 60_000 }, tFr, "fr");
-    expect(fv.status.key).toBe("Ta clé : +19 · mis à jour il y a 2 min");
+    expect(fv.status.key).toBe("Ta clé : +19 · groupe actualisé il y a 2 min");
     expect(fv.status.counts.map((c) => c.label)).toEqual(["candidats", "évalués", "INVITE"]);
     expect(v.columns.verdict).toBe("Verdict at +19");
     expect(view({ yourKey: null }, tFr, "fr").columns.verdict).toBe("Verdict");
@@ -214,7 +224,16 @@ describe("liveView", () => {
     const tanky = tv.party.members[0]!;
     expect(tanky).toMatchObject({ id: "party:0", state: "unvetted", action: { kind: "evaluate" }, you: null });
     const oneTank = { ...mockRoster, players: parseRoster("p|Tanky-Hyjal|6|T|1\np|Tank2-Hyjal|1|T|1\ns|Me-Hyjal|9|D|1\n") };
-    expect(view({ roster: oneTank }, tFr, "fr").party.line).toBe("3 / 5 · il manque 1 heal et 2 DPS");
+    // Two tanks fill one DPS seat: two seats left, a healer and one DPS.
+    expect(view({ roster: oneTank }, tFr, "fr").party.line).toBe("3 / 5 · il manque 1 heal et 1 DPS");
+  });
+
+  test("party: missing slots never exceed the free seats (2 tanks + 1 healer + 1 DPS → 1 slot)", () => {
+    const heavy = { ...mockRoster, players: parseRoster("p|Tanky-Hyjal|6|T|1\np|Tank2-Hyjal|1|T|1\np|Heals-Hyjal|7|H|1\ns|Me-Hyjal|9|D|1\n") };
+    const v = view({ roster: heavy });
+    expect(v.party.missing).toEqual(["dps"]);
+    expect(v.party.line).toBe("4 / 5 · missing 1 DPS");
+    expect(view({ roster: heavy }, tFr, "fr").party.line).toBe("4 / 5 · il manque 1 DPS");
   });
 
   test("hidden counts the applicants the filters leave out", () => {

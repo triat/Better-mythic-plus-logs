@@ -47,6 +47,9 @@ export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
   ];
 }
 
+/** The "Reading the page" entries, in order: one per block of today's profile and Compare pages (redesign). */
+export const READING_KEYS = ["header", "verdict", "runs", "deepdive", "compare"] as const;
+
 export interface CurveRow { x: string; y: number }
 
 const fmtNumber = (n: number): string => (Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100));

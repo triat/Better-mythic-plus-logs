@@ -149,6 +149,7 @@ export function sortApplicants(players: readonly RosterPlayer[], sort: LiveSort,
   }
 }
 
+/** An empty `roles` or `classes` list means "no filter" on that dimension. */
 export function filterApplicants(players: readonly RosterPlayer[], f: { roles: readonly LiveRole[]; classes: readonly string[] }): RosterPlayer[] {
-  return players.filter((p) => f.roles.includes(p.role) && (f.classes.length === 0 || f.classes.includes(p.className)));
+  return players.filter((p) => (f.roles.length === 0 || f.roles.includes(p.role)) && (f.classes.length === 0 || f.classes.includes(p.className)));
 }

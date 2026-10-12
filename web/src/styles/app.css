@@ -884,6 +884,7 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
 .lv-status { padding: 18px 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; }
 .lv-status-id { display: flex; align-items: center; gap: 14px; flex: 1 1 320px; min-width: 0; }
 .lv-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--invite-bg); border: 1px solid var(--invite-border); color: var(--invite); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box; }
+.lv-status-warn .lv-icon { background: var(--maybe-bg); border-color: var(--maybe-border); color: var(--maybe); }
 .lv-status-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .lv-status-title { font-size: 17px; font-weight: 700; }
 .lv-status-key { font-size: 14px; color: var(--muted); }
@@ -905,7 +906,7 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
 .lv-chip.on { background: var(--card-3); border-color: var(--label); color: var(--text); }
 .lv-chip:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 .lv-card { padding: 0; overflow: hidden; }
-.lv-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 52px 60px minmax(0, 1.3fr) 136px; gap: 16px; align-items: center; padding: 10px 20px; min-height: 60px; box-sizing: border-box; border-top: 1px solid var(--border-soft); }
+.lv-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 52px 60px minmax(0, 1.3fr) minmax(152px, max-content); gap: 16px; align-items: center; padding: 10px 20px; min-height: 60px; box-sizing: border-box; border-top: 1px solid var(--border-soft); }
 .lv-th-row { min-height: 42px; border-top: 0; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--label); white-space: nowrap; }
 .lv-th-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .lv-group + .lv-group .lv-group-head { border-top: 1px solid var(--border); }

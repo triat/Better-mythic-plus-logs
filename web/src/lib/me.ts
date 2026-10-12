@@ -49,6 +49,9 @@ export function addCharacter(list: MyCharacter[], c: MyCharacter): { ok: true; l
 }
 export const makeMain = (list: MyCharacter[], i: number): MyCharacter[] => [list[i]!, ...list.filter((_, j) => j !== i)];
 export const removeAt = (list: MyCharacter[], i: number): MyCharacter[] => list.filter((_, j) => j !== i);
+/** One place up the list (index 1 becomes the main); the first one, or an index out of the list, changes nothing. */
+export const moveUp = (list: MyCharacter[], i: number): MyCharacter[] =>
+  i <= 0 || i >= list.length ? list : [...list.slice(0, i - 1), list[i]!, list[i - 1]!, ...list.slice(i + 1)];
 
 /** Whether a lookup request is for one of the member's characters (the server checks it again when hosted). */
 export const mineRequest = (list: MyCharacter[], character: string, region: Region): boolean => {

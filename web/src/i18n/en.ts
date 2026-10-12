@@ -131,12 +131,7 @@ export const en = {
     },
     panel: {
       title: "Group Finder",
-      count: "showing {shown} of {total}",
-      vetted: "vetted {age}",
       notVetted: "not evaluated yet",
-      check: "Check",
-      yourGroup: "Your group",
-      you: "you",
       auto: "Evaluate new applicants automatically",
       autoNeedsClient: "Needs your own Warcraft Logs client",
       queued: "queued",

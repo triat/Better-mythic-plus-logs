@@ -40,8 +40,7 @@ import type { DeepdiveActions } from "./components/Detail.tsx";
 import type { SelfActions } from "./components/owner/types.ts";
 import { HomePage } from "./components/home/HomePage.tsx";
 import { Landing } from "./components/Landing.tsx";
-import { LiveChip } from "./components/LiveChip.tsx";
-import { LivePanel } from "./components/LivePanel.tsx";
+import { LivePage } from "./components/live/LivePage.tsx";
 import { CharactersPage } from "./components/me/CharactersPage.tsx";
 import { Setup } from "./components/Setup.tsx";
 import { Shell } from "./components/shell/Shell.tsx";
@@ -649,28 +648,19 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
           <ComparePage tabs={tabs} selected={selected} onSelect={setSelected} fetchPayload={fetchPayload} cache={payloads.current} />
         )}
         {page === "live" && (
-          <div className={"content" + (activeKey ? " content-result" : "")}>
-            <div className="page-head">
-              <h1>{t("shell.live.title")}</h1>
-              <LiveChip state={live.state} connect={() => { track("live_connect"); return live.connect(); }} />
-            </div>
-            {live.roster ? (
-              <LivePanel
-                roster={live.roster} verdicts={liveVerdicts}
-                sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
-                onSortChange={(v: LiveSort) => { track("live_filter"); updateSettings({ liveSort: v }); }}
-                onRolesChange={(v: LiveRole[]) => { track("live_filter"); updateSettings({ liveRoles: v }); }}
-                onClassesChange={(v: string[]) => { track("live_filter"); updateSettings({ liveClasses: v }); }}
-                onSelect={onLiveSelect}
-                auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={(v: boolean) => { track("live_auto_toggle"); setLiveAuto(v); }}
-                queued={liveAutoInFlight ? new Set([liveAutoInFlight]) : new Set<string>()}
-                now={Date.now()}
-              />
-            ) : (
-              <p className="muted live-intro">{t("shell.live.sub")}</p>
-            )}
-            {result}
-          </div>
+          <LivePage
+            state={live.state} connect={() => { track("live_connect"); return live.connect(); }} disconnect={live.disconnect}
+            roster={live.roster} verdicts={liveVerdicts} yourKey={yourKey}
+            sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
+            onSortChange={(v: LiveSort) => { track("live_filter"); updateSettings({ liveSort: v }); }}
+            onRolesChange={(v: LiveRole[]) => { track("live_filter"); updateSettings({ liveRoles: v }); }}
+            onClassesChange={(v: string[]) => { track("live_filter"); updateSettings({ liveClasses: v }); }}
+            onSelect={onLiveSelect}
+            auto={liveAuto} autoAllowed={liveAutoAllowed} onAutoChange={(v: boolean) => { track("live_auto_toggle"); setLiveAuto(v); }}
+            queued={liveAutoInFlight ? new Set([liveAutoInFlight]) : new Set<string>()}
+            now={Date.now()}
+            result={result}
+          />
         )}
         {page === "admin" && (
           access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />

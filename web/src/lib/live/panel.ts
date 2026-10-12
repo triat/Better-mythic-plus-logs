@@ -171,34 +171,6 @@ export function liveView(t: T, locale: Locale, o: {
   };
 }
 
-// --- Pre-redesign panel model: LivePanel.tsx's, removed with it in the Live page task (phase 4, Task 5). ---
-
-export interface PanelRow {
-  player: RosterPlayer;
-  verdict: CachedVerdict | null;
-  ageLabel: string | null;
-}
-
-export interface PanelView { applicants: PanelRow[]; party: PanelRow[]; countLine: string; hiddenCount: number }
-
-const toRow = (t: T, verdicts: Map<string, CachedVerdict>, now: number, player: RosterPlayer): PanelRow => {
-  const verdict = verdicts.get(player.character) ?? null;
-  return { player, verdict, ageLabel: verdict ? t("live.panel.vetted", { age: fmtShortAge(t, verdict.fetchedAt, now) }) : null };
-};
-
-export function panelView(t: T, o: { roster: Roster; verdicts: Map<string, CachedVerdict>; settings: PanelFilter; now: number }): PanelView {
-  const applicants = o.roster.players.filter((p) => p.kind === "applicant");
-  const party = o.roster.players.filter((p) => p.kind === "party" || p.kind === "self");
-  const filtered = filterApplicants(applicants, { roles: o.settings.liveRoles, classes: o.settings.liveClasses });
-  const sorted = sortApplicants(filtered, o.settings.liveSort, (character) => o.verdicts.get(character) ?? null);
-  return {
-    applicants: sorted.map((p) => toRow(t, o.verdicts, o.now, p)),
-    party: party.map((p) => toRow(t, o.verdicts, o.now, p)),
-    countLine: t("live.panel.count", { shown: sorted.length, total: applicants.length }),
-    hiddenCount: applicants.length - sorted.length,
-  };
-}
-
 /**
  * The characters an auto-lookup should fetch next, oldest first (lowest roster index — see
  * `RosterPlayer.index`). Never a party member or the player's own `"self"` row (kept safe even when

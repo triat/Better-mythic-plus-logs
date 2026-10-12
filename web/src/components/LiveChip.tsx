@@ -7,13 +7,11 @@ import { Around } from "./Around.tsx";
 const SUPPORTS_CAPTURE = typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function";
 
 /**
- * The Live chip (header, right of the search / before the locale chip locally, before the user menu
- * hosted): a screen-capture status dot plus the connect dialog and the two in-game error cards.
- * Design: canvas "Live", variant A ("Shared — the Live chip's states" / "the connect dialog").
+ * The Live chip in the /live page header (mockup F-Live): a status dot — `--invite` when live, `--maybe` on reconnect
+ * or error, `--dim` otherwise — plus the connect dialog and the two in-game error cards.
  *
- * `state`/`connect` come from `Main`'s single `useWowCapture()` (Task 7): the Live panel needs the same
- * roster, and two independent hook instances would each open their own `getDisplayMedia()` capture (a
- * second permission prompt, two scan loops) — so this chip no longer owns the hook itself.
+ * `state`/`connect` come from `Main`'s single `useWowCapture()`: the Live page needs the same roster, and two
+ * independent hook instances would each open their own `getDisplayMedia()` capture.
  */
 export function LiveChip({ state, connect }: { state: LiveState; connect: () => Promise<void> }) {
   const { t } = useT();
@@ -36,13 +34,13 @@ export function LiveChip({ state, connect }: { state: LiveState; connect: () => 
   // caption rather than reusing the neutral "waiting" one (the dot colour and the chip becoming
   // clickable were the only signals before). The specific fix still shows in the dialog on click.
   const label =
-    state.kind === "live" ? t("live.chip.on", { count: state.players }) :
+    state.kind === "live" ? t("live.chip.on") :
     state.kind === "reconnect" ? t("live.chip.reconnect") :
     state.kind === "off" ? t("live.chip.off") :
     state.kind === "error" ? t("live.chip.error") :
     t("live.chip.waiting");
-  const dotClass = state.kind === "live" ? "live-dot" : state.kind === "reconnect" || state.kind === "error" ? "live-dot warn" : "live-dot grey";
-  const chipClass = "live-chip" + (state.kind === "live" ? " on" : state.kind === "reconnect" ? " err" : "");
+  const dotClass = state.kind === "live" ? "live-dot on" : state.kind === "reconnect" || state.kind === "error" ? "live-dot warn" : "live-dot";
+  const chipClass = "live-chip" + (state.kind === "live" ? " on" : "");
 
   const go = async () => {
     setOpen(false);

@@ -125,12 +125,7 @@ export const fr: Mirror<typeof en> = {
     },
     panel: {
       title: "Group Finder",
-      count: "{shown} sur {total} affichés",
-      vetted: "vetté {age}",
       notVetted: "pas encore évalué",
-      check: "Vérifier",
-      yourGroup: "Ton groupe",
-      you: "toi",
       auto: "Évaluer les nouveaux candidats automatiquement",
       autoNeedsClient: "Nécessite ton propre client Warcraft Logs",
       queued: "en file",

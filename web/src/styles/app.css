@@ -116,15 +116,16 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .watch b { color: var(--green); font-weight: 600; }
 .watch:not(.on) b { color: var(--muted); }
 
-/* live chip (screen-capture roster; design: canvas "Live", variant A) */
+/* Live chip (the /live page header; mockup F-Live): a status dot, the connect dialog hangs from it */
 .live-chip-wrap { position: relative; display: inline-flex; }
-.live-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; line-height: 18px; color: var(--muted); background: transparent; white-space: nowrap; cursor: pointer; }
-.live-chip.on { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
-.live-chip.err { color: var(--warn); border-color: var(--yellow-border); }
+.live-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; box-sizing: border-box; font: inherit; font-size: 13px; border: 1px solid var(--border-2); border-radius: 999px; color: var(--text-soft); background: var(--card-2); white-space: nowrap; cursor: pointer; }
+.live-chip.on { color: var(--text); }
 .live-chip:not(button) { cursor: default; }
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
-.live-dot.grey { background: var(--faint); }
-.live-dot.warn { background: var(--warn); }
+button.live-chip:hover { border-color: var(--label); }
+button.live-chip:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); display: inline-block; flex: none; }
+.live-dot.on { background: var(--invite); }
+.live-dot.warn { background: var(--maybe); }
 .live-dialog { position: absolute; right: 0; top: calc(100% + 8px); width: 420px; max-width: calc(100vw - 32px); z-index: 20; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
 /* In a page head the chip sits near the content's left edge: the dialog hangs from the head itself (not the chip),
    opening rightwards from the content's left edge so it stays on screen at any width. */
@@ -139,26 +140,6 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 .live-dialog-error { border-color: var(--yellow-border); }
 .live-dialog-error .section-title { color: var(--yellow); }
 
-/* Live panel (roster band, LivePanel.tsx; design: canvas "Live", variant A) */
-.live { border-bottom: 1px solid var(--border-soft); padding: 10px 24px 12px; display: flex; flex-direction: column; gap: 8px; }
-.live-head { display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
-.rolefilter { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 24px; }
-.rolefilter .rf { display: flex; align-items: center; padding: 0 9px; height: 100%; font-size: 12px; color: var(--faint); border: 0; border-right: 1px solid var(--border-soft); background: var(--inset); cursor: pointer; }
-.rolefilter .rf:last-child { border-right: 0; }
-.rolefilter .rf.on { color: var(--text); background: var(--card); }
-.live-row { display: grid; grid-template-columns: 18px 210px 66px 74px 1fr auto; align-items: center; gap: 12px; padding: 5px 8px; border-radius: var(--radius); font-size: 13px; cursor: pointer; }
-.live-row:hover { background: var(--inset); }
-.live-row.alt { background: var(--inset); }
-.live-row.alt:hover { background: var(--card); }
-.live-row > * { justify-self: start; }
-.live-row > *:last-child { justify-self: end; }
-.live-row .nm { font-weight: 600; }
-.live-status { font-size: 12px; }
-.live-sep { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); padding: 6px 8px 2px; }
-.live-sep i { flex: 1; height: 1px; background: var(--border-soft); display: block; }
-.cls { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.sc { font-size: 13px; }
-.live-auto-guide { font-size: 12px; align-self: flex-end; }
 /* The auto switch (review round 1, finding 3): the canvas's own green `.sw` pill (28×16, `--green`
    family when on), ported to tokens — distinct from `.watch` (Header's Clipboard-watch toggle, blue/
    orange, 30×18), which stays exactly as it was so local mode remains pixel-identical. */
@@ -945,6 +926,85 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
 .page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .page-head .muted { flex: 1 1 280px; font-size: 13px; }
 .live-intro { margin: 0; max-width: 640px; }
+/* The Live page (redesign phase 4, mockup F-Live): header, status card, chips, the roster grouped by role,
+   "Your group". Under 760 px a roster row is a two-line card; nothing is hidden and nothing scrolls sideways. */
+.lv { gap: 24px; }
+.lv-head h1 { font-size: 28px; letter-spacing: -.02em; }
+.btn.lv-btn { height: 34px; background: var(--card-2); border-color: var(--border-2); color: var(--text); font-size: 13px; font-weight: 600; }
+.btn.lv-btn.btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.lv-btn:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.lv-disconnect { margin-left: auto; }
+.lv-status { padding: 18px 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; }
+.lv-status-id { display: flex; align-items: center; gap: 14px; flex: 1 1 320px; min-width: 0; }
+.lv-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--invite-bg); border: 1px solid var(--invite-border); color: var(--invite); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box; }
+.lv-status-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lv-status-title { font-size: 17px; font-weight: 700; }
+.lv-status-key { font-size: 14px; color: var(--muted); }
+.lv-counts { display: flex; gap: 24px; flex-wrap: wrap; }
+.lv-count { display: flex; flex-direction: column; gap: 2px; }
+.lv-count-value { font-size: 22px; font-weight: 700; }
+.lv-count-value.invite { color: var(--invite); }
+.lv-count-label { font-size: 12px; color: var(--label); }
+.lv-auto { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lv-auto-label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-soft); cursor: pointer; }
+.lv-auto-label input { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); flex: none; }
+.lv-auto-label.disabled { color: var(--label); cursor: default; }
+.lv-auto-guide { font-size: 12px; padding-left: 28px; }
+.lv-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.lv-chips-lbl { margin-right: 6px; }
+.lv-grow { flex: 1; }
+.lv-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); font: inherit; font-size: 13px; color: var(--text-soft); white-space: nowrap; cursor: pointer; }
+.lv-chip:hover { color: var(--text); border-color: var(--label); }
+.lv-chip.on { background: var(--card-3); border-color: var(--label); color: var(--text); }
+.lv-chip:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.lv-card { padding: 0; overflow: hidden; }
+.lv-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 52px 60px minmax(0, 1.3fr) 136px; gap: 16px; align-items: center; padding: 10px 20px; min-height: 60px; box-sizing: border-box; border-top: 1px solid var(--border-soft); }
+.lv-th-row { min-height: 42px; border-top: 0; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--label); white-space: nowrap; }
+.lv-th-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.lv-group + .lv-group .lv-group-head { border-top: 1px solid var(--border); }
+.lv-group-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px 6px; color: var(--label); }
+.lv-role-icon { flex: none; }
+.lv-group-count { font-size: 12px; }
+.lv-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.lv-tile { position: relative; width: 34px; height: 34px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; box-sizing: border-box; background: color-mix(in srgb, currentColor 16%, var(--card)); border: 1px solid color-mix(in srgb, currentColor 34%, var(--card)); }
+.lv-id-text { display: flex; flex-direction: column; min-width: 0; }
+.lv-name { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-realm { font-size: 12px; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-meta { display: contents; }
+.lv-spec, .lv-ilvl, .lv-rio { font-size: 14px; color: var(--text-soft); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-rio { color: var(--text); }
+.lv-spec.none, .lv-ilvl.none { color: var(--label); }
+.lv-unit { display: none; }
+.lv-verdict { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lv-age { font-size: 12px; color: var(--label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv-state { font-size: 13px; color: var(--muted); }
+.lv-act { display: flex; justify-content: flex-end; }
+.lv-hidden { margin: -12px 0 0; font-size: 13px; color: var(--label); }
+.lv-party { display: flex; flex-direction: column; gap: 12px; }
+.lv-party-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.lv-party-head h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.lv-party-line { font-size: 13px; color: var(--label); }
+.lv-party-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lv-member { display: inline-flex; align-items: center; gap: 8px; height: 36px; max-width: 100%; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); font: inherit; font-size: 13px; font-weight: 600; color: var(--text-soft); white-space: nowrap; }
+button.lv-member { cursor: pointer; }
+button.lv-member:hover { border-color: var(--label); }
+button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.lv-member .cand-pill { height: 24px; font-size: 12px; padding: 0 8px; }
+.lv-member-name { overflow: hidden; text-overflow: ellipsis; }
+.lv-member-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.lv-member-sub { color: var(--label); font-weight: 400; }
+.lv-member.slot { border-style: dashed; background: transparent; color: var(--label); font-weight: 400; }
+.lv-note { margin: 0; font-size: 13px; color: var(--label); line-height: 1.5; }
+@media (max-width: 760px) {
+  .lv-th-row { display: none; }
+  .lv-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 12px 16px; }
+  .lv-id { grid-row: 1; grid-column: 1; }
+  .lv-act { grid-row: 1; grid-column: 2; }
+  .lv-meta { grid-row: 2; grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding-left: 46px; min-width: 0; }
+  .lv-spec, .lv-ilvl, .lv-rio { font-size: 13px; }
+  .lv-unit { display: inline; color: var(--label); }
+  .lv-group-head { padding: 14px 16px 6px; }
+}
 /* The Compare page (redesign phase 4, mockups F-Comparer-Duel and F-Comparer-Multi): the picker, the duel (two
    profiles) and the ranking (three to five). Grids fit their column; the ranking's grids restack under 900 px. */
 .cmp { gap: 24px; }

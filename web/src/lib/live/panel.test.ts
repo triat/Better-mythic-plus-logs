@@ -3,7 +3,7 @@ import { fr } from "../../i18n/fr.ts";
 import { makeT, tEn } from "../../i18n/t.ts";
 import { parseRoster } from "./roster.ts";
 import type { CachedVerdict } from "./roster.ts";
-import { autoQueue, classMenu, liveView, panelView, rolesFor, sortMenu, verdictScope } from "./panel.ts";
+import { autoQueue, classMenu, liveView, rolesFor, sortMenu, verdictScope } from "./panel.ts";
 
 const roster = {
   seq: 1,
@@ -18,42 +18,6 @@ const roster = {
 const verdicts = new Map<string, CachedVerdict>([
   ["Biwaadrood-Nerzhul", { verdict: "invite", score: 78, targetLevel: 18, fetchedAt: 0, spec: null, ilvl: null }],
 ]);
-const settings = { liveSort: "arrival" as const, liveRoles: ["tank", "healer", "dps"] as const, liveClasses: [] as string[] };
-
-describe("panelView", () => {
-  test("applicants newest first, party untouched, verdict and age attached", () => {
-    const v = panelView(tEn, { roster, verdicts, settings, now: 12 * 60_000 });
-    expect(v.applicants.map((r) => r.player.name)).toEqual(["Sombrelame", "Tankadin", "Biwaadrood"]);
-    expect(v.party.map((r) => r.player.name)).toEqual(["Muleyoxo"]);
-    expect(v.applicants[2]!.verdict!.verdict).toBe("invite");
-    expect(v.applicants[2]!.ageLabel).toBe("vetted 12 min ago");
-    expect(v.applicants[0]!.ageLabel).toBeNull();
-    expect(v.countLine).toBe("showing 3 of 3");
-  });
-  test("a filter narrows the applicants and the count says so; the party is never filtered", () => {
-    const v = panelView(tEn, { roster, verdicts, settings: { ...settings, liveRoles: ["tank"] }, now: 0 });
-    expect(v.applicants.map((r) => r.player.name)).toEqual(["Tankadin"]);
-    expect(v.party.length).toBe(1);
-    expect(v.countLine).toBe("showing 1 of 3");
-    expect(v.hiddenCount).toBe(2);
-  });
-  // Review round 1, finding 5: the player's own "self" row is grouped with "party", not with the applicants.
-  test("the 'self' kind is grouped into party, not into applicants", () => {
-    const withSelf = {
-      seq: 1,
-      at: 0,
-      players: parseRoster(
-        "a|Applicant-Realm|2|H|100\n" +
-        "p|Mate-Realm|6|T|200\n" +
-        "s|Me-Realm|11|D|300\n",
-      ),
-    };
-    const v = panelView(tEn, { roster: withSelf, verdicts: new Map(), settings, now: 0 });
-    expect(v.applicants.map((r) => r.player.name)).toEqual(["Applicant"]);
-    expect(v.party.map((r) => r.player.name)).toEqual(["Mate", "Me"]);
-    expect(v.countLine).toBe("showing 1 of 1"); // "self" and "party" never count toward the applicant total
-  });
-});
 
 describe("autoQueue", () => {
   test("queues uncached applicants oldest first, skips the cached and the in-flight ones", () => {

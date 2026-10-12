@@ -1,6 +1,6 @@
 // The "What makes this score" block (canvas variant B, docs/design/canvas/ScoreDriversBars.dc.html): the view model
 // behind components/ScoreDrivers.tsx. Spec: docs/superpowers/specs/2026-09-24-score-drivers-design.md.
-import type { Evaluation } from "../types.ts";
+import type { Driver, Evaluation } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { formatEvidenceValue } from "./axes.ts";
@@ -28,24 +28,26 @@ export interface DriversView { rows: DriverRow[]; path: DriversPath | null }
 
 const signedPoints = (n: number): string => `${n > 0 ? "+" : "−"}${Math.abs(n)}`;
 
+/** A driver's value with its unit ("1.6 / run") and the average player's ("avg 0.7"). */
+export function driverValues(t: T, locale: Locale, d: Pick<Driver, "source" | "value" | "reference">): { value: string; reference: string } {
+  const unit = UNIT[d.source] ?? "plain";
+  const fmt = (u: Unit, v: number) => t(`drivers.unit.${u}`, { value: formatEvidenceValue(locale, d.source, v) });
+  return { value: fmt(unit, d.value), reference: t("drivers.avg", { value: fmt(REF_UNIT[unit], d.reference) }) };
+}
+
 export function driversView(t: T, locale: Locale, ev: Evaluation, titleOf: (source: string) => string): DriversView | null {
   const ds = ev.drivers ?? [];
   const costs = ds.filter((d) => d.impact < 0).sort((a, b) => a.impact - b.impact).slice(0, MAX_COSTS);
   const earns = ds.filter((d) => d.impact > 0).sort((a, b) => b.impact - a.impact).slice(0, MAX_EARNS);
   if (costs.length + earns.length === 0) return null;
-  const fmt = (unit: Unit, source: string, v: number) => t(`drivers.unit.${unit}`, { value: formatEvidenceValue(locale, source, v) });
-  const rows = [...costs, ...earns].map((d): DriverRow => {
-    const unit = UNIT[d.source] ?? "plain";
-    return {
-      source: d.source,
-      title: titleOf(d.source),
-      impact: signedPoints(d.impact),
-      tone: d.impact < 0 ? "bad" : "good",
-      barPx: Math.min(BAR_MAX_PX, Math.abs(d.impact) * BAR_PX_PER_POINT),
-      value: fmt(unit, d.source, d.value),
-      reference: t("drivers.avg", { value: fmt(REF_UNIT[unit], d.source, d.reference) }),
-    };
-  });
+  const rows = [...costs, ...earns].map((d): DriverRow => ({
+    source: d.source,
+    title: titleOf(d.source),
+    impact: signedPoints(d.impact),
+    tone: d.impact < 0 ? "bad" : "good",
+    barPx: Math.min(BAR_MAX_PX, Math.abs(d.impact) * BAR_PX_PER_POINT),
+    ...driverValues(t, locale, d),
+  }));
   const nv = ev.nextVerdict;
   const path: DriversPath | null = nv ? {
     message: nv.reachable ? t("drivers.path.reach") : t("drivers.path.out", { count: nv.sources.length }),

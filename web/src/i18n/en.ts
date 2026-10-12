@@ -857,5 +857,26 @@ export const en = {
       last7d: "runs · 7 days",
       runsIndexed: "{count, plural, one {# run indexed} other {# runs indexed}}",
     },
+    synth: {
+      verdictFor: "Verdict for a +{level}",
+      summary: {
+        both: "Helped by {pros}, held back by {cons}.",
+        pros: "Helped by {pros}; nothing costs much.",
+        cons: "Held back by {cons}.",
+        none: "No signal stands out.",
+        insufficient: "Not enough scored runs for a verdict: {min} needed.",
+      },
+      confidence: {
+        scored: "{count, plural, one {# run scored} other {# runs scored}} out of {indexed} indexed",
+        low: ". Few runs: the verdict can move fast.",
+      },
+      flip: {
+        title: "To reach {verdict}: +{pts} pts",
+        gain: "{axis}, up to +{pts}",
+        gap: "{value} today · {reference}",
+        out: "Bringing {count, plural, one {this signal} other {these # signals}} to the average player's level is not enough.",
+      },
+      info: "{why}. Not counted in the score.",
+    },
   },
 } as const;

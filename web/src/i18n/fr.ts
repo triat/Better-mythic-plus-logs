@@ -851,5 +851,26 @@ export const fr: Mirror<typeof en> = {
       last7d: "runs · 7 jours",
       runsIndexed: "{count, plural, one {# run indexé} other {# runs indexés}}",
     },
+    synth: {
+      verdictFor: "Verdict pour une +{level}",
+      summary: {
+        both: "Porté par {pros}, mais freiné par {cons}.",
+        pros: "Porté par {pros} ; rien ne lui coûte beaucoup.",
+        cons: "Freiné par {cons}.",
+        none: "Aucun signal ne se détache.",
+        insufficient: "Pas assez de runs notés pour un verdict : il en faut {min}.",
+      },
+      confidence: {
+        scored: "{count, plural, one {# run noté} other {# runs notés}} sur {indexed} indexés",
+        low: ". Peu de runs : le verdict peut bouger vite.",
+      },
+      flip: {
+        title: "Pour passer {verdict} : +{pts} pts",
+        gain: "{axis}, jusqu'à +{pts}",
+        gap: "{value} aujourd'hui · {reference}",
+        out: "Ramener {count, plural, one {ce signal} other {ces # signaux}} au niveau du joueur moyen ne suffit pas.",
+      },
+      info: "{why}. Ne compte pas dans le score.",
+    },
   },
 };

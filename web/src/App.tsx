@@ -4,7 +4,7 @@ import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
-import { MAX_COMPARE, initialPick, pruneSelection, toggleSelection, withPayloadSummary } from "./lib/history.ts";
+import { MAX_COMPARE, compareKeys, compareSearch, pruneSelection, toggleSelection, withPayloadSummary } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
 import { mineRequest } from "./lib/me.ts";
@@ -171,7 +171,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   regionRef.current = region;
   const [tabs, setTabs] = useState<HistoryItem[]>([]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
-  // The Compare page's picker (redesign phase 1 caps it at MAX_COMPARE = 3 — phase 4: 5).
+  // The Compare page's selection (up to MAX_COMPARE), mirrored into the URL as repeated `pick` params.
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToastState] = useState<{ message: string; action: ToastAction | null } | null>(null);
@@ -257,8 +257,12 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (q) setForm((f) => ({ ...f, character: q }));
     if (location.search) history.replaceState({}, "", location.pathname);
     loadHistory().then((items) => {
-      // The profile header's Compare: that profile ticked on arrival.
-      if (page === "compare") setSelected(initialPick(params.toString(), items.map((i) => i.key)));
+      // `/compare?pick=a&pick=b…` (the profile header's Compare is the one-key case): the picks that are history entries.
+      if (page === "compare") {
+        const keys = compareKeys(params.toString(), items.map((i) => i.key));
+        history.replaceState({}, "", "/compare" + compareSearch(keys));
+        setSelected(keys);
+      }
       if (page !== "candidate" || items.length === 0) return;
       const want = params.get("open");
       const key = (want && items.some((i) => i.key === want) ? want : null) ?? items[0]!.key;
@@ -269,6 +273,12 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     });
     // Once per page load: the URL is read at boot only.
   }, [loadHistory, showTab]);
+
+  // The Compare page keeps its selection in the URL (a reload keeps it), including loadHistory's pruning. The boot
+  // effect above has already read (and cleared) the arriving query, so this first run writes nothing it needs.
+  useEffect(() => {
+    if (page === "compare") history.replaceState({}, "", "/compare" + compareSearch(selected));
+  }, [selected]);
 
   // Self-heal: whenever the cache was cleared (e.g. by a reload that raced a tab switch),
   // re-fetch the active tab so it never sits on "loading…". `tick` re-runs this after touch().

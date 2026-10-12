@@ -1,8 +1,9 @@
 import type { T } from "../i18n/t.ts";
 import type { HistoryItem, LookupPayload, Region } from "../types.ts";
+import type { MenuItem } from "./header.ts";
 import { regionLabel } from "./regions.ts";
 
-export const MAX_COMPARE = 3;
+export const MAX_COMPARE = 5;
 
 export function toggleSelection(selected: string[], key: string): string[] {
   if (selected.includes(key)) return selected.filter((k) => k !== key);
@@ -10,10 +11,47 @@ export function toggleSelection(selected: string[], key: string): string[] {
   return next.length > MAX_COMPARE ? next.slice(next.length - MAX_COMPARE) : next;
 }
 
-/** `/compare?pick=<key>` (the profile header's Compare): that entry ticked when it is in the history, else nothing. */
-export function initialPick(search: string, existingKeys: readonly string[]): string[] {
-  const pick = new URLSearchParams(search).get("pick");
-  return pick !== null && existingKeys.includes(pick) ? [pick] : [];
+/**
+ * `/compare?pick=a&pick=b…`: every `pick` param in order, each kept only once and only when it is a history key, capped
+ * at MAX_COMPARE. The profile header's Compare (`?pick=<key>`) is the one-key case.
+ */
+export function compareKeys(search: string, existingKeys: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const k of new URLSearchParams(search).getAll("pick")) {
+    if (out.length >= MAX_COMPARE) break;
+    if (existingKeys.includes(k) && !out.includes(k)) out.push(k);
+  }
+  return out;
+}
+
+/** "?pick=a&pick=b", or "" for an empty selection (URLSearchParams, so JSON keys are encoded). */
+export function compareSearch(keys: readonly string[]): string {
+  if (keys.length === 0) return "";
+  const params = new URLSearchParams();
+  for (const k of keys) params.append("pick", k);
+  return `?${params}`;
+}
+
+/** Appends a key unless it is already there or the selection is full (then unchanged). */
+export function addPick(selected: readonly string[], key: string): string[] {
+  if (selected.includes(key) || selected.length >= MAX_COMPARE) return [...selected];
+  return [...selected, key];
+}
+
+/** The "+ Add a candidate" menu: the history entries not selected, newest first (hint "+18 · 77"). */
+export function pickMenu(t: T, items: readonly HistoryItem[], selected: readonly string[]): MenuItem[] {
+  return items
+    .filter((it) => !selected.includes(it.key))
+    .map((it, i) => ({ it, i }))
+    .sort((a, b) => b.it.fetchedAt - a.it.fetchedAt || a.i - b.i)
+    .map(({ it }) => ({
+      value: it.key,
+      label: it.label,
+      hint: it.score === null
+        ? t("compare.pick.itemLevel", { level: it.targetLevel })
+        : t("compare.pick.itemHint", { level: it.targetLevel, score: Math.round(it.score) }),
+      on: false,
+    }));
 }
 
 export const pruneSelection = (selected: string[], existingKeys: string[]): string[] =>

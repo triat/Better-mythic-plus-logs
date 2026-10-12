@@ -482,6 +482,11 @@ export const en = {
   },
   compare: {
     building: "building compare view…",
+    pick: {
+      add: "+ Add a candidate", addFull: "+ Add ({max} max)", remove: "Remove {name}", head: "Recent lookups",
+      hint: "From three candidates on, the view becomes a ranking", none: "Pick at least two profiles.",
+      itemHint: "+{level} · {score}", itemLevel: "+{level}",
+    },
     evaluation: "Evaluation", score: "Score", na: "n/a", summary: "Summary", target: "Target level", auto: " auto",
     covered: "Dungeons covered", atTarget: "Dungeons ≥ target",
     medianKey: "Median key level", median: "Median {metric}", medianOutput: "Median output", medianParse: "Median parse %", avgDeaths: "Avg deaths",
@@ -738,7 +743,7 @@ export const en = {
     },
     compare: {
       title: "Compare",
-      sub: "Tick two or three profiles from your recent lookups.",
+      sub: "Pick two to five profiles from your recent lookups.",
       empty: "No profile to compare yet: look players up first.",
       count: "{sel} / {max} selected",
       pick: "Pick at least two profiles.",

@@ -476,6 +476,11 @@ export const fr: Mirror<typeof en> = {
   },
   compare: {
     building: "construction de la vue de comparaison…",
+    pick: {
+      add: "+ Ajouter un candidat", addFull: "+ Ajouter ({max} max)", remove: "Retirer {name}", head: "Recherches récentes",
+      hint: "À partir de trois candidats, la vue devient un classement", none: "Choisis au moins deux profils.",
+      itemHint: "+{level} · {score}", itemLevel: "+{level}",
+    },
     evaluation: "Évaluation", score: "Score", na: "n/a", summary: "Résumé", target: "Niveau cible", auto: " auto",
     covered: "Donjons couverts", atTarget: "Donjons ≥ cible",
     medianKey: "Key médiane", median: "{metric} médian", medianOutput: "Output médian", medianParse: "Parse médian %", avgDeaths: "Morts moy.",
@@ -732,7 +737,7 @@ export const fr: Mirror<typeof en> = {
     },
     compare: {
       title: "Comparer",
-      sub: "Coche deux ou trois profils parmi tes recherches récentes.",
+      sub: "Choisis de deux à cinq profils parmi tes recherches récentes.",
       empty: "Rien à comparer pour l'instant : cherche d'abord des joueurs.",
       count: "{sel} / {max} sélectionnés",
       pick: "Choisis au moins deux profils.",

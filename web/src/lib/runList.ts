@@ -143,7 +143,7 @@ const SORTS: Record<RunSort, (a: MPlusRun, b: MPlusRun) => number> = {
 };
 
 /** The role whose utility column the list shows: the evaluation's, else the run signals' own. */
-const roleOf = (p: LookupPayload, r: MPlusRun): Role =>
+export const roleOf = (p: LookupPayload, r: MPlusRun): Role =>
   p.evaluation?.role ?? (r.signals?.role === "healer" ? "healer" : r.signals?.role === "tank" ? "tank" : "dps");
 
 export function runListView(t: T, locale: Locale, p: LookupPayload, filter: RunFilter, sort: RunSort, now = Date.now()): RunListView {

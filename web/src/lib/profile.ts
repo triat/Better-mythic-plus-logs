@@ -36,15 +36,26 @@ export function candHref(key: string, s: Partial<CandState>): string {
   return `/candidate?${p}`;
 }
 
-/** Switching profile in place (Récents, the palette, a lookup): the tab stays, the run and the sheet belonged to the
- * previous profile and go. */
-export const candSwitchHref = (key: string, search: string): string => candHref(key, { tab: candState(search).tab });
+/** The history key the URL names (`open`), or null. */
+export const candOpen = (search: string): string | null => new URLSearchParams(search).get("open");
 
-/** The state a profile opens with: the URL's, without a run this payload does not hold (a link from another lookup of
- * the same character, a URL left behind by a profile switch). */
-export function candInitial(search: string, runKeys: readonly string[]): CandState {
+/**
+ * Landing on the profile `key` in place (Récents, the palette, a lookup, Refresh): the same profile keeps the whole
+ * state, run and sheet included; another one keeps the tab, and the run and sheet only when `sameCharacter` (a
+ * re-evaluation of this character for another key level: `candInitial` then drops a run the new payload lacks).
+ * Written before the new key is shown, so the profile that mounts reads its own URL.
+ */
+export function candSwitchHref(key: string, search: string, sameCharacter = false): string {
   const s = candState(search);
-  return s.run !== null && !runKeys.includes(s.run) ? { ...s, run: null, sheet: false } : s;
+  return candOpen(search) === key || sameCharacter ? candHref(key, s) : candHref(key, { tab: s.tab });
+}
+
+/** The state the profile `key` opens with: the URL's, with its run and sheet only when the URL names this profile
+ * (`open`) and the payload holds that run (a link from another lookup of the same character, a URL left behind by a
+ * profile switch). */
+export function candInitial(search: string, key: string, runKeys: readonly string[]): CandState {
+  const s = candState(search);
+  return s.run !== null && (candOpen(search) !== key || !runKeys.includes(s.run)) ? { ...s, run: null, sheet: false } : s;
 }
 
 /** "<report code>:<fight id>", the key of a run in `CandState.run`. */
@@ -112,11 +123,13 @@ export function profileHeader(t: T, _locale: Locale, p: LookupPayload): ProfileH
   const token = classToken(c.classID);
   const klass = CLASS_NAMES[c.classID] ?? t("cand.header.unknownClass", { id: String(c.classID) });
   const rioScore = p.rio?.seasons[0]?.all;
-  const scoreLabel = t("verdict.stats.score", { metric: p.metric.toUpperCase() });
+  const ilvlLabel = t("verdict.stats.ilvl");
+  const stats = heroStats(t, p);
   const facts: HeaderFact[] = [
     ...(typeof rioScore === "number" ? [{ label: t("cand.header.rio"), value: rioScore.toFixed(0) }] : []),
-    // The WCL metric score stays on the Méthode / Runs side: the header keeps Raider.IO's, as the mockup does.
-    ...heroStats(t, p).filter((s) => s.label !== scoreLabel),
+    // The item level first, then the WCL metric score ("DPS score") right before the region / server ranks it holds.
+    ...stats.filter((s) => s.label === ilvlLabel),
+    ...stats.filter((s) => s.label !== ilvlLabel),
     ...(p.rio ? [{ label: t("cand.header.last7d"), value: String(p.rio.derived.runsLast7d) }] : []),
   ];
   const other = p.metric === "hps" ? "dps" : "hps";

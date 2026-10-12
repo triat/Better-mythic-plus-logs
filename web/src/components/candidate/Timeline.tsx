@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useId, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import { costText } from "../../lib/deepdive.ts";
 import { stepEvent } from "../../lib/timeline.ts";
@@ -28,6 +28,11 @@ export function Timeline({ view, onToggle, onSelect, onAnalyse, analyseDisabled,
   const focusable = selected ?? view.events[0] ?? null;
   // One "Analyser · 3 pts" in the checklist, on the first layer that needs the analysis.
   const analyseOn = view.chips.find((c) => c.analyse)?.key ?? null;
+  // A disabled layer's reason: read out through aria-describedby, and shown under the checklist while that chip has
+  // the focus (a tap on a touch screen focuses it too) — a title alone reaches neither.
+  const ids = useId();
+  const [reasonOf, setReasonOf] = useState<LayerKey | null>(null);
+  const reason = view.chips.find((c) => c.key === reasonOf)?.disabled ?? null;
 
   const onKey = (e: KeyboardEvent<HTMLButtonElement>, id: string) => {
     const next = stepEvent(view.events, id, e.key);
@@ -43,7 +48,8 @@ export function Timeline({ view, onToggle, onSelect, onAnalyse, analyseDisabled,
         <span className="tl-lbl">{t("cand.timeline.show")}</span>
         {view.chips.map((c) => (
           <Layer
-            key={c.key} c={c} onToggle={onToggle}
+            key={c.key} c={c} onToggle={onToggle} reasonId={`${ids}-why-${c.key}`}
+            onFocusChange={(on) => setReasonOf((cur) => (on ? c.key : cur === c.key ? null : cur))}
             analyse={c.key === analyseOn
               ? <button type="button" className="btn tl-analyse" disabled={analyseDisabled} title={analyseTitle} onClick={onAnalyse}>
                   {t("runs.analyze", { cost: costText(t, 1) })}
@@ -51,6 +57,7 @@ export function Timeline({ view, onToggle, onSelect, onAnalyse, analyseDisabled,
               : null}
           />
         ))}
+        {reason && <p className="tl-reason" aria-hidden="true">{reason}</p>}
       </div>
       <div className="tl-main">
         <div className="tl-row">
@@ -99,19 +106,32 @@ export function Timeline({ view, onToggle, onSelect, onAnalyse, analyseDisabled,
 const markerCls = (m: Marker, selected: string | null): string =>
   `tl-mark tl-mark-${m.kind}` + (m.kind !== "cast" && m.id === selected ? " on" : "");
 
-function Layer({ c, onToggle, analyse }: { c: LayerChip; onToggle: (key: LayerKey) => void; analyse: ReactNode }) {
+interface LayerProps {
+  c: LayerChip;
+  onToggle: (key: LayerKey) => void;
+  analyse: ReactNode;
+  /** The id of the visually hidden reason a disabled chip is described by. */
+  reasonId: string;
+  /** A disabled chip took the focus or a tap (true: show its reason), or lost the focus (false). */
+  onFocusChange: (on: boolean) => void;
+}
+
+function Layer({ c, onToggle, analyse, reasonId, onFocusChange }: LayerProps) {
   const disabled = c.disabled !== null;
   return (
     <div className="tl-layer-wrap">
       <button
         type="button" className={"tl-layer" + (c.on ? " on" : "")} aria-pressed={c.on} aria-disabled={disabled || undefined}
-        title={c.disabled ?? undefined} onClick={() => { if (!disabled) onToggle(c.key); }}
+        aria-describedby={disabled ? reasonId : undefined} title={c.disabled ?? undefined}
+        onClick={() => { if (disabled) onFocusChange(true); else onToggle(c.key); }}
+        onFocus={disabled ? () => onFocusChange(true) : undefined} onBlur={disabled ? () => onFocusChange(false) : undefined}
       >
         <span className="tl-box" aria-hidden="true">{c.on ? "✓" : ""}</span>
         <span className={"tl-sw tl-sw-" + c.key} aria-hidden="true" />
         <span className="tl-layer-label">{c.label}</span>
         <span className="mono tl-layer-count">{c.count}</span>
       </button>
+      {disabled && <span id={reasonId} className="sr-only">{c.disabled}</span>}
       {analyse}
     </div>
   );

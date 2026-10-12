@@ -863,7 +863,7 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .rl-head { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 6px 8px 10px; border-bottom: 1px solid var(--border); }
 .rl-th { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--label); white-space: nowrap; }
 .rl-head .rl-th:not(.rl-sortable), .rl-head .rl-abbr-sp { display: none; }
-.rl-sortable button { padding: 0; border: 0; background: none; font: inherit; font-size: 11px; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; min-height: 24px; }
+.rl-sortable button { padding: 0; border: 0; background: none; font: inherit; font-size: 11px; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; min-height: 32px; }
 .rl-sortable button:hover, .rl-sortable button.on { color: var(--text); }
 .rl-run { margin-top: 2px; border-radius: var(--radius); border: 1px solid transparent; cursor: pointer; }
 .rl-run:hover { background: var(--card-2); }
@@ -951,6 +951,10 @@ button.rp-moment:hover { background: var(--card-2); }
 .tl-sw-control { border-radius: 2px; border-style: dashed; border-color: var(--label); }
 .tl-layer-label { min-width: 0; }
 .tl-layer-count { font-size: 12px; color: var(--label); }
+/* A disabled layer's reason while its chip has the focus (keyboard or tap); screen readers get it via aria-describedby. */
+.tl-reason { margin: 2px 0 0; padding: 0 8px; font-size: 12px; line-height: 1.4; color: var(--muted); }
+/* Text for screen readers only. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .tl-analyse { align-self: flex-start; height: 32px; margin: 0 0 4px 34px; font-size: 13px; font-weight: 600; background: var(--card-2); border-color: var(--border-2); color: var(--text); }
 .tl-main { flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .tl-row { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; align-items: center; }
@@ -1010,6 +1014,8 @@ button.tl-mark:focus-visible { outline: 2px solid var(--link); outline-offset: 2
 .sheet-deaths-pass { color: var(--pass); } .sheet-deaths-neutral { color: var(--text-soft); } .sheet-deaths-dim { color: var(--label); }
 .sheet-panel { position: relative; width: min(100vw, max(960px, 72vw)); max-width: 100vw; height: 100%; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; background: var(--card); border-left: 1px solid var(--border-2); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
 .sheet-panel.full { border-left: 0; }
+/* Focusable (tabIndex -1) only so a click on plain text keeps the focus in the dialog: no ring of its own. */
+.sheet-panel:focus { outline: none; }
 .sheet-head { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
 .sheet-head-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .sheet-abbr { width: 40px; height: 40px; border-radius: 10px; background: var(--card-3); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }

@@ -4,8 +4,8 @@ import { createPortal } from "react-dom";
 import type { LookupPayload, MPlusRun, RunDefensives } from "../../types.ts";
 import { costText } from "../../lib/deepdive.ts";
 import { dungeonAbbr } from "../../lib/runList.ts";
-import { SHEET_TABS, sheetLayout, sheetRuns, sheetTabAfter, trapFocus } from "../../lib/runSheet.ts";
-import type { SheetTab } from "../../lib/runSheet.ts";
+import { SHEET_TABS, isEditingField, sheetKey, sheetLayout, sheetRuns, sheetTabAfter, trapFocus } from "../../lib/runSheet.ts";
+import type { SheetFocus, SheetTab } from "../../lib/runSheet.ts";
 import { runDetail } from "../../lib/runView.ts";
 import type { RunDetail, RunStat } from "../../lib/runView.ts";
 import { timelineView } from "../../lib/timeline.ts";
@@ -61,6 +61,7 @@ export function RunSheet(props: RunSheetProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const ddRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const layout = sheetLayout(useViewportWidth());
   const runKey = `${run.reportCode}:${run.fightID}`;
   const list = useMemo(() => (layout.list ? sheetRuns(t, locale, payload, runKey) : []), [layout.list, t, locale, payload, runKey]);
@@ -82,23 +83,38 @@ export function RunSheet(props: RunSheetProps) {
     // Only on open: switching run keeps the focus where the reader put it.
   }, []);
 
-  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Escape") {
+  // Escape and the focus trap listen on the document while the sheet is mounted, so they work wherever the focus is —
+  // inside, or on the body after a click on plain text — but leave another dialog over the sheet (the palette) alone.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const root = rootRef.current;
+      if (!root) return;
+      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const focus: SheetFocus = active && root.contains(active) ? "inside" : !active || active === document.body ? "none" : "outside";
+      const action = sheetKey(e.key, focus, active !== null && isEditingField(active.tagName, active.getAttribute("type")));
+      if (action === null) return;
+      if (action === "trap") {
+        const els = focusables(root);
+        const next = trapFocus(focus === "inside" ? els.indexOf(active!) : -1, els.length, e.shiftKey);
+        if (next === null) return;
+        e.preventDefault();
+        els[next]!.focus();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
-      onClose();
-      return;
-    }
-    if (e.key !== "Tab" || !rootRef.current) return;
-    const els = focusables(rootRef.current);
-    const next = trapFocus(els.indexOf(document.activeElement as HTMLElement), els.length, e.shiftKey);
-    if (next === null) return;
-    e.preventDefault();
-    els[next]!.focus();
-  };
+      // A table edit in progress: Escape leaves the field (to the panel, still inside the dialog), a second one closes.
+      if (action === "leave-field") panelRef.current?.focus();
+      else onCloseRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   return createPortal(
-    <div ref={rootRef} className="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" onKeyDown={onKey}>
+    <div ref={rootRef} className="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div className="sheet-scrim" aria-hidden="true" onClick={onClose} />
       {layout.list && (
         <nav className="sheet-list" aria-label={t("cand.sheet.list")}>
@@ -121,7 +137,8 @@ export function RunSheet(props: RunSheetProps) {
           ))}
         </nav>
       )}
-      <section className={"sheet-panel" + (layout.full ? " full" : "")}>
+      {/* tabIndex -1: a click on plain text inside keeps the focus in the dialog instead of the page's body. */}
+      <section ref={panelRef} tabIndex={-1} className={"sheet-panel" + (layout.full ? " full" : "")}>
         <SheetContent key={runKey} {...props} closeRef={closeRef} ddRef={ddRef} ddOpen={focusDeepdive} />
       </section>
     </div>,

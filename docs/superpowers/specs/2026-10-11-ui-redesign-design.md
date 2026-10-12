@@ -162,6 +162,10 @@ What phase 2 (the candidate profile) settled while it was planned and built; the
    patches its Récents item on load), so Récents and the profile header always agree.
 7. **Class and spec names stay English in the French UI**: the app has no localized class or spec names
    (`src/wow/classes.ts` is English, WCL's names); the profile header and the run rows show them as WCL does.
+8. **Dungeon coverage** lives in the Donjons tab (its missing-dungeons line); there is no coverage strip on the
+   Synthèse.
+9. **The profile header's facts** keep the WCL metric score ("DPS score") next to the region / server ranks it holds:
+   RIO, ilvl, the WCL score, region, server, previous season, runs in the last 7 days.
 
 ## Out of scope / follow-ups
 

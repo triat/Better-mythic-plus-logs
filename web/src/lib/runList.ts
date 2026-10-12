@@ -45,9 +45,12 @@ export interface RunListView {
   util: "kicks" | "dispels";
   /** "1/8 analysé". */
   analysedLine: string;
-  /** Runs that can still be analysed (`unanalyzedRuns`). */
+  /** The runs the batch analyses: the list's own runs (`perDungeon.runs`, whatever the filter) that can still be analysed
+   * — never the previous level's best, which `unanalyzedRuns` also holds but the list does not show. */
+  pendingRuns: MPlusRun[];
+  /** `pendingRuns.length`. */
   pending: number;
-  /** "Analyser les 7 autres · ~21 pts"; null when nothing is left. */
+  /** "Analyser les 7 autres · ~21 pts", counting `pendingRuns` exactly; null when nothing is left. */
   batchLabel: string | null;
   missing: string[];
 }
@@ -157,7 +160,9 @@ export function runListView(t: T, locale: Locale, p: LookupPayload, filter: RunF
   const kept = filter === "deaths" ? all.filter((r) => (r.signals?.deaths.count ?? 0) > 0) : all;
   const rows = [...kept].sort(SORTS[sort]).map((r) => runListRow(t, locale, p, r, roleOf(p, r), now));
   const analysed = all.filter((r) => analysisFor(p, r) !== null).length;
-  const pending = unanalyzedRuns(p).length;
+  const shown = new Set(all.map((r) => `${r.reportCode}:${r.fightID}`));
+  const pendingRuns = unanalyzedRuns(p).filter((r) => shown.has(`${r.reportCode}:${r.fightID}`));
+  const pending = pendingRuns.length;
   const batchLabel = pending === 0
     ? null
     : t(analysed === 0 ? "cand.runs.analyseAll" : "cand.runs.analyseOthers", { count: pending, cost: costText(t, pending) });
@@ -165,14 +170,17 @@ export function runListView(t: T, locale: Locale, p: LookupPayload, filter: RunF
     rows,
     util: (p.evaluation?.role ?? (all[0] ? roleOf(p, all[0]) : "dps")) === "healer" ? "dispels" : "kicks",
     analysedLine: t("cand.runs.analysed", { n: analysed, total: all.length }),
+    pendingRuns,
     pending,
     batchLabel,
     missing: missingDungeons(p),
   };
 }
 
-/** The run the panel shows: the one `key` names when the payload holds it, else the list's first row; null for none. */
+/** The run the panel shows: the one `key` names when the list shows it, else the list's first row (a run the filter
+ * hides is never selected out of sight); null when the list is empty. */
 export function pickRun(p: LookupPayload, rows: readonly RunListRow[], key: string | null): MPlusRun | null {
   const byKey = (k: string) => p.perDungeon.runs.find((r) => `${r.reportCode}:${r.fightID}` === k) ?? null;
-  return (key !== null ? byKey(key) : null) ?? (rows[0] ? byKey(rows[0].key) : null);
+  const shown = key !== null && rows.some((r) => r.key === key) ? key : rows[0]?.key ?? null;
+  return shown !== null ? byKey(shown) : null;
 }

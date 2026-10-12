@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Ref } from "react";
 import type { LookupPayload } from "../../types.ts";
 import { analysisFor, tableWarningText } from "../../lib/deepdive.ts";
@@ -43,6 +43,10 @@ export function RunsTab({ payload, deepdive, run: runKey, onRun, onSheet, layers
   const run = pickRun(payload, view.rows, runKey);
   const analysis = run ? analysisFor(payload, run) : null;
   const selKey = run ? `${run.reportCode}:${run.fightID}` : null;
+  // A filter that hides the selected run selects the first visible one: the profile's state (and the URL) follow.
+  useEffect(() => {
+    if (runKey !== null && selKey !== null && selKey !== runKey) onRun(selKey);
+  }, [runKey, selKey, onRun]);
   // The picked death belongs to one run: another run opens on its own default.
   const event = run && selKey ? shownEvent(pick, selKey, run, analysis) : null;
   const tableWarning = tableWarningText(t, payload.deepdiveSummary.tableWarning);
@@ -65,7 +69,7 @@ export function RunsTab({ payload, deepdive, run: runKey, onRun, onSheet, layers
             type="button" className="btn rl-btn"
             disabled={deepdive.analyzing !== null || !deepdive.canAfford(view.pending)}
             title={deepdive.canAfford(view.pending) ? undefined : deepdive.quotaTooltip}
-            onClick={() => void deepdive.analyzeAll()}
+            onClick={() => void deepdive.analyzeAll(view.pendingRuns)}
           >
             {deepdive.progress ?? view.batchLabel}
           </button>

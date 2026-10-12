@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { SHEET_TABS, sheetLayout, sheetRuns, sheetTabAfter, trapFocus } from "./runSheet.ts";
+import { SHEET_TABS, isEditingField, sheetKey, sheetLayout, sheetRuns, sheetTabAfter, trapFocus } from "./runSheet.ts";
+import { runListView } from "./runList.ts";
 import { NOW, payload, runs } from "./vachaman.fixture.ts";
 
 const tFr = makeT(fr, "fr");
@@ -30,6 +31,43 @@ describe("sheetRuns", () => {
     for (const k of byDeaths(1)) expect(rows.find((r) => r.key === k)!.deaths).toEqual({ text: "1 death", tone: "neutral" });
     for (const k of byDeaths(0)) expect(rows.find((r) => r.key === k)!.deaths).toEqual({ text: "0 deaths", tone: "dim" });
     expect(rows.find((r) => r.key === `${runs[1]!.reportCode}:1`)!.deaths).toEqual({ text: "—", tone: "dim" });
+  });
+});
+
+describe("sheetRuns — every run of the profile", () => {
+  test("a run the Runs tab's \"with deaths\" filter hides is still listed and marked", () => {
+    const p = payload();
+    const deathless = p.perDungeon.runs.find((r) => r.signals!.deaths.count === 0)!;
+    const key = `${deathless.reportCode}:${deathless.fightID}`;
+    expect(runListView(tEn, "en", p, "deaths", "parse", NOW).rows.some((r) => r.key === key)).toBe(false);
+    const rows = sheetRuns(tEn, "en", p, key, NOW);
+    expect(rows.length).toBe(p.perDungeon.runs.length);
+    expect(rows.filter((r) => r.on).map((r) => r.key)).toEqual([key]);
+  });
+});
+
+describe("sheetKey", () => {
+  test("Escape closes from inside or from the body, but only leaves a field being edited", () => {
+    expect(sheetKey("Escape", "inside", false)).toBe("close");
+    expect(sheetKey("Escape", "none", false)).toBe("close");
+    expect(sheetKey("Escape", "inside", true)).toBe("leave-field");
+    expect(sheetKey("Escape", "none", true)).toBe("close");
+  });
+  test("Tab is trapped from inside and from the body; another dialog over the sheet keeps its keys", () => {
+    expect(sheetKey("Tab", "inside", false)).toBe("trap");
+    expect(sheetKey("Tab", "none", false)).toBe("trap");
+    expect(sheetKey("Escape", "outside", false)).toBeNull();
+    expect(sheetKey("Tab", "outside", false)).toBeNull();
+    expect(sheetKey("Enter", "inside", false)).toBeNull();
+  });
+  test("a field being edited: text inputs, text areas, list boxes; not a checkbox or a button", () => {
+    expect(isEditingField("INPUT", null)).toBe(true);
+    expect(isEditingField("input", "number")).toBe(true);
+    expect(isEditingField("TEXTAREA", null)).toBe(true);
+    expect(isEditingField("SELECT", null)).toBe(true);
+    expect(isEditingField("INPUT", "checkbox")).toBe(false);
+    expect(isEditingField("BUTTON", null)).toBe(false);
+    expect(isEditingField("SECTION", null)).toBe(false);
   });
 });
 

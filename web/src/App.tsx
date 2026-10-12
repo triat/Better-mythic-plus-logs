@@ -200,9 +200,10 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     return r.items;
   }, []);
 
-  /** On a 404 (server restarted / key evicted), `items` is the fresh (already reloaded) tab list. */
-  const fetchPayload = useCallback(async (key: string): Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }> => {
-    const cached = payloads.current.get(key);
+  /** On a 404 (server restarted / key evicted), `items` is the fresh (already reloaded) tab list. `fresh` asks the server
+   * even when the cache holds the key, and replaces the cached payload only once the new one is in. */
+  const fetchPayload = useCallback(async (key: string, fresh = false): Promise<{ payload: LookupPayload | null; items: HistoryItem[] | null }> => {
+    const cached = fresh ? undefined : payloads.current.get(key);
     if (cached) return { payload: cached, items: null };
     const r = await api.historyEntry(key);
     if (!r.ok) {
@@ -276,8 +277,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (activeKey && !payloads.current.has(activeKey)) void fetchPayload(activeKey);
   }, [activeKey, fetchPayload, tick]);
 
-  /** Runs a lookup and shows its result here; the history key, or null when it was refused (the toast says why). */
-  const runLookup = useCallback(async (req: LookupRequest, refresh: boolean): Promise<string | null> => {
+  /** Runs a lookup and shows its result here; the history key, or null when it was refused (the toast says why).
+   * `sameCharacter` (Refresh, re-evaluate): the candidate page keeps the run and the sheet across the new key. */
+  const runLookup = useCallback(async (req: LookupRequest, refresh: boolean, sameCharacter = false): Promise<string | null> => {
     setBusy(t(refresh ? "header.busy.refreshing" : "header.busy.lookingUp", { name: req.character }));
     const r = await api.lookup({ ...req, refresh, mine: mineRequest(settings.characters, req.character, req.region ?? regionRef.current) });
     setBusy(null);
@@ -287,6 +289,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
+    // The URL names the new profile before it mounts: its run / sheet are read from the URL at mount (candInitial).
+    if (page === "candidate") history.replaceState({}, "", candSwitchHref(r.key, location.search, sameCharacter));
     setActiveKey(r.key);
     // A user lookup whose effective region differs (a pasted Raider.IO URL carries its own) flips the
     // remembered region to it. A refresh is not a choice: refreshing a foreign-region tab leaves it alone.
@@ -306,10 +310,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   /** A lookup from the sidebar, the palette or a page: shown in place, else the candidate page once it answered — the
    * navigation opens the stored result (0 pts), so no lookup is ever repeated by it. */
   const lookupAndLand = useCallback(async (req: LookupRequest, refresh = false) => {
-    const key = await runLookup(req, refresh);
-    if (key === null) return;
-    if (!inPlace) location.assign(candidateHref(key));
-    else if (page === "candidate") history.replaceState({}, "", candSwitchHref(key, location.search));
+    const key = await runLookup(req, refresh, refresh);
+    if (key !== null && !inPlace) location.assign(candidateHref(key));
   }, [runLookup]);
 
   const onLookup = () => void lookupAndLand(formToRequest(form, yourKey, region));
@@ -363,8 +365,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!tab) return;
     track("reevaluate");
     const oldKey = tab.key;
-    if (await runLookup({ ...tab.request, level: yourKey }, false) === null) return;
-    if (page === "candidate" && activeKeyRef.current) history.replaceState({}, "", candSwitchHref(activeKeyRef.current, location.search));
+    if (await runLookup({ ...tab.request, level: yourKey }, false, true) === null) return;
     // runLookup activated the new key; the old entry is redundant now.
     await api.removeHistory(oldKey);
     payloads.current.delete(oldKey);
@@ -517,11 +518,13 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const [analyzing, setAnalyzing] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
 
-  /** Drop every cached payload (analyses/table edits affect all tabs server-side) and reload the active one. */
+  /** Analyses and table edits affect every tab server-side: drop every other cached payload and refetch the active one.
+   * The active payload stays in the cache until its replacement arrives, so the profile never unmounts in between
+   * (tab, run, layers, picked death, open sections, scroll and focus survive); a 404 drops the tab as before. */
   const reloadActive = useCallback(async () => {
-    payloads.current.clear();
     const key = activeKeyRef.current;
-    if (key) await fetchPayload(key);
+    for (const k of [...payloads.current.keys()]) if (k !== key) payloads.current.delete(k);
+    if (key) await fetchPayload(key, true);
     touch();
   }, [fetchPayload]);
 
@@ -539,10 +542,10 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     return true;
   }, [activePayload, reloadActive, t, ownClientAction]);
 
-  const analyzeAll = useCallback(async () => {
+  const analyzeAll = useCallback(async (runs?: readonly { reportCode: string; fightID: number }[]) => {
     if (!activePayload) return;
     track("analyze_all");
-    const todo = unanalyzedRuns(activePayload);
+    const todo = runs ?? unanalyzedRuns(activePayload);
     for (let i = 0; i < todo.length; i++) {
       setProgress(t("runs.analyzing", { done: i + 1, total: todo.length }));
       const ok = await analyze(todo[i]!);

@@ -37,14 +37,30 @@ describe("candidate URL state", () => {
     expect(candSwitchHref("other", "?open=k&tab=dungeons&run=abc:3&sheet=1")).toBe("/candidate?open=other&tab=dungeons");
     expect(candSwitchHref("other", "")).toBe("/candidate?open=other");
   });
+  test("landing on the same profile (Refresh, a lookup cache hit) keeps the run and the sheet", () => {
+    expect(candSwitchHref("k", "?open=k&tab=runs&run=abc:3&sheet=1")).toBe("/candidate?open=k&tab=runs&run=abc%3A3&sheet=1");
+  });
+  test("a re-evaluation of the same character carries the run and the sheet to the new key", () => {
+    const href = candSwitchHref("k2", "?open=k&tab=runs&run=abc:3&sheet=1", true);
+    expect(candState(new URL(href, "http://x").search)).toEqual({ tab: "runs", run: "abc:3", sheet: true });
+    expect(new URL(href, "http://x").searchParams.get("open")).toBe("k2");
+  });
 });
 
 describe("profile state helpers", () => {
   test("a run the payload does not hold is dropped with its sheet; the tab stays", () => {
-    expect(candInitial("?open=k&tab=runs&run=abc:3&sheet=1", ["abc:3"])).toEqual({ tab: "runs", run: "abc:3", sheet: true });
-    expect(candInitial("?open=k&tab=runs&run=abc:3&sheet=1", ["abc:4"])).toEqual({ tab: "runs", run: null, sheet: false });
-    expect(candInitial("?tab=method", [])).toEqual({ tab: "method", run: null, sheet: false });
+    expect(candInitial("?open=k&tab=runs&run=abc:3&sheet=1", "k", ["abc:3"])).toEqual({ tab: "runs", run: "abc:3", sheet: true });
+    expect(candInitial("?open=k&tab=runs&run=abc:3&sheet=1", "k", ["abc:4"])).toEqual({ tab: "runs", run: null, sheet: false });
+    expect(candInitial("?tab=method", "k", [])).toEqual({ tab: "method", run: null, sheet: false });
     expect(runKeyOf({ reportCode: "aBc", fightID: 7 })).toBe("aBc:7");
+  });
+  test("a run is kept only when the URL names the profile that mounts (no previous profile's run)", () => {
+    // The URL still names the previous profile: even a run this payload holds is not this profile's state.
+    expect(candInitial("?open=old&tab=runs&run=abc:3&sheet=1", "new", ["abc:3"])).toEqual({ tab: "runs", run: null, sheet: false });
+    expect(candInitial("?tab=runs&run=abc:3", "new", ["abc:3"])).toEqual({ tab: "runs", run: null, sheet: false });
+    // Written first by the lookup (candSwitchHref), the URL names the new profile: its state is kept.
+    expect(candInitial(new URL(candSwitchHref("new", "?open=old&tab=runs&run=abc:3&sheet=1", true), "http://x").search, "new", ["abc:3"]))
+      .toEqual({ tab: "runs", run: "abc:3", sheet: true });
   });
   test("tab keyboard wraps around and jumps", () => {
     expect(tabAfter("synthesis", "ArrowRight")).toBe("runs");
@@ -86,7 +102,8 @@ describe("profileHeader", () => {
     expect(h.line).toBe("Devourer Demon Hunter · DPS · Hyjal (EU)");
     expect(h.verdict).toEqual({ cls: "badge-maybe", label: "MAYBE", score: "59", target: "pour une +11" });
     expect(h.facts.map((f) => [f.label, f.value])).toEqual([
-      ["RIO", "2923"], ["ilvl", "319"], ["région", "#1234"], ["serveur", "#56"], [tFr("verdict.stats.prevSeason"), "3102"], ["runs · 7 jours", "5"],
+      ["RIO", "2923"], ["ilvl", "319"], [tFr("verdict.stats.score", { metric: "DPS" }), "413"], ["région", "#1234"], ["serveur", "#56"],
+      [tFr("verdict.stats.prevSeason"), "3102"], ["runs · 7 jours", "5"],
     ]);
     expect(h.links).toEqual({ rio: "https://raider.io/characters/eu/hyjal/Obye", wcl: "https://www.warcraftlogs.com/character/eu/hyjal/obye" });
     expect(h.meta).toBe("Mythic+ Season 2 · 15 runs indexés");
@@ -109,11 +126,13 @@ describe("profileHeader", () => {
     const h = profileHeader(tEn, "en", payload({ character: { id: 2, name: "Vachâman", classID: 1, spec: null, realmSlug: "kelthuzad", region: "us", scoreTop: null } as unknown as LookupPayload["character"] }));
     expect(h.iconUrl).toBe("https://wow.zamimg.com/images/wow/icons/medium/classicon_deathknight.jpg");
     expect(h.line).toBe("Death Knight · DPS · Kelthuzad (US)");
+    // No WCL score: neither the score nor the ranks it would hold.
+    expect(h.facts.map((f) => f.label)).toEqual(["RIO", "ilvl", "prev season", "runs · 7 days"]);
     expect(h.links.wcl).toBe("https://www.warcraftlogs.com/character/us/kelthuzad/vach%C3%A2man");
   });
   test("no Raider.IO profile: no RIO link, no RIO or activity fact", () => {
     const h = profileHeader(tEn, "en", payload({ rio: null }));
     expect(h.links.rio).toBeNull();
-    expect(h.facts.map((f) => f.label)).toEqual(["ilvl", "region", "server", "prev season"]);
+    expect(h.facts.map((f) => f.label)).toEqual(["ilvl", "DPS score", "region", "server", "prev season"]);
   });
 });

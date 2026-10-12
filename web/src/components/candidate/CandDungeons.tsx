@@ -95,7 +95,7 @@ function Row({ r, run, cols, open, deepdive, onToggle, onView }: RowProps) {
   const detailId = `dg-detail-${r.key.replace(":", "-")}`;
   return (
     <div className={"dg-row" + (open ? " open" : "")}>
-      <button type="button" className="dg-btn dg-grid" aria-expanded={open} aria-controls={detailId} onClick={onToggle}>
+      <button type="button" className="dg-btn dg-grid" aria-expanded={open} aria-controls={open ? detailId : undefined} onClick={onToggle}>
         <span className="dg-name">
           <span className="dg-name-text">{r.name}</span>
           <span className="dg-sub">{r.sub}</span>

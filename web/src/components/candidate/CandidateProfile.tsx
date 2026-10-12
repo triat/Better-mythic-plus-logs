@@ -40,7 +40,7 @@ const CLOSED: CandState = { tab: "synthesis", run: null, sheet: false };
 export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, fetch, compareHref, urlKey }: CandidateProfileProps) {
   const { t, locale } = useT();
   const [state, setState] = useState<CandState>(() =>
-    urlKey === null ? CLOSED : candInitial(location.search, payload.perDungeon.runs.map(runKeyOf)));
+    urlKey === null ? CLOSED : candInitial(location.search, urlKey, payload.perDungeon.runs.map(runKeyOf)));
   useEffect(() => {
     if (urlKey !== null) history.replaceState({}, "", candHref(urlKey, state));
   }, [urlKey, state]);

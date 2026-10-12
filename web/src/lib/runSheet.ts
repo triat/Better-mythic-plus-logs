@@ -58,6 +58,29 @@ export function trapFocus(index: number, count: number, shift: boolean): number 
   return null;
 }
 
+/** Where the keyboard is while the sheet is open: inside it, on nothing (the page's body — a click on plain text), or
+ * in something else (another dialog over it, such as the palette). */
+export type SheetFocus = "inside" | "none" | "outside";
+
+/**
+ * What the sheet does with a key it hears on the document: Escape closes it, or, while a field inside is being edited
+ * (`editing`: a table edit in progress), only leaves that field; Tab wraps; null for anything else or when another
+ * dialog holds the focus.
+ */
+export function sheetKey(key: string, focus: SheetFocus, editing: boolean): "close" | "leave-field" | "trap" | null {
+  if (focus === "outside") return null;
+  if (key === "Escape") return focus === "inside" && editing ? "leave-field" : "close";
+  if (key === "Tab") return "trap";
+  return null;
+}
+
+const NOT_TEXT = new Set(["checkbox", "radio", "button", "submit", "reset", "image", "file", "range", "color"]);
+/** A text field, a text area or a list box (an `<input>` that takes typing, not a checkbox or a button). */
+export const isEditingField = (tag: string, type: string | null): boolean => {
+  const t = tag.toUpperCase();
+  return t === "TEXTAREA" || t === "SELECT" || (t === "INPUT" && !NOT_TEXT.has((type ?? "text").toLowerCase()));
+};
+
 export type SheetTab = "spells" | "avoidable";
 export const SHEET_TABS: readonly SheetTab[] = ["spells", "avoidable"];
 

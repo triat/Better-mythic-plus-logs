@@ -21,7 +21,9 @@ export interface DeepdiveActions {
   /** "Analyzing 2/8…" while a batch runs, else null. */
   progress: string | null;
   analyze: (run: { reportCode: string; fightID: number }, force?: boolean) => Promise<void>;
-  analyzeAll: () => Promise<void>;
+  /** Analyses `runs` one by one (the candidate Runs list's own runs), else every displayed run not analysed yet
+   * (`unanalyzedRuns`, the owner's view, which also shows the previous level's best). */
+  analyzeAll: (runs?: readonly { reportCode: string; fightID: number }[]) => Promise<void>;
   patch: (className: string, spec: string, patch: OverrideEntry) => Promise<void>;
   /** Whether analysing `runs` more runs fits in the hourly quota (always true locally). */
   canAfford: (runs: number) => boolean;

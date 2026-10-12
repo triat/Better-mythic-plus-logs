@@ -3,6 +3,7 @@ import type { LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { rowOf, signalParts } from "./runs.ts";
+import { unanalyzedRuns } from "./deepdive.ts";
 import { dungeonAbbr, pickRun, runListView, signedPct } from "./runList.ts";
 import { NOW, payload, runs, sig, temple } from "./vachaman.fixture.ts";
 
@@ -103,5 +104,25 @@ describe("runListView", () => {
     expect(pickRun(p, v.rows, "nope:9")!.encounterName).toBe(v.rows[0]!.dungeon);
     expect(pickRun(p, v.rows, null)!.encounterName).toBe(v.rows[0]!.dungeon);
     expect(pickRun(p, [], null)).toBeNull();
+  });
+  test("pickRun: a run the \"with deaths\" filter hides is not kept selected; the first visible row is", () => {
+    const p = payload();
+    const deathless = p.perDungeon.runs.find((r) => r.signals!.deaths.count === 0)!;
+    const v = runListView(tEn, "en", p, "deaths", "parse", NOW);
+    expect(v.rows.some((r) => r.key === `${deathless.reportCode}:${deathless.fightID}`)).toBe(false);
+    const picked = pickRun(p, v.rows, `${deathless.reportCode}:${deathless.fightID}`)!;
+    expect(`${picked.reportCode}:${picked.fightID}`).toBe(v.rows[0]!.key);
+    expect(pickRun(p, [], `${deathless.reportCode}:${deathless.fightID}`)).toBeNull();
+  });
+  test("the batch counts and analyses only the list's runs, never the previous level's best", () => {
+    const p0 = payload();
+    const prev = { ...runs[0]!, reportCode: "PREV", fightID: 4, keyLevel: 19 };
+    const p = payload({ prevLevelBest: { level: 19, best: prev, runsAtLevel: 1 } } as unknown as Partial<LookupPayload>);
+    expect(unanalyzedRuns(p).length).toBe(unanalyzedRuns(p0).length + 1);
+    const v = runListView(tFr, "fr", p, "best", "parse", NOW);
+    expect(v.pending).toBe(7);
+    expect(v.pendingRuns.map((r) => r.reportCode)).not.toContain("PREV");
+    expect(v.pendingRuns.length).toBe(v.pending);
+    expect(v.batchLabel).toBe("Analyser les 7 autres · ~21 pts");
   });
 });

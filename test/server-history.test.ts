@@ -2,11 +2,19 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { resetDefensives } from "../src/deepdive/table.ts";
+import { DEFAULT_CONFIG, validateConfig } from "../src/evaluation/config.ts";
+import { evaluate } from "../src/evaluation/evaluate.ts";
+import type { LookupPayload } from "../src/lookup.ts";
+import { analyzeLookup, type MPlusRun } from "../src/mplus.ts";
 import { runServer } from "../src/server.ts";
 import { getLocalHistory } from "../src/server/local-history.ts";
 import { History, cacheKey, requestFromJson, summaryOf } from "../src/server-history.ts";
-import { closeStore } from "../src/signals/store.ts";
+import { closeStore, getStore } from "../src/signals/store.ts";
+import { signalSummary } from "../src/signals/summary.ts";
+import { parseRunSignals } from "../src/signals/wcl-run.ts";
 import type { Region } from "../src/wow/regions.ts";
+import { loadDeepdiveFixture } from "./fixtures.ts";
 
 const req = (character: string, level: number | null = null) => ({ character, level, spec: null, metric: null, region: "eu" as Region });
 const entry = (over: Partial<Parameters<History["record"]>[1]> = {}) => ({
@@ -135,13 +143,16 @@ describe("History — verdict and score", () => {
 describe("GET /api/history — verdict and score", () => {
   let dir: string;
   let server: Awaited<ReturnType<typeof runServer>>;
-  const saved = { db: process.env.BMPL_DB_PATH, id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
+  const saved = { db: process.env.BMPL_DB_PATH, defensives: process.env.BMPL_DEFENSIVES, id: process.env.WCL_CLIENT_ID, secret: process.env.WCL_CLIENT_SECRET };
   const restore = (k: string, v: string | undefined) => { if (v === undefined) delete process.env[k]; else process.env[k] = v; };
 
   beforeAll(async () => {
     dir = mkdtempSync(join(tmpdir(), "bmpl-hist-"));
     closeStore();
     process.env.BMPL_DB_PATH = join(dir, "bmpl.db");
+    // The shipped table only: never the user's defensives.json next to the repo's .env.
+    process.env.BMPL_DEFENSIVES = join(dir, "defensives.json");
+    resetDefensives();
     // Nothing here looks up, but never let a stray path reach WCL with the real credentials.
     process.env.WCL_CLIENT_ID = "dummy";
     process.env.WCL_CLIENT_SECRET = "dummy";
@@ -151,6 +162,8 @@ describe("GET /api/history — verdict and score", () => {
     server.stop(true);
     closeStore();
     restore("BMPL_DB_PATH", saved.db);
+    restore("BMPL_DEFENSIVES", saved.defensives);
+    resetDefensives();
     restore("WCL_CLIENT_ID", saved.id);
     restore("WCL_CLIENT_SECRET", saved.secret);
     rmSync(dir, { recursive: true, force: true });
@@ -163,5 +176,36 @@ describe("GET /api/history — verdict and score", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { items: { label: string; verdict: unknown; score: unknown }[] };
     expect(body.items.map((i) => [i.label, i.verdict, i.score])).toEqual([["C-D", null, null], ["A-B", "maybe", 62]]);
+  });
+
+  // A local entry saved before an analysis field existed (here: castsAtMs) gains it on read, from the cached raw rows.
+  test("a local history read re-attaches cached analyses (0 pts) without rewriting the entry", async () => {
+    const f = await loadDeepdiveFixture("s2-healer");
+    const store = await getStore();
+    const run: MPlusRun = { ...f.run };
+    run.signals = parseRunSignals(f.report, f.character, { keyLevel: run.keyLevel, affixes: run.affixes, encounterID: run.encounterID })!;
+    store.putWclRun(run.reportCode, run.fightID, f.report);
+    store.putDeepDive(run.reportCode, run.fightID, f.character, f.deepdive);
+    const cfg = validateConfig(DEFAULT_CONFIG);
+    const result = analyzeLookup([run], run.keyLevel, [{ id: run.encounterID, name: run.encounterName }], true);
+    const base = { metric: "hps" as const, targetLevel: result.targetLevel, perDungeon: result.perDungeon, prevLevelBest: result.prevLevelBest, rio: null, summary: signalSummary([run], null) };
+    const payload = {
+      character: { id: 1, name: f.character, classID: 2, spec: "Holy", scoreTop: null, realmSlug: "hyjal", region: "eu" },
+      zone: { id: 1, name: "z", partition: 1 }, metricAutoSelected: true, alternateMetricHasData: false, specFilter: null, runsIndexed: 1, seasonDungeons: [],
+      targetAutoDetected: true, atOrAboveTargetCount: 0, rioError: null,
+      ...base, evaluation: evaluate(base, cfg), deepdive: [],
+      deepdiveSummary: { tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
+    } as unknown as LookupPayload;
+    const e = getLocalHistory().record(req("Old-Entry", 10), entry({ label: "Old-Entry", targetLevel: 10, result: payload }));
+    const res = await fetch(`http://localhost:${server.port}/api/history/${encodeURIComponent(e.key)}`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { fromCache: boolean; result: LookupPayload };
+    expect(body.fromCache).toBe(true);
+    expect(body.result.deepdive.length).toBe(1);
+    expect(body.result.deepdiveSummary.analyzedRuns).toBe(1);
+    const dp = body.result.deepdive[0]!.defensives.find((d) => d.id === 498)!;
+    expect(dp.castsAtMs.length).toBe(dp.casts);
+    expect(dp.castsAtMs.every((ms) => ms >= 0)).toBe(true);
+    expect((getLocalHistory().get(e.key)!.result as LookupPayload).deepdive).toEqual([]); // a read never writes the entry
   });
 });

@@ -33,7 +33,7 @@ export async function tablesOf(ctx: RequestContext, runtime: HostedRuntime | nul
   return runtime && ctx.user ? tablesFor(runtime.db.defensives, ctx.user.id) : getDefensives();
 }
 
-/** The payload with today's cached analyses attached against `tables` and a re-run evaluation. 0 pts. Hosted reads go through this. */
+/** The payload with today's cached analyses attached against `tables` and a re-run evaluation. 0 pts. Every history read and every hosted lookup go through this. */
 export async function withCachedAnalyses(payload: LookupPayload, tables: LoadedTables): Promise<LookupPayload> {
   const [store, cfg] = await Promise.all([getStore(), getEvalConfig()]);
   return attachDeepdive(payload, store, tables, cfg);

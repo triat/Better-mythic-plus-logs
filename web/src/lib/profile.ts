@@ -74,7 +74,7 @@ export const wclCharacterUrl = (region: string, realmSlug: string, name: string)
   `https://www.warcraftlogs.com/character/${encodeURIComponent(region.toLowerCase())}/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}`;
 
 /** WCL's spacing-free spec names read with spaces: "BeastMastery" → "Beast Mastery". */
-const specWords = (spec: string): string => spec.replace(/([a-z])([A-Z])/g, "$1 $2");
+export const specWords = (spec: string): string => spec.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 export function profileHeader(t: T, _locale: Locale, p: LookupPayload): ProfileHeaderView {
   const c = p.character;

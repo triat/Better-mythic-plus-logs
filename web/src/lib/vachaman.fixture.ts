@@ -104,7 +104,7 @@ export const templeAnalysis: RunDefensives = {
 };
 
 export const payload = (over: Partial<LookupPayload> = {}): LookupPayload => ({
-  character: { id: 1, name: "Vachâman", classID: 7, spec: "Elemental", realmSlug: "ysondre", region: "eu", scoreTop: null },
+  character: { id: 1, name: "Vachâman", classID: 9, spec: "Elemental", realmSlug: "ysondre", region: "eu", scoreTop: null },
   metric: "dps",
   targetLevel: 19,
   evaluation: { role: "dps" },

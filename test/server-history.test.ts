@@ -178,8 +178,8 @@ describe("GET /api/history — verdict and score", () => {
     expect(body.items.map((i) => [i.label, i.verdict, i.score])).toEqual([["C-D", null, null], ["A-B", "maybe", 62]]);
   });
 
-  // A local entry saved before an analysis field existed (here: castsAtMs) gains it on read, from the cached raw rows.
-  test("a local history read re-attaches cached analyses (0 pts) without rewriting the entry", async () => {
+  // A payload saved with no analysis attached, while SQLite holds the run's raw rows and its analysis.
+  const savedWithoutAnalyses = async (): Promise<LookupPayload> => {
     const f = await loadDeepdiveFixture("s2-healer");
     const store = await getStore();
     const run: MPlusRun = { ...f.run };
@@ -196,16 +196,42 @@ describe("GET /api/history — verdict and score", () => {
       ...base, evaluation: evaluate(base, cfg), deepdive: [],
       deepdiveSummary: { tableWarning: null, analyzedRuns: 0, majorUsage: null, avoidableDeathShare: null, avoidableDeaths: 0, countedDeaths: 0 },
     } as unknown as LookupPayload;
+    return payload;
+  };
+  const expectAttached = (result: LookupPayload) => {
+    expect(result.deepdive.length).toBe(1);
+    expect(result.deepdiveSummary.analyzedRuns).toBe(1);
+    const dp = result.deepdive[0]!.defensives.find((d) => d.id === 498)!;
+    expect(dp.castsAtMs.length).toBe(dp.casts);
+    expect(dp.castsAtMs.every((ms) => ms >= 0)).toBe(true);
+  };
+
+  // A local entry saved before an analysis field existed (here: castsAtMs) gains it on read, from the cached raw rows.
+  test("a local history read re-attaches cached analyses (0 pts) without rewriting the entry", async () => {
+    const payload = await savedWithoutAnalyses();
     const e = getLocalHistory().record(req("Old-Entry", 10), entry({ label: "Old-Entry", targetLevel: 10, result: payload }));
     const res = await fetch(`http://localhost:${server.port}/api/history/${encodeURIComponent(e.key)}`);
     expect(res.status).toBe(200);
     const body = await res.json() as { fromCache: boolean; result: LookupPayload };
     expect(body.fromCache).toBe(true);
-    expect(body.result.deepdive.length).toBe(1);
-    expect(body.result.deepdiveSummary.analyzedRuns).toBe(1);
-    const dp = body.result.deepdive[0]!.defensives.find((d) => d.id === 498)!;
-    expect(dp.castsAtMs.length).toBe(dp.casts);
-    expect(dp.castsAtMs.every((ms) => ms >= 0)).toBe(true);
+    expectAttached(body.result);
     expect((getLocalHistory().get(e.key)!.result as LookupPayload).deepdive).toEqual([]); // a read never writes the entry
+  });
+
+  // The same entry reached through a lookup cache hit returns the same shape as a history read (no WCL call: dummy creds).
+  test("a local lookup cache hit re-attaches cached analyses (0 pts) without rewriting the entry", async () => {
+    const payload = await savedWithoutAnalyses();
+    const e = getLocalHistory().record(req("Hit-Entry", 10), entry({ label: "Hit-Entry", targetLevel: 10, result: payload }));
+    const res = await fetch(`http://localhost:${server.port}/api/lookup`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ character: "Hit-Entry", level: 10, region: "eu" }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { fromCache: boolean; key: string; result: LookupPayload };
+    expect(body.fromCache).toBe(true);
+    expect(body.key).toBe(e.key);
+    expectAttached(body.result);
+    expect((getLocalHistory().get(e.key)!.result as LookupPayload).deepdive).toEqual([]);
   });
 });

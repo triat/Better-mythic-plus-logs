@@ -28,6 +28,11 @@ export interface DriversView { rows: DriverRow[]; path: DriversPath | null }
 
 const signedPoints = (n: number): string => `${n > 0 ? "+" : "−"}${Math.abs(n)}`;
 
+/** A source's value with its short unit, as the reference reads: "0.7", "−40%", "+4 pts" (the Méthode tab's table). */
+export function shortValue(t: T, locale: Locale, source: string, v: number): string {
+  return t(`drivers.unit.${REF_UNIT[UNIT[source] ?? "plain"]}`, { value: formatEvidenceValue(locale, source, v) });
+}
+
 /** A driver's value with its unit ("1.6 / run") and the average player's ("avg 0.7"). */
 export function driverValues(t: T, locale: Locale, d: Pick<Driver, "source" | "value" | "reference">): { value: string; reference: string } {
   const unit = UNIT[d.source] ?? "plain";

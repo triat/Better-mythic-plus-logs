@@ -13,7 +13,8 @@ have come up in the fight) and, for every death, **whether a defensive was
 available and unused** ("immunity available", "defensive available",
 "covered", "nothing available"). It's a separate, opt-in fetch — ~3 WCL
 points per run, cached forever in `bmpl.db` — because it's a heavier query
-than the per-run enrichment `lookup` already does.
+than the per-run enrichment `lookup` already does. Each defensive also lists
+its cast times (`castsAtMs`, fight-relative), used by the run timeline.
 
 ```bash
 bmpl analyze Biwaadrood-Nerzhul                    # list the runs lookup shows, and which are already analyzed

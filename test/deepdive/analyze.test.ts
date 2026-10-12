@@ -192,3 +192,29 @@ describe("analyzeRun — real fixtures", () => {
     expect(r.defensives.some((d) => d.id === 31224)).toBe(true); // Cloak of Shadows listed
   });
 });
+
+describe("analyzeRun — cast times", () => {
+  for (const name of ["s2-healer", "s2-rogue"] as const) {
+    test(`${name}: castsAtMs mirrors the cast events, fight-relative and ascending`, async () => {
+      const input = await fixtureInput(name);
+      const r = analyzeRun(input);
+      const fightStart = input.report.fights?.[0]?.startTime ?? input.raw.fightStart;
+      for (const d of r.defensives) {
+        const expected = input.raw.castEvents.filter((e) => e.abilityGameID === d.id).map((e) => e.timestamp - fightStart).sort((a, b) => a - b);
+        expect(d.castsAtMs).toEqual(expected);
+        for (const t of d.castsAtMs) expect(t).toBeGreaterThanOrEqual(0);
+        for (let i = 1; i < d.castsAtMs.length; i++) expect(d.castsAtMs[i]!).toBeGreaterThanOrEqual(d.castsAtMs[i - 1]!);
+      }
+      expect(r.defensives.some((d) => d.castsAtMs.length > 0)).toBe(true);
+      expect(analyzeRun(input)).toEqual(r); // pure
+    });
+  }
+  test("synthetic: ms from the fight start, sorted; an id outside tableIds has none", () => {
+    const input = synthetic([[1, 100], [1, 10], [3, 5]], []);
+    input.raw.tableIds = [1, 3];
+    const r = analyzeRun(input);
+    expect(r.defensives.find((d) => d.id === 1)!.castsAtMs).toEqual([10_000, 100_000]);
+    expect(r.defensives.find((d) => d.id === 3)!.castsAtMs).toEqual([5_000]);
+    expect(r.defensives.find((d) => d.id === 2)!.castsAtMs).toEqual([]);
+  });
+});

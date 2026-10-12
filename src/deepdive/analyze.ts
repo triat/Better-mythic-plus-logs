@@ -20,7 +20,7 @@ const CD_MISMATCH_RATIO = 0.9;
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
 
-function usageOf(raw: RawDeepDive, fightS: number, table: SpecDefensives): DefensiveUse[] {
+function usageOf(raw: RawDeepDive, fightS: number, table: SpecDefensives, fightStart: number): DefensiveUse[] {
   const tableCounts = new Map<number, number>();
   for (const e of raw.casts?.data?.entries ?? []) if (typeof e.guid === "number") tableCounts.set(e.guid, e.total ?? 0);
   return table.entries.map((d) => {
@@ -40,6 +40,7 @@ function usageOf(raw: RawDeepDive, fightS: number, table: SpecDefensives): Defen
       usage: Math.min(1, casts / capacity),
       observedMinIntervalS: minGap === null ? null : round1(minGap),
       cdMismatch: minGap !== null && minGap < CD_MISMATCH_RATIO * d.cooldownS,
+      castsAtMs: times.map((t) => t - fightStart),
     };
   });
 }
@@ -90,8 +91,8 @@ function unlistedOf(raw: RawDeepDive, table: SpecDefensives, denylist: number[])
 /** Pure: same raw + report + table → same analysis. */
 export function analyzeRun(i: AnalyzeInput): RunDefensives {
   const fightS = i.signals.fightDurationMs / 1000;
-  const defensives = usageOf(i.raw, fightS, i.table);
   const fightStart = i.report.fights?.[0]?.startTime ?? i.raw.fightStart;
+  const defensives = usageOf(i.raw, fightS, i.table, fightStart);
   const myEntries = (i.report.deaths?.data?.entries ?? []).filter((e) => e.name === i.character && typeof e.timestamp === "number");
   // signals.deaths.events carries inWipe for the same deaths, in timestamp order; match on atMs.
   const deaths = myEntries.map((e) => {

@@ -78,6 +78,8 @@ export interface DefensiveUse extends DefensiveSpell {
   observedMinIntervalS: number | null;
   cdMismatch: boolean;
   origin: EntryOrigin;
+  /** Fight-relative ms of each cast with an event (empty for an id added after the fetch: table total only). */
+  castsAtMs: number[];
 }
 
 export type DeathVerdict = "immunity available" | "defensive available" | "covered" | "nothing available";

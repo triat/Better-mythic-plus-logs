@@ -1,7 +1,7 @@
 // The candidate profile (redesign phase 2, spec docs/superpowers/specs/2026-10-11-ui-redesign-design.md decisions 5–6,
 // mockup docs/design/redesign/F-Synthese.dc.html): its URL state and the compact profile header.
 import { CLASS_NAMES, classHex } from "@shared/wow/classes.ts";
-import type { LookupPayload } from "../types.ts";
+import type { LookupPayload, UiEvent } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { heroStats } from "./axes.ts";
@@ -39,6 +39,35 @@ export function candHref(key: string, s: Partial<CandState>): string {
 /** Switching profile in place (Récents, the palette, a lookup): the tab stays, the run and the sheet belonged to the
  * previous profile and go. */
 export const candSwitchHref = (key: string, search: string): string => candHref(key, { tab: candState(search).tab });
+
+/** The state a profile opens with: the URL's, without a run this payload does not hold (a link from another lookup of
+ * the same character, a URL left behind by a profile switch). */
+export function candInitial(search: string, runKeys: readonly string[]): CandState {
+  const s = candState(search);
+  return s.run !== null && !runKeys.includes(s.run) ? { ...s, run: null, sheet: false } : s;
+}
+
+/** "<report code>:<fight id>", the key of a run in `CandState.run`. */
+export const runKeyOf = (r: { reportCode: string; fightID: number }): string => `${r.reportCode}:${r.fightID}`;
+
+/** The tab strip's keyboard (WAI-ARIA tabs): ← → wrap around, Home / End jump; null for any other key. */
+export function tabAfter(tab: CandTab, key: string): CandTab | null {
+  const i = CAND_TABS.indexOf(tab);
+  const n = CAND_TABS.length;
+  if (key === "ArrowRight") return CAND_TABS[(i + 1) % n]!;
+  if (key === "ArrowLeft") return CAND_TABS[(i - 1 + n) % n]!;
+  if (key === "Home") return CAND_TABS[0]!;
+  if (key === "End") return CAND_TABS[n - 1]!;
+  return null;
+}
+
+/** The usage event a tab click counts (catalogue `src/hosted/usage-catalog.ts`). */
+export const CAND_TAB_EVENT = {
+  synthesis: "cand_tab_synthesis", runs: "cand_tab_runs", dungeons: "cand_tab_dungeons", method: "cand_tab_method",
+} as const satisfies Record<CandTab, UiEvent>;
+
+/** The compare page with this profile ticked. */
+export const compareHref = (key: string): string => `/compare?${new URLSearchParams({ pick: key })}`;
 
 export interface HeaderFact { label: string; value: string; sub?: string }
 export interface ProfileHeaderView {

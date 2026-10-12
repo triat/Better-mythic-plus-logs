@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import type { IconName as NavIconName } from "../lib/shell.ts";
 
-export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "clock" | "lock" | "discord";
+export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "clock" | "lock" | "info" | "discord";
 
 const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
   search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>,
@@ -23,6 +23,7 @@ const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
   logout: <path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l-5-5 5-5M5 12h11" />,
   admin: <path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" />,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></>,
   lock: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
 };
 

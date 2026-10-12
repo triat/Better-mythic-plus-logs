@@ -747,6 +747,105 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
   .palette-main { flex-direction: column; gap: 0; }
 }
 .cand-bar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+/* The candidate profile (redesign phase 2, mockup F-Synthese): header, tabs. */
+.cand { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.cand-head { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cand-id { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.cand-icon { width: 40px; height: 40px; border-radius: var(--radius); border: 1px solid var(--border-2); flex-shrink: 0; box-sizing: border-box; }
+.cand-icon-tile { display: inline-flex; align-items: center; justify-content: center; background: var(--card-2); font-size: 15px; font-weight: 700; }
+.cand-id-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0; }
+.cand-name-row { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+.cand-name { margin: 0; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.cand-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid; font-size: 13px; font-weight: 700; white-space: nowrap; box-sizing: border-box; }
+.cand-target { font-size: 13px; color: var(--muted); }
+.cand-line { font-size: 14px; color: var(--muted); }
+.cand-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.cand-actions .btn, .cand-meta .btn { height: 34px; background: var(--card-2); border-color: var(--border-2); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; }
+.cand-actions .btn:hover, .cand-meta .btn:hover:not(:disabled) { border-color: var(--muted); color: var(--text); }
+.cand-facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.cand-facts b { color: var(--text); font-weight: 600; }
+.cand-meta { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; font-size: 12px; }
+.cand-meta > span { flex: 1 1 260px; min-width: 0; }
+.cand-head .reeval { align-self: flex-start; flex-wrap: wrap; }
+.cand-tabs { display: flex; gap: 4px 24px; border-bottom: 1px solid var(--border); margin-top: -8px; flex-wrap: wrap; }
+.cand-tab { display: inline-flex; align-items: center; height: 40px; padding: 0 2px; margin-bottom: -1px; font: inherit; font-size: 14px; font-weight: 600; color: var(--label); background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; }
+.cand-tab:hover { color: var(--text); }
+.cand-tab.on { color: var(--text); border-bottom-color: var(--text); }
+.cand-tab-count { margin-left: 6px; color: var(--label); font-weight: 500; }
+.cand-panel { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Synthèse tab (mockup F-Synthese). The verdict card takes its verdict's colours through --vt*. */
+.vt-invite { --vt: var(--invite); --vt-bg: var(--invite-bg); --vt-border: var(--invite-border); }
+.vt-maybe { --vt: var(--maybe); --vt-bg: var(--maybe-bg); --vt-border: var(--maybe-border); }
+.vt-pass { --vt: var(--pass); --vt-bg: var(--pass-bg); --vt-border: var(--pass-border); }
+.vt-insufficient { --vt: var(--muted); --vt-bg: var(--card); --vt-border: var(--border); }
+.synth { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.synth-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.synth-side { flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.synth-lbl { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--label); }
+.synth-note { font-size: 12px; color: var(--label); }
+.synth-verdict { flex: 1 1 300px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: var(--vt-bg); border-color: var(--vt-border); }
+.synth-verdict-head { display: flex; flex-direction: column; gap: 4px; }
+.synth-verdict-score { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; font-size: 38px; line-height: 1; }
+.synth-verdict-label { font-weight: 800; color: var(--vt); }
+.synth-verdict-score .mono { font-weight: 700; }
+.synth-bar-wrap { display: flex; flex-direction: column; gap: 4px; padding: 0 8px; }
+.synth-bar { position: relative; height: 8px; border-radius: 999px; background: var(--vt-border); }
+.synth-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--vt); }
+.synth-bar-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--text); }
+.synth-bar-labels { position: relative; height: 16px; font-size: 12px; color: var(--label); }
+.synth-bar-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.synth-summary { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text); }
+.synth-flip { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--vt-border); }
+.synth-flip-row { display: flex; flex-direction: column; gap: 2px; }
+.synth-flip-name { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.synth-flip-name .mono { color: var(--better); font-size: 13px; font-weight: 700; text-align: right; }
+.synth-flip-gap { font-size: 13px; color: var(--muted); }
+.synth-confidence { display: flex; gap: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--vt-border); font-size: 13px; line-height: 1.45; color: var(--text-soft); }
+.synth-confidence svg { flex-shrink: 0; margin-top: 2px; color: var(--vt); }
+.synth-card { padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.synth-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.synth-h2 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.synth-forces { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (min-width: 900px) { .synth-forces { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.synth-force { display: flex; flex-direction: column; min-width: 0; }
+.synth-force-title { margin-bottom: 4px; }
+.synth-force-row { display: flex; flex-direction: column; gap: 5px; padding: 9px 0; }
+.synth-force-row + .synth-force-row { border-top: 1px solid var(--border); }
+.synth-force-name { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 600; }
+.synth-force-name .mono { font-size: 13px; font-weight: 700; }
+.synth-force-bar { display: flex; height: 5px; border-radius: 999px; background: var(--card-2); }
+.synth-force-bar > div { height: 5px; border-radius: 999px; }
+.synth-better .synth-force-title, .synth-better .synth-force-name .mono { color: var(--better); }
+.synth-better .synth-force-bar > div { background: var(--better); }
+.synth-worse .synth-force-title, .synth-worse .synth-force-name .mono { color: var(--worse); }
+.synth-worse .synth-force-bar { justify-content: flex-end; }
+.synth-worse .synth-force-bar > div { background: var(--worse); }
+.synth-info { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius); background: var(--card-2); border: 1px solid var(--border-2); font-size: 13px; line-height: 1.45; color: var(--muted); }
+.synth-info b { color: var(--text-soft); font-weight: 600; }
+.chip-info { display: inline-flex; align-items: center; flex-shrink: 0; height: 22px; padding: 0 10px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); font-size: 11px; color: var(--text-soft); white-space: nowrap; box-sizing: border-box; }
+.synth-axes { padding: 4px 20px; }
+.synth-axis { display: grid; grid-template-columns: minmax(96px, 140px) 40px minmax(80px, 1fr) minmax(0, 1.5fr); grid-template-areas: "name score bar why"; gap: 14px; align-items: center; padding: 12px 0; }
+.synth-axis + .synth-axis { border-top: 1px solid var(--border); }
+.synth-axis-name { grid-area: name; display: flex; flex-direction: column; gap: 2px; font-size: 14px; font-weight: 600; }
+.synth-axis-info { font-size: 11px; font-weight: 500; color: var(--label); }
+.synth-axis-score { grid-area: score; font-size: 18px; font-weight: 700; color: var(--text-soft); }
+.synth-axis .scorebar { grid-area: bar; }
+.synth-axis-why { grid-area: why; min-width: 0; font-size: 13px; color: var(--muted); }
+.synth-foot { font-size: 12px; color: var(--label); }
+@media (max-width: 640px) {
+  .synth-axis { grid-template-columns: minmax(0, 1fr) 40px; grid-template-areas: "name score" "bar bar" "why why"; gap: 8px 14px; }
+  .synth-axis-score { text-align: right; }
+}
+/* A 0–100 score: blue ≥ 70, neutral 50–69, orange < 50, the average player's tick at 50 (spec "Colour meanings"). */
+.scorebar { position: relative; height: 7px; border-radius: 999px; background: var(--border); }
+.scorebar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--text-soft); }
+.scorebar-tick { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--label); }
+.band-better .synth-axis-score { color: var(--better); }
+.band-better .scorebar-fill { background: var(--better); }
+.band-worse .synth-axis-score { color: var(--worse); }
+.band-worse .scorebar-fill { background: var(--worse); }
+.is-info .scorebar-fill { opacity: .45; }
 .cand-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .cand-empty h1, .page-head h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
 .cand-empty p { margin: 0; }

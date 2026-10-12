@@ -6,12 +6,9 @@ import { RESULT_TABS, resultView, type ResultTab } from "../lib/self.ts";
 import { useT } from "../locale.tsx";
 import { track } from "../usage.ts";
 import { seasonWho, useSeason } from "../useSeason.ts";
-import { DungeonRuns } from "./DungeonRuns.tsx";
-import { RioSection } from "./RioSection.tsx";
-import { SignalTiles } from "./SignalTiles.tsx";
-import { VerdictHero } from "./VerdictHero.tsx";
+import { CandidateProfile } from "./candidate/CandidateProfile.tsx";
+import type { ProfileFetch } from "./candidate/ProfileHeader.tsx";
 import { DungeonsTab } from "./self/DungeonsTab.tsx";
-import { MeChip } from "./self/MeChip.tsx";
 import { Overview } from "./self/Overview.tsx";
 import { ResultHead, type SelfActions } from "./self/ResultHead.tsx";
 import { RunsTab } from "./self/RunsTab.tsx";
@@ -34,29 +31,30 @@ export interface DeepdiveActions {
   mode: ProposalMode;
 }
 
-export interface DetailProps { payload: LookupPayload; hint: ReevalHint | null; onReevaluate: () => void; deepdive: DeepdiveActions; self: SelfActions }
+export interface DetailProps {
+  payload: LookupPayload;
+  hint: ReevalHint | null;
+  onReevaluate: () => void;
+  deepdive: DeepdiveActions;
+  self: SelfActions;
+  /** The candidate profile's header: fetch time, cache, Refresh. */
+  fetch: ProfileFetch;
+  compareHref: string | null;
+  /** The candidate page's history key (the profile's tab / run / sheet live in the URL); null on the Live page. */
+  urlKey: string | null;
+}
 
 /**
  * The result page. One of the member's own characters opens the self-review (canvas "self-review", variants A + C);
- * anyone else opens the vetting view the page had before phase 1, with "This is me" on the name line (canvas
- * "control", ControlVettingA). Toggling the chip switches between the two in place.
+ * anyone else opens the candidate profile (redesign phase 2: header, Synthèse · Runs · Donjons · Méthode), with "This
+ * is me" in its header (canvas "control", ControlVettingA). Toggling the chip switches between the two in place.
  */
 export function Detail(props: DetailProps) {
   return resultView(props.self.characters, props.payload) === "owner" ? <OwnerDetail {...props} /> : <VettingDetail {...props} />;
 }
 
-function VettingDetail({ payload, hint, onReevaluate, deepdive, self }: DetailProps) {
-  return (
-    <>
-      <VerdictHero payload={payload} hint={hint} onReevaluate={onReevaluate} identityExtra={<MeChip payload={payload} self={self} />} />
-      {/* Stacked, or side by side on a wide screen: see .detail-rest in app.css. */}
-      <div className="detail-rest">
-        <div className="detail-tiles"><SignalTiles payload={payload} /></div>
-        <div className="detail-runs"><DungeonRuns payload={payload} deepdive={deepdive} /></div>
-        <div className="detail-rio"><RioSection payload={payload} /></div>
-      </div>
-    </>
-  );
+function VettingDetail(props: DetailProps) {
+  return <CandidateProfile {...props} />;
 }
 
 /** Header, three tabs; the season (GET /api/season) is loaded only here. */

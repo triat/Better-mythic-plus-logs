@@ -3,7 +3,7 @@ import type { LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { candidateHref, pageOf } from "./hostedMode.ts";
-import { CAND_TABS, candHref, candState, candSwitchHref, classInitials, classToken, profileHeader } from "./profile.ts";
+import { CAND_TABS, CAND_TAB_EVENT, candHref, candInitial, candState, candSwitchHref, classInitials, classToken, compareHref, profileHeader, runKeyOf, tabAfter } from "./profile.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -36,6 +36,29 @@ describe("candidate URL state", () => {
   test("switching profile keeps the tab and drops the run and the sheet", () => {
     expect(candSwitchHref("other", "?open=k&tab=dungeons&run=abc:3&sheet=1")).toBe("/candidate?open=other&tab=dungeons");
     expect(candSwitchHref("other", "")).toBe("/candidate?open=other");
+  });
+});
+
+describe("profile state helpers", () => {
+  test("a run the payload does not hold is dropped with its sheet; the tab stays", () => {
+    expect(candInitial("?open=k&tab=runs&run=abc:3&sheet=1", ["abc:3"])).toEqual({ tab: "runs", run: "abc:3", sheet: true });
+    expect(candInitial("?open=k&tab=runs&run=abc:3&sheet=1", ["abc:4"])).toEqual({ tab: "runs", run: null, sheet: false });
+    expect(candInitial("?tab=method", [])).toEqual({ tab: "method", run: null, sheet: false });
+    expect(runKeyOf({ reportCode: "aBc", fightID: 7 })).toBe("aBc:7");
+  });
+  test("tab keyboard wraps around and jumps", () => {
+    expect(tabAfter("synthesis", "ArrowRight")).toBe("runs");
+    expect(tabAfter("method", "ArrowRight")).toBe("synthesis");
+    expect(tabAfter("synthesis", "ArrowLeft")).toBe("method");
+    expect(tabAfter("dungeons", "Home")).toBe("synthesis");
+    expect(tabAfter("runs", "End")).toBe("method");
+    expect(tabAfter("runs", "Enter")).toBeNull();
+  });
+  test("one usage event per tab; the compare link names the key", () => {
+    expect(CAND_TABS.map((k) => CAND_TAB_EVENT[k])).toEqual(["cand_tab_synthesis", "cand_tab_runs", "cand_tab_dungeons", "cand_tab_method"]);
+    const href = compareHref(`eu|Élise-Kel'Thas "x"|12`);
+    expect(new URL(href, "http://x").searchParams.get("pick")).toBe(`eu|Élise-Kel'Thas "x"|12`);
+    expect(href.startsWith("/compare?pick=")).toBe(true);
   });
 });
 

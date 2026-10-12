@@ -10,6 +10,12 @@ export function toggleSelection(selected: string[], key: string): string[] {
   return next.length > MAX_COMPARE ? next.slice(next.length - MAX_COMPARE) : next;
 }
 
+/** `/compare?pick=<key>` (the profile header's Compare): that entry ticked when it is in the history, else nothing. */
+export function initialPick(search: string, existingKeys: readonly string[]): string[] {
+  const pick = new URLSearchParams(search).get("pick");
+  return pick !== null && existingKeys.includes(pick) ? [pick] : [];
+}
+
 export const pruneSelection = (selected: string[], existingKeys: string[]): string[] =>
   selected.filter((k) => existingKeys.includes(k));
 

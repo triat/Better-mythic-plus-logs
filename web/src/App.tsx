@@ -4,7 +4,7 @@ import { api } from "./api.ts";
 import type { MeUser, QuotaInfo } from "./api.ts";
 import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, OverrideEntry, OwnClientView, Region } from "./types.ts";
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
-import { MAX_COMPARE, pruneSelection, toggleSelection } from "./lib/history.ts";
+import { MAX_COMPARE, initialPick, pruneSelection, toggleSelection } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
 import { fmtAge } from "./lib/format.ts";
 import { bnetCodeOf } from "./lib/bnet.ts";
@@ -13,7 +13,8 @@ import { suggestionsOf } from "./lib/suggest.ts";
 import type { Suggestion } from "./lib/suggest.ts";
 import { OWN_CLIENT_GUIDE, menuModel } from "./lib/session.ts";
 import { reevalHint } from "./lib/keyLevel.ts";
-import { candHref, candState, candSwitchHref } from "./lib/profile.ts";
+import { candHref, candState, candSwitchHref, compareHref } from "./lib/profile.ts";
+import { resultView } from "./lib/self.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, candidateHref, pageOf, proposalMode, uiControls } from "./lib/hostedMode.ts";
 import type { StatusInfo } from "./lib/hostedMode.ts";
 import type { CachedVerdict, LiveRole, LiveSort } from "./lib/live/roster.ts";
@@ -255,6 +256,8 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (q) setForm((f) => ({ ...f, character: q }));
     if (location.search) history.replaceState({}, "", location.pathname);
     loadHistory().then((items) => {
+      // The profile header's Compare: that profile ticked on arrival.
+      if (page === "compare") setSelected(initialPick(params.toString(), items.map((i) => i.key)));
       if (page !== "candidate" || items.length === 0) return;
       const want = params.get("open");
       const key = (want && items.some((i) => i.key === want) ? want : null) ?? items[0]!.key;
@@ -577,9 +580,19 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const access = adminAccess(status, me);
   const account = accountAccess(status, me);
   const onRegionChange = (r: Region) => { track("region_change"); updateSettings({ region: r }); };
+  const profileFetch = { fetchedAt: activeTab?.fetchedAt ?? null, cached: fromCache, onRefresh, busy: !activeTab || !!busy };
   const result = activeKey && (activePayload
-    ? <Detail key={activeKey} payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()} deepdive={deepdiveActions} self={selfActions} />
+    ? (
+      <Detail
+        key={activeKey} payload={activePayload} hint={activeTab ? reevalHint(t, yourKey, activeTab) : null} onReevaluate={() => void reevaluate()}
+        deepdive={deepdiveActions} self={selfActions} fetch={profileFetch} compareHref={compareHref(activeKey)}
+        // The candidate page mirrors the profile's tab / run / sheet into its URL; Live keeps them in memory.
+        urlKey={page === "candidate" ? activeKey : null}
+      />
+    )
     : <Loading inline />);
+  // The candidate profile carries its own fetch line and Refresh; the owner's view (phase 3) still has the bar above it.
+  const ownerShown = activePayload !== null && resultView(settings.characters, activePayload) === "owner";
 
   const sidebar: SidebarProps = {
     form, onFormChange: setForm, onLookup, busy, suggestions, onSuggest,
@@ -618,13 +631,13 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
               </section>
             ) : (
               <>
-                <div className="cand-bar">
+                {ownerShown && <div className="cand-bar">
                   <span className="muted">
                     {activeTab ? t("shell.candidate.fetched", { age: fmtAge(t, activeTab.fetchedAt) }) : ""}
                     {activeTab && fromCache ? ` · ${t("shell.candidate.cached")}` : ""}
                   </span>
                   <button type="button" className="btn" onClick={onRefresh} disabled={!activeTab || !!busy} title={t("shell.candidate.refreshTitle")}>{t("shell.candidate.refresh")}</button>
-                </div>
+                </div>}
                 {result}
               </>
             )}

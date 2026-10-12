@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { HistoryItem } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { MAX_COMPARE, pruneSelection, tabLevel, tabSubtitle, toggleSelection } from "./history.ts";
+import { MAX_COMPARE, initialPick, pruneSelection, tabLevel, tabSubtitle, toggleSelection } from "./history.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -15,6 +15,11 @@ describe("history selection", () => {
   test("selecting a 4th drops the oldest selection", () => {
     expect(MAX_COMPARE).toBe(3);
     expect(toggleSelection(["a", "b", "c"], "d")).toEqual(["b", "c", "d"]);
+  });
+  test("?pick= ticks a history entry, nothing else", () => {
+    expect(initialPick("?pick=b", ["a", "b"])).toEqual(["b"]);
+    expect(initialPick("?pick=z", ["a", "b"])).toEqual([]);
+    expect(initialPick("", ["a"])).toEqual([]);
   });
   test("prune removes closed tabs", () => {
     expect(pruneSelection(["a", "b", "c"], ["c", "a"])).toEqual(["a", "c"]);

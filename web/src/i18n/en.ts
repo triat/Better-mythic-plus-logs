@@ -849,6 +849,7 @@ export const en = {
     keys: { move: "navigate", open: "open · 0 pts if already seen", close: "close", arrows: "↑↓" },
   },
   cand: {
+    tabs: { label: "Profile sections", synthesis: "Summary", runs: "Runs", dungeons: "Dungeons", method: "Method" },
     header: {
       line: "{spec} · {role} · {realm} ({region})",
       role: { dps: "DPS", healer: "Healer", tank: "Tank" },
@@ -856,6 +857,10 @@ export const en = {
       rio: "RIO",
       last7d: "runs · 7 days",
       runsIndexed: "{count, plural, one {# run indexed} other {# runs indexed}}",
+      compare: "Compare",
+      compareTitle: "Compare this profile with other recent lookups",
+      rioLink: "Raider.IO ↗",
+      wclLink: "WCL ↗",
     },
     synth: {
       verdictFor: "Verdict for a +{level}",
@@ -877,6 +882,17 @@ export const en = {
         out: "Bringing {count, plural, one {this signal} other {these # signals}} to the average player's level is not enough.",
       },
       info: "{why}. Not counted in the score.",
+      infoChip: "informational",
+      weightInfo: "informational · weight 0",
+      flipFoot: "estimated gains on the axis concerned",
+      forces: "Strengths and weaknesses",
+      forcesSub: "effect on the axis, in points",
+      pros: "What helps",
+      cons: "What holds back",
+      nonePros: "Nothing stands out.",
+      noneCons: "Nothing costs much.",
+      axes: "Axes",
+      axesFoot: "Tick = the average player of the spec.",
     },
     runs: {
       upgrade: { timed: "✓ +{chests}", timedNoChests: "✓", depleted: "✗ depleted" },

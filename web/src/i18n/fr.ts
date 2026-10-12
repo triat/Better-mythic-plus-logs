@@ -843,6 +843,7 @@ export const fr: Mirror<typeof en> = {
     keys: { move: "naviguer", open: "ouvrir · 0 pt si déjà consulté", close: "fermer", arrows: "↑↓" },
   },
   cand: {
+    tabs: { label: "Sections du profil", synthesis: "Synthèse", runs: "Runs", dungeons: "Donjons", method: "Méthode" },
     header: {
       line: "{spec} · {role} · {realm} ({region})",
       role: { dps: "DPS", healer: "Heal", tank: "Tank" },
@@ -850,6 +851,10 @@ export const fr: Mirror<typeof en> = {
       rio: "RIO",
       last7d: "runs · 7 jours",
       runsIndexed: "{count, plural, one {# run indexé} other {# runs indexés}}",
+      compare: "Comparer",
+      compareTitle: "Comparer ce profil avec d'autres recherches récentes",
+      rioLink: "Raider.IO ↗",
+      wclLink: "WCL ↗",
     },
     synth: {
       verdictFor: "Verdict pour une +{level}",
@@ -871,6 +876,17 @@ export const fr: Mirror<typeof en> = {
         out: "Ramener {count, plural, one {ce signal} other {ces # signaux}} au niveau du joueur moyen ne suffit pas.",
       },
       info: "{why}. Ne compte pas dans le score.",
+      infoChip: "informatif",
+      weightInfo: "informatif · poids 0",
+      flipFoot: "gains estimés sur l'axe concerné",
+      forces: "Forces et faiblesses",
+      forcesSub: "effet sur l'axe, en points",
+      pros: "Ce qui l'aide",
+      cons: "Ce qui le freine",
+      nonePros: "Rien ne se détache.",
+      noneCons: "Rien ne lui coûte beaucoup.",
+      axes: "Axes",
+      axesFoot: "Trait = joueur moyen de sa spé.",
     },
     runs: {
       upgrade: { timed: "✓ +{chests}", timedNoChests: "✓", depleted: "✗ hors temps" },

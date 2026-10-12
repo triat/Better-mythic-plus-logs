@@ -32,6 +32,10 @@ export const USAGE_CATALOG = {
   season_view: { category: "result", source: "api" },
   self_tab_dungeons: { category: "result", source: "ui" },
   self_tab_runs: { category: "result", source: "ui" },
+  cand_tab_synthesis: { category: "result", source: "ui" },
+  cand_tab_runs: { category: "result", source: "ui" },
+  cand_tab_dungeons: { category: "result", source: "ui" },
+  cand_tab_method: { category: "result", source: "ui" },
   // Deep-dive
   deepdive: { category: "deepdive", source: "api" },
   deepdive_reanalyze: { category: "deepdive", source: "api" },

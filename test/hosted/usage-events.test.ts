@@ -40,6 +40,12 @@ describe("catalogue", () => {
     expect(USAGE_CATALOG.page_live.category).toBe("live");
     expect(USAGE_CATALOG.page_compare.category).toBe("history");
   });
+  test("each candidate profile tab has a ui result event", () => {
+    for (const e of ["cand_tab_synthesis", "cand_tab_runs", "cand_tab_dungeons", "cand_tab_method"]) {
+      expect(isUiEvent(e)).toBe(true);
+      expect(USAGE_CATALOG[e as keyof typeof USAGE_CATALOG].category).toBe("result");
+    }
+  });
   test("dayStart is UTC midnight", () => {
     expect(dayStart(NOW)).toBe(Date.UTC(2026, 9, 9));
     expect(dayStart(Date.UTC(2026, 9, 9, 23, 59))).toBe(Date.UTC(2026, 9, 9));

@@ -186,3 +186,20 @@ export const filterCards = (v: CharactersView, filter: CharsFilter): { withSeaso
   withSeason: filter === "none" ? [] : v.withSeason,
   without: filter === "season" ? [] : v.without,
 });
+
+/**
+ * Whether every character's season answer is in (`GET /api/season`, 0 pts): until then the page shows a loading line
+ * rather than groups, since a character whose season is not loaded yet would sit in the compact group and then jump.
+ */
+export const seasonsLoaded = (list: MyCharacter[], loaded: (key: string) => boolean): boolean =>
+  list.every((c) => loaded(charKey(c)));
+
+/** The "⋯" menu's arrow keys: ↓ / ↑ wrap, Home / End jump; null for any other key. */
+export function menuStep(key: string, index: number, count: number): number | null {
+  if (count === 0) return null;
+  if (key === "ArrowDown") return (index + 1) % count;
+  if (key === "ArrowUp") return (index - 1 + count) % count;
+  if (key === "Home") return 0;
+  if (key === "End") return count - 1;
+  return null;
+}

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { BnetState } from "../../api.ts";
 import { linkedLine, unlinkConfirm, type BnetNotice } from "../../lib/bnet.ts";
 import { useT } from "../../locale.tsx";
@@ -34,31 +35,38 @@ export function BnetLinkCard() {
   );
 }
 
-/** Canvas BnetDetails, "linked" and "unlink · confirmation": the line above the list, or its confirmation in place. */
-export function BnetLinked({ link, bnetCount, confirming, busy, onUnlink, onConfirm, onKeep }: {
+/**
+ * Canvas BnetDetails, "linked" and "unlink · confirmation", drawn as the toolbar card of mockup F-Persos: the line,
+ * `children` (the tracked count), Import again and Unlink; or the confirmation in place. The wording is unchanged.
+ */
+export function BnetLinked({ link, bnetCount, confirming, busy, onUnlink, onConfirm, onKeep, children }: {
   link: NonNullable<BnetState["link"]>; bnetCount: number; confirming: boolean; busy: boolean;
-  onUnlink: () => void; onConfirm: () => void; onKeep: () => void;
+  onUnlink: () => void; onConfirm: () => void; onKeep: () => void; children?: ReactNode;
 }) {
   const { t, locale } = useT();
   if (confirming) {
     return (
-      <div className="confirm me-confirm">
+      <div className="confirm me-confirm chars-unlink">
         <span>{unlinkConfirm(t, bnetCount)}</span>
         <div className="grow" />
-        <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={onConfirm}>{t("me.bnet.unlink")}</button>
-        <button type="button" className="btn btn-sm" disabled={busy} onClick={onKeep}>{t("me.keep")}</button>
+        <button type="button" className="btn btn-danger" disabled={busy} onClick={onConfirm}>{t("me.bnet.unlink")}</button>
+        <button type="button" className="btn" disabled={busy} onClick={onKeep}>{t("me.keep")}</button>
       </div>
     );
   }
   const line = linkedLine(t, locale, link);
   return (
-    <div className="bnet-linked">
-      <span className="chip chip-ok">{t("me.bnet.brand")}</span>
-      <span>{line.who}</span>
-      <span className="faint">{line.text}</span>
-      <div className="grow" />
-      <a className="btn btn-sm" href={START}>{t("me.bnet.importAgain")}</a>
-      <button type="button" className="btn btn-sm btn-danger" onClick={onUnlink}>{t("me.bnet.unlink")}</button>
-    </div>
+    <>
+      <div className="bnet-linked chars-bar-who">
+        <span className="chip chip-ok">{t("me.bnet.brand")}</span>
+        <span className="chars-bar-name">{line.who}</span>
+        <span className="muted">{line.text}</span>
+      </div>
+      {children}
+      <div className="chars-bar-actions">
+        <a className="btn" href={START}>{t("me.bnet.importAgain")}</a>
+        <button type="button" className="btn btn-danger" onClick={onUnlink}>{t("me.bnet.unlink")}</button>
+      </div>
+    </>
   );
 }

@@ -1206,6 +1206,8 @@ export const en = {
     sync: "{start} · ~{pts} pts",
     rio: "Raider.IO ↗",
     more: "More actions",
+    moreFor: "More actions for {name}",
+    loading: "Loading each character's season…",
     menu: { main: "Make main", up: "Move up the list", remove: "Remove from tracking" },
   },
 } as const;

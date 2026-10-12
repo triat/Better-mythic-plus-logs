@@ -1200,6 +1200,8 @@ export const fr: Mirror<typeof en> = {
     sync: "{start} · ~{pts} pts",
     rio: "Raider.IO ↗",
     more: "Plus d'actions",
+    moreFor: "Plus d'actions pour {name}",
+    loading: "Chargement de la saison de chaque perso…",
     menu: { main: "En faire le principal", up: "Monter dans la liste", remove: "Retirer du suivi" },
   },
 };

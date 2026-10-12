@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { HistoryItem, MyCharacter, OwnClientView, SeasonView, WorkOnRow } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { barBand, charKey, characterCards, filterCards, type CharactersInput } from "./characters.ts";
+import { barBand, charKey, characterCards, filterCards, menuStep, seasonsLoaded, type CharactersInput } from "./characters.ts";
 import { makeMain, moveUp, removeAt } from "./me.ts";
 
 const tFr = makeT(fr, "fr");
@@ -140,5 +140,20 @@ describe("moveUp", () => {
     expect(moveUp(list, 0)).toBe(list);
     expect(moveUp(list, 9)).toBe(list);
     expect(names(removeAt(moveUp(list, 3), 0))).toEqual(["Biwaarlock", "Biwaapal", "Biwaapriest"]);
+  });
+});
+
+describe("seasonsLoaded and menuStep", () => {
+  test("every character's answer must be in; an empty list is loaded", () => {
+    const keys = new Set(list.slice(0, 3).map(charKey));
+    expect(seasonsLoaded(list, (k) => keys.has(k))).toBe(false);
+    keys.add(charKey(list[3]!));
+    expect(seasonsLoaded(list, (k) => keys.has(k))).toBe(true);
+    expect(seasonsLoaded([], () => false)).toBe(true);
+  });
+
+  test("arrows wrap, Home / End jump, other keys do nothing", () => {
+    expect([menuStep("ArrowDown", 2, 3), menuStep("ArrowUp", 0, 3), menuStep("Home", 2, 3), menuStep("End", 0, 3)]).toEqual([0, 2, 0, 2]);
+    expect([menuStep("Enter", 1, 3), menuStep("ArrowDown", 0, 0)]).toEqual([null, null]);
   });
 });

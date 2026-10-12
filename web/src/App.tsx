@@ -44,7 +44,7 @@ import { HomePage } from "./components/home/HomePage.tsx";
 import { Landing } from "./components/Landing.tsx";
 import { LiveChip } from "./components/LiveChip.tsx";
 import { LivePanel } from "./components/LivePanel.tsx";
-import { MePage } from "./components/me/MePage.tsx";
+import { CharactersPage } from "./components/me/CharactersPage.tsx";
 import { Setup } from "./components/Setup.tsx";
 import { Shell } from "./components/shell/Shell.tsx";
 import { EMPTY_FORM } from "./components/shell/Sidebar.tsx";
@@ -714,7 +714,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
         {page === "help" && <HelpPage status={status} />}
         {page === "me" && (
           <div className="content">
-            <MePage
+            <CharactersPage
               self={selfActions} history={tabs} region={region} instanceRegion={status.region} bnetCode={bnetCode}
               onRegionChange={onRegionChange}
             />

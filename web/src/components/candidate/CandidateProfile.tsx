@@ -10,10 +10,10 @@ import type { EventPick, LayerKey } from "../../lib/timeline.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
 import type { DeepdiveActions } from "../Detail.tsx";
-import { SignalTiles } from "../SignalTiles.tsx";
-import { VerdictHero } from "../VerdictHero.tsx";
 import { MeChip } from "../self/MeChip.tsx";
 import type { SelfActions } from "../self/ResultHead.tsx";
+import { CandDungeons } from "./CandDungeons.tsx";
+import { MethodTab } from "./MethodTab.tsx";
 import { ProfileHeader } from "./ProfileHeader.tsx";
 import { RunSheet } from "./RunSheet.tsx";
 import { RunsTab } from "./RunsTab.tsx";
@@ -106,9 +106,10 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
             layers={layers} onToggle={toggleLayer} pick={eventPick} onPick={setEventPick} openRef={openRef}
           />
         )}
-        {/* Until their own views land (phase 2, task 14), the other tabs show the vetting view's pieces. */}
-        {state.tab === "dungeons" && <SignalTiles payload={payload} />}
-        {state.tab === "method" && <VerdictHero payload={payload} hint={null} onReevaluate={onReevaluate} />}
+        {state.tab === "dungeons" && (
+          <CandDungeons payload={payload} deepdive={deepdive} onView={(run) => { track(CAND_TAB_EVENT.runs); setState((s) => ({ ...s, tab: "runs", run })); }} />
+        )}
+        {state.tab === "method" && <MethodTab evaluation={payload.evaluation} />}
       </div>
       {sheetRun && (
         <RunSheet

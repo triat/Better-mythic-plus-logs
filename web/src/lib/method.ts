@@ -33,6 +33,14 @@ export interface MethodView {
   axes: AxisCard[];
   curve: CurveView;
   rules: { invite: number; maybe: number; minRuns: number; high: number; medium: number };
+  /** "player's value · average DPS · …", the axes section's legend. */
+  axesLegend: string;
+  /** "curve of the reference DPS". */
+  curveSub: string;
+  /** The curve's accessible name: where the player lands, or the bare curve without a verdict. */
+  curveLabel: string;
+  /** The rules' prose lines after the thresholds line (which the tab renders with coloured verdict words). */
+  ruleLines: string[];
 }
 
 const DASH = "—";
@@ -166,5 +174,66 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
       ],
     },
     rules: { invite, maybe, minRuns, high: cfg.confidence.high, medium: cfg.confidence.medium },
+    axesLegend: t("cand.method.axesLegend", { role: roleWord }),
+    curveSub: t("cand.method.curveSub", { role: roleMany }),
+    curveLabel: insufficient || raw === null
+      ? t("cand.method.curveLabelNone", { role: roleMany })
+      : t("cand.method.curveLabel", { raw: fixed1(locale, raw), score: String(ev.global), role: roleMany, verdict: v.label }),
+    ruleLines: [
+      ...(insufficient ? [] : [t("cand.method.rules.rank", { score: String(ev.global), role: roleMany })]),
+      t("cand.method.rules.minRuns", { min: minRuns }),
+      t("cand.method.rules.confidence", { high: cfg.confidence.high, medium: cfg.confidence.medium }),
+      ...(infoKeys.length ? [t("cand.method.rules.info", { names: list(infoKeys), count: infoKeys.length })] : []),
+    ],
   };
+}
+
+/** The Méthode curve drawn in a `w` × `h` plot area (SVG units, y down): mockup F-Methode, "Du score brut au verdict". */
+export interface CurveGeometry {
+  w: number;
+  h: number;
+  /** The raw score at the plot's left edge: the decade under the curve's first rise (and under the player). */
+  xMin: number;
+  path: string;
+  zones: { verdict: ZoneVerdict; y: number; height: number; at: number }[];
+  xTicks: { x: number; value: number }[];
+  yTicks: { y: number; value: number }[];
+  /** The player: x = the raw score, y = the verdict score; null without a verdict. `anchor` keeps the label inside. */
+  marker: { x: number; y: number; anchor: "start" | "end"; verdict: ZoneVerdict } | null;
+}
+
+export function curveGeometry(c: CurveView, w = 560, h = 200): CurveGeometry {
+  const pts = [...c.points].sort((a, b) => a[0] - b[0]);
+  const rise = pts.find(([, y]) => y > 0)?.[0] ?? 0;
+  const lowest = Math.min(rise - 5, c.raw ?? Infinity);
+  const xMin = Math.max(0, Math.min(90, Math.floor(lowest / 10) * 10));
+  const span = 100 - xMin;
+  const r1 = (n: number) => Math.round(n * 10) / 10;
+  const X = (x: number) => r1(((Math.min(100, Math.max(xMin, x)) - xMin) / span) * w);
+  const Y = (y: number) => r1(h - (Math.min(100, Math.max(0, y)) / 100) * h);
+  // The curve's value at xMin (linear between its two neighbours), then every point right of it.
+  const at = (x: number): number => {
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1]!;
+      const [x1, y1] = pts[i]!;
+      if (x <= x1) return x1 === x0 ? y1 : y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+    }
+    return pts[pts.length - 1]?.[1] ?? 0;
+  };
+  const shown: [number, number][] = pts.length ? [[xMin, at(xMin)], ...pts.filter(([x]) => x > xMin)] : [];
+  const path = shown.map(([x, y], i) => `${i === 0 ? "M" : "L"}${X(x)},${Y(y)}`).join(" ");
+  const step = span >= 60 ? 20 : 10;
+  const xTicks: CurveGeometry["xTicks"] = [];
+  for (let v = xMin; v <= 100; v += step) xTicks.push({ x: X(v), value: v });
+  if (xTicks[xTicks.length - 1]?.value !== 100) xTicks.push({ x: X(100), value: 100 });
+  const zones = [...c.zones].sort((a, b) => b.from - a.from)
+    .map((z) => ({ verdict: z.verdict, y: Y(z.to), height: r1(Y(z.from) - Y(z.to)), at: z.from }));
+  const yTicks = [100, ...[...c.zones].sort((a, b) => b.from - a.from).map((z) => z.from)].map((v) => ({ y: Y(v), value: v }));
+  const marker = c.raw !== null && c.final !== null
+    ? {
+      x: X(c.raw), y: Y(c.final), anchor: X(c.raw) > w - 110 ? "end" as const : "start" as const,
+      verdict: [...c.zones].sort((a, b) => b.from - a.from).find((z) => c.final! >= z.from)?.verdict ?? "pass",
+    }
+    : null;
+  return { w, h, xMin, path, zones, xTicks, yTicks, marker };
 }

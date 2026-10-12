@@ -1044,6 +1044,10 @@ export const en = {
       curveTitle: "From the raw score to the verdict",
       curveSub: "curve of the reference {role}",
       curveAxis: "raw score (weighted axes)",
+      curveLabel: "Curve: raw score {raw} placed at {score} among the reference {role}: {verdict}",
+      curveLabelNone: "Curve of the reference {role}",
+      curveMark: "{raw} → {score}",
+      part: "{axis} {pct}",
       zone: "{verdict} ≥ {at}",
       rulesTitle: "The rules",
       rules: {

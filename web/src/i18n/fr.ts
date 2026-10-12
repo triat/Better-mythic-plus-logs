@@ -1038,6 +1038,10 @@ export const fr: Mirror<typeof en> = {
       curveTitle: "Du score brut au verdict",
       curveSub: "courbe des {role} de référence",
       curveAxis: "score brut (axes pondérés)",
+      curveLabel: "Courbe : score brut {raw} placé à {score} parmi les {role} de référence : {verdict}",
+      curveLabelNone: "Courbe des {role} de référence",
+      curveMark: "{raw} → {score}",
+      part: "{axis} {pct}",
       zone: "{verdict} ≥ {at}",
       rulesTitle: "Les règles",
       rules: {

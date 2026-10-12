@@ -5,7 +5,7 @@ import { docsResponse } from "../../../src/server/routes-shared.ts";
 import type { AxisScore, Evaluation } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { methodView, rawScore } from "./method.ts";
+import { curveGeometry, methodView, rawScore } from "./method.ts";
 
 const tFr = makeT(fr, "fr");
 const docsFr = docsResponse(DEFAULT_CONFIG, false, null, "fr");
@@ -138,5 +138,60 @@ describe("methodView", () => {
     const utility = m.axes.find((a) => a.key === "utility")!;
     expect(utility).toMatchObject({ score: "—", confidence: "—", note: "not enough data for this axis", band: "neutral" });
     expect(m.waterfall.map((w) => w.key)).toEqual(["survival"]);
+  });
+});
+
+describe("methodView — legends and rules", () => {
+  test("French: legend, curve label, rule lines with the informational axis", () => {
+    const m = methodView(tFr, "fr", vachaman(), docsFr)!;
+    expect(m.axesLegend).toBe("valeur du joueur · joueur moyen DPS · poids du signal · effet en points");
+    expect(m.curveSub).toBe("courbe des DPS de référence");
+    expect(m.curveLabel).toBe("Courbe : score brut 78,0 placé à 77 parmi les DPS de référence : INVITE");
+    expect(m.ruleLines).toEqual([
+      "Le verdict est un rang : 77 veut dire mieux que 77\u202f% des DPS de référence au même niveau.",
+      "Moins de 3 runs notés : pas de verdict, seulement « données insuffisantes ».",
+      "Confiance d'un axe : haute dès 6 runs, moyenne dès 3.",
+      "Régularité est affichée pour lire le profil, sans effet sur le verdict.",
+    ]);
+  });
+
+  test("no rank line and a bare curve label without a verdict", () => {
+    const m = methodView(tEn, "en", vachaman({ global: null, verdict: "insufficient", runsUsed: 2 }), docsEn)!;
+    expect(m.curveLabel).toBe("Curve of the reference DPS");
+    expect(m.ruleLines[0]).toBe("Fewer than 3 scored runs: no verdict, only “not enough data”.");
+  });
+});
+
+describe("curveGeometry", () => {
+  const zones = [
+    { verdict: "pass" as const, from: 0, to: 30 },
+    { verdict: "maybe" as const, from: 30, to: 70 },
+    { verdict: "invite" as const, from: 70, to: 100 },
+  ];
+  test("the mockup's DPS plot: 40 → 100, zones top-down, the player at (78.0, 77)", () => {
+    const g = curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 78, final: 77, zones });
+    expect(g.xMin).toBe(40);
+    expect(g.xTicks.map((x) => [x.value, x.x])).toEqual([[40, 0], [60, 186.7], [80, 373.3], [100, 560]]);
+    expect(g.yTicks).toEqual([{ y: 0, value: 100 }, { y: 60, value: 70 }, { y: 140, value: 30 }, { y: 200, value: 0 }]);
+    expect(g.zones).toEqual([
+      { verdict: "invite", y: 0, height: 60, at: 70 },
+      { verdict: "maybe", y: 60, height: 80, at: 30 },
+      { verdict: "pass", y: 140, height: 60, at: 0 },
+    ]);
+    expect(g.marker).toEqual({ x: 354.7, y: 46, anchor: "start", verdict: "invite" });
+    // Starts at the left edge on the curve (interpolated), then the config's points: 47.7 → 2 is the mockup's 71.9,196.
+    expect(g.path.startsWith("M0,196.6 L71.9,196 ")).toBe(true);
+    expect(g.path.endsWith("L560,0")).toBe(true);
+  });
+
+  test("the left edge goes down to the player; no marker without a verdict; label kept inside on the right", () => {
+    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 41, final: 1, zones }).xMin).toBe(40);
+    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 80, final: 70, zones }).xMin).toBe(50);
+    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 50, final: null, zones }).marker).toBeNull();
+    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 95, final: 99, zones }).marker!.anchor).toBe("end");
+    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 60, final: 30, zones }).marker!.verdict).toBe("maybe");
+    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 60, final: 29, zones }).marker!.verdict).toBe("pass");
+    const healer = curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 80, final: 70, zones });
+    expect(healer.xTicks.map((x) => x.value)).toEqual([50, 60, 70, 80, 90, 100]);
   });
 });

@@ -110,7 +110,8 @@ export const runOf = (v: SeasonRunView): MPlusRun => ({
 
 export interface RunDetailView {
   deaths: { title: string; hits: { id: number | null; ability: string; share: string }[] }[];
-  avoidable: { key: string; name: string; amount: string }[];
+  /** The avoidable abilities that hit the player, "other" last (`id` null). */
+  avoidable: { key: string; id: number | null; name: string; amount: string }[];
   casts: { id: number; name: string; ofText: string }[];
   kicked: string | null;
   control: ControlView;
@@ -167,8 +168,8 @@ export function runDetail(t: T, locale: Locale, v: SeasonRunView): RunDetailView
   });
   const a = s.avoidableDamage;
   const avoidable = [
-    ...(a?.abilities ?? []).map((x) => ({ key: String(x.id), name: x.name, amount: fmtAmount(x.total) })),
-    ...(a?.other ? [{ key: "other", name: t("self.panel.other"), amount: fmtAmount(a.other) }] : []),
+    ...(a?.abilities ?? []).map((x) => ({ key: String(x.id), id: x.id, name: x.name, amount: fmtAmount(x.total) })),
+    ...(a?.other ? [{ key: "other", id: null, name: t("self.panel.other"), amount: fmtAmount(a.other) }] : []),
   ];
   const enemy = [...(s.interrupts.enemyCasts ?? [])].sort((x, y) => y.completed - x.completed).slice(0, 5);
   const interrupted = (s.interrupts.enemyCasts ?? []).reduce((n, c) => n + c.interrupted, 0);

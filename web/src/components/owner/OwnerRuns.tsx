@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { LookupPayload, SeasonView } from "../../types.ts";
 import {
-  WEEKS_PAGE, filterLabels, filterMenus, filterOptions, keyPresets, ownerRunsView, pickMenu, revealRun, stepKey, weeksFor,
+  WEEKS_PAGE, canStep, filterLabels, filterMenus, filterOptions, keyPresets, ownerRunsView, pickMenu, revealRun, stepKey, weeksFor,
 } from "../../lib/ownerRuns.ts";
 import type { ExpandedRun, FilterMenu, OwnerRunRow, ResultFilter, RunFilters } from "../../lib/ownerRuns.ts";
 import { runDetail as runFacts } from "../../lib/runView.ts";
@@ -71,6 +71,15 @@ export function OwnerRuns(props: OwnerRunsProps) {
     onRun(key);
   };
   const setFilters = (next: RunFilters) => { onFilters(next); setLoaded(WEEKS_PAGE); };
+  // A render helper, not a component: a component declared here would remount (and drop focus) on every render.
+  const step = (label: string, text: string, bound: "min" | "max", by: 1 | -1) => (
+    <button
+      type="button" className="oruns-step" aria-label={label} title={label} disabled={!canStep(f, bound, by, opts.keys)}
+      onClick={() => setFilters(stepKey(f, bound, by, opts.keys))}
+    >
+      {text}
+    </button>
+  );
 
   return (
     <div className="oruns">
@@ -114,13 +123,13 @@ export function OwnerRuns(props: OwnerRunsProps) {
         {opts.keys && (
           <div className="oruns-keys">
             <span>{t("owner.runs.filter.key")}</span>
-            <Step label={t("owner.runs.filter.keyMinDown")} text="−" onClick={() => setFilters(stepKey(f, "min", -1, opts.keys))} />
+            {step(t("owner.runs.filter.keyMinDown"), "−", "min", -1)}
             <span className="mono oruns-key">+{f.keyMin ?? opts.keys.min}</span>
-            <Step label={t("owner.runs.filter.keyMinUp")} text="+" onClick={() => setFilters(stepKey(f, "min", 1, opts.keys))} />
+            {step(t("owner.runs.filter.keyMinUp"), "+", "min", 1)}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            <Step label={t("owner.runs.filter.keyMaxDown")} text="−" onClick={() => setFilters(stepKey(f, "max", -1, opts.keys))} />
+            {step(t("owner.runs.filter.keyMaxDown"), "−", "max", -1)}
             <span className="mono oruns-key">+{f.keyMax ?? opts.keys.max}</span>
-            <Step label={t("owner.runs.filter.keyMaxUp")} text="+" onClick={() => setFilters(stepKey(f, "max", 1, opts.keys))} />
+            {step(t("owner.runs.filter.keyMaxUp"), "+", "max", 1)}
           </div>
         )}
         {opts.keys && keyPresets(t, f, opts).map((p) => (
@@ -177,10 +186,6 @@ export function OwnerRuns(props: OwnerRunsProps) {
   );
 }
 
-function Step({ label, text, onClick }: { label: string; text: string; onClick: () => void }) {
-  return <button type="button" className="oruns-step" aria-label={label} title={label} onClick={onClick}>{text}</button>;
-}
-
 function Row({ r, colLabel, onClick }: { r: OwnerRunRow; colLabel: (c: Col) => string; onClick: () => void }) {
   const { t } = useT();
   const k = (c: Col) => <span className="oruns-k">{colLabel(c)} </span>;
@@ -193,7 +198,10 @@ function Row({ r, colLabel, onClick }: { r: OwnerRunRow; colLabel: (c: Col) => s
       <span className="oruns-c-dungeon">
         <span className="rl-abbr oruns-abbr" aria-hidden="true">{r.abbr}</span>
         <span className="oruns-name">
-          <span className="oruns-name-text">{r.dungeon}{r.analysed && <span className="rl-tag"> {t("cand.runs.analysedTag")}</span>}</span>
+          <span className="oruns-name-text">
+            {r.dungeon}{r.analysed && <span className="rl-tag"> {t("cand.runs.analysedTag")}</span>}
+            {r.failed && <span className="oruns-failed" title={r.failed}> {t("owner.runs.failedTag")}</span>}
+          </span>
           <span className="oruns-sub">{r.specLine}</span>
         </span>
       </span>
@@ -250,6 +258,26 @@ function Expanded({ payload, deepdive, layers, onToggle, pick, onPick, ex }: Own
       )}
       {d && (
         <div className="oruns-blocks">
+          <div className="oruns-block">
+            <span className="synth-lbl">{t("owner.runs.deaths")}</span>
+            {d.deaths.length === 0 && <span className="oruns-block-note">{t("owner.runs.noDeath")}</span>}
+            {d.deaths.map((death, i) => (
+              <div key={i} className="oruns-death">
+                <span className="oruns-death-title">{death.title}</span>
+                {death.hits.length === 0 && <span className="faint">—</span>}
+                {death.hits.map((h, j) => (
+                  <div key={j} className="oruns-line"><span><SpellLink id={h.id} name={h.ability} /></span><span className="mono">{h.share}</span></div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="oruns-block">
+            <span className="synth-lbl">{t("owner.runs.avoidable")}</span>
+            {d.avoidable.length === 0 && <span className="oruns-block-note">{t("owner.runs.noAvoidable")}</span>}
+            {d.avoidable.map((a) => (
+              <div key={a.key} className="oruns-line"><span><SpellLink id={a.id} name={a.name} /></span><span className="mono">{a.amount}</span></div>
+            ))}
+          </div>
           <div className="oruns-block">
             <span className="synth-lbl">{t("self.detail.casts")}</span>
             {d.casts.length === 0 && <span className="faint">—</span>}

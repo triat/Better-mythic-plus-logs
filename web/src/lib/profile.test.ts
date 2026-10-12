@@ -106,9 +106,9 @@ describe("owner URL state", () => {
     expect(ownerState(search(href), key, []).vetting).toBe(true);
     expect(vettingHref("k", { tab: "runs", run: "abc:3", sheet: true })).toBe("/candidate?open=k&tab=runs&run=abc%3A3&sheet=1&as=vetting");
     expect(candSwitchHref("k", "?open=k&tab=method&as=vetting")).toBe("/candidate?open=k&tab=method&as=vetting");
-    // Another profile, or a re-evaluation under a new key, opens that profile's own default view.
+    // Another profile opens its own default view; the same character under a new key keeps the vetting view.
     expect(candSwitchHref("other", "?open=k&tab=method&as=vetting")).toBe("/candidate?open=other&tab=method");
-    expect(candSwitchHref("k2", "?open=k&tab=runs&as=vetting", true)).toBe("/candidate?open=k2&tab=runs");
+    expect(candSwitchHref("k2", "?open=k&tab=runs&as=vetting", true)).toBe("/candidate?open=k2&tab=runs&as=vetting");
     // An owner page's state survives Refresh: "form" is the default, "runs" with its run is kept.
     expect(candSwitchHref("k", "?open=k&tab=form")).toBe("/candidate?open=k");
     expect(ownerState(search(candSwitchHref("k", "?open=k&tab=runs&run=abc:3")), "k", ["abc:3"])).toEqual({ tab: "runs", run: "abc:3", vetting: false });

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { HistoryItem, MyCharacter, OwnClientView, SeasonView, WorkOnRow } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { barBand, charKey, characterCards, filterCards, menuStep, seasonsLoaded, type CharactersInput } from "./characters.ts";
+import { barBand, charKey, characterCards, filterCards, listShown, menuStep, seasonsLoaded, type CharactersInput } from "./characters.ts";
 import { makeMain, moveUp, removeAt } from "./me.ts";
 
 const tFr = makeT(fr, "fr");
@@ -120,7 +120,8 @@ describe("characterCards", () => {
     const hosted = characterCards(tEn, "en", input());
     const local = characterCards(tEn, "en", input({ hosted: false }));
     const actions = (v: typeof hosted) => [...v.withSeason, ...v.without].map((x) => x.menu.map((m) => m.action));
-    expect(actions(hosted)).toEqual([["remove"], ["main", "remove"], ["main", "up", "remove"], ["main", "up", "remove"]]);
+    // The main (index 0) offers no action at all: it is never removed, another character is made main first.
+    expect(actions(hosted)).toEqual([[], ["main", "remove"], ["main", "up", "remove"], ["main", "up", "remove"]]);
     expect(actions(local)).toEqual(actions(hosted));
     expect(characterCards(tFr, "fr", input()).without[0]!.menu.map((m) => [m.label, m.danger])).toEqual([
       ["En faire le principal", false], ["Monter dans la liste", false], ["Retirer du suivi", true],
@@ -128,6 +129,22 @@ describe("characterCards", () => {
     expect([hosted.canAdd, local.canAdd]).toEqual([false, true]);
     const full = Array.from({ length: 20 }, (_, i) => c(`Name${String.fromCharCode(97 + i)}`, "hyjal", "manual"));
     expect(characterCards(tEn, "en", input({ hosted: false, list: full })).canAdd).toBe(false);
+  });
+
+  test("a season still loading or that failed is not shown as \"no season yet\"", () => {
+    const load = { Biwaasham: "failed", Biwaarlock: "ok", Biwaapriest: "failed", Biwaapal: "loading" } as const;
+    const v = characterCards(tEn, "en", input({ loadOf: (x) => load[x.name as keyof typeof load] }));
+    // A failed reload keeps the season it had, with the line; a character with nothing loaded says why on its row.
+    expect(v.withSeason.map((x) => [x.name, x.status])).toEqual([
+      ["Biwaasham", "Could not load the season: reload the page to try again."], ["Biwaarlock", null],
+    ]);
+    expect(v.without.map((x) => [x.name, x.status])).toEqual([
+      ["Biwaapriest", "Could not load the season: reload the page to try again."], ["Biwaapal", null],
+    ]);
+    const loading = characterCards(tFr, "fr", input({ loadOf: (x) => (x.name === "Biwaapriest" ? "loading" : "ok") }));
+    expect(loading.without[0]!.status).toBe("Chargement de sa saison…");
+    expect(loading.counts).toEqual({ all: 4, season: 2, none: 1 });
+    expect(characterCards(tEn, "en", input()).without.map((x) => x.status)).toEqual([null, null]);
   });
 
   test("filterCards", () => {
@@ -161,6 +178,10 @@ describe("seasonsLoaded and menuStep", () => {
     keys.add(charKey(list[3]!));
     expect(seasonsLoaded(list, (k) => keys.has(k))).toBe(true);
     expect(seasonsLoaded([], () => false)).toBe(true);
+  });
+
+  test("only the first load hides the list", () => {
+    expect([listShown(false, false), listShown(false, true), listShown(true, false), listShown(true, true)]).toEqual([false, true, true, true]);
   });
 
   test("arrows wrap, Home / End jump, other keys do nothing", () => {

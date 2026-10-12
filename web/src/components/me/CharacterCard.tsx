@@ -15,13 +15,13 @@ import type { SelfActions } from "../owner/types.ts";
 export function SeasonProbe({ c, self, onState }: { c: MyCharacter; self: SelfActions; onState: (key: string, s: SeasonState | null) => void }) {
   const s = useSeason({ name: c.name, realm: c.realm, region: c.region, level: null }, self);
   const key = charKey(c);
-  useEffect(() => { onState(key, s); }, [key, s.view, s.loading, s.running, s.progress, s.error, s.start]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { onState(key, s); }, [key, s.view, s.loading, s.failed, s.running, s.progress, s.error, s.start]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => onState(key, null), [key, onState]);
   return null;
 }
 
 /** The "⋯" menu (mockup F-Persos): ↑↓ Home End move, Escape or a click outside closes, focus returns to the button. */
-function CharMenu({ name, items, onPick }: { name: string; items: CharMenuItem[]; onPick: (a: CharAction) => void }) {
+function CharMenu({ charKey: key, name, items, onPick }: { charKey: string; name: string; items: CharMenuItem[]; onPick: (a: CharAction) => void }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -42,10 +42,11 @@ function CharMenu({ name, items, onPick }: { name: string; items: CharMenuItem[]
     const next = menuStep(e.key, all.indexOf(document.activeElement as HTMLButtonElement), all.length);
     if (next !== null) { e.preventDefault(); focusItem(next); }
   };
+  if (items.length === 0) return null;
   return (
     <div className="chars-more" ref={ref} onKeyDown={open ? onKey : undefined}>
       <button
-        ref={button} type="button" className="btn chars-ico" aria-haspopup="menu" aria-expanded={open}
+        ref={button} type="button" className="btn chars-ico" data-char-more={key} aria-haspopup="menu" aria-expanded={open}
         aria-label={t("chars.moreFor", { name })} title={t("chars.more")} onClick={() => setOpen((o) => !o)}
       >
         <Icon name="more" size={16} />
@@ -111,7 +112,7 @@ export function CharacterCard({ card, season, removing, onAction, onRemove, onKe
 }) {
   const { t } = useT();
   return (
-    <article className={"card chars-card" + (card.main ? " chars-card-main" : "")}>
+    <article className={"card chars-card" + (card.main ? " chars-card-main" : "")} data-char={card.key}>
       <div className="chars-card-head">
         <Badge initials={card.initials} color={card.classColor} big />
         <div className="chars-who">
@@ -138,13 +139,14 @@ export function CharacterCard({ card, season, removing, onAction, onRemove, onKe
       <div className="chars-lines">
         <span className="muted">{card.line}</span>
         <span className={"chars-note-" + card.note.tone}>{card.note.text}</span>
+        {card.status && <span className="tone-bad chars-small" role="status">{card.status}</span>}
       </div>
       {removing ? <RemoveConfirm name={card.name} onRemove={onRemove} onKeep={onKeep} /> : (
         <div className="chars-actions">
           <a className="btn btn-primary" href={card.open.href} title={card.open.hint}>{card.open.label}</a>
           <CardSync card={card} season={season} />
           <a className="btn" href={card.rio} target="_blank" rel="noreferrer">{t("chars.rio")}</a>
-          <CharMenu name={card.name} items={card.menu} onPick={onAction} />
+          <CharMenu charKey={card.key} name={card.name} items={card.menu} onPick={onAction} />
         </div>
       )}
     </article>
@@ -158,16 +160,17 @@ export function CharacterRow({ row, removing, onAction, onRemove, onKeep }: {
   const { t } = useT();
   if (removing) return <div className="chars-row-confirm"><RemoveConfirm name={row.name} onRemove={onRemove} onKeep={onKeep} /></div>;
   return (
-    <div className="card chars-row">
+    <div className="card chars-row" data-char={row.key}>
       <Badge initials={row.initials} color={row.classColor} />
       <div className="chars-who">
         <span className="chars-row-name" style={row.classColor ? { color: row.classColor } : undefined}>
           {row.name}{row.main && <span className="chars-main">{t("chars.main")}</span>}
         </span>
         <span className="chars-sub">{row.realm}</span>
+        {row.status && <span className="chars-small muted" role="status">{row.status}</span>}
       </div>
       <a className="btn" href={row.search.href} title={row.search.hint}>{row.search.label}</a>
-      <CharMenu name={row.name} items={row.menu} onPick={onAction} />
+      <CharMenu charKey={row.key} name={row.name} items={row.menu} onPick={onAction} />
     </div>
   );
 }

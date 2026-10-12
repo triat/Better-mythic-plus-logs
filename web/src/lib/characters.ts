@@ -16,6 +16,8 @@ import { MAX_ME, PILLAR_ORDER, syncCard, workOnRows } from "./self.ts";
 export type CharsFilter = "all" | "season" | "none";
 export const CHARS_FILTERS: readonly CharsFilter[] = ["all", "season", "none"];
 export type CharAction = "main" | "up" | "remove";
+/** A character's season request: answered, not answered yet, or failed (`useSeason`'s `loading` / `failed`). */
+export type SeasonLoad = "ok" | "loading" | "failed";
 /** Score bars: blue ≥ 70, neutral 50–69, orange < 50 (the 50 tick drawn by the bar); `na` without a score. */
 export type BarBand = "better" | "neutral" | "worse" | "na";
 export const barBand = (v: number | null): BarBand => (v === null ? "na" : v >= 70 ? "better" : v >= 50 ? "neutral" : "worse");
@@ -51,6 +53,8 @@ export interface CharCard {
   /** Hosted without a usable own client: the sync needs one (the page links to Settings). */
   noClient: boolean;
   rio: string;
+  /** The last `GET /api/season` failed: the card shows the season it had and says the reload failed; null otherwise. */
+  status: string | null;
   menu: CharMenuItem[];
 }
 
@@ -65,6 +69,8 @@ export interface CharCompact {
   main: boolean;
   /** Open (history entry, 0 pts) or Look up (fills the search field). */
   search: CharLink;
+  /** Its season is still loading, or could not be loaded: said on the row instead of "no season yet"; null otherwise. */
+  status: string | null;
   menu: CharMenuItem[];
 }
 
@@ -88,6 +94,8 @@ export interface CharactersInput {
   list: MyCharacter[];
   /** Each character's season (`GET /api/season`, 0 pts), null when none is stored or it is not loaded. */
   seasonOf: (c: MyCharacter, index: number) => SeasonView | null;
+  /** Where its `GET /api/season` stands; "ok" when omitted. */
+  loadOf?: (c: MyCharacter, index: number) => SeasonLoad;
   history: HistoryItem[];
   hosted: boolean;
   ownClient: OwnClientView | null;
@@ -100,7 +108,8 @@ export interface CharactersInput {
 }
 
 function menuOf(t: T, index: number): CharMenuItem[] {
-  const actions: CharAction[] = index === 0 ? ["remove"] : index === 1 ? ["main", "remove"] : ["main", "up", "remove"];
+  // The main is never removed (make another character main first), as on the /me page before the redesign.
+  const actions: CharAction[] = index === 0 ? [] : index === 1 ? ["main", "remove"] : ["main", "up", "remove"];
   return actions.map((action) => ({ action, label: t(`chars.menu.${action}`), danger: action === "remove" }));
 }
 
@@ -155,8 +164,11 @@ export function characterCards(t: T, locale: Locale, input: CharactersInput): Ch
       menu: menuOf(t, index),
     };
     const season = input.seasonOf(c, index);
+    const load = input.loadOf?.(c, index) ?? "ok";
+    const status = load === "ok" ? null : t(`chars.status.${load}`);
     if (!season || season.runs.length === 0) {
-      without.push({ ...base, realm: realmLine(c), search: openOf(t, c, history) });
+      // A season that failed or is still loading is not "no season yet": the row says so instead.
+      without.push({ ...base, realm: realmLine(c), search: openOf(t, c, history), status: season ? null : status });
       return;
     }
     const window = season.recent ?? season.season;
@@ -176,9 +188,10 @@ export function characterCards(t: T, locale: Locale, input: CharactersInput): Ch
       sync: sync.kind === "ready" ? t("chars.sync", { start: sync.start, pts: fmtPts(season.state.estimate) }) : null,
       noClient: sync.kind === "noClient",
       rio: lookupQuery(c),
+      status: load === "failed" ? status : null,
     });
   });
-  const counts = { all: list.length, season: withSeason.length, none: without.length };
+  const counts = { all: list.length, season: withSeason.length, none: without.filter((x) => x.status === null).length };
   return {
     withSeason,
     without,
@@ -204,6 +217,10 @@ export const filterCards = (v: CharactersView, filter: CharsFilter): { withSeaso
  */
 export const seasonsLoaded = (list: MyCharacter[], loaded: (key: string) => boolean): boolean =>
   list.every((c) => loaded(charKey(c)));
+
+/** Only the first load hides the list: once shown, a character added later (or a Battle.net pick) loads in its row
+ * while the other cards stay. */
+export const listShown = (shownBefore: boolean, loaded: boolean): boolean => shownBefore || loaded;
 
 /** The "⋯" menu's arrow keys: ↓ / ↑ wrap, Home / End jump; null for any other key. */
 export function menuStep(key: string, index: number, count: number): number | null {

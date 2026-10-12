@@ -148,7 +148,8 @@ enrichment 7.3–7.9 pts. Before spending, bmpl checks against its estimates
 - `mplus`: ~20 pts per character (no enrichment; unchanged)
 - `analyze`: ~3 pts per run, once ever (cached forever); re-opening tabs or
   correcting the table costs 0
-- Season sync (the web UI's **Sync season**, `POST /api/season/sync`), for
+- Season sync (the web UI's **Sync** on your own character's page, or **Sync N runs** on its card in My
+  characters; `POST /api/season/sync`), for
   your own characters only: the rankings (~20 pts, on the first batch) plus
   ~8 pts per run whose log is not cached yet and ~3 pts per run without crowd
   control, in batches of 10 runs, newest first; the estimate (20 + 10 per run

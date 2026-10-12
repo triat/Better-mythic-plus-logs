@@ -3,7 +3,7 @@ import type { MPlusRun, SeasonRunView, SeasonView } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import {
-  ALL_RUNS, filterLabels, filterMenus, filterOptions, keyPresets, pickMenu, revealRun, mainSpec, matches, normFilters, ownerRunsView, stepKey, targetFilters, weekLabel, weeksFor,
+  ALL_RUNS, filterLabels, filterMenus, filterOptions, keyPresets, pickMenu, revealRun, mainSpec, matches, normFilters, ownerRunsView, stepKey, canStep, targetFilters, weekLabel, weeksFor,
   type RunFilters,
 } from "./ownerRuns.ts";
 import { runListRow } from "./runList.ts";
@@ -103,6 +103,15 @@ describe("filters", () => {
     expect(stepKey({ ...f, keyMin: 18, keyMax: 18 }, "max", -1, o.keys)).toMatchObject({ keyMin: 18, keyMax: 18 });
     expect(stepKey({ ...ALL_RUNS }, "max", -1, o.keys)).toMatchObject({ keyMin: 16, keyMax: 19 });
     expect(stepKey(f, "min", 1, null)).toEqual(f);
+  });
+  test("a stepper is disabled when it cannot move its bound", () => {
+    const o = filterOptions(tEn, s);
+    const f = o.defaults;
+    const all = (x: typeof f) => [canStep(x, "min", -1, o.keys), canStep(x, "min", 1, o.keys), canStep(x, "max", -1, o.keys), canStep(x, "max", 1, o.keys)];
+    expect(all(f)).toEqual([false, true, true, false]);
+    expect(all({ ...f, keyMin: 18, keyMax: 18 })).toEqual([true, false, false, true]);
+    expect(all({ ...ALL_RUNS })).toEqual([false, true, true, false]);
+    expect(canStep(f, "min", 1, null)).toBe(false);
   });
   test("the target button sets min = max = target", () => {
     const o = filterOptions(tEn, s);
@@ -230,6 +239,15 @@ describe("ownerRunsView", () => {
     expect([rl.detail, rl.analyse]).toEqual([null, null]);
     expect(rl.note).toBe("Morts, sorts passés et contrôle de ce run s'affichent après l'analyse.");
     expect("timed" in rl.run || "durationMs" in rl.run).toBe(false);
+    expect(ownerRunsView(tEn, "en", season(), ALL_RUNS, "RLn:1", 3, NOW).weeks.flatMap((w) => w.rows).find((r) => r.key === "RLn:1")!.failed).toBeNull();
+
+    // A run Warcraft Logs returned no report for says so, on its row and in place of the detail.
+    const failed = season({ runs: seasonRuns.map((r) => (r.key === "RLn:1" ? { ...r, failed: true } : r)) });
+    const fv = ownerRunsView(tEn, "en", failed, ALL_RUNS, "RLn:1", 3, NOW);
+    const text = "Warcraft Logs returned no report for this run: the next sync tries again after 24 hours.";
+    expect(fv.expanded!.note).toBe(text);
+    expect(fv.weeks.flatMap((w) => w.rows).find((r) => r.key === "RLn:1")!.failed).toBe(text);
+    expect(fv.weeks.flatMap((w) => w.rows).find((r) => r.key === "VA:1")!.failed).toBeNull();
 
     expect(ownerRunsView(tEn, "en", season(), { ...ALL_RUNS, dungeon: 1 }, "VA:1", 3, NOW).expanded).toBeNull();
     expect(ownerRunsView(tEn, "en", season(), ALL_RUNS, "nope:1", 3, NOW).expanded).toBeNull();

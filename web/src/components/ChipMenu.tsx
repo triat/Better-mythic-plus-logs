@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { MenuItem } from "../lib/header.ts";
 
 interface Props {
@@ -14,10 +14,27 @@ interface Props {
   separateLast?: boolean;
 }
 
+const MEASURE = { position: "fixed", top: 0, visibility: "hidden" } as const;
+
 /** A chip inside the search field that opens a menu under itself; closes on pick, outside click or Escape. Design: canvas "RegionSpec", option B. */
 export function ChipMenu({ label, className, head, items, onPick, title, separateLast }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  // The menu opens under its chip; near a viewport edge (a phone, a chip on the right) it slides back inside, 16 px off.
+  // It is first laid out hidden and fixed (it cannot widen the page then), measured, then placed: a menu that overflows
+  // even for one layout makes a phone browser zoom the page out.
+  const [shift, setShift] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (!open) { setShift(null); return; }
+    if (shift !== null || !menu.current || !ref.current) return;
+    const vw = document.documentElement.clientWidth;
+    const m = menu.current.getBoundingClientRect();
+    const chip = ref.current.getBoundingClientRect();
+    // Fixed, a menu the stylesheet anchors left sits at the viewport's left edge, one anchored right at its right edge.
+    const natural = m.left > 1 ? chip.right - m.width : chip.left;
+    setShift(Math.round(Math.max(16, Math.min(vw - 16 - m.width, natural)) - natural));
+  }, [open, shift]);
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
@@ -32,7 +49,7 @@ export function ChipMenu({ label, className, head, items, onPick, title, separat
         {label}
       </button>
       {open && (
-        <div className="menu card" role="menu">
+        <div className="menu card" role="menu" ref={menu} style={shift === null ? MEASURE : shift !== 0 ? { transform: `translateX(${shift}px)` } : undefined}>
           <div className="menu-head">{head}</div>
           {items.map((i, k) => (
             <button

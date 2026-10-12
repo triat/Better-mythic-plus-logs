@@ -100,7 +100,7 @@ describe("runDetail", () => {
     } as unknown as SeasonRunView;
     const d = runDetail(tEn, "en", v)!;
     expect(d.deaths).toEqual([{ title: "Death at 14:02", hits: [{ id: 5, ability: "Void Slash", share: "71% of the hits" }, { id: 6, ability: "Shadow Pool (self)", share: "29% of the hits" }] }]);
-    expect(d.avoidable.map((a) => a.name)).toEqual(["Shadow Pool", "other avoidable damage"]);
+    expect(d.avoidable.map((a) => [a.id, a.name, a.amount])).toEqual([[6, "Shadow Pool", "2.10m"], [null, "other avoidable damage", "1.40m"]]);
     expect(d.casts).toEqual([{ id: 7, name: "Lava Bolt", ofText: "3 of 12" }]);
     expect(d.kicked).toBe("You kicked 4 of the 9 interrupted.");
   });

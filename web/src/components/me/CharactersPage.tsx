@@ -3,7 +3,7 @@ import { api } from "../../api.ts";
 import type { BnetState } from "../../api.ts";
 import type { HistoryItem, Region } from "../../types.ts";
 import { bnetNotice, pickFailureNotice, picksBody, picksFromList, removedNotice, type BnetCode, type BnetNotice } from "../../lib/bnet.ts";
-import { characterCards, charKey, filterCards, seasonsLoaded, type CharAction, type CharsFilter } from "../../lib/characters.ts";
+import { characterCards, charKey, filterCards, listShown, seasonsLoaded, type CharAction, type CharsFilter } from "../../lib/characters.ts";
 import { regionChipLabel, regionMenu } from "../../lib/header.ts";
 import { addCharacter, makeMain, moveUp, parseEntry, removeAt } from "../../lib/me.ts";
 import { MAX_ME } from "../../lib/self.ts";
@@ -35,6 +35,9 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [filter, setFilter] = useState<CharsFilter>("all");
+  // After "Keep", "make main" or "move up", focus goes back to that character's "⋯" button once the list re-renders.
+  const [focusKey, setFocusKey] = useState<string | null>(null);
+  const [shownOnce, setShownOnce] = useState(false);
   const [seasons, setSeasons] = useState<ReadonlyMap<string, SeasonState>>(new Map());
   const list = self.characters;
   // Hosted only: GET /api/bnet (0 pts), the picker's ticks, the pick's refusal, the unlink confirmation, API errors.
@@ -105,7 +108,17 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
     if (a === "remove") { setRemoving(key); return; }
     setRemoving(null);
     self.setCharacters(a === "main" ? makeMain(list, index) : moveUp(list, index));
+    setFocusKey(key);
   };
+  const keep = (key: string) => () => { setRemoving(null); setFocusKey(key); };
+  useEffect(() => {
+    if (focusKey === null) return;
+    // The main has no "⋯" (nothing to do on it): its card's Open link takes the focus instead.
+    const card = document.querySelector<HTMLElement>(`[data-char="${CSS.escape(focusKey)}"]`);
+    const more = document.querySelector<HTMLElement>(`[data-char-more="${CSS.escape(focusKey)}"]`);
+    (more ?? card?.querySelector<HTMLElement>("a.btn") ?? null)?.focus();
+    setFocusKey(null);
+  }, [focusKey, list]);
   const remove = (index: number) => () => { self.setCharacters(removeAt(list, index)); setRemoving(null); };
   const titleOf = docs ? sourceTitleOf(docs) : null;
 
@@ -116,8 +129,14 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
   const view = characterCards(t, locale, {
     list, history, hosted: self.hosted, ownClient: self.ownClient, titleOf,
     seasonOf: (c) => seasons.get(charKey(c))?.view ?? null,
+    loadOf: (c) => {
+      const s = seasons.get(charKey(c));
+      return !s || s.loading ? "loading" : s.failed ? "failed" : "ok";
+    },
   });
-  const ready = seasonsLoaded(list, (k) => seasons.get(k)?.loading === false);
+  const loaded = seasonsLoaded(list, (k) => seasons.get(k)?.loading === false);
+  useEffect(() => { if (loaded) setShownOnce(true); }, [loaded]);
+  const ready = listShown(shownOnce, loaded);
   const shown = filterCards(view, filter);
   const full = list.length >= MAX_ME;
   const tracked = (
@@ -190,7 +209,7 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
                 {shown.withSeason.map((card) => (
                   <CharacterCard
                     key={card.key} card={card} season={seasons.get(card.key)} removing={removing === card.key}
-                    onAction={act(card.index, card.key)} onRemove={remove(card.index)} onKeep={() => setRemoving(null)}
+                    onAction={act(card.index, card.key)} onRemove={remove(card.index)} onKeep={keep(card.key)}
                   />
                 ))}
               </div>
@@ -206,7 +225,7 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
                 {shown.without.map((row) => (
                   <CharacterRow
                     key={row.key} row={row} removing={removing === row.key}
-                    onAction={act(row.index, row.key)} onRemove={remove(row.index)} onKeep={() => setRemoving(null)}
+                    onAction={act(row.index, row.key)} onRemove={remove(row.index)} onKeep={keep(row.key)}
                   />
                 ))}
               </div>

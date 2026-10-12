@@ -50,9 +50,10 @@ export function candSwitchHref(key: string, search: string, sameCharacter = fals
   const s = candState(search);
   if (candOpen(search) === key || sameCharacter) {
     // The owner page's "form" tab reads as the default here, and "form" is the owner page's default too; `as=vetting`
-    // stays on the same profile (Refresh while a member looks at their own vetting profile).
+    // stays on the same profile (Refresh while a member looks at their own vetting profile) and on the same character's
+    // new key (re-evaluating their own vetting profile at another key level).
     const href = candHref(key, s);
-    return candOpen(search) === key && isVetting(search) ? `${href}&${VETTING}` : href;
+    return isVetting(search) ? `${href}&${VETTING}` : href;
   }
   return candHref(key, { tab: s.tab });
 }

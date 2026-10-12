@@ -11,6 +11,8 @@ export const seasonWho = (p: LookupPayload): SeasonWho =>
 export interface SeasonState {
   view: SeasonView | null;
   loading: boolean;
+  /** The last `GET /api/season` failed (the view, if any, is the one loaded before); a sync's `error` is apart. */
+  failed: boolean;
   syncOpen: boolean;
   openSync: () => void;
   closeSync: () => void;
@@ -33,6 +35,7 @@ export interface SeasonState {
 export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown): SeasonState {
   const [view, setView] = useState<SeasonView | null>(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<SeasonState["progress"]>(null);
@@ -49,6 +52,7 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
     const r = await api.season(who);
     if (seq.current !== mine || idRef.current !== asked) return;
     if (r.ok) setView(r.season);
+    setFailed(!r.ok);
     setLoading(false);
   }, [id]);
 
@@ -57,6 +61,7 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
     stopSync.current = false;
     setView(null);
     setLoading(true);
+    setFailed(false);
     setSyncOpen(false);
     setError(null);
     return () => { stopSync.current = true; };
@@ -91,7 +96,7 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
   }, [id, view, load, self]);
 
   return {
-    view, loading, syncOpen, running, progress, error, start,
+    view, loading, failed, syncOpen, running, progress, error, start,
     openSync: () => setSyncOpen(true),
     closeSync: () => setSyncOpen(false),
     stop: () => { stopSync.current = true; },

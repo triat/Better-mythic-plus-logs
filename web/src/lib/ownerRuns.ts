@@ -107,6 +107,13 @@ export function stepKey(f: RunFilters, bound: "min" | "max", by: 1 | -1, keys: F
   return bound === "min" ? { ...f, keyMin: Math.min(hi, clamp(lo + by)), keyMax: hi } : { ...f, keyMin: lo, keyMax: Math.max(lo, clamp(hi + by)) };
 }
 
+/** Whether a stepper moves its bound: false at the season's lowest / highest key, or against the other bound. */
+export function canStep(f: RunFilters, bound: "min" | "max", by: 1 | -1, keys: FilterOptions["keys"]): boolean {
+  if (!keys) return false;
+  const next = stepKey(f, bound, by, keys);
+  return bound === "min" ? next.keyMin !== (f.keyMin ?? keys.min) : next.keyMax !== (f.keyMax ?? keys.max);
+}
+
 /** "Niveau cible": only the season's target level. */
 export const targetFilters = (f: RunFilters, target: number): RunFilters => ({ ...f, keyMin: target, keyMax: target });
 
@@ -207,6 +214,8 @@ export interface OwnerRunRow extends RunListRow {
   kicksPeers: string | null;
   /** "5 · 1" (potions · healthstones); null without the count. */
   consumables: string | null;
+  /** The last sync got no report from Warcraft Logs (the row's tag tooltip); null otherwise. */
+  failed: string | null;
   open: boolean;
 }
 
@@ -228,7 +237,7 @@ export interface ExpandedRun {
   key: string;
   /** Deaths with their hits, avoidable, spells that went through, the kick line, crowd control; null without signals. */
   detail: RunDetailView | null;
-  /** Said instead of the detail when the run has no signals yet. */
+  /** Said instead of the detail when the run has no signals yet: not analysed, or no report from Warcraft Logs. */
   note: string | null;
   /** A deep-dive is cached for the run. */
   analysed: boolean;
@@ -322,6 +331,7 @@ export function ownerRunsView(
         ? t("owner.runs.peers", { pct: t("cand.runs.pct", { v: k.peerPct }) })
         : null,
       consumables: s?.consumables ? t("owner.runs.consumables", { pots: s.consumables.potions, hs: s.consumables.healthstones }) : null,
+      failed: !s && v.failed ? t("owner.runs.failed") : null,
       open: keyOf(v) === openKey,
     };
   };
@@ -379,7 +389,7 @@ function expandedRun(t: T, locale: Locale, v: SeasonRunView, now: number): Expan
   return {
     key: keyOf(v),
     detail: runDetail(t, locale, v),
-    note: s ? null : t("owner.runs.notAnalysed"),
+    note: s ? null : t(v.failed ? "owner.runs.failed" : "owner.runs.notAnalysed"),
     analysed: v.analysis !== null,
     analyse: s && v.analysis === null ? t("runs.analyze", { cost: costText(t, 1) }) : null,
     wcl: { href: wclUrl(v.reportCode, v.fightID), label: t("owner.runs.wcl") },

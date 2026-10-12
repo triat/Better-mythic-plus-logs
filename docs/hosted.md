@@ -170,8 +170,8 @@ API and never logged — the card only ever shows the abbreviated client id
 through *their* client instead of the shared one: it does not count against
 `BMPL_POINTS_PER_USER_HOUR`, does not touch the shared budget shown on
 `/api/admin/usage`, and the user menu shows "Your WCL client · 1 412 / 3 600
-pts" instead of the shared quota line. A season sync (**Sync season** on a result page, the
-sync button on `/me`, `POST /api/season/sync`) runs only this way: without an own client it is
+pts" instead of the shared quota line. A season sync (**Sync** in the header of your own character's page,
+**Sync N runs · ~X pts** on its card in My characters at `/me`, `POST /api/season/sync`) runs only this way: without an own client it is
 refused (`403 { error: "own_client_required" }`) before any WCL call, and the page links to Settings.
 It is also for the member's own characters only: a character outside their "My characters" list is
 refused first (`403 { error: "not_your_character" }`). Only those characters open the self-review tabs;

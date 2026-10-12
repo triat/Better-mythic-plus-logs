@@ -21,6 +21,8 @@ export interface SynthesisDocs {
   axisWeights: DocsResponse["config"]["axisWeights"];
   verdict: Pick<DocsResponse["config"]["verdict"], "invite" | "maybe" | "minRuns">;
   confidence: Pick<DocsResponse["config"]["confidence"], "high">;
+  /** Each axis's sub-signals in registry order ("survival.individualDeaths" …), for the Compare ranking's axis lines. */
+  subSignals?: Partial<Record<AxisKey, readonly string[]>>;
 }
 
 /** A sub-signal's title from the registry ("survival.individualDeaths" → "Individual deaths"), the source itself when unknown. */
@@ -34,6 +36,9 @@ export const synthesisDocs = (d: Pick<DocsResponse, "docs" | "config">): Synthes
   axisWeights: d.config.axisWeights,
   verdict: d.config.verdict,
   confidence: d.config.confidence,
+  subSignals: Object.fromEntries(
+    Object.entries(d.docs.axes).map(([axis, a]) => [axis, Object.keys(a?.subSignals ?? {}).map((id) => `${axis}.${id}`)]),
+  ) as Partial<Record<AxisKey, readonly string[]>>,
 });
 
 export interface VerdictBlock {

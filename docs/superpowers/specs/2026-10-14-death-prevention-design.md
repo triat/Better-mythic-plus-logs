@@ -1,6 +1,6 @@
 # Death prevention: "could I have prevented this death?" — design
 
-Status: draft 2026-10-14, reaction time added 2026-10-14, awaiting the user's review. Amends `docs/superpowers/specs/2026-09-16-run-deep-dive-design.md`
+Status: draft 2026-10-14, reaction time added and set to 700 ms 2026-10-14, awaiting the user's review. Amends `docs/superpowers/specs/2026-09-16-run-deep-dive-design.md`
 (reading B, "Avoidable deaths") and `docs/superpowers/specs/2026-09-15-evaluation-model-design.md` (Preparation axis).
 No WCL probe has been run for this draft: the section "To verify before the plan" lists the open facts and their cost.
 
@@ -73,11 +73,11 @@ in the season table next to the entries (`reaction` block of `defensives.json`, 
 
 - `dangerHpShare` = **0.5**: the player is in danger once their health is at or below 50 % of max health. Above it,
   nobody is expected to drink.
-- `reactionMs` = **1000**: the time from the danger to the heal landing (seeing the drop, deciding, the key press, the
-  server round trip).
+- `reactionMs` = **700**: the time from the danger to the heal landing. The user's figure (2026-10-14): a median human
+  reaction of about 250 ms, plus the decision, the key press and the server round trip.
 
-Both values are a first guess, not a measured fact: the plan's live check compares them against real deaths, and the
-user tunes them.
+`dangerHpShare` is a first guess, not a measured fact; both values are checked against real deaths in the plan's live
+check, and the user tunes them.
 
 For each heal tool ready at the death (potion or healthstone, availability as in "Availability"):
 
@@ -103,9 +103,14 @@ numbers:
 - "Health potion ready, no time: 100 % → 0 in 0.6 s" → not avoidable;
 - "Health potion ready, not enough: heals 180k, overkill 250k" → not avoidable.
 
-The same reaction window applies to defensives and immunities: a defensive counts as "would have prevented" only if it
-was ready at `tDrink` and `tDrink < tKill`. Without it, a death from 100 % in one burst would still read "Divine Shield
-ready" while the player had no time to react. (Decision to confirm by the user, see "Open question".)
+### Defensives are not reactive (user, 2026-10-14)
+
+The reaction window applies to health potions and healthstones only. Defensives and immunities keep today's rule:
+ready at the moment of death means the death was avoidable. The user's reason: "il faut les utiliser au bon moment, or
+ces moments sont généralement connus". A defensive answers a known mechanic (a spell that hits the group or one player
+hard, or several spells landing together, e.g. a damage-over-time on one player during a group-wide hit), so it is
+cast ahead of the damage, not in reaction to the health bar. A burst death with a defensive ready is therefore a
+missed planned use, not a lack of time. One-shots and instakills stay `unpreventable` (decision 3).
 
 ## Availability
 
@@ -146,11 +151,6 @@ None of these was checked; each needs points. Estimated total: about 5 pts on on
 5. Whether combat potions share the health potions' cooldown. If they do, a combat potion cast must put the health
    potions on cooldown, and the combat potions' ids join the event filter.
 
-## Open question
-
-1. The reaction window for defensives and immunities: apply it (recommended, fewer false positives, as for heals) or keep
-   today's rule ("ready at the moment of death") because many defensives are pre-cast on known mechanics?
-
 ## Display
 
 Visible change: the run sheet's death lines and the timeline's death markers. Mocked on the Claude Design canvas first
@@ -185,4 +185,8 @@ All strings in `web/src/i18n/en.ts` and `fr.ts`.
 
 - A reaction time per player or per role (one value for everyone).
 - Damage-reduction percentages per defensive, which would extend the overkill rule to them.
+- **Defensive timing on the right damage** (user idea, 2026-10-14, its own spec later): find the dangerous moments of
+  each dungeon from the logs (the spells that kill or hit hardest, and the overlaps such as a damage-over-time on one
+  player during a group-wide hit), then check whether the player's defensives covered them. This judges defensives
+  outside deaths too; this spec only judges deaths.
 - Potion or healthstone use outside deaths.

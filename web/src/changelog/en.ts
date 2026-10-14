@@ -4,7 +4,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.3",
+    date: "2026-10-14",
     items: [
       "The version of bmpl you use now shows at the bottom of the sidebar, under your account.",
       "A blue dot tells you bmpl changed since your last visit: click it to read what's new.",

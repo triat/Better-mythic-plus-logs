@@ -207,10 +207,19 @@ way, once). Downgrade: check out the previous commit and `just deploy` again. If
 your `.env` and `litestream.yml`), then `systemctl restart bmpl litestream`
 if the units changed.
 
-**9. Auto-deploy from GitHub.** `.github/workflows/deploy.yml` ships a
-published release (`gh release create vX.Y.Z --generate-notes`, or the
-*Releases* page) — never a plain push to `main`. The job checks the tag
-against `"version"` in `package.json` (bump it in the release commit),
+**9. Auto-deploy from GitHub.** The usual way to ship is the **release**
+workflow (`.github/workflows/release.yml`): *Actions → release → Run
+workflow* on `main`, or `gh workflow run release -f bump=patch` (`minor`,
+`major`). It runs the CI (`ci.yml`) and the dependency audit, bumps
+`"version"` in `package.json`, commits `chore(release): X.Y.Z` on `main`, tags
+`vX.Y.Z`, publishes the GitHub release with generated notes and calls
+`deploy.yml` for that tag (a release published with the workflow's own token
+does not fire `release: published`, so it is called directly). The Actions bot
+must be allowed to push to `main`. A release published by hand
+(`gh release create vX.Y.Z --generate-notes`, or the *Releases* page, after
+bumping `package.json` yourself) still triggers `deploy.yml` on its own.
+`.github/workflows/deploy.yml` never ships a plain push to `main`. The job checks the tag
+against `"version"` in `package.json`,
 installs with frozen lockfiles, runs `just check` and `bun test` (no `.env`:
 everything runs on fakes, no WCL points), builds `dist/bmpl-linux`, then does
 exactly what `just deploy` does over SSH as the `deploy` user, and finally

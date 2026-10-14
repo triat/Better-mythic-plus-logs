@@ -1,7 +1,7 @@
 // One validator for every JSON body the server accepts (issue #9): explicit shapes, unknown fields refused,
 // numbers finite, integers where the domain is integer. Pure; the routes call parseBody().
 import { DISCORD_ID } from "../hosted/config.ts";
-import { KEY_MAX, KEY_MIN } from "../hosted/settings-limits.ts"; // moved out of routes-user.ts (which now imports them from here too) — no validate ↔ routes cycle
+import { KEY_MAX, KEY_MIN, SEMVER } from "../hosted/settings-limits.ts"; // moved out of routes-user.ts (which now imports them from here too) — no validate ↔ routes cycle
 import { REGIONS } from "../wow/regions.ts";
 import { LOCALES } from "../hosted/locale.ts";
 import { LIVE_ROLES, LIVE_SORTS } from "../hosted/live.ts";
@@ -128,6 +128,7 @@ export const SETTINGS_BODY = obj({
   liveRoles: opt(arr(oneOf(LIVE_ROLES), { max: 3 })),
   liveClasses: opt(arr(str({ min: 1, max: 20 }), { max: 13 })),
   characters: opt(arr(MY_CHARACTER, { max: MAX_CHARACTERS })),
+  lastSeenVersion: opt(nullable(str({ max: 20, pattern: SEMVER }))),
 });
 /** PUT /api/bnet/characters: the chosen candidates of the member's import, in order (Battle.net spec, decision 4). */
 export const BNET_PICK_BODY = obj({ picks: arr(obj({ region: oneOf(REGIONS), bnetId: int({ min: 1 }) }), { min: 1, max: MAX_CHARACTERS }) });

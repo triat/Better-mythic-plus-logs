@@ -156,6 +156,7 @@ const SETTINGS_COLUMNS: ReadonlyArray<readonly [string, string]> = [
   ["live_roles", "TEXT"],
   ["live_classes", "TEXT"],
   ["characters", "TEXT"],
+  ["last_seen_version", "TEXT"],
 ];
 
 function migrateColumns(db: Database, table: string, columns: ReadonlyArray<readonly [string, string]>): void {

@@ -17,7 +17,7 @@ import { USAGE_BATCH_MAX_COUNT, USAGE_BATCH_MAX_NAMES, isUiEvent } from "../host
 import type { UiEvent } from "../hosted/usage-catalog.ts";
 
 /** The "Nothing to update" rule on an already-validated (SETTINGS_BODY) patch. */
-export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null; liveSort?: LiveSort; liveRoles?: LiveRole[]; liveClasses?: string[]; characters?: MyCharacter[] }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
+export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?: boolean; region?: Region | null; locale?: Locale | null; liveSort?: LiveSort; liveRoles?: LiveRole[]; liveClasses?: string[]; characters?: MyCharacter[]; lastSeenVersion?: string | null }): { ok: true; patch: Partial<UserSettings> } | { ok: false; error: string } {
   const patch: Partial<UserSettings> = {};
   if ("yourKey" in value) patch.yourKey = value.yourKey!;
   if ("legendOpen" in value) patch.legendOpen = value.legendOpen!;
@@ -28,7 +28,8 @@ export function parseSettingsPatch(value: { yourKey?: number | null; legendOpen?
   if ("liveClasses" in value) patch.liveClasses = value.liveClasses!;
   // Same cleaning as a read (duplicates dropped, first kept), so the PUT answer is what a GET will return.
   if ("characters" in value) patch.characters = parseCharacters(JSON.stringify(value.characters));
-  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region`, `locale`, `liveSort`, `liveRoles`, `liveClasses` and/or `characters`" };
+  if ("lastSeenVersion" in value) patch.lastSeenVersion = value.lastSeenVersion!;
+  if (Object.keys(patch).length === 0) return { ok: false, error: "Nothing to update: send `yourKey`, `legendOpen`, `region`, `locale`, `liveSort`, `liveRoles`, `liveClasses`, `characters` and/or `lastSeenVersion`" };
   return { ok: true, patch };
 }
 

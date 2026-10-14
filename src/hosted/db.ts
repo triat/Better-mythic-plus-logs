@@ -10,6 +10,7 @@ import type { LiveRole, LiveSort } from "./live.ts";
 import { DEFAULT_LIVE, isLiveRole, isLiveSort } from "./live.ts";
 import { applyHostedSchema } from "./schema.ts";
 import { parseCharacters, type MyCharacter } from "../self/characters.ts";
+import { SEMVER } from "./settings-limits.ts";
 import { config } from "../config.ts";
 import { HISTORY_MAX_PER_USER, USER_HISTORY_TABLES, openUserHistory } from "./history.ts";
 import type { UserHistoryRepo } from "./history.ts";
@@ -28,8 +29,9 @@ export interface WclClientRow { userId: number; clientId: string; secretEnc: str
 export interface SessionRow { id: string; userId: number; createdAt: number; expiresAt: number; ip: string | null; userAgent: string | null }
 export interface InviteRow { discordId: string; invitedBy: string; createdAt: number; note: string | null }
 export interface DiscordIdentity { discordId: string; username: string; globalName: string | null; avatarHash: string | null }
-export interface UserSettings { yourKey: number | null; legendOpen: boolean; region: Region | null; locale: Locale | null; liveSort: LiveSort; liveRoles: LiveRole[]; liveClasses: string[]; characters: MyCharacter[] }
-export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true, region: null, locale: null, ...DEFAULT_LIVE, characters: [] };
+/** `lastSeenVersion`: the newest version whose changelog the member opened (what's-new spec); null before the first visit. */
+export interface UserSettings { yourKey: number | null; legendOpen: boolean; region: Region | null; locale: Locale | null; liveSort: LiveSort; liveRoles: LiveRole[]; liveClasses: string[]; characters: MyCharacter[]; lastSeenVersion: string | null }
+export const DEFAULT_USER_SETTINGS: UserSettings = { yourKey: null, legendOpen: true, region: null, locale: null, ...DEFAULT_LIVE, characters: [], lastSeenVersion: null };
 
 /** WCL usage buckets are calendar hours (epoch ms). */
 export const HOUR_MS = 3_600_000;
@@ -186,13 +188,13 @@ export function openHosted(db: Database): HostedDb {
   const inviteUpsert = db.query("INSERT INTO invites (discord_id, invited_by, created_at, note) VALUES (?, ?, ?, ?) ON CONFLICT(discord_id) DO UPDATE SET invited_by = excluded.invited_by, note = excluded.note");
   const inviteDelete = db.query("DELETE FROM invites WHERE discord_id = ?");
 
-  const settingsGet = db.query<{ your_key: number | null; legend_open: number; region: string | null; locale: string | null; live_sort: string | null; live_roles: string | null; live_classes: string | null; characters: string | null }, [number]>(
-    "SELECT your_key, legend_open, region, locale, live_sort, live_roles, live_classes, characters FROM user_settings WHERE user_id = ?",
+  const settingsGet = db.query<{ your_key: number | null; legend_open: number; region: string | null; locale: string | null; live_sort: string | null; live_roles: string | null; live_classes: string | null; characters: string | null; last_seen_version: string | null }, [number]>(
+    "SELECT your_key, legend_open, region, locale, live_sort, live_roles, live_classes, characters, last_seen_version FROM user_settings WHERE user_id = ?",
   );
   const settingsUpsert = db.query(
-    "INSERT INTO user_settings (user_id, your_key, legend_open, region, locale, live_sort, live_roles, live_classes, characters, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+    "INSERT INTO user_settings (user_id, your_key, legend_open, region, locale, live_sort, live_roles, live_classes, characters, last_seen_version, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
     "ON CONFLICT(user_id) DO UPDATE SET your_key = excluded.your_key, legend_open = excluded.legend_open, region = excluded.region, locale = excluded.locale, " +
-    "live_sort = excluded.live_sort, live_roles = excluded.live_roles, live_classes = excluded.live_classes, characters = excluded.characters, updated_at = excluded.updated_at",
+    "live_sort = excluded.live_sort, live_roles = excluded.live_roles, live_classes = excluded.live_classes, characters = excluded.characters, last_seen_version = excluded.last_seen_version, updated_at = excluded.updated_at",
   );
   /** A malformed JSON array (or an array with a bad item) falls back to the default, never throws. */
   const parseLiveRoles = (raw: string | null): LiveRole[] => {
@@ -225,6 +227,7 @@ export function openHosted(db: Database): HostedDb {
           liveRoles: parseLiveRoles(r.live_roles),
           liveClasses: parseLiveClasses(r.live_classes),
           characters: parseCharacters(r.characters),
+          lastSeenVersion: r.last_seen_version !== null && SEMVER.test(r.last_seen_version) ? r.last_seen_version : null,
         }
       : { ...DEFAULT_USER_SETTINGS, liveRoles: [...DEFAULT_LIVE.liveRoles], liveClasses: [], characters: [] };
   };
@@ -301,7 +304,7 @@ export function openHosted(db: Database): HostedDb {
       get: settings,
       update(userId, patch, now) {
         const next = { ...settings(userId), ...patch };
-        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, next.region, next.locale, next.liveSort, JSON.stringify(next.liveRoles), JSON.stringify(next.liveClasses), JSON.stringify(next.characters), now);
+        settingsUpsert.run(userId, next.yourKey, next.legendOpen ? 1 : 0, next.region, next.locale, next.liveSort, JSON.stringify(next.liveRoles), JSON.stringify(next.liveClasses), JSON.stringify(next.characters), next.lastSeenVersion, now);
         return next;
       },
     },

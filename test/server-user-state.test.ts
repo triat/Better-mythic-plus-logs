@@ -136,11 +136,11 @@ describe("/api/settings (hosted)", () => {
   test("401 without a session; defaults for a fresh user", async () => {
     expect((await fetch(h("/api/settings"))).status).toBe(401);
     expect((await fetch(h("/api/settings"), { method: "PUT", body: "{}" })).status).toBe(401);
-    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] } });
+    expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [], lastSeenVersion: null } });
   });
 
   test("PUT merges partial patches per user", async () => {
-    const liveDefaults = { liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] };
+    const liveDefaults = { liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [], lastSeenVersion: null };
     expect(await (await put(a, { yourKey: 22 })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: true, region: null, locale: null, ...liveDefaults } });
     expect(await (await put(a, { legendOpen: false })).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null, ...liveDefaults } });
     expect(await (await fetch(h("/api/settings"), as(a))).json()).toEqual({ ok: true, settings: { yourKey: 22, legendOpen: false, region: null, locale: null, ...liveDefaults } });

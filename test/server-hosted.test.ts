@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import pkg from "../package.json";
+const pkgVersion = pkg.version;
 import { join } from "node:path";
 import { runServer } from "../src/server.ts";
 import { SECURITY_HEADERS } from "../src/server/security.ts";
@@ -176,7 +178,7 @@ describe("/api/health", () => {
     expect(body.warnings).toContain("no backup marker");
   });
   test("GET /api/status (hosted) carries the phase 2 flags", async () => {
-    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, hasCredentials: expect.any(Boolean), region: "eu", openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance" });
+    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, version: pkgVersion, hasCredentials: expect.any(Boolean), region: "eu", openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance" });
   });
 });
 

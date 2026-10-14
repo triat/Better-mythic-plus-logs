@@ -71,11 +71,13 @@ jobs:
           echo "version=$next" >> "$GITHUB_OUTPUT"
           echo "tag=v$next" >> "$GITHUB_OUTPUT"
 
-      # Only the "version" line changes, so the file keeps its formatting.
-      - name: Bump package.json
+      # The user-facing changelog's "next" entry becomes this version (refused when it is missing or empty: a release
+      # always tells the users something). Then only package.json's "version" line changes, so it keeps its formatting.
+      - name: Stamp the changelog and bump package.json
         env:
           NEXT: ${{ steps.version.outputs.version }}
         run: |
+          bun scripts/changelog-stamp.ts "$NEXT" "$(TZ=Europe/Paris date +%F)"
           sed -i -E '0,/"version": "[^"]+"/s//"version": "'"$NEXT"'"/' package.json
           test "$(jq -r .version package.json)" = "$NEXT"
           git diff --stat

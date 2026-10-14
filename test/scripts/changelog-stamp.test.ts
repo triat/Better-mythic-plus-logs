@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { nextProblem, stampSource } from "../../scripts/changelog-stamp.ts";
@@ -33,10 +33,13 @@ describe("changelog-stamp", () => {
     expect(nextProblem([{ version: "next", items: [" "] }])).toBe("the \"next\" entry is empty");
     expect(nextProblem([{ version: "next", items: ["x"] }])).toBeNull();
   });
-  test("the script stamps both shipped files, and refuses a second run (no next left)", async () => {
+  // Synthetic files, not copies of the shipped ones: right after a release the shipped files have no "next" entry.
+  test("the script stamps both files, and refuses a second run (no next left)", async () => {
     const dir = mkdtempSync(join(tmpdir(), "bmpl-stamp-"));
     try {
-      cpSync("web/src/changelog", join(dir, "changelog"), { recursive: true });
+      mkdirSync(join(dir, "changelog"));
+      writeFileSync(join(dir, "changelog", "en.ts"), SRC);
+      writeFileSync(join(dir, "changelog", "fr.ts"), SRC.replace("CHANGELOG_EN", "CHANGELOG_FR"));
       const run = (v: string) => Bun.spawnSync(["bun", "scripts/changelog-stamp.ts", v, "2099-01-01", join(dir, "changelog")]);
       const ok = run("9.9.9");
       expect(ok.exitCode).toBe(0);

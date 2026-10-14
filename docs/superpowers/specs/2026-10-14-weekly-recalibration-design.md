@@ -29,7 +29,7 @@ it as a pull request the user merges or not.
 
 ## Proposed (to confirm)
 
-4. **Where it runs: on the VPS, as a systemd timer** (`OnCalendar=Wed *-*-* 03:00 Europe/Paris`). Reasons:
+4. **Where it runs: on the VPS, as two systemd timers** (collection `OnCalendar=hourly`, fit `OnCalendar=Wed *-*-* 06:00 Europe/Paris`). Reasons:
    - the collected payloads (third-party characters) stay on the server, never in GitHub (artifacts of a public
      repository are downloadable by any signed-in GitHub user);
    - systemd handles the Paris time zone natively; GitHub's cron is UTC only.

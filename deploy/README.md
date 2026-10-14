@@ -210,7 +210,9 @@ if the units changed.
 **9. Auto-deploy from GitHub.** The usual way to ship is the **release**
 workflow (`.github/workflows/release.yml`): *Actions → release → Run
 workflow* on `main`, or `gh workflow run release -f bump=patch` (`minor`,
-`major`). It runs the CI (`ci.yml`) and the dependency audit, bumps
+`major`). Its first job checks that the user-facing changelog has lines under
+`"next"` (`bun scripts/changelog-stamp.ts --check`, the lines go to the run's
+summary) and stops there when it has none. It then runs the CI (`ci.yml`) and the dependency audit, bumps
 `"version"` in `package.json`, stamps the user-facing changelog's `"next"` entry
 (`web/src/changelog/`, shown in the app's "What's new" panel) with the version and
 the date, and refuses to run when that entry is missing or empty; it commits

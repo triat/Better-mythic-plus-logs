@@ -1,5 +1,5 @@
 # Cut a release by hand: Actions → release → Run workflow, pick the bump (patch / minor / major).
-# Runs ci.yml and the dependency audit on main, bumps package.json, commits "chore(release): X.Y.Z" on main, tags
+# Checks first that the user-facing changelog has lines under "next", then runs ci.yml and the dependency audit on main, bumps package.json, commits "chore(release): X.Y.Z" on main, tags
 # vX.Y.Z, publishes the GitHub release with generated notes, then deploys it through deploy.yml.
 # deploy.yml is called directly: a release published with the workflow's own GITHUB_TOKEN does not trigger other
 # workflows, so its `release: published` trigger would not fire. The push to main needs the GitHub Actions bot to be
@@ -24,7 +24,25 @@ permissions:
   contents: write
 
 jobs:
+  # First, before CI: a release always tells the users something (spec 2026-10-14-whats-new-design.md, decision 3).
+  # The lines that will ship go to the run's summary.
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - name: The changelog has lines under "next"
+        run: |
+          bun scripts/changelog-stamp.ts --check > lines.txt
+          { echo '### What this release tells the users'; echo; cat lines.txt; } >> "$GITHUB_STEP_SUMMARY"
+          cat lines.txt
+
   ci:
+    needs: changelog
     uses: ./.github/workflows/ci.yml
 
   release:

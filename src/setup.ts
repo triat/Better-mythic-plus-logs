@@ -76,6 +76,18 @@ export async function resolveDbPath(): Promise<string> {
   return path.join(path.dirname(await resolveEnvPath()), "bmpl.db");
 }
 
+/**
+ * The weekly recalibration's own SQLite file (samples, discovery pages, the lookups' cache): BMPL_CALIBRATION_DB, else
+ * `calibration.db` next to .env. Never the instance's `bmpl.db`, so third-party characters stay out of the production
+ * store and its replica (spec docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md, decision 6).
+ */
+export async function resolveCalibrationDbPath(): Promise<string> {
+  const override = (process.env.BMPL_CALIBRATION_DB ?? "").trim();
+  const p = override || path.join(path.dirname(await resolveEnvPath()), "calibration.db");
+  if (path.resolve(p) === path.resolve(await resolveDbPath())) throw new Error(`calibration: ${p} is the instance's database, refusing to use it`);
+  return p;
+}
+
 /** User override for the evaluation rules: BMPL_EVAL_CONFIG, else `evaluation.json` next to .env. May not exist. */
 export async function resolveEvalConfigPath(): Promise<string> {
   const override = (process.env.BMPL_EVAL_CONFIG ?? "").trim();

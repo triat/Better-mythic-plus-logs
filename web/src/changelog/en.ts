@@ -6,7 +6,8 @@ export const CHANGELOG_EN: ChangelogEntry[] = [
   {
     version: "next",
     items: [
-      "The version you use now shows under your account, with what changed since your last visit.",
+      "The version of bmpl you use now shows at the bottom of the sidebar, under your account.",
+      "A blue dot tells you bmpl changed since your last visit: click it to read what's new.",
     ],
   },
   {

@@ -5,7 +5,8 @@ export const CHANGELOG_FR: ChangelogEntry[] = [
   {
     version: "next",
     items: [
-      "La version que tu utilises s'affiche sous ton compte, avec ce qui a changé depuis ta dernière visite.",
+      "La version de bmpl que tu utilises s'affiche en bas de la barre latérale, sous ton compte.",
+      "Un point bleu t'indique que bmpl a changé depuis ta dernière visite : clique dessus pour lire les nouveautés.",
     ],
   },
   {

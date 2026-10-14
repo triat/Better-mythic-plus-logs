@@ -1,6 +1,6 @@
 # Death prevention: "could I have prevented this death?" — design
 
-Status: draft 2026-10-14, awaiting the user's review. Amends `docs/superpowers/specs/2026-09-16-run-deep-dive-design.md`
+Status: draft 2026-10-14, reaction time added 2026-10-14, awaiting the user's review. Amends `docs/superpowers/specs/2026-09-16-run-deep-dive-design.md`
 (reading B, "Avoidable deaths") and `docs/superpowers/specs/2026-09-15-evaluation-model-design.md` (Preparation axis).
 No WCL probe has been run for this draft: the section "To verify before the plan" lists the open facts and their cost.
 
@@ -60,24 +60,52 @@ health data is missing ("re-analyze to judge potions and one-shots").
 Facts already cached for each death (the Deaths table, verified on the three fixtures in `test/fixtures/`): the last
 hits newest first, each with `amount`, `overkill`, `mitigated`, `unmitigatedAmount`. On all three fixtures
 `unmitigatedAmount − mitigated = amount + overkill`: **`amount` excludes the overkill**, so the killing hit's
-`amount` is the player's health just before it.
+`amount` is the player's health just before it. The table keeps only the last three hits (`events/death` is 1 to 3 on
+the fixtures), too few to rebuild the health curve.
 
-Missing: the player's **maximum health**. It comes from the new fetch below.
+Missing: the player's **maximum health** and **health over the seconds before the death**. Both come from the new
+fetch below.
+
+### Reaction time (user, 2026-10-14: "il faut que le temps de réaction soit pris en compte sinon il va y avoir de faux positif")
+
+A heal only counts if the player had time to see the danger and press the key before the killing hit. Two constants,
+in the season table next to the entries (`reaction` block of `defensives.json`, overridable like the entries):
+
+- `dangerHpShare` = **0.5**: the player is in danger once their health is at or below 50 % of max health. Above it,
+  nobody is expected to drink.
+- `reactionMs` = **1000**: the time from the danger to the heal landing (seeing the drop, deciding, the key press, the
+  server round trip).
+
+Both values are a first guess, not a measured fact: the plan's live check compares them against real deaths, and the
+user tunes them.
 
 For each heal tool ready at the death (potion or healthstone, availability as in "Availability"):
 
 ```
-heal          = the tool's heal (flat, or a share of max health)
-room          = maxHp − hpBeforeKillingHit        // a heal cannot go above max health
-wouldSave     = min(heal, room) > overkill
+tDanger   = the first moment in the health window when hp ≤ dangerHpShare × maxHp
+            (the danger must last: if health goes back above the line, tDanger restarts at the next crossing)
+tDrink    = tDanger + reactionMs
+inTime    = tDrink < tKill                          // the heal lands before the killing hit
+hpAtDrink = the health just before tDrink, from the health window
+heal      = the tool's heal (flat, or a share of max health)
+effective = min(heal, maxHp − hpAtDrink)            // a heal cannot go above max health
+wouldSave = inTime and effective > overkill
 ```
 
-The verdict is `heal available` when at least one ready heal tool has `wouldSave`. The death line shows the numbers:
-"Health potion ready: heals 180k, overkill 110k" or "Health potion ready, not enough: heals 180k, overkill 250k".
+Why `effective > overkill` is enough: a heal added at `tDrink` shifts every later health value up by `effective`, so the
+final value goes from `−overkill` to `effective − overkill`. Healing received after `tDrink` that capped at max health
+would break this; the rule ignores it.
 
-Known approximation: the rule assumes the heal lands just before the killing hit. A heal drunk earlier could have been
-eaten by the previous hits; a heal drunk at the last moment needs reaction time. The rule is optimistic on purpose: it
-says "a heal of that size was in the bag", not "the player had time".
+The verdict is `heal available` when at least one ready heal tool has `wouldSave`. The death line shows why, with the
+numbers:
+
+- "Health potion ready: in danger 2.4 s before death, heals 180k, overkill 110k" → avoidable;
+- "Health potion ready, no time: 100 % → 0 in 0.6 s" → not avoidable;
+- "Health potion ready, not enough: heals 180k, overkill 250k" → not avoidable.
+
+The same reaction window applies to defensives and immunities: a defensive counts as "would have prevented" only if it
+was ready at `tDrink` and `tDrink < tKill`. Without it, a death from 100 % in one burst would still read "Divine Shield
+ready" while the player had no time to react. (Decision to confirm by the user, see "Open question".)
 
 ## Availability
 
@@ -92,9 +120,11 @@ says "a heal of that size was in the bag", not "the player had time".
 ## Data: the health fetch
 
 The deep-dive fetch (`src/deepdive/wcl.ts`) gains one request per analyzed run: for each of the player's deaths, the
-damage events taken by the player in the 5 s before it, with unit resources, which carry the target's health and
-maximum health. The requests are aliases of one GraphQL call. The raw row (`RawDeepDive`) stores
-`deathHealth: { atMs: number; maxHp: number | null; hpBefore: number | null }[]`.
+damage and healing events on the player in the 10 s before it, with unit resources, which carry the target's health
+and maximum health on each event. 10 s covers the death windows seen on the fixtures (`deathWindow` 2.0 to 8.0 s). The
+requests are aliases of one GraphQL call. The raw row (`RawDeepDive`) stores, per death,
+`deathHealth: { atMs: number; maxHp: number | null; curve: { atMs: number; hp: number }[] }[]` (health after each
+event, fight-relative ms).
 
 `DEEPDIVE_QUERY_VERSION` (`src/signals/store.ts:16`, today `1`) goes to `2`: rows fetched before become `staleTable`
 and keep today's verdicts until the user re-analyzes them. Nothing is re-fetched automatically.
@@ -106,12 +136,20 @@ None of these was checked; each needs points. Estimated total: about 5 pts on on
 1. `events(dataType: DamageTaken, targetID, startTime, endTime, includeResources: true)` returns events with the
    target's `hitPoints` and `maxHitPoints`, and in which unit (raw value or percentage). The deep-dive spec noted that
    `events(dataType: DamageTaken, targetID, startTime, endTime)` "returned nothing on that run"; the probe must find
-   the working form (hostility type, `dataType: All` with a filter) or fall back to `CombatantInfo` stamina.
+   the working form (hostility type, `dataType: All` with a filter). Without a health value on each event there is no
+   curve, so no reaction rule: a `CombatantInfo` fallback would give the maximum health only and is not enough.
 2. The heal of each Midnight health potion and of the healthstone: flat amount or share of maximum health, read from
    the healing events of those spell ids on cached runs.
 3. The healthstone's spell id, cooldown and charges in Midnight.
-4. Whether combat potions share the health potions' cooldown. If they do, a combat potion cast must put the health
+4. Whether health potions and the healthstone are off the global cooldown (if not, `reactionMs` must include up to one
+   global cooldown).
+5. Whether combat potions share the health potions' cooldown. If they do, a combat potion cast must put the health
    potions on cooldown, and the combat potions' ids join the event filter.
+
+## Open question
+
+1. The reaction window for defensives and immunities: apply it (recommended, fewer false positives, as for heals) or keep
+   today's rule ("ready at the moment of death") because many defensives are pre-cast on known mechanics?
 
 ## Display
 
@@ -135,8 +173,9 @@ All strings in `web/src/i18n/en.ts` and `fr.ts`.
 ## Tests
 
 - `analyzeRun` (pure): one-shot → `unpreventable`; instakill → `unpreventable`; potion ready and heal > overkill →
-  `heal available`; potion ready but `room` too small → not; healthstone without a Warlock → not ready; `maxHp` null →
-  today's verdicts; precedence immunity > defensive > heal.
+  `heal available`; potion ready but `effective` too small → not; danger reached less than `reactionMs` before the
+  killing hit → not; health back above the line then down again → `tDanger` is the last crossing; healthstone without
+  a Warlock → not ready; `maxHp` null → today's verdicts; precedence immunity > defensive > heal.
 - Aggregate: `unpreventable` leaves the counts.
 - Evaluation: the Preparation axis without potions and healthstones; calibration test updated.
 - Web view models: the death line strings for each verdict, en and fr key parity.
@@ -144,6 +183,6 @@ All strings in `web/src/i18n/en.ts` and `fr.ts`.
 
 ## Out of scope
 
-- A reaction-time model (was there 1 s between "low" and the killing hit?).
+- A reaction time per player or per role (one value for everyone).
 - Damage-reduction percentages per defensive, which would extend the overkill rule to them.
 - Potion or healthstone use outside deaths.

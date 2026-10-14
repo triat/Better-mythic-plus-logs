@@ -1,17 +1,65 @@
 {
   "v": 3,
-  "createdOnFiles": { "v": 1, "at": "2026-10-14T07:10:00Z" },
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-14T07:10:00Z"
+  },
   "title": "bmpl · Nouveautés",
-  "launch": { "view": "canvas" },
+  "launch": {
+    "view": "canvas"
+  },
   "pages": [],
   "boards": {
-    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 820, "title": "A · Ligne « Nouveautés » dans la navigation, popover" },
-    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 820, "title": "B · Version cliquable sous le compte, page dédiée" },
-    "C.dc.html": { "x": 2720, "y": 0, "w": 1280, "h": 820, "title": "C · Carte « Mis à jour » au-dessus du compte, panneau latéral" }
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 820,
+      "title": "A · Ligne « Nouveautés » dans la navigation, popover"
+    },
+    "B.dc.html": {
+      "x": 1360,
+      "y": 0,
+      "w": 1280,
+      "h": 820,
+      "title": "B · Version cliquable sous le compte, page dédiée"
+    },
+    "C.dc.html": {
+      "x": 2720,
+      "y": 0,
+      "w": 1280,
+      "h": 820,
+      "title": "C · Carte « Mis à jour » au-dessus du compte, panneau latéral"
+    },
+    "Retenu.dc.html": {
+      "x": 0,
+      "y": 1180,
+      "w": 1280,
+      "h": 820,
+      "title": "Retenu · version cliquable de B + panneau latéral de C"
+    }
   },
-  "order": ["Main.dc.html", "B.dc.html", "C.dc.html"],
+  "order": [
+    "Main.dc.html",
+    "B.dc.html",
+    "C.dc.html",
+    "Retenu.dc.html"
+  ],
   "notes": {
-    "t": { "x": 0, "y": -260, "text": "Nouveautés : version visible et changelog", "kind": "title1", "maxW": 4000 }
+    "t": {
+      "x": 0,
+      "y": -260,
+      "text": "Nouveautés : version visible et changelog",
+      "kind": "title1",
+      "maxW": 4000
+    },
+    "r": {
+      "x": 0,
+      "y": 930,
+      "text": "Retenu (choix du 2026-10-14)",
+      "kind": "title1",
+      "maxW": 1280
+    }
   },
   "designSystems": []
 }

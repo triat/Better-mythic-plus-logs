@@ -1,7 +1,6 @@
 # What's new: the running version and a user-facing changelog — design
 
-Status: draft 2026-10-14, awaiting the user's review. The visible parts go through the Claude Design canvas before any
-code (decision 6).
+Status: approved 2026-10-14 (decisions 1–5 and 7 in chat; display chosen on the canvas the same day, decision 6).
 
 ## Goal
 
@@ -40,12 +39,18 @@ developers.
 5. **"Last seen" per member.** Hosted: `user_settings.lastSeenVersion`, read and written through the existing
    `GET/PUT /api/settings`. Local: `localStorage` key `bmpl.lastSeenVersion`. A member who never had a value (a new
    sign-up, a first local run) gets the current version written silently: nothing is "new" on a first visit.
-6. **Display, to mock on the canvas first** (2–3 variants, the user picks; canvas https://claude.ai/artifact/2pSkoa1YtAww5AHhWepGw8, sources `docs/design/whats-new/`: A nav line + popover, B clickable version + page, C "updated" card + side panel):
-   - the version, small and muted, at the bottom of the sidebar's account block (`v0.10.2`);
-   - a "What's new" mark when `lastSeenVersion` is older than the running version (a dot on a sidebar line, or on the
-     version itself);
-   - a click opens the entries newer than `lastSeenVersion` (a popover or a `/whats-new` page, per the variant
-     chosen), newest first, with "See all changes" for the full list; opening it writes `lastSeenVersion`.
+6. **Display: the version line of variant B opens the side panel of variant C** (user, 2026-10-14: "Panneau latéral
+   avec l'emplacement de version de l'écran B"). Canvas https://claude.ai/artifact/2pSkoa1YtAww5AHhWepGw8, artboard
+   "Retenu"; sources `docs/design/whats-new/` (`Retenu.dc.html`; A, B, C kept as the explored variants).
+   - Under the sidebar's account block, one line, a real `<button>`: the version in mono and muted (`v0.10.2`), a
+     separator, "What's new" ("Nouveautés"), and a dot (`--better`) while `lastSeenVersion` is older than the running
+     version. Without anything new the line still shows the version and opens the panel.
+   - The click opens a side panel on the right of the page (440 px, full height, over the content, close button,
+     Escape and a click outside close it, focus moves into it and comes back to the button): the title, "since your
+     last visit · you use X.Y.Z", the entries newer than `lastSeenVersion` grouped by version (version in mono, date),
+     newest first, then "All changes", which shows every version in the same panel. Opening it writes
+     `lastSeenVersion`.
+   - Under 1000 px wide, where the sidebar stacks above the content, the panel takes the full width.
 7. **Versions compare as semver** (`0.10.2` > `0.9.9`), never as strings.
 
 ## Data flow

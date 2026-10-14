@@ -1,7 +1,7 @@
 # Weekly recalibration — design
 
 Status: approved 2026-10-14 (user: decisions 1–3, thresholds, the rest of the draft "ok"; hourly collection on the
-instance's client, decision 5, evaluated and recommended the same day, to confirm). Builds on `docs/superpowers/specs/2026-09-24-scoring-calibration-design.md`
+instance's client at 18,000 pts/h, decision 5, the same day). Builds on `docs/superpowers/specs/2026-09-24-scoring-calibration-design.md`
 (the one-off study: discovery, collection, fit, comparison).
 
 ## Goal
@@ -36,22 +36,24 @@ it as a pull request the user merges or not.
    The calibration code moves from `scripts/calibration/` (dev-only, not in the binary) into `src/calibration/`, behind
    a CLI command `bmpl calibrate --until 06:00`, so the deployed binary runs it.
 5. **The instance's own WCL client, every hour, with what the members leave** (user: no dedicated client, "on pourrait
-   faire un run toutes les heures"). Measured on production (ops API, 30 days to 2026-10-14): at most 33 lookups a
-   day, 6 active members, so about 3,000 of the client's 86,400 points a day; more than 95 % of the budget goes
-   unused. The Wednesday window alone would give about 100 characters a week (3 h × ~3,000 spare pts / ~87 pts), about
-   400 over the rolling 4 weeks: fewer than the study's 1,081 and too few healers and tanks (`MIN_ROLE_N` = 40 per
-   sub-signal and role). Hourly collection reaches the target in days. Rules:
-   - a `bmpl calibrate --hourly` run starts every hour (systemd timer); it spends at most `BMPL_CALIBRATION_PTS_PER_HOUR`
-     (default 2,000) and always leaves `BMPL_CALIBRATION_RESERVE` (default 1,200 pts, about 12 member lookups) in the
-     hour; inside the Wednesday window the cap is lifted and the reserve drops to 300;
-   - it yields to members: it reads `rateLimitData` before each lookup (the counter includes members' spend) and stops
-     for the hour when the counter is above the cap minus the reserve, or when a member request reached WCL in the last
-     5 minutes (the meter's last observation);
+   faire un run toutes les heures"; the client's subscription allows 18,000 points an hour, "tu peux utiliser ce dont
+   tu as besoin"). Measured on production (ops API, 30 days to 2026-10-14): at most 33 lookups a day, 6 active members,
+   so about 3,000 of the 432,000 points a day; the members use well under 1 % of the budget. Rules:
+   - a `bmpl calibrate --hourly` run starts every hour (systemd timer); it reads `limitPerHour` from `rateLimitData`
+     (never a hard-coded limit) and spends what it needs up to `limitPerHour − BMPL_CALIBRATION_RESERVE` (default
+     3,000 pts, about 30 member lookups, kept free in every hour);
+   - it yields to members: it reads `rateLimitData` before each lookup (the counter includes members' spend), stops for
+     the hour when the counter reaches the limit minus the reserve, and pauses 5 minutes after a member request reached
+     WCL (the meter's last observation);
    - **paced, never burst**: one lookup every ≥ 16 s, because WCL also limits per IP and the collector shares the VPS
-     address with the members (the study's burst got the IP blocked);
+     address with the members (the study's burst got the IP blocked); at ~87 pts a lookup that is about 225 lookups
+     and 19,500 pts an hour at most, so the pace, not the budget, is the real limit;
    - **a target, not "as much as possible"**: collection stops once the rolling 4 weeks hold 2,000 characters
      balanced across the study's cells (role × level × performance quintile); beyond that the role curves barely move
-     and the points would be spent for nothing.
+     and the points would be spent for nothing. From empty, the target takes about 9 to 10 hours; afterwards the
+     hourly runs only replace the characters that age out of the window, a few hundred a week.
+   - The Wednesday 03:00–06:00 window keeps its role as the preferred slot for a large batch (the reserve drops to 300
+     there), for example after a season starts and the window is empty.
 6. **Its own database.** `performLookup` caches what it fetches; the collector opens its own SQLite file
    (`calibration.db` next to `.env`), never the instance's `bmpl.db`, so third-party characters never enter the
    production store or its litestream replica. Samples are kept as evaluation payloads (what `calibrate.ts` re-scores),
@@ -71,7 +73,7 @@ it as a pull request the user merges or not.
 ## Data flow
 
 ```
-every hour       systemd → bmpl calibrate --hourly   (cap 2,000 pts, reserve 1,200; Wed 03–06 Paris: no cap, reserve 300)
+every hour       systemd → bmpl calibrate --hourly   (up to limitPerHour − 3,000 reserve; Wed 03–06 Paris: reserve 300)
                    discover (current rankings, ~1 pt/page) → collect (performLookup on calibration.db, paced,
                    yields to members) → samples on the VPS (rolling 4 weeks, target 2,000 characters)
 Wed 06:00 Paris  systemd → bmpl calibrate --fit → candidate.json + comparison.md (aggregates only)
@@ -90,7 +92,7 @@ user             → reviews, merges or closes; a merge ships with the next rele
 
 - Moving the scripts into `src/calibration/` keeps today's offline tests green; the pure parts (sampling cells, fit,
   threshold, rolling window) get unit tests.
-- `bmpl calibrate --hourly` with a fake `gql`: stops at the cap, keeps the reserve, yields after a member request,
+- `bmpl calibrate --hourly` with a fake `gql`: reads `limitPerHour`, keeps the reserve, yields after a member request,
   paces lookups, stops at the target, never opens `bmpl.db`; `--fit` writes only aggregates where the ops route reads.
 - `GET /api/ops/calibration`: token required, aggregates only.
 - The workflow's diff step on fixture configs: PR opened above the threshold, nothing below.

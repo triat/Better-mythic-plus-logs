@@ -7,8 +7,10 @@ import { PING_QUERY } from "../wcl/queries.ts";
 import type { RateLimitData } from "../wcl/types.ts";
 import { analyzeCached } from "./attach.ts";
 import { playerOf } from "./player.ts";
+import { healIds } from "./heals.ts";
 import { specDefensives } from "./table.ts";
-import type { LoadedTables, RunDefensives } from "./types.ts";
+import type { HealRules, LoadedTables, RunDefensives, SpecDefensives } from "./types.ts";
+import type { RawRunReport } from "../signals/types.ts";
 import { BudgetLowError, MIN_BUDGET_POINTS, fetchRawDeepDive } from "./wcl.ts";
 
 export interface DeepdiveRequest { reportCode: string; fightID: number; character: string; force?: boolean }
@@ -28,7 +30,7 @@ export async function runDeepdive(req: DeepdiveRequest, deps: RunDeps): Promise<
   const player = playerOf(report, req.character);
   if (!player) return { ok: false, status: 404, error: `${req.character} is not in the cached run ${req.reportCode}:${req.fightID}` };
   const table = specDefensives(deps.tables.shipped, deps.tables.override, player.className, player.spec);
-  const ids = table.entries.map((e) => e.id);
+  const ids = fetchIds(table, deps.tables.shipped.heals);
 
   const cached = deps.store.getDeepDive(req.reportCode, req.fightID, req.character);
   if (cached && !req.force) {
@@ -41,7 +43,7 @@ export async function runDeepdive(req: DeepdiveRequest, deps: RunDeps): Promise<
     const ping = await gql<RateLimitData>(PING_QUERY);
     const left = ping.rateLimitData.limitPerHour - ping.rateLimitData.pointsSpentThisHour;
     if (left < MIN_BUDGET_POINTS) return { ok: false, status: 402, error: new BudgetLowError(left).message };
-    const raw = await fetchRawDeepDive(gql, { code: req.reportCode, fightID: req.fightID, character: req.character, actorID: player.actorID, ids, pointsBefore: ping.rateLimitData.pointsSpentThisHour });
+    const raw = await fetchRawDeepDive(gql, { code: req.reportCode, fightID: req.fightID, character: req.character, actorID: player.actorID, ids, deathTimes: deathTimesOf(report, req.character), pointsBefore: ping.rateLimitData.pointsSpentThisHour });
     deps.store.putDeepDive(req.reportCode, req.fightID, req.character, raw);
     const result = analyzeCached(deps.store, deps.tables, req, req.character);
     if (!result) return { ok: false, status: 502, error: "analysis failed on the fetched data" };
@@ -52,3 +54,11 @@ export async function runDeepdive(req: DeepdiveRequest, deps: RunDeps): Promise<
     return { ok: false, status: 502, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+/** The cast filter: the spec's defensives and every heal tool, without duplicates. */
+export const fetchIds = (table: SpecDefensives, heals: HealRules): number[] =>
+  [...new Set([...table.entries.map((e) => e.id), ...healIds(heals)])];
+
+/** Report-relative timestamps of the character's deaths in the cached Deaths table. */
+export const deathTimesOf = (report: RawRunReport, character: string): number[] =>
+  (report.deaths?.data?.entries ?? []).filter((e) => e.name === character && typeof e.timestamp === "number").map((e) => e.timestamp as number);

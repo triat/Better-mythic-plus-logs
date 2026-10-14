@@ -53,6 +53,7 @@ export function OwnerHeader({ view, payload, self, season, fetch, hint, onReeval
       </div>
       {hint && (
         <div className="reeval">
+          {/* biome-ignore lint/a11y/useValidAnchor: styled as the surrounding text link; a button would change the look. */}
           {hint.label} — <a href="#" onClick={(e) => { e.preventDefault(); onReevaluate(); }}>{hint.action}</a>
           <span className="faint">{t("verdict.replaces")}</span>
         </div>

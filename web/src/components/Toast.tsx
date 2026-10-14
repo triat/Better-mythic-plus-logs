@@ -18,7 +18,7 @@ export function Toast({ message, action = null, onClose }: Props) {
     <div className="toast err" role="alert">
       <span>✗ {message}</span>
       {action && <a className="toast-action" href={action.href} onClick={() => track("toast_own_client")}>{action.label}</a>}
-      <button className="toast-close" onClick={onClose} aria-label={t("common.dismiss")}>×</button>
+      <button type="button" className="toast-close" onClick={onClose} aria-label={t("common.dismiss")}>×</button>
     </div>
   );
 }

@@ -19,7 +19,7 @@ const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   utility: { hasKick: false, kicksVsPeers: null, kicksAbsolute: null, dispels: null, hasDispel: true, crowdControl: null, controlRate: null },
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
-  preparation: { potions: null, healthstones: null, ilvl: null },
+  preparation: { ilvl: null },
   ...over,
 });
 
@@ -112,7 +112,7 @@ describe("survival", () => {
     expect(usage.value).toBe(0.6);
     expect(usage.extra).toEqual({ runs: 3 });
     const deaths = a.evidence.find((e) => e.source === "survival.avoidableDeaths")!;
-    expect(deaths.label).toBe("2/3 deaths with a defensive available");
+    expect(deaths.label).toBe("2/3 deaths with something at hand");
     expect(deaths.value).toBeCloseTo(2 / 3, 6);
     expect(deaths.extra).toEqual({ count: 2, total: 3 });
     expect(deaths.delta).toBeLessThan(0);   // 0.67 → 30 on the curve
@@ -181,13 +181,13 @@ describe("consistency", () => {
 
 describe("preparation", () => {
   test("ilvl vs expected uses the season curve", () => {
-    const p = scorePreparation(baseInputs({ targetLevel: 20, preparation: { potions: 6, healthstones: 3, ilvl: 335 } }), cfg);
-    // expected at +20 = 325 → +10 → 100 ; potions 6 → 100 ; hs 3 → 100
+    const p = scorePreparation(baseInputs({ targetLevel: 20, preparation: { ilvl: 335 } }), cfg);
+    // expected at +20 = 325 → +10 → 100 (the only preparation signal since config version 8)
     expect(p.score).toBe(100);
     expect(p.evidence.find((e) => e.source === "preparation.ilvlVsLevel")!.label).toBe("ilvl +10 vs expected for the key");
   });
   test("unknown season slug falls back to the last expectedIlvl curve", () => {
-    const p = scorePreparation(baseInputs({ seasonSlug: "season-xx-9", targetLevel: 20, preparation: { potions: null, healthstones: null, ilvl: 315 } }), cfg);
+    const p = scorePreparation(baseInputs({ seasonSlug: "season-xx-9", targetLevel: 20, preparation: { ilvl: 315 } }), cfg);
     expect(p.score).toBe(45);
   });
 });

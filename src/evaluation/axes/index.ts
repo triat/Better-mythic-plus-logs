@@ -19,6 +19,6 @@ export const EVIDENCE_SOURCES = [
   "utility.kicksVsPeers", "utility.kicksAbsolute", "utility.dispels", "utility.crowdControl",
   "throughput.medianParse", "throughput.parseAtTarget",
   "consistency.parseSpread", "consistency.deathsSpread", "consistency.damageSpread",
-  "preparation.potions", "preparation.healthstones", "preparation.ilvlVsLevel",
+  "preparation.ilvlVsLevel",
 ] as const;
 export type EvidenceSource = (typeof EVIDENCE_SOURCES)[number];

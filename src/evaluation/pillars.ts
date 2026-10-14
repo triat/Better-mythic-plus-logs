@@ -15,7 +15,7 @@ export const PILLAR_SOURCES: Record<PillarKey, readonly EvidenceSource[]> = {
 
 /** Shown beside the pillars, never scored into one. */
 export const CONTEXT_SOURCES: readonly EvidenceSource[] = [
-  "preparation.potions", "preparation.healthstones", "preparation.ilvlVsLevel",
+  "preparation.ilvlVsLevel",
   "consistency.parseSpread", "consistency.deathsSpread", "consistency.damageSpread",
 ];
 

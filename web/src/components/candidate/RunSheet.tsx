@@ -56,7 +56,7 @@ function useViewportWidth(): number {
  * Escape, the close button and the scrim close it. Opening it reads only; "Analyser · 3 pts" is a click.
  */
 export function RunSheet(props: RunSheetProps) {
-  const { payload, run, analysis, deepdive, onRun, onClose, focusDeepdive } = props;
+  const { payload, run, onRun, onClose, focusDeepdive } = props;
   const { t, locale } = useT();
   const rootRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);

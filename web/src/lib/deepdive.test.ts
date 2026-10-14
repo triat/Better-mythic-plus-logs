@@ -58,9 +58,36 @@ describe("analysisFor / unanalyzedRuns / costText", () => {
     expect(unanalyzedRuns(noSig)).toEqual([]);
   });
   test("cost text", () => {
-    expect(costText(tEn, 1)).toBe("~3 pts");
-    expect(costText(tEn, 8)).toBe("~24 pts");
-    expect(costText(tFr, 8)).toBe("~24 pts");
+    expect(costText(tEn, 1)).toBe("~4 pts");
+    expect(costText(tEn, 8)).toBe("~32 pts");
+    expect(costText(tFr, 8)).toBe("~32 pts");
+  });
+});
+
+describe("panelModel — death prevention", () => {
+  const health = { maxHp: 771120, hpBefore: 48308, killingHit: 169660, overkill: 121352, dangerMs: 1526, oneShot: false };
+  const heals = [
+    { name: "Health potion", status: "saves" as const, heal: 370000 },
+    { name: "Healthstone", status: "not in group" as const, heal: null },
+  ];
+  test("a heal that would have saved, the health facts, the old-row notice", () => {
+    const m = panelModel(tEn, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "heal available", health, heals }] }));
+    expect(m.deaths[0]!.verdict).toBe("heal available");
+    expect(m.deaths[0]!.cls).toBe("tone-warn");
+    expect(m.deaths[0]!.health).toBe("48.3k health before a 169.7k hit (771.1k max) · in danger 1.5 s before the death");
+    expect(m.deaths[0]!.heals).toEqual([{ text: "Health potion ready in time: heals 370.0k, overkill 121.4k", cls: "tone-bad" }]);
+    expect(panelModel(tEn, dd({ healthMissing: true })).notice).toBe("Analysed before the health data: analyse again to judge potions and one-shots.");
+  });
+  test("why a heal would not have saved; a one-shot (French)", () => {
+    const late = { ...health, dangerMs: 400 };
+    const m = panelModel(tFr, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "nothing available", health: late, heals: [
+      { name: "Health potion", status: "no time", heal: null }, { name: "Healthstone", status: "on cooldown", heal: null, readyInS: 12 },
+    ] }] }));
+    expect(m.deaths[0]!.health).toBe("48.3k PV avant un coup de 169.7k (771.1k max) · en danger 0.4 s avant la mort");
+    expect(m.deaths[0]!.heals.map((h) => h.text)).toEqual(["Potion de soin prête, pas le temps de réagir", "Pierre de soins en recharge · encore 12 s"]);
+    const one = panelModel(tFr, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "unpreventable", health: { ...health, killingHit: 1_200_000, oneShot: true }, heals }] }));
+    expect([one.deaths[0]!.verdict, one.deaths[0]!.cls, one.deaths[0]!.health]).toEqual(["pas évitable", "faint", "one-shot : un coup de 1.20m, 771.1k PV max"]);
+    expect(one.deaths[0]!.heals).toEqual([]);
   });
 });
 
@@ -73,11 +100,12 @@ describe("panelModel", () => {
     expect(m.usage[2]!.countsUsage).toBe(false);
     expect(m.usage[2]!.pctText).toBe("—");
     expect(m.majorsText).toBe("majors used 87% of possible");
-    expect(m.deathsHeadline).toBe("1/1 deaths with a defensive available");
+    expect(m.deathsHeadline).toBe("1/1 deaths with something at hand");
     expect(m.deaths[0]).toEqual({
       time: "29:24", verdict: "immunity available", cls: "tone-bad", wipe: false,
       hits: [{ id: 1300372, name: "Cosmic Crash", text: "55%" }, { id: 1264188, name: "Unstable Singularity", text: "45%" }], blow: "killing blow: Unstable Singularity",
       states: [{ id: 642, name: "Divine Shield", text: "available", cls: "tone-bad" }, { id: 498, name: "Divine Protection", text: "on cd · 12 s left", cls: "faint" }],
+      health: null, heals: [],
     });
     expect(m.deaths[1]!.wipe).toBe(true);
     expect(m.deaths[1]!.cls).toBe("tone-good");
@@ -111,7 +139,7 @@ describe("panelModel", () => {
     expect(m.deaths[1]!.verdict).toBe("couvert");
     expect(panelModel(tFr, dd({ deaths: [{ ...dd().deaths[0]!, verdict: "nothing available" }] })).deaths[0]!.verdict).toBe("rien de dispo");
     expect(m.majorsText).toBe("majors utilisés à 87 % du possible");
-    expect(m.deathsHeadline).toBe("1/1 morts avec un defensive dispo");
+    expect(m.deathsHeadline).toBe("1/1 morts avec un outil prêt");
     expect(panelModel(tFr, dd({ deaths: [], countedDeaths: 0, avoidableDeaths: 0 })).deathsHeadline).toBe("Aucune mort");
     expect(panelModel(tFr, dd({ staleTable: true })).notice).toBe("La table a changé depuis l'analyse de ce run — ré-analyse pour inclure les nouvelles entrées.");
     expect(tableUsedText(tFr, dd().defensives, "Holy Paladin")).toBe("Table utilisée : Holy Paladin · 3 entrées · 1 de ton override");

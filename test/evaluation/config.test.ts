@@ -21,7 +21,7 @@ describe("default config", () => {
     const cfg = validateConfig(DEFAULT_CONFIG);
     for (const k of AXIS_KEYS) expect(Object.keys(cfg.axes[k].subSignals).length).toBeGreaterThan(0);
     for (const role of ["dps", "healer", "tank"] as const) expect(Object.keys(cfg.axisWeights[role])).toEqual([...AXIS_KEYS]);
-    expect(cfg.version).toBe("7"); // the experience axis left in version 7
+    expect(cfg.version).toBe("8"); // the experience axis left in version 7
     expect(cfg.verdict).toEqual({ invite: 70, maybe: 30, minRuns: 3 });
     for (const role of ["dps", "healer", "tank"] as const) {
       expect(cfg.globalCurve[role][0]).toEqual([0, 0]);

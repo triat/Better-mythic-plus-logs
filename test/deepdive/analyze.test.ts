@@ -218,3 +218,43 @@ describe("analyzeRun — cast times", () => {
     expect(r.defensives.find((d) => d.id === 2)!.castsAtMs).toEqual([]);
   });
 });
+
+describe("analyzeRun — death prevention (2026-10-14)", () => {
+  const HEALS = { dangerHpShare: 0.5, reactionMs: 700, tools: [{ name: "Health potion", ids: [10], cooldownS: 300, flat: 400 }] };
+  // One death at 300 s: the killing hit and the health curve before it (maxHp 1000).
+  const withHealth = (casts: Array<[number, number]>, hit: { amount: number; overkill: number; type?: string }, curve: Array<[atS: number, hp: number]>) => {
+    const i = synthetic(casts, [300]);
+    const deathTs = FIGHT_START + 300_000;
+    const entry = i.report.deaths!.data!.entries![0]!;
+    entry.overkill = hit.overkill;
+    entry.events = [{ timestamp: deathTs, type: hit.type ?? "damage", amount: hit.amount, overkill: hit.overkill }];
+    const raw = { ...i.raw, tableIds: [1, 2, 3, 10], deathHealth: [{ deathTs, maxHp: 1000, curve: [...curve.map(([s, hp]) => ({ ts: FIGHT_START + s * 1000, hp })), { ts: deathTs, hp: 0 }] }] };
+    return { ...i, raw, heals: HEALS };
+  };
+  test("a one-shot is unpreventable even with a bubble ready, and leaves the counts", () => {
+    const r = analyzeRun(withHealth([], { amount: 900, overkill: 300 }, []));
+    expect(r.deaths[0]!.verdict).toBe("unpreventable");
+    expect(r.deaths[0]!.health).toMatchObject({ killingHit: 1200, oneShot: true, dangerMs: null });
+    expect([r.avoidableDeaths, r.countedDeaths]).toEqual([0, 0]);
+  });
+  test("an instakill is unpreventable", () => {
+    expect(analyzeRun(withHealth([], { amount: 0, overkill: 0, type: "instakill" }, [])).deaths[0]!.verdict).toBe("unpreventable");
+  });
+  test("defensives on cooldown, a potion ready in time and enough → heal available, counted as avoidable", () => {
+    const r = analyzeRun(withHealth([[1, 250], [2, 100]], { amount: 200, overkill: 150 }, [[297, 300], [299, 200]]));
+    expect(r.deaths[0]!.verdict).toBe("heal available");
+    expect(r.deaths[0]!.heals).toEqual([{ name: "Health potion", status: "saves", heal: 400 }]);
+    expect([r.avoidableDeaths, r.countedDeaths]).toEqual([1, 1]);
+  });
+  test("an immunity ready wins over a heal", () => {
+    const r = analyzeRun(withHealth([], { amount: 200, overkill: 150 }, [[297, 300]]));
+    expect(r.deaths[0]!.verdict).toBe("immunity available");
+  });
+  test("without a health window the death is judged as before", () => {
+    const i = synthetic([[1, 250], [2, 100]], [300]);
+    const r = analyzeRun({ ...i, heals: HEALS });
+    expect(r.deaths[0]!.verdict).toBe("nothing available");
+    expect(r.deaths[0]!.health).toBeUndefined();
+    expect(r.healthMissing).toBe(true);
+  });
+});

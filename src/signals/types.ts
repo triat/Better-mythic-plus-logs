@@ -78,8 +78,10 @@ export interface RunSignals {
     affixes: number[];
   };
   itemLevel: number | null;
-  /** healthstonesAvailable: a Warlock (the player included) was in the group, so its soulwell offered healthstones;
-   *  absent on payloads saved before 2026-10-11. */
+  /** WCL's summary counts, kept raw and no longer scored (config version 8: potions and healthstones are judged at
+   *  each death by the deep-dive). `healthstones` is WCL's `healthstoneUse`, which also counts health potions (probe of
+   *  2026-10-14: 2 Concentrated Silvermoon Health Potions → healthstoneUse 2 in a group without a Warlock).
+   *  healthstonesAvailable: a Warlock (the player included) was in the group; absent on payloads saved before 2026-10-11. */
   consumables: { potions: number; healthstones: number; healthstonesAvailable?: boolean } | null;
   deaths: { count: number; groupTotal: number; events: DeathEvent[] };
   damageTaken: { total: number; dtps: number; peer: PeerComparison | null };

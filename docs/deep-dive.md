@@ -9,16 +9,37 @@ has the user-facing version.
 ([scoring.md](scoring.md#verdict-and-axes)): it fetches
 the raw cast/buff/event data for one run and measures, per defensive
 cooldown, **usage vs. capacity** (casts vs. how many times the cooldown could
-have come up in the fight) and, for every death, **whether a defensive was
-available and unused** ("immunity available", "defensive available",
-"covered", "nothing available"). It's a separate, opt-in fetch — ~3 WCL
-points per run, cached forever in `bmpl.db` — because it's a heavier query
+have come up in the fight) and, for every death, **whether the player had something at hand that would have prevented
+it** ("immunity available", "defensive available", "heal available", "covered", "nothing available", "not preventable").
+It's a separate, opt-in fetch — ~4 WCL points per run, cached forever in `bmpl.db` — because it's a heavier query
 than the per-run enrichment `lookup` already does. Each defensive also lists
 its cast times (`castsAtMs`, fight-relative), used by the run timeline.
 
+### Deaths: could it have been prevented?
+
+Spec: `docs/superpowers/specs/2026-10-14-death-prevention-design.md`. Survivability is read from deaths only; how many
+potions a player drinks over a run is not scored. For each death the analysis has the player's health over the 10 s
+before it (damage and healing events with their `hitPoints` / `maxHitPoints`, one request per run, ~1 pt) and decides,
+in this order:
+
+1. **not preventable** — an instakill, or a one-shot: the killing hit alone is at least the player's maximum health.
+   Such a death leaves both counts of `avoidableDeaths`.
+2. **immunity available** / **defensive available** — an immunity, or a major defensive with none active, was off
+   cooldown. Defensives are cast ahead of known mechanics, so no reaction time is applied to them.
+3. **heal available** — a health potion or a healthstone would have saved the player: it was ready when it could have
+   been pressed, **in time** and **enough**. In time: the player crossed the danger line (`dangerHpShare`, 50 % of max
+   health) and stayed under it at least `reactionMs` (700 ms) before the killing hit. Enough: the heal (capped by the
+   room under max health at that moment) is larger than the overkill. The healthstone needs a Warlock in the group.
+4. **covered** (a major defensive was active) or **nothing available**.
+
+The heal tools and the two constants are the `heals` block of `defensives.json` (shipped `mn-2.4`); the health potion
+counts a conservative flat 370k (the lowest of 22 uses measured on 2026-10-14, range 370k–534k), the healthstone 25 % of
+max health (5 uses, all exactly 25 %). Runs analysed before 2026-10-14 have no health data: their deaths keep the
+defensive-only verdict and the panel asks to analyse again (`bmpl analyze … --force`).
+
 ```bash
 bmpl analyze Biwaadrood-Nerzhul                    # list the runs lookup shows, and which are already analyzed
-bmpl analyze Biwaadrood-Nerzhul --all --yes        # analyze every shown run (~3 pts each, once; analyzed ones print from the cache)
+bmpl analyze Biwaadrood-Nerzhul --all --yes        # analyze every shown run (~4 pts each, once; analyzed ones print from the cache)
 bmpl analyze Biwaadrood-Nerzhul --run <code>:<fight>   # analyze one specific run
 bmpl analyze Biwaadrood-Nerzhul --all --yes --json # structured output (--json needs --yes to fetch, since it can't prompt)
 ```
@@ -26,8 +47,7 @@ bmpl analyze Biwaadrood-Nerzhul --all --yes --json # structured output (--json n
 Which spells count as defensives per spec lives in `src/deepdive/defensives.json`
 (shipped) and can be extended or corrected with a `defensives.json` next to
 your `.env` (or a path in `BMPL_DEFENSIVES`), keyed `"Class:Spec"`, `"Class:*"`
-or `"*:*"` (every spec — the shipped table keeps the health potions there, as
-`minor` entries: listed and judged at each death, not scored). Each entry
+or `"*:*"` (every spec; empty since `mn-2.4`, the health potions moved to the `heals` block). Each entry
 supports three shapes:
 
 ```json
@@ -58,12 +78,13 @@ Every spell name in the panel links to Wowhead and shows the spell's tooltip
 on hover (Wowhead's `tooltips.js`, loaded from `wow.zamimg.com` — the only
 third-party script in the UI; without internet the names are plain links).
 
-The shipped table (`src/deepdive/defensives.json`, version `mn-2.3`) was
+The shipped table (`src/deepdive/defensives.json`, version `mn-2.4`) was
 audited on 2026-09-16 against the top 2 Voidscar Arena runs of every spec:
 entries nobody cast were dropped, ids corrected, audit noise (beacons, raid
 buffs, trinkets, racials, forms/stances/mobility) added to the denylist.
 `mn-2.3` (2026-09-22) added the Silvermoon Health Potion (season 1) and its
-Concentrated version under `"*:*"`; other potions stay audit noise.
+Concentrated version under `"*:*"`; other potions stay audit noise. `mn-2.4` (2026-10-14) moved them to the `heals`
+block with the healthstone (ids 6262 and 452930, Demonic Healthstone).
 `just audit-defensives [--only Class:Spec] [--runs N]` re-runs that check
 (~9 pts per spec) and prints, per spec, the table entries never cast and the
 self-cast buffs not in the table — the input for the next table revision.
@@ -72,4 +93,4 @@ Once at least `confidence.deepdiveMinRuns` (2 by default) of a character's
 shown runs have been analyzed, the **Survival** axis in `bmpl lookup` /
 `bmpl evaluate` picks up two more sub-signals: `defensiveUsage` (median major/
 immunity usage across analyzed runs) and `avoidableDeaths` (share of deaths
-where a defensive was available and not used).
+where an immunity, a major defensive or a heal that would have saved was at hand; not-preventable deaths left out).

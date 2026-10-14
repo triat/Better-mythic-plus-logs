@@ -30,11 +30,10 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
   players who push keys (a depleted +21 next to a timed +20 is not
   inconsistency). Raise `axisWeights.<role>.consistency` in `evaluation.json`
   if you disagree.
-- **Preparation** — potions and healthstones used per run, and item level
-  vs. the season's expected curve at the target level. Healthstones count
-  only on runs with a Warlock in the group, the player included (config
-  version 6): without a Warlock's soulwell there was no healthstone to use,
-  so those runs neither help nor hurt.
+- **Preparation** — item level vs. the season's expected curve at the target level. Potions and healthstones used per
+  run were removed in config version 8 (2026-10-14): a health potion or a healthstone only matters when it would have
+  prevented a death, which the deep-dive judges at each death ([deep-dive.md](deep-dive.md)). An `evaluation.json`
+  that still names `potions` or `healthstones` fails validation and is ignored with a warning.
 
 An **Experience** axis (coverage, keys at target, recent activity) weighed 0
 since config version 4 and was removed in config version 7: no score
@@ -146,7 +145,7 @@ enrichment 7.3–7.9 pts. Before spending, bmpl checks against its estimates
   the crowd control of each displayed run that lacks it: ~3 pts per run, once
   ever. A lookup of anyone else costs exactly the above.
 - `mplus`: ~20 pts per character (no enrichment; unchanged)
-- `analyze`: ~3 pts per run, once ever (cached forever); re-opening tabs or
+- `analyze`: ~4 pts per run, once ever (cached forever); re-opening tabs or
   correcting the table costs 0
 - Season sync (the web UI's **Sync** on your own character's page, or **Sync N runs** on its card in My
   characters; `POST /api/season/sync`), for

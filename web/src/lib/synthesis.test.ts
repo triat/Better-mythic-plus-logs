@@ -8,7 +8,7 @@ import type { SynthesisDocs } from "./synthesis.ts";
 const tFr = makeT(fr, "fr");
 
 const TITLES: Record<string, string> = {
-  "preparation.ilvlVsLevel": "Item level vs cible", "preparation.potions": "Potions", "preparation.healthstones": "Healthstones",
+  "preparation.ilvlVsLevel": "Item level vs cible",
   "utility.kicksVsPeers": "Kicks vs pairs", "utility.dispels": "Dispels",
   "throughput.parseAtTarget": "Parse à la cible", "throughput.medianParse": "Parse médian",
   "survival.avoidableVsPeers": "Dégâts évitables vs pairs", "survival.individualDeaths": "Morts individuelles", "survival.wipeDeaths": "Morts en wipe",
@@ -32,10 +32,10 @@ const axis = (key: string, score: number | null, evidence: [string, number, numb
 const obye = (over: Partial<Evaluation> = {}): Evaluation => ({
   role: "dps", targetLevel: 11, global: 59, verdict: "maybe", runsUsed: 8, analyzedRuns: 0, configVersion: "x",
   axes: [
-    axis("preparation", 65, [["preparation.ilvlVsLevel", 20, 16], ["preparation.potions", -3.2, 1.3], ["preparation.healthstones", -2, 0]]),
-    axis("utility", 61, [["utility.kicksVsPeers", 9.2, 0], ["utility.dispels", -2, 0]]),
+    axis("preparation", 65, [["preparation.ilvlVsLevel", 20, 16]]),
+    axis("utility", 61, [["utility.kicksVsPeers", 9.2, 0], ["utility.kicksAbsolute", -3.2, 0.1], ["utility.dispels", -2, 0]]),
     axis("throughput", 56, [["throughput.parseAtTarget", 4.8, 53], ["throughput.medianParse", -1.5, 43]]),
-    axis("survival", 39, [["survival.avoidableVsPeers", -10.3, 46], ["survival.individualDeaths", -9.3, 1.6], ["survival.wipeDeaths", 6.1, 0.3]]),
+    axis("survival", 39, [["survival.avoidableVsPeers", -10.3, 46], ["survival.individualDeaths", -9.3, 1.6], ["survival.wipeDeaths", 6.1, 0.3], ["survival.dtpsVsPeers", -2, 4]]),
     axis("consistency", 35, [["consistency.deathsSpread", -8, 2.8], ["consistency.damageSpread", -6, 111]]),
     // Saved before the Experience axis left: ignored everywhere.
     axis("experience", 74, [["experience.prevSeason", 30, 3100]]),
@@ -45,9 +45,9 @@ const obye = (over: Partial<Evaluation> = {}): Evaluation => ({
     { source: "survival.individualDeaths", impact: -9, value: 1.6, reference: 0.7, label: "" },
     { source: "consistency.deathsSpread", impact: -4, value: 2.8, reference: 1.2, label: "" },
     { source: "experience.prevSeason", impact: -3, value: 0, reference: 1, label: "" },
-    { source: "preparation.potions", impact: -5, value: 1.3, reference: 2, label: "" },
+    { source: "utility.dispels", impact: -5, value: 1.3, reference: 2, label: "" },
   ],
-  nextVerdict: { verdict: "invite", threshold: 70, sources: ["survival.avoidableVsPeers", "survival.individualDeaths", "consistency.deathsSpread", "experience.prevSeason", "preparation.potions"], score: 72, reachable: true },
+  nextVerdict: { verdict: "invite", threshold: 70, sources: ["survival.avoidableVsPeers", "survival.individualDeaths", "consistency.deathsSpread", "experience.prevSeason", "utility.dispels"], score: 72, reachable: true },
   ...over,
 });
 
@@ -85,7 +85,7 @@ describe("synthesisView", () => {
     expect(f.rows).toEqual([
       { name: "Dégâts évitables vs pairs", hint: "Dégâts pris sur les mécaniques évitables, comparés aux autres joueurs du même run.", gain: "Survie, jusqu'à +10", gap: "+46 % vs le groupe aujourd'hui · moy. +0 %" },
       { name: "Morts individuelles", hint: "Ses morts quand le groupe n'a pas wipe, par run, pondérées par le niveau de la clé.", gain: "Survie, jusqu'à +9", gap: "1,6 / run aujourd'hui · moy. 0,7" },
-      { name: "Potions", hint: "Potions de combat utilisées par run.", gain: "Préparation, jusqu'à +5", gap: "1,3 / run aujourd'hui · moy. 2,0" },
+      { name: "Dispels", hint: "Dispels, purges, vols de sort et apaisements par run.", gain: "Utilité, jusqu'à +5", gap: "1,3 / run aujourd'hui · moy. 2,0" },
     ]);
   });
   test("out of reach: a note under the rows", () => {

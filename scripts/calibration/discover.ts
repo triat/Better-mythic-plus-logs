@@ -142,7 +142,7 @@ async function main(): Promise<void> {
     // Band bounds per level over every page read, by global index (page - 1) * 100 + position, so the
     // bounds survive the gaps between sampled pages.
     const indexed: { idx: number; e: Ranking }[] = [];
-    for (const [p, rows] of read) rows.forEach((e, i) => indexed.push({ idx: (p - 1) * PAGE_SIZE + i, e }));
+    for (const [p, rows] of read) rows.forEach((e, i) => { indexed.push({ idx: (p - 1) * PAGE_SIZE + i, e }); });
     for (const level of LEVELS) {
       const band = indexed.filter((x) => x.e.bracketData === level);
       if (band.length === 0) continue;

@@ -2,7 +2,7 @@ import { hasCredentials } from "../config.ts";
 import { attachDeepdive } from "../deepdive/attach.ts";
 import { runDeepdive } from "../deepdive/run.ts";
 import { applyPatch, getDefensives, resetDefensives, saveOverride, specDefensives, specKey, validateOverride } from "../deepdive/table.ts";
-import type { LoadedTables, OverrideEntry } from "../deepdive/types.ts";
+import type { LoadedTables } from "../deepdive/types.ts";
 import { getEvalConfig } from "../evaluation/config.ts";
 import { clip } from "../hosted/audit.ts";
 import type { RequestContext, SessionUser } from "../hosted/auth.ts";

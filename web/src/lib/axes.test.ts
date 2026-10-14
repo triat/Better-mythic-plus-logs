@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { AxisScore, Evaluation, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
+import type { AxisScore, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { axisInfo, axisWeightLabel, evidenceText, heroStats } from "./axes.ts";
@@ -8,25 +8,6 @@ const tFr = makeT(fr, "fr");
 
 const axis = (key: AxisScore["key"], score: number | null, evidence: AxisScore["evidence"] = [], confidence: AxisScore["confidence"] = "high"): AxisScore =>
   ({ key, score, confidence, evidence } as AxisScore);
-
-const ev: Evaluation = {
-  role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
-  axes: [
-    axis("throughput", 88, [
-      { label: "median parse 86%", delta: 27.4, source: "throughput.medianParse", value: 86.4 },
-      { label: "parse 79% on target-level keys", delta: 10.6, source: "throughput.parseAtTarget", value: 79 },
-    ]),
-    axis("survival", 82, [
-      { label: "0.2 individual deaths/run", delta: 18, source: "survival.individualDeaths", value: 0.2 },
-      { label: "avoidable +12% vs peers", delta: -6.2, source: "survival.avoidableVsPeers", value: 12.3 },
-      { label: "DTPS −3% vs peers", delta: 1, source: "survival.dtpsVsPeers", value: -3 },
-    ]),
-    axis("consistency", null, [], "low"),
-    axis("utility", 61), axis("preparation", 55),
-    // A payload saved before the experience axis left (config v7): never displayed.
-    axis("experience" as AxisScore["key"], 74),
-  ],
-};
 
 describe("axes view model", () => {
   test("heroStats", () => {
@@ -84,7 +65,7 @@ describe("evidenceText", () => {
     expect(line("survival.dtpsVsPeers", 4.6)).toEqual(["DTPS +5% vs peers", "dégâts subis +5 % vs les DPS"]);
     expect(line("survival.defensiveUsage", 0.6, { runs: 1 })).toEqual(["majors used 60% of possible (1 run)", "gros défensifs utilisés à 60 % du possible (1 run)"]);
     expect(line("survival.defensiveUsage", 0.6, { runs: 3 })).toEqual(["majors used 60% of possible (3 runs)", "gros défensifs utilisés à 60 % du possible (3 runs)"]);
-    expect(line("survival.avoidableDeaths", 2 / 3, { count: 2, total: 3 })).toEqual(["2/3 deaths with a defensive available", "2/3 morts avec un défensif dispo"]);
+    expect(line("survival.avoidableDeaths", 2 / 3, { count: 2, total: 3 })).toEqual(["2/3 deaths with something at hand", "2/3 morts avec un outil prêt"]);
     expect(line("utility.kicksAbsolute", 0.2)).toEqual(["20% of kick capacity used", "20 % des kicks possibles utilisés"]);
     expect(line("utility.dispels", 9)).toEqual(["9.0 dispels/run", "9,0 dissipations / run"]);
     expect(line("utility.crowdControl", 12.4, { rate: 4.2 })).toEqual(["crowd control +12% vs spec median (4.2 per 10 min)", "contrôle +12 % vs le joueur moyen de la spé (4,2 / 10 min)"]);

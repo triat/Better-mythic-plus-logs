@@ -150,8 +150,8 @@ exceeds what is left; a 429 shows the server's message as a toast and refreshes 
 `rateLimitData`, the last 24 hourly totals) — the admin page shows it as a
 gauge (this hour vs the client's limit, reset countdown, top consumers, the
 last 24 h per hour). Estimates before spending:
-rankings ≈ 20 pts, each uncached run ≈ 10 pts, an analysis ≈ 3 pts (measured 2026-10-09: rankings 21,
-a run 7.3–7.9). Attribution
+rankings ≈ 20 pts, each uncached run ≈ 10 pts, an analysis ≈ 4 pts (measured 2026-10-09: rankings 21,
+a run 7.3–7.9; the analysis grew by ~1 pt on 2026-10-14 with the health before each death). Attribution
 is exact when requests do not overlap and approximate when they do; the hour's
 total is always exact.
 

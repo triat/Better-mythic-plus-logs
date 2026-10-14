@@ -61,7 +61,7 @@ first run lands on a setup page that writes `.env` for you, no manual editing re
 
 - `lookup`, fully uncached: ~100 pts per character; already cached: ~10 pts
 - `lookup --no-stats`: ~10 pts (Raider.IO is still fetched, free)
-- `analyze`: ~3 pts per run, once ever — cached forever after
+- `analyze`: ~4 pts per run, once ever — cached forever after
 - 3600 pts/hr per client → ~36 fully-uncached lookups/hr, or ~360/hr once cached
 
 Details: [scoring.md#api-cost](scoring.md#api-cost).
@@ -137,7 +137,7 @@ After that, four screens:
   **Re-configure** button.
 
 **Deep-dive a run.** Any run with signals in the Detail screen's per-dungeon
-list has an **Analyze · ~3 pts** button, plus an **Analyze all shown** button
+list has an **Analyze · ~4 pts** button, plus an **Analyze all shown** button
 that runs through every not-yet-analyzed run one at a time (same "stop before
 spending on the next one" budget check as a single run). The panel that opens
 shows, per defensive cooldown, usage vs. capacity, every death with what was

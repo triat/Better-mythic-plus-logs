@@ -7,6 +7,7 @@ import { parseRunSignals } from "../src/signals/wcl-run.ts";
 import { formatDuration } from "../src/util.ts";
 import { loadWclFixture } from "./fixtures.ts";
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: strips the ANSI colour codes picocolors writes.
 const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 
 const base: RunDefensives = {
@@ -165,7 +166,7 @@ describe("renderDeepdiveLine", () => {
   test("majors, deaths, unlisted", () => {
     const line = strip(renderDeepdiveLine(base));
     expect(line).toContain("defensives: majors 41%");
-    expect(line).toContain("1/2 deaths with a defensive available");
+    expect(line).toContain("1/2 deaths with something at hand");
     expect(line).toContain("unlisted: Mystery (5x)");
   });
   test("no table, no deaths", () => {

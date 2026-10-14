@@ -5,13 +5,13 @@
 import type { DeathAnalysis, DeathEvent, DefensiveUse, MPlusRun, RunDefensives } from "../types.ts";
 import type { MessageKey, T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
-import { mmss } from "./deepdive.ts";
+import { healLines, healToolName, healthText, mmss, unpreventableWhy } from "./deepdive.ts";
 
 export type LayerKey = "deaths" | "dispo" | "cd" | "casts" | "control";
 export const LAYER_ORDER: readonly LayerKey[] = ["deaths", "dispo", "cd", "casts", "control"];
 export const DEFAULT_LAYERS: Record<LayerKey, boolean> = { deaths: true, dispo: true, cd: true, casts: false, control: false };
 
-/** One layer of the checklist. `disabled` is the reason (the chip's tooltip); `analyse`: offer "Analyser · 3 pts". */
+/** One layer of the checklist. `disabled` is the reason (the chip's tooltip); `analyse`: offer "Analyser · 4 pts". */
 export interface LayerChip { key: LayerKey; label: string; count: string; on: boolean; disabled: string | null; analyse: boolean }
 /** `id` is the death's id (`d<i>`) on the deaths and dispo lanes, so a click on either selects that death. */
 export interface Marker { id: string; leftPct: number; kind: "death" | "death-bad" | "dispo" | "none" | "cast"; title: string }
@@ -45,7 +45,7 @@ const clampPct = (x: number): number => round2(Math.min(100, Math.max(0, x)));
  */
 interface Death { id: string; ev: DeathEvent; a: DeathAnalysis | null; bad: boolean; majors: string[] }
 
-const BAD: ReadonlySet<DeathAnalysis["verdict"]> = new Set(["immunity available", "defensive available"]);
+const BAD: ReadonlySet<DeathAnalysis["verdict"]> = new Set(["immunity available", "defensive available", "heal available"]);
 
 /** Fight-relative ms of each cast: an analysis saved before castsAtMs existed has none (re-analyse to get them). */
 const hasCastTimes = (a: RunDefensives): boolean =>
@@ -75,8 +75,11 @@ export function timelineView(
   const deaths: Death[] = [...s.deaths.events].sort((x, y) => x.atMs - y.atMs).map((ev, i) => {
     const a = analysis ? matchAnalysis(ev, analysis.deaths) : null;
     const bad = a !== null && BAD.has(a.verdict);
-    // A name missing from the defensives list (table edited since) still counts when the verdict says it was available.
-    const majors = bad ? a!.available.filter(isMajor) : [];
+    // A heal verdict names the heal tools that would have saved; a defensive verdict its majors. A name missing from
+    // the defensives list (table edited since) still counts when the verdict says it was available.
+    const majors = !bad ? []
+      : a!.verdict === "heal available" ? (a!.heals ?? []).filter((h) => h.status === "saves").map((h) => healToolName(t, h.name))
+      : a!.available.filter(isMajor);
     return { id: `d${i}`, ev, a, bad, majors: bad && majors.length === 0 ? a!.available : majors };
   });
   const causeOf = (d: Death): string => d.ev.cause ?? d.a?.killingBlow ?? t("cand.timeline.unknownCause");
@@ -136,6 +139,7 @@ export function timelineView(
     lane("dispo", analysed.map((d) => ({
       id: d.id, leftPct: pct(d.ev.atMs), kind: d.bad ? "dispo" : "none",
       title: d.bad ? t("cand.timeline.available", { names: d.majors.join(", "), count: d.majors.length })
+        : d.a!.verdict === "unpreventable" ? t("cand.timeline.unpreventable", { why: unpreventableWhy(t, d.a!)! })
         : d.a!.verdict === "covered" ? t("cand.timeline.covered", { names: d.a!.active.join(", ") })
         : t("cand.timeline.noneAvailable"),
     })));
@@ -167,12 +171,12 @@ export function timelineView(
           title: titleOf(d),
           detail: d.bad
             ? t("cand.timeline.moment.wasAvailable", { names: d.majors.join(", "), count: d.majors.length })
+            : d.a.verdict === "unpreventable" ? t("cand.timeline.moment.unpreventable", { why: unpreventableWhy(t, d.a)! })
             : d.a.verdict === "covered" ? t("cand.timeline.moment.covered", { names: d.a.active.join(", ") })
             : t("cand.timeline.moment.noneAvailable"),
         }),
     bad: d.bad,
   }));
-  if (s.consumables?.potions === 0) moments.push({ id: null, time: t("cand.timeline.moment.run"), text: t("cand.timeline.moment.noPotion"), bad: false });
 
   return { durationMs: dur, ticks, chips, lanes, events: deaths.map((d) => d.id), callout, moments, summary: summaryText(t, deaths) };
 }
@@ -189,11 +193,16 @@ function hitsText(t: T, d: Death): string {
 /** `unused`: the defensives that make the death avoidable (empty unless the verdict says so); the rest of `available` is listed plainly. */
 function stateText(t: T, a: DeathAnalysis, unused: string[]): string {
   const minors = a.available.filter((n) => !unused.includes(n));
+  const health = healthText(t, a);
+  // A saving heal is already named by `unused`; the heals that would not have saved say why.
+  const heals = healLines(t, a).filter((h) => !h.saves).map((h) => h.text);
   const parts = [
+    ...(health ? [health] : []),
     ...(a.active.length > 0 ? [t("cand.timeline.state.active", { names: a.active.join(", "), count: a.active.length })] : []),
     ...(unused.length > 0 ? [t("cand.timeline.state.unused", { names: unused.join(", "), count: unused.length })] : []),
     ...a.onCooldown.map((c) => t("cand.timeline.state.onCd", { name: c.name, s: String(c.readyInS) })),
     ...(minors.length > 0 ? [t("cand.timeline.state.minor", { names: minors.join(", ") })] : []),
+    ...heals,
   ];
   return parts.length > 0 ? parts.join(" · ") : t("cand.timeline.state.nothing");
 }

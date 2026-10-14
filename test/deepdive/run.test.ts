@@ -35,27 +35,29 @@ describe("runDeepdive", () => {
     const queries: string[] = [];
     let spent = 100;
     const gql = async <T,>(q: string) => {
-      queries.push(q.includes("rateLimitData") && !q.includes("reportData") ? "ping" : "deepdive");
+      queries.push(q.includes("rateLimitData") && !q.includes("reportData") ? "ping" : q.includes("DeathHealth") ? "health" : "deepdive");
       if (queries[queries.length - 1] === "ping") return ping(spent) as T;
+      if (queries[queries.length - 1] === "health") return { ...ping(spent + 4), reportData: { report: {} } } as T;
       return { ...ping(spent + 3), reportData: { report: { fights: [{ startTime: f.deepdive.fightStart, endTime: f.deepdive.fightEnd }], casts: f.deepdive.casts, buffs: f.deepdive.buffs, castEvents: { data: f.deepdive.castEvents.map((e: { timestamp: number; abilityGameID: number }) => ({ ...e, type: "cast" })), nextPageTimestamp: null } } } } as T;
     };
     const first = await runDeepdive(req, { store, tables, gql });
     expect(first.ok).toBe(true);
-    expect(queries).toEqual(["ping", "deepdive"]);
+    expect(queries).toEqual(["ping", "deepdive", "health"]); // the healer died once: one health window
     if (first.ok) {
       expect(first.fromCache).toBe(false);
-      expect(first.pointsSpent).toBe(3); // deep-dive counter minus the PING's counter
+      expect(first.pointsSpent).toBe(4); // last counter (health) minus the PING's counter
+      expect(first.result.healthMissing).toBe(true); // the fake health answer has no events: the death is judged without health
       expect(first.result.defensives.find((d) => d.id === 498)!.casts).toBe(27);
     }
     const second = await runDeepdive(req, { store, tables, gql });
-    expect(queries.length).toBe(2);
+    expect(queries.length).toBe(3);
     if (second.ok) expect(second.fromCache).toBe(true);
     await runDeepdive({ ...req, force: true }, { store, tables, gql });
-    expect(queries.length).toBe(4);
+    expect(queries.length).toBe(6);
     spent = 3590;
     const low = await runDeepdive({ ...req, force: true }, { store, tables, gql });
     expect(low).toEqual({ ok: false, status: 402, error: "WCL budget low (10 pts left this hour)" });
-    expect(queries.length).toBe(5); // ping only
+    expect(queries.length).toBe(7); // ping only
     store.close();
   });
   test("a WCL error is relayed as 502 and nothing is cached", async () => {
@@ -79,7 +81,7 @@ describe("runDeepdive", () => {
     const estimates: number[] = [];
     const r = await runDeepdive(req, { store, tables, gql, reserve: (e) => { estimates.push(e); return refusal; } });
     expect(r).toEqual({ ok: false, status: 429, error: refusal.message, quota: refusal });
-    expect(estimates).toEqual([3]);
+    expect(estimates).toEqual([4]);
     expect(calls).toBe(0);
     store.putDeepDive(req.reportCode, req.fightID, req.character, f.deepdive);
     const cached = await runDeepdive(req, { store, tables, gql, reserve: () => { throw new Error("must not be consulted for a cached analysis"); } });

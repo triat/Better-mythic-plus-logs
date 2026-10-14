@@ -1,0 +1,73 @@
+# Checks every push to main and every pull request: typecheck (src/ and web/), lint, the test suite (web/dist absent,
+# like a fresh checkout), the hosted build. Also called by release.yml before a version is cut. No secret, no .env:
+# every test runs on fakes and nothing reaches Warcraft Logs or Raider.IO.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: typecheck + lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - uses: extractions/setup-just@v4
+      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile --cwd web
+      - run: just check
+      # Errors fail the job; warnings (biome.json lists the rules kept as warnings) are only reported.
+      - run: just lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      # luajit lets the suite also run the addon's encode.lua against the golden vectors.
+      - run: sudo apt-get update -q && sudo apt-get install -y -q luajit
+      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile --cwd web
+      - run: bun test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - uses: extractions/setup-just@v4
+      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile --cwd web
+      - run: just build-linux
+
+  # Known vulnerabilities in either lockfile. Reported here without blocking (a new advisory on a transitive
+  # dependency should not turn every pull request red); release.yml runs it again and stops on a finding.
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - uses: extractions/setup-just@v4
+      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile --cwd web
+      - run: just check-deps

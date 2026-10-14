@@ -1,5 +1,5 @@
 {
-  "version": "mn-2.3",
+  "version": "mn-2.4",
   "denylist": [
     17,
     974,
@@ -45,23 +45,26 @@
     1295885,
     1297761
   ],
-  "specs": {
-    "*:*": [
+  "heals": {
+    "dangerHpShare": 0.5,
+    "reactionMs": 700,
+    "tools": [
       {
-        "id": 1234768,
-        "name": "Silvermoon Health Potion",
+        "name": "Health potion",
+        "ids": [1234768, 1295247],
         "cooldownS": 300,
-        "durationS": 0,
-        "kind": "minor"
+        "flat": 370000
       },
       {
-        "id": 1295247,
-        "name": "Concentrated Silvermoon Health Potion",
-        "cooldownS": 300,
-        "durationS": 0,
-        "kind": "minor"
+        "name": "Healthstone",
+        "ids": [6262, 452930],
+        "cooldownS": 60,
+        "maxHpShare": 0.25,
+        "groupClass": "Warlock"
       }
-    ],
+    ]
+  },
+  "specs": {
     "DeathKnight:*": [
       {
         "id": 48707,

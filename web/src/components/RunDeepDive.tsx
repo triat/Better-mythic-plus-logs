@@ -116,6 +116,8 @@ export function RunDeepDive({ d, tableWarning, busy, canAfford, quotaTooltip, mo
           <span className={x.cls}>{x.verdict}{x.wipe && <span className="chip">{t("deepdive.wipe")}</span>}</span>
           <span className="faint">{x.hits.length === 0 ? "—" : x.hits.map((h, j) => <span key={j}>{j > 0 && " · "}<SpellLink id={h.id} name={h.name} /> {h.text}</span>)}{x.blow && <span> · {x.blow}</span>}</span>
           <span className="dd-states">{x.states.map((s, j) => <span key={j} className={s.cls}>{j > 0 && <span className="faint"> · </span>}<SpellLink id={s.id} name={s.name} /> {s.text}</span>)}</span>
+          {x.health && <span className="dd-states faint">{x.health}</span>}
+          {x.heals.length > 0 && <span className="dd-states">{x.heals.map((h, j) => <span key={j} className={h.cls}>{j > 0 && <span className="faint"> · </span>}{h.text}</span>)}</span>}
         </div>
       ))}
 

@@ -37,18 +37,24 @@ describe("specKey / specDefensives", () => {
     expect(ids.filter((i) => i === 61336).length).toBe(1);
     expect(d.entries.every((e) => e.origin === "shipped")).toBe(true);
   });
-  test("the universal *:* key (health potions) reaches every spec, first in the merge, without making a spec 'present'", () => {
-    const d = specDefensives(SHIPPED, {}, "Druid", "Guardian");
-    expect(d.entries.slice(0, 2).map((e) => e.id)).toEqual([1234768, 1295247]);
-    expect(d.entries.find((e) => e.id === 1295247)).toMatchObject({ name: "Concentrated Silvermoon Health Potion", cooldownS: 300, durationS: 0, kind: "minor", origin: "shipped" });
-    expect(specDefensives(SHIPPED, {}, "Demon Hunter", "Devourer").tableMissing).toBe(true);
+  test("the universal *:* key reaches every spec, first in the merge, without making a spec 'present'", () => {
+    const potion = { id: 1234768, name: "Potion", cooldownS: 300, durationS: 0, kind: "minor" as const };
+    const withUniversal = { ...SHIPPED, specs: { ...SHIPPED.specs, "*:*": [potion] } };
+    const d = specDefensives(withUniversal, {}, "Druid", "Guardian");
+    expect(d.entries[0]).toMatchObject({ ...potion, origin: "shipped" });
+    expect(specDefensives(withUniversal, {}, "Demon Hunter", "Devourer").tableMissing).toBe(true);
     // A spec key wins over the universal one on the same id; an override can patch or ignore it under any key.
-    const shipped = { ...SHIPPED, specs: { ...SHIPPED.specs, "Druid:Guardian": [...SHIPPED.specs["Druid:Guardian"]!, { id: 1234768, name: "Potion (spec)", cooldownS: 60, durationS: 0, kind: "minor" as const }] } };
+    const shipped = { ...withUniversal, specs: { ...withUniversal.specs, "Druid:Guardian": [...SHIPPED.specs["Druid:Guardian"]!, { ...potion, name: "Potion (spec)", cooldownS: 60 }] } };
     expect(specDefensives(shipped, {}, "Druid", "Guardian").entries.find((e) => e.id === 1234768)!.cooldownS).toBe(60);
-    const d2 = specDefensives(SHIPPED, { "*:*": [{ id: 1234768, cooldownS: 240 }], "Druid:Guardian": [{ id: 1295247, ignore: true }] }, "Druid", "Guardian");
+    const d2 = specDefensives(withUniversal, { "*:*": [{ id: 1234768, cooldownS: 240 }], "Druid:Guardian": [{ id: 22812, ignore: true }] }, "Druid", "Guardian");
     expect(d2.entries.find((e) => e.id === 1234768)).toMatchObject({ cooldownS: 240, origin: "override" });
-    expect(d2.entries.some((e) => e.id === 1295247)).toBe(false);
-    expect(d2.ignored).toEqual([1295247]);
+    expect(d2.entries.some((e) => e.id === 22812)).toBe(false);
+    expect(d2.ignored).toEqual([22812]);
+  });
+  test("the shipped table keeps the heals apart from the defensives (mn-2.4)", () => {
+    expect(SHIPPED.specs["*:*"]).toBeUndefined();
+    expect(SHIPPED.heals).toMatchObject({ dangerHpShare: 0.5, reactionMs: 700 });
+    expect(SHIPPED.heals.tools.map((t) => t.ids)).toEqual([[1234768, 1295247], [6262, 452930]]);
   });
   test("override patches, adds, ignores", () => {
     const override: Override = {
@@ -73,7 +79,7 @@ describe("specKey / specDefensives", () => {
   test("override alone makes a missing spec present", () => {
     const d = specDefensives(SHIPPED, { "DemonHunter:Devourer": [{ id: 1, name: "X", cooldownS: 60, durationS: 5, kind: "major" }] }, "DemonHunter", "Devourer");
     expect(d.tableMissing).toBe(false);
-    expect(d.entries.map((e) => e.id)).toEqual([1234768, 1295247, 1]); // the potions come first, then the override
+    expect(d.entries.map((e) => e.id)).toEqual([1]);
   });
 });
 

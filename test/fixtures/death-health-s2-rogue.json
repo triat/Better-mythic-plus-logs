@@ -1,0 +1,414 @@
+{
+ "_note": "Captured 2026-10-14 (probe, 2 pts): report 8DFkgn3LtdBcmGJ4 fight 7, Casualaddict (actor 5), first death at 7593415; 10 s window. DamageTaken with sourceID, Healing with targetID, includeResources.",
+ "actorID": 5,
+ "deathTs": 7593415,
+ "damage": [
+  {
+   "timestamp": 7590387,
+   "type": "damage",
+   "sourceID": 324,
+   "targetID": 5,
+   "abilityGameID": 1291399,
+   "amount": 173109,
+   "absorbed": 113190,
+   "hitPoints": 598011,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7591397,
+   "type": "damage",
+   "sourceID": 324,
+   "targetID": 5,
+   "abilityGameID": 1291399,
+   "amount": 212074,
+   "hitPoints": 393648,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7591889,
+   "type": "damage",
+   "sourceID": 319,
+   "targetID": 5,
+   "abilityGameID": 1308148,
+   "amount": 332487,
+   "absorbed": 18737,
+   "hitPoints": 219270,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7592396,
+   "type": "damage",
+   "sourceID": 324,
+   "targetID": 5,
+   "abilityGameID": 1291399,
+   "amount": 152694,
+   "absorbed": 16966,
+   "hitPoints": 66576,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7592876,
+   "type": "damage",
+   "sourceID": 319,
+   "targetID": 5,
+   "abilityGameID": 1308148,
+   "amount": 118933,
+   "hitPoints": 113,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7593415,
+   "type": "damage",
+   "sourceID": 324,
+   "targetID": 5,
+   "abilityGameID": 1291399,
+   "amount": 48308,
+   "overkill": 121352,
+   "hitPoints": 0,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  }
+ ],
+ "healing": [
+  {
+   "timestamp": 7583699,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1310389,
+   "amount": 45927,
+   "hitPoints": 731915,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7583855,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 433722,
+   "amount": 16940,
+   "hitPoints": 748855,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7583957,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1287665,
+   "amount": 721,
+   "hitPoints": 749576,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7584307,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 143924,
+   "amount": 21544,
+   "overheal": 34862,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  },
+  {
+   "timestamp": 7584593,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 426605,
+   "amount": 0,
+   "overheal": 7711,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  },
+  {
+   "timestamp": 7584959,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1287665,
+   "amount": 0,
+   "overheal": 865,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7584959,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 433722,
+   "amount": 0,
+   "overheal": 9865,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7585160,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 433722,
+   "amount": 0,
+   "overheal": 20126,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7585960,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1287665,
+   "amount": 0,
+   "overheal": 865,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7586209,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 403460,
+   "amount": 0,
+   "overheal": 11476,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7586966,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1287665,
+   "amount": 0,
+   "overheal": 864,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7587602,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 426605,
+   "amount": 0,
+   "overheal": 7711,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  },
+  {
+   "timestamp": 7587971,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1287665,
+   "amount": 0,
+   "overheal": 720,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7588736,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 441590,
+   "amount": 0,
+   "overheal": 12458,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7589017,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 85222,
+   "amount": 0,
+   "overheal": 12511,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7589967,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1265595,
+   "amount": 0,
+   "overheal": 8748,
+   "hitPoints": 771120,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7590387,
+   "type": "absorbed",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 1267220,
+   "amount": 57259
+  },
+  {
+   "timestamp": 7590387,
+   "type": "absorbed",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 454286,
+   "amount": 22904
+  },
+  {
+   "timestamp": 7590387,
+   "type": "absorbed",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1241866,
+   "amount": 15422
+  },
+  {
+   "timestamp": 7590387,
+   "type": "absorbed",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1245369,
+   "amount": 17605
+  },
+  {
+   "timestamp": 7590388,
+   "type": "removebuff",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1241866
+  },
+  {
+   "timestamp": 7590388,
+   "type": "removebuff",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1245369
+  },
+  {
+   "timestamp": 7590599,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 426605,
+   "amount": 7711,
+   "hitPoints": 605722,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  },
+  {
+   "timestamp": 7591593,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 143924,
+   "amount": 83578,
+   "hitPoints": 477226,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  },
+  {
+   "timestamp": 7591696,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 53652,
+   "amount": 74531,
+   "hitPoints": 551757,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7591889,
+   "type": "absorbed",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1245369,
+   "amount": 18737
+  },
+  {
+   "timestamp": 7591889,
+   "type": "removebuff",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1245369
+  },
+  {
+   "timestamp": 7592396,
+   "type": "absorbed",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 454286,
+   "amount": 16966
+  },
+  {
+   "timestamp": 7592752,
+   "type": "heal",
+   "sourceID": 3,
+   "targetID": 5,
+   "abilityGameID": 1265595,
+   "amount": 8519,
+   "hitPoints": 75095,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7592806,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 143924,
+   "amount": 32424,
+   "hitPoints": 107519,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  },
+  {
+   "timestamp": 7592825,
+   "type": "heal",
+   "sourceID": 1,
+   "targetID": 5,
+   "abilityGameID": 1263002,
+   "amount": 11527,
+   "hitPoints": 119046,
+   "maxHitPoints": 771120,
+   "resourceActor": 2
+  },
+  {
+   "timestamp": 7593075,
+   "type": "heal",
+   "sourceID": 5,
+   "targetID": 5,
+   "abilityGameID": 185311,
+   "amount": 48195,
+   "hitPoints": 48308,
+   "maxHitPoints": 771120,
+   "resourceActor": 1
+  }
+ ]
+}

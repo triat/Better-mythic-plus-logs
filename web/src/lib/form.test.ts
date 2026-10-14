@@ -9,7 +9,7 @@ const tFr = makeT(fr, "fr");
 const KEY = "eu|Biwaasham-Hyjal|19";
 
 const TITLES: Record<string, string> = {
-  "preparation.healthstones": "Healthstones", "preparation.potions": "Potions", "throughput.parseAtTarget": "Parse à la cible",
+  "survival.wipeDeaths": "Morts en wipe", "utility.dispels": "Dispels", "throughput.parseAtTarget": "Parse à la cible",
   "throughput.medianParse": "Parse médian", "preparation.ilvlVsLevel": "Item level vs cible", "survival.individualDeaths": "Morts individuelles",
 };
 const docs: SynthesisDocs = {
@@ -36,8 +36,8 @@ const trend = (key: PillarKey, delta: number | null, recentRuns = 5, beforeRuns 
 // The mockup's pillars (F-Moi-Forme): global 66.
 const PILLARS = [pillar("damage", 64), pillar("survival", 66), pillar("avoidable", 76), pillar("interrupts", 68), pillar("control", 55)];
 const WORK: WorkOnRow[] = [
-  { source: "preparation.potions", pillar: null, impact: -1.2, value: 4.1, reference: 5, label: "", past: { value: 4.1, change: "same" } },
-  { source: "preparation.healthstones", pillar: null, impact: -3.6, value: 0, reference: 1.6, label: "", past: { value: 0.7, change: "worse" } },
+  { source: "utility.dispels", pillar: "control", impact: -1.2, value: 4.1, reference: 5, label: "", past: { value: 4.1, change: "same" } },
+  { source: "survival.wipeDeaths", pillar: "survival", impact: -3.6, value: 0, reference: 1.6, label: "", past: { value: 0.7, change: "worse" } },
   { source: "throughput.parseAtTarget", pillar: "damage", impact: -2.8, value: 51, reference: 59, label: "", past: null },
 ];
 
@@ -224,13 +224,13 @@ describe("formView · checklist", () => {
     const f = formView(tFr, "fr", ev(), season(), docs, KEY);
     expect(f.checklistNote).toBe("4 dernières semaines vs 4 d'avant");
     expect(f.checklist).toEqual([
-      { title: "Healthstones", hint: "Pierres de soins utilisées par run (seulement les runs avec un démoniste).", goal: "objectif 1,6 / run", before: "avant 0,7", now: "maintenant 0,0", nowTone: "worse", cost: "−4" },
+      { title: "Morts en wipe", hint: "Ses morts quand au moins 3 joueurs meurent en 15 s ; ça compte peu.", goal: "objectif 1,6 / run", before: "avant 0,7", now: "maintenant 0,0", nowTone: "worse", cost: "−4" },
       { title: "Parse à la cible", hint: "Le même parse, mais seulement sur ses runs au niveau de clé cible ou un niveau en dessous.", goal: "objectif 59", before: null, now: "maintenant 51", nowTone: "neutral", cost: "−3" },
-      { title: "Potions", hint: "Potions de combat utilisées par run.", goal: "objectif 5,0 / run", before: "avant 4,1", now: "maintenant 4,1", nowTone: "neutral", cost: "−1" },
+      { title: "Dispels", hint: "Dispels, purges, vols de sort et apaisements par run.", goal: "objectif 5,0 / run", before: "avant 4,1", now: "maintenant 4,1", nowTone: "neutral", cost: "−1" },
     ]);
   });
   test("better than before reads in the better tone", () => {
-    const work: WorkOnRow[] = [{ source: "preparation.potions", pillar: null, impact: -1, value: 4.6, reference: 5, label: "", past: { value: 3.2, change: "better" } }];
+    const work: WorkOnRow[] = [{ source: "utility.dispels", pillar: "control", impact: -1, value: 4.6, reference: 5, label: "", past: { value: 3.2, change: "better" } }];
     expect(formView(tEn, "en", ev(), season({ workOn: work }), docs, KEY).checklist[0]).toMatchObject({ before: "before 3.2", now: "now 4.6", nowTone: "better" });
   });
 });

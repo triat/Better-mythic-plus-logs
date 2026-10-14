@@ -11,9 +11,9 @@ import type {
 } from "../types.ts";
 import type { ProposalMode } from "./hostedMode.ts";
 import type { MessageKey, T } from "../i18n/t.ts";
-import { fmtAge } from "./format.ts";
+import { fmtAge, fmtAmount } from "./format.ts";
 
-export const POINTS_PER_RUN = 3;
+export const POINTS_PER_RUN = 4;
 export const costText = (t: T, runs: number): string => t("runs.cost", { pts: runs * POINTS_PER_RUN });
 
 const runKey = (r: { reportCode: string; fightID: number }) => `${r.reportCode}:${r.fightID}`;
@@ -32,7 +32,14 @@ export function unanalyzedRuns(p: LookupPayload): MPlusRun[] {
 export interface UsageRow { id: number; name: string; kind: DefensiveUse["kind"]; counts: string; pct: number; pctText: string; cls: string; cd: string; mismatch: boolean; origin: DefensiveUse["origin"]; countsUsage: boolean }
 /** A spell mention: `id` null when WCL gave no guid (no Wowhead link then). */
 export interface SpellRef { id: number | null; name: string }
-export interface DeathLine { time: string; verdict: string; cls: string; wipe: boolean; hits: (SpellRef & { text: string })[]; blow: string | null; states: (SpellRef & { text: string; cls: string })[] }
+export interface DeathLine {
+  time: string; verdict: string; cls: string; wipe: boolean; hits: (SpellRef & { text: string })[]; blow: string | null;
+  states: (SpellRef & { text: string; cls: string })[];
+  /** The health facts ("48.3k health before a 169.7k hit (771.1k max) · in danger 1.5 s before the death"); null without health data. */
+  health: string | null;
+  /** One line per heal tool the analysis judged (potion, healthstone). */
+  heals: { text: string; cls: string }[];
+}
 export interface PanelModel {
   title: string; meta: string; notice: string | null;
   usage: UsageRow[]; majorsText: string | null;
@@ -44,15 +51,57 @@ export interface PanelModel {
 /** Fight-relative ms as "m:ss", seconds floored (the deep-dive panel's death times). */
 export const mmss = (ms: number): string => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const usageTone = (pct: number): string => (pct >= 70 ? "tone-good" : pct >= 40 ? "tone-warn" : "tone-bad");
-const verdictTone = (v: DeathAnalysis["verdict"]): string => (v === "immunity available" ? "tone-bad" : v === "defensive available" ? "tone-warn" : "tone-good");
+const verdictTone = (v: DeathAnalysis["verdict"]): string =>
+  v === "immunity available" ? "tone-bad" : v === "defensive available" || v === "heal available" ? "tone-warn" : v === "unpreventable" ? "faint" : "tone-good";
 
 /** DeathAnalysis.verdict is already the display text in English — but it must be translated for the UI. */
 const VERDICT_KEY: Record<DeathAnalysis["verdict"], MessageKey> = {
   "immunity available": "deepdive.verdict.immunity",
   "defensive available": "deepdive.verdict.defensive",
+  "heal available": "deepdive.verdict.heal",
   covered: "deepdive.verdict.covered",
   "nothing available": "deepdive.verdict.nothing",
+  unpreventable: "deepdive.verdict.unpreventable",
 };
+
+/** The heal tools' names from the shipped table, translated; any other name (an edited table) as is. */
+const HEAL_TOOL_KEY: Record<string, MessageKey> = { "Health potion": "deepdive.healTool.potion", Healthstone: "deepdive.healTool.healthstone" };
+export const healToolName = (t: T, name: string): string => (HEAL_TOOL_KEY[name] ? t(HEAL_TOOL_KEY[name]) : name);
+
+/** Why nothing would have prevented the death ("one-shot: a 1.20m hit, 1.00m max health"); null when it was preventable. */
+export function unpreventableWhy(t: T, a: DeathAnalysis): string | null {
+  if (a.verdict !== "unpreventable") return null;
+  if (a.health?.oneShot) return t("deepdive.health.oneShot", { hit: fmtAmount(a.health.killingHit), max: fmtAmount(a.health.maxHp) });
+  return t("deepdive.health.instakill");
+}
+
+/** The health facts of a death, joined with " · "; null without health data. */
+export function healthText(t: T, a: DeathAnalysis): string | null {
+  const why = unpreventableWhy(t, a);
+  if (why) return why;
+  const h = a.health;
+  if (!h) return null;
+  return [
+    t("deepdive.health.hit", { hp: fmtAmount(h.hpBefore), hit: fmtAmount(h.killingHit), max: fmtAmount(h.maxHp) }),
+    h.dangerMs === null ? t("deepdive.health.noDanger") : t("deepdive.health.danger", { s: (h.dangerMs / 1000).toFixed(1) }),
+  ].join(" · ");
+}
+
+/** One line per judged heal tool; a tool the group could not offer (no Warlock) is left out. */
+export function healLines(t: T, a: DeathAnalysis): { text: string; cls: string; saves: boolean }[] {
+  if (a.verdict === "unpreventable" || !a.health) return [];
+  const overkill = fmtAmount(a.health.overkill);
+  return (a.heals ?? []).flatMap((x): { text: string; cls: string; saves: boolean }[] => {
+    const name = healToolName(t, x.name);
+    switch (x.status) {
+      case "saves": return [{ text: t("deepdive.health.saves", { name, heal: fmtAmount(x.heal ?? 0), overkill }), cls: "tone-bad", saves: true }];
+      case "not enough": return [{ text: t("deepdive.health.notEnough", { name, heal: fmtAmount(x.heal ?? 0), overkill }), cls: "faint", saves: false }];
+      case "no time": return [{ text: t("deepdive.health.noTime", { name }), cls: "faint", saves: false }];
+      case "on cooldown": return [{ text: t("deepdive.health.onCd", { name, s: String(x.readyInS ?? 0) }), cls: "faint", saves: false }];
+      default: return [];
+    }
+  });
+}
 
 const usageRow = (t: T, u: DefensiveUse): UsageRow => {
   const pct = Math.round(u.usage * 100);
@@ -74,6 +123,8 @@ const deathLine = (t: T, x: DeathAnalysis, idOf: (name: string) => number | null
     ...x.available.map((n) => ({ id: idOf(n), name: n, text: t("deepdive.available"), cls: "tone-bad" })),
     ...x.onCooldown.map((c) => ({ id: idOf(c.name), name: c.name, text: t("deepdive.onCd", { s: String(c.readyInS) }), cls: "faint" })),
   ],
+  health: healthText(t, x),
+  heals: healLines(t, x).map(({ text, cls }) => ({ text, cls })),
 });
 
 /** The table-override load error (payload.deepdiveSummary.tableWarning) as a UI line; null when the file is fine or absent. */
@@ -161,6 +212,7 @@ export function panelModel(t: T, d: RunDefensives, now = Date.now(), tableWarnin
   else if (d.tableMissing) notice = t("deepdive.noTable", { spec: specClass });
   else if (d.staleTable) notice = t("deepdive.tableChanged");
   else if (d.truncated) notice = t("deepdive.truncated");
+  else if (d.healthMissing) notice = t("deepdive.health.missing");
   return {
     title: t("deepdive.title", { spec: specClass }),
     meta: t("deepdive.analyzedAgo", { age: fmtAge(t, d.fetchedAt, now) }) + (d.pointsSpent !== null ? t("deepdive.pointsSpent", { pts: d.pointsSpent }) : ""),

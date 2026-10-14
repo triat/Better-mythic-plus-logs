@@ -46,14 +46,13 @@ describe("timelineView", () => {
     expect(v.events).toEqual(["d0", "d1", "d2"]);
     expect(v.callout).toEqual({
       id: "d1", time: "13:45", title: "Mort évitable · Storm Strikes", hits: `Storm Strikes 100${NB}%`,
-      state: "Astral Shift disponible et non utilisé · Earth Elemental en recharge (encore 94 s) · dispo : Silvermoon Health Potion",
+      state: "Astral Shift disponible et non utilisé · Earth Elemental en recharge (encore 94 s)",
       bad: true,
     });
     expect(v.moments).toEqual([
       { id: "d0", time: "1:53", text: "Mort · Ground Pound — aucun défensif majeur disponible", bad: false },
       { id: "d1", time: "13:45", text: "Mort évitable · Storm Strikes — Astral Shift était disponible", bad: true },
       { id: "d2", time: "17:50", text: "Mort · Spark Step — aucun défensif majeur disponible", bad: false },
-      { id: null, time: "run", text: "Aucune potion de soin", bad: false },
     ]);
     expect(v.summary).toBe("3 morts, dont une évitable : à 13:45, Astral Shift était prêt et n'a pas servi.");
   });
@@ -62,7 +61,7 @@ describe("timelineView", () => {
     const v = timelineView(tEn, "en", temple, templeAnalysis, false, DEFAULT_LAYERS, "d0")!;
     expect(v.callout).toEqual({
       id: "d0", time: "1:53", title: "Death · Ground Pound", hits: "Ground Pound 71% · Slither Strike 29%",
-      state: "Astral Shift on cooldown (41 s left) · available: Silvermoon Health Potion", bad: false,
+      state: "Astral Shift on cooldown (41 s left)", bad: false,
     });
     expect(v.summary).toBe("3 deaths, one avoidable: at 13:45, Astral Shift was ready and went unused.");
     expect(timelineView(tEn, "en", temple, templeAnalysis, false, DEFAULT_LAYERS, "nope")!.callout).toBeNull();
@@ -131,15 +130,37 @@ describe("timelineView", () => {
     const covered = {
       ...templeAnalysis,
       deaths: templeAnalysis.deaths.map((d, i) => (i === 0
-        ? { ...d, verdict: "covered" as const, active: ["Astral Shift"], available: ["Earth Elemental", "Silvermoon Health Potion"], onCooldown: [] }
+        ? { ...d, verdict: "covered" as const, active: ["Astral Shift"], available: ["Earth Elemental"], onCooldown: [] }
         : d)),
     };
     const v = timelineView(tFr, "fr", temple, covered, false, DEFAULT_LAYERS, "d0")!;
     expect(v.chips.find((c) => c.key === "dispo")!.count).toBe("1/3");
     expect(v.lanes.find((l) => l.key === "dispo")!.markers[0]).toMatchObject({ id: "d0", kind: "none", title: "Couvert par Astral Shift" });
     expect(v.moments[0]!.text).toBe("Mort · Ground Pound — couvert par Astral Shift");
-    expect(v.callout).toMatchObject({ bad: false, state: "Astral Shift actif · dispo : Earth Elemental, Silvermoon Health Potion" });
+    expect(v.callout).toMatchObject({ bad: false, state: "Astral Shift actif · dispo : Earth Elemental" });
     expect(v.summary).toBe("3 morts, dont une évitable : à 13:45, Astral Shift était prêt et n'a pas servi.");
+  });
+
+  test("a heal that would have saved is an avoidable death; a one-shot is not preventable", () => {
+    const health = { maxHp: 1_000_000, hpBefore: 300_000, killingHit: 500_000, overkill: 200_000, dangerMs: 2400, oneShot: false };
+    const withHeals = {
+      ...templeAnalysis,
+      deaths: templeAnalysis.deaths.map((d, i) => (i === 0
+        ? { ...d, verdict: "heal available" as const, health, heals: [{ name: "Health potion", status: "saves" as const, heal: 370_000 }] }
+        : i === 2 ? { ...d, verdict: "unpreventable" as const, health: { ...health, killingHit: 1_100_000, oneShot: true } }
+        : d)),
+    };
+    const v = timelineView(tEn, "en", temple, withHeals, false, DEFAULT_LAYERS, "d0")!;
+    expect(v.chips.find((c) => c.key === "dispo")!.count).toBe("2/3");
+    expect(v.callout).toMatchObject({
+      title: "Avoidable death · Ground Pound", bad: true,
+      state: "300.0k health before a 500.0k hit (1.00m max) · in danger 2.4 s before the death · Health potion available and unused · Astral Shift on cooldown (41 s left)",
+    });
+    expect(v.moments[0]!.text).toBe("Avoidable death · Ground Pound — Health potion was available");
+    expect(v.lanes.find((l) => l.key === "dispo")!.markers[2]).toMatchObject({ kind: "none", title: "Not preventable: one-shot: a 1.10m hit, 1.00m max health" });
+    const fr = timelineView(tFr, "fr", temple, withHeals, false, DEFAULT_LAYERS, "d2")!;
+    expect(fr.moments[2]!.text).toBe("Mort · Spark Step — rien ne l'aurait évitée (one-shot : un coup de 1.10m, 1.00m PV max)");
+    expect(fr.callout!.state).toBe("one-shot : un coup de 1.10m, 1.00m PV max · Astral Shift en recharge (encore 32 s)");
   });
 
   test("French agreement with several names", () => {

@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 // Usage: bun scripts/capture-deepdive.ts <Name-Realm> <reportCode> <fightID> <out.json>
-// The run must already be in the local cache (do a `bmpl lookup` first). Costs ~3 WCL pts.
+// The run must already be in the local cache (do a `bmpl lookup` first). Costs ~4 WCL pts.
 import { SHIPPED, loadDefensives, specDefensives } from "../src/deepdive/table.ts";
 import { playerOf } from "../src/deepdive/player.ts";
+import { deathTimesOf, fetchIds } from "../src/deepdive/run.ts";
 import { fetchRawDeepDive } from "../src/deepdive/wcl.ts";
 import { config } from "../src/config.ts";
 import { fetchMplusData } from "../src/mplus.ts";
@@ -23,7 +24,7 @@ if (!run) { console.error("run not in this character's rankings"); process.exit(
 const player = playerOf(report, data.character.name)!;
 const { override } = await loadDefensives();
 const table = specDefensives(SHIPPED, override, player.className, player.spec);
-const deepdive = await fetchRawDeepDive(gql, { code, fightID, character: data.character.name, actorID: player.actorID, ids: table.entries.map((e) => e.id) });
+const deepdive = await fetchRawDeepDive(gql, { code, fightID, character: data.character.name, actorID: player.actorID, ids: fetchIds(table, SHIPPED.heals), deathTimes: deathTimesOf(report, data.character.name) });
 await Bun.write(out, JSON.stringify({ character: data.character.name, run: { ...run, signals: undefined }, report, deepdive }, null, 1));
 console.log(`wrote ${out}: ${deepdive.castEvents.length} cast events, ${table.entries.length} table ids, ${deepdive.pointsSpent ?? "?"} pts`);
 closeStore();

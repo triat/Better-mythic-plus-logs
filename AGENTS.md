@@ -28,7 +28,8 @@ bun src/cli.ts analyze Name-Realm   # deep-dive (spends WCL points — read arch
 just audit-defensives [--only Class:Spec]   # ~9 WCL pts per spec per run
 just build-linux                            # cross-compile dist/bmpl-linux for the VPS (local, safe)
 just deploy                                 # touches the VPS by hand — only when the user asks, never from an agent (needs BMPL_DEPLOY_HOST)
-gh release create vX.Y.Z --generate-notes   # the normal way to ship: the deploy workflow ships a published release (bump package.json first)
+gh workflow run release -f bump=patch       # the normal way to ship (patch|minor|major; or Actions → release): CI, audit, bump, tag, release, deploy — only when the user asks
+just lint                                   # Biome lint (biome.json); errors fail CI, warnings are reported
 just check-deps                             # bun audit on both lockfiles — run before a release
 ```
 
@@ -50,7 +51,7 @@ just check-deps                             # bun audit on both lockfiles — ru
 
 ## Toolchain
 
-Bun ≥ 1.4, pinned to 1.4.3 in `.tool-versions` and the deploy workflow (runtime, test runner, bundler, SQLite via `bun:sqlite`), TypeScript 7 strict (`tsc` is the native compiler), `just` for recipes, Vite 8 + React 19 in `web/` (no router, no state lib, no CSS framework, no component lib). No linter/formatter is configured: match the surrounding style (2 spaces, double quotes, trailing commas, ≤ ~120 cols, `.ts` extensions in imports).
+Bun ≥ 1.4, pinned to 1.4.3 in `.tool-versions` and the deploy workflow (runtime, test runner, bundler, SQLite via `bun:sqlite`), TypeScript 7 strict (`tsc` is the native compiler), `just` for recipes, Vite 8 + React 19 in `web/` (no router, no state lib, no CSS framework, no component lib). Biome lints (`biome.json`: recommended rules minus `noNonNullAssertion`/`useTemplate`, a few UI rules kept as warnings; formatter off); CI (`.github/workflows/ci.yml`) runs `just check`, `just lint`, `bun test` and `just build-linux` on every push to main and every pull request. No formatter: match the surrounding style (2 spaces, double quotes, trailing commas, ≤ ~120 cols, `.ts` extensions in imports).
 
 ## Where things are
 

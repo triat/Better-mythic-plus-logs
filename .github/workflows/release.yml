@@ -1,0 +1,106 @@
+# Cut a release by hand: Actions → release → Run workflow, pick the bump (patch / minor / major).
+# Runs ci.yml and the dependency audit on main, bumps package.json, commits "chore(release): X.Y.Z" on main, tags
+# vX.Y.Z, publishes the GitHub release with generated notes, then deploys it through deploy.yml.
+# deploy.yml is called directly: a release published with the workflow's own GITHUB_TOKEN does not trigger other
+# workflows, so its `release: published` trigger would not fire. The push to main needs the GitHub Actions bot to be
+# allowed to push there (no branch protection rule blocking it).
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+        required: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - uses: extractions/setup-just@v4
+
+      # Releases are cut from main only, and exactly from the commit ci.yml checked (main may have moved since).
+      - name: Check the run is on main, at the commit ci.yml checked
+        run: |
+          test "${{ github.ref }}" = refs/heads/main || { echo "run the release from main, not ${{ github.ref }}"; exit 1; }
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}" || { echo "main moved since this run started; run the release again"; exit 1; }
+
+      - run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile --cwd web
+      - name: Known vulnerabilities (blocking before a release)
+        run: just check-deps
+
+      - name: Compute the next version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          current=$(jq -r .version package.json)
+          IFS=. read -r major minor patch <<< "$current"
+          case "$BUMP" in
+            major) next="$((major + 1)).0.0" ;;
+            minor) next="$major.$((minor + 1)).0" ;;
+            patch) next="$major.$minor.$((patch + 1))" ;;
+            *) echo "unknown bump: $BUMP"; exit 1 ;;
+          esac
+          if git rev-parse -q --verify "refs/tags/v$next" >/dev/null; then echo "tag v$next already exists"; exit 1; fi
+          echo "$current → $next ($BUMP)"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "tag=v$next" >> "$GITHUB_OUTPUT"
+
+      # Only the "version" line changes, so the file keeps its formatting.
+      - name: Bump package.json
+        env:
+          NEXT: ${{ steps.version.outputs.version }}
+        run: |
+          sed -i -E '0,/"version": "[^"]+"/s//"version": "'"$NEXT"'"/' package.json
+          test "$(jq -r .version package.json)" = "$NEXT"
+          git diff --stat
+
+      - name: Commit, tag and push
+        env:
+          NEXT: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(release): $NEXT"
+          git tag "$TAG"
+          git push origin HEAD:main
+          git push origin "$TAG"
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"
+
+  deploy:
+    needs: release
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit

@@ -47,7 +47,7 @@ describe("runListView", () => {
     expect(v.rows.find((r) => r.abbr === "BV")!.deaths).toEqual({ text: "1 mort", tone: "neutral" });
     expect(v.analysedLine).toBe("1/8 analysé");
     expect(v.pending).toBe(7);
-    expect(v.batchLabel).toBe("Analyser les 7 autres · ~21 pts");
+    expect(v.batchLabel).toBe("Analyser les 7 autres · ~28 pts");
     expect(v.missing).toEqual(["Eco-Dome Al'dani"]);
   });
 
@@ -80,7 +80,7 @@ describe("runListView", () => {
       deaths: { text: "—", tone: "dim" }, dtps: null, avoidable: null, util: null, parse: { text: "unranked", tier: null },
     });
     expect(v.analysedLine).toBe("0/2 analysed");
-    expect(v.batchLabel).toBe("Analyse the run · ~3 pts");
+    expect(v.batchLabel).toBe("Analyse the run · ~4 pts");
   });
 
   test("no peers: raw figures; nothing left to analyse", () => {
@@ -118,6 +118,6 @@ describe("runListView", () => {
     expect(v.pending).toBe(7);
     expect(v.pendingRuns.map((r) => r.reportCode)).not.toContain("PREV");
     expect(v.pendingRuns.length).toBe(v.pending);
-    expect(v.batchLabel).toBe("Analyser les 7 autres · ~21 pts");
+    expect(v.batchLabel).toBe("Analyser les 7 autres · ~28 pts");
   });
 });

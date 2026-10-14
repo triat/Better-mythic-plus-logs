@@ -1,5 +1,6 @@
-# Deploy a GitHub release to the VPS. Triggered when a release is published (or by hand), never by a
-# push to main: main is where work happens, a release is the decision to ship it.
+# Deploy a GitHub release to the VPS. Triggered when a release is published, by release.yml once it has published
+# one (a release made with the workflow token does not fire `release: published`), or by hand; never by a push to
+# main: main is where work happens, a release is the decision to ship it.
 # Secrets: BMPL_DEPLOY_SSH_KEY (private key authorised for the `deploy` user), BMPL_DEPLOY_KNOWN_HOSTS
 # (the VPS host key, from `ssh-keyscan -t ed25519 <ip>`). Variables: BMPL_DEPLOY_HOST (deploy@<ip>),
 # BMPL_PUBLIC_URL (https://bmpl.<domain>). See deploy/README.md § 9.
@@ -8,6 +9,12 @@ name: deploy
 on:
   release:
     types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag to deploy (vX.Y.Z)
+        type: string
+        required: true
   workflow_dispatch:
 
 concurrency:
@@ -20,8 +27,13 @@ jobs:
     # `contents: write` is for attaching the addon zip to the release below; nothing else writes.
     permissions:
       contents: write
+    env:
+      # The release being deployed: the published one, or the tag release.yml passes; empty when run by hand.
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -30,10 +42,10 @@ jobs:
 
       # A release tag must be the version the binary will report (/api/health, the admin page).
       - name: Check the release tag against package.json
-        if: github.event_name == 'release'
+        if: env.TAG != ''
         run: |
           v="v$(jq -r .version package.json)"
-          test "$v" = "${{ github.event.release.tag_name }}" || { echo "package.json says $v, release tag is ${{ github.event.release.tag_name }}"; exit 1; }
+          test "$v" = "$TAG" || { echo "package.json says $v, release tag is $TAG"; exit 1; }
 
       - run: bun install --frozen-lockfile
       - run: bun install --frozen-lockfile --cwd web
@@ -62,9 +74,9 @@ jobs:
       # format behind decodes as nothing at all), so it is attached to the release that shipped that
       # front, from the same commit, rather than built by hand. --clobber so a re-run replaces it.
       - name: Attach the addon to the release
-        if: github.event_name == 'release'
+        if: env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           just addon-zip
-          gh release upload "${{ github.event.release.tag_name }}" dist/bmpl-addon.zip --clobber
+          gh release upload "$TAG" dist/bmpl-addon.zip --clobber

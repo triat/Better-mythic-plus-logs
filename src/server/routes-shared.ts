@@ -153,12 +153,12 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
       const rt = ctx.runtime;
       return rt
         ? jsonResponse({
-            ok: true, hosted: true, hasCredentials: hasCredentials(), region: config.region,
+            ok: true, hosted: true, version: pkg.version as string, hasCredentials: hasCredentials(), region: config.region,
             openSignup: rt.config.openSignup, guildRequired: rt.config.discordGuildId !== null,
             wclClients: rt.wclClients.enabled, operator: rt.config.operator,
           })
         : jsonResponse({
-            ok: true, hosted: false, hasCredentials: hasCredentials(), envPath: ctx.envPath, region: config.region,
+            ok: true, hosted: false, version: pkg.version as string, hasCredentials: hasCredentials(), envPath: ctx.envPath, region: config.region,
           });
     }, "public"),
   ];

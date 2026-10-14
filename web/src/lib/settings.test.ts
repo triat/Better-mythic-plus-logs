@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_SETTINGS, LEGEND_STORAGE_KEY, parseServerSettings, readLocalSettings, writeLocalSettings } from "./settings.ts";
+import { DEFAULT_SETTINGS, LAST_SEEN_STORAGE_KEY, LEGEND_STORAGE_KEY, parseServerSettings, readLocalSettings, writeLocalSettings } from "./settings.ts";
 import { STORAGE_KEY } from "./keyLevel.ts";
 
 const fakeStore = (init: Record<string, string> = {}) => {
@@ -98,5 +98,22 @@ describe("characters", () => {
   test("server settings: characters parsed, invalid ones dropped", () => {
     expect(parseServerSettings({ characters: [me, { name: "x" }] }).characters).toEqual([me]);
     expect(parseServerSettings({}).characters).toEqual([]);
+  });
+});
+
+describe("lastSeenVersion", () => {
+  test("stored under bmpl.lastSeenVersion; a malformed value reads as null; null removes it", () => {
+    const store = fakeStore();
+    expect(readLocalSettings(store).lastSeenVersion).toBeNull();
+    writeLocalSettings(store, { lastSeenVersion: "0.10.2" });
+    expect(store.getItem(LAST_SEEN_STORAGE_KEY)).toBe("0.10.2");
+    expect(readLocalSettings(store).lastSeenVersion).toBe("0.10.2");
+    expect(readLocalSettings(fakeStore({ [LAST_SEEN_STORAGE_KEY]: "next" })).lastSeenVersion).toBeNull();
+    writeLocalSettings(store, { lastSeenVersion: null });
+    expect(store.getItem(LAST_SEEN_STORAGE_KEY)).toBeNull();
+  });
+  test("from the server: kept when it is a version, null otherwise", () => {
+    expect(parseServerSettings({ lastSeenVersion: "0.10.2" }).lastSeenVersion).toBe("0.10.2");
+    expect(parseServerSettings({ lastSeenVersion: 3 }).lastSeenVersion).toBeNull();
   });
 });

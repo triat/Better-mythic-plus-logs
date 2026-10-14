@@ -211,7 +211,10 @@ if the units changed.
 workflow (`.github/workflows/release.yml`): *Actions → release → Run
 workflow* on `main`, or `gh workflow run release -f bump=patch` (`minor`,
 `major`). It runs the CI (`ci.yml`) and the dependency audit, bumps
-`"version"` in `package.json`, commits `chore(release): X.Y.Z` on `main`, tags
+`"version"` in `package.json`, stamps the user-facing changelog's `"next"` entry
+(`web/src/changelog/`, shown in the app's "What's new" panel) with the version and
+the date, and refuses to run when that entry is missing or empty; it commits
+`chore(release): X.Y.Z` on `main`, tags
 `vX.Y.Z`, publishes the GitHub release with generated notes and calls
 `deploy.yml` for that tag (a release published with the workflow's own token
 does not fire `release: published`, so it is called directly). The Actions bot

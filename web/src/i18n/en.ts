@@ -1243,4 +1243,13 @@ export const en = {
     status: { loading: "Loading its season…", failed: "Could not load the season: reload the page to try again." },
     menu: { main: "Make main", up: "Move up the list", remove: "Remove from tracking" },
   },
+  whatsNew: {
+    label: "What's new",
+    unread: "new changes since your last visit",
+    since: "since your last visit · you use {version}",
+    youUse: "you use {version}",
+    all: "All changes",
+    close: "Close",
+    empty: "Nothing new since your last visit.",
+  },
 } as const;

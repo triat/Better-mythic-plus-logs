@@ -14,13 +14,13 @@ function setup() {
 describe("user settings repository", () => {
   test("defaults before any write", () => {
     const { s, ua } = setup();
-    expect(s.get(ua.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] });
-    expect(DEFAULT_USER_SETTINGS).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [] });
+    expect(s.get(ua.id)).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [], lastSeenVersion: null });
+    expect(DEFAULT_USER_SETTINGS).toEqual({ yourKey: null, legendOpen: true, region: null, locale: null, liveSort: "arrival", liveRoles: ["tank", "healer", "dps"], liveClasses: [], characters: [], lastSeenVersion: null });
   });
 
   test("update merges a partial patch and returns the whole row; users are independent", () => {
     const { s, ua, ub, db } = setup();
-    const liveDefaults = { liveSort: DEFAULT_USER_SETTINGS.liveSort, liveRoles: [...DEFAULT_USER_SETTINGS.liveRoles], liveClasses: [...DEFAULT_USER_SETTINGS.liveClasses], characters: [] };
+    const liveDefaults = { liveSort: DEFAULT_USER_SETTINGS.liveSort, liveRoles: [...DEFAULT_USER_SETTINGS.liveRoles], liveClasses: [...DEFAULT_USER_SETTINGS.liveClasses], characters: [], lastSeenVersion: null };
     expect(s.update(ua.id, { yourKey: 18 }, 1000)).toEqual({ yourKey: 18, legendOpen: true, region: null, locale: null, ...liveDefaults });
     expect(s.update(ua.id, { legendOpen: false }, 2000)).toEqual({ yourKey: 18, legendOpen: false, region: null, locale: null, ...liveDefaults });
     expect(s.update(ua.id, { yourKey: null }, 3000)).toEqual({ yourKey: null, legendOpen: false, region: null, locale: null, ...liveDefaults });
@@ -47,6 +47,14 @@ describe("user settings repository", () => {
     expect(s.get(ua.id)).toMatchObject({ yourKey: null, legendOpen: true, region: null, locale: null });
   });
 
+  test("lastSeenVersion is stored and read back; a malformed value read from the row falls back to null", () => {
+    const { s, ua, db } = setup();
+    expect(s.update(ua.id, { lastSeenVersion: "0.10.2" }, 1000).lastSeenVersion).toBe("0.10.2");
+    expect(s.get(ua.id).lastSeenVersion).toBe("0.10.2");
+    db.run("UPDATE user_settings SET last_seen_version = ? WHERE user_id = ?", ["next", ua.id]);
+    expect(s.get(ua.id).lastSeenVersion).toBeNull();
+  });
+
   test("deleting the user cascades", () => {
     const { s, ua, db } = setup();
     s.update(ua.id, { yourKey: 20 }, 1);
@@ -60,6 +68,9 @@ describe("user settings repository", () => {
     expect(s.get(ua.id)).toMatchObject({ liveSort: "score", liveRoles: ["dps"], liveClasses: ["Mage", "Druid"] });
 
     expect(SETTINGS_BODY.parse({ liveSort: "nope" }, "").ok).toBe(false);
+    expect(SETTINGS_BODY.parse({ lastSeenVersion: "next" }, "").ok).toBe(false);
+    expect(SETTINGS_BODY.parse({ lastSeenVersion: "0.10.2" }, "").ok).toBe(true);
+    expect(SETTINGS_BODY.parse({ lastSeenVersion: null }, "").ok).toBe(true);
     expect(SETTINGS_BODY.parse({ liveRoles: ["tank", "wizard"] }, "").ok).toBe(false);
     expect(SETTINGS_BODY.parse({ liveSort: "role", liveRoles: [], liveClasses: [] }, "").ok).toBe(true);
   });

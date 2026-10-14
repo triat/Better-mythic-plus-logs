@@ -6,6 +6,7 @@ import { isLocale } from "./locale.ts";
 import type { Locale } from "./locale.ts";
 import { isRegion } from "./regions.ts";
 import { LIVE_ROLES, isLiveRole, isLiveSort } from "./live/roster.ts";
+import { isVersion } from "./whatsNew.ts";
 import type { LiveRole, LiveSort } from "./live/roster.ts";
 
 export interface Settings {
@@ -17,6 +18,8 @@ export interface Settings {
   liveRoles: LiveRole[];
   liveClasses: string[];
   characters: MyCharacter[];
+  /** The newest version whose changelog was opened (what's-new spec); null before the first visit. */
+  lastSeenVersion: string | null;
 }
 // liveRoles/liveClasses are frozen: DEFAULT_SETTINGS is a module-scoped singleton handed out as-is
 // on the "no storage" / throwing-storage fast paths below — a caller that sorted or pushed in place
@@ -31,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   liveRoles: Object.freeze([...LIVE_ROLES]) as LiveRole[],
   liveClasses: Object.freeze([] as string[]) as string[],
   characters: Object.freeze([] as MyCharacter[]) as MyCharacter[],
+  lastSeenVersion: null,
 };
 export const LEGEND_STORAGE_KEY = "bmpl.legendOpen";
 export const REGION_STORAGE_KEY = "bmpl.region";
@@ -40,6 +44,7 @@ export const LIVE_SORT_STORAGE_KEY = "bmpl.liveSort";
 export const LIVE_ROLES_STORAGE_KEY = "bmpl.liveRoles";
 export const LIVE_CLASSES_STORAGE_KEY = "bmpl.liveClasses";
 export const CHARACTERS_STORAGE_KEY = "bmpl.characters";
+export const LAST_SEEN_STORAGE_KEY = "bmpl.lastSeenVersion";
 
 /** The subset of the Web Storage API we use; null when storage is unavailable. */
 export interface KeyValueStore { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void }
@@ -80,6 +85,7 @@ export function readLocalSettings(store: KeyValueStore | null): Settings {
       liveRoles: readJsonArray(store.getItem(LIVE_ROLES_STORAGE_KEY), isLiveRole, [...LIVE_ROLES]),
       liveClasses: readJsonArray(store.getItem(LIVE_CLASSES_STORAGE_KEY), isString, []),
       characters: readJsonArray(store.getItem(CHARACTERS_STORAGE_KEY), isMyCharacter, []),
+      lastSeenVersion: isVersion(store.getItem(LAST_SEEN_STORAGE_KEY)) ? store.getItem(LAST_SEEN_STORAGE_KEY) : null,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -107,6 +113,10 @@ export function writeLocalSettings(store: KeyValueStore | null, patch: Partial<S
     if (patch.liveRoles !== undefined) store.setItem(LIVE_ROLES_STORAGE_KEY, JSON.stringify(patch.liveRoles));
     if (patch.liveClasses !== undefined) store.setItem(LIVE_CLASSES_STORAGE_KEY, JSON.stringify(patch.liveClasses));
     if (patch.characters !== undefined) store.setItem(CHARACTERS_STORAGE_KEY, JSON.stringify(patch.characters));
+    if ("lastSeenVersion" in patch) {
+      if (isVersion(patch.lastSeenVersion)) store.setItem(LAST_SEEN_STORAGE_KEY, patch.lastSeenVersion);
+      else store.removeItem(LAST_SEEN_STORAGE_KEY);
+    }
   } catch {
     /* private mode etc. */
   }
@@ -124,5 +134,6 @@ export function parseServerSettings(raw: unknown): Settings {
     liveRoles: Array.isArray(o.liveRoles) && o.liveRoles.every(isLiveRole) ? o.liveRoles : [...LIVE_ROLES],
     liveClasses: Array.isArray(o.liveClasses) && o.liveClasses.every((s) => typeof s === "string") ? o.liveClasses : [],
     characters: Array.isArray(o.characters) ? o.characters.filter(isMyCharacter) : [],
+    lastSeenVersion: isVersion(o.lastSeenVersion) ? o.lastSeenVersion : null,
   };
 }

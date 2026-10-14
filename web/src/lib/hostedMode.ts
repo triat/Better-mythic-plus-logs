@@ -15,6 +15,8 @@ export interface StatusInfo {
   operator: string;
   /** The instance default region — the region a fresh lookup uses until the member picks (and saves) their own. */
   region: Region;
+  /** The running version (`package.json`), shown under the account block with the changelog; absent on old servers. */
+  version?: string;
 }
 export interface UiControls { setup: boolean; quit: boolean; watch: boolean; envPath: boolean; signOut: boolean }
 export type BootScreen = "setup" | "main" | "signin";

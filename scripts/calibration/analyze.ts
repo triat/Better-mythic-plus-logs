@@ -7,54 +7,16 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import defaultConfig from "../../src/evaluation/default-config.json" with { type: "json" };
 import { evaluate } from "../../src/evaluation/evaluate.ts";
-import type { EvalPayload } from "../../src/evaluation/inputs.ts";
 import type { Evaluation, EvaluationConfig, Role } from "../../src/evaluation/types.ts";
 import { DIR } from "./discover.ts";
-import type { Candidate } from "./collect.ts";
+import { curveInputs, quantile, type Sample } from "../../src/calibration/fit.ts";
 
-export interface Sample { study: Candidate; payload: EvalPayload }
+export { curveInputs, quantile, type Sample } from "../../src/calibration/fit.ts";
 
 export function loadSamples(): Sample[] {
   const dir = `${DIR}/payloads`;
   return readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(`${dir}/${f}`, "utf8")) as Sample);
 }
-
-const SLOPE = 1000;
-/**
- * The value each sub-signal feeds its curve, per axis — recovered without touching production code.
- * A probe config turns every curve into a straight line of slope 1000 and every weight into 1, so
- * `scoreAxis`'s delta = (1000·x − 50) / n with n = the axis's contributing sub-signals; inverting gives
- * x to within 0.05·n / 1000. `Evidence.value` is not enough: it is the display value, not the level-
- * scaled number the curve actually reads.
- */
-export function curveInputs(payload: EvalPayload, cfg: EvaluationConfig): Record<string, number> {
-  const probe = structuredClone(cfg) as EvaluationConfig;
-  for (const axis of Object.values(probe.axes)) {
-    for (const sub of Object.values(axis.subSignals)) {
-      sub.curve = [[-1e9, -1e9 * SLOPE], [1e9, 1e9 * SLOPE]];
-      sub.weights = { dps: 1, healer: 1, tank: 1 };
-    }
-  }
-  const ev = evaluate(payload, probe);
-  const out: Record<string, number> = {};
-  for (const axis of ev.axes) {
-    // Only configured sub-signals share the axis's Σw; an evidence entry that is not one of them
-    // would skew every inversion.
-    const configured = probe.axes[axis.key].subSignals;
-    const subs = axis.evidence.filter((e) => e.source.split(".")[1]! in configured);
-    for (const e of subs) out[e.source] = (e.delta * subs.length + 50) / SLOPE;
-  }
-  return out;
-}
-
-export const quantile = (xs: number[], q: number): number => {
-  if (xs.length === 0) return NaN;
-  const s = [...xs].sort((a, b) => a - b);
-  const pos = (s.length - 1) * q;
-  const lo = Math.floor(pos);
-  const hi = Math.ceil(pos);
-  return s[lo]! + (s[hi]! - s[lo]!) * (pos - lo);
-};
 
 const fmt = (v: number, d = 0) => (Number.isFinite(v) ? v.toFixed(d) : "—");
 const pct = (n: number, total: number) => (total ? `${Math.round((100 * n) / total)} %` : "—");

@@ -93,7 +93,7 @@ describe("evaluate", () => {
 
   test("the default curve places a median player of the calibration population near 50", () => {
     for (const role of ["dps", "healer", "tank"] as const) {
-      const median = cfg.globalCurve[role].find(([, y]) => y === 50)!;
+      const median = cfg.globalCurve[role].find(([, y]) => y >= 50)!; // a refitted curve may step over 50 exactly
       expect(median).toBeDefined();
       expect(median[0]).toBeGreaterThan(70); // today's raw weighted mean of a median player sits in the mid-70s
     }
@@ -127,7 +127,13 @@ describe("default config snapshot (v8)", () => {
   // v7 removed the experience axis (weight 0: no global moved). v8 removed preparation.potions and
   // preparation.healthstones (judged at each death since 2026-10-14): globals moved (good 99 → 98, s1-tank 59 → 81,
   // s1-tank + rio 70 → 80, s2-healer 59 → 48, s2-healer + rio 48 → 40), no verdict did. Any later drift means a
-  // weight or curve moved.
+  // weight or curve moved. `globalCurve` is pinned to v8's: the weekly recalibration refits it (spec
+  // docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md), and its pull request must not fail here.
+  const cfg = { ...validateConfig(DEFAULT_CONFIG), globalCurve: {
+    dps:    [[0, 0], [47.7, 2], [51.1, 5], [56, 10], [63.9, 25], [69.1, 40], [71.4, 50], [73.7, 60], [77.3, 75], [82.7, 90], [84, 95], [86.4, 98], [100, 100]],
+    healer: [[0, 0], [60.2, 2], [62.7, 5], [65.9, 10], [71.6, 25], [75.3, 40], [77.5, 50], [79.1, 60], [83.3, 75], [86.7, 90], [89.5, 95], [91.5, 98], [100, 100]],
+    tank:   [[0, 0], [56.7, 2], [59.6, 5], [62.3, 10], [67, 25], [71, 40], [72.6, 50], [75.5, 60], [78.6, 74], [83.4, 90], [86.7, 95], [88.9, 98], [100, 100]],
+  } as ReturnType<typeof validateConfig>["globalCurve"] };
   const good = () => runWith({
     deaths: deaths(0), consumables: { potions: 6, healthstones: 3 },
     interrupts: { count: 30, kickCooldownS: 15, capacity: 100, usage: 0.3, peer: { median: 0.2, count: 3 } },

@@ -8,8 +8,26 @@ import { makeT, tEn } from "../i18n/t.ts";
 import { curveGeometry, methodView, rawScore } from "./method.ts";
 
 const tFr = makeT(fr, "fr");
-const docsFr = docsResponse(DEFAULT_CONFIG, false, null, "fr");
-const docsEn = docsResponse(DEFAULT_CONFIG, false, null, "en");
+// The mockup was drawn on config v8's curves and references; the weekly recalibration moves the shipped ones (spec
+// docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md), so these tests pin v8's.
+const V8 = {
+  ...DEFAULT_CONFIG,
+  globalCurve: {
+    dps:    [[0, 0], [47.7, 2], [51.1, 5], [56, 10], [63.9, 25], [69.1, 40], [71.4, 50], [73.7, 60], [77.3, 75], [82.7, 90], [84, 95], [86.4, 98], [100, 100]],
+    healer: [[0, 0], [60.2, 2], [62.7, 5], [65.9, 10], [71.6, 25], [75.3, 40], [77.5, 50], [79.1, 60], [83.3, 75], [86.7, 90], [89.5, 95], [91.5, 98], [100, 100]],
+    tank:   [[0, 0], [56.7, 2], [59.6, 5], [62.3, 10], [67, 25], [71, 40], [72.6, 50], [75.5, 60], [78.6, 74], [83.4, 90], [86.7, 95], [88.9, 98], [100, 100]],
+  },
+  reference: {
+    ...DEFAULT_CONFIG.reference,
+    dps: {
+      ...DEFAULT_CONFIG.reference.dps,
+      "survival.individualDeaths": { x: 0.6265, value: 0.6667 },
+      "survival.avoidableVsPeers": { x: -3.2232, value: -3.2232 },
+    },
+  },
+} as typeof DEFAULT_CONFIG;
+const docsFr = docsResponse(V8, false, null, "fr");
+const docsEn = docsResponse(V8, false, null, "en");
 
 type Ev = [source: string, delta: number, value: number, weight?: number];
 const axis = (key: string, score: number | null, evidence: Ev[]): AxisScore =>
@@ -114,7 +132,7 @@ describe("methodView", () => {
 
   test("curve and rules from the config", () => {
     const m = methodView(tEn, "en", vachaman(), docsEn)!;
-    expect(m.curve.points).toEqual(DEFAULT_CONFIG.globalCurve.dps);
+    expect(m.curve.points).toEqual(V8.globalCurve.dps);
     expect(m.curve.raw).toBeCloseTo(78, 9);
     expect(m.curve.final).toBe(77);
     expect(m.curve.zones).toEqual([
@@ -170,7 +188,7 @@ describe("curveGeometry", () => {
     { verdict: "invite" as const, from: 70, to: 100 },
   ];
   test("the mockup's DPS plot: 40 → 100, zones top-down, the player at (78.0, 77)", () => {
-    const g = curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 78, final: 77, zones });
+    const g = curveGeometry({ points: V8.globalCurve.dps, raw: 78, final: 77, zones });
     expect(g.xMin).toBe(40);
     expect(g.xTicks.map((x) => [x.value, x.x])).toEqual([[40, 0], [60, 186.7], [80, 373.3], [100, 560]]);
     expect(g.yTicks).toEqual([{ y: 0, value: 100 }, { y: 60, value: 70 }, { y: 140, value: 30 }, { y: 200, value: 0 }]);
@@ -186,13 +204,13 @@ describe("curveGeometry", () => {
   });
 
   test("the left edge goes down to the player; no marker without a verdict; label kept inside on the right", () => {
-    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 41, final: 1, zones }).xMin).toBe(40);
-    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 80, final: 70, zones }).xMin).toBe(50);
-    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 50, final: null, zones }).marker).toBeNull();
-    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 95, final: 99, zones }).marker!.anchor).toBe("end");
-    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 60, final: 30, zones }).marker!.verdict).toBe("maybe");
-    expect(curveGeometry({ points: DEFAULT_CONFIG.globalCurve.dps, raw: 60, final: 29, zones }).marker!.verdict).toBe("pass");
-    const healer = curveGeometry({ points: DEFAULT_CONFIG.globalCurve.healer, raw: 80, final: 70, zones });
+    expect(curveGeometry({ points: V8.globalCurve.healer, raw: 41, final: 1, zones }).xMin).toBe(40);
+    expect(curveGeometry({ points: V8.globalCurve.healer, raw: 80, final: 70, zones }).xMin).toBe(50);
+    expect(curveGeometry({ points: V8.globalCurve.healer, raw: 50, final: null, zones }).marker).toBeNull();
+    expect(curveGeometry({ points: V8.globalCurve.dps, raw: 95, final: 99, zones }).marker!.anchor).toBe("end");
+    expect(curveGeometry({ points: V8.globalCurve.dps, raw: 60, final: 30, zones }).marker!.verdict).toBe("maybe");
+    expect(curveGeometry({ points: V8.globalCurve.dps, raw: 60, final: 29, zones }).marker!.verdict).toBe("pass");
+    const healer = curveGeometry({ points: V8.globalCurve.healer, raw: 80, final: 70, zones });
     expect(healer.xTicks.map((x) => x.value)).toEqual([50, 60, 70, 80, 90, 100]);
   });
 });

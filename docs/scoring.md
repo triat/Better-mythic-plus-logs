@@ -55,6 +55,14 @@ weights or curves in `evaluation.json`, set `globalCurve` too (to
 `[[0, 0], [100, 100]]` per role to turn it off), or the percentiles no
 longer mean what they say.
 
+Since October 2026 the population is kept fresh: the hosted instance samples
+EU characters every hour with the Warcraft Logs points its members leave
+unused, and every Wednesday refits `globalCurve` and `reference` on the last
+four weeks of the season. When the refit would change at least 2 % of the
+verdicts or move a role's median by 2 points, it is proposed as a pull
+request; nothing changes until it is merged and released
+([spec](superpowers/specs/2026-10-14-weekly-recalibration-design.md)).
+
 **What makes this score.** Under the badge, bars show the signals that cost
 or earn the most points of the global score against the role's average player
 (the calibration median, `reference` in `default-config.json`, refitted with

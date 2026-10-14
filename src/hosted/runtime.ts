@@ -8,6 +8,7 @@ import { OAuthStates } from "./oauth-state.ts";
 import { BnetAppToken } from "./bnet.ts";
 import { BNET_CHECK_INTERVAL_MS, BNET_FIRST_CHECK_MS, checkBnetCharacters } from "./bnet-check.ts";
 import { setRateLimitObserver, setWclErrorObserver } from "../wcl/client.ts";
+import { memberMarker } from "../calibration/marker.ts";
 import { PointsMeter } from "../wcl/meter.ts";
 import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
 import { QuotaGate } from "./quota.ts";
@@ -91,7 +92,9 @@ export function createHostedRuntime(
   };
   // Every WCL response of this process now feeds the meter, every WCL failure the audit log (the CLI
   // and local mode never install either).
-  setRateLimitObserver((rl) => meter.observe(rl));
+  // The marker tells the recalibration collector (another process) that a member just used the shared client.
+  const touchMarker = memberMarker();
+  setRateLimitObserver((rl) => { meter.observe(rl); touchMarker(); });
   setWclErrorObserver((e) => audit.record("wcl_error", { detail: { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300) } }));
   const purge = (): void => {
     const now = Date.now();

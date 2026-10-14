@@ -233,6 +233,16 @@ land on their next bmpl request, unless they exceed 100 pts at once.
 To see refusals, open the admin page's Audit section filtered to **Quota**
 (`GET /api/admin/audit?kind=quota` is the same rows, for scripting).
 
+The weekly recalibration also spends the shared client's points, on
+purpose: `bmpl-calibrate-collect.timer` samples every hour with what the
+members leave, keeping `BMPL_CALIBRATION_RESERVE` points (default 3,000;
+300 on Wednesdays 03:00–06:00 Paris) free in every hour and pausing 5
+minutes after any member request. To give the members more room, raise the
+reserve in `/opt/bmpl/.env` (read at each hourly run, no restart); to stop
+it, `systemctl disable --now bmpl-calibrate-collect.timer
+bmpl-calibrate-fit.timer`. Its runs: `journalctl -u
+bmpl-calibrate-collect -n 50`.
+
 **Check** — the gauge drops back under the limit at the top of the next
 calendar hour; quota/budget 429s stop.
 
@@ -371,6 +381,10 @@ you restart the server; a fresh lookup after restart reflects it live.
    just check && bun test
    BMPL_DEPLOY_HOST=deploy@<host> just deploy
    ```
+
+The global curves follow on their own: the recalibration drops the
+previous season's samples, fills the new one's (about 10 hours from empty)
+and proposes the refit as a pull request the next Wednesday.
 
 **Check** — a lookup against the new season shows fresh (non-stale) item
 level badges, and avoidable-damage signals populate for its dungeons.

@@ -1,0 +1,24 @@
+[Unit]
+Description=bmpl recalibration: the weekly fit (candidate.json + comparison.md)
+After=network-online.target bmpl.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=bmpl
+Group=bmpl
+WorkingDirectory=/opt/bmpl
+EnvironmentFile=/opt/bmpl/.env
+ExecStart=/opt/bmpl/bmpl calibrate --fit
+Nice=10
+# Same hardening as bmpl.service: only /opt/bmpl is writable (calibration.db and its two aggregates live there).
+ProtectSystem=strict
+ReadWritePaths=/opt/bmpl
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+UMask=0077

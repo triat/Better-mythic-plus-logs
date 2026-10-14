@@ -14,49 +14,20 @@ import defaultConfig from "../../src/evaluation/default-config.json" with { type
 import { curve } from "../../src/evaluation/curve.ts";
 import { evaluate } from "../../src/evaluation/evaluate.ts";
 import type { CurvePoints, EvaluationConfig, Role, Verdict } from "../../src/evaluation/types.ts";
+import { isFit, percentileCurve, spearman } from "../../src/calibration/fit.ts";
 import { curveInputs, loadSamples, quantile, type Sample } from "./analyze.ts";
 import { DIR } from "./discover.ts";
 
 const ROLES: Role[] = ["dps", "healer", "tank"];
-/** Quantiles a sub-signal's curve is anchored on; ties collapse onto one point at their mid-rank. */
-const ANCHOR_QS = [0.02, 0.05, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 0.95, 0.98];
 /** Below this many observations for a role, a sub-signal falls back to the pooled population. */
 const MIN_ROLE_N = 40;
 
-// ---------- fit / test split: a character is in one half only, whatever its spec ----------
-const hash = (s: string) => [...s].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 2166136261);
-export const isFit = (s: Sample) => hash(`${s.study.name}|${s.study.server}`) % 2 === 0;
-
-// ---------- percentile curves ----------
 /** Higher x is better for this sub-signal when its current curve rises. */
 const risesWith = (pts: CurvePoints) => pts[pts.length - 1]![1] > pts[0]![1];
 
-/**
- * Curve points placing x on the population's own distribution: the score at x is the mid-rank
- * percentile of x (ties share their average rank), flipped when lower is better. Anchored on a fixed
- * set of quantiles so the curve stays short and readable in the Help page.
- */
-export function percentileCurve(xs: number[], higherIsBetter: boolean): CurvePoints {
-  const s = [...xs].sort((a, b) => a - b);
-  const n = s.length;
-  const midRank = (v: number) => {
-    let below = 0;
-    let equal = 0;
-    for (const x of s) { if (x < v) below++; else if (x === v) equal++; }
-    return (below + equal / 2) / n;
-  };
-  const anchors = [...new Set(ANCHOR_QS.map((q) => quantile(s, q)))].sort((a, b) => a - b);
-  const pts: CurvePoints = anchors.map((v) => {
-    const p = 100 * midRank(v);
-    return [round(v, 4), round(higherIsBetter ? p : 100 - p, 1)];
-  });
-  // A curve needs at least two points; a signal that is constant across the population carries no
-  // information and is scored neutral.
-  if (pts.length === 1) return [[pts[0]![0], 50], [pts[0]![0] + 1, 50]];
-  return pts;
-}
-
 const round = (v: number, d: number) => Math.round(v * 10 ** d) / 10 ** d;
+
+export { isFit, percentileCurve, spearman } from "../../src/calibration/fit.ts";
 
 // ---------- the candidate ----------
 export interface Candidate {
@@ -132,31 +103,6 @@ export function scoreCandidate(s: Sample, c: Candidate): Scored {
   }
   return { global, verdict, capped };
 }
-
-// ---------- validity ----------
-/** Spearman rank correlation. */
-export function spearman(a: number[], b: number[]): number {
-  const rank = (xs: number[]) => {
-    const idx = xs.map((v, i) => [v, i] as const).sort((p, q) => p[0] - q[0]);
-    const r = new Array<number>(xs.length);
-    for (let i = 0; i < idx.length; ) {
-      let j = i;
-      while (j + 1 < idx.length && idx[j + 1]![0] === idx[i]![0]) j++;
-      for (let k = i; k <= j; k++) r[idx[k]![1]] = (i + j) / 2;
-      i = j + 1;
-    }
-    return r;
-  };
-  const ra = rank(a);
-  const rb = rank(b);
-  const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
-  const ma = mean(ra);
-  const mb = mean(rb);
-  let num = 0, da = 0, db = 0;
-  for (let i = 0; i < ra.length; i++) { num += (ra[i]! - ma) * (rb[i]! - mb); da += (ra[i]! - ma) ** 2; db += (rb[i]! - mb) ** 2; }
-  return num / Math.sqrt(da * db);
-}
-
 
 // ---------- predictive validity: score the older runs, predict the newer ones ----------
 interface Run {

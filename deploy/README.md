@@ -245,6 +245,21 @@ BMPL_DEPLOY_KNOWN_HOSTS < known_hosts`, `gh variable set BMPL_DEPLOY_HOST
 reinstall of the VPS. `concurrency: deploy` queues overlapping runs instead
 of interleaving them.
 
+**9b. Weekly recalibration.** `bootstrap.sh` installs and enables two
+timers that run the deployed binary as `bmpl`: `bmpl-calibrate-collect.timer`
+(hourly, `bmpl calibrate --hourly`: samples EU characters with the WCL points
+the members leave, into `/opt/bmpl/calibration.db`, never `bmpl.db`) and
+`bmpl-calibrate-fit.timer` (Wednesdays 06:00 Europe/Paris, `bmpl calibrate
+--fit`: writes `/opt/bmpl/candidate.json` and `comparison.md`, aggregates
+only). On an existing VPS, re-run `bootstrap.sh` once after the release that
+ships them. Optional in `/opt/bmpl/.env`: `BMPL_CALIBRATION_RESERVE` (points
+kept free for the members in every hour, default 3000). The pull request
+side is `.github/workflows/calibration-pr.yml` (Wednesdays 05:45 UTC): it
+needs the repository secrets `BMPL_URL` (`https://bmpl.<domain>`) and
+`BMPL_OPS_TOKEN` (the same token as in `.env`), and *Settings → Actions →
+General → Allow GitHub Actions to create and approve pull requests*.
+Spec: `docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md`.
+
 **10. Uninstall.** On the VPS as root:
 
 ```bash

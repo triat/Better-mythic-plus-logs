@@ -40,7 +40,7 @@ developers.
 5. **"Last seen" per member.** Hosted: `user_settings.lastSeenVersion`, read and written through the existing
    `GET/PUT /api/settings`. Local: `localStorage` key `bmpl.lastSeenVersion`. A member who never had a value (a new
    sign-up, a first local run) gets the current version written silently: nothing is "new" on a first visit.
-6. **Display, to mock on the canvas first** (2–3 variants, the user picks):
+6. **Display, to mock on the canvas first** (2–3 variants, the user picks; canvas https://claude.ai/artifact/2pSkoa1YtAww5AHhWepGw8, sources `docs/design/whats-new/`: A nav line + popover, B clickable version + page, C "updated" card + side panel):
    - the version, small and muted, at the bottom of the sidebar's account block (`v0.10.2`);
    - a "What's new" mark when `lastSeenVersion` is older than the running version (a dot on a sidebar line, or on the
      version itself);

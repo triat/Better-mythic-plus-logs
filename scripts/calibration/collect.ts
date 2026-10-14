@@ -19,7 +19,8 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { setRateLimitObserver, type RateLimit } from "../../src/wcl/client.ts";
 import { buildLookupPayload, performLookup } from "../../src/lookup.ts";
-import { DIR, LEVELS, type PoolEntry, type Role } from "./discover.ts";
+import { candidates, schedule } from "../../src/calibration/discover.ts";
+import { DIR, LEVELS, type PoolEntry } from "./discover.ts";
 
 const args = new Map<string, string>();
 for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i]!.replace(/^--/, ""), process.argv[i + 1] ?? "");
@@ -35,63 +36,7 @@ const PAYLOADS = `${DIR}/payloads`;
 const FAILED = `${DIR}/failed.jsonl`;
 const LOG = `${DIR}/collect.log`;
 
-export interface Candidate {
-  key: string;
-  name: string;
-  server: string;
-  className: string;
-  spec: string;
-  role: Role;
-  level: number;
-  percentile: number;
-  quintile: number;
-}
-
-export const fileKey = (name: string, server: string, spec: string): string =>
-  `${name}-${server}-${spec}`.toLowerCase().replace(/[^\p{L}\p{N}-]+/gu, "_");
-
-/** One candidate per (character, spec): level = median of their bands, percentile = median position. */
-export function candidates(pool: PoolEntry[]): Candidate[] {
-  const byChar = new Map<string, PoolEntry[]>();
-  for (const e of pool) {
-    const k = `${e.name}|${e.server}|${e.spec}`;
-    (byChar.get(k) ?? byChar.set(k, []).get(k)!).push(e);
-  }
-  const med = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s[Math.floor((s.length - 1) / 2)]!; };
-  const out: Candidate[] = [];
-  for (const entries of byChar.values()) {
-    const e0 = entries[0]!;
-    const level = med(entries.map((e) => e.level));
-    const percentile = med(entries.map((e) => e.percentile));
-    out.push({
-      key: fileKey(e0.name, e0.server, e0.spec), name: e0.name, server: e0.server, className: e0.className,
-      spec: e0.spec, role: e0.role, level, percentile, quintile: Math.min(4, Math.floor(percentile * 5)),
-    });
-  }
-  return out;
-}
-
-/** Deterministic shuffle (mulberry32), so a rerun walks the cells in the same order. */
-function shuffle<T>(xs: T[], seed: number): T[] {
-  let a = seed >>> 0;
-  const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  const out = [...xs];
-  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [out[i], out[j]] = [out[j]!, out[i]!]; }
-  return out;
-}
-
-/** Round-robin over role × level × quintile: round r takes the r-th candidate of every cell. */
-export function schedule(cands: Candidate[]): Candidate[] {
-  const cells = new Map<string, Candidate[]>();
-  for (const c of cands) {
-    const k = `${c.role}|${c.level}|${c.quintile}`;
-    (cells.get(k) ?? cells.set(k, []).get(k)!).push(c);
-  }
-  const lists = [...cells.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([k, l]) => shuffle(l, [...k].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7)));
-  const order: Candidate[] = [];
-  for (let r = 0; lists.some((l) => r < l.length); r++) for (const l of lists) if (r < l.length) order.push(l[r]!);
-  return order;
-}
+export { type Candidate, candidates, fileKey, schedule } from "../../src/calibration/discover.ts";
 
 function deadline(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);

@@ -13,8 +13,9 @@ it as a pull request the user merges or not.
 ## Non-goals
 
 - Never change production by itself: the output is a pull request (user, 2026-10-14: "ok pour la PR").
-- No new signal, no change to the rubric's structure: only what the study already fits (sub-signal curves, the
-  per-role global percentile curve, the average-player `reference`).
+- No new signal, no change to the rubric's structure: only what shipped from the study, the per-role global percentile
+  curve (`globalCurve`) and the average-player `reference`, both fitted by `scripts/calibration/fit-global.ts`
+  (amended 2026-10-14 while planning: the study's sub-signal curves were never shipped, so they are not refitted).
 - No third-party data in the repository (the study's rule: "0 names kept in the repo"; the repository is public).
 
 ## Decisions (user answers of 2026-10-14)

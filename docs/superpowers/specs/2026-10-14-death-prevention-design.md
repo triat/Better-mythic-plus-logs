@@ -1,8 +1,10 @@
 # Death prevention: "could I have prevented this death?" — design
 
-Status: draft 2026-10-14, reaction time added and set to 700 ms 2026-10-14, awaiting the user's review. Amends `docs/superpowers/specs/2026-09-16-run-deep-dive-design.md`
-(reading B, "Avoidable deaths") and `docs/superpowers/specs/2026-09-15-evaluation-model-design.md` (Preparation axis).
-No WCL probe has been run for this draft: the section "To verify before the plan" lists the open facts and their cost.
+Status: implemented 2026-10-14 (no plan: the user asked for the change directly). Probes of 2026-10-14 (section "Data
+notes", ~16 WCL pts) replaced the open facts of the draft. Amends `docs/superpowers/specs/2026-09-16-run-deep-dive-design.md`
+(reading B, "Avoidable deaths") and `docs/superpowers/specs/2026-09-15-evaluation-model-design.md` (Preparation axis,
+config version 8). Not done: the Claude Design canvas step for the run sheet's death lines (the lines reuse the panel's
+existing layout); the live check of `dangerHpShare` and `reactionMs` against real deaths.
 
 ## Goal
 
@@ -114,42 +116,58 @@ missed planned use, not a lack of time. One-shots and instakills stay `unprevent
 
 ## Availability
 
-- **Health potions**: already in the table (`*:*`, `mn-2.3`, `kind: "minor"`, cooldown 300 s), judged by the cast
-  events the deep-dive already fetches. They gain a `heal` field and a new `kind: "heal"`; `minor` stays for the short
-  self-heals and utilities.
-- **Healthstone**: added to `*:*` with `kind: "heal"`. Ready only if a Warlock was in the group
-  (`consumables.healthstonesAvailable`, `src/signals/wcl-run.ts:61`) and no healthstone was used within its cooldown
-  before the death. Its spell id is added to the deep-dive's event filter.
-- A `heal` entry never counts toward `majorUsage` (same as `minor`).
+- **Health potions** (1234768, 1295247): one tool, cooldown 300 s, judged by the cast events the deep-dive fetches (the
+  ids join the cast filter).
+- **Healthstone** (6262, 452930): cooldown 60 s, offered only when a Warlock was in the group (the report's
+  composition, the player included).
+- A heal tool never counts toward `majorUsage`. A tool whose ids were not in the row's cast filter (an older row) is not
+  judged.
 
 ## Data: the health fetch
 
 The deep-dive fetch (`src/deepdive/wcl.ts`) gains one request per analyzed run: for each of the player's deaths, the
-damage and healing events on the player in the 10 s before it, with unit resources, which carry the target's health
+damage and healing events on the player in the 10 s before it, with unit resources, which carry the player's health
 and maximum health on each event. 10 s covers the death windows seen on the fixtures (`deathWindow` 2.0 to 8.0 s). The
 requests are aliases of one GraphQL call. The raw row (`RawDeepDive`) stores, per death,
 `deathHealth: { atMs: number; maxHp: number | null; curve: { atMs: number; hp: number }[] }[]` (health after each
 event, fight-relative ms).
 
-`DEEPDIVE_QUERY_VERSION` (`src/signals/store.ts:16`, today `1`) goes to `2`: rows fetched before become `staleTable`
-and keep today's verdicts until the user re-analyzes them. Nothing is re-fetched automatically.
+Rows fetched before keep today's verdicts until the user re-analyzes them (see "Implementation notes"). Nothing is
+re-fetched automatically.
 
-## To verify before the plan (WCL probes, user approval needed)
+## Data notes (probes of 2026-10-14)
 
-None of these was checked; each needs points. Estimated total: about 5 pts on one cached run with deaths.
+Run on cached reports `8DFkgn3LtdBcmGJ4` fight 7 (Temple of Sethraliss), `hGd6gTaqVcyLFZB8` fight 16 (Voidscar Arena)
+and one Affliction Warlock ranking report (`t1hPrcanpLBKkHCN` fight 12), about 16 pts in all.
 
-1. `events(dataType: DamageTaken, targetID, startTime, endTime, includeResources: true)` returns events with the
-   target's `hitPoints` and `maxHitPoints`, and in which unit (raw value or percentage). The deep-dive spec noted that
-   `events(dataType: DamageTaken, targetID, startTime, endTime)` "returned nothing on that run"; the probe must find
-   the working form (hostility type, `dataType: All` with a filter). Without a health value on each event there is no
-   curve, so no reaction rule: a `CombatantInfo` fallback would give the maximum health only and is not enough.
-2. The heal of each Midnight health potion and of the healthstone: flat amount or share of maximum health, read from
-   the healing events of those spell ids on cached runs.
-3. The healthstone's spell id, cooldown and charges in Midnight.
-4. Whether health potions and the healthstone are off the global cooldown (if not, `reactionMs` must include up to one
-   global cooldown).
-5. Whether combat potions share the health potions' cooldown. If they do, a combat potion cast must put the health
-   potions on cooldown, and the combat potions' ids join the event filter.
+1. **Health.** `events(dataType: DamageTaken, sourceID: <player>, includeResources: true)` returns the damage the player
+   took with `hitPoints` (health after the event, raw value) and `maxHitPoints` (771 120 for the Assassination Rogue);
+   with `targetID` it returns nothing. `events(dataType: Healing, targetID: <player>, includeResources: true)` returns the
+   heals received. `resourceActor` says whose resources the event carries: 2 the target, 1 the source (a heal from
+   another player then carries the healer's health, which must be skipped). One request with both aliases: ~1 pt.
+   Fixture: `test/fixtures/death-health-s2-rogue.json`.
+2. **Health potions.** 22 uses of Concentrated Silvermoon Health Potion (1295247) on two runs: amount + overheal between
+   370k and 534k, unrelated to max health (25 % to 66 % of it): a flat heal that varies per use. The table keeps the
+   lowest, **370 000**, so a "would have saved" is never optimistic. The plain Silvermoon Health Potion (1234768) was not
+   seen; it gets the same value.
+3. **Healthstone.** Healthstone (6262): 5 uses, each exactly **25 %** of max health. Demonic Healthstone (452930) was
+   seen in the Healing table but not measured (the probe was stopped to save points): it counts as a use of the same
+   tool and is judged at 25 %, a low estimate. Cooldown 60 s; charges are not modelled.
+4. **Shared cooldown.** Combat potions do not share the health potions' cooldown: a player drank a health potion 31 s
+   after a Potion of Recklessness, another 78 s after. Health potion intervals were all ≥ 384 s, consistent with 300 s.
+5. **WCL's `healthstoneUse`** counts health potions too: no Warlock in either group, yet `healthstoneUse` equals the
+   health potions cast (the Rogue: 2 and 2). The count removed by decision 1 was therefore never a healthstone count.
+6. Not checked: whether potions and the healthstone are off the global cooldown (`reactionMs` would then need up to one
+   global cooldown more).
+
+## Implementation notes
+
+- The heal tools live in a `heals` block of `defensives.json` (`mn-2.4`), next to the specs, not as `kind: "heal"`
+  entries: the per-spec table, its override file, the hosted shared layer and the table editor stay unchanged. The two
+  health potions left `*:*`.
+- `DEEPDIVE_QUERY_VERSION` stays 1: bumping it would hide every analysis already stored. A row without `deathHealth`
+  keeps today's verdicts and the analysis carries `healthMissing: true`, which the panel turns into "analyse again".
+- The estimate shown before an analysis went from 3 to 4 pts.
 
 ## Display
 
@@ -167,8 +185,7 @@ All strings in `web/src/i18n/en.ts` and `fr.ts`.
 
 - Health fetch fails or returns no resources: the row is stored with `maxHp: null`, the verdicts fall back (see "The
   death verdict"), the run sheet says so. The rest of the deep-dive is kept.
-- A heal entry without a `heal` value (override file, shared table): validation rejects it with a message naming the
-  key and the id, like a missing `cooldownS` today.
+- The `heals` block is shipped data only: no override file entry, no hosted layer, so no validation path.
 
 ## Tests
 

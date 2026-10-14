@@ -4,8 +4,6 @@
 // something. Spec: docs/superpowers/specs/2026-10-14-whats-new-design.md, decision 3.
 //
 //   bun scripts/changelog-stamp.ts <X.Y.Z> <YYYY-MM-DD> [dir]     (dir defaults to web/src/changelog)
-//   bun scripts/changelog-stamp.ts --check [dir]                   the same refusal, nothing written: release.yml's
-//                                                                   first job, so an empty "next" fails before CI runs
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { ChangelogEntry } from "../web/src/changelog/types.ts";
@@ -29,42 +27,22 @@ export function stampSource(src: string, version: string, date: string): string 
   return src.replace(NEXT, `version: "${version}",\n${indent}date: "${date}",\n`);
 }
 
-/** Each file's entries, as the release would read them. */
-async function load(dir: string): Promise<[string, ChangelogEntry[]][]> {
-  return Promise.all(FILES.map(async (f): Promise<[string, ChangelogEntry[]]> => {
-    const mod = (await import(resolve(dir, f))) as Record<string, ChangelogEntry[]>;
-    return [f, Object.values(mod).find(Array.isArray) ?? []];
-  }));
-}
-
-const REFUSAL = `Add the release's lines under "next" in web/src/changelog/en.ts and fr.ts.`;
-
-if (import.meta.main && process.argv[2] === "--check") {
-  const dir = process.argv[3] ?? "web/src/changelog";
-  const files = await load(dir);
-  const problems = files.flatMap(([f, entries]) => { const why = nextProblem(entries); return why ? [`${f}: ${why}`] : []; });
-  if (problems.length > 0) {
-    console.error(`Nothing to tell the users in the next release: ${problems.join("; ")}. ${REFUSAL}`);
-    process.exit(1);
-  }
-  for (const [f, entries] of files) {
-    console.log(`${f}:`);
-    for (const item of entries.find((e) => e.version === "next")!.items) console.log(`- ${item}`);
-  }
-} else if (import.meta.main) {
+if (import.meta.main) {
   const [version, date, dir = "web/src/changelog"] = process.argv.slice(2);
   if (!version || !/^\d+\.\d+\.\d+$/.test(version) || !date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     console.error("usage: changelog-stamp <X.Y.Z> <YYYY-MM-DD> [dir]");
     process.exit(2);
   }
   const problems: string[] = [];
-  for (const [f, entries] of await load(dir)) {
+  for (const f of FILES) {
+    const mod = (await import(resolve(dir, f))) as Record<string, ChangelogEntry[]>;
+    const entries = Object.values(mod).find(Array.isArray) ?? [];
     const why = nextProblem(entries);
     if (why) problems.push(`${f}: ${why}`);
     if (entries.some((e) => e.version === version)) problems.push(`${f}: version ${version} is already in the changelog`);
   }
   if (problems.length > 0) {
-    console.error(`Nothing to tell the users for ${version}: ${problems.join("; ")}. ${REFUSAL}`);
+    console.error(`Nothing to tell the users for ${version}: ${problems.join("; ")}. Add the release's lines under "next" in web/src/changelog/en.ts and fr.ts.`);
     process.exit(1);
   }
   for (const f of FILES) {

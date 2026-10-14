@@ -41,10 +41,6 @@ describe("changelog-stamp", () => {
       writeFileSync(join(dir, "changelog", "en.ts"), SRC);
       writeFileSync(join(dir, "changelog", "fr.ts"), SRC.replace("CHANGELOG_EN", "CHANGELOG_FR"));
       const run = (v: string) => Bun.spawnSync(["bun", "scripts/changelog-stamp.ts", v, "2099-01-01", join(dir, "changelog")]);
-      const check = () => Bun.spawnSync(["bun", "scripts/changelog-stamp.ts", "--check", join(dir, "changelog")]);
-      const before = check();
-      expect(before.exitCode).toBe(0);
-      expect(before.stdout.toString()).toContain("- A line.");
       const ok = run("9.9.9");
       expect(ok.exitCode).toBe(0);
       for (const f of ["en.ts", "fr.ts"]) {
@@ -56,8 +52,6 @@ describe("changelog-stamp", () => {
       const again = run("9.9.10");
       expect(again.exitCode).toBe(1);
       expect(again.stderr.toString()).toContain("no \"next\" entry");
-      expect(check().exitCode).toBe(1);
-      expect(check().stderr.toString()).toContain("no \"next\" entry");
       writeFileSync(join(dir, "changelog", "en.ts"), "export const X = [];\n");
       expect(run("bad").exitCode).toBe(2);
     } finally {

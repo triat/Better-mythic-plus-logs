@@ -3,7 +3,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.4",
+    date: "2026-10-14",
     items: [
       "Les scores restent mesurés par rapport aux joueurs de la saison en cours : ils sont revérifiés chaque semaine.",
     ],

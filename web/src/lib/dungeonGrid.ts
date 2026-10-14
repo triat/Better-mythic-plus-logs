@@ -117,9 +117,6 @@ function rowOf(t: T, locale: Locale, p: LookupPayload, r: MPlusRun, role: Role, 
     ...(avoidable ? [{ label: t("cand.dungeons.fact.avoidable"), value: avoidable.text }] : []),
     { label: t("cand.dungeons.fact.dtps"), value: dtps.text },
     amountParse,
-    ...(s.consumables
-      ? [{ label: t("cand.dungeons.fact.consumables"), value: pair(String(s.consumables.potions), String(s.consumables.healthstones)) }]
-      : []),
   ];
   return {
     ...base,

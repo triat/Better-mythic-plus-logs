@@ -67,7 +67,6 @@ describe("dungeonGrid", () => {
       { label: "Évitable vs pairs", value: `−100${NB}%` },
       { label: "DTPS vs pairs", value: `+14${NB}%` },
       { label: "DPS · parse", value: `400.0k · 72,2${NB}%` },
-      { label: "Potions · healthstones", value: "0 · 1" },
     ]);
     expect(ts.note).not.toBe(tFr("cand.dungeons.notAnalysed"));
     const mr = v.rows.find((r) => r.name === "Murder Row")!;
@@ -82,7 +81,7 @@ describe("dungeonGrid", () => {
 
   test("the analysed note is panelModel's headline", () => {
     const ts = dungeonGrid(tEn, "en", full()).rows[0]!;
-    expect(ts.note).toBe("majors used 60% of possible · 1/3 deaths with a defensive available");
+    expect(ts.note).toBe("majors used 60% of possible · 1/3 deaths with something at hand");
   });
 
   test("a run in another spec says so under the dungeon's name", () => {

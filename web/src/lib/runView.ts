@@ -12,7 +12,7 @@ import { dispelsPart, kickFigures, kicksPart, vsPeers } from "./runs.ts";
 import { clearTime, parseCell, signedPct, upgradeOf } from "./runList.ts";
 
 export interface RunStat { key: string; label: string; value: string; tone: "pass" | "better" | "worse" | "neutral" | `tier-${ParseTier}` }
-/** `used` "10/15" with `pct` the bar; a count without a capacity (potions) has `pct` null and no bar. `id` null: no spell. */
+/** `used` "10/15" with `pct` the bar; `pct` null: a count without a capacity, no bar. `id` null: no spell. */
 export interface DefRow { name: string; id: number | null; used: string; pct: number | null }
 export interface RunDetail {
   title: string;
@@ -99,8 +99,6 @@ export function runDetail(t: T, locale: Locale, p: LookupPayload, run: MPlusRun,
   const defensives: DefRow[] = [
     ...(analysis?.defensives ?? []).filter((d) => d.kind !== "minor")
       .map((d) => ({ name: d.name, id: d.id, used: `${d.casts}/${d.capacity}`, pct: Math.round(d.usage * 100) })),
-    // The signals count potions without a capacity (today's "5 pots · 1 hs"): a count, no bar.
-    ...(s?.consumables ? [{ name: t("cand.run.potions"), id: null, used: String(s.consumables.potions), pct: null }] : []),
   ];
   let also: string | null = null;
   if (s) {

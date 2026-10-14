@@ -50,7 +50,7 @@ export interface RunListView {
   pendingRuns: MPlusRun[];
   /** `pendingRuns.length`. */
   pending: number;
-  /** "Analyser les 7 autres · ~21 pts", counting `pendingRuns` exactly; null when nothing is left. */
+  /** "Analyser les 7 autres · ~28 pts", counting `pendingRuns` exactly; null when nothing is left. */
   batchLabel: string | null;
   missing: string[];
 }

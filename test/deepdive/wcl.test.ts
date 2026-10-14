@@ -69,4 +69,35 @@ describe("fetchRawDeepDive", () => {
     const cheap = await fetchRawDeepDive(async <T,>() => page([], null, 50) as T, { code: "A", fightID: 1, character: "X", actorID: 1, ids: [498], pointsBefore: 60 });
     expect(cheap.pointsSpent).toBe(0); // a counter that went down (hour reset) never yields a negative cost
   });
+  test("deaths: one health request with two aliases per death, window of 10 s, the health curve per death", async () => {
+    const calls: Array<{ q: string; v: Record<string, unknown> }> = [];
+    const gql = async <T,>(q: string, v?: Record<string, unknown>) => {
+      calls.push({ q, v: v! });
+      if (!q.includes("DeathHealth")) return page([], null, 10) as T;
+      return { rateLimitData: { limitPerHour: 3600, pointsSpentThisHour: 12, pointsResetIn: 1 }, reportData: { report: {
+        d0: { data: [{ timestamp: 50_000, type: "damage", sourceID: 9, targetID: 1, resourceActor: 2, hitPoints: 0, maxHitPoints: 900 }] },
+        h0: { data: [
+          { timestamp: 49_000, type: "heal", sourceID: 3, targetID: 1, resourceActor: 1, hitPoints: 777, maxHitPoints: 800 }, // the healer's own health
+          { timestamp: 48_000, type: "heal", sourceID: 1, targetID: 1, resourceActor: 1, hitPoints: 300, maxHitPoints: 900 },
+        ] },
+        d1: null, h1: { data: [] },
+      } } } as T;
+    };
+    const raw = await fetchRawDeepDive(gql, { code: "A", fightID: 1, character: "X", actorID: 1, ids: [498], deathTimes: [50_000, 70_000], pointsBefore: 9 });
+    expect(calls.length).toBe(2);
+    expect(calls[1]!.q).toContain("d1: events");
+    expect(calls[1]!.v).toMatchObject({ actorID: 1, s0: 40_000, e0: 50_001, s1: 60_000, e1: 70_001 });
+    expect(raw.deathHealth).toEqual([
+      { deathTs: 50_000, maxHp: 900, curve: [{ ts: 48_000, hp: 300 }, { ts: 50_000, hp: 0 }] },
+      { deathTs: 70_000, maxHp: null, curve: [] },
+    ]);
+    expect(raw.pointsSpent).toBe(3);
+    // A failed health request keeps the casts and buffs: the deaths are judged without health.
+    const failing = async <T,>(q: string) => { if (q.includes("DeathHealth")) throw new Error("boom"); return page([], null) as T; };
+    const kept = await fetchRawDeepDive(failing, { code: "A", fightID: 1, character: "X", actorID: 1, ids: [498], deathTimes: [50_000] });
+    expect(kept.deathHealth).toEqual([{ deathTs: 50_000, maxHp: null, curve: [] }]);
+    expect(kept.casts?.data?.entries?.[0]?.guid).toBe(498);
+    const none = await fetchRawDeepDive(async <T,>() => page([], null) as T, { code: "A", fightID: 1, character: "X", actorID: 1, ids: [498], deathTimes: [] });
+    expect(none.deathHealth).toBeUndefined();
+  });
 });

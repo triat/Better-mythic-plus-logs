@@ -212,8 +212,6 @@ export interface OwnerRunRow extends RunListRow {
   avoidableAbs: string | null;
   /** "peers 24%": the peers' median kick usage; null without it. */
   kicksPeers: string | null;
-  /** "5 · 1" (potions · healthstones); null without the count. */
-  consumables: string | null;
   /** The last sync got no report from Warcraft Logs (the row's tag tooltip); null otherwise. */
   failed: string | null;
   open: boolean;
@@ -241,7 +239,7 @@ export interface ExpandedRun {
   note: string | null;
   /** A deep-dive is cached for the run. */
   analysed: boolean;
-  /** "Analyze · ~3 pts" when the run has signals and no deep-dive; null otherwise. A click, never automatic. */
+  /** "Analyze · ~4 pts" when the run has signals and no deep-dive; null otherwise. A click, never automatic. */
   analyse: string | null;
   wcl: { href: string; label: string };
   /** "1 week ago · dispels 13". */
@@ -330,7 +328,6 @@ export function ownerRunsView(
       kicksPeers: k && k.peerPct !== null && base.util?.label === "kicks"
         ? t("owner.runs.peers", { pct: t("cand.runs.pct", { v: k.peerPct }) })
         : null,
-      consumables: s?.consumables ? t("owner.runs.consumables", { pots: s.consumables.potions, hs: s.consumables.healthstones }) : null,
       failed: !s && v.failed ? t("owner.runs.failed") : null,
       open: keyOf(v) === openKey,
     };

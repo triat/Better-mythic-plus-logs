@@ -118,7 +118,7 @@ export const renderDeepdiveLine = (d: RunDefensives): string => {
   const parts: string[] = [];
   if (d.tableMissing) parts.push(pc.yellow(`no defensives table for ${d.spec} ${d.className}`));
   else if (d.majorUsage !== null) parts.push(`majors ${Math.round(d.majorUsage * 100)}%`);
-  parts.push(d.countedDeaths === 0 ? dim("no deaths") : `${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`);
+  parts.push(d.countedDeaths === 0 ? dim("no deaths") : `${d.avoidableDeaths}/${d.countedDeaths} deaths with something at hand`);
   if (d.unlisted.length > 0) parts.push(dim(`unlisted: ${d.unlisted.slice(0, 3).map((u) => `${u.name} (${u.casts}x)`).join(", ")}`));
   return `defensives: ${parts.join(" · ")}`;
 };
@@ -129,7 +129,23 @@ const mmss = (ms: number): string => {
 };
 
 const verdictColor = (v: RunDefensives["deaths"][number]["verdict"], s: string): string =>
-  v === "covered" || v === "nothing available" ? pc.green(s) : v === "immunity available" ? pc.red(pc.bold(s)) : pc.red(s);
+  v === "covered" || v === "nothing available" || v === "unpreventable" ? pc.green(s) : v === "immunity available" ? pc.red(pc.bold(s)) : pc.red(s);
+
+const kilo = (n: number): string => `${Math.round(n / 1000)}k`;
+
+/** "hit 170k · 771k max · danger 1.5 s · Health potion would save (370k > 121k) · Healthstone not in group". */
+const healthLine = (x: RunDefensives["deaths"][number]): string | null => {
+  if (!x.health) return x.instakill ? dim("instakill") : null;
+  const h = x.health;
+  const parts = [
+    `hit ${kilo(h.killingHit)} · ${kilo(h.maxHp)} max${h.oneShot ? " · one-shot" : ""}`,
+    h.dangerMs === null ? "never under the danger line before the hit" : `danger ${(h.dangerMs / 1000).toFixed(1)} s`,
+    ...(x.heals ?? []).map((t) => t.status === "saves" ? pc.red(`${t.name} would save (${kilo(t.heal!)} > ${kilo(h.overkill)})`)
+      : t.status === "not enough" ? `${t.name} not enough (${kilo(t.heal!)} ≤ ${kilo(h.overkill)})`
+      : t.status === "on cooldown" ? `${t.name} on cd (${t.readyInS}s)` : `${t.name} ${t.status}`),
+  ];
+  return dim(parts.join(" · "));
+};
 
 /** Multi-line panel for `bmpl analyze`. */
 export const renderDeepdive = (d: RunDefensives): string => {
@@ -141,7 +157,7 @@ export const renderDeepdive = (d: RunDefensives): string => {
     lines.push(`  ${u.name.padEnd(26)} ${dim(u.kind.padEnd(8))} ${String(u.casts).padStart(3)}/${String(u.capacity).padEnd(3)} ${usage}  ${cd}${u.origin === "override" ? dim(" (override)") : ""}`);
   }
   if (d.majorUsage !== null) lines.push(dim(`  majors used ${Math.round(d.majorUsage * 100)}% of possible`));
-  lines.push(d.deaths.length === 0 ? dim("  no deaths") : `  ${d.avoidableDeaths}/${d.countedDeaths} deaths with a defensive available`);
+  lines.push(d.deaths.length === 0 ? dim("  no deaths") : `  ${d.avoidableDeaths}/${d.countedDeaths} deaths with something at hand`);
   for (const x of d.deaths) {
     const hits = x.killingHits.map((h) => `${h.name} ${Math.round(h.share * 100)}%`).join(" · ");
     const state = [
@@ -151,7 +167,10 @@ export const renderDeepdive = (d: RunDefensives): string => {
     ].join(", ");
     lines.push(`    ${mmss(x.atMs)}  ${verdictColor(x.verdict, x.verdict)}${x.inWipe ? pc.yellow(" · wipe") : ""}  ${dim(hits)}`);
     if (state) lines.push(`           ${state}`);
+    const hl = healthLine(x);
+    if (hl) lines.push(`           ${hl}`);
   }
+  if (d.healthMissing) lines.push(pc.yellow("  Fetched before the health data: re-analyze (--force) to judge heals and one-shots."));
   if (d.unlisted.length > 0) lines.push(pc.yellow(`  Not in table: ${d.unlisted.map((u) => `${u.name} (${u.casts}x, ${u.uptimeS}s up)`).join(", ")}`));
   return lines.join("\n");
 };

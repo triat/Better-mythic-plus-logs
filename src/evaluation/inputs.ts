@@ -70,7 +70,7 @@ export interface EvalInputs {
   };
   throughput: { medianParse: number | null; parseAtTarget: number | null };
   consistency: { sample: number; parseSpread: number | null; deathsSpread: number | null; damageSpread: number | null };
-  preparation: { potions: number | null; healthstones: number | null; ilvl: number | null };
+  preparation: { ilvl: number | null };
 }
 
 const pct = (mine: number, peerMedian: number): number | null => (peerMedian > 0 ? ((mine - peerMedian) / peerMedian) * 100 : null);
@@ -178,11 +178,7 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
   const damageSpread = damageDeltas.length >= minRuns ? stddev(damageDeltas) : null;
 
   // --- preparation ---
-  const withConsumables = sig.filter((s) => s.consumables !== null);
-  const potions = mean(withConsumables.map((s) => s.consumables!.potions));
-  // Healthstones come from a Warlock's soulwell: only the runs with one in the group (the player included) had any.
-  const withStones = withConsumables.filter((s) => s.consumables!.healthstonesAvailable === true);
-  const healthstones = mean(withStones.map((s) => s.consumables!.healthstones));
+  // Potions and healthstones are judged at each death (the deep-dive), never as a count per run.
   const ilvl = payload.rio?.itemLevel ?? null;
 
   return {
@@ -198,6 +194,6 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     utility: { hasKick, kicksVsPeers, kicksAbsolute, dispels, hasDispel, crowdControl, controlRate },
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },
-    preparation: { potions, healthstones, ilvl },
+    preparation: { ilvl },
   };
 }

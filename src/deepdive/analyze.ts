@@ -1,5 +1,6 @@
 import type { RawRunReport, RawTableEntry, RunSignals } from "../signals/types.ts";
-import type { DeathAnalysis, DeathVerdict, DefensiveUse, RawDeepDive, RunDefensives, SpecDefensives } from "./types.ts";
+import { judgeHeals } from "./heals.ts";
+import type { DeathAnalysis, DeathVerdict, DefensiveUse, HealRules, RawDeepDive, RunDefensives, SpecDefensives } from "./types.ts";
 
 export interface AnalyzeInput {
   raw: RawDeepDive;
@@ -11,12 +12,16 @@ export interface AnalyzeInput {
   table: SpecDefensives;
   tableVersion: string;
   denylist: number[];
+  /** Health potions, healthstone and the reaction rule; without it heals are not judged. */
+  heals?: HealRules;
 }
 
 /** Self-buffs that are consumables, forms/stances or mobility — never defensives (audit noise). */
 export const NON_DEFENSIVE_NAME =
   /potion|flask|phial|food|well fed|\brune\b|vantus|drums|healthstone|augment|\bform\b|\bstance\b|prowl|stealth|shimmer|sprint|\bdash\b|teleport|hover|ghost wolf|spirit walk|wraith walk|death's advance|burning rush|tiger's lust|camouflage|shroud of concealment|mount/i;
 const CD_MISMATCH_RATIO = 0.9;
+/** The verdicts that count as "a death with something at hand". */
+export const AVOIDABLE: ReadonlySet<DeathVerdict> = new Set(["immunity available", "defensive available", "heal available"]);
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
 
@@ -45,7 +50,10 @@ function usageOf(raw: RawDeepDive, fightS: number, table: SpecDefensives, fightS
   });
 }
 
-function deathOf(entry: RawTableEntry, atMs: number, inWipe: boolean, raw: RawDeepDive, table: SpecDefensives, fightStart: number): DeathAnalysis {
+interface DeathCtx { raw: RawDeepDive; table: SpecDefensives; fightStart: number; heals?: HealRules; groupClasses: string[] }
+
+function deathOf(entry: RawTableEntry, atMs: number, inWipe: boolean, ctx: DeathCtx): DeathAnalysis {
+  const { raw, table, fightStart } = ctx;
   const abilities = (entry.damage?.abilities ?? []).filter((a) => typeof a.total === "number");
   const sum = abilities.reduce((s, a) => s + (a.total ?? 0), 0);
   const killingHits = [...abilities].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 3)
@@ -69,12 +77,33 @@ function deathOf(entry: RawTableEntry, atMs: number, inWipe: boolean, raw: RawDe
     else if (onCd) onCooldown.push({ name: d.name, readyInS: Math.round(d.cooldownS - (deathTs - last!) / 1000) });
     else { available.push(d.name); if (d.kind === "immunity") immunityAvail = true; if (d.kind === "major") majorAvail = true; }
   }
+  // The killing hit: WCL lists the last hits newest first; `amount` excludes the overkill, so it is the health left.
+  const last = entry.events?.[0];
+  const instakill = last?.type === "instakill";
+  const overkill = entry.overkill ?? last?.overkill ?? 0;
+  const dh = raw.deathHealth?.find((h) => h.deathTs === deathTs);
+  let health: DeathAnalysis["health"];
+  let heals: DeathAnalysis["heals"];
+  if (dh && dh.maxHp !== null && last) {
+    const hpBefore = last.amount ?? 0;
+    const killingHit = hpBefore + (last.overkill ?? 0);
+    const judged = ctx.heals
+      ? judgeHeals({ rules: ctx.heals, raw, health: { ...dh, maxHp: dh.maxHp }, overkill, groupClasses: ctx.groupClasses })
+      : { dangerMs: null, heals: [] };
+    health = { maxHp: dh.maxHp, hpBefore, killingHit, overkill, dangerMs: judged.dangerMs, oneShot: killingHit >= dh.maxHp };
+    if (ctx.heals) heals = judged.heals;
+  }
   let verdict: DeathVerdict;
-  if (immunityAvail) verdict = "immunity available";
+  if (instakill || health?.oneShot) verdict = "unpreventable";
+  else if (immunityAvail) verdict = "immunity available";
   else if (majorAvail && !anyActive) verdict = "defensive available";
+  else if (heals?.some((h) => h.status === "saves")) verdict = "heal available";
   else if (anyActive) verdict = "covered";
   else verdict = "nothing available";
-  return { atMs, inWipe, killingHits, killingBlow: entry.killingBlow?.name ?? null, available, active, onCooldown, verdict };
+  return {
+    atMs, inWipe, killingHits, killingBlow: entry.killingBlow?.name ?? null, available, active, onCooldown, verdict,
+    ...(health ? { health } : {}), ...(instakill ? { instakill } : {}), ...(heals ? { heals } : {}),
+  };
 }
 
 function unlistedOf(raw: RawDeepDive, table: SpecDefensives, denylist: number[]): RunDefensives["unlisted"] {
@@ -93,15 +122,18 @@ export function analyzeRun(i: AnalyzeInput): RunDefensives {
   const fightS = i.signals.fightDurationMs / 1000;
   const fightStart = i.report.fights?.[0]?.startTime ?? i.raw.fightStart;
   const defensives = usageOf(i.raw, fightS, i.table, fightStart);
+  const groupClasses = (i.report.summary?.data?.composition ?? []).map((c) => c.type ?? "").filter(Boolean);
+  const ctx: DeathCtx = { raw: i.raw, table: i.table, fightStart, heals: i.heals, groupClasses };
   const myEntries = (i.report.deaths?.data?.entries ?? []).filter((e) => e.name === i.character && typeof e.timestamp === "number");
   // signals.deaths.events carries inWipe for the same deaths, in timestamp order; match on atMs.
   const deaths = myEntries.map((e) => {
     const atMs = (e.timestamp as number) - fightStart;
     const ev = i.signals.deaths.events.find((d) => d.atMs === atMs);
-    return deathOf(e, atMs, ev?.inWipe ?? false, i.raw, i.table, fightStart);
+    return deathOf(e, atMs, ev?.inWipe ?? false, ctx);
   }).sort((a, b) => a.atMs - b.atMs);
   const majors = defensives.filter((d) => d.kind !== "minor");
-  const counted = deaths.filter((d) => !d.inWipe);
+  // Unpreventable deaths (one-shots, instakills) leave both counts.
+  const counted = deaths.filter((d) => !d.inWipe && d.verdict !== "unpreventable");
   return {
     reportCode: i.raw.code,
     fightID: i.raw.fightID,
@@ -113,10 +145,12 @@ export function analyzeRun(i: AnalyzeInput): RunDefensives {
     defensives,
     deaths,
     majorUsage: majors.length > 0 ? majors.reduce((s, d) => s + d.usage, 0) / majors.length : null,
-    avoidableDeaths: counted.filter((d) => d.verdict === "immunity available" || d.verdict === "defensive available").length,
+    avoidableDeaths: counted.filter((d) => AVOIDABLE.has(d.verdict)).length,
     countedDeaths: counted.length,
     unlisted: unlistedOf(i.raw, i.table, i.denylist),
     staleTable: !i.table.entries.every((e) => i.raw.tableIds.includes(e.id)),
+    // A row fetched before the health data, or whose health request failed: heals and one-shots not judged.
+    ...(deaths.some((d) => d.health === undefined && !d.instakill) ? { healthMissing: true } : {}),
     truncated: i.raw.truncated,
     fetchedAt: i.raw.fetchedAt,
     pointsSpent: i.raw.pointsSpent,

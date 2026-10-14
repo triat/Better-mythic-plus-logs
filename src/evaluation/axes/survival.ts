@@ -19,7 +19,7 @@ export function scoreSurvival(i: EvalInputs, cfg: EvaluationConfig, override?: O
     },
     {
       id: "avoidableDeaths", value: s.avoidableDeathShare, extra: { count: s.avoidableDeathsCount, total: s.countedDeathsCount },
-      label: () => `${s.avoidableDeathsCount}/${s.countedDeathsCount} deaths with a defensive available`,
+      label: () => `${s.avoidableDeathsCount}/${s.countedDeathsCount} deaths with something at hand`,
     },
   ], i.role, cfg, i.runsUsed, override);
 }

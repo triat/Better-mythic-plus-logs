@@ -28,7 +28,6 @@ describe("runDetail", () => {
     expect(d.defensives).toEqual([
       { name: "Astral Shift", id: 108271, used: "10/15", pct: 67 },
       { name: "Earth Elemental", id: 198103, used: "3/6", pct: 50 },
-      { name: "Potions de soin", id: null, used: "0", pct: null },
     ]);
     expect(d.also).toBe(`Aussi sur ce run : kicks 37/146 (pairs 32${NB}%) · dispels 8 · DTPS +14${NB}% vs pairs`);
     expect(d.killers).toEqual([
@@ -60,7 +59,7 @@ describe("runDetail", () => {
     };
     const d = runDetail(tFr, "fr", payload(), withHits, null, NOW);
     expect(d.notAnalysed).toBe(`Déjà connu : 3 morts · parse 72,2${NB}%`);
-    expect(d.defensives).toEqual([{ name: "Potions de soin", id: null, used: "0", pct: null }]);
+    expect(d.defensives).toEqual([]);
     expect(d.killers).toEqual([{ id: 1001, name: "Ground Pound", share: `71${NB}%` }, { id: 1002, name: "Slither Strike", share: `29${NB}%` }]);
     const other = runDetail(tEn, "en", payload(), va, null, NOW);
     expect(other.notAnalysed).toBe("Already known: 0 deaths · parse 68.3%");

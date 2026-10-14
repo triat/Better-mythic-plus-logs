@@ -197,7 +197,6 @@ describe("ownerRunsView", () => {
     expect(ts.dtpsAbs).toBe("114.0k");
     expect(ts.avoidableAbs).toBe("0/min");
     expect(ts.kicksPeers).toBe(`pairs ${tFr("cand.runs.pct", { v: 32 })}`);
-    expect(ts.consumables).toBe("0 · 1");
     expect(ts.wipe).toBeNull();
   });
 
@@ -214,7 +213,7 @@ describe("ownerRunsView", () => {
     expect(v.weeks[0]!.rows[0]!.wipe).toBe("2 in wipes");
     expect(ownerRunsView(tFr, "fr", s, ALL_RUNS, null, 3, NOW).weeks[0]!.rows[0]!.wipe).toBe("2 en wipe");
     const rl = v.weeks[2]!.rows.find((r) => r.key === "RLn:1")!;
-    expect([rl.upgrade, rl.time, rl.dtps, rl.dtpsAbs, rl.consumables, rl.result]).toEqual([null, "—", null, null, null, "none"]);
+    expect([rl.upgrade, rl.time, rl.dtps, rl.dtpsAbs, rl.result]).toEqual([null, "—", null, null, "none"]);
     const depleted = v.weeks[1]!.rows.find((r) => r.key === "KRd:1")!;
     expect(depleted.upgrade).toEqual({ text: "✗ depleted", timed: false });
   });
@@ -225,7 +224,7 @@ describe("ownerRunsView", () => {
     expect(e.key).toBe("VA:1");
     expect(e.detail!.casts.map((c) => c.name)).toEqual(["Lightning Bolt", "Healing Wave"]);
     expect(e.detail!.kicked).toBe("You kicked 5 of the 13 interrupted.");
-    expect([e.analysed, e.analyse, e.note]).toEqual([false, "Analyze · ~3 pts", null]);
+    expect([e.analysed, e.analyse, e.note]).toEqual([false, "Analyze · ~4 pts", null]);
     expect(e.wcl.href).toBe("https://www.warcraftlogs.com/reports/VA#fight=1");
     expect(e.facts).toBe("1d ago · dispels 8");
     expect(e.run.reportCode).toBe("VA");

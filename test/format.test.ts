@@ -165,7 +165,7 @@ describe("renderDeepdiveLine", () => {
   test("majors, deaths, unlisted", () => {
     const line = strip(renderDeepdiveLine(base));
     expect(line).toContain("defensives: majors 41%");
-    expect(line).toContain("1/2 deaths with a defensive available");
+    expect(line).toContain("1/2 deaths with something at hand");
     expect(line).toContain("unlisted: Mystery (5x)");
   });
   test("no table, no deaths", () => {

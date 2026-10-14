@@ -123,9 +123,11 @@ describe("evaluate", () => {
   });
 });
 
-describe("experience axis removed (config v7)", () => {
-  // The experience axis weighed 0 for every role, so removing it changes no global and no verdict. These are the
-  // values the default config gave before the removal; any drift means a weight or curve moved with it.
+describe("default config snapshot (v8)", () => {
+  // v7 removed the experience axis (weight 0: no global moved). v8 removed preparation.potions and
+  // preparation.healthstones (judged at each death since 2026-10-14): globals moved (good 99 → 98, s1-tank 59 → 81,
+  // s1-tank + rio 70 → 80, s2-healer 59 → 48, s2-healer + rio 48 → 40), no verdict did. Any later drift means a
+  // weight or curve moved.
   const good = () => runWith({
     deaths: deaths(0), consumables: { potions: 6, healthstones: 3 },
     interrupts: { count: 30, kickCooldownS: 15, capacity: 100, usage: 0.3, peer: { median: 0.2, count: 3 } },
@@ -136,12 +138,12 @@ describe("experience axis removed (config v7)", () => {
 
   test("globals and verdicts unchanged on every evaluation fixture, no experience axis", async () => {
     const cases: Array<[string, Promise<ReturnType<typeof evaluate>>, number, string]> = [
-      ["good", Promise.resolve(evaluate(payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 }), cfg)), 99, "invite"],
+      ["good", Promise.resolve(evaluate(payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 }), cfg)), 98, "invite"],
       ["bad", Promise.resolve(evaluate(payloadWith(Array.from({ length: 6 }, bad), { targetLevel: 16 }), cfg)), 1, "pass"],
-      ["s1-tank", fixturePayload("s1-tank", false).then((p) => evaluate(p, cfg)), 59, "insufficient"],
-      ["s1-tank + rio", fixturePayload("s1-tank", true).then((p) => evaluate(p, cfg)), 70, "insufficient"],
-      ["s2-healer", fixturePayload("s2-healer", false).then((p) => evaluate(p, cfg)), 59, "insufficient"],
-      ["s2-healer + rio", fixturePayload("s2-healer", true).then((p) => evaluate(p, cfg)), 48, "insufficient"],
+      ["s1-tank", fixturePayload("s1-tank", false).then((p) => evaluate(p, cfg)), 81, "insufficient"],
+      ["s1-tank + rio", fixturePayload("s1-tank", true).then((p) => evaluate(p, cfg)), 80, "insufficient"],
+      ["s2-healer", fixturePayload("s2-healer", false).then((p) => evaluate(p, cfg)), 48, "insufficient"],
+      ["s2-healer + rio", fixturePayload("s2-healer", true).then((p) => evaluate(p, cfg)), 40, "insufficient"],
     ];
     for (const [name, pending, global, verdict] of cases) {
       const e = await pending;

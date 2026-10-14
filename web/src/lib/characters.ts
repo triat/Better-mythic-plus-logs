@@ -102,7 +102,7 @@ export interface CharactersInput {
   ownClient: OwnClientView | null;
   /**
    * A sub-signal's name (`sourceTitleOf(t, docs)`), null to leave it out: the note then never prints the raw source
-   * key ("preparation.healthstones").
+   * key ("survival.wipeDeaths").
    */
   titleOf: ((source: string) => string) | null;
   now?: number;

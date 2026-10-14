@@ -8,7 +8,7 @@ import { makeMain, moveUp, removeAt } from "./me.ts";
 const tFr = makeT(fr, "fr");
 const NOW = Date.UTC(2026, 9, 12, 12);
 const H = 3600e3;
-const titleOf = (s: string) => (s === "preparation.healthstones" ? "Healthstones" : s);
+const titleOf = (s: string) => (s === "survival.wipeDeaths" ? "Wipe deaths" : s);
 
 const c = (name: string, realm = "nerzhul", source: MyCharacter["source"] = "bnet"): MyCharacter =>
   ({ name, realm, region: "eu", source, ...(source === "bnet" ? { bnetId: 1, verifiedAt: NOW } : {}) });
@@ -16,15 +16,15 @@ const c = (name: string, realm = "nerzhul", source: MyCharacter["source"] = "bne
 const pillars = (v: [number | null, number | null, number | null, number | null, number | null]) =>
   (["damage", "survival", "avoidable", "interrupts", "control"] as const).map((key, i) => ({ key, score: v[i]!, evidence: [] }));
 
-const healthstones: WorkOnRow = {
-  source: "preparation.healthstones", pillar: "survival", impact: -4, value: 0, reference: 0.6, label: "0.0 / run", past: null,
+const wipes: WorkOnRow = {
+  source: "survival.wipeDeaths", pillar: "survival", impact: -4, value: 2, reference: 0.1, label: "2.0 / run", past: null,
 };
 
 const season = (over: Partial<SeasonView> = {}): SeasonView => ({
   character: { name: "X", realm: "hyjal", region: "eu" }, zoneID: 55, targetLevel: 19, currentWeek: 10, checkedAt: NOW - 7 * H,
   state: { runs: 94, analysed: 94, pending: 0, controlOnly: 0, failed: 0, estimate: 0 },
   runs: [{} as SeasonView["runs"][number]], recent: { runs: 40, pillars: pillars([64, 66, 76, 68, 55]), overall: 66 }, season: null,
-  trends: [], workOn: [healthstones], dungeons: [], ...over,
+  trends: [], workOn: [wipes], dungeons: [], ...over,
 });
 
 const history: HistoryItem[] = [{
@@ -72,9 +72,9 @@ describe("characterCards", () => {
     ]);
     expect(main!.line).toBe("94 runs cette saison · à jour");
     expect(main!.note.tone).toBe("worse");
-    expect(main!.note.text).toStartWith("À travailler : Healthstones (");
+    expect(main!.note.text).toStartWith("À travailler : Wipe deaths (");
     expect(main!.note.text).toEndWith(", −4 pts)");
-    expect(main!.note.hint).toBe("Pierres de soins utilisées par run (seulement les runs avec un démoniste).");
+    expect(main!.note.hint).toBe("Ses morts quand au moins 3 joueurs meurent en 15 s ; ça compte peu.");
     expect([other!.sub, other!.initials, other!.classColor, other!.global]).toEqual(["Nerzhul EU", "Bi", null, "—"]);
     expect(other!.bars.map((b) => b.band)).toEqual(["neutral", "better", "better", "worse", "na"]);
     expect(other!.line).toBe("33 runs · 25 non analysés · vérifié il y a 7 h");
@@ -88,11 +88,11 @@ describe("characterCards", () => {
     const main = (titleOf: CharactersInput["titleOf"]) => characterCards(tEn, "en", input({ titleOf })).withSeason[0]!.note;
     for (const n of [main(null), main((s) => s)]) {
       expect(n.tone).toBe("worse");
-      expect(n.text).not.toContain("preparation.healthstones");
-      expect(n.text).toBe("Work on: 0.0 healthstones/run (−4 pts)");
+      expect(n.text).not.toContain("survival.wipeDeaths");
+      expect(n.text).toBe("Work on: 2.0 deaths in wipes/run (−4 pts)");
     }
-    expect(main(titleOf).text).toStartWith("Work on: Healthstones (");
-    expect(characterCards(tFr, "fr", input({ titleOf: null })).withSeason[0]!.note.text).toStartWith("À travailler : 0,0 ");
+    expect(main(titleOf).text).toStartWith("Work on: Wipe deaths (");
+    expect(characterCards(tFr, "fr", input({ titleOf: null })).withSeason[0]!.note.text).toStartWith("À travailler : 2,0 ");
   });
 
   test("open: the history entry at 0 pts, else the lookup link; Raider.IO", () => {

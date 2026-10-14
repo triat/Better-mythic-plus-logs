@@ -84,7 +84,7 @@ describe("evidenceText", () => {
     expect(line("survival.dtpsVsPeers", 4.6)).toEqual(["DTPS +5% vs peers", "dégâts subis +5 % vs les DPS"]);
     expect(line("survival.defensiveUsage", 0.6, { runs: 1 })).toEqual(["majors used 60% of possible (1 run)", "gros défensifs utilisés à 60 % du possible (1 run)"]);
     expect(line("survival.defensiveUsage", 0.6, { runs: 3 })).toEqual(["majors used 60% of possible (3 runs)", "gros défensifs utilisés à 60 % du possible (3 runs)"]);
-    expect(line("survival.avoidableDeaths", 2 / 3, { count: 2, total: 3 })).toEqual(["2/3 deaths with a defensive available", "2/3 morts avec un défensif dispo"]);
+    expect(line("survival.avoidableDeaths", 2 / 3, { count: 2, total: 3 })).toEqual(["2/3 deaths with something at hand", "2/3 morts avec un outil prêt"]);
     expect(line("utility.kicksAbsolute", 0.2)).toEqual(["20% of kick capacity used", "20 % des kicks possibles utilisés"]);
     expect(line("utility.dispels", 9)).toEqual(["9.0 dispels/run", "9,0 dissipations / run"]);
     expect(line("utility.crowdControl", 12.4, { rate: 4.2 })).toEqual(["crowd control +12% vs spec median (4.2 per 10 min)", "contrôle +12 % vs le joueur moyen de la spé (4,2 / 10 min)"]);

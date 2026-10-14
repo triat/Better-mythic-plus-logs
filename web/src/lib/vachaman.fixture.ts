@@ -81,23 +81,22 @@ export const templeAnalysis: RunDefensives = {
   defensives: [
     use(108271, "Astral Shift", "major", 120, 10, 15, [32_000, 192_000, 330_000, 470_000, 610_000, 950_000, 1_100_000, 1_250_000, 1_430_000, 1_650_000]),
     use(198103, "Earth Elemental", "major", 300, 3, 6, [400_000, 731_000, 1_300_000]),
-    use(431416, "Silvermoon Health Potion", "minor", 300, 0, 6, []),
   ],
   deaths: [
     {
       atMs: 113_000, inWipe: false, killingBlow: "Ground Pound", verdict: "nothing available",
       killingHits: [{ id: 1001, name: "Ground Pound", amount: 710_000, share: 0.71 }, { id: 1002, name: "Slither Strike", amount: 290_000, share: 0.29 }],
-      available: ["Silvermoon Health Potion"], active: [], onCooldown: [{ name: "Astral Shift", readyInS: 41 }],
+      available: [], active: [], onCooldown: [{ name: "Astral Shift", readyInS: 41 }],
     },
     {
       atMs: 825_000, inWipe: false, killingBlow: "Storm Strikes", verdict: "defensive available",
       killingHits: [{ id: 1003, name: "Storm Strikes", amount: 900_000, share: 1 }],
-      available: ["Astral Shift", "Silvermoon Health Potion"], active: [], onCooldown: [{ name: "Earth Elemental", readyInS: 94 }],
+      available: ["Astral Shift"], active: [], onCooldown: [{ name: "Earth Elemental", readyInS: 94 }],
     },
     {
       atMs: 1_070_000, inWipe: false, killingBlow: "Spark Step", verdict: "nothing available",
       killingHits: [{ id: 1004, name: "Spark Step", amount: 620_000, share: 0.62 }, { id: 1005, name: "Release Charge", amount: 380_000, share: 0.38 }],
-      available: ["Silvermoon Health Potion"], active: [], onCooldown: [{ name: "Astral Shift", readyInS: 32 }],
+      available: [], active: [], onCooldown: [{ name: "Astral Shift", readyInS: 32 }],
     },
   ],
   majorUsage: 0.6, avoidableDeaths: 1, countedDeaths: 3, unlisted: [], staleTable: false, truncated: false, fetchedAt: NOW - H, pointsSpent: 3,

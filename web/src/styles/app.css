@@ -1722,13 +1722,12 @@ button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset:
 .oruns-name { min-width: 0; display: flex; flex-direction: column; }
 .oruns-name-text { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .oruns-c-time { color: var(--muted); }
-.oruns-c-consumables { color: var(--text-soft); }
 .oruns-c-parse { font-size: 14px; font-weight: 700; }
 .oruns-empty { margin: 0; padding: 14px 18px; border-top: 1px solid var(--border-soft); font-size: 13px; color: var(--label); }
 .oruns-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid var(--border); font-size: 13px; color: var(--label); }
 .oruns-foot .btn { margin-left: auto; }
 @container (min-width: 900px) {
-  .oruns-head, .oruns-row { display: grid; grid-template-columns: 64px minmax(0, 1.6fr) 64px 70px 76px 96px 84px 56px 76px 16px; gap: 10px; align-items: center; padding: 8px 18px; }
+  .oruns-head, .oruns-row { display: grid; grid-template-columns: 64px minmax(0, 1.6fr) 64px 70px 76px 96px 84px 76px 16px; gap: 10px; align-items: center; padding: 8px 18px; }
   .oruns-head { min-height: 44px; border-bottom: 1px solid var(--border); padding-top: 0; padding-bottom: 0; }
   .oruns-row { min-height: 56px; box-sizing: border-box; }
   .oruns-c-dungeon, .oruns-c-key { grid-column: auto; order: 0; text-align: left; }

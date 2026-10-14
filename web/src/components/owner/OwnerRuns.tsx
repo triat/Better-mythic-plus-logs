@@ -35,8 +35,8 @@ export interface OwnerRunsProps {
 }
 
 const MENUS: readonly FilterMenu[] = ["dungeon", "spec", "weeks"];
-type Col = "key" | "dungeon" | "time" | "deaths" | "dtps" | "avoidable" | "util" | "consumables" | "parse";
-const COLS: readonly Col[] = ["key", "dungeon", "time", "deaths", "dtps", "avoidable", "util", "consumables", "parse"];
+type Col = "key" | "dungeon" | "time" | "deaths" | "dtps" | "avoidable" | "util" | "parse";
+const COLS: readonly Col[] = ["key", "dungeon", "time", "deaths", "dtps", "avoidable", "util", "parse"];
 
 /** Runs (mockup F-Moi-Runs): the season's tiles, the filters, the runs grouped by game week, the expanded run. */
 export function OwnerRuns(props: OwnerRunsProps) {
@@ -214,7 +214,6 @@ function Row({ r, colLabel, onClick }: { r: OwnerRunRow; colLabel: (c: Col) => s
       <span className="oruns-c-util mono">
         {k("util")}{r.util ? r.util.text : <span className="faint">—</span>}{r.kicksPeers && <span className="oruns-sub">{r.kicksPeers}</span>}
       </span>
-      <span className="oruns-c-consumables mono">{k("consumables")}{r.consumables ?? <span className="faint">—</span>}</span>
       <span className="oruns-c-parse mono">{k("parse")}<span className={r.parse.tier ? "tier-" + r.parse.tier : "faint"}>{r.parse.text}</span></span>
       <svg className="oruns-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <path d={r.open ? "M6 9l6 6 6-6" : "M9 6l6 6-6 6"} />

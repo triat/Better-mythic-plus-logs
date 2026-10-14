@@ -238,3 +238,24 @@ export const REPORT_DEEPDIVE_NO_EVENTS_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+/**
+ * The player's health before each death: per death, the damage they took (`sourceID` is the viewpoint for DamageTaken;
+ * `targetID` returns nothing) and the healing they received, with unit resources (`hitPoints`, `maxHitPoints`). One
+ * request, two aliases per death (probed 2026-10-14: ~1 pt per alias pair).
+ */
+export const deathHealthQuery = (count: number): string => {
+  const vars = Array.from({ length: count }, (_, i) => `$s${i}: Float!, $e${i}: Float!`).join(", ");
+  const aliases = Array.from({ length: count }, (_, i) => `
+        d${i}: events(fightIDs: [$fightID], dataType: DamageTaken, sourceID: $actorID, startTime: $s${i}, endTime: $e${i}, includeResources: true, limit: 500) { data }
+        h${i}: events(fightIDs: [$fightID], dataType: Healing, targetID: $actorID, startTime: $s${i}, endTime: $e${i}, includeResources: true, limit: 500) { data }`).join("");
+  return /* GraphQL */ `
+  query DeathHealth($code: String!, $fightID: Int!, $actorID: Int!, ${vars}) {
+    rateLimitData { limitPerHour pointsSpentThisHour pointsResetIn }
+    reportData {
+      report(code: $code) {${aliases}
+      }
+    }
+  }
+`;
+};

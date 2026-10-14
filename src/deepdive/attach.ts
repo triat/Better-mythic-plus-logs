@@ -23,7 +23,7 @@ export function analyzeCached(store: Store, tables: LoadedTables, run: { reportC
   const signals = parseRunSignals(report, character, { keyLevel: 0, affixes: [], encounterID: 0 });
   if (!signals) return null;
   const table = specDefensives(tables.shipped, tables.override, player.className, player.spec);
-  return analyzeRun({ raw, report, signals, character, className: player.className, spec: player.spec, table, tableVersion: tables.shipped.version, denylist: tables.shipped.denylist });
+  return analyzeRun({ raw, report, signals, character, className: player.className, spec: player.spec, table, tableVersion: tables.shipped.version, denylist: tables.shipped.denylist, heals: tables.shipped.heals });
 }
 
 /** New payload with `deepdive` for every displayed run that has a cached analysis, its summary, and a re-run evaluation. */

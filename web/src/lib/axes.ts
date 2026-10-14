@@ -36,8 +36,6 @@ const VALUE_FORMAT: Record<EvidenceSource, ValueFormat> = {
   "consistency.parseSpread": fixed(0),
   "consistency.deathsSpread": fixed(1),
   "consistency.damageSpread": fixed(0),
-  "preparation.potions": fixed(1),
-  "preparation.healthstones": fixed(1),
   "preparation.ilvlVsLevel": signed0,
 };
 

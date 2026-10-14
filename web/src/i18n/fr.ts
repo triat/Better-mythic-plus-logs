@@ -1233,4 +1233,13 @@ export const fr: Mirror<typeof en> = {
     status: { loading: "Chargement de sa saison…", failed: "Impossible de charger la saison : recharge la page pour réessayer." },
     menu: { main: "En faire le principal", up: "Monter dans la liste", remove: "Retirer du suivi" },
   },
+  whatsNew: {
+    label: "Nouveautés",
+    unread: "nouveautés depuis ta dernière visite",
+    since: "depuis ta dernière visite · tu utilises la {version}",
+    youUse: "tu utilises la {version}",
+    all: "Tout l'historique",
+    close: "Fermer",
+    empty: "Rien de nouveau depuis ta dernière visite.",
+  },
 };

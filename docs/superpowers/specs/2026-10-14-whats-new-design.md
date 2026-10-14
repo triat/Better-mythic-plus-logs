@@ -1,6 +1,7 @@
 # What's new: the running version and a user-facing changelog — design
 
-Status: approved 2026-10-14 (decisions 1–5 and 7 in chat; display chosen on the canvas the same day, decision 6).
+Status: approved 2026-10-14 (decisions 1–5 and 7 in chat; display chosen on the canvas the same day, decision 6);
+implemented 2026-10-14 (plan `docs/superpowers/plans/2026-10-14-whats-new.md`), checked live in local mode (1440 and 390 px).
 
 ## Goal
 

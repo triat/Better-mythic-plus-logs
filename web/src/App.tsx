@@ -79,6 +79,7 @@ export function App() {
             hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null,
             openSignup: s.openSignup ?? false, guildRequired: s.guildRequired ?? false, wclClients: s.wclClients ?? false, operator: s.operator ?? "",
             region: isRegion(s.region) ? s.region : "eu",
+            ...(typeof s.version === "string" ? { version: s.version } : {}),
           }
         : LOCAL_STATUS;
       const me = status.hosted ? await api.me() : null;
@@ -651,7 +652,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     onRecent: inPlace ? openProfile : null,
     onRemove: (k) => void closeTab(k), onClearAll: () => void clearAll(),
     account: accountView(t, status, menu), controls, menu, pendingProposals, onMenuOpen: () => void onMenuOpen(), onSignOut,
-    watch, onWatchToggle, onSetup, onQuit,
+    watch, onWatchToggle, onSetup, onQuit, version: status.version ?? null,
   };
   const palette = { sources: { suggestions, mine: settings.characters, history: tabs, region }, yourKey, onRun: onPalette };
   const toastEl = <Toast message={toast?.message ?? null} action={toast?.action ?? null} onClose={closeToast} />;

@@ -14,6 +14,7 @@ import { KeyStepper } from "../KeyStepper.tsx";
 import { SearchInput } from "../SearchInput.tsx";
 import { UserMenu } from "../UserMenu.tsx";
 import { LocalAccount } from "./LocalAccount.tsx";
+import { WhatsNew } from "./WhatsNew.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -57,6 +58,8 @@ export interface SidebarProps {
   onWatchToggle: (wanted: boolean) => void;
   onSetup: () => void;
   onQuit: () => void;
+  /** The running version: the line under the account block that opens the changelog (null: no line). */
+  version: string | null;
 }
 
 /**
@@ -169,6 +172,7 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
         ) : (
           <LocalAccount title={p.account.title} controls={p.controls} watch={p.watch} onWatchToggle={p.onWatchToggle} onSetup={p.onSetup} onQuit={p.onQuit} />
         )}
+        {p.version && <WhatsNew version={p.version} />}
       </div>
     </aside>
   );

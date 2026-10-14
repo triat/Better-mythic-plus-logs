@@ -37,7 +37,7 @@ just check-deps                             # bun audit on both lockfiles — ru
 
 ## Hard rules
 
-- **Never spend WCL points automatically.** Every WCL call costs budget (3600 pts/h per API client). Only `lookup`/`mplus` (rankings + run enrichment) and the explicit `analyze` / `POST /api/deepdive` fetch; anything else reads the SQLite cache. Raw WCL results are immutable → cached forever; analysis is always recomputed from raw.
+- **Never spend WCL points automatically.** Every WCL call costs budget (3600 pts/h per API client). Only `lookup`/`mplus` (rankings + run enrichment) and the explicit `analyze` / `POST /api/deepdive` fetch; anything else reads the SQLite cache. Raw WCL results are immutable → cached forever; analysis is always recomputed from raw. One user-approved exception (2026-10-14): the weekly recalibration's `bmpl calibrate --hourly` / `--fit`, run only by their systemd timers on the VPS, on the instance's client, bounded by `src/calibration/window.ts` (`limitPerHour − BMPL_CALIBRATION_RESERVE`, 5-minute pause after a member, one lookup every 16 s, 2,000-character target) and writing only `calibration.db` (spec `docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md`). Agents never run them, nor import a `scripts/calibration/*.ts` file to "check it loads": several run their collection on import; typecheck them with `tsc` instead.
 - **`just check` and `bun test` green at the end of every task**, with `web/dist` absent (server answers 503 for static routes then).
 - **English everywhere in code, docs and commits; UI strings live in `web/src/i18n/` — `en.ts` is the source, `fr.ts` mirrors it key for key; never write a UI literal in a component.** The user writes French in chat; answer in French.
 - **Every change a user can notice goes into the user-facing changelog**, in the same change: a line under `"next"` in
@@ -67,6 +67,7 @@ src/wcl/              OAuth2 + gql() + queries + meter     src/signals/         
 src/evaluation/       axes → verdict (rules in default-config.json)
 src/deepdive/         defensive-cooldown analysis  scripts/              dev-only tools (audit, fixtures, introspect)
 src/self/             self-review: game weeks, season sync, season view, "My characters"
+src/calibration/      weekly recalibration: discovery, sample store (calibration.db), governor, hourly collector, fit, PR candidate
 src/hosted/           hosted-mode config, schema/repos (users, sessions, invites), per-user history/settings, shared defensives + proposals, quota gate, feature-usage counters, cookie/state/Discord helpers, Battle.net link + 30-day check, auth gate
 src/server/           route table, shared/local routes, handlers, SSE, security headers
 deploy/               VPS files (Caddy, systemd, litestream, bootstrap) — source of truth for the runbook in `deploy/README.md`
@@ -102,7 +103,10 @@ hosted landing. Redesign phase 2 is implemented (plan `docs/superpowers/plans/20
 candidate profile — compact header, Synthèse, Runs with the layered timeline, the run sheet, Donjons, Méthode — and the
 Experience axis removed. Redesign phase 3 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`):
 the owner pages — Ma forme, Donjons, Runs with filters and week groups, `as=vetting` — and Mes personnages as cards.
-Redesign phase 4 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md`): Compare 2–5 (duel /
+The weekly recalibration is implemented (spec `docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md`,
+plan `docs/superpowers/plans/2026-10-14-weekly-recalibration.md`; live once the user re-runs `deploy/bootstrap.sh` after the
+release and adds the repository secrets `BMPL_URL` and `BMPL_OPS_TOKEN`): `src/calibration/`, `bmpl calibrate`, the two
+VPS timers, `GET /api/ops/calibration` and `.github/workflows/calibration-pr.yml`. Redesign phase 4 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md`): Compare 2–5 (duel /
 ranking), the Live page in the frame, the old CSS and components removed — the redesign is complete. Next: self-review
 phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

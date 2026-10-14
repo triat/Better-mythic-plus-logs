@@ -1,6 +1,6 @@
 # Weekly recalibration — design
 
-Status: approved 2026-10-14 (user: decisions 1–3, thresholds, the rest of the draft "ok"; hourly collection on the
+Status: implemented 2026-10-14 (plan `docs/superpowers/plans/2026-10-14-weekly-recalibration.md`); approved 2026-10-14 (user: decisions 1–3, thresholds, the rest of the draft "ok"; hourly collection on the
 instance's client at 18,000 pts/h, decision 5, the same day). Builds on `docs/superpowers/specs/2026-09-24-scoring-calibration-design.md`
 (the one-off study: discovery, collection, fit, comparison).
 
@@ -35,7 +35,7 @@ it as a pull request the user merges or not.
      repository are downloadable by any signed-in GitHub user);
    - systemd handles the Paris time zone natively; GitHub's cron is UTC only.
    The calibration code moves from `scripts/calibration/` (dev-only, not in the binary) into `src/calibration/`, behind
-   a CLI command `bmpl calibrate --until 06:00`, so the deployed binary runs it.
+   a CLI command (implemented as `bmpl calibrate --hourly` and `--fit`), so the deployed binary runs it.
 5. **The instance's own WCL client, every hour, with what the members leave** (user: no dedicated client, "on pourrait
    faire un run toutes les heures"; the client's subscription allows 18,000 points an hour, "tu peux utiliser ce dont
    tu as besoin"). Measured on production (ops API, 30 days to 2026-10-14): at most 33 lookups a day, 6 active members,

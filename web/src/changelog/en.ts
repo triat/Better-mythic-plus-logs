@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Scores now stay measured against this season's players: they are re-checked every week.",
+    ],
+  },
+  {
     version: "0.10.3",
     date: "2026-10-14",
     items: [

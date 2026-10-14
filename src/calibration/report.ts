@@ -4,6 +4,7 @@
 // body. Spec: docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md (decisions 8 and 9).
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { validateConfig } from "../evaluation/config.ts";
 import { evaluate } from "../evaluation/evaluate.ts";
 import type { EvaluationConfig, Role } from "../evaluation/types.ts";
 import { fitGlobal, isFit, MIN_N, quantile, ROLES, type Sample } from "./fit.ts";
@@ -34,7 +35,8 @@ export function fitAndCompare(samples: Sample[], base: EvaluationConfig, now: nu
   const fit = samples.filter(isFit);
   const test = samples.filter((s) => !isFit(s));
   const g = fitGlobal(fit, base);
-  const cand: EvaluationConfig = { ...base, globalCurve: g.globalCurve, reference: g.reference };
+  // Validated here, so a candidate the shipped config would refuse never reaches the pull request.
+  const cand: EvaluationConfig = validateConfig({ ...base, globalCurve: g.globalCurve, reference: g.reference });
   const roles = {} as Record<Role, RoleComparison>;
   let changes = 0;
   for (const role of ROLES) {

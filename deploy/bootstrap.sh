@@ -57,6 +57,11 @@ install -m 644 "$HERE/bmpl.service" /etc/systemd/system/bmpl.service
 install -m 644 "$HERE/litestream.service" /etc/systemd/system/litestream.service
 install -m 644 "$HERE/bmpl-backup-check.service" /etc/systemd/system/bmpl-backup-check.service
 install -m 644 "$HERE/bmpl-backup-check.timer" /etc/systemd/system/bmpl-backup-check.timer
+# The weekly recalibration (spec docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md): hourly sampling
+# and the Wednesday fit, both with the bmpl binary and .env, writing only calibration.db and its aggregates.
+for u in bmpl-calibrate-collect.service bmpl-calibrate-collect.timer bmpl-calibrate-fit.service bmpl-calibrate-fit.timer; do
+  install -m 644 "$HERE/$u" "/etc/systemd/system/$u"
+done
 install -m 755 "$HERE/backup-check.sh" /usr/local/sbin/bmpl-backup-check
 install -m 755 "$HERE/restore-test.sh" /usr/local/sbin/bmpl-restore-test
 # The litestream .deb ships its own sample /etc/litestream.yml — check its content, not just its presence.
@@ -82,4 +87,6 @@ systemctl daemon-reload
 systemctl enable --now caddy
 systemctl reload caddy || systemctl restart caddy
 systemctl enable bmpl litestream bmpl-backup-check.timer
+# The timers run the deployed binary; before the first `just deploy` their runs fail harmlessly.
+systemctl enable --now bmpl-calibrate-collect.timer bmpl-calibrate-fit.timer
 echo "bootstrap done — next: your public key in /home/deploy/.ssh/authorized_keys, fill /opt/bmpl/.env and /etc/litestream.yml, then 'just deploy' from your machine"

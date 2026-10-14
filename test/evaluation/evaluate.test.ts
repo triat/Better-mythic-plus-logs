@@ -93,7 +93,7 @@ describe("evaluate", () => {
 
   test("the default curve places a median player of the calibration population near 50", () => {
     for (const role of ["dps", "healer", "tank"] as const) {
-      const median = cfg.globalCurve[role].find(([, y]) => y === 50)!;
+      const median = cfg.globalCurve[role].find(([, y]) => y >= 50)!; // a refitted curve may step over 50 exactly
       expect(median).toBeDefined();
       expect(median[0]).toBeGreaterThan(70); // today's raw weighted mean of a median player sits in the mid-70s
     }

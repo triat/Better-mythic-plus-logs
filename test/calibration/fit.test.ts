@@ -35,8 +35,8 @@ describe("calibration fit", () => {
     const c = fit.globalCurve.dps;
     expect(c[0]).toEqual([0, 0]);
     expect(c[c.length - 1]).toEqual([100, 100]);
-    for (let i = 1; i < c.length; i++) { expect(c[i]![0]).toBeGreaterThanOrEqual(c[i - 1]![0]); expect(c[i]![1]).toBeGreaterThanOrEqual(c[i - 1]![1]); }
-    expect(c.find(([, y]) => y === 50)).toBeDefined();
+    for (let i = 1; i < c.length; i++) { expect(c[i]![0]).toBeGreaterThan(c[i - 1]![0]); expect(c[i]![1]).toBeGreaterThanOrEqual(c[i - 1]![1]); }
+    expect(validateConfig({ ...cfg, globalCurve: fit.globalCurve, reference: fit.reference }).globalCurve.dps).toEqual(c);
     expect(fit.reference.dps["throughput.medianParse"]!.value).toBeCloseTo(quantile(Array.from({ length: 60 }, (_, i) => 20 + i), 0.5), 1);
     // Roles without enough samples keep today's curve and reference.
     expect(fit.globalCurve.healer).toEqual(cfg.globalCurve.healer);

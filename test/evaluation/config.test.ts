@@ -21,7 +21,9 @@ describe("default config", () => {
     const cfg = validateConfig(DEFAULT_CONFIG);
     for (const k of AXIS_KEYS) expect(Object.keys(cfg.axes[k].subSignals).length).toBeGreaterThan(0);
     for (const role of ["dps", "healer", "tank"] as const) expect(Object.keys(cfg.axisWeights[role])).toEqual([...AXIS_KEYS]);
-    expect(cfg.version).toBe("8"); // the experience axis left in version 7
+    // An integer string: the weekly recalibration's pull request bumps it (src/calibration/apply.ts).
+    expect(cfg.version).toMatch(/^\d+$/);
+    expect(Number(cfg.version)).toBeGreaterThanOrEqual(8); // the experience axis left in version 7, the potions in 8
     expect(cfg.verdict).toEqual({ invite: 70, maybe: 30, minRuns: 3 });
     for (const role of ["dps", "healer", "tank"] as const) {
       expect(cfg.globalCurve[role][0]).toEqual([0, 0]);

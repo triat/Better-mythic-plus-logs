@@ -52,6 +52,15 @@ describe("deploy/ files agree on the VPS layout", () => {
     expect(b).toContain('grep -qs "/opt/bmpl/bmpl.db" /etc/litestream.yml');
     expect(b).toContain("install -m 755 \"$HERE/backup-check.sh\" /usr/local/sbin/bmpl-backup-check");
   });
+  test("the recalibration units: the bmpl binary and .env, hardened like bmpl.service, hourly and Wednesday 06:00 Paris", () => {
+    for (const [unit, cmd] of [["bmpl-calibrate-collect", "calibrate --hourly"], ["bmpl-calibrate-fit", "calibrate --fit"]] as const) {
+      const svc = read(`${unit}.service`);
+      for (const line of ["Type=oneshot", "User=bmpl", "WorkingDirectory=/opt/bmpl", "EnvironmentFile=/opt/bmpl/.env", `ExecStart=/opt/bmpl/bmpl ${cmd}`, "ProtectSystem=strict", "ReadWritePaths=/opt/bmpl", "NoNewPrivileges=yes"]) expect(svc).toContain(line);
+      expect(read("bootstrap.sh")).toContain(`${unit}.timer`);
+    }
+    expect(read("bmpl-calibrate-collect.timer")).toContain("OnCalendar=hourly");
+    expect(read("bmpl-calibrate-fit.timer")).toContain("OnCalendar=Wed *-*-* 06:00 Europe/Paris");
+  });
   test("no real secret or host leaks into the templates", () => {
     for (const f of ["Caddyfile", "litestream.yml", "bootstrap.sh"]) expect(read(f)).not.toMatch(/AKIA|sk_live|BEGIN (RSA|OPENSSH)/);
     expect(read("Caddyfile")).toContain("bmpl.example.com");

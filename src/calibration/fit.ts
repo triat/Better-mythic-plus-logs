@@ -128,7 +128,10 @@ export function fitGlobal(samples: Sample[], base: EvaluationConfig): GlobalFit 
     const raw = own.map((s) => { const i = collectInputs(s.payload, base); return globalScore(scoreAllAxes(i, base), i.role, base); })
       .filter((g): g is number => g !== null);
     if (raw.length < MIN_N) continue;
-    const c = percentileCurve(raw, true).map(([x, y]) => [round(x, 1), Math.round(y)] as [number, number]);
+    // Rounding to a tenth can merge two anchors, and a curve's x must strictly increase: keep the first of a tie, and
+    // only what lies strictly between the fixed end points.
+    const c = percentileCurve(raw, true).map(([x, y]) => [round(x, 1), Math.round(y)] as [number, number])
+      .filter(([x], i, a) => x > 0 && x < 100 && (i === 0 || x !== a[i - 1]![0]));
     globalCurve[role] = [[0, 0], ...c, [100, 100]];
 
     const xsBySource = new Map<string, number[]>();

@@ -1,0 +1,9 @@
+[Unit]
+Description=bmpl recalibration: fit every Wednesday at 06:00 Paris time, after the quiet window
+
+[Timer]
+OnCalendar=Wed *-*-* 06:00 Europe/Paris
+Persistent=false
+
+[Install]
+WantedBy=timers.target

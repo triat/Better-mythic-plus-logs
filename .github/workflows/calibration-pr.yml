@@ -1,0 +1,79 @@
+# Weekly recalibration, last step (spec docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md, decision 8).
+# The VPS fits on Wednesdays at 06:00 Paris (deploy/bmpl-calibrate-fit.timer); this workflow then reads the fit's
+# aggregates through the read-only ops API and, when the candidate moves verdicts or medians beyond the threshold,
+# opens or updates the pull request `calibration/<date>` with the new `globalCurve` and `reference`. It never merges.
+# Secrets: BMPL_URL (https://bmpl.<domain>) and BMPL_OPS_TOKEN. Needs "Allow GitHub Actions to create and approve pull
+# requests" in the repository settings.
+name: calibration-pr
+
+on:
+  # 05:45 UTC = 07:45 Paris in summer, 06:45 in winter: after the 06:00 fit in both.
+  schedule:
+    - cron: "45 5 * * 3"
+  workflow_dispatch:
+
+concurrency:
+  group: calibration-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - uses: extractions/setup-just@v4
+
+      # Unreachable or no fit yet: the run fails visibly, nothing else happens.
+      - name: Read the last fit
+        env:
+          BMPL_URL: ${{ secrets.BMPL_URL }}
+          BMPL_OPS_TOKEN: ${{ secrets.BMPL_OPS_TOKEN }}
+        run: |
+          curl -fsS --max-time 30 -H "Authorization: Bearer $BMPL_OPS_TOKEN" "$BMPL_URL/api/ops/calibration" -o "$RUNNER_TEMP/fit.json"
+
+      - name: Decide and write the candidate
+        id: apply
+        run: |
+          bun scripts/calibration/apply-candidate.ts "$RUNNER_TEMP/fit.json" src/evaluation/default-config.json "$RUNNER_TEMP/pr-body.md" 2> "$RUNNER_TEMP/reason.txt" >> "$GITHUB_OUTPUT" || { cat "$RUNNER_TEMP/reason.txt"; exit 1; }
+          { echo "### Weekly recalibration"; echo; cat "$RUNNER_TEMP/reason.txt"; } >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/reason.txt"
+
+      # A pull request opened with the workflow token does not start ci.yml, so the same checks run here first.
+      - name: Check the candidate like CI would
+        if: steps.apply.outputs.apply == 'true'
+        run: |
+          bun install --frozen-lockfile
+          bun install --frozen-lockfile --cwd web
+          just check
+          just lint
+          bun test
+
+      - name: Open or update the pull request
+        if: steps.apply.outputs.apply == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.apply.outputs.version }}
+        run: |
+          date=$(TZ=Europe/Paris date +%F)
+          branch="calibration/$date"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -am "feat(evaluation): weekly recalibration $date (config $VERSION)"
+          git push --force origin "$branch"
+          body="$RUNNER_TEMP/pr-body.md"
+          printf '\nChecked in this workflow (just check, just lint, bun test): a pull request opened with the workflow token does not start ci.yml.\n' >> "$body"
+          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')" ]; then
+            gh pr edit "$branch" --body-file "$body"
+          else
+            gh pr create --base main --head "$branch" --title "Weekly recalibration $date" --body-file "$body"
+          fi

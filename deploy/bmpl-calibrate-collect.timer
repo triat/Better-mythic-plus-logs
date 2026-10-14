@@ -1,0 +1,10 @@
+[Unit]
+Description=bmpl recalibration: sample every hour (spec docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md)
+
+[Timer]
+OnCalendar=hourly
+# A missed hour is not caught up: the next one samples anyway.
+Persistent=false
+
+[Install]
+WantedBy=timers.target

@@ -40,8 +40,10 @@ just check-deps                             # bun audit on both lockfiles — ru
 - **Never spend WCL points automatically.** Every WCL call costs budget (3600 pts/h per API client). Only `lookup`/`mplus` (rankings + run enrichment) and the explicit `analyze` / `POST /api/deepdive` fetch; anything else reads the SQLite cache. Raw WCL results are immutable → cached forever; analysis is always recomputed from raw.
 - **`just check` and `bun test` green at the end of every task**, with `web/dist` absent (server answers 503 for static routes then).
 - **English everywhere in code, docs and commits; UI strings live in `web/src/i18n/` — `en.ts` is the source, `fr.ts` mirrors it key for key; never write a UI literal in a component.** The user writes French in chat; answer in French.
-- **Every user-visible change adds its line to the user-facing changelog** under `"next"` in `web/src/changelog/en.ts`
-  and `fr.ts` (plain player language, one sentence, no internal names), in the same change. The release stamps
+- **Every change a user can notice goes into the user-facing changelog**, in the same change: a line under `"next"` in
+  `web/src/changelog/en.ts` and the same line in `fr.ts` (plain player language, one sentence, no internal names). That
+  covers a new feature, a changed screen, a score, verdict or signal that moves, a fixed bug a player could see. Tests,
+  CI, refactors and docs add none. Check it before ending every task: nobody else writes these lines. The release stamps
   `"next"` with the version and refuses to run without it (spec `docs/superpowers/specs/2026-10-14-whats-new-design.md`).
 - **`web/` imports from `src/` are types only** (`import type … from "@shared/…"`), single runtime exception `src/wow/classes.ts`. `verbatimModuleSyntax` enforces it.
 - **Front colours/radii/fonts come from `web/src/styles/tokens.css`**; never invent a value. Any visible UI change goes through the Claude Design canvas first (see `docs/agents/workflow.md`).

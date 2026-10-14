@@ -1,7 +1,7 @@
 // The Compare page (redesign phase 4, plan docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md task 3): the picker,
 // then the duel for two profiles or the ranking for three to five. It only reads history (`GET /api/history/:key`, 0 pts).
 // A pick that fails to load is named with a Retry; the comparison still shows when two or more loaded.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { HistoryItem, LookupPayload } from "../../types.ts";
 import { duelView, rankingView } from "../../lib/compare.ts";
 import type { CompareEntry } from "../../lib/compare.ts";
@@ -98,7 +98,7 @@ export function ComparePage({ tabs, selected, onSelect, loadEntry, onLoadFailed,
   const pending = selected.some((k) => !cache.has(k) && !failed.has(k));
   const retryFailed = () => load(failedKeys);
   const labelOf = (k: string) => tabs.find((i) => i.key === k)?.label ?? k;
-  let body;
+  let body: ReactNode;
   if (!open) body = <p className="muted cmp-none">{selected.length === 0 ? t("shell.compare.sub") : t("compare.pick.none")}</p>;
   else if (pending) body = <div className="muted"><span className="spinner" /> {t("compare.building")}</div>;
   else if (entries.length < 2) body = <Failure text={t("compare.failed.all")} onRetry={retryFailed} />;

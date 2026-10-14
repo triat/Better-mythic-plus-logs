@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import * as path from "node:path";
 import { fixturePayload } from "./helpers.ts";
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: strips the ANSI colour codes picocolors writes.
 const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 const tmp = path.join(import.meta.dir, "..", "..", ".superpowers-test-tmp");
 mkdirSync(tmp, { recursive: true });

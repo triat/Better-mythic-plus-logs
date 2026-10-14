@@ -178,6 +178,7 @@ export const en = {
     failed: "✗ Sign-in failed — Discord did not complete the login. Try again.",
     copy: "Copy",
     copied: "Copied",
+    // biome-ignore lint/suspicious/noThenProperty: a message key ("then sign in again"), never awaited.
     invite: { title: "Invitation required", body: "Your Discord account signed in fine, but it is not invited. Send your id to the admin:", then: "Then sign in again — no need to reload." },
     denied: {
       guild: { title: "Members of the guild's Discord only", text: "Your account is not in that server. Join it, then sign in again." },

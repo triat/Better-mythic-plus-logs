@@ -69,7 +69,10 @@ export function openDefensives(db: Database): DefensivesRepo {
   return {
     shared() {
       const out: Override = {};
-      for (const r of sharedAll.all()) (out[r.key] ??= []).push(JSON.parse(r.entry) as OverrideEntry);
+      for (const r of sharedAll.all()) {
+        out[r.key] ??= [];
+        out[r.key]!.push(JSON.parse(r.entry) as OverrideEntry);
+      }
       return tagOrigin(out, "shared");
     },
     upsertShared(key, entry, approvedBy, now) { sharedUpsert.run(key, entry.id, JSON.stringify(stripOrigin(entry)), approvedBy, now); },

@@ -1,4 +1,4 @@
-import type { AxisKey, DocsResponse, Evaluation, Evidence, EvidenceSource, LookupPayload, Role } from "../types.ts";
+import type { AxisKey, DocsResponse, Evidence, EvidenceSource, LookupPayload, Role } from "../types.ts";
 import type { MessageKey, T } from "../i18n/t.ts";
 import type { Locale } from "./locale.ts";
 import { signed } from "./format.ts";

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { AxisScore, Evaluation, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
+import type { AxisScore, Evidence, EvidenceSource, LookupPayload } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { axisInfo, axisWeightLabel, evidenceText, heroStats } from "./axes.ts";
@@ -8,25 +8,6 @@ const tFr = makeT(fr, "fr");
 
 const axis = (key: AxisScore["key"], score: number | null, evidence: AxisScore["evidence"] = [], confidence: AxisScore["confidence"] = "high"): AxisScore =>
   ({ key, score, confidence, evidence } as AxisScore);
-
-const ev: Evaluation = {
-  role: "healer", targetLevel: 21, global: 78, verdict: "invite", runsUsed: 9, analyzedRuns: 0, configVersion: "x",
-  axes: [
-    axis("throughput", 88, [
-      { label: "median parse 86%", delta: 27.4, source: "throughput.medianParse", value: 86.4 },
-      { label: "parse 79% on target-level keys", delta: 10.6, source: "throughput.parseAtTarget", value: 79 },
-    ]),
-    axis("survival", 82, [
-      { label: "0.2 individual deaths/run", delta: 18, source: "survival.individualDeaths", value: 0.2 },
-      { label: "avoidable +12% vs peers", delta: -6.2, source: "survival.avoidableVsPeers", value: 12.3 },
-      { label: "DTPS −3% vs peers", delta: 1, source: "survival.dtpsVsPeers", value: -3 },
-    ]),
-    axis("consistency", null, [], "low"),
-    axis("utility", 61), axis("preparation", 55),
-    // A payload saved before the experience axis left (config v7): never displayed.
-    axis("experience" as AxisScore["key"], 74),
-  ],
-};
 
 describe("axes view model", () => {
   test("heroStats", () => {

@@ -15,6 +15,10 @@ check:
     bun run typecheck
     bun run --cwd web typecheck
 
+# lint src/, web/src/, test/ and scripts/ (Biome, rules in biome.json; warnings do not fail)
+lint:
+    bun run lint
+
 # known-vulnerability check of both lockfiles (bun audit); run before a release
 check-deps:
     bun audit && cd web && bun audit

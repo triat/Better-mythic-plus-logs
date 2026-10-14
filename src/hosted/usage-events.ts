@@ -87,13 +87,19 @@ export function openUsageEvents(db: Database): UsageEventsRepo {
         const i = index(r.day);
         if (i < 0 || i >= days) continue;
         let row = daily.get(r.event);
-        if (!row) daily.set(r.event, (row = new Array<number>(days).fill(0)));
+        if (!row) {
+          row = new Array<number>(days).fill(0);
+          daily.set(r.event, row);
+        }
         row[i] = (row[i] ?? 0) + r.n;
       }
       const byUser = new Map<string, Array<{ userId: number; username: string; uses: number; lastAt: number }>>();
       for (const r of perEventUser.all(from, adm)) {
         let list = byUser.get(r.event);
-        if (!list) byUser.set(r.event, (list = []));
+        if (!list) {
+          list = [];
+          byUser.set(r.event, list);
+        }
         list.push({ userId: r.user_id, username: r.username, uses: r.n, lastAt: r.last_at });
       }
       const dailyActive = new Array<number>(days).fill(0);

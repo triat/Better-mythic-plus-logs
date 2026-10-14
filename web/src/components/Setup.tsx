@@ -55,7 +55,7 @@ export function Setup({ envPath, hasCredentials, onDone }: Props) {
         <form onSubmit={submit} className="setup-form">
           <label>{t("setup.clientId")}<input value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="off" required /></label>
           <label>{t("setup.clientSecret")}<input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} autoComplete="off" required /></label>
-          <button className="btn btn-primary" disabled={state.kind === "saving"}>{t("setup.save")}</button>
+          <button type="submit" className="btn btn-primary" disabled={state.kind === "saving"}>{t("setup.save")}</button>
         </form>
         {state.kind === "saving" && <p className="muted">{t("setup.saving")}</p>}
         {state.kind === "saved" && <p className="tone-good">{t("setup.saved")}</p>}

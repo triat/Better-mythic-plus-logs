@@ -40,7 +40,7 @@ const COLS: readonly Col[] = ["key", "dungeon", "time", "deaths", "dtps", "avoid
 
 /** Runs (mockup F-Moi-Runs): the season's tiles, the filters, the runs grouped by game week, the expanded run. */
 export function OwnerRuns(props: OwnerRunsProps) {
-  const { payload, season, run, onRun, onFilters } = props;
+  const { season, run, onRun, onFilters } = props;
   const { t, locale } = useT();
   const opts = useMemo(() => filterOptions(t, season), [t, season]);
   const f = props.filters ?? opts.defaults;

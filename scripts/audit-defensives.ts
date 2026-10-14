@@ -94,7 +94,8 @@ for (const key of KICK_SPECS) {
       sampled++;
       const casts = new Map((tables.reportData.report.casts.data?.entries ?? []).map((e) => [e.guid, e]));
       for (const e of casts.values()) {
-        const s = (seen[e.guid] ??= { name: e.name, casts: 0, runs: 0 });
+        seen[e.guid] ??= { name: e.name, casts: 0, runs: 0 };
+        const s = seen[e.guid]!;
         s.casts += e.total; s.runs++;
       }
       for (const a of tables.reportData.report.buffs.data?.auras ?? []) {

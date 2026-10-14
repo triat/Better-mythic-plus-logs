@@ -17,8 +17,7 @@ export function Around({ message, params }: Props) {
   const parts: ReactNode[] = [];
   const re = /\{(\w+)\}/g;
   let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(message))) {
+  for (const m of message.matchAll(re)) {
     const name = m[1]!;
     if (!(name in params)) continue;
     parts.push(message.slice(last, m.index));

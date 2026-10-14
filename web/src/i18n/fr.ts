@@ -169,6 +169,7 @@ export const fr: Mirror<typeof en> = {
     failed: "✗ Connexion échouée — Discord n'a pas terminé la connexion. Réessaie.",
     copy: "Copier",
     copied: "Copié",
+    // biome-ignore lint/suspicious/noThenProperty: a message key ("then sign in again"), never awaited.
     invite: { title: "Invitation requise", body: "Ton compte Discord s'est bien connecté, mais il n'est pas invité. Envoie ton id à l'admin :", then: "Puis reconnecte-toi — pas besoin de recharger." },
     denied: {
       guild: { title: "Réservé aux membres du Discord de la guilde", text: "Ton compte n'est pas sur ce serveur. Rejoins-le, puis reconnecte-toi." },

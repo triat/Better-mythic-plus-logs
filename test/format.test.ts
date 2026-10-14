@@ -7,6 +7,7 @@ import { parseRunSignals } from "../src/signals/wcl-run.ts";
 import { formatDuration } from "../src/util.ts";
 import { loadWclFixture } from "./fixtures.ts";
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: strips the ANSI colour codes picocolors writes.
 const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 
 const base: RunDefensives = {

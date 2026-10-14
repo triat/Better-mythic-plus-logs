@@ -12,9 +12,11 @@
     "dev": "bun --watch src/cli.ts",
     "build": "bun run --cwd web build && bun build src/cli.ts --compile --outfile bmpl",
     "typecheck": "tsc --noEmit",
+    "lint": "biome lint",
     "test": "bun test"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "bun-types": "1.4.3",
     "typescript": "^7.0.2"
   },

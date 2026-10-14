@@ -57,6 +57,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <a href="#users">{t("admin.page.nav.users")}</a>
         <a href="#invites">{t("admin.page.nav.invites")}</a>
         <a href="#instance">{t("admin.page.nav.instance")}</a>
+        {/* biome-ignore lint/a11y/useValidAnchor: a real in-page link; the click also preselects the error filter. */}
         <a href="#audit" onClick={() => { if (data.errors24h > 0) setAuditKind("error"); }}>
           {t("admin.page.nav.audit")}{data.errors24h > 0 && <span className="chip" style={{ marginLeft: 4, color: "var(--red)" }}>{t("admin.page.errors", { n: data.errors24h })}</span>}
         </a>

@@ -149,10 +149,10 @@ describe("dungeonGrid", () => {
       ...v.notes.flatMap((n) => [n.value, n.sub]),
       ...v.rows.flatMap((r) => r.facts.map((f) => f.value)),
     ];
-    const escape = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     // A whole field, or a run of words inside one: never a fragment of a longer number or word.
     const inField = (value: string) => {
-      const re = new RegExp(`(^|[\\s(])${escape(value)}($|[\\s)·,])`);
+      const re = new RegExp(`(^|[\\s(])${esc(value)}($|[\\s)·,])`);
       return fields.some((f) => f === value || re.test(f));
     };
     const header = profileHeader(tEn, "en", p).facts.map((f) => f.value);

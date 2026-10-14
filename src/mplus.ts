@@ -123,8 +123,8 @@ export const uniqueSpecs = (runs: MPlusRun[]): string[] => {
   return [...seen].sort();
 };
 
-export async function getCurrentMplusZone(): Promise<CurrentMplusZone> {
-  const data = await gql<ZonesData>(ZONES_QUERY);
+export async function getCurrentMplusZone(q: <T>(query: string) => Promise<T> = gql): Promise<CurrentMplusZone> {
+  const data = await q<ZonesData>(ZONES_QUERY);
   const mplus = data.worldData.zones.filter((z) => /^Mythic\+/.test(z.name));
   const current = mplus.find((z) => !z.frozen);
   if (!current) {

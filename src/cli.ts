@@ -38,6 +38,7 @@ import type { HostedConfig } from "./hosted/config.ts";
 import { openHosted } from "./hosted/db.ts";
 import { tablesFor } from "./hosted/defensives.ts";
 import { runWatch } from "./watch.ts";
+import { cmdCalibrate } from "./calibration/cli.ts";
 import { regionFlag } from "./wow/regions.ts";
 import type { Region } from "./wow/regions.ts";
 
@@ -85,6 +86,10 @@ Usage:
   bmpl invite <discord-id> [--note "…"] | --list | --remove <discord-id>
                                      Hosted mode: allow a Discord user to sign in
                                      (writes the invites table in bmpl.db).
+  bmpl calibrate --hourly [--minutes 55]
+                                     Weekly recalibration, run by its systemd timer:
+                                     one hour of sampling with the WCL points the
+                                     members leave (spends points; calibration.db).
   bmpl char <name> <realm>           Basic character info.
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).
@@ -684,6 +689,11 @@ async function main(): Promise<void> {
         await runServer({ port: plan.port, open: plan.open, hosted: plan.hosted, hostedConfig: plan.hosted ? plan.hostedConfig : undefined, host: plan.host });
         // Bun.serve keeps the process alive; do not return.
         return;
+      }
+      case "calibrate": {
+        // Spends WCL points on purpose: the user-approved exception, run by its systemd timer (AGENTS.md).
+        await cmdCalibrate(rest);
+        break;
       }
       case "invite": {
         await cmdInvite(rest);

@@ -14,6 +14,9 @@ import { cacheKey } from "../src/server-history.ts";
 import { opsRoutes, opsTokenMatches } from "../src/server/routes-ops.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
+import { fitAndCompare, writeFit } from "../src/calibration/report.ts";
+import { DEFAULT_CONFIG, validateConfig } from "../src/evaluation/config.ts";
+import { payloadWith, runWith } from "./evaluation/helpers.ts";
 
 const TOKEN = "Zq8vN3kP0rT6wY1bC4eH7jL2mQ5sU9xAopsTestToken";
 const bearer = (t = TOKEN): RequestInit => ({ headers: { authorization: `Bearer ${t}` } });
@@ -122,6 +125,35 @@ describe("routes", () => {
       expect((await fetch(u(`/api/ops/errors?${q}`), bearer())).status).toBe(400);
     }
     expect((await fetch(u("/api/ops/logs?since=-1"), bearer())).status).toBe(400);
+  });
+});
+
+describe("calibration", () => {
+  test("404 before the first fit; then the fit's aggregates, behind the token, without a character name", async () => {
+    const saved = process.env.BMPL_CALIBRATION_DB;
+    process.env.BMPL_CALIBRATION_DB = join(dir, "calibration.db");
+    try {
+      const none = await fetch(u("/api/ops/calibration"), bearer());
+      expect(none.status).toBe(404);
+      expect(await none.json()).toEqual({ ok: false, error: "no fit yet" });
+      const samples = Array.from({ length: 120 }, (_, i) => ({
+        study: { key: `k${i}`, name: `Secretname${i}`, server: "Hiddenrealm", className: "Mage", spec: "Fire", role: "dps" as const, level: 16, percentile: 0.5, quintile: 2 },
+        payload: payloadWith(Array.from({ length: 6 }, () => runWith({}, { parsePercent: (i * 7) % 100, keyLevel: 16 })), { targetLevel: 16 }),
+      }));
+      writeFit(join(dir, "calibration.db"), fitAndCompare(samples, validateConfig(DEFAULT_CONFIG), 1_800_000_000_000));
+      expect((await fetch(u("/api/ops/calibration"))).status).toBe(401);
+      const r = await (await fetch(u("/api/ops/calibration"), bearer())).json();
+      expect(r.ok).toBe(true);
+      expect(r.fittedAt).toBe(1_800_000_000_000);
+      expect(r.candidate.globalCurve.dps[0]).toEqual([0, 0]);
+      expect(typeof r.thresholdMet).toBe("boolean");
+      expect(r.comparison).toContain("# Weekly recalibration");
+      const all = JSON.stringify(r);
+      expect(all).not.toContain("Secretname");
+      expect(all).not.toContain("Hiddenrealm");
+    } finally {
+      if (saved === undefined) delete process.env.BMPL_CALIBRATION_DB; else process.env.BMPL_CALIBRATION_DB = saved;
+    }
   });
 });
 

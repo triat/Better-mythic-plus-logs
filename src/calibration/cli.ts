@@ -6,7 +6,9 @@ import { buildLookupPayload, performLookup } from "../lookup.ts";
 import { resolveCalibrationDbPath } from "../setup.ts";
 import { openStore } from "../signals/store.ts";
 import { gql } from "../wcl/client.ts";
-import { collectHour } from "./collect.ts";
+import { getCurrentMplusZone } from "../mplus.ts";
+import { collectHour, WINDOW_MS } from "./collect.ts";
+import { fitAndCompare, writeFit } from "./report.ts";
 import { ensureMarker, memberMarkerAt, resolveMarkerPath } from "./marker.ts";
 import { openSamples } from "./samples.ts";
 import { reserveFromEnv } from "./window.ts";
@@ -37,7 +39,27 @@ export async function runHourly(minutes = 55): Promise<void> {
   }
 }
 
+/** The weekly fit, 0 WCL points: reads the window's samples, writes candidate.json and comparison.md. */
+export async function runFit(): Promise<void> {
+  const path = await resolveCalibrationDbPath();
+  const samples = openSamples(path);
+  try {
+    const zone = await getCurrentMplusZone();
+    const now = Date.now();
+    samples.prune(zone.id, now - WINDOW_MS);
+    const r = fitAndCompare(samples.list(zone.id, now - WINDOW_MS), validateConfig(DEFAULT_CONFIG), now);
+    writeFit(path, r);
+    stamp(`fit: ${r.test} held-out characters; ${r.reason}`);
+  } finally {
+    samples.close();
+  }
+}
+
 export async function cmdCalibrate(rest: string[]): Promise<void> {
+  if (rest.includes("--fit")) {
+    await runFit();
+    return;
+  }
   if (rest.includes("--hourly")) {
     const i = rest.indexOf("--minutes");
     const minutes = i >= 0 ? Number(rest[i + 1]) : 55;
@@ -45,5 +67,5 @@ export async function cmdCalibrate(rest: string[]): Promise<void> {
     await runHourly(minutes);
     return;
   }
-  throw new Error("Usage: bmpl calibrate --hourly [--minutes 55]");
+  throw new Error("Usage: bmpl calibrate --hourly [--minutes 55] | --fit");
 }

@@ -10,7 +10,8 @@ import { sha256Hex } from "../hosted/config.ts";
 import { describeConfig, lastBackupAt } from "../hosted/instance.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import { parseUsageQuery } from "../hosted/usage-events.ts";
-import { resolveEnvPath } from "../setup.ts";
+import { readFit } from "../calibration/report.ts";
+import { resolveCalibrationDbPath, resolveEnvPath } from "../setup.ts";
 import { jsonResponse } from "./http.ts";
 import { AUDIT_MAX_LIMIT } from "./routes-admin.ts";
 import { route } from "./routes.ts";
@@ -81,6 +82,13 @@ export function opsRoutes(rt: HostedRuntime): Route[] {
       const p = paging(url);
       if (!p.ok) return p.res;
       return jsonResponse({ ok: true, entries: rt.errors.list({ since: p.since, limit: p.limit }) });
+    }), "public"),
+    // The weekly recalibration's last fit (`bmpl calibrate --fit`), read by .github/workflows/calibration-pr.yml.
+    // Aggregates only: curves, medians and counts, never a character.
+    route("GET", "/api/ops/calibration", guarded(async () => {
+      const fit = readFit(await resolveCalibrationDbPath());
+      if (!fit) return jsonResponse({ ok: false, error: "no fit yet" }, 404);
+      return jsonResponse({ ok: true, ...fit.result, comparison: fit.comparison });
     }), "public"),
   ];
 }

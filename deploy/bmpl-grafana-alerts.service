@@ -1,0 +1,6 @@
+[Unit]
+Description=Install or remove Grafana's alert rules after /etc/grafana/grafana.env changed
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/bmpl-grafana-alerts

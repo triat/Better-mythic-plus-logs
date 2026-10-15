@@ -84,7 +84,10 @@ every restart.
     <tag>` after the binary; that root-owned script downloads the tag from GitHub itself (nothing the job sends runs as
     root), fingerprints `deploy/` and the alert webhook's presence, and runs the tag's `bootstrap.sh` only when the
     fingerprint changed. `bootstrap.sh` installs a file only when it differs and restarts only the services concerned.
-    Manual once (the first `bootstrap.sh`), and for secrets and DNS.
+    Manual once, and for secrets and DNS. Then reduced further (user, 2026-10-15: "fait 1 et 2"): the first install is
+    one line (`curl … deploy/provision.sh | sudo bash -s -- <tag> --domain <domain>`, the script installs itself), and
+    `bmpl-grafana-alerts.path` watches `/etc/grafana/grafana.env`, so pasting the Discord webhook turns the alerts on
+    with no command. DNS: one record per subdomain, no wildcard (user's choice).
 
 ## Data flow
 

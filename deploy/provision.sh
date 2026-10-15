@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
-# /usr/local/sbin/bmpl-provision <vX.Y.Z> [--force] — applies deploy/ of a release to this VPS, only when it changed.
-# Installed root-owned by bootstrap.sh; the deploy user may run it through sudo (sudoers-bmpl-deploy), never edit it.
-# It downloads the tag from GitHub itself (the repository is public), so nothing the deploy job sends is ever run as
-# root: a leaked deploy key can at most re-apply an official release. Run by .github/workflows/deploy.yml after the
-# binary is installed; by hand with --force after a change outside the repository (the Discord webhook in
-# /etc/grafana/grafana.env).
+# bmpl-provision <vX.Y.Z> [--force] [--domain <domain>] — applies deploy/ of a release to this VPS, only when it changed.
+# Installed root-owned as /usr/local/sbin/bmpl-provision by bootstrap.sh; the deploy user may run it through sudo
+# (sudoers-bmpl-deploy), never edit it. It downloads the tag from GitHub itself (the repository is public), so nothing
+# the deploy job sends is ever run as root: a leaked deploy key can at most re-apply an official release. Run by
+# .github/workflows/deploy.yml after the binary is installed. The first time, straight from GitHub, as root:
+#   curl -fsSL https://raw.githubusercontent.com/triat/Better-mythic-plus-logs/<tag>/deploy/provision.sh \
+#     | sudo bash -s -- <tag> --domain bmpl.example.com
 set -euo pipefail
+usage() { echo "usage: bmpl-provision <vX.Y.Z> [--force] [--domain <domain>]" >&2; exit 2; }
 TAG="${1:-}"
-FORCE="${2:-}"
-[[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "usage: bmpl-provision <vX.Y.Z> [--force]" >&2; exit 2; }
-[ -z "$FORCE" ] || [ "$FORCE" = "--force" ] || { echo "usage: bmpl-provision <vX.Y.Z> [--force]" >&2; exit 2; }
+[[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || usage
+shift
+FORCE=""
+NEW_DOMAIN=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --force) FORCE=--force ;;
+    --domain) [ $# -ge 2 ] || usage; NEW_DOMAIN="$2"; shift ;;
+    *) usage ;;
+  esac
+  shift
+done
+if [ -n "$NEW_DOMAIN" ]; then
+  [[ "$NEW_DOMAIN" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo "bmpl-provision: bad domain: $NEW_DOMAIN" >&2; exit 2; }
+  install -d -m 755 /etc/bmpl
+  [ -f /etc/bmpl/provision.conf ] || printf 'DOMAIN=%s\nREPO=triat/Better-mythic-plus-logs\n' "$NEW_DOMAIN" > /etc/bmpl/provision.conf
+fi
+[ -f /etc/bmpl/provision.conf ] || { echo "bmpl-provision: first run: pass --domain <domain>" >&2; exit 2; }
 # shellcheck disable=SC1091
 . /etc/bmpl/provision.conf # DOMAIN=…, REPO=owner/name
 STATE=/var/lib/bmpl-provision
@@ -37,10 +54,9 @@ tar -xzf "$work/src.tar.gz" -C "$work"
 src=$(find "$work" -mindepth 1 -maxdepth 1 -type d | head -n 1)
 [ -f "$src/deploy/bootstrap.sh" ] || { report failed "no deploy/bootstrap.sh in ${TAG}"; exit 1; }
 
-# The fingerprint: every file under deploy/ (path and content), and whether the alert rules can be installed.
-alerts=off
-grep -qs '^DISCORD_ALERT_WEBHOOK=.\+' /etc/grafana/grafana.env && alerts=on
-fingerprint=$( { (cd "$src" && find deploy -type f -print0 | sort -z | xargs -0 sha256sum); echo "alerts=$alerts"; } | sha256sum | cut -d' ' -f1)
+# The fingerprint: every file under deploy/, path and content. (The alert webhook in grafana.env has its own watch:
+# bmpl-grafana-alerts.path.)
+fingerprint=$( (cd "$src" && find deploy -type f -print0 | sort -z | xargs -0 sha256sum) | sha256sum | cut -d' ' -f1)
 if [ "$FORCE" != "--force" ] && [ "$(cat "$STATE/applied" 2>/dev/null || true)" = "$fingerprint" ]; then
   report unchanged "deploy/ as applied"
   exit 0

@@ -113,8 +113,8 @@ them (`bmpl-provision`, [deploy/README.md § 9d](../deploy/README.md)).
   `DISCORD_ALERT_WEBHOOK` in `/etc/grafana/grafana.env`: a server error, more
   than 5 WCL errors in 15 minutes, bmpl silent for over 2 hours, the backup
   older than 2 hours, a failed recalibration run. Empty webhook: no alert rule
-  is installed (Grafana would refuse to start); set it, then
-  `sudo bmpl-provision --force vX.Y.Z` (the running version).
+  is installed (Grafana would refuse to start). Paste the URL into that file
+  and save: a systemd path unit installs the rules and restarts Grafana.
 - **A member reports an error**: ask for the time; in Grafana's Explore, query
   `service:bmpl event:server_error` around it, or `req:<id>` with the
   `X-Request-Id` of the failed response.

@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch /etc/grafana/grafana.env: pasting the Discord webhook there turns the alerts on
+
+[Path]
+PathChanged=/etc/grafana/grafana.env
+
+[Install]
+WantedBy=multi-user.target

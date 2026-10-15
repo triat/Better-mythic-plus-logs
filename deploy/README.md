@@ -64,13 +64,19 @@ a drop-in that sorts *before* it, `/etc/ssh/sshd_config.d/00-bmpl.conf` (a
 `zz-` name is silently ignored; deleting the cloud-init drop-in also works),
 then `sshd -t && systemctl restart ssh`. Verify with `sshd -T | grep -i
 passwordauthentication` and keep the current session open until a fresh
-key-based login works. Then, from the repo root:
+key-based login works. Then, on the VPS as root, one line with the release tag
+to install (the latest one) and your domain:
 
 ```bash
-ssh root@<vps> 'mkdir -p /root/bmpl-deploy'
-scp -r deploy .env.hosted.example root@<vps>:/root/bmpl-deploy/
-ssh root@<vps> 'cd /root/bmpl-deploy/deploy && bash bootstrap.sh bmpl.<domain>'
+curl -fsSL https://raw.githubusercontent.com/triat/Better-mythic-plus-logs/vX.Y.Z/deploy/provision.sh \
+  | sudo bash -s -- vX.Y.Z --domain bmpl.<domain>
 ```
+
+It downloads that tag from GitHub, runs its `bootstrap.sh` and installs itself
+as `/usr/local/sbin/bmpl-provision` (§ 9d): every later release applies
+`deploy/` by itself. From a checkout instead (no release yet):
+`scp -r deploy .env.hosted.example root@<vps>:/root/bmpl-deploy/` then
+`ssh root@<vps> 'bash /root/bmpl-deploy/deploy/bootstrap.sh bmpl.<domain>'`.
 
 `bootstrap.sh` is idempotent (re-run it after a `git pull` that touched
 `deploy/`). It installs `curl`, `ufw`, `sqlite3`, `gnupg`, `fail2ban`,
@@ -266,8 +272,9 @@ Grafana Alloy and Grafana from Grafana's apt repository (Grafana on loopback
 at the VPS (Caddy fetches its certificate). The first run creates
 `/etc/grafana/grafana.env` (root:grafana, 640) with the domain, a random admin
 password (printed path, user `admin`) and an empty `DISCORD_ALERT_WEBHOOK`;
-put a Discord webhook URL there and run `sudo bmpl-provision --force vX.Y.Z`
-(the running version) to install the alert rules. Dashboards and rules live in `deploy/grafana/` and are read-only in the
+paste a Discord webhook URL there and save: `bmpl-grafana-alerts.path` notices
+the change, installs the alert rules and restarts Grafana (emptying it removes
+them the same way). Dashboards and rules live in `deploy/grafana/` and are read-only in the
 UI. Spec: `docs/superpowers/specs/2026-10-15-observability-design.md`.
 
 **9d. Provisioning on release.** Every release applies `deploy/` to the VPS by
@@ -281,7 +288,7 @@ only when the fingerprint differs from the last one applied
 files whose content differs and restarts only the services they belong to.
 Each run logs one `provision` line (applied, unchanged or failed), visible in
 Grafana; a failure turns the deploy job red. By hand: `sudo bmpl-provision
-vX.Y.Z [--force]`. The first time, run `bootstrap.sh` by hand once (§ 2): the
+vX.Y.Z [--force]`. The first time, the one-liner of § 2 installs it: the
 deploy job skips the step with a notice until `bmpl-provision` exists. Secrets
 (`/opt/bmpl/.env`, `/etc/grafana/grafana.env`, `/etc/litestream.yml`) and DNS
 records stay yours.

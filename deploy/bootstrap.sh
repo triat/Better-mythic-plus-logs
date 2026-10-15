@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # VPS setup for bmpl hosted mode, first time and every later change. Safe to re-run: every file is installed only when
-# its content differs, and only the services whose files changed are reloaded or restarted. Run by hand once
-# (sudo ./bootstrap.sh bmpl.example.com); after that, each release runs it through /usr/local/sbin/bmpl-provision when
-# deploy/ changed (deploy/provision.sh, .github/workflows/deploy.yml).
+# its content differs, and only the services whose files changed are reloaded or restarted. Run through
+# deploy/provision.sh: once by hand, as the one-liner in deploy/README.md § 2, then by each release when deploy/ changed
+# (.github/workflows/deploy.yml). Direct use still works: sudo ./bootstrap.sh bmpl.example.com.
 set -euo pipefail
 DOMAIN="${1:?usage: bootstrap.sh <domain>}"
 export DEBIAN_FRONTEND=noninteractive
@@ -163,14 +163,13 @@ install -d -o root -g grafana -m 750 /etc/grafana/dashboards/bmpl
 for f in "$HERE"/grafana/dashboards/*.json; do put "$f" "/etc/grafana/dashboards/bmpl/$(basename "$f")" 640 root:grafana; done
 put "$HERE/grafana/provisioning/datasources/victorialogs.yaml" /etc/grafana/provisioning/datasources/victorialogs.yaml 640 root:grafana grafana
 put "$HERE/grafana/provisioning/dashboards/bmpl.yaml" /etc/grafana/provisioning/dashboards/bmpl.yaml 640 root:grafana grafana
-if grep -qs '^DISCORD_ALERT_WEBHOOK=.\+' /etc/grafana/grafana.env; then
-  put "$HERE/grafana/provisioning/alerting/bmpl.yaml" /etc/grafana/provisioning/alerting/bmpl.yaml 640 root:grafana grafana
-elif [ -e /etc/grafana/provisioning/alerting/bmpl.yaml ]; then
-  rm -f /etc/grafana/provisioning/alerting/bmpl.yaml
-  CHANGED[grafana]=1
-else
-  echo "Grafana alerts: off until DISCORD_ALERT_WEBHOOK is set in /etc/grafana/grafana.env (then: sudo bmpl-provision --force <tag>)"
-fi
+# The alert rules: kept aside, installed by bmpl-grafana-alerts once grafana.env holds the webhook; the .path unit runs it
+# again whenever grafana.env is saved, so pasting the webhook there is enough.
+install -d -m 755 /usr/local/share/bmpl
+put "$HERE/grafana/provisioning/alerting/bmpl.yaml" /usr/local/share/bmpl/grafana-alerting.yaml 644 root:root
+put "$HERE/grafana-alerts.sh" /usr/local/sbin/bmpl-grafana-alerts 755 root:root
+put "$HERE/bmpl-grafana-alerts.service" /etc/systemd/system/bmpl-grafana-alerts.service 644 root:root systemd
+put "$HERE/bmpl-grafana-alerts.path" /etc/systemd/system/bmpl-grafana-alerts.path 644 root:root systemd
 
 # 5. Hardening: fail2ban on sshd (bans through ufw) and unattended security upgrades with a
 # scheduled reboot — Ubuntu ships 20auto-upgrades already enabled, this only adds the reboot policy.
@@ -199,4 +198,7 @@ for s in victorialogs alloy grafana-server; do
   key="$s"; [ "$s" = grafana-server ] && key=grafana
   if [ -n "${CHANGED[$key]:-}" ] || ! systemctl is-active --quiet "$s"; then systemctl restart "$s"; echo "restarted $s"; fi
 done
+# After Grafana is up: the alert rules as grafana.env allows (restarts Grafana only if that changes them), then the watch.
+/usr/local/sbin/bmpl-grafana-alerts
+systemctl enable --now bmpl-grafana-alerts.path >/dev/null 2>&1
 echo "bootstrap done (${#CHANGED[@]} change groups: ${!CHANGED[*]})"

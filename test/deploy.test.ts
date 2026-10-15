@@ -106,6 +106,16 @@ describe("deploy/ files agree on the VPS layout", () => {
   test("provisioning: bmpl-provision downloads the tag itself, applies deploy/ only when its fingerprint changed, and the deploy job calls it", () => {
     const p = read("provision.sh");
     for (const piece of ["set -euo pipefail", "^v[0-9]+\\.[0-9]+\\.[0-9]+$", "https://codeload.github.com/${REPO}/tar.gz/refs/tags/${TAG}", "flock", "find deploy -type f -print0 | sort -z | xargs -0 sha256sum", "/var/lib/bmpl-provision", "systemd-cat -t bmpl-provision", "--force"]) expect(p).toContain(piece);
+    expect(p).toContain("--domain");
+    expect(p).toContain("first run: pass --domain");
+    // pasting the webhook is enough: a path unit on grafana.env runs bmpl-grafana-alerts.
+    expect(read("bmpl-grafana-alerts.path")).toContain("PathChanged=/etc/grafana/grafana.env");
+    expect(read("bmpl-grafana-alerts.service")).toContain("ExecStart=/usr/local/sbin/bmpl-grafana-alerts");
+    const ga = read("grafana-alerts.sh");
+    for (const piece of ["set -euo pipefail", "DISCORD_ALERT_WEBHOOK=.\\+", "/etc/grafana/provisioning/alerting/bmpl.yaml", "systemctl restart grafana-server"]) expect(ga).toContain(piece);
+    const b = read("bootstrap.sh");
+    for (const piece of ["/usr/local/sbin/bmpl-grafana-alerts", "systemctl enable --now bmpl-grafana-alerts.path", "/usr/local/share/bmpl/grafana-alerting.yaml"]) expect(b).toContain(piece);
+    expect(b).not.toContain('put "$HERE/grafana/provisioning/alerting/bmpl.yaml" /etc/grafana/provisioning/alerting/bmpl.yaml');
     expect(read("bootstrap.sh")).toContain('put "$HERE/provision.sh" /usr/local/sbin/bmpl-provision 755 root:root');
     expect(read("sudoers-bmpl-deploy")).toContain(", /usr/local/sbin/bmpl-provision");
     expect(read("alloy/config.alloy")).toContain(".*;bmpl-provision");

@@ -109,7 +109,8 @@ plan `docs/superpowers/plans/2026-10-14-weekly-recalibration.md`; live once the 
 release and adds the repository secrets `BMPL_URL` and `BMPL_OPS_TOKEN`): `src/calibration/`, `bmpl calibrate`, the two
 VPS timers, `GET /api/ops/calibration` and `.github/workflows/calibration-pr.yml`. The logs stack is implemented (spec
 `docs/superpowers/specs/2026-10-15-observability-design.md`; live once the user adds the DNS record `logs.<domain>` and
-re-runs `deploy/bootstrap.sh` once after the release; later releases apply `deploy/` themselves through `bmpl-provision`): `src/log.ts`, VictoriaLogs + Alloy + Grafana on the VPS, dashboards and
+runs the one-line install of `deploy/README.md` § 2 once after the release; later releases apply `deploy/` themselves
+through `bmpl-provision`): `src/log.ts`, VictoriaLogs + Alloy + Grafana on the VPS, dashboards and
 alert rules in `deploy/grafana/`. Redesign phase 4 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md`): Compare 2–5 (duel /
 ranking), the Live page in the frame, the old CSS and components removed — the redesign is complete. Next: self-review
 phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live

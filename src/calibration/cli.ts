@@ -12,8 +12,10 @@ import { fitAndCompare, writeFit } from "./report.ts";
 import { ensureMarker, memberMarkerAt, resolveMarkerPath } from "./marker.ts";
 import { openSamples } from "./samples.ts";
 import { reserveFromEnv } from "./window.ts";
+import { errorFields, log } from "../log.ts";
 
-const stamp = (l: string) => console.log(`${new Date().toISOString()} ${l}`);
+// Structured lines (src/log.ts), like the server's: the journal of the two units ships to the logs stack.
+const note = (message: string) => log.info("calibration_note", { message });
 
 /** One hour of collection; `minutes` bounds it so the next hourly run never overlaps. */
 export async function runHourly(minutes = 55): Promise<void> {
@@ -24,15 +26,20 @@ export async function runHourly(minutes = 55): Promise<void> {
   const store = openStore(path);
   const evalConfig = validateConfig(DEFAULT_CONFIG);
   const tables = await getDefensives();
+  const startedAt = Date.now();
   try {
-    await collectHour({
+    const report = await collectHour({
       samples, gql, reserve: reserveFromEnv(process.env.BMPL_CALIBRATION_RESERVE), endAt: Date.now() + minutes * 60_000,
-      memberAt: () => memberMarkerAt(marker), log: stamp,
+      memberAt: () => memberMarkerAt(marker), log: note,
       lookup: async (c) => {
         const o = await performLookup({ name: c.name, realm: c.server, region: "eu", level: c.level, spec: c.spec, enrich: true }, { store, evalConfig, tables });
         return o.ok ? { ok: true, payload: buildLookupPayload(o, c.server) } : { ok: false, error: o.error };
       },
     });
+    log.info("calibration_hour", { ...report, minutes: Math.round((Date.now() - startedAt) / 60_000) });
+  } catch (e) {
+    log.error("calibration_failed", { step: "hourly", ...errorFields(e) });
+    throw e;
   } finally {
     store.close();
     samples.close();
@@ -49,7 +56,10 @@ export async function runFit(): Promise<void> {
     samples.prune(zone.id, now - WINDOW_MS);
     const r = fitAndCompare(samples.list(zone.id, now - WINDOW_MS), validateConfig(DEFAULT_CONFIG), now);
     writeFit(path, r);
-    stamp(`fit: ${r.test} held-out characters; ${r.reason}`);
+    log.info("calibration_fit", { test: r.test, verdictChanges: r.verdictChanges, thresholdMet: r.thresholdMet, reason: r.reason });
+  } catch (e) {
+    log.error("calibration_failed", { step: "fit", ...errorFields(e) });
+    throw e;
   } finally {
     samples.close();
   }

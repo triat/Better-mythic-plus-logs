@@ -4,6 +4,7 @@ import { ACTION_KIND, AUDIT_KINDS, AuditLog, actionsOf, clip, kindOf } from "../
 import type { AuditAction } from "../../src/hosted/audit.ts";
 import { openHosted } from "../../src/hosted/db.ts";
 import type { HostedDb, UserRow } from "../../src/hosted/db.ts";
+import { setLogSink } from "../../src/log.ts";
 
 const ALL_ACTIONS = Object.keys(ACTION_KIND) as AuditAction[];
 
@@ -44,15 +45,14 @@ describe("AuditLog", () => {
     const [row] = db.audit.list({ actions: null, before: null, limit: 1 });
     expect(row!.at).toBeGreaterThanOrEqual(before);
     const broken = new AuditLog({ ...db.audit, add: () => { throw new Error("disk full"); } });
-    const err = console.error;
-    const calls: unknown[][] = [];
-    console.error = (...a: unknown[]) => { calls.push(a); };
+    const lines: string[] = [];
+    setLogSink((l) => lines.push(l));
     try {
       expect(() => broken.record("logout")).not.toThrow();
     } finally {
-      console.error = err;
+      setLogSink(null);
     }
-    expect(calls).toHaveLength(1);
+    expect(lines.map((l) => JSON.parse(l))).toEqual([expect.objectContaining({ level: "error", event: "audit_write_failed", action: "logout", message: "disk full" })]);
   });
 
   test("record bounds target (300) and ip (64), whether explicit or from the scope", async () => {

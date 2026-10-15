@@ -3,7 +3,7 @@ import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, 
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { AUDIT_KIND_OF, USAGE_CATEGORY_ORDER, auditChips, usageCards, usageChips, usageIsEmpty, usageKpis, usageRow, usageTable, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
-import { fmtPts } from "./format.ts";
+import { fmtPts, fmtStamp } from "./format.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -101,11 +101,11 @@ describe("users, invites, instance", () => {
   test("user row: display name, handle, role chip, toggle label, last seen, points, revoke text, self/config guards", () => {
     expect(userRow(tEn, users[0]!, NOW, 1)).toEqual({
       id: 1, name: "Muleyoxo", handle: "@muleyoxo", initials: "M", avatarUrl: "a", role: "admin", roleNote: "env", toggle: null,
-      lastSeen: "just now", pointsHour: "181", pointsHourTone: "", points24h: "2 340", discordId: "11", sessions: 2, canRevoke: false,
+      lastSeen: fmtStamp(NOW - 10_000), lastSeenTitle: "just now", pointsHour: "181", pointsHourTone: "", points24h: "2 340", discordId: "11", sessions: 2, canRevoke: false,
       banned: false, ban: null, pointsCell: "181",
     });
     const tom = userRow(tEn, users[1]!, NOW, 1);
-    expect(tom).toMatchObject({ role: "member", roleNote: null, toggle: "make admin", lastSeen: "2h ago", pointsHour: "252", pointsHourTone: "tone-warn", points24h: "1 118", canRevoke: true });
+    expect(tom).toMatchObject({ role: "member", roleNote: null, toggle: "make admin", lastSeen: fmtStamp(NOW - 2 * H), lastSeenTitle: "2h ago", pointsHour: "252", pointsHourTone: "tone-warn", points24h: "1 118", canRevoke: true });
     expect(userRow(tEn, { ...users[1]!, role: "admin" }, NOW, 1).toggle).toBe("make member");
     expect(userRow(tEn, { ...users[1]!, pointsHour: 300 }, NOW, 1).pointsHourTone).toBe("tone-bad");
   });
@@ -127,7 +127,7 @@ describe("users, invites, instance", () => {
   });
   test("French user row: own client, last seen", () => {
     const base = { id: 3, discordId: "333333333333333333", username: "bob", globalName: null, avatarUrl: "", role: "member" as const, createdAt: 0, lastSeenAt: NOW - 3 * H, pointsHour: 12, points24h: 40, sessions: 1, configAdmin: false, bannedAt: null, ownClient: true, ownPointsHour: 34, ownPoints24h: 1200 };
-    expect(userRow(tFr, base, NOW, 1, 300)).toMatchObject({ pointsCell: "34 · client perso", lastSeen: "il y a 3 h", toggle: "make admin" });
+    expect(userRow(tFr, base, NOW, 1, 300)).toMatchObject({ pointsCell: "34 · client perso", lastSeenTitle: "il y a 3 h", toggle: "make admin" });
   });
   test("invite row: note or dash, added by admin id or CLI, status chip", () => {
     const base: AdminInvite = { discordId: "22", invitedBy: "admin:1", createdAt: NOW - 6 * 24 * H, note: "guild mate", user: { id: 2, username: "tom" } };
@@ -158,12 +158,10 @@ describe("users, invites, instance", () => {
 describe("audit rows", () => {
   const NOW = new Date(2026, 8, 18, 14, 30).getTime(); // local time
   const row = (over: Partial<AuditRow>): AuditRow => ({ id: 1, at: NOW - 28 * 60_000, userId: 2, username: "tom", action: "wcl_error", target: "lookup Biwaadrood-Nerzhul", detail: { kind: "http", status: 502, message: "WCL HTTP 502" }, ip: "1.2.3.4", ...over });
-  test("time: today HH:MM, yesterday, older via fmtAge", () => {
-    expect(auditRow(tEn, row({}), NOW).time).toBe("14:02");
-    expect(auditRow(tEn, row({ at: NOW - 24 * 3600_000 }), NOW).time).toBe("yesterday 14:30");
-    expect(auditRow(tEn, row({ at: NOW - 5 * 24 * 3600_000 }), NOW).time).toBe("5d ago");
-    expect(auditRow(tFr, row({ at: NOW - 24 * 3600_000 }), NOW).time).toBe("hier 14:30");
-    expect(auditRow(tFr, row({ at: NOW - 5 * 24 * 3600_000 }), NOW).time).toBe("il y a 5 j");
+  test("time: the exact local date and time, the age as its tooltip", () => {
+    expect(auditRow(tEn, row({}), NOW)).toMatchObject({ time: "2026-09-18 14:02:00", timeTitle: "just now" });
+    expect(auditRow(tEn, row({ at: NOW - 5 * 24 * 3600_000 }), NOW)).toMatchObject({ time: "2026-09-13 14:30:00", timeTitle: "5d ago" });
+    expect(auditRow(tFr, row({ at: NOW - 5 * 24 * 3600_000 }), NOW)).toMatchObject({ time: "2026-09-13 14:30:00", timeTitle: "il y a 5 j" });
   });
   test("who, dot, action, target, detail per action", () => {
     expect(auditRow(tEn, row({}), NOW)).toMatchObject({ who: "tom", whoFaint: false, dot: "dot-error", action: "wcl_error", target: "lookup Biwaadrood-Nerzhul", detail: "WCL HTTP 502" });

@@ -13,6 +13,7 @@ import { getHostedRuntime, runServer } from "../src/server.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { loadBnetFixture } from "./fixtures.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
+import { setLogSink } from "../src/log.ts";
 
 const CODE = "bnet-good-code";
 const USER_TOKEN = "bnet-user-token";
@@ -275,12 +276,11 @@ describe("GET /auth/bnet/callback", () => {
     expect(db.bnet.link.get(user.id)?.accountId).toBe(fake.accountId);
     expect(db.bnet.imports.get(user.id, Date.now())).toBeNull();
   });
-  test("no code, token or client secret in the audit log, the error ring or the console", async () => {
+  test("no code, token or client secret in the audit log, the error ring or the structured log", async () => {
     const { cookie } = member();
     const since = Date.now();
     const logged: string[] = [];
-    const orig = console.error;
-    console.error = (...a: unknown[]) => { logged.push(a.map(String).join(" ")); };
+    setLogSink((l) => logged.push(l));
     try {
       fake.regions.tw = 500;
       expect(codeOf((await link(cookie)).cb)).toBe("down");
@@ -288,9 +288,10 @@ describe("GET /auth/bnet/callback", () => {
       fake.scope = "openid";
       expect(codeOf((await link(cookie)).cb)).toBe("scope");
     } finally {
-      console.error = orig;
+      setLogSink(null);
     }
-    expect(logged).toEqual(["bnet link: down", "bnet link: scope"]);
+    const failures = logged.map((l) => JSON.parse(l)).filter((o) => o.event === "bnet_link_failed");
+    expect(failures.map((o) => o.code)).toEqual(["down", "scope"]);
     const errors = getHostedRuntime()!.errors.list({ since, limit: 50 });
     expect(errors.map((e) => e.target)).toEqual(["bnet callback", "bnet callback"]);
     const audit = db.audit.list({ actions: null, before: null, limit: 500 });

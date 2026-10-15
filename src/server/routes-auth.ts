@@ -11,6 +11,7 @@ import type { HostedRuntime } from "../hosted/runtime.ts";
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
+import { log } from "../log.ts";
 
 /** A no-store 302, with any Set-Cookie headers (also the Battle.net routes' redirect). */
 export const redirect = (location: string, setCookies: string[] = []): Response => {
@@ -66,7 +67,7 @@ export function authRoutes(rt: HostedRuntime): Route[] {
       // Discord-side failure sends the user back to the sign-in page instead of a bare JSON
       // 502 the browser would render as a blank page.
       const discordFailure = (error: string): Response => {
-        console.error(`discord login: ${error}`);
+        log.warn("discord_login_failed", { error });
         return redirect("/?login=failed", [clearOauth]);
       };
 

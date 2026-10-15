@@ -30,6 +30,7 @@ export function PrivacyPage({ operator, guildRequired }: Props) {
           <li><Around message={t("privacy.featuresLine")} params={{ features: <b>{t("privacy.features")}</b> }} /></li>
           <li><Around message={t("privacy.sessionsLine")} params={{ sessions: <b>{t("privacy.sessions")}</b> }} /></li>
           <li><Around message={t("privacy.auditLine")} params={{ audit: <b>{t("privacy.audit")}</b> }} /></li>
+          <li><Around message={t("privacy.requestsLine")} params={{ requests: <b>{t("privacy.requests")}</b> }} /></li>
         </ul>
         <h2>{t("privacy.notYours")}</h2>
         <p>{t("privacy.publicData")}</p>

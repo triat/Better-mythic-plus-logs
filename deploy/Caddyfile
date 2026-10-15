@@ -1,4 +1,5 @@
-# bmpl — reverse proxy with automatic HTTPS (Let's Encrypt). Replace the host name.
+# bmpl — reverse proxy with automatic HTTPS (Let's Encrypt). Replace the host name (bootstrap.sh does: bmpl.example.com
+# becomes the domain it is given, logs.bmpl.example.com logs.<domain>; both DNS records must point at the VPS).
 # Caddy sets X-Forwarded-For to the client address and strips any incoming copy
 # by default (no upstream proxy is configured as trusted) — bmpl reads the last entry.
 bmpl.example.com {
@@ -12,6 +13,19 @@ bmpl.example.com {
 		health_interval 30s
 	}
 	log {
-		output file /var/log/caddy/bmpl.log
+		# 640: Grafana Alloy (in the caddy group) ships it to VictoriaLogs.
+		output file /var/log/caddy/bmpl.log {
+			mode 640
+		}
 	}
+}
+
+# Grafana (deploy/grafana/), its own login; loopback only behind this block.
+logs.bmpl.example.com {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	reverse_proxy 127.0.0.1:3001
 }

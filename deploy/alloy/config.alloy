@@ -1,0 +1,52 @@
+// Grafana Alloy on the bmpl VPS: ships the journal of bmpl and of the recalibration units, and Caddy's access log, to
+// VictoriaLogs on loopback (spec docs/superpowers/specs/2026-10-15-observability-design.md, decisions 5 and 6).
+// Installed by deploy/bootstrap.sh as /etc/alloy/config.alloy. Both sinks speak the Loki push API: moving to Loki is
+// a change of the two URLs below.
+
+// bmpl.service, bmpl-calibrate-*.service and bmpl-provision's lines only; the unit name becomes the `unit` stream field.
+loki.relabel "units" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit", "__journal_syslog_identifier"]
+    separator     = ";"
+    regex         = "(bmpl\\.service|bmpl-calibrate-(collect|fit)\\.service);.*|.*;bmpl-provision"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+}
+
+loki.source.journal "bmpl" {
+  relabel_rules = loki.relabel.units.rules
+  labels        = { service = "bmpl" }
+  forward_to    = [loki.write.bmpl.receiver]
+}
+
+// Caddy's access log (JSON). The request and response headers are dropped at ingestion: only the client IP, method,
+// URI, status, duration and size are kept.
+local.file_match "caddy" {
+  path_targets = [{ __path__ = "/var/log/caddy/bmpl.log", service = "caddy" }]
+}
+
+loki.source.file "caddy" {
+  targets    = local.file_match.caddy.targets
+  forward_to = [loki.write.caddy.receiver]
+}
+
+// bmpl's lines are JSON objects: VictoriaLogs parses them into fields (event, route, status, ms, user, …); `msg` is the
+// line's message.
+loki.write "bmpl" {
+  endpoint {
+    url = "http://127.0.0.1:9428/insert/loki/api/v1/push?_stream_fields=service,unit&_msg_field=msg"
+  }
+}
+
+loki.write "caddy" {
+  endpoint {
+    url = "http://127.0.0.1:9428/insert/loki/api/v1/push?_stream_fields=service&_msg_field=msg&ignore_fields=request.headers.*,resp_headers.*,request.tls.*,user_id,logger,filename"
+  }
+}

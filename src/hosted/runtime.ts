@@ -19,6 +19,10 @@ import { UserWclClients, verifyWithPing } from "./wcl-clients.ts";
 import type { Verify } from "./wcl-clients.ts";
 import { USAGE_RETENTION_DAYS, DAY_MS } from "./usage-catalog.ts";
 import type { UsageEvent } from "./usage-catalog.ts";
+import { errorFields, log } from "../log.ts";
+import { dirname } from "node:path";
+import { resolveEnvPath } from "../setup.ts";
+import { lastBackupAt } from "./instance.ts";
 
 export interface HostedRuntime {
   config: HostedConfig;
@@ -86,7 +90,7 @@ export function createHostedRuntime(
       try {
         hostedDb.features.add(userId, event, Date.now(), n);
       } catch (err) {
-        console.error(`usage: could not record ${event}: ${err instanceof Error ? err.message : String(err)}`);
+        log.error("usage_write_failed", { usage: event, ...errorFields(err) });
       }
     },
   };
@@ -95,12 +99,23 @@ export function createHostedRuntime(
   // The marker tells the recalibration collector (another process) that a member just used the shared client.
   const touchMarker = memberMarker();
   setRateLimitObserver((rl) => { meter.observe(rl); touchMarker(); });
-  setWclErrorObserver((e) => audit.record("wcl_error", { detail: { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300) } }));
+  setWclErrorObserver((e) => {
+    audit.record("wcl_error", { detail: { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300) } });
+    log.warn("wcl_error", { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300) });
+  });
   const purge = (): void => {
     const now = Date.now();
+    // One `health` line an hour (with the purge): what the logs stack's backup alert reads.
+    void resolveEnvPath().then((env) => {
+      const backupAt = lastBackupAt(dirname(env));
+      log.info("health", { backupAgeS: backupAt === null ? null : Math.round((now - backupAt) / 1000), users: runtime.db.users.count(), sessions: runtime.db.sessions.countActive(now) });
+    }).catch(() => {});
     runtime.db.sessions.purgeExpired(now);
     runtime.db.audit.purgeBefore(now - AUDIT_RETENTION_MS);
     runtime.db.features.purgeBefore(now - (USAGE_RETENTION_DAYS - 1) * DAY_MS);
+    // The hourly WCL usage keeps the same 90 days (it had no purge before 2026-10-15).
+    runtime.db.usage.purgeBefore(now - USAGE_RETENTION_DAYS * DAY_MS);
+    runtime.db.usageOwn.purgeBefore(now - USAGE_RETENTION_DAYS * DAY_MS);
     for (const l of Object.values(runtime.limits)) l.sweep(now);
   };
   purge();
@@ -112,7 +127,7 @@ export function createHostedRuntime(
     checking = true;
     try {
       const r = await checkBnetCharacters({ db: hostedDb, audit, app: runtime.bnetApp, fetchFn, now: Date.now(), errors: runtime.errors });
-      if (r.checked > 0) console.log(`bnet check: ${r.checked} checked, ${r.removed} removed, ${r.failed} failed`);
+      if (r.checked > 0) log.info("bnet_check", { checked: r.checked, kept: r.kept, removed: r.removed, failed: r.failed });
     } finally {
       checking = false;
     }

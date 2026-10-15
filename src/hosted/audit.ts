@@ -6,6 +6,7 @@
 // `detail`; `record` itself bounds `target` (300) and `ip` (64), which come straight from the request.
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { HostedDb } from "./db.ts";
+import { errorFields, log, userRef } from "../log.ts";
 
 export type AuditAction =
   | "login" | "login_denied" | "logout" | "account_delete" | "wcl_client_set" | "wcl_client_remove"
@@ -104,16 +105,20 @@ export class AuditLog {
     try {
       const target = e.target !== undefined ? e.target : s?.target ?? null;
       const ip = e.ip !== undefined ? e.ip : s?.ip ?? null;
+      const userId = e.userId !== undefined ? e.userId : s?.userId ?? null;
       this.repo.add({
         at: e.at ?? Date.now(),
-        userId: e.userId !== undefined ? e.userId : s?.userId ?? null,
+        userId,
         action,
         target: target === null ? null : clip(target, 300),
         detail: e.detail ? JSON.stringify(e.detail) : null,
         ip: ip === null ? null : clip(ip, 64),
       });
+      // The structured log carries the action and the member only: target, detail and IP stay in the audit table
+      // (they may name a Discord account or a character).
+      log.info("audit", { action, kind: ACTION_KIND[action], user: userRef(userId) });
     } catch (err) {
-      console.error(`audit: could not record ${action}: ${err instanceof Error ? err.message : String(err)}`);
+      log.error("audit_write_failed", { action, ...errorFields(err) });
     }
   }
 }

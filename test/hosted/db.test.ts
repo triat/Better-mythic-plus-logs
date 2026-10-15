@@ -179,6 +179,18 @@ describe("phase 2: bans, deletion, wcl clients", () => {
     expect(db.users.delete(u.id)).toBe(false);
     expect(raw.query<{ approved_by: number | null }, []>("SELECT approved_by FROM defensives_shared").get()).toEqual({ approved_by: null });
   });
+  test("usage and usageOwn: purgeBefore drops the older hours only", () => {
+    const db = openHosted(new Database(":memory:"));
+    const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);
+    const H = 3_600_000;
+    for (const repo of [db.usage, db.usageOwn]) {
+      repo.add(u.id, 10 * H, 5);
+      repo.add(u.id, 20 * H, 7);
+      expect(repo.purgeBefore(20 * H)).toBe(1);
+      expect(repo.used(u.id, 10 * H)).toBe(0);
+      expect(repo.used(u.id, 20 * H)).toBe(7);
+    }
+  });
   test("wclClients: put upserts, setVerified, remove, count", () => {
     const db = openHosted(new Database(":memory:"));
     const u = db.users.upsertFromDiscord({ discordId: "123456789012345678", username: "tom", globalName: null, avatarHash: null }, null, 1000);

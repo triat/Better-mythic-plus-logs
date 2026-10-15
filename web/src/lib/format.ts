@@ -26,6 +26,13 @@ export const fmtAge = (t: T, ms: number, now = Date.now()): string => {
   return t("common.age.years", { n: Math.floor(days / 365) });
 };
 
+const p2 = (n: number): string => n.toString().padStart(2, "0");
+/** The exact local date and time, `2026-10-14 21:03:12`: what the admin tables show (the age goes in a tooltip). */
+export const fmtStamp = (ms: number): string => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+};
+
 export const ageDays = (ms: number, now = Date.now()): number => Math.max(0, (now - ms) / 86400000);
 
 export const fmtDuration = (ms: number): string => {

@@ -85,7 +85,7 @@ export function Users({ users, selfId, limitPerUser, onRole, onRevoke, onBan, on
                         )}
                       </>}
                 </span>
-                <span className="muted">{r.lastSeen}</span>
+                <span className="muted mono" title={r.lastSeenTitle}>{r.lastSeen}</span>
                 <span className={"mono " + (u.ownClient ? "faint" : r.pointsHourTone)}>{r.pointsCell}</span>
                 <span className="mono">{r.points24h}</span>
                 <span className="mono faint">{r.discordId}</span>

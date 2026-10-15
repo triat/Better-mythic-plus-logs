@@ -64,6 +64,20 @@ jobs:
           scp -i ~/.ssh/deploy_key -o IdentitiesOnly=yes dist/bmpl-linux "$DEPLOY_HOST:/home/deploy/bmpl.new"
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$DEPLOY_HOST" 'sudo -n install -o bmpl -g bmpl -m 755 /home/deploy/bmpl.new /opt/bmpl/bmpl && rm /home/deploy/bmpl.new && sudo -n systemctl restart bmpl && for i in $(seq 1 30); do curl -fsS http://127.0.0.1:3000/api/health >/dev/null 2>&1 && { echo "bmpl is up"; exit 0; }; sleep 1; done; echo "bmpl did not answer /api/health in 30 s" >&2; journalctl -u bmpl -n 30 --no-pager; exit 1'
 
+      # deploy/ of this tag onto the VPS, only when it changed since the last run (deploy/provision.sh): the root-owned
+      # script downloads the tag from GitHub itself. Skipped, with a notice, on a VPS whose bootstrap.sh predates it.
+      - name: Provision the VPS (deploy/ changes only)
+        if: env.TAG != ''
+        env:
+          DEPLOY_HOST: ${{ vars.BMPL_DEPLOY_HOST }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "unexpected tag: $TAG"; exit 1; }
+          if ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$DEPLOY_HOST" 'test -x /usr/local/sbin/bmpl-provision'; then
+            ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$DEPLOY_HOST" "sudo -n /usr/local/sbin/bmpl-provision '$TAG'"
+          else
+            echo "::notice::bmpl-provision is not installed on the VPS yet: run deploy/bootstrap.sh by hand once (deploy/README.md § 9d)"
+          fi
+
       - name: Public health check
         run: |
           out=$(curl -fsS --max-time 15 "${{ vars.BMPL_PUBLIC_URL }}/api/health")

@@ -44,6 +44,8 @@ export const SESSION_REFRESH_MS = 60 * 60 * 1000;
 export interface UsageRepo {
   /** Adds `points` to the user's bucket of `at`. */
   add(userId: number, at: number, points: number): void;
+  /** Drops the buckets that start before `at`; returns how many. */
+  purgeBefore(at: number): number;
   used(userId: number, at: number): number;
   /** Every user's points in the bucket of `at`, largest first. */
   byUser(at: number): Array<{ userId: number; points: number }>;
@@ -60,8 +62,10 @@ function openUsage(db: Database, table: "usage_hourly" | "usage_hourly_own"): Us
   const byUser = db.query<{ user_id: number; points: number }, [number]>(`SELECT user_id, points FROM ${table} WHERE hour_start = ? ORDER BY points DESC, user_id`);
   const byUserSince = db.query<{ user_id: number; points: number }, [number]>(`SELECT user_id, SUM(points) AS points FROM ${table} WHERE hour_start >= ? GROUP BY user_id ORDER BY points DESC, user_id`);
   const totals = db.query<{ hour_start: number; points: number }, [number]>(`SELECT hour_start, SUM(points) AS points FROM ${table} WHERE hour_start >= ? GROUP BY hour_start ORDER BY hour_start`);
+  const purge = db.query(`DELETE FROM ${table} WHERE hour_start < ?`);
   return {
     add(userId, at, points) { add.run(userId, hourStart(at), points); },
+    purgeBefore: (at) => purge.run(at).changes,
     used: (userId, at) => used.get(userId, hourStart(at))?.points ?? 0,
     byUser: (at) => byUser.all(hourStart(at)).map((r) => ({ userId: r.user_id, points: r.points })),
     byUserSince: (sinceAt) => byUserSince.all(hourStart(sinceAt)).map((r) => ({ userId: r.user_id, points: r.points })),

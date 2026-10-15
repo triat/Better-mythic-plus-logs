@@ -1,0 +1,26 @@
+[Unit]
+Description=VictoriaLogs: bmpl's logs, 90 days (spec docs/superpowers/specs/2026-10-15-observability-design.md)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=victorialogs
+Group=victorialogs
+ExecStart=/usr/local/bin/victoria-logs-prod -storageDataPath=/var/lib/victorialogs -retentionPeriod=90d -httpListenAddr=127.0.0.1:9428
+Restart=always
+RestartSec=2
+# A cap so the logs can never starve bmpl (4 GB on the VPS); measured at ~20 MB for a light load.
+MemoryMax=512M
+ProtectSystem=strict
+ReadWritePaths=/var/lib/victorialogs
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

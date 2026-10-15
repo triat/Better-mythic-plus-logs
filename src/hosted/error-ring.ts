@@ -3,7 +3,7 @@
 // In memory only (empty after a restart): the journal stays the durable record.
 import { clip } from "./audit.ts";
 
-export interface ErrorEntry { at: number; target: string | null; message: string; stack: string | null }
+export interface ErrorEntry { at: number; target: string | null; message: string; stack: string | null; /** The request's `X-Request-Id`, when known. */ req?: string }
 
 export const ERROR_RING_SIZE = 500;
 const MAX_STACK = 4000;
@@ -13,9 +13,10 @@ export class ErrorRing {
 
   constructor(private readonly size = ERROR_RING_SIZE) {}
 
-  push(e: unknown, target: string | null, at = Date.now()): void {
+  push(e: unknown, target: string | null, at = Date.now(), req?: string): void {
     const err = e instanceof Error ? e : null;
     this.entries.push({
+      ...(req ? { req } : {}),
       at,
       target: target === null ? null : clip(target, 300),
       message: clip(err ? err.message : String(e), 1000),

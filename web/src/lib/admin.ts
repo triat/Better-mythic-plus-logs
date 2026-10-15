@@ -2,7 +2,7 @@
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditAction, AuditKind, AuditRow, FeatureUsage, OverrideEntry, UsageCategory, UsageReport } from "../types.ts";
 import type { T } from "../i18n/t.ts";
 import { patchText } from "./deepdive.ts";
-import { fmtAge, fmtPts } from "./format.ts";
+import { fmtAge, fmtPts, fmtStamp } from "./format.ts";
 import { initialsOf } from "./session.ts";
 
 const H = 3600_000;
@@ -113,7 +113,7 @@ export function decidedLine(t: T, p: AdminProposal, now = Date.now()): DecidedLi
 
 export interface UserRowModel {
   id: number; name: string; handle: string; initials: string; avatarUrl: string; role: "member" | "admin"; roleNote: "env" | null; toggle: "make admin" | "make member" | null;
-  lastSeen: string; pointsHour: string; pointsHourTone: "" | "tone-warn" | "tone-bad"; points24h: string; discordId: string; sessions: number; canRevoke: boolean;
+  lastSeen: string; /** The age ("2h ago"), the last-seen cell's tooltip. */ lastSeenTitle: string; pointsHour: string; pointsHourTone: "" | "tone-warn" | "tone-bad"; points24h: string; discordId: string; sessions: number; canRevoke: boolean;
   /** Issue #11: a banned row is dimmed and shows the red "banned" chip; `ban` is the button to offer (null on yourself and config admins). */
   banned: boolean; ban: "ban" | "unban" | null;
   /** "pts · hour" cell: a member with their own WCL client spends nothing from the shared budget, so it shows their own-client points, labelled. */
@@ -128,7 +128,7 @@ export function userRow(t: T, u: AdminUser, now = Date.now(), selfId: number, li
   return {
     id: u.id, name, handle: `@${u.username}`, initials: initialsOf(name), avatarUrl: u.avatarUrl, role: u.role, roleNote: u.configAdmin ? "env" : null,
     toggle: self || u.configAdmin ? null : u.role === "admin" ? "make member" : "make admin",
-    lastSeen: fmtAge(t, u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
+    lastSeen: fmtStamp(u.lastSeenAt), lastSeenTitle: fmtAge(t, u.lastSeenAt, now), pointsHour, pointsHourTone: u.role === "admin" ? "" : pointsTone(u.pointsHour, limitPerUser),
     points24h: fmtPts(u.points24h + u.ownPoints24h), discordId: u.discordId, sessions: u.sessions, canRevoke: !self && !banned,
     banned, ban: self || u.configAdmin ? null : banned ? "unban" : "ban", pointsCell: u.ownClient ? t("admin.users.ownClientPts", { pts: fmtPts(u.ownPointsHour) }) : pointsHour,
   };
@@ -191,21 +191,10 @@ export const auditChips = (t: T): Array<{ kind: AuditKind | "all"; label: string
 const AUDIT_DOT: Record<AuditKind, AuditRowModel["dot"]> = { login: "dot-login", admin: "dot-admin", quota: "dot-quota", security: "dot-sec", error: "dot-error" };
 
 export interface AuditRowModel {
-  id: number; time: string; who: string; whoFaint: boolean; dot: "dot-login" | "dot-admin" | "dot-quota" | "dot-sec" | "dot-error";
+  id: number; time: string; /** The age ("5d ago"), the time cell's tooltip. */ timeTitle: string; who: string; whoFaint: boolean; dot: "dot-login" | "dot-admin" | "dot-quota" | "dot-sec" | "dot-error";
   action: string; target: string; detail: string;
 }
 
-const pad2 = (n: number): string => n.toString().padStart(2, "0");
-const sameDay = (a: Date, b: Date): boolean => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-/** Local time: "14:02" today, "yesterday 14:30", else `fmtAge` ("5d ago"). */
-function auditTime(t: T, at: number, now: number): string {
-  const d = new Date(at), n = new Date(now);
-  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  if (sameDay(d, n)) return hm;
-  const yesterday = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
-  if (sameDay(d, yesterday)) return t("admin.audit.yesterday", { time: hm });
-  return fmtAge(t, at, now);
-}
 
 const str = (v: unknown): string => (typeof v === "string" ? v : v === null || v === undefined ? "" : String(v));
 const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -266,7 +255,7 @@ export function auditDetail(t: T, action: AuditAction, detail: Record<string, un
 
 export function auditRow(t: T, r: AuditRow, now = Date.now()): AuditRowModel {
   return {
-    id: r.id, time: auditTime(t, r.at, now), who: r.username ?? "—", whoFaint: r.username === null, dot: AUDIT_DOT[AUDIT_KIND_OF[r.action]],
+    id: r.id, time: fmtStamp(r.at), timeTitle: fmtAge(t, r.at, now), who: r.username ?? "—", whoFaint: r.username === null, dot: AUDIT_DOT[AUDIT_KIND_OF[r.action]],
     action: r.action, target: r.target ?? "", detail: auditDetail(t, r.action, r.detail),
   };
 }

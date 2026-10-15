@@ -33,13 +33,14 @@ export const SECURITY_HEADERS: Readonly<Record<string, string>> = Object.freeze(
  * the body (e.g. `text/plain` on `new Response("Not found")`) survive. Falls back to a
  * re-wrap (losing that implicit type) only if the response's headers are immutable.
  */
-export function withSecurityHeaders(res: Response): Response {
+export function withSecurityHeaders(res: Response, extra: Record<string, string> = {}): Response {
+  const all = { ...SECURITY_HEADERS, ...extra };
   try {
-    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.headers.set(k, v);
+    for (const [k, v] of Object.entries(all)) res.headers.set(k, v);
     return res;
   } catch {
     const headers = new Headers(res.headers);
-    for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+    for (const [k, v] of Object.entries(all)) headers.set(k, v);
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
   }
 }

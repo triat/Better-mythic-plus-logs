@@ -58,7 +58,7 @@ every restart.
    - *Errors*: server errors, WCL errors and members hit over the last 24 h (what the admin badge counted), server
      errors with their stack and request id, WCL errors one per line with member, target and request id (what the
      admin's Errors chip listed), WCL errors by kind, 4xx/5xx rate, the slowest routes (p95).
-   - *Recalibration*: characters sampled per hour, the window's total vs the 2,000 target, stop reasons, the last fit.
+   - *Recalibration*: characters sampled per hour, the window's total (150 new a day, about 4,200 at steady state), stop reasons, the last fit.
    - *Security*: rate-limited, origin-rejected and ops-denied events, top client IPs from Caddy.
 8. **Alerts to a Discord channel** (a webhook URL, a secret in Grafana's environment file): a server error, more than
    5 WCL errors in 15 minutes, bmpl silent (no `health` line for over 2 hours; amended from "no request for 30 minutes

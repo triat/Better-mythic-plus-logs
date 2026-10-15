@@ -1,13 +1,13 @@
 {
   "uid": "bmpl-recalibration",
   "title": "bmpl \u00b7 Recalibration",
-  "description": "bmpl calibrate --hourly / --fit (spec 2026-10-14-weekly-recalibration-design.md): the 4-week window, each sample, the points it spends and the weekly fit.",
+  "description": "bmpl calibrate --hourly / --fit (spec 2026-10-14-weekly-recalibration-design.md): the 4-week window (150 new characters a day), each sample, the points it spends and the weekly fit.",
   "tags": [
     "bmpl"
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": false,
   "refresh": "5m",
   "time": {
@@ -64,7 +64,7 @@
         "w": 4,
         "h": 4
       },
-      "description": "The last hour's count of characters sampled in the last 4 weeks; the collector stops at 2,000.",
+      "description": "Characters sampled in the last 4 weeks, at the last hour's end. The collector adds 150 a day, so the window settles at about 4,200.",
       "timeFrom": "7d",
       "hideTimeOverride": true,
       "fieldConfig": {
@@ -296,7 +296,7 @@
         "w": 4,
         "h": 4
       },
-      "description": "Lookups that became a sample.",
+      "description": "Lookups that became a sample in the last 24 hours; the collector stops at 150 (the daily quota).",
       "timeFrom": "24h",
       "hideTimeOverride": true,
       "fieldConfig": {
@@ -496,7 +496,7 @@
     },
     {
       "id": 9,
-      "title": "The 4-week window by role (target 2,000)",
+      "title": "The 4-week window by role (about 4,200 at steady state)",
       "type": "timeseries",
       "datasource": {
         "type": "victoriametrics-logs-datasource",

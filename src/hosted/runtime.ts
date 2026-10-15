@@ -102,6 +102,9 @@ export function createHostedRuntime(
     runtime.db.sessions.purgeExpired(now);
     runtime.db.audit.purgeBefore(now - AUDIT_RETENTION_MS);
     runtime.db.features.purgeBefore(now - (USAGE_RETENTION_DAYS - 1) * DAY_MS);
+    // The hourly WCL usage keeps the same 90 days (it had no purge before 2026-10-15).
+    runtime.db.usage.purgeBefore(now - USAGE_RETENTION_DAYS * DAY_MS);
+    runtime.db.usageOwn.purgeBefore(now - USAGE_RETENTION_DAYS * DAY_MS);
     for (const l of Object.values(runtime.limits)) l.sweep(now);
   };
   purge();

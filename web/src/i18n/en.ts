@@ -654,6 +654,8 @@ export const en = {
     sessionsLine: "{sessions}: a random id in a cookie, your IP and browser at sign-in, for 30 days.",
     audit: "Audit log",
     auditLine: "{audit}: sign-ins, refusals and errors with your id and IP, kept 90 days.",
+    requests: "Request log",
+    requestsLine: "{requests}: each request you make (what was called, the answer's status and time, your member number, the WCL points spent) and, in the web server's log, your IP, kept 90 days for running and protecting the service only.",
     notYours: "What is not yours",
     publicData: "Runs, rankings and fight data fetched from Warcraft Logs are public and are cached for everyone; they carry the names of the players in those runs, which is how Warcraft Logs publishes them.",
     deleting: "Deleting your account",
@@ -798,7 +800,6 @@ export const en = {
       chips: { all: "All", login: "Logins", admin: "Admin", quota: "Quota", security: "Security", error: "Errors" },
       head: { time: "time", who: "who", action: "action", target: "target", detail: "detail" },
       empty: "Nothing logged yet.", loadMore: "Load {n} more", showing: "showing {shown} of {total} · newest first",
-      yesterday: "yesterday {time}",
       detail: {
         quota: "quota", budget: "instance budget", quotaRefused: "{what} · {used}/{limit} pts used, resets in {min} min",
         rateLimited: "{limit} per {window} s · retry in {retry} s",

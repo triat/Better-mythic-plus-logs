@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "La page de confidentialité décrit maintenant le journal des requêtes : ce qui est enregistré, et qu'il est gardé 90 jours.",
+    ],
+  },
+  {
     version: "0.10.4",
     date: "2026-10-14",
     items: [

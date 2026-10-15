@@ -73,7 +73,7 @@ export function Audit({ kind, onKind }: Props) {
         const r = auditRow(t, row);
         return (
           <div key={r.id} className="inset admin-row admin-row-audit">
-            <span className="mono faint">{r.time}</span>
+            <span className="mono faint" title={r.timeTitle}>{r.time}</span>
             <span className={r.whoFaint ? "faint" : undefined}>{r.who}</span>
             <span><span className={`dot ${r.dot}`} /><span className="mono" style={{ fontSize: 12 }}>{r.action}</span></span>
             <span className="text-soft" title={r.target}>{r.target}</span>

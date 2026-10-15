@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "The privacy page now lists the request log: what is recorded, and that it is kept 90 days.",
+    ],
+  },
+  {
     version: "0.10.4",
     date: "2026-10-14",
     items: [

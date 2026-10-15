@@ -643,6 +643,8 @@ export const fr: Mirror<typeof en> = {
     sessions: "Sessions",
     sessionsLine: "{sessions} : un id aléatoire dans un cookie, ton IP et ton navigateur à la connexion, pendant 30 jours.",
     audit: "Journal d'audit",
+    requests: "Journal des requêtes",
+    requestsLine: "{requests} : chaque requête que tu fais (ce qui est appelé, le statut et la durée de la réponse, ton numéro de membre, les points WCL dépensés) et, dans le journal du serveur web, ton IP, gardés 90 jours, uniquement pour faire tourner et protéger le service.",
     auditLine: "{audit} : connexions, refus et erreurs avec ton id et ton IP, gardés 90 jours.",
     notYours: "Ce qui n'est pas à toi",
     publicData: "Les runs, classements et données de combat récupérés sur Warcraft Logs sont publics et mis en cache pour tout le monde ; ils portent les noms des joueurs de ces runs, c'est ainsi que Warcraft Logs les publie.",
@@ -788,7 +790,6 @@ export const fr: Mirror<typeof en> = {
       chips: { all: "Tout", login: "Connexions", admin: "Admin", quota: "Quota", security: "Sécurité", error: "Erreurs" },
       head: { time: "heure", who: "qui", action: "action", target: "cible", detail: "détail" },
       empty: "Rien d'enregistré pour l'instant.", loadMore: "Charger {n} de plus", showing: "{shown} affichées sur {total} · plus récentes d'abord",
-      yesterday: "hier {time}",
       detail: {
         quota: "quota", budget: "budget de l'instance", quotaRefused: "{what} · {used}/{limit} pts utilisés, reset dans {min} min",
         rateLimited: "{limit} par {window} s · réessai dans {retry} s",

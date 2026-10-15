@@ -106,14 +106,15 @@ The VPS runs a logs stack beside bmpl (spec
 bmpl writes one JSON line per event to the journal, Grafana Alloy ships it and
 Caddy's access log to VictoriaLogs (kept 90 days), Grafana shows them at
 `https://logs.<host>`. The dashboards and alert rules come from the repository
-(`deploy/grafana/`): change them by pull request, then re-run `bootstrap.sh`.
+(`deploy/grafana/`): change them by pull request; the next release applies
+them (`bmpl-provision`, [deploy/README.md § 9d](../deploy/README.md)).
 
 - **Alerts** go to the Discord channel whose webhook URL is
   `DISCORD_ALERT_WEBHOOK` in `/etc/grafana/grafana.env`: a server error, more
   than 5 WCL errors in 15 minutes, bmpl silent for over 2 hours, the backup
   older than 2 hours, a failed recalibration run. Empty webhook: no alert rule
-  is installed (Grafana would refuse to start); set it, then re-run
-  `bootstrap.sh`.
+  is installed (Grafana would refuse to start); set it, then
+  `sudo bmpl-provision --force vX.Y.Z` (the running version).
 - **A member reports an error**: ask for the time; in Grafana's Explore, query
   `service:bmpl event:server_error` around it, or `req:<id>` with the
   `X-Request-Id` of the failed response.

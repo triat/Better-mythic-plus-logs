@@ -79,6 +79,13 @@ every restart.
 14. **Privacy page.** `/privacy` says that requests are logged for 90 days with the client IP (Caddy) and the member
     number, for operations and security only.
 
+15. **Provisioning on release** (added 2026-10-15 at the user's request: "un process qui va se déclencher uniquement aux
+    changements de config et / ou choses à installer"). The deploy workflow runs `sudo -n /usr/local/sbin/bmpl-provision
+    <tag>` after the binary; that root-owned script downloads the tag from GitHub itself (nothing the job sends runs as
+    root), fingerprints `deploy/` and the alert webhook's presence, and runs the tag's `bootstrap.sh` only when the
+    fingerprint changed. `bootstrap.sh` installs a file only when it differs and restarts only the services concerned.
+    Manual once (the first `bootstrap.sh`), and for secrets and DNS.
+
 ## Data flow
 
 ```

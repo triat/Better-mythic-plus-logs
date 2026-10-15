@@ -202,10 +202,9 @@ new key reads the replica.
 (`CREATE … IF NOT EXISTS`), there is no migration step, and cached WCL data is
 kept; one-time data changes run by themselves at start (the first start of the Battle.net
 linking release removes the manually added "My characters" entries that
-way, once). Downgrade: check out the previous commit and `just deploy` again. If the
-`deploy/` files changed, copy them again and re-run `bootstrap.sh` (it keeps
-your `.env` and `litestream.yml`), then `systemctl restart bmpl litestream`
-if the units changed.
+way, once). Downgrade: check out the previous commit and `just deploy` again. A
+release applies a changed `deploy/` by itself (§ 9d); a hand `just deploy` does
+not: then run `sudo bmpl-provision vX.Y.Z` on the VPS for the tag you shipped.
 
 **9. Auto-deploy from GitHub.** The usual way to ship is the **release**
 workflow (`.github/workflows/release.yml`): *Actions → release → Run
@@ -251,8 +250,7 @@ timers that run the deployed binary as `bmpl`: `bmpl-calibrate-collect.timer`
 the members leave, into `/opt/bmpl/calibration.db`, never `bmpl.db`) and
 `bmpl-calibrate-fit.timer` (Wednesdays 06:00 Europe/Paris, `bmpl calibrate
 --fit`: writes `/opt/bmpl/candidate.json` and `comparison.md`, aggregates
-only). On an existing VPS, re-run `bootstrap.sh` once after the release that
-ships them. Optional in `/opt/bmpl/.env`: `BMPL_CALIBRATION_RESERVE` (points
+only). A release installs them through `bmpl-provision` (§ 9d). Optional in `/opt/bmpl/.env`: `BMPL_CALIBRATION_RESERVE` (points
 kept free for the members in every hour, default 3000). The pull request
 side is `.github/workflows/calibration-pr.yml` (Wednesdays 05:45 UTC): it
 needs the repository secrets `BMPL_URL` (`https://bmpl.<domain>`) and
@@ -268,9 +266,25 @@ Grafana Alloy and Grafana from Grafana's apt repository (Grafana on loopback
 at the VPS (Caddy fetches its certificate). The first run creates
 `/etc/grafana/grafana.env` (root:grafana, 640) with the domain, a random admin
 password (printed path, user `admin`) and an empty `DISCORD_ALERT_WEBHOOK`;
-put a Discord webhook URL there and re-run `bootstrap.sh` to install the alert
-rules. Dashboards and rules live in `deploy/grafana/` and are read-only in the
+put a Discord webhook URL there and run `sudo bmpl-provision --force vX.Y.Z`
+(the running version) to install the alert rules. Dashboards and rules live in `deploy/grafana/` and are read-only in the
 UI. Spec: `docs/superpowers/specs/2026-10-15-observability-design.md`.
+
+**9d. Provisioning on release.** Every release applies `deploy/` to the VPS by
+itself, only when it changed: after installing the binary, the deploy workflow
+runs `sudo -n /usr/local/sbin/bmpl-provision vX.Y.Z`. That root-owned script
+(`deploy/provision.sh`, installed by `bootstrap.sh`; the `deploy` user may run
+it, never edit it) downloads the tag from GitHub itself, fingerprints `deploy/`
+(plus whether the alert webhook is set), and runs that tag's `bootstrap.sh`
+only when the fingerprint differs from the last one applied
+(`/var/lib/bmpl-provision/applied`). `bootstrap.sh` in turn installs only the
+files whose content differs and restarts only the services they belong to.
+Each run logs one `provision` line (applied, unchanged or failed), visible in
+Grafana; a failure turns the deploy job red. By hand: `sudo bmpl-provision
+vX.Y.Z [--force]`. The first time, run `bootstrap.sh` by hand once (§ 2): the
+deploy job skips the step with a notice until `bmpl-provision` exists. Secrets
+(`/opt/bmpl/.env`, `/etc/grafana/grafana.env`, `/etc/litestream.yml`) and DNS
+records stay yours.
 
 **10. Uninstall.** On the VPS as root:
 

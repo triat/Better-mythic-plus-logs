@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 const read = (f: string) => readFileSync(new URL(`../deploy/${f}`, import.meta.url), "utf8");
 
 describe("deploy/ files agree on the VPS layout", () => {
@@ -50,7 +52,7 @@ describe("deploy/ files agree on the VPS layout", () => {
     expect(b).toContain("systemctl reload caddy");
     expect(b).toContain("chown caddy:caddy /var/log/caddy/bmpl.log");
     expect(b).toContain('grep -qs "/opt/bmpl/bmpl.db" /etc/litestream.yml');
-    expect(b).toContain("install -m 755 \"$HERE/backup-check.sh\" /usr/local/sbin/bmpl-backup-check");
+    expect(b).toContain("put \"$HERE/backup-check.sh\" /usr/local/sbin/bmpl-backup-check 755 root:root");
   });
   test("the recalibration units: the bmpl binary and .env, hardened like bmpl.service, hourly and Wednesday 06:00 Paris", () => {
     for (const [unit, cmd] of [["bmpl-calibrate-collect", "calibrate --hourly"], ["bmpl-calibrate-fit", "calibrate --fit"]] as const) {
@@ -75,7 +77,7 @@ describe("deploy/ files agree on the VPS layout", () => {
     expect(caddy.slice(caddy.indexOf("\nlogs.bmpl.example.com {"))).toContain("reverse_proxy 127.0.0.1:3001");
     expect(caddy).toContain("mode 640");
     const b = read("bootstrap.sh");
-    for (const piece of ["victorialogs.service", "sha256sum -c", "apt.grafana.com", "/etc/alloy/config.alloy", "usermod -aG caddy alloy", "grafana-server.service.d/bmpl.conf", "DISCORD_ALERT_WEBHOOK", "systemctl restart victorialogs alloy grafana-server"]) expect(b).toContain(piece);
+    for (const piece of ["victorialogs.service", "sha256sum -c", "apt.grafana.com", "/etc/alloy/config.alloy", "usermod -aG caddy alloy", "grafana-server.service.d/bmpl.conf", "DISCORD_ALERT_WEBHOOK", "for s in victorialogs alloy grafana-server"]) expect(b).toContain(piece);
     expect(b).not.toMatch(/ufw allow (3001|9428|12345)/);
   });
   test("Grafana provisioning: every panel and alert rule queries the VictoriaLogs data source by uid; no secret in the files", async () => {
@@ -100,6 +102,37 @@ describe("deploy/ files agree on the VPS layout", () => {
     expect(doc.contactPoints[0]!.receivers[0]!.settings.url).toBe("$DISCORD_ALERT_WEBHOOK");
     for (const r of doc.groups[0]!.rules) expect(r.data[0]!.datasourceUid).toBe("victorialogs");
     for (const f of ["grafana/provisioning/alerting/bmpl.yaml", "grafana/systemd/grafana-bmpl.conf", "alloy/config.alloy"]) expect(read(f)).not.toMatch(/discord\.com\/api\/webhooks\/\d|GF_SECURITY_ADMIN_PASSWORD=\S/);
+  });
+  test("provisioning: bmpl-provision downloads the tag itself, applies deploy/ only when its fingerprint changed, and the deploy job calls it", () => {
+    const p = read("provision.sh");
+    for (const piece of ["set -euo pipefail", "^v[0-9]+\\.[0-9]+\\.[0-9]+$", "https://codeload.github.com/${REPO}/tar.gz/refs/tags/${TAG}", "flock", "find deploy -type f -print0 | sort -z | xargs -0 sha256sum", "/var/lib/bmpl-provision", "systemd-cat -t bmpl-provision", "--force"]) expect(p).toContain(piece);
+    expect(read("bootstrap.sh")).toContain('put "$HERE/provision.sh" /usr/local/sbin/bmpl-provision 755 root:root');
+    expect(read("sudoers-bmpl-deploy")).toContain(", /usr/local/sbin/bmpl-provision");
+    expect(read("alloy/config.alloy")).toContain(".*;bmpl-provision");
+    const wf = readFileSync(new URL("../.github/workflows/deploy.yml", import.meta.url), "utf8");
+    expect(wf).toContain("sudo -n /usr/local/sbin/bmpl-provision '$TAG'");
+    // The binary is installed and bmpl restarted before deploy/ is applied; the public check runs after both.
+    expect(wf.indexOf("Ship the binary")).toBeLessThan(wf.indexOf("Provision the VPS"));
+    expect(wf.indexOf("Provision the VPS")).toBeLessThan(wf.indexOf("Public health check"));
+  });
+  test("bootstrap.sh's put(): installs only what differs (content, mode), marks its tags, and is quiet otherwise", () => {
+    const b = read("bootstrap.sh");
+    const fn = b.slice(b.indexOf("put() {"), b.indexOf("\n}\n", b.indexOf("put() {")) + 2);
+    const dir = mkdtempSync(join(tmpdir(), "bmpl-put-"));
+    try {
+      const owner = `${Bun.spawnSync(["id", "-un"]).stdout.toString().trim()}:${Bun.spawnSync(["id", "-gn"]).stdout.toString().trim()}`;
+      writeFileSync(join(dir, "src"), "one\n");
+      const script = `declare -A CHANGED=()\n${fn}\nput "${dir}/src" "${dir}/dst" 640 ${owner} caddy systemd\necho "tags:\${!CHANGED[*]}"\nCHANGED=()\nput "${dir}/src" "${dir}/dst" 640 ${owner} caddy\necho "tags:\${!CHANGED[*]}"`;
+      const run = () => Bun.spawnSync(["bash", "-c", script]).stdout.toString();
+      const first = run();
+      expect(first).toContain(`installed ${dir}/dst`);
+      expect(first).toMatch(/tags:(caddy systemd|systemd caddy)\ntags:\n/);
+      expect(readFileSync(join(dir, "dst"), "utf8")).toBe("one\n");
+      writeFileSync(join(dir, "src"), "two\n");
+      expect(run()).toMatch(/installed .*\/dst\ntags:(caddy systemd|systemd caddy)\ntags:\n/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
   test("no real secret or host leaks into the templates", () => {
     for (const f of ["Caddyfile", "litestream.yml", "bootstrap.sh"]) expect(read(f)).not.toMatch(/AKIA|sk_live|BEGIN (RSA|OPENSSH)/);

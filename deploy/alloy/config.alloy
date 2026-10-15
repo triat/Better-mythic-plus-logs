@@ -3,13 +3,14 @@
 // Installed by deploy/bootstrap.sh as /etc/alloy/config.alloy. Both sinks speak the Loki push API: moving to Loki is
 // a change of the two URLs below.
 
-// bmpl.service and bmpl-calibrate-*.service only; the unit name becomes the `unit` stream field.
+// bmpl.service, bmpl-calibrate-*.service and bmpl-provision's lines only; the unit name becomes the `unit` stream field.
 loki.relabel "units" {
   forward_to = []
 
   rule {
-    source_labels = ["__journal__systemd_unit"]
-    regex         = "bmpl\\.service|bmpl-calibrate-(collect|fit)\\.service"
+    source_labels = ["__journal__systemd_unit", "__journal_syslog_identifier"]
+    separator     = ";"
+    regex         = "(bmpl\\.service|bmpl-calibrate-(collect|fit)\\.service);.*|.*;bmpl-provision"
     action        = "keep"
   }
 

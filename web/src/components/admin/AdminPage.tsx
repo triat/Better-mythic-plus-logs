@@ -12,8 +12,8 @@ import { Queue } from "./Queue.tsx";
 import { Usage } from "./Usage.tsx";
 import { Users } from "./Users.tsx";
 
-export interface AdminData { usage: AdminUsage | null; users: AdminUser[]; invites: AdminInvite[]; pending: AdminProposal[]; decided: AdminProposal[]; instance: AdminInstance | null; errors24h: number }
-const EMPTY: AdminData = { usage: null, users: [], invites: [], pending: [], decided: [], instance: null, errors24h: 0 };
+export interface AdminData { usage: AdminUsage | null; users: AdminUser[]; invites: AdminInvite[]; pending: AdminProposal[]; decided: AdminProposal[]; instance: AdminInstance | null }
+const EMPTY: AdminData = { usage: null, users: [], invites: [], pending: [], decided: [], instance: null };
 
 /** Layout B of the canvas: every section stacked, anchor sub-nav. All data is 0 WCL pts (SQLite + the meter's last snapshot). */
 export function AdminPage({ me }: { me: MeUser }) {
@@ -23,17 +23,16 @@ export function AdminPage({ me }: { me: MeUser }) {
   const [auditKind, setAuditKind] = useState<AuditKind | "all">("all");
   const closeToast = useCallback(() => setToast(null), []);
   const reload = useCallback(async () => {
-    const [usage, users, invites, pending, approved, rejected, instance, audit] = await Promise.all([
+    const [usage, users, invites, pending, approved, rejected, instance] = await Promise.all([
       api.admin.usage(), api.admin.users(), api.admin.invites(), api.admin.proposals("pending"), api.admin.proposals("approved"), api.admin.proposals("rejected"), api.admin.instance(),
-      api.admin.audit({ kind: "error", limit: 1 }),
     ]);
-    const firstError = [usage, users, invites, pending, approved, rejected, instance, audit].find((r) => !r.ok);
+    const firstError = [usage, users, invites, pending, approved, rejected, instance].find((r) => !r.ok);
     if (firstError && !firstError.ok) setToast(firstError.error);
     const decided = [...(approved.ok ? approved.proposals : []), ...(rejected.ok ? rejected.proposals : [])]
       .sort((a, b) => (b.decidedAt ?? 0) - (a.decidedAt ?? 0)).slice(0, 50);
     setData({
       usage: usage.ok ? usage : null, users: users.ok ? users.users : [], invites: invites.ok ? invites.invites : [],
-      pending: pending.ok ? pending.proposals : [], decided, instance: instance.ok ? instance : null, errors24h: audit.ok ? audit.errors24h : 0,
+      pending: pending.ok ? pending.proposals : [], decided, instance: instance.ok ? instance : null,
     });
   }, []);
   useEffect(() => { void reload(); }, [reload]);
@@ -57,10 +56,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <a href="#users">{t("admin.page.nav.users")}</a>
         <a href="#invites">{t("admin.page.nav.invites")}</a>
         <a href="#instance">{t("admin.page.nav.instance")}</a>
-        {/* biome-ignore lint/a11y/useValidAnchor: a real in-page link; the click also preselects the error filter. */}
-        <a href="#audit" onClick={() => { if (data.errors24h > 0) setAuditKind("error"); }}>
-          {t("admin.page.nav.audit")}{data.errors24h > 0 && <span className="chip" style={{ marginLeft: 4, color: "var(--red)" }}>{t("admin.page.errors", { n: data.errors24h })}</span>}
-        </a>
+        <a href="#audit">{t("admin.page.nav.audit")}</a>
       </nav>
       <div className="content">
         <Gauge usage={data.usage} users={data.users} />

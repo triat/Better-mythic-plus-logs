@@ -27,7 +27,8 @@ every JSON body is validated against an explicit shape (unknown fields are
 refused), server errors never carry messages or paths, and the audit log
 (`GET /api/admin/audit?kind=&before=&limit=`, the admin page's Audit section) keeps
 90 days of logins, admin actions, quota refusals, security rejections and
-WCL/server errors.
+WCL/server errors (`kind=error`; `kind=all` and the admin page leave the errors
+out, they are read in Grafana's Errors dashboard or `GET /api/ops/errors`).
 
 ## Login
 
@@ -279,8 +280,10 @@ of a `last-backup` file next to `.env`, touched by the hourly backup check of
 the VPS deployment — see
 [Deploying on a VPS](../deploy/README.md#deploying-on-a-vps)) and the effective environment
 with secrets masked (including the four optional variables below —
-`BMPL_ENCRYPTION_KEY` shows only whether a key is set). WCL errors are in the
-audit log (Errors chip).
+`BMPL_ENCRYPTION_KEY` shows only whether a key is set), plus `logsUrl`, Grafana's
+origin (`logs.` + the host of `BMPL_BASE_URL`, as `deploy/` serves it): the
+section links to its Activity, Errors, Recalibration and Security dashboards.
+The environment is folded under one line until clicked.
 
 ## Health
 

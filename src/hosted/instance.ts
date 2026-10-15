@@ -31,6 +31,12 @@ export function describeConfig(config: HostedConfig, wcl: { clientId: string | n
   ];
 }
 
+/** Grafana's origin: `deploy/` serves it as `logs.<domain>` next to bmpl (Caddyfile, bootstrap.sh). */
+export function logsUrlOf(baseUrl: string): string {
+  const u = new URL(baseUrl);
+  return `${u.protocol}//logs.${u.host}`;
+}
+
 /** mtime of `<dir>/last-backup` (written by the deploy's litestream check, issue #10); null when absent. */
 export function lastBackupAt(dir: string): number | null {
   try { return Math.round(statSync(join(dir, "last-backup")).mtimeMs); } catch { return null; }

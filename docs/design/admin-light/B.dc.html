@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>B · Instance réduite</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 760px; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap; font-size: 13px">
+      <span style="font-weight: 600; font-size: 14px">Instance</span>
+      <span><span style="color: #A0A7B4">version</span> <span style="font-family: 'Geist Mono', monospace">0.10.5</span></span>
+      <span><span style="color: #A0A7B4">uptime</span> 3 j 4 h</span>
+      <span><span style="color: #A0A7B4">base</span> <span style="font-family: 'Geist Mono', monospace">41.2 MB</span></span>
+      <span><span style="color: #A0A7B4">backup</span> il y a 12 min</span>
+      <span><span style="color: #A0A7B4">WCL</span> 18 000 pts/h</span>
+      <div style="flex-grow: 1"></div>
+      <a href="#" style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid #2A2F3B; border-radius: 10px; color: #ECEEF2; font-size: 13px; font-weight: 600">Activité ↗</a>
+      <a href="#" style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid #2A2F3B; border-radius: 10px; color: #ECEEF2; font-size: 13px; font-weight: 600">Erreurs ↗</a>
+      <a href="#" style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid #2A2F3B; border-radius: 10px; color: #ECEEF2; font-size: 13px; font-weight: 600">Recalibrage ↗</a>
+      <a href="#" style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid #2A2F3B; border-radius: 10px; color: #ECEEF2; font-size: 13px; font-weight: 600">Sécurité ↗</a>
+    </div>
+    <button type="button" aria-expanded="false" style="align-self: flex-start; font: inherit; font-size: 13px; color: #A0A7B4; background: transparent; border: 0; padding: 0">▸ Environnement effectif · 12 variables, secrets masqués</button>
+  </section>
+
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span style="font-weight: 600">Journal d'audit</span>
+      <span style="font-size: 12px; color: #A0A7B4">connexions, actions admin, refus de quota, rejets de sécurité · gardé 90 jours</span>
+      <div style="flex-grow: 1"></div>
+      <button type="button" style="font: inherit; font-size: 12px; color: #ECEEF2; border: 1px solid #A0A7B4; border-radius: 999px; padding: 1px 8px; background: transparent">Tout · 214</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Connexions · 168</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Admin · 21</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Quota · 9</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Sécurité · 16</button>
+    </div>
+    <div style="display: grid; grid-template-columns: 156px 130px 150px 220px 1fr; gap: 12px; padding: 8px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">
+      <span>heure</span><span>qui</span><span>action</span><span>cible</span><span>détail</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 156px 130px 150px 220px 1fr; gap: 12px; padding: 8px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; align-items: center">
+      <span style="font-family: 'Geist Mono', monospace; color: #8D95A3">2026-10-15 14:02:11</span><span>tom</span>
+      <span><span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5AB8F0; margin-right: 6px"></span><span style="font-family: 'Geist Mono', monospace; font-size: 12px">login</span></span>
+      <span style="color: #C9CED8">discord 1234…</span><span style="color: #8D95A3"></span>
+    </div>
+    <div style="display: grid; grid-template-columns: 156px 130px 150px 220px 1fr; gap: 12px; padding: 8px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; align-items: center">
+      <span style="font-family: 'Geist Mono', monospace; color: #8D95A3">2026-10-15 13:41:57</span><span>muleyoxo</span>
+      <span><span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #F2B544; margin-right: 6px"></span><span style="font-family: 'Geist Mono', monospace; font-size: 12px">quota_refused</span></span>
+      <span style="color: #C9CED8">POST /api/lookup</span><span style="color: #8D95A3">quota · 287/300 pts utilisés, reset dans 22 min</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 156px 130px 150px 220px 1fr; gap: 12px; padding: 8px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; align-items: center">
+      <span style="font-family: 'Geist Mono', monospace; color: #8D95A3">2026-10-14 22:10:03</span><span>Biwaa</span>
+      <span><span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #7FB4FF; margin-right: 6px"></span><span style="font-family: 'Geist Mono', monospace; font-size: 12px">invite_add</span></span>
+      <span style="color: #C9CED8">5551…</span><span style="color: #8D95A3">note : « alt de tom »</span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

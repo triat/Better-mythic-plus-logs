@@ -144,14 +144,33 @@ export function inviteRow(t: T, i: AdminInvite, now = Date.now()): InviteRowMode
   };
 }
 
-export interface InstanceModel { version: string; uptime: string; db: string; dbPath: string; backup: string; env: AdminInstance["env"] }
+export interface InstanceModel { version: string; uptime: string; db: string; dbSize: string; dbPath: string; backup: string; env: AdminInstance["env"]; envSummary: string }
 export function instanceModel(t: T, i: AdminInstance, now = Date.now()): InstanceModel {
   const file = i.dbPath.split(/[\\/]/).pop() ?? i.dbPath;
   return {
-    version: i.version, uptime: fmtUptime(t, i.uptimeS), db: `${file} · ${fmtBytes(i.dbBytes)}`, dbPath: i.dbPath,
+    version: i.version, uptime: fmtUptime(t, i.uptimeS), db: `${file} · ${fmtBytes(i.dbBytes)}`, dbSize: fmtBytes(i.dbBytes), dbPath: i.dbPath,
     backup: i.lastBackupAt === null ? t("admin.instance.neverBackup") : fmtShortAge(t, i.lastBackupAt, now), env: i.env,
+    envSummary: t("admin.instance.envSummary", { count: i.env.length }),
   };
 }
+
+/** The Instance line's WCL cell: the shared client's hourly limit, the last rateLimitData as its tooltip. */
+export function instanceWcl(t: T, u: AdminUsage | null, now = Date.now()): { text: string; title: string } {
+  if (!u?.instance) return { text: "—", title: t("admin.instance.noCall") };
+  const pts = fmtPts(u.instance.limitPerHour);
+  return { text: t("admin.instance.wclPts", { pts }), title: t("admin.instance.wcl", { age: fmtShortAge(t, u.instance.observedAt, now), pts }) };
+}
+
+/** The Grafana dashboards provisioned from deploy/grafana/dashboards/, by uid, in the Instance card's order. */
+export const GRAFANA_DASHBOARDS = [
+  { key: "activity", uid: "bmpl-activity" },
+  { key: "errors", uid: "bmpl-errors" },
+  { key: "recalibration", uid: "bmpl-recalibration" },
+  { key: "security", uid: "bmpl-security" },
+] as const;
+
+export const grafanaLinks = (t: T, logsUrl: string): Array<{ key: string; label: string; href: string }> =>
+  GRAFANA_DASHBOARDS.map((d) => ({ key: d.key, label: t(`admin.instance.dashboards.${d.key}`), href: `${logsUrl}/d/${d.uid}` }));
 
 // --- audit log (issue #9) ---
 
@@ -183,9 +202,11 @@ export const AUDIT_KIND_OF: Record<AuditAction, AuditKind> = {
   server_error: "error",
 };
 
-export const AUDIT_CHIP_KINDS: ReadonlyArray<AuditKind | "all"> = ["all", "login", "admin", "quota", "security", "error"];
+/** No "error" chip: WCL and server errors are read in Grafana (the Errors dashboard); the server's "all" leaves them out too. */
+export const AUDIT_CHIP_KINDS = ["all", "login", "admin", "quota", "security"] as const satisfies ReadonlyArray<AuditKind | "all">;
+export type AuditChipKind = (typeof AUDIT_CHIP_KINDS)[number];
 /** The kind filter chips, "All" first, in the order of the canvas. */
-export const auditChips = (t: T): Array<{ kind: AuditKind | "all"; label: string }> =>
+export const auditChips = (t: T): Array<{ kind: AuditChipKind; label: string }> =>
   AUDIT_CHIP_KINDS.map((kind) => ({ kind, label: t(`admin.audit.chips.${kind}`) }));
 
 const AUDIT_DOT: Record<AuditKind, AuditRowModel["dot"]> = { login: "dot-login", admin: "dot-admin", quota: "dot-quota", security: "dot-sec", error: "dot-error" };

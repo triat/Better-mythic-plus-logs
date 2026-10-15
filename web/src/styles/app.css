@@ -297,6 +297,13 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .confirm { display: inline-flex; gap: 8px; align-items: center; padding: 6px 10px; font-size: 13px; }
 .kv { display: grid; grid-template-columns: 200px 1fr; gap: 4px 16px; font-size: 13px; }
 .kv .kv-key { color: var(--muted); }
+.admin-instance { display: flex; flex-direction: column; gap: 12px; padding: 16px 24px; }
+.admin-instance-line { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+.admin-instance-line .muted { margin-right: 4px; }
+.admin-dash { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid var(--border-2); border-radius: var(--radius); color: var(--text); font-size: 13px; font-weight: 600; }
+.admin-dash:hover { border-color: var(--muted); }
+.admin-env-toggle { align-self: flex-start; font: inherit; font-size: 13px; color: var(--muted); background: transparent; border: 0; padding: 0; cursor: pointer; }
+.admin-env-toggle:hover { color: var(--text); }
 .forbidden { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: calc(100vh - 65px); text-align: center; }
 .forbidden h1 { font-size: 22px; font-weight: 700; margin: 0; }
 

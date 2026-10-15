@@ -708,7 +708,7 @@ export const fr: Mirror<typeof en> = {
     page: {
       title: "Admin", sub: "invitations, membres, propositions, budget, instance",
       nav: { budget: "Budget", usage: "Usage", proposals: "Propositions", users: "Membres", invites: "Invitations", instance: "Instance", audit: "Audit" },
-      errors: "{n} erreurs", requestFailed: "Requête échouée",
+      requestFailed: "Requête échouée",
     },
     forbidden: {
       title: "Réservé aux admins", local: "La page admin n'existe qu'en mode hébergé.",
@@ -761,8 +761,10 @@ export const fr: Mirror<typeof en> = {
       adminRef: "admin #{n}", added: "{age} · {by}", signedInAs: "connecté en tant que {name}", notSignedIn: "pas encore connecté",
     },
     instance: {
-      title: "Instance", version: "version", uptime: "uptime", database: "base de données", lastBackup: "dernier backup", wclClient: "client WCL",
-      backupHint: "· last-backup à côté du .env", env: "Environnement effectif", secretsMasked: "secrets masqués",
+      title: "Instance", version: "version", uptime: "uptime", database: "base", lastBackup: "backup", wclClient: "WCL",
+      backupHint: "fichier last-backup à côté du .env", wclPts: "{pts} pts/h",
+      envSummary: "Environnement effectif · {count, plural, one {# variable} other {# variables}}, secrets masqués",
+      dashboards: { activity: "Activité ↗", errors: "Erreurs ↗", recalibration: "Recalibrage ↗", security: "Sécurité ↗" },
       wcl: "rateLimitData {age} · {pts} pts/h", noCall: "aucun appel WCL observé pour l'instant",
       neverBackup: "jamais (pas encore de fichier last-backup)",
       uptimeLessMin: "moins d'une minute", uptimeDays: "{d} j {h} h", uptimeHours: "{h} h {m} min", uptimeMinutes: "{m} min",
@@ -786,8 +788,8 @@ export const fr: Mirror<typeof en> = {
       dayTitle: "{day} · {n}",
     },
     audit: {
-      title: "Journal d'audit", sub: "connexions, actions admin, refus de quota, rejets de sécurité, erreurs WCL · gardé 90 jours",
-      chips: { all: "Tout", login: "Connexions", admin: "Admin", quota: "Quota", security: "Sécurité", error: "Erreurs" },
+      title: "Journal d'audit", sub: "connexions, actions admin, refus de quota, rejets de sécurité · gardé 90 jours",
+      chips: { all: "Tout", login: "Connexions", admin: "Admin", quota: "Quota", security: "Sécurité" },
       head: { time: "heure", who: "qui", action: "action", target: "cible", detail: "détail" },
       empty: "Rien d'enregistré pour l'instant.", loadMore: "Charger {n} de plus", showing: "{shown} affichées sur {total} · plus récentes d'abord",
       detail: {

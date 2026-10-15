@@ -1,6 +1,6 @@
 # Observability — design
 
-Status: implemented 2026-10-15 (approved the same day: "ok go"). Amended while implementing: decisions 4, 8, 9, 10 and 12, marked.
+Status: implemented 2026-10-15 (approved the same day: "ok go"). Amended while implementing: decisions 4, 8, 9, 10 and 12, marked; decision 12 completed once the dashboards were live.
 
 ## Goal
 
@@ -75,6 +75,12 @@ every restart.
     age as a tooltip; amended: the members' last visit too, the proposal queue and invites keep their age (a text
     format change in two cells, done without a canvas round). The technical sections (Instance, Usage gauges)
     stay until the dashboards are live; what moves out is decided then. Visible change: the Claude Design canvas first.
+    Decided 2026-10-15 once Grafana was live (canvas "bmpl · Admin allégée", variant B, sources in
+    `docs/design/admin-light/`; user: "B, implémente-le"): the Instance card shrinks to one line (version, uptime,
+    database size, backup age, WCL limit) with links to the four dashboards (`logsUrl` from `GET /api/admin/instance`,
+    `logs.` + the host of `BMPL_BASE_URL`), the effective environment folded under it; the audit section loses its
+    Errors chip and the nav loses the "N errors" badge, and the API's `kind=all` leaves errors out (they stay in the
+    table for `kind=error` and `/api/ops/errors`). The budget gauge and feature usage stay: they are bmpl's own data.
 13. **Retention fixes found on the way.** `usage_hourly` and `usage_hourly_own` get the 90-day purge they lack today.
 14. **Privacy page.** `/privacy` says that requests are logged for 90 days with the client IP (Caddy) and the member
     number, for operations and security only.
@@ -120,4 +126,3 @@ Caddy access log (JSON) ──────────────┴─ Alloy �
 
 - A metrics database and a `/metrics` endpoint (later, if the log-based charts are not enough).
 - Login to Grafana with Discord.
-- Moving the admin page's technical sections out (decided once the dashboards are live).

@@ -92,9 +92,10 @@ Also worth a look: the Grafana dashboards at `https://logs.<host>` (Activity,
 Errors, Recalibration, Security; user `admin`, password in
 `/etc/grafana/grafana.env` on the VPS), where every request, error and audit
 event of the last 90 days is searchable by its request id (`X-Request-Id`,
-also in a 500's ring entry); the admin page's **Instance** section (version,
-uptime, database size, last backup, effective environment) and **Audit**
-section's Errors chip; `ssh <vps> journalctl -u caddy` and `ssh <vps> journalctl -u
+also in a 500's ring entry); the admin page's **Instance** line (version,
+uptime, database size, last backup, the four dashboard links, the effective
+environment folded under it) and **Audit** section (logins, admin actions,
+quota refusals, security rejections; errors are in Grafana); `ssh <vps> journalctl -u caddy` and `ssh <vps> journalctl -u
 litestream` for the reverse proxy and replication themselves.
 
 **Reference** — [docs/hosted.md § Health](hosted.md#health), [deploy/README.md § Deploying on a VPS, part 5](../deploy/README.md#deploying-on-a-vps).

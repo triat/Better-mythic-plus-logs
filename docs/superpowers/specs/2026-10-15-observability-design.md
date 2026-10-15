@@ -42,6 +42,9 @@ every restart.
    most telling field), which VictoriaLogs takes as the message; `wcl_error` (kind, status) and an hourly `health` line
    (backup age, members, sessions) feed the Errors dashboard and the alerts; `calibration_hour` carries the window's
    total. The audit mirror carries the action, its kind and the member only (a target can name a Discord account).
+   Completed with the admin page's Errors chip gone (2026-10-15): `wcl_error` also carries `user`, `req` and `target`
+   (only a lookup, season or deep-dive target: `lookup Name-Realm`, never an admin target), and a 5xx answered without
+   an exception (a failed lookup, season sync or deep-dive) logs its own `server_error` with the same fields.
 5. **Alloy collects two sources**: the journal of `bmpl.service` and of the two `bmpl-calibrate-*` units (JSON parsed
    into fields), and Caddy's access log (`/var/log/caddy/bmpl.log`, already JSON: client IP, status, duration, size).
    It pushes to VictoriaLogs through the Loki push API (`/insert/loki/api/v1/push`), which VictoriaLogs accepts.
@@ -52,7 +55,9 @@ every restart.
 7. **Dashboards** (provisioned, read-only in the UI):
    - *Activity*: requests per hour by route, lookups and deep-dives per day, active members per day, WCL points per hour
      (members vs recalibration), logins.
-   - *Errors*: server errors with their stack and request id, WCL errors by kind, 4xx/5xx rate, the slowest routes (p95).
+   - *Errors*: server errors, WCL errors and members hit over the last 24 h (what the admin badge counted), server
+     errors with their stack and request id, WCL errors one per line with member, target and request id (what the
+     admin's Errors chip listed), WCL errors by kind, 4xx/5xx rate, the slowest routes (p95).
    - *Recalibration*: characters sampled per hour, the window's total vs the 2,000 target, stop reasons, the last fit.
    - *Security*: rate-limited, origin-rejected and ops-denied events, top client IPs from Caddy.
 8. **Alerts to a Discord channel** (a webhook URL, a secret in Grafana's environment file): a server error, more than

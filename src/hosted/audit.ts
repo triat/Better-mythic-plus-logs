@@ -76,7 +76,13 @@ export const AUDIT_RETENTION_MS = 90 * 24 * 3600_000;
 /** Truncates to `n` characters with an ellipsis — every free-text string stored in a row goes through this. */
 export const clip = (s: string, n = 300): string => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
-export interface AuditScope { userId: number | null; ip: string; target: string }
+/** `req` is the request id (`X-Request-Id`): never stored in a row, it only ties a log line to its request. */
+export interface AuditScope { userId: number | null; ip: string; target: string; req?: string }
+
+/** The scope's target when it names what the member was doing (`lookup Name-Realm`, `season …`, `deepdive report:fight`),
+ *  for an error's log line; null for a bare `METHOD /path` or an admin target, which can name a Discord account. */
+export const workTarget = (target: string | undefined): string | null =>
+  target !== undefined && /^(lookup|season|deepdive) /.test(target) ? target : null;
 
 export class AuditLog {
   private readonly als = new AsyncLocalStorage<AuditScope>();

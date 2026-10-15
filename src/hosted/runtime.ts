@@ -10,7 +10,7 @@ import { BNET_CHECK_INTERVAL_MS, BNET_FIRST_CHECK_MS, checkBnetCharacters } from
 import { setRateLimitObserver, setWclErrorObserver } from "../wcl/client.ts";
 import { memberMarker } from "../calibration/marker.ts";
 import { PointsMeter } from "../wcl/meter.ts";
-import { AUDIT_RETENTION_MS, AuditLog, clip } from "./audit.ts";
+import { AUDIT_RETENTION_MS, AuditLog, clip, workTarget } from "./audit.ts";
 import { QuotaGate } from "./quota.ts";
 import { DEFAULT_RATE_LIMITS, RateLimiter } from "./ratelimit.ts";
 import type { RateLimits } from "./ratelimit.ts";
@@ -19,7 +19,7 @@ import { UserWclClients, verifyWithPing } from "./wcl-clients.ts";
 import type { Verify } from "./wcl-clients.ts";
 import { USAGE_RETENTION_DAYS, DAY_MS } from "./usage-catalog.ts";
 import type { UsageEvent } from "./usage-catalog.ts";
-import { errorFields, log } from "../log.ts";
+import { errorFields, log, userRef } from "../log.ts";
 import { dirname } from "node:path";
 import { resolveEnvPath } from "../setup.ts";
 import { lastBackupAt } from "./instance.ts";
@@ -101,7 +101,8 @@ export function createHostedRuntime(
   setRateLimitObserver((rl) => { meter.observe(rl); touchMarker(); });
   setWclErrorObserver((e) => {
     audit.record("wcl_error", { detail: { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300) } });
-    log.warn("wcl_error", { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300) });
+    const s = audit.current();
+    log.warn("wcl_error", { kind: e.kind, status: e.status, message: clip(e.publicMessage, 300), user: userRef(s?.userId), req: s?.req, target: workTarget(s?.target) });
   });
   const purge = (): void => {
     const now = Date.now();

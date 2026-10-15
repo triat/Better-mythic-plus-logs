@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, test } from "bun:test";
-import { ACTION_KIND, AUDIT_KINDS, AuditLog, actionsOf, clip, kindOf } from "../../src/hosted/audit.ts";
+import { ACTION_KIND, AUDIT_KINDS, AuditLog, actionsOf, clip, kindOf, workTarget } from "../../src/hosted/audit.ts";
 import type { AuditAction } from "../../src/hosted/audit.ts";
 import { openHosted } from "../../src/hosted/db.ts";
 import type { HostedDb, UserRow } from "../../src/hosted/db.ts";
@@ -109,5 +109,16 @@ describe("AuditLog", () => {
 
   test("Battle.net linking actions are account actions", () => {
     for (const a of ["bnet_link", "bnet_unlink", "bnet_character_removed", "characters_reset"] as const) expect(kindOf(a)).toBe("login");
+  });
+});
+
+describe("workTarget", () => {
+  test("keeps what the member was doing, drops a bare route or an admin target", () => {
+    expect(workTarget("lookup Biwaadrood-Nerzhul")).toBe("lookup Biwaadrood-Nerzhul");
+    expect(workTarget("season Tom-Hyjal")).toBe("season Tom-Hyjal");
+    expect(workTarget("deepdive ab12:7")).toBe("deepdive ab12:7");
+    expect(workTarget("POST /api/lookup")).toBeNull();
+    expect(workTarget("123456789012345678")).toBeNull();
+    expect(workTarget(undefined)).toBeNull();
   });
 });

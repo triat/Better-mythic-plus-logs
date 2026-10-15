@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "When a page fails in your browser, the error is now sent to the operator so it can be fixed; the privacy page says so.",
+    ],
+  },
+  {
     version: "0.10.5",
     date: "2026-10-15",
     items: [

@@ -12,7 +12,8 @@ import { parseCharacters, restrictToStored, type MyCharacter } from "../self/cha
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
-import { SETTINGS_BODY, USAGE_EVENTS_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
+import { CLIENT_ERROR_BODY, SETTINGS_BODY, USAGE_EVENTS_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
+import { log, userRef } from "../log.ts";
 import { USAGE_BATCH_MAX_COUNT, USAGE_BATCH_MAX_NAMES, isUiEvent } from "../hosted/usage-catalog.ts";
 import type { UiEvent } from "../hosted/usage-catalog.ts";
 
@@ -79,6 +80,16 @@ export function userRoutes(rt: HostedRuntime): Route[] {
       if (!parsed.ok) return jsonResponse({ ok: false, error: parsed.error }, 400);
       for (const [name, n] of parsed.events) rt.track(ctx.user!.id, name, n);
       return jsonResponse({ ok: true, recorded: parsed.events.length, dropped: parsed.dropped });
+    }),
+
+    // An uncaught error of the page (logs spec, decision 17): one `client_error` line for the Errors dashboard, nothing
+    // stored. Signed-in members only, rate-limited per member (server.ts `rateLimitFor`).
+    route("POST", "/api/client-error", async (req, _url, ctx) => {
+      const b = await parseBody(req, CLIENT_ERROR_BODY);
+      if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+      const { kind, message, stack, page, version } = b.value;
+      log.warn("client_error", { kind, message, stack: stack ?? null, page, version: version ?? null, user: userRef(ctx.user!.id) });
+      return jsonResponse({ ok: true });
     }),
 
     route("GET", "/api/me/wcl-client", async (_req, _url, ctx) =>

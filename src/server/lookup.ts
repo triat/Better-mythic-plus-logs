@@ -5,7 +5,8 @@ import type { HostedRuntime } from "../hosted/runtime.ts";
 import type { QuotaRefusal, Reserve } from "../hosted/quota.ts";
 import { buildLookupPayload, performLookup } from "../lookup.ts";
 import { CharacterNotFoundError } from "../mplus.ts";
-import type { LookupOutcome, LookupPayload } from "../lookup.ts";
+import type { LookupOutcome, LookupPayload, LookupTimings } from "../lookup.ts";
+import { log } from "../log.ts";
 import type { Metric } from "../roles.ts";
 import { cacheKey } from "../server-history.ts";
 import type { HistoryListItem, HistoryRequest, HistoryStore } from "../server-history.ts";
@@ -52,6 +53,8 @@ export interface LookupSuccess {
   request: HistoryRequest;
   /** The history entry's `fetchedAt` (the payload `result` is), for `HistoryStore.syncSummary`'s guard. */
   fetchedAt: number;
+  /** The fetch's timings (a joiner shares the starter's); absent on a cache hit. */
+  timings?: LookupTimings;
 }
 export interface LookupDeps { reserve?: Reserve; performLookup?: typeof performLookup; tables?: LoadedTables }
 
@@ -155,7 +158,7 @@ export async function runLookupWithCache(opts: {
       targetAutoDetected: o.result.targetAutoDetected,
     });
 
-    return { ok: true, key: entry.key, result: payload, fromCache: false, joined, request, fetchedAt: entry.fetchedAt };
+    return { ok: true, key: entry.key, result: payload, fromCache: false, joined, request, fetchedAt: entry.fetchedAt, timings: o.timings };
   } catch (e) {
     if (e instanceof WclError) return { ok: false, status: 502, error: e.message, wcl: e.publicMessage };
     if (e instanceof CharacterNotFoundError) {
@@ -187,7 +190,13 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
     region: body.region ?? config.region,
     owns: lookupOwns(!!body.mine, listed),
   }, historyOf(ctx), { reserve: scope.own ? undefined : (runtime && user ? runtime.quota.for(user) : undefined), tables }));
-  if (!result.ok) return jsonResponse(failureBody(result, runtime), result.status);
+  if (!result.ok) {
+    if (runtime) {
+      const outcome = result.status === 429 ? "refused" : result.status === 404 ? "not_found" : result.wcl ? "wcl_error" : "failed";
+      log.info("lookup_done", { outcome, status: result.status, region: body.region ?? config.region, refresh: !!body.refresh, own_client: scope.own });
+    }
+    return jsonResponse(failureBody(result, runtime), result.status);
+  }
   runtime?.track(ctx.user?.id ?? null, result.fromCache ? "lookup_cached" : body.refresh ? "lookup_refresh" : "lookup");
   // Attach today's cached analyses (0 pts, SQLite only). Hosted: always, against the member's own tables (a joiner never
   // sees the starter's pending layer). Local: on a cache hit, so an entry saved before an analysis field existed gains
@@ -195,6 +204,17 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
   const payload = ctx.hosted || result.fromCache ? await withCachedAnalyses(result.result as LookupPayload, tables) : result.result;
   // The row's verdict/score follow the re-run evaluation the member sees (payload, date and order untouched).
   if (payload !== result.result) historyOf(ctx).syncSummary(result.key, payload, result.fetchedAt);
+  if (runtime) {
+    // One line per answered lookup, with the verdict the member sees: the Lookups dashboard (cache share, verdicts by level, where the time goes).
+    const p = payload as LookupPayload;
+    const t = result.timings;
+    log.info("lookup_done", {
+      outcome: result.fromCache ? "cached" : result.joined ? "joined" : "fetched",
+      region: result.request.region, refresh: !!body.refresh, own_client: scope.own,
+      key_level: p.evaluation.targetLevel, role: p.evaluation.role, verdict: p.evaluation.verdict, score: p.evaluation.global, runs: p.runsIndexed,
+      ...(t ? { rankings_ms: t.rankingsMs, enrich_ms: t.enrichMs, rio_ms: t.rioMs, rio_cached: t.rioCached, total_ms: t.totalMs } : {}),
+    });
+  }
   // A member's own client charges nothing to the shared meter/usage (issue #11 Task 3).
   const accounting = runtime && user
     ? scope.own

@@ -100,6 +100,23 @@ every restart.
     `bmpl-grafana-alerts.path` watches `/etc/grafana/grafana.env`, so pasting the Discord webhook turns the alerts on
     with no command. DNS: one record per subdomain, no wildcard (user's choice).
 
+16. **More to read once live** (added 2026-10-15, user: "fait tout dans la PR", and "le recalibrage qui tourne, ça
+    pourrait être intéressant d'avoir quelque chose pour ça"). New lines, all hosted or `bmpl calibrate` only:
+    `upstream` (every call to WCL, Raider.IO, Discord, Battle.net: `dep`, `op` — a GraphQL query's first field or a path
+    with what follows `character` replaced —, status, ms, ok, `client` for WCL, `req`); `lookup_done` (outcome, key level,
+    role, verdict, score, the phases' timings; never the character); `wcl_hour` (the finished hour's shared and own
+    points, members who spent, the limit); `health` gains memory, database size and uptime; `calibration_sample` (one per
+    recalibration lookup, with the counter's rise as its cost), `calibration_hour` gains the window by role and the
+    instance counter, `calibration_fit` the per-role figures. New dashboards: *Lookups*, *Dependencies*, *System*; the
+    *Recalibration* dashboard is redrawn (window by role, samples by role × key level and by spec, points per hour, lookup
+    time, failures, the weekly fits as a table); every dashboard marks each `startup` (releases and restarts). Tables run
+    their `stats` query as an instant query (one row per group, its fields extracted): the tables shipped before showed
+    one column per series. Fields named `service` or `unit` are dropped by `src/log.ts` (the stream labels).
+17. **The browser's errors.** `web/src/clientErrors.ts` sends the page's uncaught errors and rejections (signed-in
+    members, at most five distinct per page load, bmpl's own scripts only, the pathname without its query) to
+    `POST /api/client-error` (10 per minute per member), which writes one `client_error` line and stores nothing. The
+    privacy page says so.
+
 ## Data flow
 
 ```

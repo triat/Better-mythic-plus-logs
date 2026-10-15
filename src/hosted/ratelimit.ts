@@ -17,6 +17,8 @@ export const DEFAULT_RATE_LIMITS = {
   signup: { limit: 5, windowMs: 3_600_000 },
   /** `POST /api/usage/events` (the front's batched interface events), per user. */
   usage: { limit: 30, windowMs: 60_000 },
+  /** `POST /api/client-error` (the page's uncaught errors), per user. */
+  clientError: { limit: 10, windowMs: 60_000 },
 } as const;
 
 export type RateLimits = { [K in keyof typeof DEFAULT_RATE_LIMITS]: RateLimitRule };

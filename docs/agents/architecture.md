@@ -134,13 +134,23 @@ Spec `docs/superpowers/specs/2026-10-11-battlenet-linking-design.md`, plan `docs
 
 Spec `docs/superpowers/specs/2026-10-15-observability-design.md`. `log.info|warn|error(event, fields)` writes one JSON
 object per line to stdout (`ts` ISO UTC ms, `level`, `event`, `msg`, the fields); fields named `ip`, `discordId`,
-`username`, `email` are dropped, strings clipped (stacks at 4,000); silent under `bun test` (`setLogSink` captures).
+`username`, `email` are dropped, and so are `service` and `unit` (the logs stack's stream labels: a field of that name
+would shadow them; an outbound call names its dependency `dep`, a key level is `key_level` since `level` is the line's
+own); strings clipped (stacks at 4,000); silent under `bun test` (`setLogSink` captures).
 Hosted only: `server.ts` logs one `http_request` per routed request (`route` is `Route.template`, never the raw path;
 `user#<id>`; the meter's `wcl_points`; `req`, also the `X-Request-Id` header and the error ring's `req`) and
 `server_error` with the stack; `AuditLog.record` mirrors each row as `audit` (action, kind, member); `wcl_error`,
 `bnet_check(_failed)`, `bnet_link_failed`, `discord_login_failed`, `wcl_client_undecryptable`, `audit_write_failed`,
-`usage_write_failed`, `startup`, and the hourly `health` (backup age) from the runtime's purge; `bmpl calibrate` logs
-`calibration_hour` / `calibration_fit` / `calibration_note` / `calibration_failed`. Local mode keeps its human console
+`usage_write_failed`, `startup`, the hourly `health` (backup age, memory, database size, uptime) from the runtime's purge,
+`wcl_hour` a minute after each clock hour (`wclHourFields`: the hour's shared and own points from `usage_hourly(_own)`),
+`lookup_done` per `POST /api/lookup` (outcome, key level, role, verdict, score, phase timings from
+`LookupOutcome.timings`, never the character), `client_error` from `POST /api/client-error` (the page's uncaught errors,
+`web/src/clientErrors.ts`), and `upstream` for every outbound call (`src/upstream.ts`: WCL through `gql`/`getAccessToken`,
+Raider.IO in `fetchRioProfile`, Discord and Battle.net through the runtime's `instrumentFetch`; silent until an observer
+is installed, so local mode and the CLI print nothing); `bmpl calibrate` logs `calibration_hour` (window by role, the
+instance counter at the hour's end) / `calibration_sample` (one per lookup: spec, role, key level, ok, ms, points) /
+`calibration_fit` (per-role `<role>_fit`, `_median_current`, `_median_candidate` …) / `calibration_note` /
+`calibration_failed`, and its own `upstream` lines. Local mode keeps its human console
 output. On the VPS, Grafana Alloy ships the journal and Caddy's log to VictoriaLogs; dashboards and alerts in
 `deploy/grafana/` query fields by these names: rename an event or a field and update them in the same change.
 

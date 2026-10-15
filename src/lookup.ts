@@ -103,8 +103,14 @@ export type LookupOutcome =
       evaluation: Evaluation;
       deepdive: RunDefensives[];
       deepdiveSummary: DeepdiveSummary;
+      /** Where the time went (the logs' `lookup_done` line); never in the payload. Null: the step did not run. */
+      timings?: LookupTimings;
     }
   | { ok: false; status: 404 | 429; error: string; quota?: QuotaRefusal };
+
+export interface LookupTimings { rankingsMs: number | null; enrichMs: number | null; rioMs: number; rioCached: boolean; totalMs: number }
+
+const since = (t: number): number => Math.round(performance.now() - t);
 
 interface Deps {
   store?: Store;
@@ -122,18 +128,22 @@ interface Deps {
 
 /** The whole lookup: rankings → analysis → (WCL enrichment ‖ Raider.IO). */
 export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promise<LookupOutcome> {
+  const startedAt = performance.now();
   const store = deps.store ?? (await getStore());
   const recent = deps.recent ?? recentRankings;
   const recentKey = RecentRankings.key(opts);
   let fetched = opts.refresh ? null : recent.get(recentKey);
+  let rankingsMs: number | null = null;
   if (!fetched) {
     const refusedRankings = deps.reserve?.(ESTIMATE_RANKINGS);
     if (refusedRankings) return { ok: false, status: 429, error: refusedRankings.message, quota: refusedRankings };
+    const t = performance.now();
     fetched = await (deps.fetchMplus ?? fetchMplusData)(opts.name, opts.realm, {
       region: opts.region,
       metric: opts.metric,
       specFilter: opts.spec,
     });
+    rankingsMs = since(t);
   }
   let data = fetched;
   // The rankings list every ranked run of the season (issue #24 § 1): keep them for the season views, 0 extra pts.
@@ -188,14 +198,17 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
   }
   recent.drop(recentKey);
 
+  const parallelAt = performance.now();
+  let enrichMs: number | null = null;
+  let rioMs = 0;
   const [, rioRes] = await Promise.all([
     opts.enrich
-      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql, control })
+      ? enrichRuns(shown, data.character.name, store, { gql: deps.gql, control }).then((r) => { enrichMs = since(parallelAt); return r; })
       : Promise.resolve(),
     fetchRioProfile(opts.region, opts.realm, data.character.name, store, {
       refresh: opts.refresh,
       fetchFn: deps.fetchFn,
-    }),
+    }).then((r) => { rioMs = since(parallelAt); return r; }),
   ]);
 
   const tables = deps.tables ?? (await getDefensives());
@@ -226,6 +239,7 @@ export async function performLookup(opts: LookupOptions, deps: Deps = {}): Promi
     evaluation: evaluate(payloadForEval, deps.evalConfig ?? (await getEvalConfig())),
     deepdive,
     deepdiveSummary: deepdiveSummary(deepdive, tables.warning),
+    timings: { rankingsMs, enrichMs, rioMs, rioCached: rioRes.fromCache, totalMs: since(startedAt) },
   };
 }
 

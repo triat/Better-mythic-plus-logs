@@ -377,6 +377,7 @@ are registered in both modes; the local-only routes
 | POST | `/api/me/wcl-client/verify` | user | Re-verify the caller's saved WCL client |
 | DELETE | `/api/me/wcl-client` | user | Remove the caller's own WCL client |
 | POST | `/api/usage/events` | user | Batched interface events `{ events: { name: count } }` for the feature-usage counters (catalogue names only) |
+| POST | `/api/client-error` | user | One uncaught error of the page `{ kind, message, stack?, page, version? }`: a `client_error` log line, nothing stored (10 per minute per member; the page sends five at most) |
 | GET | `/api/admin/invites` | admin | List invites |
 | POST | `/api/admin/invites` | admin | Add an invite (Discord id + optional note) |
 | DELETE | `/api/admin/invites/:discordId` | admin | Remove an invite (also revokes that user's sessions) |

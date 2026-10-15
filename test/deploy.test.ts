@@ -87,7 +87,7 @@ describe("deploy/ files agree on the VPS layout", () => {
     expect(ds).toContain("url: http://127.0.0.1:9428");
     const dir = new URL("../deploy/grafana/dashboards/", import.meta.url);
     const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
-    expect(files.sort()).toEqual(["activity.json", "errors.json", "recalibration.json", "security.json"]);
+    expect(files.sort()).toEqual(["activity.json", "dependencies.json", "errors.json", "lookups.json", "recalibration.json", "security.json", "system.json"]);
     for (const f of files) {
       const d = JSON.parse(read(`grafana/dashboards/${f}`)) as { uid: string; editable: boolean; panels: { datasource: { uid: string }; targets: { datasource: { uid: string }; expr: string }[] }[] };
       expect(d.uid.startsWith("bmpl-")).toBe(true);

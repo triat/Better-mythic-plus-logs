@@ -142,4 +142,14 @@ export const WATCH_BODY = obj({ level: opt(nullable(int({ min: 2, max: 50 }))), 
 const CHARACTER = /^[^|\s]{1,24}-[^|\s]{1,32}$/;
 export const LIVE_PLAYER = obj({ character: str({ min: 3, max: 60, trim: true, pattern: CHARACTER }), region: opt(oneOf(REGIONS)) });
 export const USAGE_EVENTS_BODY = obj({ events: any() });
+/** POST /api/client-error: one uncaught error of the page (the front clips message and stack before sending). */
+export const CLIENT_ERROR_KINDS = ["error", "rejection"] as const;
+export const CLIENT_ERROR_BODY = obj({
+  kind: oneOf(CLIENT_ERROR_KINDS),
+  message: str({ min: 1, max: 500 }),
+  stack: opt(nullable(str({ max: 4000 }))),
+  /** The pathname only (`/candidate`): never the query, which can name a character. */
+  page: str({ min: 1, max: 64, pattern: /^\/[A-Za-z0-9/_-]*$/ }),
+  version: opt(nullable(str({ max: 32, pattern: SEMVER }))),
+});
 export const LIVE_CACHED_BODY = obj({ level: nullable(int({ min: KEY_MIN, max: KEY_MAX })), players: arr(LIVE_PLAYER, { min: 1, max: 40 }) });

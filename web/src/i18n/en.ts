@@ -655,7 +655,7 @@ export const en = {
     audit: "Audit log",
     auditLine: "{audit}: sign-ins, refusals and errors with your id and IP, kept 90 days.",
     requests: "Request log",
-    requestsLine: "{requests}: each request you make (what was called, the answer's status and time, your member number, the WCL points spent) and, in the web server's log, your IP, kept 90 days for running and protecting the service only.",
+    requestsLine: "{requests}: each request you make (what was called, the answer's status and time, your member number, the WCL points spent), the errors your browser hits on a page (the message, the page, the version) and, in the web server's log, your IP, kept 90 days for running and protecting the service only.",
     notYours: "What is not yours",
     publicData: "Runs, rankings and fight data fetched from Warcraft Logs are public and are cached for everyone; they carry the names of the players in those runs, which is how Warcraft Logs publishes them.",
     deleting: "Deleting your account",

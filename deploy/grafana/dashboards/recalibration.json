@@ -1,7 +1,7 @@
 {
   "uid": "bmpl-recalibration",
   "title": "bmpl \u00b7 Recalibration",
-  "description": "bmpl calibrate --hourly / --fit (spec 2026-10-14-weekly-recalibration-design.md).",
+  "description": "bmpl calibrate --hourly / --fit (spec 2026-10-14-weekly-recalibration-design.md): the 4-week window, each sample, the points it spends and the weekly fit.",
   "tags": [
     "bmpl"
   ],
@@ -14,9 +14,438 @@
     "from": "now-14d",
     "to": "now"
   },
+  "annotations": {
+    "list": [
+      {
+        "name": "Releases and restarts",
+        "enable": true,
+        "iconColor": "blue",
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "victorialogs"
+        },
+        "target": {
+          "refId": "Anno",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:startup",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
+      "title": "Window",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_hour | last 1 by (_time) | stats max(window) n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "The last hour's count of characters sampled in the last 4 weeks; the collector stops at 2,000.",
+      "timeFrom": "7d",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Tanks",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_hour | last 1 by (_time) | stats max(window_tank) n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "description": "Each role needs 40 in the fit half to be refitted.",
+      "timeFrom": "7d",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Healers",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_hour | last 1 by (_time) | stats max(window_healer) n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 7,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "description": "Each role needs 40 in the fit half to be refitted.",
+      "timeFrom": "7d",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 4,
+      "title": "DPS",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_hour | last 1 by (_time) | stats max(window_dps) n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 10,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "description": "Each role needs 40 in the fit half to be refitted.",
+      "timeFrom": "7d",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Sampled, 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample ok:true | stats count() n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 13,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "Lookups that became a sample.",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Failed, 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample ok:false | stats count() n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 17,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "description": "Lookups that found nothing usable (never retried).",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 7,
+      "title": "WCL points, 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample | stats sum(points) pts",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "The counter's rise across each lookup (members' calls in the same seconds included).",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 8,
       "title": "Characters sampled per hour",
       "type": "timeseries",
       "datasource": {
@@ -30,14 +459,15 @@
             "type": "victoriametrics-logs-datasource",
             "uid": "victorialogs"
           },
-          "expr": "event:calibration_hour | stats sum(looked) sampled, sum(failed) failed",
+          "expr": "service:bmpl event:calibration_sample | stats by (ok) count() n",
           "queryType": "statsRange",
-          "editorMode": "code"
+          "editorMode": "code",
+          "legendFormat": "ok={{ok}}"
         }
       ],
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 4,
         "w": 12,
         "h": 8
       },
@@ -65,8 +495,8 @@
       "interval": "1h"
     },
     {
-      "id": 2,
-      "title": "Characters in the 4-week window (target 2,000)",
+      "id": 9,
+      "title": "The 4-week window by role (target 2,000)",
       "type": "timeseries",
       "datasource": {
         "type": "victoriametrics-logs-datasource",
@@ -79,31 +509,345 @@
             "type": "victoriametrics-logs-datasource",
             "uid": "victorialogs"
           },
-          "expr": "event:calibration_hour | stats max(window) window",
+          "expr": "service:bmpl event:calibration_hour | stats max(window_tank) tank, max(window_healer) healer, max(window_dps) dps",
           "queryType": "statsRange",
           "editorMode": "code",
-          "legendFormat": "window"
+          "legendFormat": "{{__name__}}"
         }
       ],
       "gridPos": {
         "x": 12,
-        "y": 0,
+        "y": 4,
         "w": 12,
         "h": 8
       },
-      "interval": "1h",
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "drawStyle": "line"
-          },
-          "min": 0
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          }
         },
         "overrides": []
-      }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1h"
     },
     {
-      "id": 3,
+      "id": 10,
+      "title": "WCL points per hour",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample | stats sum(points) recalibration",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "recalibration"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_hour | stats max(wcl_spent) instance",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "instance counter at the hour's end"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_hour | stats max(wcl_limit) limit",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "limit"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "description": "The recalibration's own spend against the instance's whole counter (members included) and the hourly limit.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1h"
+    },
+    {
+      "id": 11,
+      "title": "Lookup time (ms)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample | stats quantile(0.5, ms) median, quantile(0.95, ms) p95",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "{{__name__}}"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1h"
+    },
+    {
+      "id": 12,
+      "title": "Samples by role and key level",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample ok:true | stats by (role, key_level) count() samples | sort by (role, key_level)",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 8,
+        "h": 10
+      },
+      "description": "The last 4 weeks: the collector fills the emptiest cell first.",
+      "options": {
+        "showHeader": true
+      },
+      "timeFrom": "28d",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "role": 0,
+              "key_level": 1,
+              "samples": 2
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "samples",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Samples by spec",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample ok:true | stats by (spec) count() samples | sort by (samples desc)",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 20,
+        "w": 8,
+        "h": 10
+      },
+      "options": {
+        "showHeader": true
+      },
+      "timeFrom": "28d",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "spec": 0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "samples",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Why lookups failed",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_sample ok:false | stats by (error) count() n | sort by (n desc) | limit 10",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 20,
+        "w": 8,
+        "h": 5
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "error": 0,
+              "n": 1
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "n",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
       "title": "Why each hour stopped",
       "type": "table",
       "datasource": {
@@ -117,23 +861,163 @@
             "type": "victoriametrics-logs-datasource",
             "uid": "victorialogs"
           },
-          "expr": "event:calibration_hour | stats by (stopped) count() hours | sort by (hours desc)",
-          "queryType": "stats",
+          "expr": "service:bmpl event:calibration_hour | stats by (stopped) count() hours | sort by (hours desc)",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 25,
+        "w": 8,
+        "h": 5
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "stopped": 0,
+              "hours": 1
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "hours",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Weekly fits: held-out characters, verdict changes and median score per role",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:calibration_fit | format \"<time:_time>\" as fitted | stats by (fitted) max(test) held_out, max(verdictChanges) changes, max(tank_fit) tank_n, max(tank_median_current) tank_now, max(tank_median_candidate) tank_new, max(healer_fit) healer_n, max(healer_median_current) healer_now, max(healer_median_candidate) healer_new, max(dps_fit) dps_n, max(dps_median_current) dps_now, max(dps_median_candidate) dps_new | sort by (fitted desc)",
+          "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
         "x": 0,
-        "y": 8,
-        "w": 12,
-        "h": 8
+        "y": 30,
+        "w": 24,
+        "h": 6
       },
+      "description": "<role>_n: characters in the fit half; <role>_now / <role>_new: the role's median score today and with the candidate curves. The pull request opens when 2 % of the held-out characters change verdict or a median moves 2 points.",
       "options": {
         "showHeader": true
-      }
+      },
+      "timeFrom": "90d",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "fitted": 0,
+              "held_out": 1,
+              "changes": 2,
+              "tank_n": 3,
+              "tank_now": 4,
+              "tank_new": 5,
+              "healer_n": 6,
+              "healer_now": 7,
+              "healer_new": 8,
+              "dps_n": 9,
+              "dps_now": 10,
+              "dps_new": 11
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "held_out",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "changes",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "tank_n",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "tank_now",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "tank_new",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "healer_n",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "healer_now",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "healer_new",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "dps_n",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "dps_now",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "dps_new",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
-      "id": 4,
+      "id": 17,
       "title": "Weekly fits",
       "type": "logs",
       "datasource": {
@@ -147,14 +1031,14 @@
             "type": "victoriametrics-logs-datasource",
             "uid": "victorialogs"
           },
-          "expr": "event:calibration_fit",
+          "expr": "service:bmpl event:calibration_fit",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
-        "x": 12,
-        "y": 8,
+        "x": 0,
+        "y": 36,
         "w": 12,
         "h": 8
       },
@@ -163,10 +1047,11 @@
         "wrapLogMessage": true,
         "sortOrder": "Descending",
         "enableLogDetails": true
-      }
+      },
+      "timeFrom": "90d"
     },
     {
-      "id": 5,
+      "id": 18,
       "title": "Failures and notes",
       "type": "logs",
       "datasource": {
@@ -180,16 +1065,16 @@
             "type": "victoriametrics-logs-datasource",
             "uid": "victorialogs"
           },
-          "expr": "event:in(calibration_failed,calibration_note)",
+          "expr": "service:bmpl event:in(calibration_failed,calibration_note)",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
-        "x": 0,
-        "y": 16,
-        "w": 24,
-        "h": 10
+        "x": 12,
+        "y": 36,
+        "w": 12,
+        "h": 8
       },
       "options": {
         "showTime": true,

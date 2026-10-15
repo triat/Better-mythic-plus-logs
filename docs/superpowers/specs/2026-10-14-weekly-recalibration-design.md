@@ -53,6 +53,15 @@ it as a pull request the user merges or not.
      balanced across the study's cells (role × level × performance quintile); beyond that the role curves barely move
      and the points would be spent for nothing. From empty, the target takes about 9 to 10 hours; afterwards the
      hourly runs only replace the characters that age out of the window, a few hundred a week.
+     **Amended 2026-10-15** (user: "fait le quota qui donnera le meilleur résultat et le plus précis"): the first
+     fill took a day, so all 2,000 characters would have aged out together on day 28 and the window would have stayed
+     frozen until then, every weekly fit reading the same people. The stop is now a **daily quota**: 150 new
+     characters per rolling 24 hours (`DAILY_TARGET`). The window renews every day, a seventh of it each week, and
+     settles at about 4,200 characters (`WINDOW_STEADY`), twice the first target: the uncertainty on a role's median
+     shrinks by about √2 (from roughly ±2 to ±1.5 points with ~330 → ~700 characters per role and half), below the
+     2-point median threshold. Cost: about 150 × 87 ≈ 13,000 points a day, 3 % of the client's daily budget, a little
+     under an hour of paced lookups. A character already in the window is not looked up again; if the weekly pool
+     holds fewer new characters than the quota, the hour stops with "every candidate of the pool is sampled".
    - The Wednesday 03:00–06:00 window keeps its role as the preferred slot for a large batch (the reserve drops to 300
      there), for example after a season starts and the window is empty.
 6. **Its own database.** `performLookup` caches what it fetches; the collector opens its own SQLite file
@@ -76,7 +85,7 @@ it as a pull request the user merges or not.
 ```
 every hour       systemd → bmpl calibrate --hourly   (up to limitPerHour − 3,000 reserve; Wed 03–06 Paris: reserve 300)
                    discover (current rankings, ~1 pt/page) → collect (performLookup on calibration.db, paced,
-                   yields to members) → samples on the VPS (rolling 4 weeks, target 2,000 characters)
+                   yields to members) → samples on the VPS (rolling 4 weeks, 150 new characters a day, about 4,200 in all)
 Wed 06:00 Paris  systemd → bmpl calibrate --fit → candidate.json + comparison.md (aggregates only)
 Wed ~06:30 Paris GitHub Actions → GET /api/ops/calibration → diff vs main → PR "calibration/<date>" (or nothing)
 user             → reviews, merges or closes; a merge ships with the next release

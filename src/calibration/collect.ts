@@ -2,7 +2,7 @@
 // docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md, decision 5). The scheduled spend is the explicit,
 // user-approved exception to "never spend WCL points automatically"; the governor (window.ts) bounds it.
 //
-// Each run: prune the rolling window, stop if the target is reached, (re)discover the pool once a week (pages cached in
+// Each run: prune the rolling window, stop if the day's quota is reached, (re)discover the pool once a week (pages cached in
 // calibration.db, so an interrupted discovery resumes), then look characters up one at a time from the emptiest cell,
 // asking WCL for its counter before every lookup.
 import type { EvalPayload } from "../evaluation/inputs.ts";
@@ -19,8 +19,14 @@ import { decide } from "./window.ts";
 const DAY_MS = 86_400_000;
 /** The rolling window the fit reads (decision 7). */
 export const WINDOW_MS = 28 * DAY_MS;
-/** Characters in the window beyond which the curves barely move (decision 5). */
-export const TARGET = 2000;
+/**
+ * New characters per rolling 24 hours (decision 5, amended 2026-10-15). A daily quota rather than a total for the window:
+ * the window then renews every day (a seventh of it each week) instead of filling once and freezing for 4 weeks, and
+ * settles at about 28 × 150 ≈ 4,200 characters, twice the first target's 2,000, for a tighter fit.
+ */
+export const DAILY_TARGET = 150;
+/** What the window holds once every day of it has its quota: the dashboards' reference line. */
+export const WINDOW_STEADY = DAILY_TARGET * 28;
 /** A new discovery pass every this often: the current rankings bring new characters each week. */
 export const CYCLE_MS = 7 * DAY_MS;
 /** Discovery pages are ~1 pt each; a short gap keeps them from bursting. */
@@ -53,8 +59,8 @@ export interface SampleOutcome { spec: string; role: Role; level: number; ok: bo
 
 export interface CollectReport {
   looked: number; failed: number; pages: number; stopped: string;
-  /** Characters in the window when the hour ended, against `target`. */
-  window: number; target: number;
+  /** Characters in the window when the hour ended; `day` of them in the last 24 hours, against the daily `target`. */
+  window: number; day: number; target: number;
   /** The same window split by role (the fit needs each role, not only the total). */
   windowByRole: Record<Role, number>;
 }
@@ -71,8 +77,8 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
   const now = d.now ?? Date.now;
   const sleep = d.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const log = d.log ?? ((l: string) => console.log(l));
-  const target = d.target ?? TARGET;
-  const report: CollectReport = { looked: 0, failed: 0, pages: 0, stopped: "", window: 0, target, windowByRole: { tank: 0, healer: 0, dps: 0 } };
+  const target = d.target ?? DAILY_TARGET;
+  const report: CollectReport = { looked: 0, failed: 0, pages: 0, stopped: "", window: 0, day: 0, target, windowByRole: { tank: 0, healer: 0, dps: 0 } };
   let counted: { season: number; since: number } | null = null;
   let lastStartAt: number | null = null;
   let backoff: number = BACKOFF_MS[0];
@@ -97,8 +103,11 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
     counted = { season, since };
     d.samples.prune(season, since);
     let total = d.samples.count(season, since).total;
+    let day = d.samples.count(season, now() - DAY_MS).total;
     report.window = total;
-    if (total >= target) throw new Stop(`target reached (${total} characters in the window)`);
+    report.day = day;
+    const quotaReached = (): Stop => new Stop(`daily quota reached (${day} characters in the last 24 h, ${total} in the window)`);
+    if (day >= target) throw quotaReached();
 
     // Discovery: once per cycle. Pages already read this cycle come from the cache, so a pass cut short resumes.
     const cycle = Math.floor(now() / CYCLE_MS);
@@ -169,8 +178,10 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
           counts.set(cellOf(c), (counts.get(cellOf(c)) ?? 0) + 1);
           report.looked++;
           total++;
+          day++;
           report.window = total;
-          if (total >= target) throw new Stop(`target reached (${total} characters in the window)`);
+          report.day = day;
+          if (day >= target) throw quotaReached();
         } else {
           d.samples.fail(c.key, season, now(), r.error);
           report.failed++;

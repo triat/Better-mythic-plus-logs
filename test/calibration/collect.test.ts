@@ -83,13 +83,22 @@ describe("bmpl calibrate --hourly", () => {
     expect(s.starts[0]! - START).toBeGreaterThanOrEqual(MEMBER_PAUSE_MS - 60_000);
   });
 
-  test("stops at the target", async () => {
+  test("stops at the daily quota, and collects again once the last 24 hours hold fewer", async () => {
     const wcl = fakeWcl({ spent: 0, ladder: 20 });
-    const s = setup({ wcl, target: 3 });
+    let t = START;
+    const s = setup({ wcl, target: 3, now: () => t, sleep: async (ms) => { t += ms; } });
     const r = await collectHour(s.deps);
     expect(r.looked).toBe(3);
-    expect(r.stopped).toContain("target reached");
-    expect((await collectHour({ ...s.deps, endAt: s.clock() + 60_000 })).looked).toBe(0);
+    expect(r.day).toBe(3);
+    expect(r.stopped).toContain("daily quota reached");
+    // Later the same day: nothing to do.
+    expect((await collectHour({ ...s.deps, endAt: t + 60_000 })).looked).toBe(0);
+    // A day later the quota is free again: three new characters join the window, the first three stay in it.
+    t += 24 * 3_600_000 + 60_000;
+    const next = await collectHour({ ...s.deps, endAt: t + 55 * 60_000 });
+    expect(next.looked).toBe(3);
+    expect(next.window).toBe(6);
+    expect(next.day).toBe(3);
   });
 
   test("a lookup that fails is recorded and never retried; a 429 is retried after a pause", async () => {

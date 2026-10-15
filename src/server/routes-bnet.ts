@@ -15,6 +15,7 @@ import { redirect } from "./routes-auth.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
 import { BNET_PICK_BODY, parseBody } from "./validate.ts";
+import { log } from "../log.ts";
 
 const BNET_COOKIE_PATH = "/auth/bnet";
 /** What the state store keeps for a nonce: the member's id with it, so the state only works for the member who started. */
@@ -42,7 +43,7 @@ export function bnetRoutes(rt: HostedRuntime): Route[] {
       const done = (code: BnetCallbackCode): Response => redirect(`/me?bnet=${code}`, [clearNonce]);
       const blizzardFailure = (f: BnetFailure): Response => {
         const code = f.kind === "scope" ? "scope" : "down";
-        console.error(`bnet link: ${code}`);
+        log.warn("bnet_link_failed", { code, kind: f.kind });
         rt.errors.push(new Error(`bnet link: ${code} (${f.kind}): ${f.error}`), "bnet callback");
         return done(code);
       };

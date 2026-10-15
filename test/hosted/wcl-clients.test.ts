@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { describe, expect, spyOn, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { openHosted } from "../../src/hosted/db.ts";
 import { UserWclClients, verifyWithPing } from "../../src/hosted/wcl-clients.ts";
 import type { Verify } from "../../src/hosted/wcl-clients.ts";
@@ -7,6 +7,7 @@ import { decrypt } from "../../src/hosted/crypto.ts";
 import { getAccessToken, resetAuthCache } from "../../src/wcl/auth.ts";
 import { currentWclClient } from "../../src/wcl/client.ts";
 import { TEST_ENCRYPTION_KEY } from "./helpers.ts";
+import { setLogSink } from "../../src/log.ts";
 
 const RL = { limitPerHour: 3600, pointsSpentThisHour: 1412, pointsResetIn: 2280 };
 const setup = (key: Uint8Array | null, verify: Verify = async () => ({ ok: true, rateLimit: RL })) => {
@@ -41,7 +42,8 @@ describe("UserWclClients", () => {
   });
   test("verify: 404 without a client, 400 when the key changed, success re-stamps verifiedAt", async () => {
     const { db, u, svc } = setup(TEST_ENCRYPTION_KEY);
-    const errSpy = spyOn(console, "error").mockImplementation(() => {});
+    const lines: string[] = [];
+    setLogSink((l) => lines.push(l));
     try {
       expect(await svc.verify(u.id)).toEqual({ ok: false, status: 404, error: "No WCL client saved" });
       db.wclClients.put({ userId: u.id, clientId: "abc", secretEnc: "v1.AAAAAAAAAAAAAAAA.AAAA", verifiedAt: null, now: 1 });
@@ -51,9 +53,9 @@ describe("UserWclClients", () => {
       expect((await svc.view(u.id))!.usable).toBe(false);
       expect(svc.has(u.id)).toBe(true);
       // Once per process per user, even across the two undecryptable calls above.
-      expect(errSpy).toHaveBeenCalledTimes(1);
+      expect(lines.map((l) => JSON.parse(l))).toEqual([expect.objectContaining({ event: "wcl_client_undecryptable", user: `user#${u.id}` })]);
     } finally {
-      errSpy.mockRestore();
+      setLogSink(null);
     }
     await svc.save(u.id, { clientId: "abc", clientSecret: "s" });
     db.wclClients.setVerified(u.id, 1); // pretend it is old

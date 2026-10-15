@@ -16,6 +16,7 @@ import { decrypt, encrypt } from "./crypto.ts";
 import { clip } from "./audit.ts";
 import { abbreviate } from "./instance.ts";
 import type { HostedDb } from "./db.ts";
+import { log, userRef } from "../log.ts";
 
 export interface OwnClientView {
   clientId: string; // abbreviated
@@ -179,6 +180,6 @@ export class UserWclClients {
   private warnUndecryptable(userId: number): void {
     if (this.warned.has(userId)) return;
     this.warned.add(userId);
-    console.error(`wcl client of user ${userId} cannot be decrypted (key changed?)`);
+    log.error("wcl_client_undecryptable", { user: userRef(userId), hint: "BMPL_ENCRYPTION_KEY changed?" });
   }
 }

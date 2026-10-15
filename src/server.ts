@@ -24,6 +24,8 @@ import { localRoutes } from "./server/routes-local.ts";
 import { getLocalHistory, openLocalHistory } from "./server/local-history.ts";
 import { jsonResponse } from "./server/http.ts";
 import { withSecurityHeaders } from "./server/security.ts";
+import { errorFields, log, userRef } from "./log.ts";
+import pkg from "../package.json";
 import { closeStore, getStore } from "./signals/store.ts";
 import { resolveEnvPath } from "./setup.ts";
 import { createStaticHandler, defaultAssetLoader } from "./web-static.ts";
@@ -133,7 +135,9 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     ...(runtime ? [...authRoutes(runtime), ...bnetRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime), ...opsRoutes(runtime)] : localRoutes()),
   ];
 
-  const respond = async (req: Request, url: URL, peerIp: string | null): Promise<Response> => {
+  /** What the request log needs from `respond`: the route it reached, its user and the WCL points it spent. */
+  interface Seen { route: string | null; userId: number | null; points: number | null }
+  const respond = async (req: Request, url: URL, peerIp: string | null, reqId: string, seen: Seen): Promise<Response> => {
     // Hosted: what the audit row of an uncaught throw is attributed to (known once the request is resolved).
     let scope: AuditScope | null = null;
     try {
@@ -143,6 +147,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       }
       const r = findRoute(routes, req, url);
       if (!r) return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      seen.route = r.template;
       const ip = clientIp(req, hosted, peerIp);
       const target = `${req.method} ${url.pathname}`;
       // Hosted: a state-changing request from another origin is refused before the auth gate, so a
@@ -159,6 +164,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
         }
       }
       const ctx = runtime ? resolveRequest(req, { db: runtime.db, secret: runtime.config.sessionSecret, now: Date.now(), ip }) : LOCAL_CONTEXT(ip, getLocalHistory());
+      seen.userId = ctx.user?.id ?? null;
       const gate = authGate(r, ctx);
       if (gate) return gate;
       if (!runtime) return await r.handle(req, url, ctx);
@@ -182,15 +188,23 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       // every audit row recorded inside it carries the user, ip and target of this request.
       scope = { userId: ctx.user?.id ?? null, ip, target };
       const rt = runtime;
-      const res = await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, () => Promise.resolve(r.handle(req, url, ctx))));
+      const res = await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, async () => {
+        try {
+          return await r.handle(req, url, ctx);
+        } finally {
+          // Spent until the response is ready; a stream's later spend is the meter's, not this line's.
+          seen.points = rt.meter.charge()?.spent ?? null;
+        }
+      }));
       const event = res.status < 400 ? apiEventFor(req.method, url.pathname) : null;
       if (event) rt.track(ctx.user?.id ?? null, event);
       return res;
     } catch (e) {
-      console.error(e);
-      // The message stays in the log (clipped) and in stderr; the client only ever sees "Internal error".
-      // The stack goes to the in-memory ring that `/api/ops/logs` reads.
-      runtime?.errors.push(e, scope?.target ?? `${req.method} ${url.pathname}`);
+      // The message stays in the audit log (clipped) and the structured log (with its stack, hosted) or stderr (local);
+      // the client only ever sees "Internal error". The stack also goes to the in-memory ring that `/api/ops/logs` reads.
+      if (runtime) log.error("server_error", { method: req.method, route: seen.route, req: reqId, user: userRef(seen.userId), ...errorFields(e) });
+      else console.error(e);
+      runtime?.errors.push(e, scope?.target ?? `${req.method} ${url.pathname}`, Date.now(), reqId);
       runtime?.audit.record("server_error", { ...(scope ?? { userId: null, ip: clientIp(req, hosted, peerIp), target: `${req.method} ${url.pathname}` }), detail: { message: clip(String(e instanceof Error ? e.message : e)) } });
       return jsonResponse({ ok: false, error: "Internal error" }, 500);
     }
@@ -203,14 +217,27 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     development: !hosted,
     async fetch(req, srv) {
       const url = new URL(req.url);
-      const res = await respond(req, url, srv.requestIP(req)?.address ?? null);
-      return hosted ? withSecurityHeaders(res) : res;
+      const reqId = crypto.randomUUID();
+      const seen: Seen = { route: null, userId: null, points: null };
+      const t0 = performance.now();
+      const res = await respond(req, url, srv.requestIP(req)?.address ?? null, reqId, seen);
+      if (!hosted) return res;
+      // One line per request that reached a route (static files and unknown paths are in Caddy's access log):
+      // the route as written, never the raw path, and the member as user#<id>. `ms` runs until the response is ready.
+      if (seen.route) {
+        log.info("http_request", {
+          method: req.method, route: seen.route, status: res.status, ms: Math.round(performance.now() - t0),
+          user: userRef(seen.userId), wcl_points: seen.points, req: reqId,
+        });
+      }
+      return withSecurityHeaders(res, { "X-Request-Id": reqId });
     },
     // Belt-and-suspenders: `respond` already catches everything reachable through `findRoute` and
     // `serveStatic`, but nothing outside it (e.g. a throw from Bun's own request parsing) should
     // ever reach Bun's default HTML debug page, especially in hosted mode.
     error(e) {
-      console.error(e);
+      if (runtime) log.error("server_error", { route: null, ...errorFields(e) });
+      else console.error(e);
       runtime?.errors.push(e, null);
       const res = jsonResponse({ ok: false, error: "Internal error" }, 500);
       return hosted ? withSecurityHeaders(res) : res;
@@ -220,15 +247,18 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const bindHost = opts.host ?? null;
   const displayHost = bindHost === null || bindHost === "0.0.0.0" || bindHost === "::" ? "localhost" : bindHost;
   const url = `http://${displayHost}:${server.port}`;
-  console.log(`${heading("bmpl serve")}  ${ok(url)}${hosted ? dim("  (hosted mode)") : ""}`);
   if (hosted) {
+    // Hosted: one structured line, like every other one the journal gets.
     const cfg = opts.hostedConfig!;
-    console.log(dim(`  credentials: ${hasCredentials() ? "loaded" : "NOT SET"}  ·  local routes disabled  ·  signup: ${cfg.openSignup ? "open" : "invite-only"}  ·  guild gate: ${cfg.discordGuildId ? "on" : "off"}  ·  own WCL clients: ${cfg.encryptionKey ? "on" : "off"}`));
-    if (bindHost) console.log(dim(`  bound to ${bindHost} — put a reverse proxy in front`));
+    log.info("startup", {
+      version: pkg.version as string, port: server.port, host: bindHost, credentials: hasCredentials(),
+      signup: cfg.openSignup ? "open" : "invite-only", guildGate: !!cfg.discordGuildId, ownWclClients: !!cfg.encryptionKey,
+    });
   } else {
+    console.log(`${heading("bmpl serve")}  ${ok(url)}`);
     console.log(dim(`  env path: ${envPathHint}  ·  credentials: ${hasCredentials() ? "loaded" : "not set (setup page will open)"}`));
   }
-  console.log(dim("  Ctrl+C to stop."));
+  if (!hosted) console.log(dim("  Ctrl+C to stop."));
   if (opts.open && !hosted) setTimeout(() => openBrowser(url), 80);
   return server;
 }

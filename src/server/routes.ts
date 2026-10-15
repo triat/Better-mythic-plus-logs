@@ -5,13 +5,20 @@ import type { RequestContext } from "../hosted/auth.ts";
 
 export type RouteAuth = "public" | "user" | "admin";
 export type Handler = (req: Request, url: URL, ctx: RequestContext) => Response | Promise<Response>;
-export interface Route { method: "GET" | "POST" | "DELETE" | "PUT"; match: (path: string) => boolean; handle: Handler; auth: RouteAuth }
+export interface Route {
+  method: "GET" | "POST" | "DELETE" | "PUT";
+  match: (path: string) => boolean;
+  handle: Handler;
+  auth: RouteAuth;
+  /** The route as written (`/api/admin/users/*` for a prefix): what the request log names, never the raw path. */
+  template: string;
+}
 
 export const route = (method: Route["method"], path: string, handle: Handler, auth: RouteAuth = "user"): Route =>
-  ({ method, match: (p) => p === path, handle, auth });
+  ({ method, match: (p) => p === path, handle, auth, template: path });
 
 export const prefixRoute = (method: Route["method"], prefix: string, handle: Handler, auth: RouteAuth = "user"): Route =>
-  ({ method, match: (p) => p.startsWith(prefix), handle, auth });
+  ({ method, match: (p) => p.startsWith(prefix), handle, auth, template: `${prefix}*` });
 
 export function findRoute(routes: Route[], req: Request, url: URL): Route | null {
   for (const r of routes) if (r.method === req.method && r.match(url.pathname)) return r;

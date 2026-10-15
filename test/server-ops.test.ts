@@ -12,6 +12,7 @@ import type { HostedRuntime } from "../src/hosted/runtime.ts";
 import { runServer } from "../src/server.ts";
 import { cacheKey } from "../src/server-history.ts";
 import { opsRoutes, opsTokenMatches } from "../src/server/routes-ops.ts";
+import { setLogSink } from "../src/log.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
 import { fitAndCompare, writeFit } from "../src/calibration/report.ts";
@@ -103,13 +104,28 @@ describe("routes", () => {
       [member.user.id, key, JSON.stringify(request), "x", "Corrupt", 1, null, 10, 0, Date.now(), 1],
     );
     const since = Date.now() - 1;
-    expect((await fetch(u(`/api/history/${encodeURIComponent(key)}`), { headers: { cookie: member.cookie } })).status).toBe(500);
+    const lines: string[] = [];
+    setLogSink((l) => lines.push(l));
+    const failed = await fetch(u(`/api/history/${encodeURIComponent(key)}`), { headers: { cookie: member.cookie } });
+    setLogSink(null);
+    expect(failed.status).toBe(500);
+    // The structured log: the error with its stack, then the request line, both carrying the response's X-Request-Id.
+    const reqId = failed.headers.get("x-request-id")!;
+    expect(reqId).toMatch(/^[0-9a-f-]{36}$/);
+    const parsed = lines.map((l) => JSON.parse(l));
+    const err = parsed.find((o) => o.event === "server_error");
+    expect(err).toMatchObject({ level: "error", route: "/api/history/*", req: reqId, user: `user#${member.user.id}` });
+    expect(err.stack).toContain("history.ts");
+    expect(parsed.find((o) => o.event === "http_request")).toMatchObject({ method: "GET", route: "/api/history/*", status: 500, req: reqId, user: `user#${member.user.id}` });
+    expect(lines.join("\n")).not.toContain("Corrupt");
+    expect(lines.join("\n")).not.toContain("127.0.0.1");
 
     const logs = await (await fetch(u(`/api/ops/logs?since=${since}`), bearer())).json();
     expect(logs.entries).toHaveLength(1);
     expect(logs.entries[0].target).toBe(`GET /api/history/${encodeURIComponent(key)}`);
     expect(logs.entries[0].message).toContain("JSON Parse error");
     expect(logs.entries[0].stack).toContain("history.ts");
+    expect(logs.entries[0].req).toBe(reqId);
 
     const errors = await (await fetch(u(`/api/ops/errors?since=${since}`), bearer())).json();
     expect(errors.rows).toHaveLength(1);

@@ -11,12 +11,16 @@ const FORBIDDEN = new Set(["ip", "discordId", "discord_id", "username", "email"]
 const MAX_STRING = 1000;
 const MAX_STACK = 4000;
 
-let sink: (line: string) => void = (line) => { process.stdout.write(`${line}\n`); };
+// Under `bun test` (NODE_ENV=test) the default sink is silent: a hosted test server would otherwise print a line per
+// request. Tests that check the lines install their own sink.
+const stdoutSink = (line: string): void => { process.stdout.write(`${line}\n`); };
+const defaultSink = process.env.NODE_ENV === "test" ? () => {} : stdoutSink;
+let sink: (line: string) => void = defaultSink;
 let clock: () => number = Date.now;
 
-/** Tests: capture the lines (and fix the clock); `null` restores stdout and the real clock. */
+/** Tests: capture the lines (and fix the clock); `null` restores the default sink and the real clock. */
 export function setLogSink(fn: ((line: string) => void) | null, now: (() => number) | null = null): void {
-  sink = fn ?? ((line) => { process.stdout.write(`${line}\n`); });
+  sink = fn ?? defaultSink;
   clock = now ?? Date.now;
 }
 

@@ -8,6 +8,7 @@ import { characterStatus, type BnetAppToken } from "./bnet.ts";
 import type { HostedDb } from "./db.ts";
 import type { ErrorRing } from "./error-ring.ts";
 import { characterKey, type MyCharacter } from "../self/characters.ts";
+import { errorFields, log } from "../log.ts";
 
 export const BNET_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 export const BNET_CHECK_AFTER_MS = 25 * 24 * 60 * 60 * 1000;
@@ -40,8 +41,8 @@ export async function checkBnetCharacters(deps: {
   const { db, audit, app, fetchFn, now } = deps;
   const counts: BnetCheckCounts = { checked: 0, kept: 0, removed: 0, failed: 0 };
   const report = (err: unknown): void => {
-    if (deps.errors) deps.errors.push(err, "bnet check", now);
-    else console.error(`bnet check: ${err instanceof Error ? err.message : String(err)}`);
+    deps.errors?.push(err, "bnet check", now);
+    log.error("bnet_check_failed", errorFields(err));
   };
   try {
     const due = db.bnet.withBnetCharacters()

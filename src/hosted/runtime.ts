@@ -19,6 +19,7 @@ import { UserWclClients, verifyWithPing } from "./wcl-clients.ts";
 import type { Verify } from "./wcl-clients.ts";
 import { USAGE_RETENTION_DAYS, DAY_MS } from "./usage-catalog.ts";
 import type { UsageEvent } from "./usage-catalog.ts";
+import { errorFields, log } from "../log.ts";
 
 export interface HostedRuntime {
   config: HostedConfig;
@@ -86,7 +87,7 @@ export function createHostedRuntime(
       try {
         hostedDb.features.add(userId, event, Date.now(), n);
       } catch (err) {
-        console.error(`usage: could not record ${event}: ${err instanceof Error ? err.message : String(err)}`);
+        log.error("usage_write_failed", { usage: event, ...errorFields(err) });
       }
     },
   };
@@ -112,7 +113,7 @@ export function createHostedRuntime(
     checking = true;
     try {
       const r = await checkBnetCharacters({ db: hostedDb, audit, app: runtime.bnetApp, fetchFn, now: Date.now(), errors: runtime.errors });
-      if (r.checked > 0) console.log(`bnet check: ${r.checked} checked, ${r.removed} removed, ${r.failed} failed`);
+      if (r.checked > 0) log.info("bnet_check", { checked: r.checked, kept: r.kept, removed: r.removed, failed: r.failed });
     } finally {
       checking = false;
     }

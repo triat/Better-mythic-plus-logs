@@ -1,0 +1,11 @@
+# The only data source: VictoriaLogs on loopback (deploy/victorialogs.service). Its uid is what every dashboard panel
+# and alert rule names; moving to Loki means a new data source and new queries, not a new uid convention.
+apiVersion: 1
+datasources:
+  - name: VictoriaLogs
+    uid: victorialogs
+    type: victoriametrics-logs-datasource
+    access: proxy
+    url: http://127.0.0.1:9428
+    isDefault: true
+    editable: false

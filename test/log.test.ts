@@ -11,12 +11,16 @@ describe("structured logs", () => {
     log.info("http_request", { method: "GET", status: 200, user: userRef(4) });
     expect(lines).toHaveLength(1);
     expect(lines[0]!.includes("\n")).toBe(false);
-    expect(JSON.parse(lines[0]!)).toEqual({ ts: "2026-10-15T08:30:00.123Z", level: "info", event: "http_request", method: "GET", status: 200, user: "user#4" });
+    log.info("http_request", { method: "GET", route: "/api/me", status: 200, ms: 4, user: userRef(4) });
+    expect(JSON.parse(lines[0]!)).toEqual({ ts: "2026-10-15T08:30:00.123Z", level: "info", event: "http_request", msg: "GET undefined 200 undefined ms", method: "GET", status: 200, user: "user#4" });
+    expect(JSON.parse(lines[1]!).msg).toBe("GET /api/me 200 4 ms");
   });
   test("never an IP, a Discord id or a username; undefined fields left out; reserved keys kept", () => {
     capture();
-    log.warn("x", { ip: "1.2.3.4", discordId: "123", username: "tom", a: undefined, b: null, ts: "fake", event: "fake" });
-    expect(JSON.parse(lines[0]!)).toEqual({ ts: "2026-10-15T08:30:00.123Z", level: "warn", event: "x", b: null });
+    log.warn("x", { ip: "1.2.3.4", discordId: "123", username: "tom", a: undefined, b: null, ts: "fake", event: "fake", msg: "fake" });
+    expect(JSON.parse(lines[0]!)).toEqual({ ts: "2026-10-15T08:30:00.123Z", level: "warn", event: "x", msg: "x", b: null });
+    log.error("server_error", { message: "boom" });
+    expect(JSON.parse(lines[1]!).msg).toBe("server_error: boom");
   });
   test("long strings clipped, stacks with more room; an unserialisable value still logs a line", () => {
     capture();

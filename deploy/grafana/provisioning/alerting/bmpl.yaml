@@ -1,0 +1,360 @@
+# Alerts to the Discord channel whose webhook URL is DISCORD_ALERT_WEBHOOK in /etc/grafana/grafana.env (never in the
+# repository). Spec docs/superpowers/specs/2026-10-15-observability-design.md, decision 8. Generated layout: keep the
+# five rules uniform (one LogsQL stats query, reduce to its last value, one threshold).
+{
+  "apiVersion": 1,
+  "contactPoints": [
+    {
+      "orgId": 1,
+      "name": "discord",
+      "receivers": [
+        {
+          "uid": "bmpl-discord",
+          "type": "discord",
+          "settings": {
+            "url": "$DISCORD_ALERT_WEBHOOK",
+            "use_discord_username": false
+          },
+          "disableResolveMessage": false
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "orgId": 1,
+      "receiver": "discord",
+      "group_by": [
+        "alertname"
+      ],
+      "group_wait": "30s",
+      "group_interval": "5m",
+      "repeat_interval": "4h"
+    }
+  ],
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "bmpl",
+      "folder": "bmpl",
+      "interval": "1m",
+      "rules": [
+        {
+          "uid": "bmpl-server-error",
+          "title": "Server error",
+          "condition": "C",
+          "for": "0s",
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "annotations": {
+            "summary": "bmpl answered 500 at least once in the last 5 minutes: see the Errors dashboard (request id in each line)."
+          },
+          "labels": {
+            "service": "bmpl"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 300,
+                "to": 0
+              },
+              "datasourceUid": "victorialogs",
+              "model": {
+                "refId": "A",
+                "expr": "_time:5m service:bmpl event:server_error | stats count() n",
+                "queryType": "stats",
+                "editorMode": "code"
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "reduce",
+                "expression": "A",
+                "reducer": "last",
+                "settings": {
+                  "mode": "replaceNN",
+                  "replaceWithValue": 0
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "bmpl-wcl-errors",
+          "title": "WCL errors",
+          "condition": "C",
+          "for": "0s",
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "annotations": {
+            "summary": "More than 5 Warcraft Logs errors in 15 minutes."
+          },
+          "labels": {
+            "service": "bmpl"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 900,
+                "to": 0
+              },
+              "datasourceUid": "victorialogs",
+              "model": {
+                "refId": "A",
+                "expr": "_time:15m service:bmpl event:wcl_error | stats count() n",
+                "queryType": "stats",
+                "editorMode": "code"
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "reduce",
+                "expression": "A",
+                "reducer": "last",
+                "settings": {
+                  "mode": "replaceNN",
+                  "replaceWithValue": 0
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        5
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "bmpl-silent",
+          "title": "bmpl silent",
+          "condition": "C",
+          "for": "0s",
+          "noDataState": "Alerting",
+          "execErrState": "Error",
+          "annotations": {
+            "summary": "bmpl wrote no hourly `health` line for over 2 hours: the server is down or its logs no longer reach VictoriaLogs."
+          },
+          "labels": {
+            "service": "bmpl"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 7800,
+                "to": 0
+              },
+              "datasourceUid": "victorialogs",
+              "model": {
+                "refId": "A",
+                "expr": "_time:130m service:bmpl event:health | stats count() n",
+                "queryType": "stats",
+                "editorMode": "code"
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "reduce",
+                "expression": "A",
+                "reducer": "last",
+                "settings": {
+                  "mode": "replaceNN",
+                  "replaceWithValue": 0
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "lt",
+                      "params": [
+                        1
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "bmpl-backup-stale",
+          "title": "Backup older than 2 hours",
+          "condition": "C",
+          "for": "0s",
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "annotations": {
+            "summary": "The last litestream snapshot is older than 2 hours (bmpl logs it every hour as `health`)."
+          },
+          "labels": {
+            "service": "bmpl"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 7200,
+                "to": 0
+              },
+              "datasourceUid": "victorialogs",
+              "model": {
+                "refId": "A",
+                "expr": "_time:2h service:bmpl event:health | stats max(backupAgeS) age",
+                "queryType": "stats",
+                "editorMode": "code"
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "reduce",
+                "expression": "A",
+                "reducer": "last",
+                "settings": {
+                  "mode": "replaceNN",
+                  "replaceWithValue": 0
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        7200
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "uid": "bmpl-calibration-failed",
+          "title": "Recalibration run failed",
+          "condition": "C",
+          "for": "0s",
+          "noDataState": "OK",
+          "execErrState": "Error",
+          "annotations": {
+            "summary": "A bmpl calibrate run failed: see the Recalibration dashboard."
+          },
+          "labels": {
+            "service": "bmpl"
+          },
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 7200,
+                "to": 0
+              },
+              "datasourceUid": "victorialogs",
+              "model": {
+                "refId": "A",
+                "expr": "_time:2h event:calibration_failed | stats count() n",
+                "queryType": "stats",
+                "editorMode": "code"
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "B",
+                "type": "reduce",
+                "expression": "A",
+                "reducer": "last",
+                "settings": {
+                  "mode": "replaceNN",
+                  "replaceWithValue": 0
+                }
+              }
+            },
+            {
+              "refId": "C",
+              "datasourceUid": "__expr__",
+              "model": {
+                "refId": "C",
+                "type": "threshold",
+                "expression": "B",
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "type": "gt",
+                      "params": [
+                        0
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

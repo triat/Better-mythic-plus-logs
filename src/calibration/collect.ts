@@ -47,7 +47,11 @@ export interface CollectDeps {
   target?: number;
 }
 
-export interface CollectReport { looked: number; failed: number; pages: number; stopped: string }
+export interface CollectReport {
+  looked: number; failed: number; pages: number; stopped: string;
+  /** Characters in the window when the hour ended, against `target`. */
+  window: number; target: number;
+}
 
 class Stop extends Error {}
 
@@ -62,7 +66,7 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
   const sleep = d.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const log = d.log ?? ((l: string) => console.log(l));
   const target = d.target ?? TARGET;
-  const report: CollectReport = { looked: 0, failed: 0, pages: 0, stopped: "" };
+  const report: CollectReport = { looked: 0, failed: 0, pages: 0, stopped: "", window: 0, target };
   let lastStartAt: number | null = null;
   let backoff: number = BACKOFF_MS[0];
 
@@ -85,6 +89,7 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
     const since = now() - WINDOW_MS;
     d.samples.prune(season, since);
     let total = d.samples.count(season, since).total;
+    report.window = total;
     if (total >= target) throw new Stop(`target reached (${total} characters in the window)`);
 
     // Discovery: once per cycle. Pages already read this cycle come from the cache, so a pass cut short resumes.
@@ -153,6 +158,7 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
           counts.set(cellOf(c), (counts.get(cellOf(c)) ?? 0) + 1);
           report.looked++;
           total++;
+          report.window = total;
           if (total >= target) throw new Stop(`target reached (${total} characters in the window)`);
         } else {
           d.samples.fail(c.key, season, now(), r.error);

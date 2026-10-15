@@ -1,0 +1,679 @@
+{
+  "uid": "bmpl-lookups",
+  "title": "bmpl \u00b7 Lookups",
+  "description": "What the members' lookups return and cost: outcomes, the cache's share, verdicts by key level, where a fetched lookup's time goes (src/server/lookup.ts `lookup_done` lines; never the character).",
+  "tags": [
+    "bmpl"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "5m",
+  "time": {
+    "from": "now-14d",
+    "to": "now"
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Releases and restarts",
+        "enable": true,
+        "iconColor": "blue",
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "victorialogs"
+        },
+        "target": {
+          "refId": "Anno",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:startup",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Lookups answered \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:in(fetched,cached,joined) | stats count() n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Fetched, cached or joined.",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Served without WCL \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done | stats count() if (outcome:in(cached,joined)) hits, count() if (outcome:in(fetched,cached,joined)) n | math round(hits / n * 100) as pct | fields pct",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "description": "The share of answered lookups that cost no WCL point: a 6-hour cache hit, or joining a lookup already running.",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0",
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Refused for quota \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:refused | stats count() n",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "description": "The member's hourly quota or the shared budget.",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Fetched lookup, median time \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:fetched | stats quantile(0.5, total_ms) ms",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Rankings, then the runs from WCL alongside Raider.IO, then the evaluation.",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "0",
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Lookups per day by outcome",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done | stats by (outcome) count() n",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "description": "fetched: WCL called; cached: the 6-hour cache; joined: shared a lookup already running; refused: quota; not_found; wcl_error; failed: any other error.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1d"
+    },
+    {
+      "id": 6,
+      "title": "Verdicts per day",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:in(fetched,cached,joined) | stats by (verdict) count() n",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "{{verdict}}"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "description": "The verdict each member saw, cache hits included (one per lookup, not per character).",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1d"
+    },
+    {
+      "id": 7,
+      "title": "Verdicts by key level",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:in(fetched,cached,joined) key_level:* | stats by (key_level, verdict) count() n | sort by (key_level, verdict)",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 10
+      },
+      "description": "Over the dashboard's time range: the recalibration moves these shares.",
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "key_level": 0,
+              "verdict": 1,
+              "n": 2
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "n",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Score by role",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:in(fetched,cached,joined) score:* | stats by (role) count() lookups, quantile(0.25, score) p25, quantile(0.5, score) median, quantile(0.75, score) p75",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 5
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "role": 0,
+              "lookups": 1,
+              "p25": 2,
+              "median": 3,
+              "p75": 4
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "lookups",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "p25",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "median",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "p75",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "By region and client",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:in(fetched,cached,joined) | stats by (region, own_client) count() n | sort by (n desc)",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 5
+      },
+      "description": "own_client: the member's own WCL client (no shared budget).",
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "region": 0,
+              "own_client": 1,
+              "n": 2
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "n",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Where a fetched lookup's time goes (median, ms)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:fetched | stats quantile(0.5, rankings_ms) rankings, quantile(0.5, enrich_ms) runs, quantile(0.5, rio_ms) raiderio, quantile(0.5, total_ms) total",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "{{__name__}}"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 12,
+        "h": 8
+      },
+      "description": "rankings: the season's rankings from WCL; runs: the runs' details from WCL; raiderio: in parallel with the runs.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1h"
+    },
+    {
+      "id": 11,
+      "title": "Fetched lookups: p95 total time (ms)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:lookup_done outcome:fetched | stats quantile(0.95, total_ms) p95",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "p95"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "spanNulls": true,
+            "showPoints": "never"
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1h"
+    }
+  ]
+}

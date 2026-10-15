@@ -158,11 +158,13 @@ separately — a cron or uptime-check body match on
 on `"no backup marker"`, `"last backup N h ago"` or `"shared WCL budget under
 100 pts"` instead of checking the backup marker by hand. The admin page's
 Instance section shows the same version, uptime, database size and *last
-backup*, plus the effective environment (including whether open signup, the
-guild gate and members' own WCL clients are on). Errors: `journalctl -u bmpl`
-(or `just deploy-logs`), the Caddy access log at `/var/log/caddy/bmpl.log`,
-and the audit log (`/admin` → Audit) for logins, bans, account deletions,
-quota refusals, security rejections and WCL/server errors. If a guild behind
+backup* on one line, links to the four Grafana dashboards, and folds the
+effective environment (including whether open signup, the guild gate and
+members' own WCL clients are on) under it. Errors: Grafana's Errors dashboard
+at `https://logs.<domain>`, `journalctl -u bmpl` (or `just deploy-logs`), the
+Caddy access log at `/var/log/caddy/bmpl.log`; the audit log (`/admin` →
+Audit) for logins, bans, account deletions, quota refusals and security
+rejections. If a guild behind
 one NAT hits the `/auth/*` limit (10 per minute per IP), the numbers are
 `DEFAULT_RATE_LIMITS` in `src/hosted/ratelimit.ts`.
 

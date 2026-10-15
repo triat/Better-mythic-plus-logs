@@ -8,6 +8,7 @@ import type { HostedDb } from "../src/hosted/db.ts";
 import { cacheKey } from "../src/server-history.ts";
 import { runServer } from "../src/server.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
+import { setLogSink } from "../src/log.ts";
 import { payloadWith } from "./evaluation/helpers.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
 
@@ -92,7 +93,14 @@ describe("per-user history (hosted)", () => {
   });
 
   test("the same character costs one WCL fetch: A's own hit, then B inherits it as a cache hit", async () => {
+    const lines: string[] = [];
+    setLogSink((l) => lines.push(l));
     const own = await (await fetch(h("/api/lookup"), as(a, { method: "POST", body: JSON.stringify({ character: "Muleyoxo-Silvermoon", level: 21 }) }))).json();
+    setLogSink(null);
+    // The Lookups dashboard's line: the outcome and the verdict the member saw, no character name.
+    const done = lines.map((l) => JSON.parse(l)).find((o) => o.event === "lookup_done");
+    expect(done).toMatchObject({ outcome: "cached", region: "eu", refresh: false, own_client: false, key_level: own.result.evaluation.targetLevel, verdict: own.result.evaluation.verdict });
+    expect(JSON.stringify(done)).not.toContain("Muleyoxo");
     expect(own.ok).toBe(true);
     expect(own.fromCache).toBe(true);
     expect(own.result.deepdive).toEqual([]);

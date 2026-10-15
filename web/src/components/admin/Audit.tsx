@@ -58,7 +58,6 @@ export function Audit({ kind, onKind }: Props) {
         {auditChips(t).map((c) => (
           <button
             key={c.kind} type="button" className={"chip" + (kind === c.kind ? " chip-on" : "")}
-            style={c.kind === "error" && counts.error > 0 ? { color: "var(--red)" } : undefined}
             onClick={() => onKind(c.kind)}
           >
             {c.label} · {counts[c.kind]}

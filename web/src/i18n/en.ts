@@ -655,7 +655,7 @@ export const en = {
     audit: "Audit log",
     auditLine: "{audit}: sign-ins, refusals and errors with your id and IP, kept 90 days.",
     requests: "Request log",
-    requestsLine: "{requests}: each request you make (what was called, the answer's status and time, your member number, the WCL points spent) and, in the web server's log, your IP, kept 90 days for running and protecting the service only.",
+    requestsLine: "{requests}: each request you make (what was called, the answer's status and time, your member number, the WCL points spent), the errors your browser hits on a page (the message, the page, the version) and, in the web server's log, your IP, kept 90 days for running and protecting the service only.",
     notYours: "What is not yours",
     publicData: "Runs, rankings and fight data fetched from Warcraft Logs are public and are cached for everyone; they carry the names of the players in those runs, which is how Warcraft Logs publishes them.",
     deleting: "Deleting your account",
@@ -718,7 +718,7 @@ export const en = {
     page: {
       title: "Admin", sub: "invites, users, proposals, budget, instance",
       nav: { budget: "Budget", usage: "Usage", proposals: "Proposals", users: "Users", invites: "Invites", instance: "Instance", audit: "Audit" },
-      errors: "{n} errors", requestFailed: "Request failed",
+      requestFailed: "Request failed",
     },
     forbidden: {
       title: "Admins only", local: "The admin page exists in hosted mode only.",
@@ -771,8 +771,10 @@ export const en = {
       adminRef: "admin #{n}", added: "{age} · {by}", signedInAs: "signed in as {name}", notSignedIn: "not signed in yet",
     },
     instance: {
-      title: "Instance", version: "version", uptime: "uptime", database: "database", lastBackup: "last backup", wclClient: "WCL client",
-      backupHint: "· last-backup next to .env", env: "Effective environment", secretsMasked: "secrets masked",
+      title: "Instance", version: "version", uptime: "uptime", database: "database", lastBackup: "backup", wclClient: "WCL",
+      backupHint: "last-backup file next to .env", wclPts: "{pts} pts/h",
+      envSummary: "Effective environment · {count, plural, one {# variable} other {# variables}}, secrets masked",
+      dashboards: { activity: "Activity ↗", errors: "Errors ↗", recalibration: "Recalibration ↗", security: "Security ↗" },
       wcl: "rateLimitData {age} · {pts} pts/h", noCall: "no WCL call observed yet",
       neverBackup: "never (no last-backup file yet)",
       uptimeLessMin: "less than a minute", uptimeDays: "{d} d {h} h", uptimeHours: "{h} h {m} min", uptimeMinutes: "{m} min",
@@ -796,8 +798,8 @@ export const en = {
       dayTitle: "{day} · {n}",
     },
     audit: {
-      title: "Audit log", sub: "logins, admin actions, quota refusals, security rejections, WCL errors · kept 90 days",
-      chips: { all: "All", login: "Logins", admin: "Admin", quota: "Quota", security: "Security", error: "Errors" },
+      title: "Audit log", sub: "logins, admin actions, quota refusals, security rejections · kept 90 days",
+      chips: { all: "All", login: "Logins", admin: "Admin", quota: "Quota", security: "Security" },
       head: { time: "time", who: "who", action: "action", target: "target", detail: "detail" },
       empty: "Nothing logged yet.", loadMore: "Load {n} more", showing: "showing {shown} of {total} · newest first",
       detail: {

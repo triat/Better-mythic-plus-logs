@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { timedFetch } from "../upstream.ts";
 import { config } from "../config.ts";
 
 export interface WclCredentials {
@@ -65,14 +66,14 @@ export async function getAccessToken(creds?: WclCredentials): Promise<string> {
   }
 
   const basic = btoa(`${clientId}:${clientSecret}`);
-  const res = await fetch(config.oauthUrl, {
+  const res = await timedFetch("wcl", "oauth", () => fetch(config.oauthUrl, {
     method: "POST",
     headers: {
       Authorization: `Basic ${basic}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({ grant_type: "client_credentials" }),
-  });
+  }));
 
   if (!res.ok) {
     throw new WclOAuthError(res.status, clipText(await res.text()));

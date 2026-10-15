@@ -7,7 +7,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": false,
   "refresh": "5m",
   "time": {
@@ -131,7 +131,7 @@
             "uid": "victorialogs"
           },
           "expr": "service:caddy | stats by (request.client_ip) count() hits | sort by (hits desc) | limit 20",
-          "queryType": "stats",
+          "queryType": "instant",
           "editorMode": "code"
         }
       ],
@@ -143,7 +143,36 @@
       },
       "options": {
         "showHeader": true
-      }
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "request.client_ip": 0,
+              "hits": 1
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "hits",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": 4,
@@ -161,7 +190,7 @@
             "uid": "victorialogs"
           },
           "expr": "service:caddy status:404 | stats by (request.uri) count() hits | sort by (hits desc) | limit 20",
-          "queryType": "stats",
+          "queryType": "instant",
           "editorMode": "code"
         }
       ],
@@ -173,7 +202,59 @@
       },
       "options": {
         "showHeader": true
-      }
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "request.uri": 0,
+              "hits": 1
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "hits",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
     }
-  ]
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Releases and restarts",
+        "enable": true,
+        "iconColor": "blue",
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "victorialogs"
+        },
+        "target": {
+          "refId": "Anno",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:startup",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      }
+    ]
+  }
 }

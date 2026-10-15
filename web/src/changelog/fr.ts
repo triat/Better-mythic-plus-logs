@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Quand une page plante dans ton navigateur, l'erreur est maintenant envoyée à l'opérateur pour être corrigée ; la page de confidentialité le dit.",
+    ],
+  },
+  {
     version: "0.10.5",
     date: "2026-10-15",
     items: [

@@ -11,7 +11,7 @@ import type { GqlFn } from "../signals/enrich.ts";
 import type { RateLimit } from "../wcl/client.ts";
 import { PING_QUERY } from "../wcl/queries.ts";
 import {
-  type Candidate, candidates, cellOf, discoverCombo, LEVELS, metricOf, type PoolEntry, type Ranking, RANKINGS_QUERY, schedule, SPECS,
+  type Candidate, candidates, cellOf, discoverCombo, LEVELS, metricOf, type PoolEntry, type Ranking, RANKINGS_QUERY, type Role, schedule, SPECS,
 } from "./discover.ts";
 import type { SampleStore } from "./samples.ts";
 import { decide } from "./window.ts";
@@ -44,13 +44,19 @@ export interface CollectDeps {
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
   log?: (line: string) => void;
+  /** One call per lookup that ran (a 429 retried later is not one): the logs stack's per-sample line. */
+  onSample?: (s: SampleOutcome) => void;
   target?: number;
 }
+
+export interface SampleOutcome { spec: string; role: Role; level: number; ok: boolean; ms: number; error?: string }
 
 export interface CollectReport {
   looked: number; failed: number; pages: number; stopped: string;
   /** Characters in the window when the hour ended, against `target`. */
   window: number; target: number;
+  /** The same window split by role (the fit needs each role, not only the total). */
+  windowByRole: Record<Role, number>;
 }
 
 class Stop extends Error {}
@@ -66,7 +72,8 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
   const sleep = d.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const log = d.log ?? ((l: string) => console.log(l));
   const target = d.target ?? TARGET;
-  const report: CollectReport = { looked: 0, failed: 0, pages: 0, stopped: "", window: 0, target };
+  const report: CollectReport = { looked: 0, failed: 0, pages: 0, stopped: "", window: 0, target, windowByRole: { tank: 0, healer: 0, dps: 0 } };
+  let counted: { season: number; since: number } | null = null;
   let lastStartAt: number | null = null;
   let backoff: number = BACKOFF_MS[0];
 
@@ -87,6 +94,7 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
     const zone = await getCurrentMplusZone(d.gql);
     const season = zone.id;
     const since = now() - WINDOW_MS;
+    counted = { season, since };
     d.samples.prune(season, since);
     let total = d.samples.count(season, since).total;
     report.window = total;
@@ -150,9 +158,12 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
     for (let c = next(); c; c = next()) {
       await gate(null, true);
       lastStartAt = now();
+      const sample = (ok: boolean, error?: string): void =>
+        d.onSample?.({ spec: c.spec, role: c.role, level: c.level, ok, ms: now() - lastStartAt!, ...(error ? { error } : {}) });
       try {
         const r = await d.lookup(c);
         backoff = BACKOFF_MS[0];
+        sample(r.ok, r.ok ? undefined : r.error);
         if (r.ok) {
           d.samples.put(c, r.payload, season, now());
           counts.set(cellOf(c), (counts.get(cellOf(c)) ?? 0) + 1);
@@ -173,6 +184,7 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
           backoff = Math.min(BACKOFF_MS[1], backoff * 2);
         } else {
           d.samples.fail(c.key, season, now(), e instanceof Error ? e.message : String(e));
+          sample(false, e instanceof Error ? e.message : String(e));
           report.failed++;
         }
       }
@@ -181,6 +193,12 @@ export async function collectHour(d: CollectDeps): Promise<CollectReport> {
   } catch (e) {
     if (!(e instanceof Stop)) throw e;
     report.stopped = e.message;
+  }
+  if (counted) {
+    for (const [cell, n] of d.samples.count(counted.season, counted.since).cells) {
+      const role = cell.split("|")[0] as Role;
+      if (role in report.windowByRole) report.windowByRole[role] += n;
+    }
   }
   log(`collection: ${report.looked} characters sampled, ${report.failed} failed, ${report.pages} discovery pages; stopped: ${report.stopped}`);
   return report;

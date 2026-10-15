@@ -89,12 +89,15 @@ read `.warnings` separately:
 | `shared WCL budget under 100 pts` | the shared client is near the floor bmpl refuses to cross | wait for the hourly reset, or see [§5 WCL budget](#5-wcl-budget) |
 
 Also worth a look: the Grafana dashboards at `https://logs.<host>` (Activity,
-Errors, Recalibration, Security; user `admin`, password in
+Errors — server, WCL and browser errors —, Lookups, Dependencies — WCL, Raider.IO, Discord, Battle.net —, System —
+memory, database, backup, the shared WCL budget per hour —, Recalibration, Security; every chart marks each start of
+bmpl, so a release shows on all of them; user `admin`, password in
 `/etc/grafana/grafana.env` on the VPS), where every request, error and audit
 event of the last 90 days is searchable by its request id (`X-Request-Id`,
-also in a 500's ring entry); the admin page's **Instance** section (version,
-uptime, database size, last backup, effective environment) and **Audit**
-section's Errors chip; `ssh <vps> journalctl -u caddy` and `ssh <vps> journalctl -u
+also in a 500's ring entry); the admin page's **Instance** line (version,
+uptime, database size, last backup, the four dashboard links, the effective
+environment folded under it) and **Audit** section (logins, admin actions,
+quota refusals, security rejections; errors are in Grafana); `ssh <vps> journalctl -u caddy` and `ssh <vps> journalctl -u
 litestream` for the reverse proxy and replication themselves.
 
 **Reference** — [docs/hosted.md § Health](hosted.md#health), [deploy/README.md § Deploying on a VPS, part 5](../deploy/README.md#deploying-on-a-vps).

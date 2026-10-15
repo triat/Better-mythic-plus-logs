@@ -7,6 +7,8 @@ export type Fields = Record<string, unknown>;
 
 /** Fields never written, whatever the caller passes: the ops API's rule, applied to the logs. */
 const FORBIDDEN = new Set(["ip", "discordId", "discord_id", "username", "email"]);
+/** The logs stack's stream labels (deploy/alloy/config.alloy): a field of the same name would shadow them. */
+const RESERVED = new Set(["service", "unit"]);
 /** A string field longer than this is clipped; a stack gets more room. */
 const MAX_STRING = 1000;
 const MAX_STACK = 4000;
@@ -33,6 +35,7 @@ const clipped = (k: string, v: unknown): unknown => {
 /** The message a log viewer shows for the line: the event, with its most telling field. */
 const msgOf = (event: string, f: Fields): string => {
   if (event === "http_request") return `${String(f.method)} ${String(f.route)} ${String(f.status)} ${String(f.ms)} ms`;
+  if (event === "upstream") return `${String(f.dep)} ${String(f.op)} ${String(f.status)} ${String(f.ms)} ms`;
   if (typeof f.message === "string") return `${event}: ${f.message}`;
   if (typeof f.action === "string") return `${event}: ${f.action}`;
   return event;
@@ -42,7 +45,7 @@ export function logEvent(level: Level, event: string, fields: Fields = {}): void
   // `msg` is what VictoriaLogs takes as the message (`_msg_field=msg` in deploy/alloy/config.alloy); `event` stays a field.
   const out: Fields = { ts: new Date(clock()).toISOString(), level, event, msg: clipped("msg", msgOf(event, fields)) };
   for (const [k, v] of Object.entries(fields)) {
-    if (FORBIDDEN.has(k) || v === undefined || k === "ts" || k === "level" || k === "event" || k === "msg") continue;
+    if (FORBIDDEN.has(k) || RESERVED.has(k) || v === undefined || k === "ts" || k === "level" || k === "event" || k === "msg") continue;
     out[k] = clipped(k, v);
   }
   let line: string;

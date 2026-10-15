@@ -83,6 +83,7 @@ function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: nu
   if (req.method === "PUT" && url.pathname === "/api/me/wcl-client") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/me/wcl-client/verify") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/usage/events") return { limiter: runtime.limits.usage, key };
+  if (req.method === "POST" && url.pathname === "/api/client-error") return { limiter: runtime.limits.clientError, key };
   return null;
 }
 
@@ -186,7 +187,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       }
       // Hosted: every WCL point spent while this handler runs is charged to the session user, and
       // every audit row recorded inside it carries the user, ip and target of this request.
-      scope = { userId: ctx.user?.id ?? null, ip, target };
+      scope = { userId: ctx.user?.id ?? null, ip, target, req: reqId };
       const rt = runtime;
       const res = await rt.audit.scope(scope, () => rt.meter.run(ctx.user?.id ?? null, async () => {
         try {

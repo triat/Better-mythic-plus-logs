@@ -2,6 +2,7 @@ import { realmToSlug } from "../util.ts";
 import { parseRioProfile, rioProfileUrl } from "./rio-profile.ts";
 import type { Store } from "./store.ts";
 import type { RioProfile } from "./types.ts";
+import { reportUpstream } from "../upstream.ts";
 
 export const RIO_RETRY_DELAYS_MS = [1000, 2000, 4000];
 export const RIO_TIMEOUT_MS = 10_000;
@@ -45,8 +46,13 @@ export async function fetchRioProfile(
   const url = rioProfileUrl(region, slug, name);
   let lastError = "Raider.IO unavailable";
   for (let attempt = 0; ; attempt++) {
+    const started = performance.now();
+    const report = (status: number | null, ok: boolean, error?: string): void =>
+      reportUpstream({ service: "raiderio", op: "profile", status, ms: Math.round(performance.now() - started), ok, ...(error ? { error } : {}) });
     try {
       const res = await fetchFn(url, { signal: AbortSignal.timeout(RIO_TIMEOUT_MS) });
+      // A 400/404 is an answer (no such character), not a failure of Raider.IO.
+      report(res.status, res.ok || res.status === 400 || res.status === 404);
       if (res.ok) {
         const raw: unknown = await res.json();
         const t = now();
@@ -59,6 +65,7 @@ export async function fetchRioProfile(
       lastError = `Raider.IO unavailable (HTTP ${res.status})`;
     } catch (e) {
       lastError = `Raider.IO unreachable (${e instanceof Error ? e.message : String(e)})`;
+      if (!(e instanceof SyntaxError)) report(null, false, lastError);
     }
     if (attempt >= RIO_RETRY_DELAYS_MS.length) break;
     await sleep(RIO_RETRY_DELAYS_MS[attempt]!);

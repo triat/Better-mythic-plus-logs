@@ -138,6 +138,6 @@ export interface AdminUsage {
   hours: Array<{ hourStart: number; points: number }>;
 }
 /** GET /api/admin/instance body. */
-export interface AdminInstance { version: string; uptimeS: number; dbPath: string; dbBytes: number; lastBackupAt: number | null; env: EnvRow[] }
+export interface AdminInstance { version: string; uptimeS: number; dbPath: string; dbBytes: number; lastBackupAt: number | null; env: EnvRow[]; logsUrl: string }
 /** GET /api/admin/audit body: one page of rows (newest first), the per-kind totals, WCL/server errors in the last 24 h. */
 export interface AdminAudit { rows: AuditRow[]; counts: Record<AuditKind | "all", number>; errors24h: number; nextBefore: number | null }

@@ -75,7 +75,7 @@ jobs:
           if ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$DEPLOY_HOST" 'test -x /usr/local/sbin/bmpl-provision'; then
             ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$DEPLOY_HOST" "sudo -n /usr/local/sbin/bmpl-provision '$TAG'"
           else
-            echo "::notice::bmpl-provision is not installed on the VPS yet: run deploy/bootstrap.sh by hand once (deploy/README.md § 9d)"
+            echo "::notice::bmpl-provision is not installed on the VPS yet: run the one-line install of deploy/README.md § 2 once"
           fi
 
       - name: Public health check

@@ -12,6 +12,7 @@ import { USAGE_BATCH_MAX_COUNT, USAGE_BATCH_MAX_NAMES, USAGE_EVENTS } from "../s
 import { apiEventFor, runServer } from "../src/server.ts";
 import { parseUsageEvents } from "../src/server/routes-user.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
+import { setLogSink } from "../src/log.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
 
 const TOKEN = "Zq8vN3kP0rT6wY1bC4eH7jL2mQ5sU9xAusageTestToken";
@@ -126,5 +127,22 @@ describe("GET /api/ops/features", () => {
     expect(text).not.toContain("tom");
     expect(text).not.toContain("userId");
     expect(r.features.every((f: { top: unknown[] }) => f.top.length === 0)).toBe(true);
+  });
+});
+
+describe("POST /api/client-error", () => {
+  test("logs one client_error line with the member, nothing stored; a bad body or no session is refused", async () => {
+    const lines: string[] = [];
+    setLogSink((l) => lines.push(l));
+    const body = { kind: "error", message: "TypeError: x is undefined", stack: "at app.js:1:2", page: "/candidate", version: "0.10.5" };
+    const r = await fetch(u("/api/client-error"), json("POST", body, member.cookie));
+    const bad = await fetch(u("/api/client-error"), json("POST", { ...body, page: "/candidate?open=Tom-Hyjal" }, member.cookie));
+    const anon = await fetch(u("/api/client-error"), json("POST", body));
+    setLogSink(null);
+    expect(r.status).toBe(200);
+    expect(bad.status).toBe(400);
+    expect(anon.status).toBe(401);
+    const line = lines.map((l) => JSON.parse(l)).find((o) => o.event === "client_error");
+    expect(line).toMatchObject({ level: "warn", kind: "error", message: "TypeError: x is undefined", page: "/candidate", version: "0.10.5", user: `user#${member.user.id}` });
   });
 });

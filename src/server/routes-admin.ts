@@ -11,7 +11,7 @@ import type { UserRow } from "../hosted/db.ts";
 import { decide, proposalSummary, tablesFor } from "../hosted/defensives.ts";
 import type { ProposalStatus } from "../hosted/defensives.ts";
 import { avatarUrl } from "../hosted/discord.ts";
-import { describeConfig, lastBackupAt } from "../hosted/instance.ts";
+import { describeConfig, lastBackupAt, logsUrlOf } from "../hosted/instance.ts";
 import { resetInS } from "../hosted/quota.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import { parseUsageQuery } from "../hosted/usage-events.ts";
@@ -42,6 +42,8 @@ const positiveInt = (raw: string | null): number | null | undefined => {
   if (raw === null) return null;
   return /^\d+$/.test(raw) && Number(raw) > 0 && Number.isSafeInteger(Number(raw)) ? Number(raw) : undefined;
 };
+
+const ADMIN_ALL_ACTIONS = AUDIT_KINDS.filter((k) => k !== "error").flatMap(actionsOf);
 
 export function adminRoutes(rt: HostedRuntime): Route[] {
   // A single user's row of extras (role change, revoke): the users list route computes these in bulk instead.
@@ -89,11 +91,13 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const rawLimit = positiveInt(url.searchParams.get("limit"));
       if (rawLimit === undefined || (rawLimit !== null && rawLimit > AUDIT_MAX_LIMIT)) return jsonResponse({ ok: false, error: `\`limit\` must be an integer between 1 and ${AUDIT_MAX_LIMIT}` }, 400);
       const limit = rawLimit ?? AUDIT_DEFAULT_LIMIT;
-      const rows = rt.db.audit.list({ actions: kind === "all" ? null : actionsOf(kind as AuditKind), before, limit });
+      // "all" leaves WCL and server errors out: the admin page reads them in Grafana; `kind=error` and /api/ops/errors still serve them.
+      const rows = rt.db.audit.list({ actions: kind === "all" ? ADMIN_ALL_ACTIONS : actionsOf(kind as AuditKind), before, limit });
+      const counts = rt.db.audit.counts(null);
       return jsonResponse({
         ok: true,
         rows,
-        counts: rt.db.audit.counts(null),
+        counts: { ...counts, all: counts.all - counts.error },
         errors24h: rt.db.audit.counts(ctx.now - 24 * HOUR_MS).error,
         nextBefore: rows.length === limit ? rows[rows.length - 1]!.id : null,
       });
@@ -209,7 +213,7 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       let dbBytes = 0;
       try { dbBytes = statSync(dbPath).size; } catch { /* :memory: or unreadable */ }
       const env = describeConfig(rt.config, { clientId: process.env.WCL_CLIENT_ID ?? null, hasSecret: !!process.env.WCL_CLIENT_SECRET });
-      return jsonResponse({ ok: true, version: pkg.version as string, uptimeS: Math.round(process.uptime()), dbPath, dbBytes, lastBackupAt: lastBackupAt(dirname(await resolveEnvPath())), env });
+      return jsonResponse({ ok: true, version: pkg.version as string, uptimeS: Math.round(process.uptime()), dbPath, dbBytes, lastBackupAt: lastBackupAt(dirname(await resolveEnvPath())), env, logsUrl: logsUrlOf(rt.config.baseUrl) });
     }, "admin"),
   ];
 }

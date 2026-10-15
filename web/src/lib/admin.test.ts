@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditRow, FeatureUsage, UsageReport } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { AUDIT_KIND_OF, USAGE_CATEGORY_ORDER, auditChips, usageCards, usageChips, usageIsEmpty, usageKpis, usageRow, usageTable, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, hourBars, instanceModel, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
+import { AUDIT_KIND_OF, USAGE_CATEGORY_ORDER, auditChips, usageCards, usageChips, usageIsEmpty, usageKpis, usageRow, usageTable, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, grafanaLinks, hourBars, instanceModel, instanceWcl, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
 import { fmtPts, fmtStamp } from "./format.ts";
 
 const tFr = makeT(fr, "fr");
@@ -137,11 +137,25 @@ describe("users, invites, instance", () => {
     expect(inviteRow(tFr, { ...base, user: null }, NOW).status).toBe("pas encore connecté");
   });
   test("instance: version, uptime, db, backup age or never, env rows as given", () => {
-    const i: AdminInstance = { version: "0.1.0", uptimeS: 3 * 86400 + 4 * 3600 + 5, dbPath: "/opt/bmpl/bmpl.db", dbBytes: 43_200_000, lastBackupAt: NOW - 12 * 60_000, env: [{ key: "BMPL_BASE_URL", value: "https://x", secret: false }] };
-    expect(instanceModel(tEn, i, NOW)).toEqual({ version: "0.1.0", uptime: "3 d 4 h", db: "bmpl.db · 41.2 MB", dbPath: "/opt/bmpl/bmpl.db", backup: "12 min ago", env: i.env });
+    const i: AdminInstance = { version: "0.1.0", uptimeS: 3 * 86400 + 4 * 3600 + 5, dbPath: "/opt/bmpl/bmpl.db", dbBytes: 43_200_000, lastBackupAt: NOW - 12 * 60_000, env: [{ key: "BMPL_BASE_URL", value: "https://x", secret: false }], logsUrl: "https://logs.x" };
+    expect(instanceModel(tEn, i, NOW)).toEqual({ version: "0.1.0", uptime: "3 d 4 h", db: "bmpl.db · 41.2 MB", dbSize: "41.2 MB", dbPath: "/opt/bmpl/bmpl.db", backup: "12 min ago", env: i.env, envSummary: "Effective environment · 1 variable, secrets masked" });
+    expect(instanceModel(tFr, { ...i, env: [...i.env, ...i.env] }, NOW).envSummary).toBe("Environnement effectif · 2 variables, secrets masqués");
     expect(instanceModel(tEn, { ...i, lastBackupAt: null, uptimeS: 90 }, NOW)).toMatchObject({ backup: "never (no last-backup file yet)", uptime: "1 min" });
     expect(instanceModel(tFr, i, NOW)).toMatchObject({ uptime: "3 j 4 h", db: "bmpl.db · 41.2 MB", backup: "il y a 12 min" });
     expect(instanceModel(tFr, { ...i, lastBackupAt: null, uptimeS: 30 }, NOW)).toMatchObject({ backup: "jamais (pas encore de fichier last-backup)", uptime: "moins d'une minute" });
+  });
+  test("instance WCL cell: the hourly limit, the last rateLimitData as tooltip; a dash before any call", () => {
+    const u = { hourStart: NOW, resetInS: 600, limitPerUser: 300, instance: { limitPerHour: 18000, pointsSpentThisHour: 10, pointsResetIn: 600, observedAt: NOW - 2 * 60_000 }, users: [], hours: [] } as unknown as AdminUsage;
+    expect(instanceWcl(tEn, u, NOW)).toEqual({ text: `${fmtPts(18000)} pts/h`, title: `rateLimitData 2 min ago · ${fmtPts(18000)} pts/h` });
+    expect(instanceWcl(tFr, null, NOW)).toEqual({ text: "—", title: "aucun appel WCL observé pour l'instant" });
+  });
+  test("Grafana links: the four provisioned dashboards by uid", () => {
+    expect(grafanaLinks(tFr, "https://logs.bmpl.example.com")).toEqual([
+      { key: "activity", label: "Activité ↗", href: "https://logs.bmpl.example.com/d/bmpl-activity" },
+      { key: "errors", label: "Erreurs ↗", href: "https://logs.bmpl.example.com/d/bmpl-errors" },
+      { key: "recalibration", label: "Recalibrage ↗", href: "https://logs.bmpl.example.com/d/bmpl-recalibration" },
+      { key: "security", label: "Sécurité ↗", href: "https://logs.bmpl.example.com/d/bmpl-security" },
+    ]);
   });
   test("formatters", () => {
     expect(fmtPts(1412.4)).toBe("1 412");
@@ -199,11 +213,11 @@ describe("audit rows", () => {
     expect(auditDetail(tEn, "bnet_unlink", {})).toBe("");
     expect(auditDetail(tEn, "bnet_unlink", null)).toBe("");
   });
-  test("every action has a kind and chips cover every kind", () => {
+  test("every action has a kind; the chips leave errors to Grafana", () => {
     const kinds = new Set(Object.values(AUDIT_KIND_OF));
     for (const c of auditChips(tEn)) if (c.kind !== "all") expect(kinds.has(c.kind)).toBe(true);
-    expect(auditChips(tEn).map((c) => c.label)).toEqual(["All", "Logins", "Admin", "Quota", "Security", "Errors"]);
-    expect(auditChips(tFr).map((c) => c.label)).toEqual(["Tout", "Connexions", "Admin", "Quota", "Sécurité", "Erreurs"]);
+    expect(auditChips(tEn).map((c) => c.label)).toEqual(["All", "Logins", "Admin", "Quota", "Security"]);
+    expect(auditChips(tFr).map((c) => c.label)).toEqual(["Tout", "Connexions", "Admin", "Quota", "Sécurité"]);
     expect(auditShowing(tEn, 10, 1280)).toBe("showing 10 of 1 280 · newest first");
     expect(auditShowing(tFr, 10, 1280)).toBe("10 affichées sur 1 280 · plus récentes d'abord");
   });

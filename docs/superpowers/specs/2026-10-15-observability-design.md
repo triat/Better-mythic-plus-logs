@@ -1,6 +1,6 @@
 # Observability — design
 
-Status: implemented 2026-10-15 (approved the same day: "ok go"). Amended while implementing: decisions 4, 8, 9, 10 and 12, marked.
+Status: implemented 2026-10-15 (approved the same day: "ok go"). Amended while implementing: decisions 4, 8, 9, 10 and 12, marked; decision 12 completed once the dashboards were live.
 
 ## Goal
 
@@ -42,6 +42,9 @@ every restart.
    most telling field), which VictoriaLogs takes as the message; `wcl_error` (kind, status) and an hourly `health` line
    (backup age, members, sessions) feed the Errors dashboard and the alerts; `calibration_hour` carries the window's
    total. The audit mirror carries the action, its kind and the member only (a target can name a Discord account).
+   Completed with the admin page's Errors chip gone (2026-10-15): `wcl_error` also carries `user`, `req` and `target`
+   (only a lookup, season or deep-dive target: `lookup Name-Realm`, never an admin target), and a 5xx answered without
+   an exception (a failed lookup, season sync or deep-dive) logs its own `server_error` with the same fields.
 5. **Alloy collects two sources**: the journal of `bmpl.service` and of the two `bmpl-calibrate-*` units (JSON parsed
    into fields), and Caddy's access log (`/var/log/caddy/bmpl.log`, already JSON: client IP, status, duration, size).
    It pushes to VictoriaLogs through the Loki push API (`/insert/loki/api/v1/push`), which VictoriaLogs accepts.
@@ -52,7 +55,9 @@ every restart.
 7. **Dashboards** (provisioned, read-only in the UI):
    - *Activity*: requests per hour by route, lookups and deep-dives per day, active members per day, WCL points per hour
      (members vs recalibration), logins.
-   - *Errors*: server errors with their stack and request id, WCL errors by kind, 4xx/5xx rate, the slowest routes (p95).
+   - *Errors*: server errors, WCL errors and members hit over the last 24 h (what the admin badge counted), server
+     errors with their stack and request id, WCL errors one per line with member, target and request id (what the
+     admin's Errors chip listed), WCL errors by kind, 4xx/5xx rate, the slowest routes (p95).
    - *Recalibration*: characters sampled per hour, the window's total vs the 2,000 target, stop reasons, the last fit.
    - *Security*: rate-limited, origin-rejected and ops-denied events, top client IPs from Caddy.
 8. **Alerts to a Discord channel** (a webhook URL, a secret in Grafana's environment file): a server error, more than
@@ -75,6 +80,12 @@ every restart.
     age as a tooltip; amended: the members' last visit too, the proposal queue and invites keep their age (a text
     format change in two cells, done without a canvas round). The technical sections (Instance, Usage gauges)
     stay until the dashboards are live; what moves out is decided then. Visible change: the Claude Design canvas first.
+    Decided 2026-10-15 once Grafana was live (canvas "bmpl · Admin allégée", variant B, sources in
+    `docs/design/admin-light/`; user: "B, implémente-le"): the Instance card shrinks to one line (version, uptime,
+    database size, backup age, WCL limit) with links to the four dashboards (`logsUrl` from `GET /api/admin/instance`,
+    `logs.` + the host of `BMPL_BASE_URL`), the effective environment folded under it; the audit section loses its
+    Errors chip and the nav loses the "N errors" badge, and the API's `kind=all` leaves errors out (they stay in the
+    table for `kind=error` and `/api/ops/errors`). The budget gauge and feature usage stay: they are bmpl's own data.
 13. **Retention fixes found on the way.** `usage_hourly` and `usage_hourly_own` get the 90-day purge they lack today.
 14. **Privacy page.** `/privacy` says that requests are logged for 90 days with the client IP (Caddy) and the member
     number, for operations and security only.
@@ -88,6 +99,23 @@ every restart.
     one line (`curl … deploy/provision.sh | sudo bash -s -- <tag> --domain <domain>`, the script installs itself), and
     `bmpl-grafana-alerts.path` watches `/etc/grafana/grafana.env`, so pasting the Discord webhook turns the alerts on
     with no command. DNS: one record per subdomain, no wildcard (user's choice).
+
+16. **More to read once live** (added 2026-10-15, user: "fait tout dans la PR", and "le recalibrage qui tourne, ça
+    pourrait être intéressant d'avoir quelque chose pour ça"). New lines, all hosted or `bmpl calibrate` only:
+    `upstream` (every call to WCL, Raider.IO, Discord, Battle.net: `dep`, `op` — a GraphQL query's first field or a path
+    with what follows `character` replaced —, status, ms, ok, `client` for WCL, `req`); `lookup_done` (outcome, key level,
+    role, verdict, score, the phases' timings; never the character); `wcl_hour` (the finished hour's shared and own
+    points, members who spent, the limit); `health` gains memory, database size and uptime; `calibration_sample` (one per
+    recalibration lookup, with the counter's rise as its cost), `calibration_hour` gains the window by role and the
+    instance counter, `calibration_fit` the per-role figures. New dashboards: *Lookups*, *Dependencies*, *System*; the
+    *Recalibration* dashboard is redrawn (window by role, samples by role × key level and by spec, points per hour, lookup
+    time, failures, the weekly fits as a table); every dashboard marks each `startup` (releases and restarts). Tables run
+    their `stats` query as an instant query (one row per group, its fields extracted): the tables shipped before showed
+    one column per series. Fields named `service` or `unit` are dropped by `src/log.ts` (the stream labels).
+17. **The browser's errors.** `web/src/clientErrors.ts` sends the page's uncaught errors and rejections (signed-in
+    members, at most five distinct per page load, bmpl's own scripts only, the pathname without its query) to
+    `POST /api/client-error` (10 per minute per member), which writes one `client_error` line and stores nothing. The
+    privacy page says so.
 
 ## Data flow
 
@@ -120,4 +148,3 @@ Caddy access log (JSON) ──────────────┴─ Alloy �
 
 - A metrics database and a `/metrics` endpoint (later, if the log-based charts are not enough).
 - Login to Grafana with Discord.
-- Moving the admin page's technical sections out (decided once the dashboards are live).

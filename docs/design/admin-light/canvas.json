@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-15T16:00:00Z" },
+  "title": "bmpl · Admin allégée",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 760, "title": "A · Liens vers Grafana, l'onglet Erreurs retiré" },
+    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 760, "title": "B · Instance réduite à une ligne, environnement replié" },
+    "C.dc.html": { "x": 2720, "y": 0, "w": 1280, "h": 760, "title": "C · Instance remplacée par une carte « Exploitation »" }
+  },
+  "order": ["Main.dc.html", "B.dc.html", "C.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Admin : ce qui part dans Grafana (logs.bmpl.riat.dev)", "kind": "title1", "maxW": 4000 }
+  },
+  "designSystems": []
+}

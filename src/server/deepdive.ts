@@ -4,7 +4,8 @@ import { runDeepdive } from "../deepdive/run.ts";
 import { applyPatch, getDefensives, resetDefensives, saveOverride, specDefensives, specKey, validateOverride } from "../deepdive/table.ts";
 import type { LoadedTables } from "../deepdive/types.ts";
 import { getEvalConfig } from "../evaluation/config.ts";
-import { clip } from "../hosted/audit.ts";
+import { clip, workTarget } from "../hosted/audit.ts";
+import { log, userRef } from "../log.ts";
 import type { RequestContext, SessionUser } from "../hosted/auth.ts";
 import { propose, proposalSummary, tablesFor } from "../hosted/defensives.ts";
 import type { QuotaRefusal } from "../hosted/quota.ts";
@@ -58,7 +59,12 @@ export async function refreshLocalHistory(): Promise<void> {
 export function failureBody(r: { status: number; error: string; quota?: QuotaRefusal; wcl?: string; notFound?: { character: string; region: string } }, runtime: HostedRuntime | null): Record<string, unknown> {
   if (runtime) {
     if (r.quota) runtime.audit.record("quota_refused", { detail: { used: r.quota.used, limit: r.quota.limit, resetInS: r.quota.resetInS, error: r.quota.error } });
-    else if (r.status >= 500 && !r.wcl) runtime.audit.record("server_error", { detail: { message: clip(r.error) } });
+    else if (r.status >= 500 && !r.wcl) {
+      runtime.audit.record("server_error", { detail: { message: clip(r.error) } });
+      // A 5xx answered without a throw: server.ts's catch never sees it, so the Errors dashboard gets its line here.
+      const s = runtime.audit.current();
+      log.error("server_error", { message: clip(r.error), status: r.status, user: userRef(s?.userId), req: s?.req, target: workTarget(s?.target) });
+    }
   }
   if (r.quota) return { ok: false, ...r.quota };
   // Same shape as a quota refusal: `error` is the code the front reads, `message` the English fallback.

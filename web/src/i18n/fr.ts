@@ -644,7 +644,7 @@ export const fr: Mirror<typeof en> = {
     sessionsLine: "{sessions} : un id aléatoire dans un cookie, ton IP et ton navigateur à la connexion, pendant 30 jours.",
     audit: "Journal d'audit",
     requests: "Journal des requêtes",
-    requestsLine: "{requests} : chaque requête que tu fais (ce qui est appelé, le statut et la durée de la réponse, ton numéro de membre, les points WCL dépensés) et, dans le journal du serveur web, ton IP, gardés 90 jours, uniquement pour faire tourner et protéger le service.",
+    requestsLine: "{requests} : chaque requête que tu fais (ce qui est appelé, le statut et la durée de la réponse, ton numéro de membre, les points WCL dépensés), les erreurs que ton navigateur rencontre sur une page (le message, la page, la version) et, dans le journal du serveur web, ton IP, gardés 90 jours, uniquement pour faire tourner et protéger le service.",
     auditLine: "{audit} : connexions, refus et erreurs avec ton id et ton IP, gardés 90 jours.",
     notYours: "Ce qui n'est pas à toi",
     publicData: "Les runs, classements et données de combat récupérés sur Warcraft Logs sont publics et mis en cache pour tout le monde ; ils portent les noms des joueurs de ces runs, c'est ainsi que Warcraft Logs les publie.",
@@ -708,7 +708,7 @@ export const fr: Mirror<typeof en> = {
     page: {
       title: "Admin", sub: "invitations, membres, propositions, budget, instance",
       nav: { budget: "Budget", usage: "Usage", proposals: "Propositions", users: "Membres", invites: "Invitations", instance: "Instance", audit: "Audit" },
-      errors: "{n} erreurs", requestFailed: "Requête échouée",
+      requestFailed: "Requête échouée",
     },
     forbidden: {
       title: "Réservé aux admins", local: "La page admin n'existe qu'en mode hébergé.",
@@ -761,8 +761,10 @@ export const fr: Mirror<typeof en> = {
       adminRef: "admin #{n}", added: "{age} · {by}", signedInAs: "connecté en tant que {name}", notSignedIn: "pas encore connecté",
     },
     instance: {
-      title: "Instance", version: "version", uptime: "uptime", database: "base de données", lastBackup: "dernier backup", wclClient: "client WCL",
-      backupHint: "· last-backup à côté du .env", env: "Environnement effectif", secretsMasked: "secrets masqués",
+      title: "Instance", version: "version", uptime: "uptime", database: "base", lastBackup: "backup", wclClient: "WCL",
+      backupHint: "fichier last-backup à côté du .env", wclPts: "{pts} pts/h",
+      envSummary: "Environnement effectif · {count, plural, one {# variable} other {# variables}}, secrets masqués",
+      dashboards: { activity: "Activité ↗", errors: "Erreurs ↗", recalibration: "Recalibrage ↗", security: "Sécurité ↗" },
       wcl: "rateLimitData {age} · {pts} pts/h", noCall: "aucun appel WCL observé pour l'instant",
       neverBackup: "jamais (pas encore de fichier last-backup)",
       uptimeLessMin: "moins d'une minute", uptimeDays: "{d} j {h} h", uptimeHours: "{h} h {m} min", uptimeMinutes: "{m} min",
@@ -786,8 +788,8 @@ export const fr: Mirror<typeof en> = {
       dayTitle: "{day} · {n}",
     },
     audit: {
-      title: "Journal d'audit", sub: "connexions, actions admin, refus de quota, rejets de sécurité, erreurs WCL · gardé 90 jours",
-      chips: { all: "Tout", login: "Connexions", admin: "Admin", quota: "Quota", security: "Sécurité", error: "Erreurs" },
+      title: "Journal d'audit", sub: "connexions, actions admin, refus de quota, rejets de sécurité · gardé 90 jours",
+      chips: { all: "Tout", login: "Connexions", admin: "Admin", quota: "Quota", security: "Sécurité" },
       head: { time: "heure", who: "qui", action: "action", target: "cible", detail: "détail" },
       empty: "Rien d'enregistré pour l'instant.", loadMore: "Charger {n} de plus", showing: "{shown} affichées sur {total} · plus récentes d'abord",
       detail: {

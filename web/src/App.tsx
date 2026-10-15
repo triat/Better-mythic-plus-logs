@@ -29,6 +29,7 @@ import { LocaleProvider, useT } from "./locale.tsx";
 import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
 import { startUsageTracking, track } from "./usage.ts";
+import { startErrorReporting } from "./clientErrors.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
@@ -85,6 +86,8 @@ export function App() {
       const me = status.hosted ? await api.me() : null;
       // Feature usage (hosted, signed in only): on for the page's lifetime; a full navigation starts it again.
       startUsageTracking(status.hosted && me?.kind === "ok");
+      // The page's uncaught errors go to the logs (hosted, signed in): the Errors dashboard's browser panel.
+      startErrorReporting(status.hosted && me?.kind === "ok", status.version ?? null);
       track(PAGE_EVENT[page]);
       const kind = bootScreen(status, me, location.pathname);
       if (kind === "main") {

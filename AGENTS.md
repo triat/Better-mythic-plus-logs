@@ -105,12 +105,10 @@ candidate profile — compact header, Synthèse, Runs with the layered timeline,
 Experience axis removed. Redesign phase 3 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-3.md`):
 the owner pages — Ma forme, Donjons, Runs with filters and week groups, `as=vetting` — and Mes personnages as cards.
 The weekly recalibration is implemented (spec `docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md`,
-plan `docs/superpowers/plans/2026-10-14-weekly-recalibration.md`; live once the user re-runs `deploy/bootstrap.sh` after the
-release and adds the repository secrets `BMPL_URL` and `BMPL_OPS_TOKEN`): `src/calibration/`, `bmpl calibrate`, the two
+plan `docs/superpowers/plans/2026-10-14-weekly-recalibration.md`; live since 2026-10-14, timers installed on the VPS): `src/calibration/`, `bmpl calibrate`, the two
 VPS timers, `GET /api/ops/calibration` and `.github/workflows/calibration-pr.yml`. The logs stack is implemented (spec
-`docs/superpowers/specs/2026-10-15-observability-design.md`; live once the user adds the DNS record `logs.<domain>` and
-runs the one-line install of `deploy/README.md` § 2 once after the release; later releases apply `deploy/` themselves
-through `bmpl-provision`): `src/log.ts`, VictoriaLogs + Alloy + Grafana on the VPS, dashboards and
+`docs/superpowers/specs/2026-10-15-observability-design.md`; live since v0.10.5 at `logs.bmpl.riat.dev`; every release
+applies a changed `deploy/` through `bmpl-provision`): `src/log.ts`, VictoriaLogs + Alloy + Grafana on the VPS, dashboards and
 alert rules in `deploy/grafana/`. Redesign phase 4 is implemented (plan `docs/superpowers/plans/2026-10-12-ui-redesign-phase-4.md`): Compare 2–5 (duel /
 ranking), the Live page in the frame, the old CSS and components removed — the redesign is complete. Next: self-review
 phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live

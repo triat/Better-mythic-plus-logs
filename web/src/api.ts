@@ -30,6 +30,7 @@ import type {
   WatchStatus,
 } from "./types.ts";
 import type { Locale } from "./lib/locale.ts";
+import type { ClientErrorReport } from "./lib/clientErrors.ts";
 import type { Settings } from "./lib/settings.ts";
 import { budgetFromFailure, notFoundFromFailure, quotaFromFailure } from "./lib/quota.ts";
 
@@ -188,4 +189,6 @@ export const api = {
   /** Batched interface events (hosted, signed in); `keepalive` lets the request outlive a page being hidden. */
   usage: (events: Partial<Record<UiEvent, number>>, keepalive = false) =>
     call<{ recorded: number; dropped: number }>("/api/usage/events", { ...post({ events }), keepalive }),
+  /** One uncaught error of the page (hosted, signed in): the logs stack's Errors dashboard. */
+  clientError: (report: ClientErrorReport) => call<Record<never, never>>("/api/client-error", { ...post(report), keepalive: true }),
 };

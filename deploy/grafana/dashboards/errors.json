@@ -1,13 +1,13 @@
 {
   "uid": "bmpl-errors",
   "title": "bmpl \u00b7 Errors",
-  "description": "Server errors with their stack and request id, WCL errors, error rates, slow routes.",
+  "description": "Error counts over 24 h, server errors with their stack and request id, WCL errors with the member and what they were doing, the browser's errors, error rates, slow routes.",
   "tags": [
     "bmpl"
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 3,
   "editable": false,
   "refresh": "5m",
   "time": {
@@ -15,6 +15,254 @@
     "to": "now"
   },
   "panels": [
+    {
+      "id": 7,
+      "title": "Server errors \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:server_error | stats count() errors",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "timeFrom": "24h",
+      "description": "What the admin page's \"N errors\" badge counted, server side.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "hideTimeOverride": true
+    },
+    {
+      "id": 8,
+      "title": "WCL errors \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:wcl_error | stats count() errors",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "timeFrom": "24h",
+      "description": "Warcraft Logs failures (HTTP, GraphQL, timeouts, private reports).",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "hideTimeOverride": true
+    },
+    {
+      "id": 9,
+      "title": "Members hit by an error \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:in(server_error,wcl_error) user:* | stats count_uniq(user) members",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "timeFrom": "24h",
+      "description": "Distinct members whose request met a server or WCL error.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "hideTimeOverride": true
+    },
+    {
+      "id": 11,
+      "title": "Browser errors \u00b7 last 24 h",
+      "type": "stat",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:client_error | stats count() errors",
+          "queryType": "stats",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "description": "Uncaught errors and rejections of the page, sent by signed-in members' browsers.",
+      "timeFrom": "24h",
+      "hideTimeOverride": true,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
     {
       "id": 1,
       "title": "Server errors",
@@ -37,11 +285,79 @@
       ],
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 4,
         "w": 24,
         "h": 10
       },
-      "description": "Each line carries `req`, the X-Request-Id a member can report.",
+      "description": "Each line carries `req`, the X-Request-Id a member can report, and `user`; a 5xx answered without an exception (a failed lookup, season sync or deep-dive) carries `target` instead of a stack.",
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 10,
+      "title": "WCL errors",
+      "type": "logs",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:wcl_error",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 8
+      },
+      "description": "One line per Warcraft Logs failure: kind, status, message, the member (`user`), what they were doing (`target`: lookup, season or deep-dive with its character or report) and the request id (`req`). Replaces the admin page's Errors chip.",
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 12,
+      "title": "Browser errors",
+      "type": "logs",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:client_error",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      },
+      "description": "One line per uncaught error of the page (POST /api/client-error): message, stack, page (pathname only), version and member. At most five per page load.",
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
@@ -83,7 +399,7 @@
       ],
       "gridPos": {
         "x": 0,
-        "y": 10,
+        "y": 30,
         "w": 12,
         "h": 8
       },
@@ -133,7 +449,7 @@
       ],
       "gridPos": {
         "x": 12,
-        "y": 10,
+        "y": 30,
         "w": 12,
         "h": 8
       },
@@ -176,19 +492,53 @@
             "uid": "victorialogs"
           },
           "expr": "service:bmpl event:http_request | stats by (route) quantile(0.95, ms) p95_ms, count() requests | sort by (p95_ms desc) | limit 15",
-          "queryType": "stats",
+          "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
         "x": 0,
-        "y": 18,
+        "y": 38,
         "w": 12,
         "h": 9
       },
       "options": {
         "showHeader": true
-      }
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "route": 0,
+              "p95_ms": 1,
+              "requests": 2
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "p95_ms",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "requests",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": 5,
@@ -205,18 +555,18 @@
             "type": "victoriametrics-logs-datasource",
             "uid": "victorialogs"
           },
-          "expr": "service:bmpl level:in(warn,error) -event:in(server_error,wcl_error)",
+          "expr": "service:bmpl level:in(warn,error) -event:in(server_error,wcl_error,client_error,upstream,calibration_sample)",
           "queryType": "instant",
           "editorMode": "code"
         }
       ],
       "gridPos": {
         "x": 12,
-        "y": 18,
+        "y": 38,
         "w": 12,
         "h": 9
       },
-      "description": "Battle.net, Discord, audit and usage write failures.",
+      "description": "Battle.net, Discord, audit and usage write failures. Failed outbound calls are on Dependencies, failed recalibration lookups on Recalibration.",
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
@@ -246,7 +596,7 @@
       ],
       "gridPos": {
         "x": 0,
-        "y": 27,
+        "y": 47,
         "w": 24,
         "h": 8
       },
@@ -257,5 +607,28 @@
         "enableLogDetails": true
       }
     }
-  ]
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Releases and restarts",
+        "enable": true,
+        "iconColor": "blue",
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "victorialogs"
+        },
+        "target": {
+          "refId": "Anno",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:bmpl event:startup",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      }
+    ]
+  }
 }

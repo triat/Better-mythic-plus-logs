@@ -3,6 +3,7 @@ import { config } from "../config.ts";
 import { WclOAuthError, forgetToken, getAccessToken } from "./auth.ts";
 import type { WclCredentials } from "./auth.ts";
 import type { RateLimitData } from "./types.ts";
+import { opOfQuery, timedFetch } from "../upstream.ts";
 
 export type RateLimit = RateLimitData["rateLimitData"];
 export type RateLimitObserver = (rl: RateLimit) => void;
@@ -80,14 +81,15 @@ export async function gql<T>(
     const hint = scope ? " — check your client in Settings" : "";
     return fail(new WclError("http", e.status, `OAuth failed: ${e.status} ${e.body}${hint}`));
   });
-  const post = async (): Promise<Response> => fetch(config.graphqlUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${await token()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  const op = opOfQuery(query);
+  const post = async (): Promise<Response> => {
+    const authorization = `Bearer ${await token()}`;
+    return timedFetch("wcl", op, () => fetch(config.graphqlUrl, {
+      method: "POST",
+      headers: { Authorization: authorization, "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables }),
+    }), { client: scope ? "own" : "shared" });
+  };
   let res = await post();
   if (res.status === 401) {
     // WCL stopped accepting a token that is still cached (production 2026-10-08: every lookup failed

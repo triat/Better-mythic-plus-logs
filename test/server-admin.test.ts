@@ -9,6 +9,7 @@ import { propose } from "../src/hosted/defensives.ts";
 import { getHostedRuntime, runServer } from "../src/server.ts";
 import { WclError, notifyWclError } from "../src/wcl/client.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
+import { setLogSink } from "../src/log.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
 
 let dir: string;
@@ -205,6 +206,8 @@ describe("GET /api/admin/instance", () => {
     expect(r.dbPath.endsWith("bmpl.db")).toBe(true);
     expect(r.dbBytes).toBeGreaterThan(0);
     expect(r.lastBackupAt).toBeNull();
+    const base = new URL(TEST_HOSTED_CONFIG.baseUrl);
+    expect(r.logsUrl).toBe(`${base.protocol}//logs.${base.host}`);
     expect(r.env.map((e: { key: string }) => e.key)).toEqual(["BMPL_BASE_URL", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET", "BMPL_SESSION_SECRET", "BMPL_ADMIN_DISCORD_IDS", "BMPL_BNET_CLIENT_ID", "BMPL_BNET_CLIENT_SECRET", "BMPL_POINTS_PER_USER_HOUR", "BMPL_OPEN_SIGNUP", "BMPL_DISCORD_GUILD_ID", "BMPL_ENCRYPTION_KEY", "BMPL_OPERATOR", "BMPL_OPS_TOKEN", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET"]);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.sessionSecret);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.discordClientSecret);
@@ -268,11 +271,22 @@ describe("audit log", () => {
   test("a WCL error thrown inside a request lands in the log with the request's user and target", async () => {
     // Never reaches WCL: the observer path is triggered directly through the runtime hook the server exposes for tests.
     const rt = getHostedRuntime()!;
-    await rt.audit.scope({ userId: member.user.id, ip: "1.2.3.4", target: "lookup X-Y" }, async () => notifyWclError(new WclError("graphql", null, "Report ab12CD is private")));
+    const lines: string[] = [];
+    setLogSink((l) => lines.push(l));
+    await rt.audit.scope({ userId: member.user.id, ip: "1.2.3.4", target: "lookup X-Y", req: "req-1" }, async () => notifyWclError(new WclError("graphql", null, "Report ab12CD is private")));
+    setLogSink(null);
+    // The Errors dashboard's line: the member, what they were doing and the request id, never the IP.
+    const line = lines.map((l) => JSON.parse(l)).find((o) => o.event === "wcl_error");
+    expect(line).toMatchObject({ level: "warn", kind: "graphql", user: `user#${member.user.id}`, req: "req-1", target: "lookup X-Y" });
+    expect(lines.join("\n")).not.toContain("1.2.3.4");
     const r = await (await fetch(u("/api/admin/audit?kind=error"), { headers: { cookie: admin.cookie } })).json();
     expect(r.rows[0]).toMatchObject({ action: "wcl_error", userId: member.user.id, username: "tom", ip: "1.2.3.4", target: "lookup X-Y", detail: { kind: "graphql", status: null, message: "Report ab12CD is private" } });
     expect(r.errors24h).toBeGreaterThanOrEqual(1);
     expect(r.counts.error).toBeGreaterThanOrEqual(1);
+    // "all" leaves errors to Grafana: neither its rows nor its count include them.
+    const all = await (await fetch(u("/api/admin/audit?limit=200"), { headers: { cookie: admin.cookie } })).json();
+    expect(all.rows.some((x: { action: string }) => x.action === "wcl_error" || x.action === "server_error")).toBe(false);
+    expect(all.counts.all).toBe(all.counts.login + all.counts.admin + all.counts.quota + all.counts.security);
   });
   test("logout is logged with the session user", async () => {
     const third = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "555555555555555555", role: "member", username: "leaver" });

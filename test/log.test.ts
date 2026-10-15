@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { errorFields, log, setLogSink, userRef } from "../src/log.ts";
+import { upstreamFields } from "../src/upstream.ts";
 
 let lines: string[] = [];
 const capture = () => { lines = []; setLogSink((l) => lines.push(l), () => Date.parse("2026-10-15T08:30:00.123Z")); };
@@ -39,5 +40,12 @@ describe("structured logs", () => {
     expect(errorFields("plain")).toEqual({ message: "plain", stack: null });
     expect(userRef(null)).toBeNull();
     expect(userRef(12)).toBe("user#12");
+  });
+  test("the stream labels `service` and `unit` are never shadowed; an upstream call names its dependency `dep`", () => {
+    capture();
+    log.info("upstream", { ...upstreamFields({ service: "raiderio", op: "profile", status: 503, ms: 120, ok: false }), unit: "x" });
+    const o = JSON.parse(lines[0]!);
+    expect(o).toMatchObject({ dep: "raiderio", op: "profile", status: 503, ok: false, msg: "raiderio profile 503 120 ms" });
+    expect("service" in o || "unit" in o).toBe(false);
   });
 });

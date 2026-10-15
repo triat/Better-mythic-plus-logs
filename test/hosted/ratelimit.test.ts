@@ -61,6 +61,7 @@ describe("RateLimiter", () => {
       security: { limit: 5, windowMs: 60_000 },
       signup: { limit: 5, windowMs: 3_600_000 },
       usage: { limit: 30, windowMs: 60_000 },
+      clientError: { limit: 10, windowMs: 60_000 },
     });
   });
 });

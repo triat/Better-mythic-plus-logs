@@ -104,10 +104,15 @@ describe("bmpl calibrate --hourly", () => {
         return { ok: true, payload };
       },
     });
-    const r = await collectHour(s.deps);
+    const outcomes: Array<{ ok: boolean; error?: string }> = [];
+    const r = await collectHour({ ...s.deps, onSample: (o) => outcomes.push(o) });
     expect(r.looked).toBe(2);
     expect(r.failed).toBe(1);
     expect(samples.done("m1-realm-fire", 49, 0)).toBe(true);
+    // One outcome per lookup that ran: the 429 is retried, not reported; the failure carries its error.
+    expect(outcomes.filter((o) => o.ok)).toHaveLength(2);
+    expect(outcomes.filter((o) => !o.ok)).toEqual([expect.objectContaining({ spec: "Fire", role: "dps", ok: false, error: "No runs found" })]);
+    expect(r.windowByRole).toEqual({ tank: 0, healer: 0, dps: 2 });
   });
 
   test("the end of the hour stops discovery and lookups; the next run resumes the discovery from its cache", async () => {

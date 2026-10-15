@@ -1,6 +1,6 @@
 # Observability — design
 
-Status: draft 2026-10-15, for the user's review.
+Status: implemented 2026-10-15 (approved the same day: "ok go"). Amended while implementing: decisions 4, 8, 9, 10 and 12, marked.
 
 ## Goal
 
@@ -38,7 +38,10 @@ every restart.
    - `calibration_hour` / `calibration_fit`: the recalibration's summary lines (sampled, failed, pages, stop reason,
      points this hour).
    No IP and no Discord id in bmpl's own lines: `user#<id>` only, as in the ops API. The startup banner stays human text
-   in local mode; hosted mode logs it as one `startup` event.
+   in local mode; hosted mode logs it as one `startup` event. Amended: every line also carries `msg` (the event and its
+   most telling field), which VictoriaLogs takes as the message; `wcl_error` (kind, status) and an hourly `health` line
+   (backup age, members, sessions) feed the Errors dashboard and the alerts; `calibration_hour` carries the window's
+   total. The audit mirror carries the action, its kind and the member only (a target can name a Discord account).
 5. **Alloy collects two sources**: the journal of `bmpl.service` and of the two `bmpl-calibrate-*` units (JSON parsed
    into fields), and Caddy's access log (`/var/log/caddy/bmpl.log`, already JSON: client IP, status, duration, size).
    It pushes to VictoriaLogs through the Loki push API (`/insert/loki/api/v1/push`), which VictoriaLogs accepts.
@@ -53,19 +56,24 @@ every restart.
    - *Recalibration*: characters sampled per hour, the window's total vs the 2,000 target, stop reasons, the last fit.
    - *Security*: rate-limited, origin-rejected and ops-denied events, top client IPs from Caddy.
 8. **Alerts to a Discord channel** (a webhook URL, a secret in Grafana's environment file): a server error, more than
-   N WCL errors in 15 minutes, no request at all for 30 minutes during the day, the backup older than 2 hours, a
-   recalibration hour that failed.
-9. **Resource limits.** Each new service runs under systemd with `MemoryMax` (VictoriaLogs 512 MB, Grafana 512 MB,
-   Alloy 256 MB, to be checked against real use in the first week) so none can starve bmpl (4 GB in all). Every port
+   5 WCL errors in 15 minutes, bmpl silent (no `health` line for over 2 hours; amended from "no request for 30 minutes
+   during the day", which a 16-member instance would trip every quiet afternoon, and Caddy does not log its own health
+   checks), the backup older than 2 hours, a recalibration run that failed. Grafana refuses to start with an empty
+   webhook URL, so the rules are installed only once it is set.
+9. **Resource limits.** Each new service runs under systemd with `MemoryMax` (VictoriaLogs 512 MB, Grafana 768 MB,
+   Alloy 384 MB; amended after measuring locally ~20 MB for VictoriaLogs and ~400 MB for Grafana with its plugin; to be
+   checked against real use in the first week) so none can starve bmpl (4 GB in all). Every port
    binds to `127.0.0.1` (VictoriaLogs 9428, Grafana 3001, Alloy 12345); only Caddy is public.
 10. **Installation.** Grafana and Alloy from Grafana's apt repository (`apt.grafana.com`), VictoriaLogs as the pinned
-    release binary (checksum verified) under its own system user, all from `deploy/bootstrap.sh`, idempotent like the
-    rest. The user adds the DNS record `logs.bmpl.riat.dev` before running it (Caddy obtains the certificate).
+    release binary (v1.53.0, checksum verified) under its own system user, the Grafana plugin pinned (0.32.0), all from
+    `deploy/bootstrap.sh`, idempotent like the rest. Settings as `GF_*` variables in a systemd drop-in; secrets in
+    `/etc/grafana/grafana.env`, created once with a random admin password. The user adds the DNS record `logs.bmpl.riat.dev` before running it (Caddy obtains the certificate).
 11. **Grafana hardening.** Sign-up off, anonymous access off, the admin password set from `/etc/grafana/grafana.env`
-    (never in the repository), the VictoriaLogs data source and the dashboards provisioned; `logs.bmpl.riat.dev` added
-    to the fail2ban jail if Grafana's own login throttling is not enough (to check during the plan).
+    (never in the repository), the VictoriaLogs data source and the dashboards provisioned. Grafana's own brute-force
+    protection is on by default (`disable_brute_force_login_protection = false`, 5 attempts), so no fail2ban jail.
 12. **The admin page.** The audit table shows the exact date and time (`2026-10-14 21:03:12`, local time), the relative
-    age as a tooltip; the same on every admin table that shows a time. The technical sections (Instance, Usage gauges)
+    age as a tooltip; amended: the members' last visit too, the proposal queue and invites keep their age (a text
+    format change in two cells, done without a canvas round). The technical sections (Instance, Usage gauges)
     stay until the dashboards are live; what moves out is decided then. Visible change: the Claude Design canvas first.
 13. **Retention fixes found on the way.** `usage_hourly` and `usage_hourly_own` get the 90-day purge they lack today.
 14. **Privacy page.** `/privacy` says that requests are logged for 90 days with the client IP (Caddy) and the member

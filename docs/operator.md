@@ -88,12 +88,39 @@ read `.warnings` separately:
 | `last backup N h ago` (N > 2) | litestream/backup-check hasn't confirmed a fresh snapshot in over 2 hours | see [§6 Backups and restore](#6-backups-and-restore) |
 | `shared WCL budget under 100 pts` | the shared client is near the floor bmpl refuses to cross | wait for the hourly reset, or see [§5 WCL budget](#5-wcl-budget) |
 
-Also worth a look: the admin page's **Instance** section (version, uptime,
-database size, last backup, effective environment) and **Audit** section's
-Errors chip; `ssh <vps> journalctl -u caddy` and `ssh <vps> journalctl -u
+Also worth a look: the Grafana dashboards at `https://logs.<host>` (Activity,
+Errors, Recalibration, Security; user `admin`, password in
+`/etc/grafana/grafana.env` on the VPS), where every request, error and audit
+event of the last 90 days is searchable by its request id (`X-Request-Id`,
+also in a 500's ring entry); the admin page's **Instance** section (version,
+uptime, database size, last backup, effective environment) and **Audit**
+section's Errors chip; `ssh <vps> journalctl -u caddy` and `ssh <vps> journalctl -u
 litestream` for the reverse proxy and replication themselves.
 
 **Reference** — [docs/hosted.md § Health](hosted.md#health), [deploy/README.md § Deploying on a VPS, part 5](../deploy/README.md#deploying-on-a-vps).
+
+### Logs and alerts
+
+The VPS runs a logs stack beside bmpl (spec
+[2026-10-15-observability-design.md](superpowers/specs/2026-10-15-observability-design.md)):
+bmpl writes one JSON line per event to the journal, Grafana Alloy ships it and
+Caddy's access log to VictoriaLogs (kept 90 days), Grafana shows them at
+`https://logs.<host>`. The dashboards and alert rules come from the repository
+(`deploy/grafana/`): change them by pull request, then re-run `bootstrap.sh`.
+
+- **Alerts** go to the Discord channel whose webhook URL is
+  `DISCORD_ALERT_WEBHOOK` in `/etc/grafana/grafana.env`: a server error, more
+  than 5 WCL errors in 15 minutes, bmpl silent for over 2 hours, the backup
+  older than 2 hours, a failed recalibration run. Empty webhook: no alert rule
+  is installed (Grafana would refuse to start); set it, then re-run
+  `bootstrap.sh`.
+- **A member reports an error**: ask for the time; in Grafana's Explore, query
+  `service:bmpl event:server_error` around it, or `req:<id>` with the
+  `X-Request-Id` of the failed response.
+- **The services**: `systemctl status victorialogs alloy grafana-server`; each
+  has a `MemoryMax` (512 MB, 384 MB, 768 MB). Disable the whole stack with
+  `systemctl disable --now victorialogs alloy grafana-server`: bmpl keeps
+  writing to its journal and is not affected.
 
 ## 3. People
 

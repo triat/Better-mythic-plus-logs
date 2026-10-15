@@ -83,7 +83,7 @@ shell, home `/opt/bmpl`, mode 750) and the `deploy` user (bash, home
 restart bmpl` and anything as `bmpl`); writes `/etc/caddy/Caddyfile` with your
 domain and runs `caddy validate`; installs `bmpl.service`,
 `litestream.service`, `bmpl-backup-check.service` and
-`bmpl-backup-check.timer` into `/etc/systemd/system/` and the two scripts,
+`bmpl-backup-check.timer` into `/etc/systemd/system/` (and the units of §9b and §9c) and the two scripts,
 root-owned, at `/usr/local/sbin/bmpl-backup-check` and
 `/usr/local/sbin/bmpl-restore-test`; installs the
 `/etc/litestream.yml` template (owner `bmpl`, mode 600) unless a file already
@@ -259,6 +259,18 @@ needs the repository secrets `BMPL_URL` (`https://bmpl.<domain>`) and
 `BMPL_OPS_TOKEN` (the same token as in `.env`), and *Settings → Actions →
 General → Allow GitHub Actions to create and approve pull requests*.
 Spec: `docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md`.
+
+**9c. Logs stack.** `bootstrap.sh` also installs VictoriaLogs (pinned binary,
+checksum checked, `/var/lib/victorialogs`, 90 days, loopback `:9428`),
+Grafana Alloy and Grafana from Grafana's apt repository (Grafana on loopback
+`:3001`, served by Caddy as `logs.<domain>`), each under a systemd
+`MemoryMax`. Before running it: a DNS `A` record for `logs.<domain>` pointing
+at the VPS (Caddy fetches its certificate). The first run creates
+`/etc/grafana/grafana.env` (root:grafana, 640) with the domain, a random admin
+password (printed path, user `admin`) and an empty `DISCORD_ALERT_WEBHOOK`;
+put a Discord webhook URL there and re-run `bootstrap.sh` to install the alert
+rules. Dashboards and rules live in `deploy/grafana/` and are read-only in the
+UI. Spec: `docs/superpowers/specs/2026-10-15-observability-design.md`.
 
 **10. Uninstall.** On the VPS as root:
 

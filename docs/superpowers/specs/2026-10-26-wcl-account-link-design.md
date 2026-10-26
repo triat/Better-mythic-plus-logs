@@ -1,6 +1,8 @@
 # Warcraft Logs account link: "Connect Warcraft Logs" before "your own API key" — design
 
-Status: draft 2026-10-26, for review. User's direction (2026-10-26): "il faut aller vers le 3 directement. Au lieu de
+Status: approved 2026-10-26 ("ok go"; the operator added the redirect `https://bmpl.riat.dev/auth/wcl/callback` to the
+instance's WCL client the same day). Decision 1's gate implemented 2026-10-26: `src/hosted/wcl-link.ts`,
+`src/server/routes-wcl-link.ts`; result pending the first run. User's direction (2026-10-26): "il faut aller vers le 3 directement. Au lieu de
 proposer d'enregistrer une clé en premier, il faut leur proposer d'authentifier leur compte WCL."
 
 ## Goal
@@ -76,6 +78,17 @@ and whether a scope can be omitted.
 6. **Unlink and delete.** Settings shows the linked WCL name, the budget left this hour, **Disconnect** (deletes the
    row). Account deletion deletes it too. Audit rows: `wcl_link`, `wcl_unlink` (kind `login`). The privacy page says
    what is kept (the WCL user id and name, the encrypted token) and why.
+
+### The gate as built (decision 1)
+
+`GET /auth/wcl/start` (admins only) issues a `state` bound to the admin and a PKCE pair; the nonce and the verifier
+ride in the HttpOnly `bmpl_wcl` cookie (path `/auth/wcl`, 10 minutes). `GET /auth/wcl/callback` checks the admin
+session and the state, trades the code (basic auth + `code_verifier`), then `probeUserToken`: `rateLimitData` on
+both endpoints, `currentUser`, the current Mythic+ zone and three pages of one public ladder with the user token,
+`rateLimitData` again. It answers the report as JSON (token facts without the values, both counters before and after,
+`verdict`: `user budget`, `instance budget`, `both moved`, `nothing moved`, `unreadable`) and logs a
+`wcl_link_probe` line. Nothing is stored. Run it when no member is looking players up: a member's lookup in the same
+seconds moves the instance counter too.
 
 ## Data flow
 

@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Les scores sont de nouveau mesurés par rapport aux joueurs de cette saison : les healers et les tanks sont notés plus sévèrement qu'avant, certains verdicts baissent.",
+    ],
+  },
+  {
     version: "0.10.6",
     date: "2026-10-15",
     items: [

@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-26T22:40:00Z" },
+  "title": "bmpl · Clé WCL guidée",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 800, "title": "A · Fiche dans le message « quota atteint »" },
+    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 800, "title": "B · Assistant en 3 étapes (fenêtre)" },
+    "C.dc.html": { "x": 2720, "y": 0, "w": 1280, "h": 800, "title": "C · Paramètres en checklist + lien dans la barre latérale" }
+  },
+  "order": ["Main.dc.html", "B.dc.html", "C.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Créer sa clé Warcraft Logs : guider au moment du quota", "kind": "title1", "maxW": 4000 }
+  },
+  "designSystems": []
+}

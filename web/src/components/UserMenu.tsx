@@ -55,6 +55,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut, lines, compac
           <span className="account-caret" aria-hidden="true"><Icon name="chevron" size={16} /></span>
         </button>
       )}
+      {!compact && m.keyLink && <a className="account-key-link" href={m.keyLink.href}>{m.keyLink.label}</a>}
       {open && (
         <div className="menu card" role="menu">
           <div className="menu-head">

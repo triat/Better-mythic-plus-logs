@@ -3,7 +3,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.8",
+    date: "2026-10-26",
     items: [
       "Quand ton quota de l'heure est épuisé, bmpl te guide pas à pas pour créer ta propre clé Warcraft Logs, puis relance ta recherche une fois la clé enregistrée.",
     ],

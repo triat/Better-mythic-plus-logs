@@ -6,8 +6,6 @@ export const SESSION_COOKIE = "bmpl_session";
 export const OAUTH_COOKIE = "bmpl_oauth";
 /** The Battle.net link's nonce (path `/auth/bnet`), the same lifetime as OAUTH_COOKIE's. */
 export const BNET_COOKIE = "bmpl_bnet";
-/** The WCL link's nonce and PKCE verifier, path /auth/wcl (spec 2026-10-26-wcl-account-link-design.md). */
-export const WCL_COOKIE = "bmpl_wcl";
 export const SESSION_COOKIE_MAX_AGE_S = 30 * 24 * 60 * 60;
 export const OAUTH_COOKIE_MAX_AGE_S = 600;
 

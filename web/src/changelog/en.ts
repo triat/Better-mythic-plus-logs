@@ -4,7 +4,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.7",
+    date: "2026-10-26",
     items: [
       "Scores are now measured against this season's players again: healers and tanks are rated more strictly than before, so some verdicts go down.",
     ],

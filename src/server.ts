@@ -17,6 +17,7 @@ import type { Route } from "./server/routes.ts";
 import { adminRoutes } from "./server/routes-admin.ts";
 import { authRoutes } from "./server/routes-auth.ts";
 import { bnetRoutes } from "./server/routes-bnet.ts";
+import { wclLinkRoutes } from "./server/routes-wcl-link.ts";
 import { opsRoutes } from "./server/routes-ops.ts";
 import { userRoutes } from "./server/routes-user.ts";
 import { sharedRoutes } from "./server/routes-shared.ts";
@@ -133,7 +134,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   }
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint, runtime }),
-    ...(runtime ? [...authRoutes(runtime), ...bnetRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime), ...opsRoutes(runtime)] : localRoutes()),
+    ...(runtime ? [...authRoutes(runtime), ...bnetRoutes(runtime), ...wclLinkRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime), ...opsRoutes(runtime)] : localRoutes()),
   ];
 
   /** What the request log needs from `respond`: the route it reached, its user and the WCL points it spent. */

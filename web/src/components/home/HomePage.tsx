@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { classHex } from "@shared/wow/classes.ts";
 import type { HistoryItem, MyCharacter, Region } from "../../types.ts";
 import { realmName } from "../../lib/format.ts";
@@ -32,6 +32,8 @@ type SearchProps = Pick<SidebarProps,
 type AccountProps = Pick<SidebarProps,
   "account" | "controls" | "menu" | "pendingProposals" | "onMenuOpen" | "onSignOut" | "watch" | "onWatchToggle" | "onSetup" | "onQuit">;
 export type HomePageProps = SearchProps & AccountProps & {
+  /** Above the page's body: the guided own-client sheet after a refused lookup (App's `guideEl`). */
+  notice?: ReactNode;
   palette: PaletteProps;
   history: HistoryItem[];
   liveOn: boolean;
@@ -53,6 +55,7 @@ export function HomePage(p: HomePageProps) {
     <div className="home-page">
       <TopBar {...p} />
       <main className="home-main">
+        {p.notice}
         {main
           ? <MainSeason key={`${main.region}|${main.realm}|${main.name}`} main={main} p={p} />
           : <HomeBody p={p} main={null} season={null} />}

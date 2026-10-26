@@ -363,8 +363,6 @@ are registered in both modes; the local-only routes
 | GET | `/auth/discord` | public | Start the Discord OAuth flow |
 | GET | `/auth/discord/callback` | public | Discord OAuth callback: admits, checks the guild gate, creates the session |
 | POST | `/auth/logout` | public | End the caller's session |
-| GET | `/auth/wcl/start` | admin | Warcraft Logs account link, measurement step: WCL's authorize page with PKCE and a single-use `state` (cookie `bmpl_wcl`) |
-| GET | `/auth/wcl/callback` | public (admin checked) | Trades the code, measures the user token's budget against the instance's and answers the report as JSON; nothing stored (spec `2026-10-26-wcl-account-link-design.md`) |
 | GET | `/auth/bnet/start` | user | Start the Battle.net link (`wow.profile`, a single-use `state` bound to the `bmpl_bnet` cookie) |
 | GET | `/auth/bnet/callback` | public | Battle.net callback (the handler checks the session): exchanges the code, reads the account and the four regions' characters, stores the link and the one-hour import; always a 302 to `/me?bnet=pick\|cancelled\|state\|scope\|taken\|empty\|down` |
 | GET | `/api/bnet` | user | The caller's link (`{ battletag, linkedAt }` or `null`), the characters the 30-day check removed, and the pending import (`null` after one hour) |

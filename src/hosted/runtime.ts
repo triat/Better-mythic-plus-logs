@@ -32,8 +32,6 @@ export interface HostedRuntime {
   states: OAuthStates;
   /** Battle.net link states, their own instance so a Discord state is never consumed by the Battle.net callback. */
   bnetStates: OAuthStates;
-  /** Warcraft Logs link states (the measurement gate), their own instance like Battle.net's. */
-  wclStates: OAuthStates;
   /** Blizzard application token (client credentials) for the 30-day character check. */
   bnetApp: BnetAppToken;
   fetchFn: typeof fetch;
@@ -94,7 +92,6 @@ export function createHostedRuntime(
     db: hostedDb,
     states: new OAuthStates(),
     bnetStates: new OAuthStates(),
-    wclStates: new OAuthStates(),
     bnetApp: new BnetAppToken(config, fetchFn),
     fetchFn,
     secure: config.baseUrl.startsWith("https:"),

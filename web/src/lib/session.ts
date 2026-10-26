@@ -4,6 +4,7 @@ import type { T } from "../i18n/t.ts";
 import type { OwnClientView } from "../types.ts";
 import { fmtPts } from "./format.ts";
 import { pointsLeft, quotaLabel } from "./quota.ts";
+import { keyLinkLabel } from "./wclGuide.ts";
 
 export interface QuotaLine { text: string; sub: string | null; pct: number | null; tone: "" | "tone-warn" | "tone-bad" }
 export interface MenuModel {
@@ -19,7 +20,13 @@ export interface MenuModel {
   ownClient: boolean;
   /** Under the quota bar while on the shared budget (not an admin, no usable own client): the /help guide to an own client. */
   guideLink: { label: string; href: string } | null;
+  /** Under the account block once the quota is exhausted and the instance stores own clients: to the Settings card
+   * (canvas "bmpl · Clé WCL guidée", C's sidebar line). */
+  keyLink: { label: string; href: string } | null;
 }
+
+/** The Settings card where a member saves their own WCL client. */
+export const OWN_CLIENT_SETTINGS = { href: "/settings#wcl-client" } as const;
 
 /** The href to the "use your own client" guide; the visible label is `t("header.quota.guide")` (in the menu) or
  * `t("errors.ownClientAction")` (in a quota/budget toast). */
@@ -68,12 +75,13 @@ const staleClientLine = (t: T): QuotaLine => ({ text: t("header.quota.stale"), s
  * With a usable own client the shared quota is irrelevant: its counter replaces the line and nothing is ever "exhausted".
  * An unusable one (see `OwnClientView.usable`) warns and keeps the shared-quota behaviour, since that is what gets charged.
  */
-export function menuModel(t: T, me: MeUser, q: QuotaInfo | null, ownClient: OwnClientView | null = null): MenuModel {
+export function menuModel(t: T, me: MeUser, q: QuotaInfo | null, ownClient: OwnClientView | null = null, ownClients = false): MenuModel {
   const isAdmin = me.role === "admin";
   const name = me.globalName ?? me.username;
   const left = pointsLeft(q);
   const usable = ownClient !== null && ownClient.usable;
   const stale = ownClient !== null && !ownClient.usable;
+  const exhausted = !usable && left !== null && left < 1 ? quotaLabel(t, q) : null;
   return {
     name,
     handle: `@${me.username}${isAdmin ? t("header.quota.adminHandle") : ""}`,
@@ -81,8 +89,9 @@ export function menuModel(t: T, me: MeUser, q: QuotaInfo | null, ownClient: OwnC
     avatarUrl: me.avatarUrl,
     isAdmin,
     quota: usable ? ownClientLine(t, ownClient) : stale ? staleClientLine(t) : quotaLine(t, q, isAdmin),
-    exhausted: !usable && left !== null && left < 1 ? quotaLabel(t, q) : null,
+    exhausted,
     ownClient: usable,
     guideLink: !usable && !isAdmin && q !== null && q.limit !== null ? { label: t("header.quota.guide"), href: OWN_CLIENT_GUIDE.href } : null,
+    keyLink: exhausted !== null && ownClients ? { label: keyLinkLabel(t), href: OWN_CLIENT_SETTINGS.href } : null,
   };
 }

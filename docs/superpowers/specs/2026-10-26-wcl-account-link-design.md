@@ -1,8 +1,9 @@
 # Warcraft Logs account link: "Connect Warcraft Logs" before "your own API key" — design
 
-Status: approved 2026-10-26 ("ok go"; the operator added the redirect `https://bmpl.riat.dev/auth/wcl/callback` to the
-instance's WCL client the same day). Decision 1's gate implemented 2026-10-26: `src/hosted/wcl-link.ts`,
-`src/server/routes-wcl-link.ts`; result pending the first run. User's direction (2026-10-26): "il faut aller vers le 3 directement. Au lieu de
+Status: **stopped at the gate, 2026-10-26.** Approved the same day ("ok go"); decision 1's gate shipped in v0.10.7 and
+ran once in production; the result (below) shows a member's token draws on bmpl's client budget, so the link saves
+nothing and is not built. The gate's routes were removed afterwards (user: "supprime les URL qui ne fonctionne pas").
+Follow-up: a guided setup of a member's own API client (its own budget), canvas first. User's direction (2026-10-26): "il faut aller vers le 3 directement. Au lieu de
 proposer d'enregistrer une clé en premier, il faut leur proposer d'authentifier leur compte WCL."
 
 ## Goal
@@ -79,7 +80,23 @@ and whether a scope can be omitted.
    row). Account deletion deletes it too. Audit rows: `wcl_link`, `wcl_unlink` (kind `login`). The privacy page says
    what is kept (the WCL user id and name, the encrypted token) and why.
 
-### The gate as built (decision 1)
+### Result (2026-10-26, production, the operator's WCL account)
+
+```
+token: Bearer, expires_in 31,104,000 s (360 days), refresh_token present, no scope returned
+currentUser: answered; public queries on /api/v2/user: answered (3 ladder pages)
+user token     rateLimitData: limit 3,600, spent 183.44 → 191.68, reset in 2,510 s
+instance token rateLimitData: limit 3,600, spent 184.44 → 192.68, reset in 2,509 s
+verdict: both moved
+```
+
+The user token's counter already held the members' spend of the hour (183 points before the probe), had the same limit
+and reset as the instance client, and rose by the same 8.24 points: WCL charges a user token's requests to the API
+client that obtained it, not to the account. A linked member would still draw on the shared 3,600 points; each API
+client has its own budget, so a member's own client remains the only way to give them their own. The operator also
+confirmed their account's limit is 3,600 points an hour now (the recalibration spec recorded 18,000).
+
+### The gate as built (decision 1, removed after the result)
 
 `GET /auth/wcl/start` (admins only) issues a `state` bound to the admin and a PKCE pair; the nonce and the verifier
 ride in the HttpOnly `bmpl_wcl` cookie (path `/auth/wcl`, 10 minutes). `GET /auth/wcl/callback` checks the admin

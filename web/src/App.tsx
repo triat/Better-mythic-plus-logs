@@ -6,6 +6,8 @@ import type { HistoryItem, KnownCharacter, LookupPayload, LookupRequest, Overrid
 import { POINTS_PER_RUN, unanalyzedRuns } from "./lib/deepdive.ts";
 import { compareKeys, compareSearch, pruneSelection, withPayloadSummary } from "./lib/history.ts";
 import { canAfford, quotaOrBudgetMessage, quotaTooltip } from "./lib/quota.ts";
+import { showsWclGuide } from "./lib/wclGuide.ts";
+import { WclGuide } from "./components/WclGuide.tsx";
 import { bnetCodeOf } from "./lib/bnet.ts";
 import { mineRequest } from "./lib/me.ts";
 import { suggestionsOf } from "./lib/suggest.ts";
@@ -156,7 +158,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
   // The member's own WCL client (issue #11): its counter replaces the quota line; lookups and deep-dives carry the latest view.
   const [ownClient, setOwnClient] = useState<OwnClientView | null>(initialOwnClient);
-  const menu = me ? menuModel(t, me, quota, ownClient) : null;
+  /** A lookup refused for the member's quota, while they could save an own client: the guided sheet shows instead of a toast. */
+  const [guide, setGuide] = useState<{ quota: QuotaInfo; req: LookupRequest; refresh: boolean } | null>(null);
+  const menu = me ? menuModel(t, me, quota, ownClient, status.hosted && !!status.wclClients) : null;
   // The toast action on a quota/budget refusal: label from the dictionary, href fixed (session.ts keeps only that).
   const ownClientAction = useMemo<ToastAction>(() => ({ label: t("errors.ownClientAction"), href: OWN_CLIENT_GUIDE.href }), [t]);
   // Admins see "N pending proposals" next to the Admin item; counted when the menu opens (0 WCL pts, SQLite only).
@@ -333,8 +337,18 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     setBusy(t(refresh ? "header.busy.refreshing" : "header.busy.lookingUp", { name: req.character }));
     const r = await api.lookup({ ...req, refresh, mine: mineRequest(settings.characters, req.character, req.region ?? regionRef.current) });
     setBusy(null);
-    // A refusal that carries the member's own quota numbers gets the way out: the guide to an own client.
-    if (!r.ok) { if (r.quota) setQuota(r.quota); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return null; }
+    // A refusal that carries the member's own quota numbers gets the way out: the guided sheet when the instance stores
+    // own clients (canvas "bmpl · Clé WCL guidée" A), else the toast with the guide link.
+    if (!r.ok) {
+      if (r.quota) setQuota(r.quota);
+      if (r.quota && showsWclGuide({ hosted: status.hosted, wclClients: status.wclClients, ownClient, quota: r.quota })) {
+        setGuide({ quota: r.quota, req, refresh });
+        return null;
+      }
+      setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null);
+      return null;
+    }
+    setGuide(null);
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
@@ -348,7 +362,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     touch();
     await loadHistory();
     return r.key;
-  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters]);
+  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters, status.hosted, status.wclClients, ownClient]);
 
   /** Shows a history profile: in place on the candidate page (the URL follows) and on Live, else on the candidate page. */
   const openProfile = useCallback((key: string) => {
@@ -659,12 +673,19 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   };
   const palette = { sources: { suggestions, mine: settings.characters, history: tabs, region }, yourKey, onRun: onPalette };
   const toastEl = <Toast message={toast?.message ?? null} action={toast?.action ?? null} onClose={closeToast} />;
+  const guideEl = guide && (
+    <WclGuide
+      quota={guide.quota}
+      onSaved={(client) => { setOwnClient(client); setGuide(null); void runLookup(guide.req, guide.refresh); }}
+      onError={(message) => setToast(message)}
+    />
+  );
 
   // The connected home page sits outside the frame (redesign spec decision 2).
   if (page === "home") {
     return (
       <>
-        <HomePage {...sidebar} palette={palette} history={tabs} liveOn={live.state.kind === "live"} self={selfActions} envPath={status.hosted ? null : status.envPath ?? ""} />
+        <HomePage {...sidebar} notice={guideEl} palette={palette} history={tabs} liveOn={live.state.kind === "live"} self={selfActions} envPath={status.hosted ? null : status.envPath ?? ""} />
         {toastEl}
       </>
     );
@@ -673,6 +694,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   return (
     <>
       <Shell sidebar={sidebar} palette={palette}>
+        {guideEl}
         {page === "candidate" && (
           <div className="content content-result">
             {tabs.length === 0 ? (

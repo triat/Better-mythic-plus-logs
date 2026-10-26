@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>B · Assistant en 3 étapes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; position: relative; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+  <div style="position: absolute; inset: 0; display: flex; opacity: 0.35">
+    <aside style="width: 248px; border-right: 1px solid #232733"></aside>
+    <main style="flex-grow: 1; padding: 32px 40px; display: flex; flex-direction: column; gap: 16px">
+      <div style="height: 64px; background: #161920; border: 1px solid #232733; border-radius: 16px"></div>
+      <div style="height: 280px; background: #161920; border: 1px solid #232733; border-radius: 16px"></div>
+    </main>
+  </div>
+  <div style="position: absolute; inset: 0; background: rgba(14, 16, 20, 0.6); display: flex; align-items: center; justify-content: center">
+    <section role="dialog" aria-modal="true" aria-labelledby="wcl-guide-title" style="width: 620px; background: #161920; border: 1px solid #2A2F3B; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; align-items: flex-start; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+          <span id="wcl-guide-title" style="font-weight: 600; font-size: 17px">Ta propre clé Warcraft Logs</span>
+          <span style="font-size: 13px; color: #A0A7B4">3 600 pts par heure rien qu'à toi, 12 fois ton quota actuel. 2 minutes.</span>
+        </div>
+        <button type="button" aria-label="Fermer" style="width: 32px; height: 32px; border: 1px solid #2A2F3B; border-radius: 10px; background: transparent; color: #A0A7B4; font: inherit">✕</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 4px; border-radius: 2px; background: #3FCF8E"></span><span style="color: #A0A7B4">1 · Ouvrir Warcraft Logs</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 4px; border-radius: 2px; background: #ECEEF2"></span><span style="font-weight: 600">2 · Créer le client</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 4px; border-radius: 2px; background: #2A2F3B"></span><span style="color: #8D95A3">3 · Coller la clé</span></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px">
+        <span>Sur la page qui s'est ouverte, clique sur <b>Create Client</b> et remplis :</span>
+        <div style="display: grid; grid-template-columns: 120px 1fr auto; gap: 8px 12px; align-items: center; font-size: 13px">
+          <span style="color: #A0A7B4">Name</span><span style="font-family: 'Geist Mono', monospace; background: #0E1014; border: 1px solid #232733; border-radius: 6px; padding: 5px 10px">bmpl</span><button type="button" style="font: inherit; font-size: 12px; height: 28px; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 10px; background: transparent; color: #A0A7B4">Copier</button>
+          <span style="color: #A0A7B4">Redirect URL</span><span style="font-family: 'Geist Mono', monospace; background: #0E1014; border: 1px solid #232733; border-radius: 6px; padding: 5px 10px">https://bmpl.riat.dev</span><button type="button" style="font: inherit; font-size: 12px; height: 28px; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 10px; background: transparent; color: #A0A7B4">Copier</button>
+          <span style="color: #A0A7B4">Public Client</span><span style="color: #C9CED8">laisse décoché</span><span></span>
+        </div>
+        <span style="font-size: 12px; color: #8D95A3">Pas de compte Warcraft Logs ? La page te propose d'en créer un, gratuitement.</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <a href="https://www.warcraftlogs.com/api/clients" style="font-size: 13px">Rouvrir warcraftlogs.com ↗</a>
+        <div style="flex-grow: 1"></div>
+        <button type="button" style="font: inherit; font-size: 13px; height: 34px; padding: 0 14px; border: 1px solid #2A2F3B; border-radius: 10px; background: transparent; color: #A0A7B4">Retour</button>
+        <button type="button" style="font: inherit; font-size: 13px; font-weight: 600; height: 34px; padding: 0 16px; border: 0; border-radius: 10px; background: #ECEEF2; color: #0E1014">C'est fait, étape suivante</button>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

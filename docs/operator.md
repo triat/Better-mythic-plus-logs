@@ -388,8 +388,11 @@ with the region chip inside the search field (remembered per account through
 `calibration.db`; the weekly fit runs it too) writes `study.json` and
 `study.md` next to it: each signal's reliability from one run to the next, the
 share of the score it really carries, whether the parse is ranked per key level,
-and whether shrinkage or per-role percentile curves would make the score steadier
-without predicting worse:
+and whether shrinkage, per-role percentile curves, lighter weights on the two
+noisiest signals, or all of them would make the score steadier without predicting
+worse. Each candidate's difference with today comes with a 95 % interval (a
+bootstrap over the held-out characters); only a difference whose interval leaves
+out 0 decides. It takes a few seconds to a minute:
 
 ```bash
 ssh <vps> 'cd /opt/bmpl && sudo -u bmpl ./bmpl calibrate --study && cat study.md'

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { Sample } from "../../src/calibration/fit.ts";
-import { beats, halves, MIN_SPLIT_RUNS, outcomes, parseCheck, runStudy, signalStudy, studyMarkdown } from "../../src/calibration/study.ts";
+import {
+  beats, bootstrapDiffs, halves, MIN_SPLIT_RUNS, outcomes, parseCheck, runStudy, type ScoreRows, type ScoreStudy, signalStudy, studyMarkdown, targetedAxes,
+} from "../../src/calibration/study.ts";
+import type { EvalPayload } from "../../src/evaluation/inputs.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import { deaths, payloadWith, runWith } from "../evaluation/helpers.ts";
 
@@ -34,7 +37,8 @@ function population(n: number, seed = 7): Sample[] {
     });
     return {
       study: { key: `c${i}`, name: `Name${i}`, server: "Realm", className: "Mage", spec: "Mage:Fire", role: "dps", level: 16, percentile: 1 - skill, quintile: 2 },
-      payload: payloadWith(runs, { targetLevel: 16 }),
+      // The item level is the character's, the same in every half of its runs.
+      payload: Object.assign(payloadWith(runs, { targetLevel: 16 }), { rio: { itemLevel: 640 + Math.round(skill * 12), seasons: [] } as unknown as EvalPayload["rio"] }),
     } as Sample;
   });
 }
@@ -67,6 +71,10 @@ describe("evaluation study", () => {
     expect(of("survival.avoidableVsPeers").splitHalf!).toBeGreaterThan(0.5);
     expect(of("survival.individualDeaths").k!).toBeLessThan(2);
     expect(Math.abs(of("survival.wipeDeaths").splitHalf ?? 0)).toBeLessThan(0.3);
+    // Measured on the character, not on its runs: no reliability, no k, though it still has its share of the score.
+    expect(of("preparation.ilvlVsLevel")).toMatchObject({ runBased: false, splitHalf: null, oneRun: null, k: null });
+    expect(of("preparation.ilvlVsLevel").n).toBe(160);
+    expect(of("survival.individualDeaths").runBased).toBe(true);
     const share = rows.reduce((s, r) => s + r.effective, 0);
     expect(share).toBeCloseTo(1, 2);
     expect(rows.reduce((s, r) => s + r.nominal, 0)).toBeCloseTo(1, 2);
@@ -87,18 +95,67 @@ describe("evaluation study", () => {
     expect(parseCheck(make(false)).reading).toBe("across levels");
   });
 
-  test("a candidate beats today only when steadier without predicting worse", () => {
-    const base = { splitHalf: 0.5, predicts: { deaths: 0.3, avoidable: 0.3, timed: 0.2 }, wclLadder: 0.6, verdicts: { invite: 0.3, maybe: 0.4, pass: 0.3, insufficient: 0 }, changes: 0 };
-    expect(beats({ ...base, splitHalf: 0.53 }, base)).toBe(true);
-    expect(beats({ ...base, splitHalf: 0.51 }, base)).toBe(false);
-    expect(beats({ ...base, splitHalf: 0.6, predicts: { ...base.predicts, deaths: 0.2 } }, base)).toBe(false);
+  test("a candidate beats today only when surely steadier and not surely worse at predicting", () => {
+    const base: ScoreStudy = { splitHalf: 0.5, predicts: { deaths: 0.3, avoidable: 0.3, timed: 0.2 }, wclLadder: 0.6, verdicts: { invite: 0.3, maybe: 0.4, pass: 0.3, insufficient: 0 }, changes: 0, vsToday: null };
+    const flat = { diff: 0, low: -0.05, high: 0.05 };
+    const steadier = { diff: 0.1, low: 0.04, high: 0.16 };
+    const with_ = (v: Partial<NonNullable<ScoreStudy["vsToday"]>>): ScoreStudy => ({ ...base, vsToday: { splitHalf: flat, deaths: flat, avoidable: flat, timed: flat, ...v } });
+    expect(beats(with_({ splitHalf: steadier }))).toBe(true);
+    // A prediction that may have dropped (its interval holds 0) does not stop it; one that surely dropped does.
+    expect(beats(with_({ splitHalf: steadier, deaths: { diff: -0.03, low: -0.08, high: 0.02 } }))).toBe(true);
+    expect(beats(with_({ splitHalf: steadier, deaths: { diff: -0.1, low: -0.15, high: -0.04 } }))).toBe(false);
+    // A rise inside the noise is no rise.
+    expect(beats(with_({ splitHalf: { diff: 0.03, low: -0.01, high: 0.07 } }))).toBe(false);
+    expect(beats(with_({ splitHalf: null }))).toBe(false);
+    expect(beats(base)).toBe(false);
+  });
+
+  test("paired bootstrap: the same scores give 0 both ways; noisier scores are surely less steady", () => {
+    const rnd = noise(11);
+    const n = 200;
+    const skill = Array.from({ length: n }, () => rnd());
+    const rows = (spread: number): ScoreRows => ({
+      halves: skill.map((s) => [s + (rnd() - 0.5) * spread, s + (rnd() - 0.5) * spread]),
+      before: skill.map((s) => s + (rnd() - 0.5) * spread),
+    });
+    const after = skill.map((s) => ({ deaths: s + (rnd() - 0.5) * 0.4, avoidable: null, timed: null }));
+    const today = rows(0.2);
+    const d = bootstrapDiffs(today, { same: today, noisy: rows(1.5) }, after, 300);
+    expect(d.same!.splitHalf).toEqual({ diff: 0, low: 0, high: 0 });
+    expect(d.same!.avoidable).toBeNull();
+    expect(d.noisy!.splitHalf!.high).toBeLessThan(0);
+    expect(d.noisy!.deaths!.high).toBeLessThan(0);
+    expect(d.noisy!.splitHalf!.low).toBeLessThanOrEqual(d.noisy!.splitHalf!.diff);
+    expect(d.noisy!.splitHalf!.diff).toBeLessThanOrEqual(d.noisy!.splitHalf!.high);
+    // The same samples give the same intervals.
+    expect(bootstrapDiffs(today, { noisy: rows(1.5) }, after, 300).noisy!.splitHalf).not.toBeNull();
+    expect(bootstrapDiffs(today, { same: today }, after, 300)).toEqual(bootstrapDiffs(today, { same: today }, after, 300));
+  });
+
+  test("targeted weights: tank individual deaths and healer dispels weigh 1, nothing else moves", () => {
+    const axes = targetedAxes(cfg.axes);
+    expect(axes.survival.subSignals.individualDeaths!.weights).toEqual({ ...cfg.axes.survival.subSignals.individualDeaths!.weights, tank: 1 });
+    expect(axes.utility.subSignals.dispels!.weights).toEqual({ ...cfg.axes.utility.subSignals.dispels!.weights, healer: 1 });
+    expect(cfg.axes.survival.subSignals.individualDeaths!.weights.tank).toBe(3);
+    expect(() => validateConfig({ ...cfg, axes })).not.toThrow();
   });
 
   test("the whole study: candidates a config accepts, a report without any character name", () => {
-    const r = runStudy(population(240), cfg, 1_800_000_000_000);
+    const r = runStudy(population(240), cfg, 1_800_000_000_000, 200);
     expect(r.roles.dps.fit + r.roles.dps.test).toBe(240);
-    expect(Object.keys(r.roles.dps.candidates)).toEqual(["today", "shrinkage", "percentile", "both"]);
+    expect(r.bootstrap).toBe(200);
+    expect(Object.keys(r.roles.dps.candidates)).toEqual(["today", "shrinkage", "percentile", "both", "targeted", "all"]);
     expect(r.roles.dps.candidates.today.changes).toBe(0);
+    expect(r.roles.dps.candidates.today.vsToday).toBeNull();
+    const shrink = r.roles.dps.candidates.shrinkage.vsToday!.splitHalf!;
+    expect(shrink.low).toBeLessThanOrEqual(shrink.high);
+    expect(r.candidate.weights).toEqual([
+      { source: "survival.individualDeaths", role: "tank", from: 3, to: 1 },
+      { source: "utility.dispels", role: "healer", from: 3, to: 1 },
+    ]);
+    // A role without held-out characters has no interval and no winner.
+    expect(r.roles.tank.candidates.both.vsToday!.splitHalf).toBeNull();
+    expect(r.best.tank).toBeNull();
     expect(r.roles.dps.candidates.today.splitHalf!).toBeGreaterThan(0.3);
     const axes = structuredClone(cfg.axes);
     for (const [src, curves] of Object.entries(r.candidate.curves)) {
@@ -109,8 +166,11 @@ describe("evaluation study", () => {
     // Everyone has 0 dispels here: a constant signal has no reliability and no k.
     expect(r.roles.dps.signals.find((x) => x.source === "utility.dispels")!.splitHalf).toBeNull();
     expect(r.candidate.shrinkage.dps?.["utility.dispels"]).toBeUndefined();
+    expect(r.candidate.shrinkage.dps?.["preparation.ilvlVsLevel"]).toBeUndefined();
     const md = studyMarkdown(r);
     expect(md).toContain("## dps");
+    expect(md).toContain("n/a, per character");
+    expect(md).toMatch(/\| shrinkage \| \d\.\d\d · \**[+−±]\d\.\d\d \[/);
     expect(md).not.toMatch(/Name\d/);
     expect(JSON.stringify(r)).not.toMatch(/Name\d/);
   });

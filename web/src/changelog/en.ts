@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "bmpl has a logo: its name over three dots, green, yellow and red like the verdicts, in the sidebar and the browser tab.",
+    ],
+  },
+  {
     version: "0.10.9",
     date: "2026-10-27",
     items: [

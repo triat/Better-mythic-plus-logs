@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>D · Loupe sur les logs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+</style>
+</helmet>
+<div style="width: 1040px; height: 560px; box-sizing: border-box; padding: 40px; display: flex; gap: 40px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014">
+  <div style="width: 480px; height: 480px; flex-shrink: 0; background: #161920; border: 1px solid #232733; border-radius: 24px; display: flex; align-items: center; justify-content: center; color: #ECEEF2">
+    <svg width="300" height="300" viewBox="0 0 100 100" role="img" aria-label="Logo bmpl : loupe sur trois barres de logs"><circle cx="44" cy="44" r="25" fill="none" stroke="currentColor" stroke-width="6"></circle><path d="M62 62 L80 80" stroke="currentColor" stroke-width="9" stroke-linecap="round"></path><rect x="32" y="46" width="6" height="10" rx="2" fill="#5AB8F0"></rect><rect x="41" y="40" width="6" height="16" rx="2" fill="#5AB8F0"></rect><rect x="50" y="32" width="6" height="24" rx="2" fill="#3FCF8E"></rect></svg>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 32px; flex-grow: 1">
+    <div style="display: flex; gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center">
+        <div style="width: 160px; height: 160px; border-radius: 50%; background: #161920; border: 1px solid #232733; display: flex; align-items: center; justify-content: center; color: #ECEEF2">
+          <svg width="104" height="104" viewBox="0 0 100 100" aria-hidden="true"><circle cx="44" cy="44" r="25" fill="none" stroke="currentColor" stroke-width="6"></circle><path d="M62 62 L80 80" stroke="currentColor" stroke-width="9" stroke-linecap="round"></path><rect x="32" y="46" width="6" height="10" rx="2" fill="#5AB8F0"></rect><rect x="41" y="40" width="6" height="16" rx="2" fill="#5AB8F0"></rect><rect x="50" y="32" width="6" height="24" rx="2" fill="#3FCF8E"></rect></svg>
+        </div>
+        <span style="font-size: 13px; color: #A0A7B4">Profil rond, sombre</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center">
+        <div style="width: 160px; height: 160px; border-radius: 50%; background: #ECEEF2; display: flex; align-items: center; justify-content: center; color: #0E1014">
+          <svg width="104" height="104" viewBox="0 0 100 100" aria-hidden="true"><circle cx="44" cy="44" r="25" fill="none" stroke="currentColor" stroke-width="6"></circle><path d="M62 62 L80 80" stroke="currentColor" stroke-width="9" stroke-linecap="round"></path><rect x="32" y="46" width="6" height="10" rx="2" fill="#2B7FB8"></rect><rect x="41" y="40" width="6" height="16" rx="2" fill="#2B7FB8"></rect><rect x="50" y="32" width="6" height="24" rx="2" fill="#1E9E66"></rect></svg>
+        </div>
+        <span style="font-size: 13px; color: #A0A7B4">Profil rond, clair</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 24px; align-items: flex-end">
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center">
+        <div style="width: 64px; height: 64px; border-radius: 14px; background: #161920; border: 1px solid #232733; display: flex; align-items: center; justify-content: center; color: #ECEEF2">
+          <svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><circle cx="44" cy="44" r="25" fill="none" stroke="currentColor" stroke-width="8"></circle><path d="M62 62 L80 80" stroke="currentColor" stroke-width="11" stroke-linecap="round"></path><rect x="31" y="45" width="8" height="11" rx="2" fill="#5AB8F0"></rect><rect x="48" y="33" width="8" height="23" rx="2" fill="#3FCF8E"></rect></svg>
+        </div>
+        <span style="font-size: 13px; color: #A0A7B4">64 px, deux barres</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: #161920; border: 1px solid #232733; display: flex; align-items: center; justify-content: center; color: #ECEEF2">
+          <svg width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"><circle cx="44" cy="44" r="25" fill="none" stroke="currentColor" stroke-width="10"></circle><path d="M62 62 L80 80" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><rect x="39" y="34" width="10" height="22" rx="2" fill="#3FCF8E"></rect></svg>
+        </div>
+        <span style="font-size: 13px; color: #A0A7B4">32 px</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

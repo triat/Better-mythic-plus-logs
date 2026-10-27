@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "bmpl a un logo : son nom au-dessus de trois points, vert, jaune et rouge comme les verdicts, dans la barre latérale et l'onglet du navigateur.",
+    ],
+  },
+  {
     version: "0.10.9",
     date: "2026-10-27",
     items: [

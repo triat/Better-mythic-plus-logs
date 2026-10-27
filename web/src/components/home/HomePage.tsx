@@ -25,6 +25,7 @@ import { Palette } from "../shell/Palette.tsx";
 import { usePaletteKey } from "../shell/Shell.tsx";
 import type { PaletteProps } from "../shell/Shell.tsx";
 import type { SidebarProps } from "../shell/Sidebar.tsx";
+import { Logo } from "../Logo.tsx";
 
 type SearchProps = Pick<SidebarProps,
   "form" | "onFormChange" | "onLookup" | "busy" | "suggestions" | "onSuggest" | "region" | "instanceRegion" | "onRegionChange"
@@ -70,7 +71,7 @@ function TopBar(p: HomePageProps) {
   return (
     <header className="home-top">
       <div className="home-top-row">
-        <a className="home-logo" href="/">bmpl</a>
+        <Logo className="home-logo" />
         <nav className="home-top-nav" aria-label={t("home.nav")}>
           <a href="/me" className="home-top-a">{t("shell.nav.me")}</a>
           <a href="/live" className="home-top-a"><span className={"nav-dot " + (p.liveOn ? "on" : "off")} aria-hidden="true" />{t("shell.nav.live")}</a>

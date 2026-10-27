@@ -63,6 +63,13 @@ input:focus, select:focus { outline: none; border-color: var(--link); }
 /* bare-page brand bar (sign-in, privacy, signed-out help) and the search field's box (the sidebar's, see "shell") */
 .top { border-bottom: 1px solid var(--border-soft); padding: 12px var(--gutter); display: flex; flex-direction: column; gap: 10px; }
 .top-row { display: flex; align-items: center; gap: 16px; }
+/* The bmpl mark (canvas "bmpl · Logo", C): the name over the three verdict dots, centred under it. */
+.logo { display: inline-flex; flex-direction: column; align-items: center; gap: .18em; line-height: 1; }
+.logo-word { font-weight: 800; letter-spacing: -.04em; }
+.logo-dots { display: flex; gap: .2em; }
+.logo-dots i { width: .26em; height: .26em; border-radius: 50%; background: var(--invite); }
+.logo-dots i:nth-child(2) { background: var(--maybe); }
+.logo-dots i:nth-child(3) { background: var(--pass); }
 .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; color: var(--text); }
 .brand:hover { color: var(--text); }
 .grow { flex: 1; }

@@ -15,6 +15,7 @@ import { SearchInput } from "../SearchInput.tsx";
 import { UserMenu } from "../UserMenu.tsx";
 import { LocalAccount } from "./LocalAccount.tsx";
 import { WhatsNew } from "./WhatsNew.tsx";
+import { Logo } from "../Logo.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -82,7 +83,7 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
   const typed = p.form.character.trim() !== "";
   return (
     <aside className="sidebar">
-      <a className="side-logo" href="/">bmpl</a>
+      <Logo className="side-logo" />
       <div className="side-search-wrap">
         <form className="side-search" role="search" aria-label={t("shell.search.label")} onSubmit={submit}>
           <div className="search-box">

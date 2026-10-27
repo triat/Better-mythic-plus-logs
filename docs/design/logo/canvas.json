@@ -1,0 +1,18 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-27T07:10:00Z" },
+  "title": "bmpl · Logo",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1040, "h": 560, "title": "A · Bouclier et coche" },
+    "B.dc.html": { "x": 1120, "y": 0, "w": 1040, "h": 560, "title": "B · Clé mythique +" },
+    "C.dc.html": { "x": 0, "y": 680, "w": 1040, "h": 560, "title": "C · Mot « bmpl » et trois verdicts" },
+    "D.dc.html": { "x": 1120, "y": 680, "w": 1040, "h": 560, "title": "D · Loupe sur les logs" }
+  },
+  "order": ["Main.dc.html", "B.dc.html", "C.dc.html", "D.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Ébauches de logo pour Buy Me a Coffee", "kind": "title1", "maxW": 2160 }
+  },
+  "designSystems": []
+}

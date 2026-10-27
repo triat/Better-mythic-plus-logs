@@ -17,6 +17,7 @@ import { Faq } from "./Faq.tsx";
 import { HelpToc } from "./HelpToc.tsx";
 import { LiveAddonGuide } from "./LiveAddonGuide.tsx";
 import { WclClientGuide } from "./WclClientGuide.tsx";
+import { Logo } from "../Logo.tsx";
 
 type Docs = Omit<DocsResponse, "ok">;
 const ROLES = ["dps", "healer", "tank"] as const;
@@ -54,7 +55,7 @@ export function HelpPage({ status, bare = false }: Props) {
   const entries = useMemo(() => (data ? toc(t, data.docs, status.hosted) : []), [t, data, status.hosted]);
   return (
     <>
-      {bare && <header className="top"><div className="top-row"><a className="brand" href="/">bmpl</a></div></header>}
+      {bare && <header className="top"><div className="top-row"><Logo className="brand" /></div></header>}
       <div className="admin-title">
         <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.backToLookups")}</a>
         <h1>{t("help.title")}</h1>

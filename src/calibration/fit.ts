@@ -65,6 +65,9 @@ const SLOPE = 1000;
  */
 export function curveInputs(payload: EvalPayload, cfg: EvaluationConfig): Record<string, number> {
   const probe = structuredClone(cfg) as EvaluationConfig;
+  // No reference, so nothing is imputed: only measured sub-signals reach the evidence, and the reference stays a median
+  // of real values (validity spec 2026-10-27, decision 3).
+  probe.reference = { dps: {}, healer: {}, tank: {} };
   for (const axis of Object.values(probe.axes)) {
     for (const sub of Object.values(axis.subSignals)) {
       sub.curve = [[-1e9, -1e9 * SLOPE], [1e9, 1e9 * SLOPE]];
@@ -115,7 +118,9 @@ export interface GlobalFit {
 
 /**
  * `globalCurve` and `reference` fitted on `samples`. Reads globalScore(), taken before the curve, so the curve already in
- * `base` does not bias the fit.
+ * `base` does not bias the fit. The reference is fitted first, from measured values only, and the raw scores the curve
+ * reads impute missing sub-signals with that new reference (validity spec 2026-10-27, decision 3): a config fitted on
+ * its own population is then a fixed point.
  */
 export function fitGlobal(samples: Sample[], base: EvaluationConfig): GlobalFit {
   const globalCurve = structuredClone(base.globalCurve);
@@ -125,14 +130,6 @@ export function fitGlobal(samples: Sample[], base: EvaluationConfig): GlobalFit 
     const own = samples.filter((s) => s.study.role === role);
     n[role] = own.length;
     if (own.length < MIN_N) continue;
-    const raw = own.map((s) => { const i = collectInputs(s.payload, base); return globalScore(scoreAllAxes(i, base), i.role, base); })
-      .filter((g): g is number => g !== null);
-    if (raw.length < MIN_N) continue;
-    // Rounding to a tenth can merge two anchors, and a curve's x must strictly increase: keep the first of a tie, and
-    // only what lies strictly between the fixed end points.
-    const c = percentileCurve(raw, true).map(([x, y]) => [round(x, 1), Math.round(y)] as [number, number])
-      .filter(([x], i, a) => x > 0 && x < 100 && (i === 0 || x !== a[i - 1]![0]));
-    globalCurve[role] = [[0, 0], ...c, [100, 100]];
 
     const xsBySource = new Map<string, number[]>();
     const valuesBySource = new Map<string, number[]>();
@@ -147,6 +144,16 @@ export function fitGlobal(samples: Sample[], base: EvaluationConfig): GlobalFit 
       ref[src] = { x: round(quantile(xs, 0.5), 4), value: round(quantile(values, 0.5), 4) };
     }
     reference[role] = ref;
+
+    const withRef: EvaluationConfig = { ...base, reference: { ...base.reference, [role]: ref } };
+    const raw = own.map((s) => { const i = collectInputs(s.payload, withRef); return globalScore(scoreAllAxes(i, withRef), i.role, withRef); })
+      .filter((g): g is number => g !== null);
+    if (raw.length < MIN_N) { reference[role] = base.reference[role]; continue; }
+    // Rounding to a tenth can merge two anchors, and a curve's x must strictly increase: keep the first of a tie, and
+    // only what lies strictly between the fixed end points.
+    const c = percentileCurve(raw, true).map(([x, y]) => [round(x, 1), Math.round(y)] as [number, number])
+      .filter(([x], i, a) => x > 0 && x < 100 && (i === 0 || x !== a[i - 1]![0]));
+    globalCurve[role] = [[0, 0], ...c, [100, 100]];
   }
   return { globalCurve, reference, n };
 }

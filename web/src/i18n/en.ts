@@ -699,9 +699,9 @@ export const en = {
     weightsCaption: "axis weights by role (effective config, version {version})",
     informational: "{list} {count, plural, one {has} other {have}} weight 0 for every role: shown, never counted. Timed vs depleted is shown in the run list and never scored.",
     axesIntro: "Each axis scores 0–100. A sub-signal's value goes through its curve — printed beside it, linear between the points and clamped outside them — into a "
-      + "0–100 score; the axis is the mean of those scores weighted by the player's role (the chips under each curve), rounded. A sub-signal that is n/a, or whose "
-      + "weight for the role is 0, is left out. Each evidence line on an axis row is that sub-signal's share of the distance from 50, in axis points.",
-    survivalNote: "The two deep-dive sub-signals appear once at least {count, plural, one {# shown run has} other {# shown runs have}} been analyzed.",
+      + "0–100 score; the axis is the mean of those scores weighted by the player's role (the chips under each curve), rounded. A sub-signal the kit cannot have, or whose "
+      + "weight for the role is 0, is left out; one whose data is missing counts as the role's average player, with no evidence line. Each evidence line on an axis row is that sub-signal's share of the distance from 50, in axis points.",
+    survivalNote: "The two deep-dive sub-signals appear once at least {count, plural, one {# shown run has} other {# shown runs have}} been analyzed, in your own characters' Survival pillar only: they never count in the verdict.",
     consistencyNote: "Every sub-signal needs at least {count, plural, one {# run} other {# runs}}; below that the axis is n/a.",
     subSignals: "{count, plural, one {# sub-signal} other {# sub-signals}}", bonus: " · {n} bonus",
     whyPrefix: "why · ", informationalChip: "informational",
@@ -1071,7 +1071,7 @@ export const en = {
       weightInfo: "informational · weight 0",
       confidence: "{c} confidence · {count, plural, one {# run} other {# runs}}",
       infoNote: "Shown to read the profile, no effect on the verdict.",
-      deepdiveNote: "The deep-dive signals ({names}) count from {min} analysed runs: {n} so far.",
+      deepdiveNote: "The deep-dive signals ({names}) show in the run analyses and in your own characters' pillars; they do not count in this score.",
       curveTitle: "From the raw score to the verdict",
       curveSub: "curve of the reference {role}",
       curveAxis: "raw score (weighted axes)",

@@ -12,10 +12,9 @@ On top of the raw stats, `bmpl lookup` (CLI and web) computes a rule-based
 
 - **Survival** — deaths (individual and in wipes), damage taken vs. the
   group's peers, avoidable damage vs. peers, and (for healers) teammate
-  deaths. Once at least `confidence.deepdiveMinRuns` (2 by default) of a
-  character's shown runs have been deep-dive analyzed (see [Deep-dive: defensive cooldowns](deep-dive.md#deep-dive-defensive-cooldowns)), two more sub-signals feed in: defensive
-  cooldown usage and the share of deaths where a defensive was available and
-  unused.
+  deaths. The deep-dive's two sub-signals (defensive cooldown usage and the
+  share of deaths where a defensive was available and unused, see [Deep-dive: defensive cooldowns](deep-dive.md#deep-dive-defensive-cooldowns))
+  count in the self-review's Survival pillar only since config version 10, never in the verdict.
 - **Utility** — interrupts vs. peers, normalized by the spec's kick cooldown
   and capacity, plus dispels. Kicks and dispels are each `n/a` when the spec
   has no such ability (rogues, warriors and death knights have no dispel or
@@ -42,6 +41,14 @@ outside the score; an `evaluation.json` that still names `experience`
 keys loads with a warning and those keys are ignored. Any axis whose role
 weight is 0 is informational: shown, never counted in "what would flip the
 verdict".
+
+**Missing data scores as the average player** (config version 10). A sub-signal the player could have but whose
+data is missing — no ranked run at the target level, no avoidable-damage list for the dungeon, no peer data, no
+Raider.IO item level — is scored at the role's calibration median (`reference`), so unknown data neither helps nor
+hurts. Before, it left the average, which made the player's other signals count for it: never having played at the
+target level then scored better than having played there badly. A sub-signal the kit cannot have (no interrupt, no
+dispel) is still left out, and an axis where nothing was measured stays `n/a`. The Method tab's evidence lists only
+what was measured ([validity spec](superpowers/specs/2026-10-27-evaluation-validity-design.md)).
 
 The **global score** is a percentile. The weighted mean of the axes (the
 role's `axisWeights`) goes through the role's `globalCurve`, fitted on 1,081

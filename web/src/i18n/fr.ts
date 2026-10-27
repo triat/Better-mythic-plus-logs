@@ -689,9 +689,9 @@ export const fr: Mirror<typeof en> = {
     weightsCaption: "poids des axes par rôle (config effective, version {version})",
     informational: "{list} {count, plural, one {a un poids 0 pour tous les rôles : affiché, jamais compté} other {ont un poids 0 pour tous les rôles : affichés, jamais comptés}}. Timed vs depleted est affiché dans la liste des runs et jamais noté.",
     axesIntro: "Chaque axe est noté de 0 à 100. La valeur d'un sous-signal passe par sa courbe — imprimée à côté, linéaire entre les points et bornée en dehors — pour donner un "
-      + "score de 0 à 100 ; l'axe est la moyenne de ces scores pondérée par le rôle du joueur (les chips sous chaque courbe), arrondie. Un sous-signal n/a, ou dont le "
-      + "poids pour le rôle est 0, est exclu. Chaque ligne d'indice sur une ligne d'axe est la part de ce sous-signal dans la distance à 50, en points d'axe.",
-    survivalNote: "Les deux sous-signaux deep-dive apparaissent une fois qu'au moins {count, plural, one {# run affiché a été analysé} other {# runs affichés ont été analysés}}.",
+      + "score de 0 à 100 ; l'axe est la moyenne de ces scores pondérée par le rôle du joueur (les chips sous chaque courbe), arrondie. Un sous-signal que le kit ne peut pas avoir, ou dont le "
+      + "poids pour le rôle est 0, est exclu ; un sous-signal sans donnée compte comme celui du joueur moyen du rôle, sans ligne d'indice. Chaque ligne d'indice sur une ligne d'axe est la part de ce sous-signal dans la distance à 50, en points d'axe.",
+    survivalNote: "Les deux sous-signaux deep-dive apparaissent une fois qu'au moins {count, plural, one {# run affiché a été analysé} other {# runs affichés ont été analysés}}, dans le pilier Survie de tes propres personnages seulement : ils ne comptent jamais dans le verdict.",
     consistencyNote: "Chaque sous-signal demande au moins {count, plural, one {# run} other {# runs}} ; en dessous l'axe est n/a.",
     subSignals: "{count, plural, one {# sous-signal} other {# sous-signaux}}", bonus: " · {n} bonus",
     whyPrefix: "pourquoi · ", informationalChip: "informatif",
@@ -1061,7 +1061,7 @@ export const fr: Mirror<typeof en> = {
       weightInfo: "informatif · poids 0",
       confidence: "confiance {c} · {count, plural, one {# run} other {# runs}}",
       infoNote: "Montré pour lire le profil, sans effet sur le verdict.",
-      deepdiveNote: "Les signaux du deep-dive ({names}) comptent dès {min} runs analysés : {n} pour l'instant.",
+      deepdiveNote: "Les signaux du deep-dive ({names}) apparaissent dans les analyses de runs et les piliers de tes propres personnages ; ils ne comptent pas dans ce score.",
       curveTitle: "Du score brut au verdict",
       curveSub: "courbe des {role} de référence",
       curveAxis: "score brut (axes pondérés)",

@@ -11,7 +11,7 @@ export type CurvePoints = [number, number][];
 export interface Evidence {
   /** English line as the CLI prints it; the web front rebuilds it per locale from `value` / `extra`. */
   label: string;
-  /** Contribution in axis points vs. neutral 50; sums to score − 50. Comparable across axes. */
+  /** Contribution in axis points vs. neutral 50; with the axis' imputed sources, sums to score − 50. Comparable across axes. */
   delta: number;
   source: string; // "<axis>.<subSignalId>"
   /** The raw number behind `label` (the unscaled mean when one exists), unrounded. */
@@ -40,6 +40,9 @@ export interface AxisScore {
   /** Evidence of the axis' pillar-only sub-signals (delta 0): read by `pillarScores` only, never by the axis score,
    * the global score, the drivers or the verdict. */
   pillarOnly?: Evidence[];
+  /** Sources whose data was missing, scored at the role's average player (`EvaluationConfig.reference`); absent when
+   * none, and on payloads saved before 2026-10-27 (docs/superpowers/specs/2026-10-27-evaluation-validity-design.md). */
+  imputed?: string[];
 }
 
 /** A pillar: the weighted mean of its sub-signals' curve scores, `null` when none of them has data. */

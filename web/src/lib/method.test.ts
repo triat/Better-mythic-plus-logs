@@ -106,7 +106,7 @@ describe("methodView", () => {
     ]);
     expect(m.axes[0]!.confidence).toBe("confiance haute · 9 runs");
     expect(m.axes[4]!.note).toBe("Montré pour lire le profil, sans effet sur le verdict.");
-    expect(m.axes[0]!.note).toBe("Les signaux du deep-dive (utilisation des défensifs et morts avec un outil prêt) comptent dès 2 runs analysés : 1 pour l'instant.");
+    expect(m.axes[0]!.note).toBe("Les signaux du deep-dive (utilisation des défensifs et morts avec un outil prêt) apparaissent dans les analyses de runs et les piliers de tes propres personnages ; ils ne comptent pas dans ce score.");
     expect(m.axes[1]!.note).toBeNull();
   });
 

@@ -45,7 +45,7 @@ export interface MethodView {
 }
 
 const DASH = "—";
-/** Deep-dive sub-signals: they count only from `confidence.deepdiveMinRuns` analysed runs. */
+/** Deep-dive sub-signals: shown, never counted in the score (validity spec 2026-10-27, decision 4). */
 const DEEPDIVE_SOURCES = ["survival.defensiveUsage", "survival.avoidableDeaths"];
 
 /**
@@ -137,9 +137,7 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
       let note: string | null = null;
       if (score === null) note = t("verdict.notEnough");
       else if (informational) note = t("cand.method.infoNote");
-      else if (k === "survival" && ev.analyzedRuns < cfg.confidence.deepdiveMinRuns) {
-        note = t("cand.method.deepdiveNote", { names: deepdiveNames, min: cfg.confidence.deepdiveMinRuns, n: ev.analyzedRuns });
-      }
+      else if (k === "survival") note = t("cand.method.deepdiveNote", { names: deepdiveNames });
       return {
         key: k,
         name: axisTitle(t, k),

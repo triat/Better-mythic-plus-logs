@@ -21,6 +21,15 @@ describe("calibration fit", () => {
     expect(quantile([1, 2, 3, 4], 0.5)).toBe(2.5);
   });
 
+  test("fitGlobal: the reference is a median of measured values only, never of imputed ones", () => {
+    // These runs carry no avoidable list: avoidableVsPeers is missing everywhere, so it gets no reference at all, even
+    // though the evaluation scores it at today's reference.
+    const fit = fitGlobal(dps(60, (i) => 20 + i), cfg);
+    expect(fit.reference.dps["survival.avoidableVsPeers"]).toBeUndefined();
+    // No death anywhere: the median curve input is exactly 0, which an imputed neighbour in Σw would skew.
+    expect(fit.reference.dps["survival.individualDeaths"]!.x).toBeCloseTo(0, 3);
+  });
+
   test("isFit: a character is in one half whatever its spec, and the halves are both filled", () => {
     const s = (name: string, spec: string) => ({ study: { name, server: "Ysondre", spec } });
     expect(isFit(s("Abc", "Mage:Fire"))).toBe(isFit(s("Abc", "Mage:Frost")));

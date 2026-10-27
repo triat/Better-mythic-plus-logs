@@ -3,7 +3,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.9",
+    date: "2026-10-27",
     items: [
       "Tu peux maintenant écrire sur Discord à la personne qui fait tourner bmpl, depuis la barre latérale ou le menu du compte.",
     ],

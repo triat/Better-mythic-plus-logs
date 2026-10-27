@@ -5,7 +5,7 @@
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { validateConfig } from "../evaluation/config.ts";
-import { evaluate } from "../evaluation/evaluate.ts";
+import { scoreOnly } from "../evaluation/evaluate.ts";
 import type { EvaluationConfig, Role } from "../evaluation/types.ts";
 import { fitGlobal, isFit, MIN_N, quantile, ROLES, type Sample } from "./fit.ts";
 
@@ -41,8 +41,8 @@ export function fitAndCompare(samples: Sample[], base: EvaluationConfig, now: nu
   let changes = 0;
   for (const role of ROLES) {
     const own = test.filter((s) => s.study.role === role);
-    const cur = own.map((s) => evaluate(s.payload, base));
-    const next = own.map((s) => evaluate(s.payload, cand));
+    const cur = own.map((s) => scoreOnly(s.payload, base));
+    const next = own.map((s) => scoreOnly(s.payload, cand));
     const verdictChanges = cur.filter((e, i) => e.verdict !== next[i]!.verdict).length;
     changes += verdictChanges;
     roles[role] = {

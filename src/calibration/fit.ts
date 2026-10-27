@@ -2,7 +2,7 @@
 // axes → its percentile in the population) and the average player (`reference`, the median curve input `x` and display
 // value `value` of every scored sub-signal). The only parts of the 2026-09 study that shipped, so the only parts the
 // weekly run refits (spec docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md, non-goals).
-import { evaluate, globalScore } from "../evaluation/evaluate.ts";
+import { globalScore } from "../evaluation/evaluate.ts";
 import { scoreAllAxes } from "../evaluation/axes/index.ts";
 import { collectInputs, type EvalPayload } from "../evaluation/inputs.ts";
 import type { CurvePoints, EvaluationConfig, Role } from "../evaluation/types.ts";
@@ -74,9 +74,9 @@ export function curveInputs(payload: EvalPayload, cfg: EvaluationConfig): Record
       sub.weights = { dps: 1, healer: 1, tank: 1 };
     }
   }
-  const ev = evaluate(payload, probe);
+  // The axes alone: no drivers, pillars or reliability, which the bulk fit never reads.
   const out: Record<string, number> = {};
-  for (const axis of ev.axes) {
+  for (const axis of scoreAllAxes(collectInputs(payload, probe), probe)) {
     // Only configured sub-signals share the axis's Σw; an evidence entry that is not one of them would skew every
     // inversion.
     const configured = probe.axes[axis.key].subSignals;
@@ -135,7 +135,7 @@ export function fitGlobal(samples: Sample[], base: EvaluationConfig): GlobalFit 
     const valuesBySource = new Map<string, number[]>();
     for (const s of own) {
       for (const [src, x] of Object.entries(curveInputs(s.payload, base))) (xsBySource.get(src) ?? xsBySource.set(src, []).get(src)!).push(x);
-      for (const e of evaluate(s.payload, base).axes.flatMap((a) => a.evidence)) (valuesBySource.get(e.source) ?? valuesBySource.set(e.source, []).get(e.source)!).push(e.value);
+      for (const e of scoreAllAxes(collectInputs(s.payload, base), base).flatMap((a) => a.evidence)) (valuesBySource.get(e.source) ?? valuesBySource.set(e.source, []).get(e.source)!).push(e.value);
     }
     const ref: Record<string, { x: number; value: number }> = {};
     for (const [src, xs] of xsBySource) {

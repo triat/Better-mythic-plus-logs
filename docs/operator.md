@@ -384,6 +384,18 @@ as `BMPL_OPERATOR`, same restart; each member can still pick their own region
 with the region chip inside the search field (remembered per account through
 `PUT /api/settings`), which applies immediately.
 
+**Measure before tuning** — `bmpl calibrate --study` (0 pts, read-only on
+`calibration.db`; the weekly fit runs it too) writes `study.json` and
+`study.md` next to it: each signal's reliability from one run to the next, the
+share of the score it really carries, whether the parse is ranked per key level,
+and whether shrinkage or per-role percentile curves would make the score steadier
+without predicting worse:
+
+```bash
+ssh <vps> 'cd /opt/bmpl && sudo -u bmpl ./bmpl calibrate --study && cat study.md'
+curl -s -H "Authorization: Bearer $BMPL_OPS_TOKEN" "$BMPL_URL/api/ops/calibration/study" | jq .best
+```
+
 **Check** — `bmpl evaluate saved.json` reflects the intended change before
 you restart the server; a fresh lookup after restart reflects it live.
 

@@ -1,6 +1,7 @@
 # Evaluation validity — design
 
-Status: phases 1 and 2 implemented 2026-10-27; phases 3–4 designed, not started.
+Status: phases 1 and 2 implemented 2026-10-27; phase 3's study and engine support implemented 2026-10-27, its
+decisions wait on the first study of the real samples; phase 4 designed, not started.
 
 ## Goal
 
@@ -114,11 +115,36 @@ Canvas **https://claude.ai/artifact/XWfxzv9XyHfM5YDikZaSev** ("bmpl · Verdict �
   "Level · Stability" line in Compare; the Méthode tab lists each imputed sub-signal as an "average" row with its
   reason, the role's average, its weight and an effect of 0.
 
-## Phases 3–4
+## Phase 3 — measure, then decide (study implemented 2026-10-27)
 
-- **Phase 3** (a read-only script on `calibration.db`, run by the user on the VPS, 0 points): measure effective
-  weights and split-half reliability per sub-signal and role; check whether WCL's `rankPercent` is computed per key
-  level (`bracketData`); then decisions 7 and 8, each as a candidate config judged on the held-out half.
+**The study** (`src/calibration/study.ts`, `bmpl calibrate --study`, and every weekly `--fit` after its fit), 0 WCL
+points: it reads the rolling window of `calibration.db` (the newest season present, no zone query) and writes
+`study.json` and `study.md` next to it, aggregates only, served by `GET /api/ops/calibration/study`.
+
+- **Per role and counted sub-signal**: n, median curve input, the share of the raw score its weights give it
+  (`nominal`) and the share it really carries (`effective` = nominal × the spread of its 0–100 score, normalised);
+  `splitHalf` = Spearman between a character's alternating runs (from 4 runs, at least 30 characters); `oneRun` = one
+  run's reliability, Spearman-Brown inverted from the halves' size; `k` = (1 − r1) / r1, null when one run carries no
+  signal (or the signal is constant).
+- **The parse**: Spearman(amount, parse) inside spec × dungeon and inside spec × dungeon × key level, and
+  Spearman(key level, parse); "per key level" when the second reaches 0.8 and beats the first by 0.05. The code already
+  asks WCL for `byBracket: true` rankings; this checks it on the data.
+- **Candidates**, fitted on the fit half (`isFit`), judged on the held-out half, each with `globalCurve` and
+  `reference` refitted so the percentiles mean the same: `today`, `shrinkage` (decision 7, k per role and source),
+  `percentile` (decision 8, per-role curves `curves[role]` = the fit half's percentile, direction kept), `both`.
+  Measured: the raw score's split-half Spearman (the stability the user asked for), its prediction of the newer half's
+  deaths, avoidable damage and timed share from the older half, its agreement with WCL's ladder, the verdict shares and
+  the verdict changes against today. **A candidate beats today** when its split-half rises by 0.02 or more and no
+  prediction drops by more than 0.02; `best[role]` names the steadiest such candidate, or null.
+
+**The engine** reads both changes from the config, off by default: `shrinkage[role][source] = k` pulls a value
+measured on n runs toward `reference.x` by k / (n + k) (`EvalInputs.counts` holds n; a driver's override is never
+pulled), and a sub-signal's `curves[role]` replaces its shared `curve` for that role. Nothing changes until a reviewed
+pull request puts the study's `candidate` block into `default-config.json` for the roles where it wins; the Help page
+still draws the shared curves.
+
+## Phase 4
+
 - **Phase 4**: decision 9. A rating page for invited raters (profiles anonymised, score hidden), the labelled set
   stored apart from `bmpl.db`, the fit and its report. Success: the fitted model agrees with the raters better than
   today's on the held-out half, and no worse on the later-runs check.

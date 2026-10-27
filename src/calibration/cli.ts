@@ -13,6 +13,7 @@ import { collectHour, WINDOW_MS } from "./collect.ts";
 import { fitAndCompare, writeFit } from "./report.ts";
 import { ensureMarker, memberMarkerAt, resolveMarkerPath } from "./marker.ts";
 import { openSamples } from "./samples.ts";
+import { runStudy, writeStudy } from "./study.ts";
 import { reserveFromEnv } from "./window.ts";
 import { errorFields, log } from "../log.ts";
 
@@ -90,6 +91,12 @@ export async function runFit(): Promise<void> {
       });
     }
     log.info("calibration_fit", { test: r.test, verdictChanges: r.verdictChanges, thresholdMet: r.thresholdMet, reason: r.reason, ...roles });
+    // The study rides on the weekly fit (same samples, 0 points); a failure of it never costs the fit.
+    try {
+      studyAndLog(path, samples.list(zone.id, now - WINDOW_MS), now);
+    } catch (e) {
+      log.error("calibration_failed", { step: "study", ...errorFields(e) });
+    }
   } catch (e) {
     log.error("calibration_failed", { step: "fit", ...errorFields(e) });
     throw e;
@@ -98,7 +105,39 @@ export async function runFit(): Promise<void> {
   }
 }
 
+/** The evaluation study on `list`, written next to calibration.db, one log line per role. */
+function studyAndLog(path: string, list: ReturnType<ReturnType<typeof openSamples>["list"]>, now: number): void {
+  const r = runStudy(list, validateConfig(DEFAULT_CONFIG), now);
+  writeStudy(path, r);
+  const roles: Record<string, unknown> = {};
+  for (const [role, x] of Object.entries(r.roles)) {
+    Object.assign(roles, { [`${role}_split_half`]: x.candidates.today.splitHalf, [`${role}_best`]: r.best[x.role] ?? "today" });
+  }
+  log.info("calibration_study", { samples: r.samples, parse: r.parse.reading, ...roles });
+}
+
+/**
+ * `bmpl calibrate --study`, 0 WCL points: the newest season's samples of the rolling window, read from calibration.db
+ * only (no zone query), then study.json and study.md next to it (validity spec 2026-10-27, phase 3).
+ */
+export async function runStudyNow(): Promise<void> {
+  const path = await resolveCalibrationDbPath();
+  const samples = openSamples(path);
+  try {
+    const season = samples.latestSeason();
+    if (season === null) throw new Error("no calibration sample yet");
+    const now = Date.now();
+    studyAndLog(path, samples.list(season, now - WINDOW_MS), now);
+  } finally {
+    samples.close();
+  }
+}
+
 export async function cmdCalibrate(rest: string[]): Promise<void> {
+  if (rest.includes("--study")) {
+    await runStudyNow();
+    return;
+  }
   if (rest.includes("--fit")) {
     await runFit();
     return;
@@ -110,5 +149,5 @@ export async function cmdCalibrate(rest: string[]): Promise<void> {
     await runHourly(minutes);
     return;
   }
-  throw new Error("Usage: bmpl calibrate --hourly [--minutes 55] | --fit");
+  throw new Error("Usage: bmpl calibrate --hourly [--minutes 55] | --fit | --study");
 }

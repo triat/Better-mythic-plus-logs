@@ -115,6 +115,8 @@ validity work has its spec (`docs/superpowers/specs/2026-10-27-evaluation-validi
 this player help time a key at L"); phase 1 is implemented (config version 10: missing data scores as the average
 player, the deep-dive out of the verdict, the property suite `test/evaluation/properties.test.ts`); phase 2 is
 implemented (canvas "bmpl · Verdict à ton niveau" C: `src/evaluation/reliability.ts`, the Synthèse Fiabilité block, the
-header chip, the marks in Récents / Live / Compare, the Méthode tab's "average" rows); phases 3–4 (shrinkage and
-percentile sub-signals from `calibration.db`, labelled profiles) are not started. Next: self-review phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
+header chip, the marks in Récents / Live / Compare, the Méthode tab's "average" rows); phase 3's study is implemented
+(`src/calibration/study.ts`, `bmpl calibrate --study`, `GET /api/ops/calibration/study`; the engine reads optional
+`shrinkage` and per-role `curves`, off until the study's results are reviewed); phase 4 (labelled profiles) is not
+started. Next: self-review phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

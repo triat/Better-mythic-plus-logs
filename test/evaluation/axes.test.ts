@@ -22,6 +22,7 @@ const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
   preparation: { ilvl: null },
+  counts: {},
   ...over,
 });
 

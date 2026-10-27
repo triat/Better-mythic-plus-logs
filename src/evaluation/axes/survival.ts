@@ -8,11 +8,11 @@ import type { AxisScore, EvaluationConfig } from "../types.ts";
 export function scoreSurvival(i: EvalInputs, cfg: EvaluationConfig, override?: Override): AxisScore {
   const s = i.survival;
   return scoreAxis("survival", [
-    { id: "individualDeaths", value: s.individualDeathsScaled, raw: s.individualDeaths ?? undefined, label: (r) => `${r.toFixed(1)} individual deaths/run` },
-    { id: "wipeDeaths", value: s.wipeDeaths, label: (r) => `${r.toFixed(1)} deaths in wipes/run` },
-    { id: "avoidableVsPeers", value: s.avoidableVsPeers, label: (r) => `avoidable ${signed(r)}% vs peers` },
-    { id: "dtpsVsPeers", value: s.dtpsVsPeers, label: (r) => `DTPS ${signed(r)}% vs peers` },
-    { id: "groupDeaths", value: s.groupDeathsScaled, raw: s.groupDeaths ?? undefined, label: (r) => `${r.toFixed(1)} teammate deaths/run` },
+    { id: "individualDeaths", n: i.counts["survival.individualDeaths"], value: s.individualDeathsScaled, raw: s.individualDeaths ?? undefined, label: (r) => `${r.toFixed(1)} individual deaths/run` },
+    { id: "wipeDeaths", n: i.counts["survival.wipeDeaths"], value: s.wipeDeaths, label: (r) => `${r.toFixed(1)} deaths in wipes/run` },
+    { id: "avoidableVsPeers", n: i.counts["survival.avoidableVsPeers"], value: s.avoidableVsPeers, label: (r) => `avoidable ${signed(r)}% vs peers` },
+    { id: "dtpsVsPeers", n: i.counts["survival.dtpsVsPeers"], value: s.dtpsVsPeers, label: (r) => `DTPS ${signed(r)}% vs peers` },
+    { id: "groupDeaths", n: i.counts["survival.groupDeaths"], value: s.groupDeathsScaled, raw: s.groupDeaths ?? undefined, label: (r) => `${r.toFixed(1)} teammate deaths/run` },
     {
       id: "defensiveUsage", value: s.defensiveUsage, extra: { runs: i.analyzedRuns },
       label: (r) => `majors used ${Math.round(r * 100)}% of possible (${i.analyzedRuns} run${i.analyzedRuns === 1 ? "" : "s"})`,

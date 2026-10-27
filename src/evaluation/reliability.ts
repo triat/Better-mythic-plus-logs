@@ -27,16 +27,25 @@ export function levelProof(payload: EvalPayload): LevelProof {
 
 const runKey = (r: Pick<EvalRun, "reportCode" | "fightID">): string => `${r.reportCode}:${r.fightID}`;
 
-/** The payload without one run: out of the dungeon list (its median parse recomputed) and out of the previous level. */
-export function payloadWithout(payload: EvalPayload, run: Pick<EvalRun, "reportCode" | "fightID">): EvalPayload {
-  const key = runKey(run);
-  const runs = payload.perDungeon.runs.filter((r) => runKey(r) !== key);
+/**
+ * The payload with only `keep` among its dungeon runs (the median parse recomputed); the previous level's best stays
+ * only when it is kept too. Also the calibration study's halves (src/calibration/study.ts).
+ */
+export function payloadWithRuns(payload: EvalPayload, keep: readonly Pick<EvalRun, "reportCode" | "fightID">[]): EvalPayload {
+  const keys = new Set(keep.map(runKey));
+  const runs = payload.perDungeon.runs.filter((r) => keys.has(runKey(r)));
   const ranked = runs.filter((r) => r.parsePercent > 0).map((r) => r.parsePercent);
   return {
     ...payload,
     perDungeon: { ...payload.perDungeon, runs, medianParse: median(ranked) ?? 0 },
-    prevLevelBest: payload.prevLevelBest && runKey(payload.prevLevelBest.best) === key ? null : payload.prevLevelBest,
+    prevLevelBest: payload.prevLevelBest && keys.has(runKey(payload.prevLevelBest.best)) ? payload.prevLevelBest : null,
   };
+}
+
+/** The payload without one run: out of the dungeon list (its median parse recomputed) and out of the previous level. */
+export function payloadWithout(payload: EvalPayload, run: Pick<EvalRun, "reportCode" | "fightID">): EvalPayload {
+  const key = runKey(run);
+  return payloadWithRuns(payload, evalRuns(payload).filter((r) => runKey(r) !== key));
 }
 
 /**

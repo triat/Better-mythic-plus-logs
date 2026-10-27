@@ -118,6 +118,8 @@ export interface Evaluation {
 
 export interface SubSignalConfig {
   curve: CurvePoints;
+  /** Per-role curves that replace `curve` for that role (validity spec 2026-10-27, decision 8); absent by default. */
+  curves?: Partial<Record<Role, CurvePoints>>;
   weights: Record<Role, number>;
   /** Scored for its pillar only: kept out of the axis score, so out of the global score and the verdict. */
   pillarOnly?: boolean;
@@ -144,4 +146,9 @@ export interface EvaluationConfig {
   reference: Record<Role, Record<string, { x: number; value: number }>>;
   verdict: { invite: number; maybe: number; minRuns: number };
   confidence: { high: number; medium: number; consistencyMinRuns: number; deepdiveMinRuns: number };
+  /**
+   * Per role and source, k in n / (n + k): a sub-signal measured on n runs is pulled toward the role's average player
+   * (`reference.x`) by k / (n + k) (validity spec 2026-10-27, decision 7). Absent by default: no pull.
+   */
+  shrinkage?: Partial<Record<Role, Record<string, number>>>;
 }

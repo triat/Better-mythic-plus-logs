@@ -71,6 +71,8 @@ export interface EvalInputs {
   throughput: { medianParse: number | null; parseAtTarget: number | null };
   consistency: { sample: number; parseSpread: number | null; deathsSpread: number | null; damageSpread: number | null };
   preparation: { ilvl: number | null };
+  /** Runs each run-based sub-signal was measured on, by source, for the config's shrinkage. */
+  counts: Record<string, number>;
 }
 
 const pct = (mine: number, peerMedian: number): number | null => (peerMedian > 0 ? ((mine - peerMedian) / peerMedian) * 100 : null);
@@ -177,6 +179,22 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
   const damageDeltas = nums(sig.map(damageDeltaPct));
   const damageSpread = damageDeltas.length >= minRuns ? stddev(damageDeltas) : null;
 
+  // --- runs per sub-signal (shrinkage, validity spec 2026-10-27 decision 7) ---
+  const avoidablePeered = sig.filter((s) => s.avoidableDamage?.peer && s.avoidableDamage.peer.median > 0).length;
+  const dtpsPeered = sig.filter((s) => s.damageTaken.peer && s.damageTaken.peer.median > 0).length;
+  const counts: Record<string, number> = {
+    "survival.individualDeaths": sig.length,
+    "survival.wipeDeaths": sig.length,
+    "survival.groupDeaths": sig.length,
+    "survival.avoidableVsPeers": avoidablePeered,
+    "survival.dtpsVsPeers": dtpsPeered,
+    "utility.kicksVsPeers": sig.filter((s) => s.interrupts.usage !== null && s.interrupts.peer).length,
+    "utility.kicksAbsolute": sig.filter((s) => s.interrupts.usage !== null).length,
+    "utility.dispels": sig.length,
+    "throughput.medianParse": payload.perDungeon.runs.filter(ranked).length,
+    "throughput.parseAtTarget": runs.filter((r) => ranked(r) && r.keyLevel >= payload.targetLevel - 1).length,
+  };
+
   // --- preparation ---
   // Potions and healthstones are judged at each death (the deep-dive), never as a count per run.
   const ilvl = payload.rio?.itemLevel ?? null;
@@ -195,5 +213,6 @@ export function collectInputs(payload: EvalPayload, cfg: EvaluationConfig): Eval
     throughput: { medianParse, parseAtTarget },
     consistency: { sample, parseSpread, deathsSpread, damageSpread },
     preparation: { ilvl },
+    counts,
   };
 }

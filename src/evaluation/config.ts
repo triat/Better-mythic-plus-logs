@@ -52,7 +52,9 @@ const checkWeights = (v: unknown, path: string): Record<Role, number> => {
 /** Structural + semantic validation. Throws with the offending path in the message. */
 export function validateConfig(obj: unknown): EvaluationConfig {
   if (!isObj(obj)) return fail("config", "must be an object");
-  expectKeys(obj, ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "globalCurve", "reference", "verdict", "confidence"], "config");
+  expectKeys(obj, "shrinkage" in obj
+    ? ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "globalCurve", "reference", "verdict", "confidence", "shrinkage"]
+    : ["version", "levelScale", "expectedIlvl", "axes", "axisWeights", "globalCurve", "reference", "verdict", "confidence"], "config");
   if (typeof obj.version !== "string") fail("version", "must be a string");
   const levelScale = checkCurve(obj.levelScale, "levelScale", 0, 10);
 
@@ -77,10 +79,20 @@ export function validateConfig(obj: unknown): EvaluationConfig {
       const p = `axes.${k}.subSignals.${id}`;
       if (!isObj(s)) fail(p, "must be an object");
       const so = s as Record<string, unknown>;
-      expectKeys(so, "pillarOnly" in so ? ["curve", "weights", "pillarOnly"] : ["curve", "weights"], p);
+      expectKeys(so, ["curve", "weights", ...("pillarOnly" in so ? ["pillarOnly"] : []), ...("curves" in so ? ["curves"] : [])], p);
       if ("pillarOnly" in so && typeof so.pillarOnly !== "boolean") fail(`${p}.pillarOnly`, "must be a boolean");
+      let curves: Partial<Record<Role, CurvePoints>> | undefined;
+      if ("curves" in so) {
+        if (!isObj(so.curves)) fail(`${p}.curves`, "must be an object");
+        curves = {};
+        for (const [r, c] of Object.entries(so.curves as Record<string, unknown>)) {
+          if (!(ROLES as readonly string[]).includes(r)) fail(`${p}.curves.${r}`, "unknown role");
+          curves[r as Role] = checkCurve(c, `${p}.curves.${r}`, 0, 100);
+        }
+      }
       outSubs[id] = {
         curve: checkCurve(so.curve, `${p}.curve`, 0, 100),
+        ...(curves ? { curves } : {}),
         weights: checkWeights(so.weights, `${p}.weights`),
         ...(so.pillarOnly === true ? { pillarOnly: true } : {}),
       };
@@ -145,7 +157,23 @@ export function validateConfig(obj: unknown): EvaluationConfig {
     deepdiveMinRuns: checkNumber(cf.deepdiveMinRuns, "confidence.deepdiveMinRuns"),
   };
 
-  return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, globalCurve, reference, verdict, confidence };
+  let shrinkage: EvaluationConfig["shrinkage"];
+  if ("shrinkage" in obj) {
+    if (!isObj(obj.shrinkage)) fail("shrinkage", "must be an object");
+    shrinkage = {};
+    for (const [r, byRole] of Object.entries(obj.shrinkage as Record<string, unknown>)) {
+      if (!(ROLES as readonly string[]).includes(r)) fail(`shrinkage.${r}`, "unknown role");
+      if (!isObj(byRole)) fail(`shrinkage.${r}`, "must be an object");
+      const out: Record<string, number> = {};
+      for (const [src, k] of Object.entries(byRole as Record<string, unknown>)) {
+        if (!known.has(src)) fail(`shrinkage.${r}.${src}`, "unknown source");
+        out[src] = checkNumber(k, `shrinkage.${r}.${src}`);
+      }
+      shrinkage[r as Role] = out;
+    }
+  }
+
+  return { version: obj.version as string, levelScale, expectedIlvl, axes, axisWeights, globalCurve, reference, verdict, confidence, ...(shrinkage ? { shrinkage } : {}) };
 }
 
 const canonical = (v: unknown): string => {

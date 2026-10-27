@@ -1,7 +1,7 @@
 import { scoreAllAxes } from "./axes/index.ts";
 import { configVersion } from "./config.ts";
 import { scoreDrivers } from "./drivers.ts";
-import { finalGlobal } from "./global.ts";
+import { finalGlobal, globalScore } from "./global.ts";
 import { collectInputs, type EvalPayload } from "./inputs.ts";
 import { pillarScores } from "./pillars.ts";
 import { levelProof, scoreRange } from "./reliability.ts";
@@ -14,6 +14,14 @@ export function verdictFor(global: number | null, runsUsed: number, cfg: Evaluat
   if (global >= cfg.verdict.invite) return "invite";
   if (global >= cfg.verdict.maybe) return "maybe";
   return "pass";
+}
+
+/** The score and the verdict alone, without drivers, pillars or the reliability (the calibration's bulk path). */
+export function scoreOnly(payload: EvalPayload, cfg: EvaluationConfig): { role: Evaluation["role"]; raw: number | null; global: number | null; verdict: Verdict; runsUsed: number } {
+  const inputs = collectInputs(payload, cfg);
+  const axes = scoreAllAxes(inputs, cfg);
+  const global = finalGlobal(axes, inputs.role, cfg);
+  return { role: inputs.role, raw: globalScore(axes, inputs.role, cfg), global, verdict: verdictFor(global, inputs.runsUsed, cfg), runsUsed: inputs.runsUsed };
 }
 
 /** Pure: same payload + same config → same evaluation. */

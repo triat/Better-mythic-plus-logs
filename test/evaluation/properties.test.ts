@@ -2,6 +2,7 @@
 // docs/superpowers/specs/2026-10-27-evaluation-validity-design.md, decision 2). Synthetic profiles, 0 WCL points.
 import { describe, expect, test } from "bun:test";
 import { scoreAllAxes } from "../../src/evaluation/axes/index.ts";
+import { shrink } from "../../src/evaluation/axis.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import { curve } from "../../src/evaluation/curve.ts";
 import { evaluate, globalScore } from "../../src/evaluation/evaluate.ts";
@@ -23,6 +24,9 @@ const measured = (role: Role): EvalInputs => ({
   throughput: { medianParse: 58, parseAtTarget: 55 },
   consistency: { sample: 8, parseSpread: 20, deathsSpread: 0.8, damageSpread: 60 },
   preparation: { ilvl: 325 },
+  counts: Object.fromEntries(["survival.individualDeaths", "survival.wipeDeaths", "survival.avoidableVsPeers", "survival.dtpsVsPeers",
+    "survival.groupDeaths", "utility.kicksVsPeers", "utility.kicksAbsolute", "utility.dispels", "throughput.medianParse",
+    "throughput.parseAtTarget"].map((s) => [s, 8])),
 });
 
 const raw = (i: EvalInputs): number => globalScore(scoreAllAxes(i, cfg), i.role, cfg)!;
@@ -142,6 +146,41 @@ describe("evaluation properties", () => {
       expect([again.global, again.verdict]).toEqual([once.global, once.verdict]);
       expect(again.axes.map((a) => a.score)).toEqual(once.axes.map((a) => a.score));
     }
+  });
+
+  test("shrinkage pulls toward the average player, never past it, less with more runs; off without k", () => {
+    for (const [x, ref] of [[3, 0.6], [-20, 5], [80, 61]] as const) {
+      const few = shrink(x, 3, 4, ref);
+      const many = shrink(x, 9, 4, ref);
+      expect(Math.abs(few - ref)).toBeLessThan(Math.abs(x - ref));
+      expect(Math.sign(few - ref)).toBe(Math.sign(x - ref));
+      expect(Math.abs(many - ref)).toBeGreaterThan(Math.abs(few - ref));
+      expect(shrink(x, 3, undefined, ref)).toBe(x);
+      expect(shrink(x, 3, 0, ref)).toBe(x);
+    }
+    const base = measured("dps");
+    base.survival.individualDeathsScaled = 3;
+    base.counts["survival.individualDeaths"] = 3;
+    const shrunk = validateConfig({ ...cfg, shrinkage: { dps: { "survival.individualDeaths": 4 } } });
+    const ax = (c: typeof cfg) => scoreAllAxes(base, c).find((a) => a.key === "survival")!.score!;
+    expect(ax(shrunk)).toBeGreaterThan(ax(cfg));
+  });
+
+  test("a per-role curve replaces the shared one for that role only", () => {
+    const sub = cfg.axes.throughput.subSignals.medianParse!;
+    const flat: CurvePoints = [[0, 50], [100, 50]];
+    const perRole = validateConfig({ ...cfg, axes: { ...cfg.axes, throughput: { subSignals: { ...cfg.axes.throughput.subSignals, medianParse: { ...sub, curves: { healer: flat } } } } } });
+    const evidence = (role: Role) => scoreAllAxes(measured(role), perRole).find((a) => a.key === "throughput")!.evidence.find((e) => e.source === "throughput.medianParse")!;
+    expect(evidence("healer").score).toBe(50);
+    expect(evidence("dps").score).toBe(curve(58, sub.curve));
+  });
+
+  test("a config's shrinkage and per-role curves are validated: known roles and sources only", () => {
+    expect(() => validateConfig({ ...cfg, shrinkage: { mage: {} } })).toThrow(/shrinkage\.mage/);
+    expect(() => validateConfig({ ...cfg, shrinkage: { dps: { "survival.nope": 2 } } })).toThrow(/unknown source/);
+    expect(() => validateConfig({ ...cfg, shrinkage: { dps: { "survival.wipeDeaths": -1 } } })).toThrow(/wipeDeaths/);
+    const sub = cfg.axes.throughput.subSignals.medianParse!;
+    expect(() => validateConfig({ ...cfg, axes: { ...cfg.axes, throughput: { subSignals: { ...cfg.axes.throughput.subSignals, medianParse: { ...sub, curves: { mage: sub.curve } } } } } })).toThrow(/unknown role/);
   });
 
   test("the measured profile's collectInputs agrees with the slots it is varied through", () => {

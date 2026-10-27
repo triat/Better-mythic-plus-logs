@@ -1,5 +1,5 @@
 import { curve } from "./curve.ts";
-import type { AxisKey, AxisScore, Confidence, EvaluationConfig, Evidence, EvidenceExtra, Role } from "./types.ts";
+import type { AxisKey, AxisScore, Confidence, CurvePoints, EvaluationConfig, Evidence, EvidenceExtra, Role, SubSignalConfig } from "./types.ts";
 
 export interface SubSignalInput {
   id: string;
@@ -12,6 +12,20 @@ export interface SubSignalInput {
   extra?: EvidenceExtra;
   /** False when the kit cannot have this sub-signal at all (no interrupt, no dispel): left out, never imputed. */
   applies?: boolean;
+  /** Runs the value was measured on, for the config's shrinkage (`EvaluationConfig.shrinkage`); absent: no pull. */
+  n?: number;
+}
+
+/** The sub-signal's curve for a role: its per-role curve when the config has one (decision 8), else the shared one. */
+export const curveFor = (sc: SubSignalConfig, role: Role): CurvePoints => sc.curves?.[role] ?? sc.curve;
+
+/**
+ * A curve input pulled toward the role's average player by k / (n + k) (validity spec 2026-10-27, decision 7): with n
+ * runs measured, the value keeps n / (n + k) of its distance to the reference. k = 0, no reference or no n: unchanged.
+ */
+export function shrink(x: number, n: number | undefined, k: number | undefined, ref: number | undefined): number {
+  if (n === undefined || k === undefined || ref === undefined || k <= 0 || n <= 0) return x;
+  return (n * x + k * ref) / (n + k);
 }
 
 /** Curve inputs to use instead of the player's, by source ("survival.individualDeaths"): the score drivers'
@@ -47,12 +61,13 @@ export function scoreAxis(key: AxisKey, subs: SubSignalInput[], role: Role, cfg:
       const ref = cfg.reference[role]?.[source];
       if (sc.pillarOnly || !ref) continue;
       imputed.push(source);
-      imputedNum += w * curve(override?.[source] ?? ref.x, sc.curve);
+      imputedNum += w * curve(override?.[source] ?? ref.x, curveFor(sc, role));
       den += w;
       continue;
     }
-    const x = override?.[source] ?? (sub.x ? sub.x(sub.value) : sub.value);
-    const s = curve(x, sc.curve);
+    const measured = sub.x ? sub.x(sub.value) : sub.value;
+    const x = override?.[source] ?? shrink(measured, sub.n, cfg.shrinkage?.[role]?.[source], cfg.reference[role]?.[source]?.x);
+    const s = curve(x, curveFor(sc, role));
     const value = sub.raw ?? sub.value;
     // Scored for its pillar only (src/evaluation/pillars.ts): never in Σw, so never in the axis score.
     if (sc.pillarOnly) {

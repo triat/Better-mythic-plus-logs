@@ -75,6 +75,25 @@ export interface NextVerdict {
   reachable: boolean;
 }
 
+/** Whether the player has played the vetted key's level (validity spec 2026-10-27, decision 5). */
+export interface LevelProof {
+  /** `targetLevel − LEVEL_MARGIN` (src/evaluation/reliability.ts): the lowest key that proves the level. */
+  floor: number;
+  /** The highest key among the shown runs; null without any. */
+  best: number | null;
+  /** Shown runs (one per dungeon) at the target level or above. */
+  atTarget: number;
+  proven: boolean;
+}
+
+/** The global score with each shown run left out in turn (validity spec 2026-10-27, decision 6). */
+export interface ScoreRange {
+  low: number;
+  high: number;
+  /** One entry per shown run, in the evaluated runs' order. */
+  without: { reportCode: string; fightID: number; score: number }[];
+}
+
 export interface Evaluation {
   role: Role;
   targetLevel: number;
@@ -91,6 +110,10 @@ export interface Evaluation {
   nextVerdict?: NextVerdict | null;
   /** The five pillars, regrouped from `axes` (no effect on `global` or `verdict`); absent on payloads saved before. */
   pillars?: PillarScore[];
+  /** Whether the target level is proven; absent on payloads evaluated before 2026-10-27. */
+  level?: LevelProof;
+  /** The score's range over leave-one-run-out; null under `verdict.minRuns + 1` runs; absent before 2026-10-27. */
+  range?: ScoreRange | null;
 }
 
 export interface SubSignalConfig {

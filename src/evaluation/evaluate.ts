@@ -4,6 +4,7 @@ import { scoreDrivers } from "./drivers.ts";
 import { finalGlobal } from "./global.ts";
 import { collectInputs, type EvalPayload } from "./inputs.ts";
 import { pillarScores } from "./pillars.ts";
+import { levelProof, scoreRange } from "./reliability.ts";
 import type { Evaluation, EvaluationConfig, Verdict } from "./types.ts";
 
 export { globalScore, finalGlobal } from "./global.ts";
@@ -35,6 +36,8 @@ export function evaluate(payload: EvalPayload, cfg: EvaluationConfig): Evaluatio
     drivers,
     nextVerdict,
     pillars: pillarScores(axes),
+    level: levelProof(payload),
+    range: verdict === "insufficient" ? null : scoreRange(payload, cfg, inputs.runsUsed, global),
     runsUsed: inputs.runsUsed,
     analyzedRuns: inputs.analyzedRuns,
     configVersion: configVersion(cfg),

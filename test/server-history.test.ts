@@ -116,14 +116,22 @@ const evaluated = (verdict: unknown, global: unknown) => ({ evaluation: { verdic
 
 describe("History — verdict and score", () => {
   test("summaryOf reads evaluation.verdict / .global defensively", () => {
-    expect(summaryOf(evaluated("invite", 87))).toEqual({ verdict: "invite", score: 87 });
-    expect(summaryOf(evaluated("maybe", 54.6))).toEqual({ verdict: "maybe", score: 54.6 });
-    expect(summaryOf(evaluated("insufficient", null))).toEqual({ verdict: null, score: null });
-    expect(summaryOf(evaluated("nope", "12"))).toEqual({ verdict: null, score: null });
-    expect(summaryOf({ evaluation: null })).toEqual({ verdict: null, score: null });
-    expect(summaryOf({ any: "payload" })).toEqual({ verdict: null, score: null });
-    expect(summaryOf(null)).toEqual({ verdict: null, score: null });
-    expect(summaryOf("x")).toEqual({ verdict: null, score: null });
+    const none = { spread: null, unproven: null };
+    expect(summaryOf(evaluated("invite", 87))).toEqual({ verdict: "invite", score: 87, ...none });
+    expect(summaryOf(evaluated("maybe", 54.6))).toEqual({ verdict: "maybe", score: 54.6, ...none });
+    expect(summaryOf(evaluated("insufficient", null))).toEqual({ verdict: null, score: null, ...none });
+    expect(summaryOf(evaluated("nope", "12"))).toEqual({ verdict: null, score: null, ...none });
+    expect(summaryOf({ evaluation: null })).toEqual({ verdict: null, score: null, ...none });
+    expect(summaryOf({ any: "payload" })).toEqual({ verdict: null, score: null, ...none });
+    expect(summaryOf(null)).toEqual({ verdict: null, score: null, ...none });
+    expect(summaryOf("x")).toEqual({ verdict: null, score: null, ...none });
+  });
+
+  test("summaryOf: the spread is the range's widest side around the score, unproven the level proof's opposite", () => {
+    const ev = (range: unknown, level: unknown) => ({ evaluation: { verdict: "maybe", global: 66, axes: [], range, level } });
+    expect(summaryOf(ev({ low: 58, high: 74, without: [] }, { proven: false }))).toMatchObject({ spread: 8, unproven: true });
+    expect(summaryOf(ev({ low: 63, high: 67, without: [] }, { proven: true }))).toMatchObject({ spread: 3, unproven: false });
+    expect(summaryOf(ev(null, "x"))).toMatchObject({ spread: null, unproven: null });
   });
 
   test("record fills verdict/score from the result; list carries them; updateResult refreshes them", () => {
@@ -259,9 +267,10 @@ describe("GET /api/history — verdict and score", () => {
   });
 
   // An entry saved under an older config: the stored evaluation says INVITE 99, today's rules say otherwise.
-  const savedStale = async (): Promise<{ payload: LookupPayload; fresh: ReturnType<typeof summaryOf> }> => {
+  const savedStale = async (): Promise<{ payload: LookupPayload; fresh: Pick<ReturnType<typeof summaryOf>, "verdict" | "score"> }> => {
     const payload = await savedWithoutAnalyses();
-    const fresh = summaryOf(payload);
+    const { verdict, score } = summaryOf(payload);
+    const fresh = { verdict, score };
     return { payload: { ...payload, evaluation: { ...payload.evaluation, verdict: "invite", global: 99 } } as LookupPayload, fresh };
   };
   const listed = async (label: string) => {
@@ -278,12 +287,12 @@ describe("GET /api/history — verdict and score", () => {
     expect([before.item.verdict, before.item.score]).toEqual(["invite", 99]);
     const res = await fetch(`http://localhost:${server.port}/api/history/${encodeURIComponent(e.key)}`);
     const body = await res.json() as { result: LookupPayload };
-    expect(summaryOf(body.result)).toEqual(fresh);
+    expect(summaryOf(body.result)).toMatchObject(fresh);
     const after = await listed("Stale-Read");
     expect({ verdict: after.item.verdict, score: after.item.score }).toEqual(fresh);
     expect(after.item.fetchedAt).toBe(before.item.fetchedAt);
     expect(after.order).toEqual(before.order); // a read never reorders
-    expect(summaryOf(getLocalHistory().get(e.key)!.result)).toEqual({ verdict: "invite", score: 99 }); // payload untouched
+    expect(summaryOf(getLocalHistory().get(e.key)!.result)).toMatchObject({ verdict: "invite", score: 99 }); // payload untouched
   });
 
   test("a lookup cache hit brings the row's verdict and score in step too (0 pts)", async () => {
@@ -296,9 +305,9 @@ describe("GET /api/history — verdict and score", () => {
     });
     const body = await res.json() as { fromCache: boolean; result: LookupPayload };
     expect(body.fromCache).toBe(true);
-    expect(summaryOf(body.result)).toEqual(fresh);
+    expect(summaryOf(body.result)).toMatchObject(fresh);
     const after = await listed("Stale-Hit");
     expect({ verdict: after.item.verdict, score: after.item.score }).toEqual(fresh);
-    expect(summaryOf(getLocalHistory().get(e.key)!.result)).toEqual({ verdict: "invite", score: 99 });
+    expect(summaryOf(getLocalHistory().get(e.key)!.result)).toMatchObject({ verdict: "invite", score: 99 });
   });
 });

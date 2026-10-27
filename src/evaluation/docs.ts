@@ -50,7 +50,7 @@ export interface LiveAddonDoc {
 }
 export interface EvaluationDocs {
   axes: Record<AxisKey, AxisDoc>;
-  verdict: { summary: string; global: string; drivers: string; thresholds: string; confidence: string; insufficient: string; role: string };
+  verdict: { summary: string; global: string; drivers: string; reliability: string; thresholds: string; confidence: string; insufficient: string; role: string };
   levelScale: string;
   expectedIlvl: string;
   peers: string;
@@ -78,6 +78,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
     role: "The role (DPS, healer, tank) is the one the player had in most of the shown runs; with no run data it follows the metric (HPS → healer). Weights differ by role.",
     global: "First the weighted mean: Σ(axis weight × axis score) / Σ(axis weight) over the axes that could be scored, with the weights of the player's role. An axis that is n/a is left out of both sums, so it neither helps nor hurts. Then that mean is placed among about a thousand EU players who log +15 to +20 keys in the same role, and the global score is that percentile, rounded: 50 is the typical player of that population, 90 is better than nine in ten of them. The placement never changes who ranks above whom; it only spreads the scale, which otherwise squeezed almost everyone between 60 and 90.",
     drivers: "What makes this score: for each signal, how many points of the global score the player gains or loses against the average player of the role — the median of about a thousand EU players logging +15 to +20 keys. −19 on deaths means that dying as often as the average player, everything else unchanged, would score 19 more. The median rather than the mean because deaths and avoidable damage are lopsided: a few players at three deaths a run pull a mean up, and \"average\" would then mean worse than most. The effects do not add up exactly to the score, because the global is a percentile, not a sum. The closing line lists the largest costs, up to three, that together would reach the next verdict if brought to the average player's level. Deep-dive signals have no average yet and are left out.",
+    reliability: "Reliability says how far the verdict holds for the key you are vetting for; it never changes the score. Level: proven when one of the shown runs is at most two levels below your key; otherwise the score describes the player at their own level, not at yours. Stability: the score recomputed with each shown run left out in turn, from four runs on; when that range crosses a verdict threshold, a single run decides the verdict. The header shows \"low reliability\" in either case.",
     thresholds: "INVITE when the global score reaches the invite threshold, MAYBE when it reaches the maybe threshold, PASS below. The thresholds are printed below from this instance's configuration.",
     confidence: "Confidence is only about how many enriched runs the evaluation saw: high, medium or low by the two run counts printed below. It does not change the score.",
     insufficient: "With fewer enriched runs than the minimum printed below the verdict is INSUFFICIENT DATA whatever the score would have been: there is not enough signal to say anything.",

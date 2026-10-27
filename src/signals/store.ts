@@ -128,6 +128,8 @@ CREATE TABLE IF NOT EXISTS local_history (
   seq          INTEGER NOT NULL,
   verdict      TEXT,
   score        INTEGER,
+  spread       INTEGER,
+  unproven     INTEGER,
   PRIMARY KEY (user_id, key)
 );
 CREATE TABLE IF NOT EXISTS local_history_auto (

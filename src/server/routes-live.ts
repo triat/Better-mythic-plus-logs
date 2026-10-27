@@ -13,6 +13,9 @@ export interface LiveVerdict {
   character: string;
   verdict: Evaluation["verdict"];
   score: number | null;
+  /** The history row's spread and unproven level (validity spec 2026-10-27, decisions 5–6); null when unknown. */
+  spread: number | null;
+  unproven: boolean | null;
   targetLevel: number;
   fetchedAt: number;
   /** The spec the cached lookup was for, else the payload's character spec. */
@@ -65,6 +68,8 @@ export function liveRoutes(): Route[] {
           character: p.character,
           verdict: entry.verdict ?? "insufficient",
           score: entry.score,
+          spread: entry.spread,
+          unproven: entry.unproven,
           targetLevel: evaluation.targetLevel,
           fetchedAt: entry.fetchedAt,
           spec: entry.spec ?? (typeof payloadSpec === "string" ? payloadSpec : null),

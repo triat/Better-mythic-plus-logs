@@ -16,11 +16,28 @@ import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 export interface PathStep { label: string; value: string; sub: string }
 /** An axis' contribution to the raw score: `pct` = w × score / Σw, so the parts sum to the raw score. */
 export interface WaterfallPart { key: AxisKey; label: string; pct: number }
-export interface SignalRow { name: string; hint: string | null; value: string; ref: string; weight: string; effect: string; tone: "better" | "worse" | "neutral" }
+export interface SignalRow {
+  name: string; hint: string | null; value: string; ref: string; weight: string; effect: string; tone: "better" | "worse" | "neutral";
+  /** No data, scored as the role's average player (canvas "bmpl · Verdict à ton niveau", E option 2): the reason. */
+  imputed?: string;
+}
 export interface AxisCard {
   key: AxisKey; name: string; weightLabel: string; confidence: string; score: string; band: Band; informational: boolean;
   signals: SignalRow[]; note: string | null;
+  /** Under the table when a row is imputed: what "average" means there. */
+  imputedNote: string | null;
 }
+
+/** Why a sub-signal had no data, per source; anything else reads "no data". */
+type ImputedWhy = "parseAtTarget" | "medianParse" | "avoidableVsPeers" | "dtpsVsPeers" | "kicksVsPeers" | "kicksAbsolute" | "other";
+const IMPUTED_WHY: Record<string, ImputedWhy> = {
+  "throughput.parseAtTarget": "parseAtTarget",
+  "throughput.medianParse": "medianParse",
+  "survival.avoidableVsPeers": "avoidableVsPeers",
+  "survival.dtpsVsPeers": "dtpsVsPeers",
+  "utility.kicksVsPeers": "kicksVsPeers",
+  "utility.kicksAbsolute": "kicksAbsolute",
+};
 export type ZoneVerdict = "invite" | "maybe" | "pass";
 /** `points` the role's raw → percentile curve; `zones` on the final (y) axis; `raw` / `final` mark the player. */
 export interface CurveView { points: [number, number][]; raw: number | null; final: number | null; zones: { verdict: ZoneVerdict; from: number; to: number }[] }
@@ -124,6 +141,21 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
       tone: e.delta > 0 ? "better" : e.delta < 0 ? "worse" : "neutral",
     };
   };
+  const imputedRow = (source: string): SignalRow => {
+    const [axis, id] = source.split(".") as [AxisKey, string];
+    const ref = cfg.reference?.[role]?.[source];
+    const w = cfg.axes?.[axis]?.subSignals?.[id]?.weights?.[role];
+    return {
+      name: titleOf(source),
+      hint: null,
+      value: t("cand.method.imputed.chip"),
+      ref: ref ? shortValue(t, locale, source, ref.value) : DASH,
+      weight: typeof w === "number" ? `×${number.format(w)}` : DASH,
+      effect: effectText(locale, 0),
+      tone: "neutral",
+      imputed: t(`cand.method.imputed.why.${IMPUTED_WHY[source] ?? ("other" as const)}`, { level: String(ev.targetLevel - 1) }),
+    };
+  };
   const deepdiveNames = new Intl.ListFormat(locale, { type: "conjunction" })
     .format(DEEPDIVE_SOURCES.map((s) => titleOf(s).toLocaleLowerCase(locale)));
   const cards: AxisCard[] = AXIS_ORDER.filter((k) => axes.some((a) => a.key === k))
@@ -146,8 +178,9 @@ export function methodView(t: T, locale: Locale, ev: Evaluation, docs: Pick<Docs
         score: score === null ? DASH : String(score),
         band: scoreBand(score),
         informational,
-        signals: a.evidence.map(signalRow),
+        signals: [...a.evidence.map(signalRow), ...(a.imputed ?? []).map(imputedRow)],
         note,
+        imputedNote: (a.imputed ?? []).length > 0 ? t("cand.method.imputed.note") : null,
       };
     });
 

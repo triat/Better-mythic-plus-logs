@@ -50,6 +50,17 @@ target level then scored better than having played there badly. A sub-signal the
 dispel) is still left out, and an axis where nothing was measured stays `n/a`. The Method tab's evidence lists only
 what was measured ([validity spec](superpowers/specs/2026-10-27-evaluation-validity-design.md)).
 
+**Reliability** (validity spec phase 2): how far the verdict holds for the key you vet for. Neither part changes the
+score or the verdict.
+
+- **Level**: proven when one of the shown runs is at most two levels below the target (`LEVEL_MARGIN`,
+  `src/evaluation/reliability.ts`). Otherwise the score describes the player at their own level, and the Synthèse tab
+  says so ("Not proven at +19 · best run +16, none at +17 or above").
+- **Stability**: the global score recomputed with each shown run left out in turn, from `verdict.minRuns + 1` runs
+  (4 by default). When that range crosses a verdict threshold, a single run decides the verdict.
+- The profile header shows "low reliability" in either case; Récents and Live show the spread ("±8") and a mark for an
+  unproven level; Compare shows both in one line.
+
 The **global score** is a percentile. The weighted mean of the axes (the
 role's `axisWeights`) goes through the role's `globalCurve`, fitted on 1,081
 EU characters logging +15 to +20 keys in September 2026 (see the

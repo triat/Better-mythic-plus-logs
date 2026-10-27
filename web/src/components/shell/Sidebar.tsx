@@ -215,6 +215,8 @@ function Recent({ row, onRecent, onRemove }: { row: RecentRow; onRecent: ((key: 
         <span className={"recent-dot " + tone} aria-hidden="true" />
         <span className="recent-name">{row.name}</span>
         <span className={"recent-score mono " + tone}>{row.score}</span>
+        {row.spread && <span className="rel-spread mono">{row.spread}</span>}
+        {row.unproven && <span className="rel-mark" role="img" aria-label={t("cand.rel.unprovenMark")} title={t("cand.rel.unprovenMark")}><Icon name="warn" size={12} /></span>}
       </a>
       <button type="button" className="recent-more" aria-label={t("shell.recent.more", { name: row.name })} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <Icon name="more" size={16} />

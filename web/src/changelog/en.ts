@@ -8,6 +8,7 @@ export const CHANGELOG_EN: ChangelogEntry[] = [
     items: [
       "bmpl has a logo: its name over three dots, green, yellow and red like the verdicts, in the sidebar and the browser tab.",
       "Missing data no longer helps a player's score: a signal with no data, such as no run at your key level, now counts as an average player's, and analysing a run no longer changes the verdict.",
+      "The verdict now says whether the player has already played your key's level and whether a single run decides it, with a reliability block on the summary and a mark in your recent lookups and in Live.",
     ],
   },
   {

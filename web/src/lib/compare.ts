@@ -15,6 +15,7 @@ import type { Band, SynthesisDocs } from "./synthesis.ts";
 import { signalHint } from "./signals.ts";
 import { scoreBand, synthesisView } from "./synthesis.ts";
 import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
+import { reliabilityLine } from "./reliability.ts";
 
 export type Mode = "higher" | "lower" | "none";
 
@@ -209,6 +210,8 @@ export interface DuelHead {
   verdict: { cls: string; label: string; score: string | null };
   /** "+18 · 9 runs scored" (target, auto suffix, evaluation.runsUsed). */
   runs: string;
+  /** "Level ✗ best +16 · Stability 58–74" (canvas "bmpl · Verdict à ton niveau", C); null when unknown. */
+  reliability: string | null;
   /** ≤ 3: the two strongest pros then the strongest con, filled from the other list when one is short. */
   notes: DuelNote[];
 }
@@ -260,6 +263,7 @@ function duelHead(t: T, locale: Locale, e: CompareEntry, docs: SynthesisDocs): D
     initials: classInitials(c.classID),
     sub: rio === null ? t("compare.duel.sub", base) : t("compare.duel.subRio", { ...base, rio: rio.toFixed(0) }),
     verdict: { cls: v.cls, label: v.label, score: v.score },
+    reliability: reliabilityLine(t, ev),
     runs: t("compare.duel.runs", {
       level: String(ev.targetLevel),
       auto: p.targetAutoDetected ? t("compare.duel.auto") : "",
@@ -375,6 +379,8 @@ export interface RankCard {
   /** "+18", "+18 auto" when the target was detected (as the duel's heads). */
   target: string;
   score: string | null; verdict: { cls: string; label: string };
+  /** As the duel's heads: the level and the stability in one line; null when unknown. */
+  reliability: string | null;
   /** Rank 1 (every card tied there, never an insufficient one): its border takes the verdict's border token. */
   top: boolean;
   bars: RankBar[];
@@ -442,6 +448,7 @@ export function rankingView(t: T, locale: Locale, entries: CompareEntry[], docs:
       target: t("compare.multi.targetValue", { level: String(ev.targetLevel), auto: p.targetAutoDetected ? t("compare.duel.auto") : "" }),
       score: v.score,
       verdict: { cls: v.cls, label: v.label },
+      reliability: reliabilityLine(t, ev),
       top: global !== null && rankOf(i) === 1,
       bars,
       aria: AXIS_ORDER.map((k, j) => `${axisTitle(t, k)} ${bars[j]!.value ?? DASH}`).join(", "),

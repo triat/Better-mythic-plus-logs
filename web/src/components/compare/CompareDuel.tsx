@@ -83,6 +83,7 @@ function Head({ head }: { head: DuelHead }) {
         {head.verdict.score !== null && <span className="mono cmp-verdict-score">{head.verdict.score}</span>}
         <span className="cmp-verdict-runs">{head.runs}</span>
       </div>
+      {head.reliability && <span className="cmp-rel">{head.reliability}</span>}
       {head.notes.length > 0 && (
         <ul className="cmp-notes">
           {head.notes.map((n, i) => (

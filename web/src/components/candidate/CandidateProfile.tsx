@@ -19,6 +19,7 @@ import { RunSheet } from "./RunSheet.tsx";
 import { RunsTab } from "./RunsTab.tsx";
 import type { ProfileFetch } from "./ProfileHeader.tsx";
 import { SynthesisTab } from "./SynthesisTab.tsx";
+import { useDocs } from "../../docs.tsx";
 
 export interface CandidateProfileProps {
   payload: LookupPayload;
@@ -46,7 +47,8 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
   useEffect(() => {
     if (urlKey !== null) history.replaceState({}, "", (vetting ? vettingHref : candHref)(urlKey, state));
   }, [urlKey, state, vetting]);
-  const header = useMemo(() => profileHeader(t, locale, payload), [t, locale, payload]);
+  const { docs } = useDocs();
+  const header = useMemo(() => profileHeader(t, locale, payload, docs?.config.verdict ?? null), [t, locale, payload, docs]);
   const tabRefs = useRef(new Map<CandTab, HTMLButtonElement>());
   // The timeline's ticked layers and picked death: per page view, shared by the Runs tab and the run sheet.
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>(DEFAULT_LAYERS);

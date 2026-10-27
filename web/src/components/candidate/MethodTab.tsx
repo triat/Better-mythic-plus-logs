@@ -124,9 +124,11 @@ function Axis({ a }: { a: AxisCard }) {
             <span role="columnheader">{t("cand.method.col.effect")}</span>
           </div>
           {a.signals.map((s) => (
-            <div key={s.name} className="mt-sig" role="row">
-              <span role="cell" className="mt-sig-name">{s.name}{s.hint && <span className="signal-hint">{s.hint}</span>}</span>
-              <span role="cell" className="mono">{s.value}</span>
+            <div key={s.name} className={"mt-sig" + (s.imputed ? " is-imputed" : "")} role="row">
+              <span role="cell" className="mt-sig-name">
+                {s.name}{s.hint && <span className="signal-hint">{s.hint}</span>}{s.imputed && <span className="signal-hint">{s.imputed}</span>}
+              </span>
+              <span role="cell" className="mono">{s.imputed ? <span className="mt-chip">{s.value}</span> : s.value}</span>
               <span role="cell" className="mono mt-sig-ref">{s.ref}</span>
               <span role="cell" className="mono mt-sig-w">{s.weight}</span>
               <span role="cell" className={"mono mt-sig-eff delta-" + s.tone}>{s.effect}</span>
@@ -134,6 +136,7 @@ function Axis({ a }: { a: AxisCard }) {
           ))}
         </div>
       )}
+      {a.imputedNote && <span className="mt-axis-note">{a.imputedNote}</span>}
       {a.note && <span className="mt-axis-note">{a.note}</span>}
     </article>
   );

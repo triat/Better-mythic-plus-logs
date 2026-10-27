@@ -91,6 +91,7 @@ function Card({ card }: { card: RankCard }) {
         {card.score !== null && <span className="mono">{card.score}</span>}
         <span className="cmp-card-verdict">{card.verdict.label}</span>
       </div>
+      {card.reliability && <span className="cmp-rel">{card.reliability}</span>}
       <div className="cmp-card-bars" role="img" aria-label={card.aria}>
         {card.bars.map((b) => (
           <span key={b.key} className={`cmp-card-bar band-${b.band}` + (b.informational ? " is-info" : "")} style={{ height: `${b.value ?? 0}%` }} />

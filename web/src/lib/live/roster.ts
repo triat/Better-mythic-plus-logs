@@ -41,6 +41,10 @@ export interface Roster { seq: number; players: RosterPlayer[]; at: number }
 export interface CachedVerdict {
   verdict: "invite" | "maybe" | "pass" | "insufficient";
   score: number | null;
+  /** How far the score moves when one run is left out (`HistoryEntry.spread`); null when unknown. Absent on old servers. */
+  spread?: number | null;
+  /** The key's level is not proven (`HistoryEntry.unproven`); null when unknown. Absent on old servers. */
+  unproven?: boolean | null;
   targetLevel: number;
   fetchedAt: number;
   /** The evaluated spec (WCL's spacing-free name), null without one — the game itself never gives it. */

@@ -1,6 +1,6 @@
 # Evaluation validity — design
 
-Status: phase 1 implemented 2026-10-27; phases 2–4 designed, not started.
+Status: phases 1 and 2 implemented 2026-10-27; phases 3–4 designed, not started.
 
 ## Goal
 
@@ -95,10 +95,27 @@ says the deep-dive signals are shown but not counted, whatever the number of ana
 - adding deep-dive analyses never changes the global or the verdict;
 - shuffling the runs never changes the evaluation.
 
-## Phases 2–4
+## Phase 2 — the verdict at your key (implemented 2026-10-27)
 
-- **Phase 2** (canvas "bmpl · Verdict", variants first): decisions 5 and 6. The range is computed server-side
-  (`Evaluation.range`) from the same payload, 0 points.
+Canvas **https://claude.ai/artifact/XWfxzv9XyHfM5YDikZaSev** ("bmpl · Verdict à ton niveau", sources in
+`docs/design/verdict/`): variant **C** chosen (the "Fiabilité" block), and option **2** of board E for the Méthode tab.
+
+- **Evaluation** (`src/evaluation/reliability.ts`): `Evaluation.level` = `{ floor: L − LEVEL_MARGIN (2), best, atTarget,
+  proven }` from the shown runs; `Evaluation.range` = the global with each shown run left out in turn
+  (`payloadWithout`: the run out of the dungeon list, its median parse recomputed, out of the previous level),
+  `{ low, high, without[] }`, null under `verdict.minRuns + 1` runs with signals or for NOT ENOUGH DATA. Neither
+  changes the score or the verdict; any key counts as played (timed or not, as elsewhere).
+- **History** (`summaryOf`): the rows carry `spread` (the range's widest side around the score) and `unproven`
+  (columns added NULL by `migrateReliabilityColumns`, filled when a row is read and re-evaluated); Live's cached
+  verdicts carry both.
+- **Front** (`web/src/lib/reliability.ts`): the Synthèse verdict card's Fiabilité block (Level, Stability, one dot per
+  run left out against the MAYBE / INVITE ticks, the run that moves the score most); the header's "low reliability"
+  chip when the level is unproven or the range crosses a threshold; "±N" and the unproven mark in Récents and Live; the
+  "Level · Stability" line in Compare; the Méthode tab lists each imputed sub-signal as an "average" row with its
+  reason, the role's average, its weight and an effect of 0.
+
+## Phases 3–4
+
 - **Phase 3** (a read-only script on `calibration.db`, run by the user on the VPS, 0 points): measure effective
   weights and split-half reliability per sub-signal and role; check whether WCL's `rankPercent` is computed per key
   level (`bracketData`); then decisions 7 and 8, each as a candidate config judged on the held-out half.

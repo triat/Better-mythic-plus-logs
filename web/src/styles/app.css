@@ -596,6 +596,8 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .cand-name { margin: 0; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .cand-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid; font-size: 13px; font-weight: 700; white-space: nowrap; box-sizing: border-box; }
 .cand-target { font-size: 13px; color: var(--muted); }
+.cand-rel { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--card-2); font-size: 13px; color: var(--text-soft); white-space: nowrap; box-sizing: border-box; }
+.cand-rel svg { color: var(--muted); }
 .cand-line { font-size: 14px; color: var(--muted); }
 .cand-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cand-actions .btn, .cand-meta .btn { height: 34px; background: var(--card-2); border-color: var(--border-2); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; }
@@ -641,6 +643,32 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .synth-flip-name { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
 .synth-flip-name .mono { color: var(--better); font-size: 13px; font-weight: 700; text-align: right; }
 .synth-flip-gap { font-size: 13px; color: var(--muted); }
+/* Méthode: a sub-signal without data, scored as the role's average player (canvas E, option 2). */
+.mt-sig.is-imputed { color: var(--muted); }
+.mt-chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--border-2); font-family: inherit; font-size: 11px; color: var(--text-soft); white-space: nowrap; }
+/* Compare: the level and the stability under a verdict. */
+.cmp-rel { font-size: 12px; color: var(--muted); }
+/* Récents and Live: the score's spread and the unproven-level mark next to the score. */
+.rel-spread { font-size: 11px; color: var(--label); }
+.rel-mark { display: inline-flex; color: var(--muted); }
+/* The Fiabilité block (canvas "bmpl · Verdict à ton niveau", variant C): level, stability, the score without each run. */
+.rel { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 12px; background: var(--bg); border: 1px solid var(--vt-border); }
+.rel-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; margin: 0; font-size: 13px; line-height: 1.45; }
+.rel-rows dt { font-weight: 600; color: var(--text); }
+.rel-rows dd { margin: 0; color: var(--text-soft); min-width: 0; }
+.rel-rows b { color: var(--text); }
+.rel-strip-wrap { display: flex; flex-direction: column; gap: 4px; padding: 0 6px; }
+.rel-strip { position: relative; height: 22px; }
+.rel-track { position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: var(--vt-border); }
+.rel-tick { position: absolute; top: 2px; bottom: 2px; width: 1px; background: var(--label); }
+.rel-tick.invite { background: var(--text); }
+.rel-dot { position: absolute; top: 6px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 1px solid var(--bg); box-sizing: border-box; }
+.rel-dot.invite { background: var(--invite); }
+.rel-dot.maybe { background: var(--maybe); }
+.rel-dot.pass { background: var(--pass); }
+.rel-labels { position: relative; height: 14px; font-size: 11px; color: var(--label); }
+.rel-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.rel-note { font-size: 12px; color: var(--label); line-height: 1.45; }
 .synth-confidence { display: flex; gap: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--vt-border); font-size: 13px; line-height: 1.45; color: var(--text-soft); }
 .synth-confidence svg { flex-shrink: 0; margin-top: 2px; color: var(--vt); }
 .synth-card { padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }

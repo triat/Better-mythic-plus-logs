@@ -7,6 +7,7 @@ export const CHANGELOG_FR: ChangelogEntry[] = [
     items: [
       "bmpl a un logo : son nom au-dessus de trois points, vert, jaune et rouge comme les verdicts, dans la barre latérale et l'onglet du navigateur.",
       "Une donnée manquante n'avantage plus un joueur : un signal sans donnée, par exemple aucun run à ton niveau de clé, compte désormais comme celui d'un joueur moyen, et analyser un run ne change plus le verdict.",
+      "Le verdict dit maintenant si le joueur a déjà joué le niveau de ta clé et si un seul run le décide, avec un bloc fiabilité sur la synthèse et une marque dans tes recherches récentes et dans Live.",
     ],
   },
   {

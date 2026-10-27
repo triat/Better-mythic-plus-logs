@@ -4,9 +4,10 @@
 import type { ReactNode } from "react";
 import type { IconName as NavIconName } from "../lib/shell.ts";
 
-export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "clock" | "lock" | "info" | "discord";
+export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "clock" | "lock" | "info" | "warn" | "discord";
 
 const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
+  warn: <><path d="M12 3l9 16H3z" /><path d="M12 10v4M12 17h.01" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>,
   home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
   users: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.5-5 6.5-5s5.7 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.3 3.5 5" /></>,

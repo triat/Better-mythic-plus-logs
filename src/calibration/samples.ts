@@ -57,6 +57,8 @@ export interface SampleStore {
   /** Samples per cell (`role|level|quintile`) and in all, in `season` since `since`. */
   count(season: number, since: number): { total: number; cells: Map<string, number> };
   list(season: number, since: number): Sample[];
+  /** The newest season with samples, or null: what `bmpl calibrate --study` reads without asking WCL. */
+  latestSeason(): number | null;
   getPage(season: number, cycle: number, encounter: number, spec: string, page: number): unknown[] | null;
   putPage(season: number, cycle: number, encounter: number, spec: string, page: number, rows: unknown[]): void;
   putPool(season: number, cycle: number, pool: PoolEntry[], now: number): void;
@@ -115,6 +117,9 @@ export function openSamples(path: string): SampleStore {
     },
     list(season, since) {
       return listQ.all(season, since).map((r) => ({ study: JSON.parse(r.study) as Candidate, payload: JSON.parse(gunzip(r.payload)) as EvalPayload }));
+    },
+    latestSeason() {
+      return db.query<{ s: number | null }, []>("SELECT MAX(season) AS s FROM cal_samples").get()?.s ?? null;
     },
     getPage(season, cycle, encounter, spec, page) {
       const row = getPageQ.get(season, cycle, encounter, spec, page);

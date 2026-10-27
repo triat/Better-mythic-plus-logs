@@ -5,6 +5,7 @@ import { scoreTone } from "../lib/home.ts";
 import { PREVIEW_AXES, PREVIEW_SCORE, landingView } from "../lib/landing.ts";
 import { useT } from "../locale.tsx";
 import { Icon } from "./Icon.tsx";
+import { Logo } from "./Logo.tsx";
 
 /** Shaman, the preview's class (WCL class id). */
 const PREVIEW_CLASS = 9;
@@ -29,7 +30,7 @@ export function Landing({ status, search }: { status: StatusInfo; search: string
     <div className="landing">
       <header className="land-top">
         <div className="land-row">
-          <a className="home-logo" href="/">bmpl</a>
+          <Logo className="home-logo" />
           <nav className="home-top-nav" aria-label={t("landing.nav")}>
             <a href="/help" className="home-top-a">{t("common.help")}</a>
             <a href="/privacy" className="home-top-a">{t("common.privacy")}</a>

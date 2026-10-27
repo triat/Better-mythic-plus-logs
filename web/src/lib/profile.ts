@@ -8,6 +8,7 @@ import { heroStats } from "./axes.ts";
 import { realmName, rioHref } from "./format.ts";
 import { headLine } from "./self.ts";
 import { verdictView } from "./verdict.ts";
+import { isLowReliability, type Thresholds } from "./reliability.ts";
 
 export type CandTab = "synthesis" | "runs" | "dungeons" | "method";
 export const CAND_TABS: readonly CandTab[] = ["synthesis", "runs", "dungeons", "method"];
@@ -156,6 +157,8 @@ export interface ProfileHeaderView {
   /** "Devourer Demon Hunter · DPS · Hyjal (EU)". */
   line: string;
   verdict: { cls: string; label: string; score: string | null; target: string };
+  /** "low reliability" (canvas "bmpl · Verdict à ton niveau", C): the level is unproven or one run decides; null otherwise. */
+  lowReliability: string | null;
   facts: HeaderFact[];
   links: { rio: string | null; wcl: string };
   /** Zone · runs indexed · metric auto-selected · spec filter (the old VerdictHero metaline). */
@@ -181,7 +184,8 @@ export const wclCharacterUrl = (region: string, realmSlug: string, name: string)
 /** WCL's spacing-free spec names read with spaces: "BeastMastery" → "Beast Mastery". */
 export const specWords = (spec: string): string => spec.replace(/([a-z])([A-Z])/g, "$1 $2");
 
-export function profileHeader(t: T, _locale: Locale, p: LookupPayload): ProfileHeaderView {
+/** `th`: the verdict thresholds from GET /api/docs; without them (docs not loaded yet) the reliability chip waits. */
+export function profileHeader(t: T, _locale: Locale, p: LookupPayload, th: Thresholds | null = null): ProfileHeaderView {
   const c = p.character;
   const ev = p.evaluation;
   const v = verdictView(t, ev, p.targetAutoDetected);
@@ -216,6 +220,7 @@ export function profileHeader(t: T, _locale: Locale, p: LookupPayload): ProfileH
       region: c.region.toUpperCase(),
     }),
     verdict: { cls: v.cls, label: v.label, score: v.score, target: t("cand.header.target", { level: String(ev.targetLevel) }) },
+    lowReliability: th && isLowReliability(ev, th) ? t("cand.rel.lowChip") : null,
     facts,
     links: { rio: rioHref(p.rio?.profileUrl), wcl: wclCharacterUrl(c.region, c.realmSlug, c.name) },
     meta,

@@ -90,7 +90,9 @@ block with the healthstone (ids 6262 and 452930, Demonic Healthstone).
 self-cast buffs not in the table — the input for the next table revision.
 
 Once at least `confidence.deepdiveMinRuns` (2 by default) of a character's
-shown runs have been analyzed, the **Survival** axis in `bmpl lookup` /
-`bmpl evaluate` picks up two more sub-signals: `defensiveUsage` (median major/
+shown runs have been analyzed, two more sub-signals are scored: `defensiveUsage` (median major/
 immunity usage across analyzed runs) and `avoidableDeaths` (share of deaths
 where an immunity, a major defensive or a heal that would have saved was at hand; not-preventable deaths left out).
+Since config version 10 they count in the self-review's Survival pillar only (`pillarOnly`), never in the Survival
+axis, the global score or the verdict: the score's calibration population has no analysed runs, so analysing a run
+must not move a verdict ([validity spec](superpowers/specs/2026-10-27-evaluation-validity-design.md), decision 4).

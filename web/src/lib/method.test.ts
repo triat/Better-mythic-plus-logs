@@ -106,8 +106,20 @@ describe("methodView", () => {
     ]);
     expect(m.axes[0]!.confidence).toBe("confiance haute · 9 runs");
     expect(m.axes[4]!.note).toBe("Montré pour lire le profil, sans effet sur le verdict.");
-    expect(m.axes[0]!.note).toBe("Les signaux du deep-dive (utilisation des défensifs et morts avec un outil prêt) comptent dès 2 runs analysés : 1 pour l'instant.");
+    expect(m.axes[0]!.note).toBe("Les signaux du deep-dive (utilisation des défensifs et morts avec un outil prêt) apparaissent dans les analyses de runs et les piliers de tes propres personnages ; ils ne comptent pas dans ce score.");
     expect(m.axes[1]!.note).toBeNull();
+  });
+
+  test("a sub-signal without data: an \"average\" row with its reason, the role's average, its weight, no effect", () => {
+    const ev = structuredClone(vachaman());
+    ev.axes.find((a) => a.key === "throughput")!.imputed = ["throughput.parseAtTarget"];
+    const m = methodView(tFr, "fr", ev, docsFr)!;
+    const card = m.axes.find((a) => a.key === "throughput")!;
+    const row = card.signals.at(-1)!;
+    expect(row).toMatchObject({ value: "moyen", weight: "×2", effect: "0,0", tone: "neutral", imputed: `aucun run classé en +${ev.targetLevel - 1} ou plus` });
+    expect(row.ref).not.toBe("—");
+    expect(card.imputedNote).toBe("« moyen » : pas de donnée, compté comme le joueur moyen du rôle. Effet 0 par rapport à la moyenne.");
+    expect(m.axes.find((a) => a.key === "survival")!.imputedNote).toBeNull();
   });
 
   test("signal rows: value and the average player formatted alike, weight, signed effect", () => {

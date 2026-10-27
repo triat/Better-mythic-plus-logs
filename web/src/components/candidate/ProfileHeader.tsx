@@ -5,6 +5,7 @@ import type { ProfileHeaderView } from "../../lib/profile.ts";
 import { fmtAge } from "../../lib/format.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
+import { Icon } from "../Icon.tsx";
 
 /** Where the profile came from and how to fetch it again (the candidate page's former `cand-bar`). */
 export interface ProfileFetch {
@@ -39,6 +40,9 @@ export function ProfileHeader({ view, hint, onReevaluate, fetch, compareHref, me
               {v.label}{v.score !== null && <span className="mono">{v.score}</span>}
             </span>
             <span className="cand-target">{v.target}</span>
+            {view.lowReliability && (
+              <span className="cand-rel"><Icon name="warn" size={13} />{view.lowReliability}</span>
+            )}
             {meChip}
           </div>
           <span className="cand-line">{view.line}</span>

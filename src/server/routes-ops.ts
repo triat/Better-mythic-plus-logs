@@ -11,6 +11,7 @@ import { describeConfig, lastBackupAt } from "../hosted/instance.ts";
 import type { HostedRuntime } from "../hosted/runtime.ts";
 import { parseUsageQuery } from "../hosted/usage-events.ts";
 import { readFit } from "../calibration/report.ts";
+import { readStudy } from "../calibration/study.ts";
 import { resolveCalibrationDbPath, resolveEnvPath } from "../setup.ts";
 import { jsonResponse } from "./http.ts";
 import { AUDIT_MAX_LIMIT } from "./routes-admin.ts";
@@ -89,6 +90,12 @@ export function opsRoutes(rt: HostedRuntime): Route[] {
       const fit = readFit(await resolveCalibrationDbPath());
       if (!fit) return jsonResponse({ ok: false, error: "no fit yet" }, 404);
       return jsonResponse({ ok: true, ...fit.result, comparison: fit.comparison });
+    }), "public"),
+    // The evaluation study (`bmpl calibrate --study`, and every weekly fit): aggregates only, never a character.
+    route("GET", "/api/ops/calibration/study", guarded(async () => {
+      const study = readStudy(await resolveCalibrationDbPath());
+      if (!study) return jsonResponse({ ok: false, error: "no study yet" }, 404);
+      return jsonResponse({ ok: true, ...study.result, markdown: study.markdown });
     }), "public"),
   ];
 }

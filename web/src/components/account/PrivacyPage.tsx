@@ -1,5 +1,6 @@
 import { useT } from "../../locale.tsx";
 import { Around } from "../Around.tsx";
+import { Logo } from "../Logo.tsx";
 
 interface Props { operator: string; guildRequired: boolean; contactUrl: string | null }
 
@@ -8,7 +9,7 @@ export function PrivacyPage({ operator, guildRequired, contactUrl }: Props) {
   const { t } = useT();
   return (
     <>
-      <header className="top"><div className="top-row"><a className="brand" href="/">bmpl</a></div></header>
+      <header className="top"><div className="top-row"><Logo className="brand" /></div></header>
       <main className="privacy">
         <a href="/" className="muted" style={{ fontSize: 13 }}>{t("common.back")}</a>
         <h1>{t("privacy.title")}</h1>

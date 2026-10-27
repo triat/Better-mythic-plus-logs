@@ -31,23 +31,39 @@ export interface HistoryEntry {
   verdict: HistoryVerdict | null;
   /** The evaluation's global score, derived from `result`. */
   score: number | null;
+  /** How far the score moves when one run is left out (max distance to `range.low` / `range.high`), from `result`. */
+  spread: number | null;
+  /** The target level is not proven (`evaluation.level.proven` false), from `result`; null when unknown. */
+  unproven: boolean | null;
 }
 
 export type HistoryVerdict = "invite" | "maybe" | "pass";
 
-/** What a caller stores: verdict and score are never passed, the stores derive them from `result` (`summaryOf`). */
-export type HistoryRecord = Omit<HistoryEntry, "key" | "request" | "fetchedAt" | "verdict" | "score">;
+/** What a caller stores: the summary is never passed, the stores derive it from `result` (`summaryOf`). */
+export type HistoryRecord = Omit<HistoryEntry, "key" | "request" | "fetchedAt" | "verdict" | "score" | "spread" | "unproven">;
+
+export interface HistorySummary { verdict: HistoryVerdict | null; score: number | null; spread: number | null; unproven: boolean | null }
 
 const VERDICTS: readonly unknown[] = ["invite", "maybe", "pass"] satisfies HistoryVerdict[];
 
-/** `result.evaluation.verdict` / `.global`, read defensively: null when absent or of the wrong type. */
-export function summaryOf(result: unknown): { verdict: HistoryVerdict | null; score: number | null } {
+const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * `result.evaluation.verdict` / `.global` / `.range` / `.level`, read defensively: null when absent or of the wrong
+ * type (a payload evaluated before 2026-10-27 has no range or level).
+ */
+export function summaryOf(result: unknown): HistorySummary {
   const ev = typeof result === "object" && result !== null ? (result as { evaluation?: unknown }).evaluation : undefined;
-  if (typeof ev !== "object" || ev === null) return { verdict: null, score: null };
-  const { verdict, global } = ev as { verdict?: unknown; global?: unknown };
+  if (typeof ev !== "object" || ev === null) return { verdict: null, score: null, spread: null, unproven: null };
+  const { verdict, global, range, level } = ev as { verdict?: unknown; global?: unknown; range?: unknown; level?: unknown };
+  const score = finite(global) ? global : null;
+  const r = typeof range === "object" && range !== null ? range as { low?: unknown; high?: unknown } : null;
+  const proven = typeof level === "object" && level !== null ? (level as { proven?: unknown }).proven : undefined;
   return {
     verdict: VERDICTS.includes(verdict) ? verdict as HistoryVerdict : null,
-    score: typeof global === "number" && Number.isFinite(global) ? global : null,
+    score,
+    spread: score !== null && r && finite(r.low) && finite(r.high) ? Math.max(score - r.low, r.high - score, 0) : null,
+    unproven: typeof proven === "boolean" ? !proven : null,
   };
 }
 

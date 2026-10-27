@@ -16,6 +16,8 @@ import { setLogSink } from "../src/log.ts";
 import { closeStore, getStore } from "../src/signals/store.ts";
 import { TEST_HOSTED_CONFIG, loginAs } from "./hosted/helpers.ts";
 import { fitAndCompare, writeFit } from "../src/calibration/report.ts";
+import { runStudy, writeStudy } from "../src/calibration/study.ts";
+import { openSamples } from "../src/calibration/samples.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../src/evaluation/config.ts";
 import { payloadWith, runWith } from "./evaluation/helpers.ts";
 
@@ -167,8 +169,32 @@ describe("calibration", () => {
       const all = JSON.stringify(r);
       expect(all).not.toContain("Secretname");
       expect(all).not.toContain("Hiddenrealm");
+
+      // The evaluation study: 404 before the first one, then its aggregates, behind the token, without a name.
+      expect((await fetch(u("/api/ops/calibration/study"), bearer())).status).toBe(404);
+      writeStudy(join(dir, "calibration.db"), runStudy(samples, validateConfig(DEFAULT_CONFIG), 1_800_000_000_000));
+      expect((await fetch(u("/api/ops/calibration/study"))).status).toBe(401);
+      const st = await (await fetch(u("/api/ops/calibration/study"), bearer())).json();
+      expect(st.ok).toBe(true);
+      expect(st.studiedAt).toBe(1_800_000_000_000);
+      expect(st.markdown).toContain("# Evaluation study");
+      expect(JSON.stringify(st)).not.toContain("Secretname");
+      expect(JSON.stringify(st)).not.toContain("Hiddenrealm");
     } finally {
       if (saved === undefined) delete process.env.BMPL_CALIBRATION_DB; else process.env.BMPL_CALIBRATION_DB = saved;
+    }
+  });
+
+  test("the sample store names its newest season (what --study reads, without asking WCL)", () => {
+    const s = openSamples(join(dir, "seasons.db"));
+    try {
+      expect(s.latestSeason()).toBeNull();
+      const study = { key: "k", name: "N", server: "S", className: "Mage", spec: "Fire", role: "dps" as const, level: 16, percentile: 0.5, quintile: 2 };
+      s.put(study, payloadWith([runWith({})]), 44, 1);
+      s.put({ ...study, key: "k2" }, payloadWith([runWith({})]), 45, 1);
+      expect(s.latestSeason()).toBe(45);
+    } finally {
+      s.close();
     }
   });
 });

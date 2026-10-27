@@ -71,6 +71,12 @@ describe("withPayloadSummary", () => {
     expect(next.map((i) => [i.key, i.verdict, i.score])).toEqual([["a", "maybe", 63], ["b", "pass", 20]]);
     expect(next[1]).toBe(items[1]!);
   });
+  test("the spread and the unproven level come along, and alone are a change", () => {
+    const withRel = { evaluation: { verdict: "maybe", global: 66, range: { low: 58, high: 74, without: [] }, level: { floor: 17, best: 16, atTarget: 0, proven: false } } } as unknown as Pick<LookupPayload, "evaluation">;
+    const next = withPayloadSummary([item("a", "maybe", 66)], "a", withRel);
+    expect(next[0]).toMatchObject({ verdict: "maybe", score: 66, spread: 8, unproven: true });
+    expect(withPayloadSummary(next, "a", withRel)).toBe(next);
+  });
   test("INSUFFICIENT DATA is a null verdict", () => {
     expect(withPayloadSummary([item("a", "maybe", 50)], "a", ev("insufficient", null))[0]).toMatchObject({ verdict: null, score: null });
   });

@@ -36,7 +36,7 @@ describe("POST /api/live/cached", () => {
     const ctx = ctxWith([{ character: "Biwaadrood-Nerzhul", level: 18, verdict: "invite", global: 78.4 }]);
     const { status, json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }, { character: "Nobody-Hyjal", region: "eu" }] });
     expect(status).toBe(200);
-    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "invite", score: 78.4, targetLevel: 18, fetchedAt: 1_000, spec: null, ilvl: null });
+    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "invite", score: 78.4, spread: null, unproven: null, targetLevel: 18, fetchedAt: 1_000, spec: null, ilvl: null });
     expect(json.verdicts![1]).toBeNull();
   });
 
@@ -83,7 +83,7 @@ describe("POST /api/live/cached", () => {
     // Today's rules re-evaluated the stored payload to a MAYBE 61 (a history read): Récents shows that, Live too.
     ctx.history!.syncSummary(e.key, payload("maybe", 61, 18), e.fetchedAt);
     const { json } = await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] });
-    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "maybe", score: 61, targetLevel: 18, fetchedAt: 1_000, spec: null, ilvl: null });
+    expect(json.verdicts![0]).toEqual({ character: "Biwaadrood-Nerzhul", verdict: "maybe", score: 61, spread: null, unproven: null, targetLevel: 18, fetchedAt: 1_000, spec: null, ilvl: null });
     ctx.history!.syncSummary(e.key, payload("insufficient", null, 18), e.fetchedAt);
     expect((await post(ctx, { level: 18, players: [{ character: "Biwaadrood-Nerzhul", region: "eu" }] })).json.verdicts![0])
       .toMatchObject({ verdict: "insufficient", score: null, targetLevel: 18 });

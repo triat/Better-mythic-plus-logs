@@ -112,7 +112,9 @@ describe("evaluate", () => {
     const tank = evaluate(await fixturePayload("s1-tank", false), cfg);
     expect(tank.role).toBe("tank");
     expect(tank.verdict).toBe("insufficient");
-    expect(tank.axes[0]!.score).toBe(100);                       // 0 deaths, no avoidable list, no dtps for tank
+    // 0 deaths, no dtps for tank; no avoidable list for this dungeon: scored as the average tank (config version 10)
+    expect(tank.axes[0]!.score).toBe(87);
+    expect(tank.axes[0]!.imputed).toEqual(["survival.avoidableVsPeers"]);
     expect(tank.axes[1]!.score!).toBeGreaterThan(50);            // kicks ≈ peers
     expect(tank.axes[1]!.score!).toBeLessThan(70);
     const heal = evaluate(await fixturePayload("s2-healer", true), cfg);
@@ -126,8 +128,10 @@ describe("evaluate", () => {
 describe("default config snapshot (v8)", () => {
   // v7 removed the experience axis (weight 0: no global moved). v8 removed preparation.potions and
   // preparation.healthstones (judged at each death since 2026-10-14): globals moved (good 99 → 98, s1-tank 59 → 81,
-  // s1-tank + rio 70 → 80, s2-healer 59 → 48, s2-healer + rio 48 → 40), no verdict did. Any later drift means a
-  // weight or curve moved. `globalCurve` is pinned to v8's: the weekly recalibration refits it (spec
+  // s1-tank + rio 70 → 80, s2-healer 59 → 48, s2-healer + rio 48 → 40), no verdict did. v10 scores missing data as the
+  // average player and takes the deep-dive out of the verdict (docs/superpowers/specs/2026-10-27-evaluation-validity-design.md):
+  // s1-tank has no avoidable list for its dungeon, which no longer leaves Survival at 100 (s1-tank 81 → 58, + rio
+  // 80 → 60); no fixture has analyses. Any later drift means a weight or curve moved. `globalCurve` is pinned to v8's: the weekly recalibration refits it (spec
   // docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md), and its pull request must not fail here.
   const cfg = { ...validateConfig(DEFAULT_CONFIG), globalCurve: {
     dps:    [[0, 0], [47.7, 2], [51.1, 5], [56, 10], [63.9, 25], [69.1, 40], [71.4, 50], [73.7, 60], [77.3, 75], [82.7, 90], [84, 95], [86.4, 98], [100, 100]],
@@ -146,8 +150,8 @@ describe("default config snapshot (v8)", () => {
     const cases: Array<[string, Promise<ReturnType<typeof evaluate>>, number, string]> = [
       ["good", Promise.resolve(evaluate(payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 }), cfg)), 98, "invite"],
       ["bad", Promise.resolve(evaluate(payloadWith(Array.from({ length: 6 }, bad), { targetLevel: 16 }), cfg)), 1, "pass"],
-      ["s1-tank", fixturePayload("s1-tank", false).then((p) => evaluate(p, cfg)), 81, "insufficient"],
-      ["s1-tank + rio", fixturePayload("s1-tank", true).then((p) => evaluate(p, cfg)), 80, "insufficient"],
+      ["s1-tank", fixturePayload("s1-tank", false).then((p) => evaluate(p, cfg)), 58, "insufficient"],
+      ["s1-tank + rio", fixturePayload("s1-tank", true).then((p) => evaluate(p, cfg)), 60, "insufficient"],
       ["s2-healer", fixturePayload("s2-healer", false).then((p) => evaluate(p, cfg)), 48, "insufficient"],
       ["s2-healer + rio", fixturePayload("s2-healer", true).then((p) => evaluate(p, cfg)), 40, "insufficient"],
     ];

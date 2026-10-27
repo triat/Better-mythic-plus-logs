@@ -11,7 +11,7 @@ export type CurvePoints = [number, number][];
 export interface Evidence {
   /** English line as the CLI prints it; the web front rebuilds it per locale from `value` / `extra`. */
   label: string;
-  /** Contribution in axis points vs. neutral 50; sums to score − 50. Comparable across axes. */
+  /** Contribution in axis points vs. neutral 50; with the axis' imputed sources, sums to score − 50. Comparable across axes. */
   delta: number;
   source: string; // "<axis>.<subSignalId>"
   /** The raw number behind `label` (the unscaled mean when one exists), unrounded. */
@@ -40,6 +40,9 @@ export interface AxisScore {
   /** Evidence of the axis' pillar-only sub-signals (delta 0): read by `pillarScores` only, never by the axis score,
    * the global score, the drivers or the verdict. */
   pillarOnly?: Evidence[];
+  /** Sources whose data was missing, scored at the role's average player (`EvaluationConfig.reference`); absent when
+   * none, and on payloads saved before 2026-10-27 (docs/superpowers/specs/2026-10-27-evaluation-validity-design.md). */
+  imputed?: string[];
 }
 
 /** A pillar: the weighted mean of its sub-signals' curve scores, `null` when none of them has data. */
@@ -72,6 +75,25 @@ export interface NextVerdict {
   reachable: boolean;
 }
 
+/** Whether the player has played the vetted key's level (validity spec 2026-10-27, decision 5). */
+export interface LevelProof {
+  /** `targetLevel − LEVEL_MARGIN` (src/evaluation/reliability.ts): the lowest key that proves the level. */
+  floor: number;
+  /** The highest key among the shown runs; null without any. */
+  best: number | null;
+  /** Shown runs (one per dungeon) at the target level or above. */
+  atTarget: number;
+  proven: boolean;
+}
+
+/** The global score with each shown run left out in turn (validity spec 2026-10-27, decision 6). */
+export interface ScoreRange {
+  low: number;
+  high: number;
+  /** One entry per shown run, in the evaluated runs' order. */
+  without: { reportCode: string; fightID: number; score: number }[];
+}
+
 export interface Evaluation {
   role: Role;
   targetLevel: number;
@@ -88,10 +110,16 @@ export interface Evaluation {
   nextVerdict?: NextVerdict | null;
   /** The five pillars, regrouped from `axes` (no effect on `global` or `verdict`); absent on payloads saved before. */
   pillars?: PillarScore[];
+  /** Whether the target level is proven; absent on payloads evaluated before 2026-10-27. */
+  level?: LevelProof;
+  /** The score's range over leave-one-run-out; null under `verdict.minRuns + 1` runs; absent before 2026-10-27. */
+  range?: ScoreRange | null;
 }
 
 export interface SubSignalConfig {
   curve: CurvePoints;
+  /** Per-role curves that replace `curve` for that role (validity spec 2026-10-27, decision 8); absent by default. */
+  curves?: Partial<Record<Role, CurvePoints>>;
   weights: Record<Role, number>;
   /** Scored for its pillar only: kept out of the axis score, so out of the global score and the verdict. */
   pillarOnly?: boolean;
@@ -118,4 +146,9 @@ export interface EvaluationConfig {
   reference: Record<Role, Record<string, { x: number; value: number }>>;
   verdict: { invite: number; maybe: number; minRuns: number };
   confidence: { high: number; medium: number; consistencyMinRuns: number; deepdiveMinRuns: number };
+  /**
+   * Per role and source, k in n / (n + k): a sub-signal measured on n runs is pulled toward the role's average player
+   * (`reference.x`) by k / (n + k) (validity spec 2026-10-27, decision 7). Absent by default: no pull.
+   */
+  shrinkage?: Partial<Record<Role, Record<string, number>>>;
 }

@@ -8,6 +8,7 @@ import { LOOKUP_PTS } from "../help.ts";
 import { classInitials, specWords } from "../profile.ts";
 import { LIVE_ROLES, LIVE_SORTS, filterApplicants, sortApplicants } from "./roster.ts";
 import type { CachedVerdict, LiveRole, LiveSort, Roster, RosterPlayer } from "./roster.ts";
+import { compactReliability } from "../reliability.ts";
 
 export interface PanelFilter {
   liveSort: LiveSort;
@@ -29,7 +30,7 @@ export interface LiveRowView {
   spec: string;
   ilvl: string;
   rio: string;
-  verdict: { cls: string; label: string; score: string | null } | null;
+  verdict: { cls: string; label: string; score: string | null; spread: string | null; unproven: string | null } | null;
   /** "2 d ago", from the cached verdict's fetch time. */
   age: string | null;
   state: "vetted" | "queued" | "unvetted" | "self";
@@ -82,7 +83,7 @@ function rowOf(t: T, o: { verdicts: Map<string, CachedVerdict>; now: number; que
     ilvl: v?.ilvl != null ? String(Math.round(v.ilvl)) : "—",
     rio: p.score > 0 ? String(p.score) : "—",
     verdict: v
-      ? { cls: `badge-${v.verdict}`, label: t(`verdict.words.${v.verdict}`), score: v.score === null ? null : String(Math.round(v.score)) }
+      ? { cls: `badge-${v.verdict}`, label: t(`verdict.words.${v.verdict}`), score: v.score === null ? null : String(Math.round(v.score)), ...compactReliability(t, v) }
       : null,
     age: v ? fmtShortAge(t, v.fetchedAt, o.now) : null,
     state,

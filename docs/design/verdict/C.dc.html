@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>C · Bloc Fiabilité</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#161920;border:1px solid #232733;border-radius:16px;box-sizing:border-box;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:13px;color:#C9CED8;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #2A2F3B;background:#1C2029;color:#ECEEF2;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.nav-a{display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:10px;color:#A0A7B4;font-size:14px;font-weight:600}
+.nav-on{background:#1C2029;color:#ECEEF2}
+.tab{display:inline-flex;align-items:center;height:40px;padding:0 2px;font-size:14px;font-weight:600;color:#8D95A3;border-bottom:2px solid transparent}
+.tab-on{color:#ECEEF2;border-bottom-color:#ECEEF2}
+</style>
+</helmet>
+<div style="font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; min-height: 100%">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; min-height: 100%">
+  <aside style="flex: 1 1 248px; max-width: 100%; box-sizing: border-box; padding: 20px 12px; border-right: 1px solid #1E222C; display: flex; flex-direction: column; gap: 20px">
+    <strong style="font-size: 18px; letter-spacing: -0.02em; padding: 0 10px">bmpl</strong>
+    <div style="display: flex; gap: 6px; padding: 0 4px"><span class="chip">EU</span><span class="chip">Clé +19</span></div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="lbl" style="padding: 0 12px 4px">Récents</span>
+      <sc-for list="{{side}}" as="s" hint-placeholder-count="5">
+        <a href="#" class="{{s.cls}}" style="font-weight: 500"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{s.vColor}}; flex-shrink: 0"></span><span style="color: #C9CED8">{{s.name}}</span><span style="margin-left: auto; display: inline-flex; align-items: baseline; gap: 4px"><span class="m" style="font-size: 13px; color: {{s.vColor}}">{{s.score}}</span><span class="m" style="font-size: 11px; color: #8D95A3">±{{s.spread}}</span><sc-if value="{{s.gate}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A0A7B4" stroke-width="2.4" aria-label="non prouvé à ta clé"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></sc-if></span></a>
+      </sc-for>
+    </div>
+  </aside>
+
+  <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column">
+    <main style="padding: 28px 32px 64px; box-sizing: border-box">
+      <div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+
+        <section style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: #2A1838; border: 1px solid #4A2A60; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#B65CE0" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 4c3 2 5 5 5 9M20 4c-3 2-5 5-5 9M8 21c0-3 1.8-5 4-5s4 2 4 5M9 13h6"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+              <h1 style="margin: 0; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; color: #B65CE0">Obye</h1>
+              <span class="chip" style="background: #1A1812; border-color: #3D3420; color: #F2B544; font-weight: 700">MAYBE <span class="m">66</span></span>
+              <span class="chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A0A7B4" stroke-width="2.4" aria-hidden="true"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>fiabilité faible</span>
+            </div>
+            <span style="font-size: 14px; color: #A0A7B4">Chasseur de démons Dévoreur · DPS · Hyjal (EU) · RIO 2611 · ilvl 319</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button class="btn">Comparer</button>
+            <a href="#" class="btn">Raider.IO ↗</a>
+            <a href="#" class="btn">WCL ↗</a>
+          </div>
+        </section>
+
+        <nav style="display: flex; gap: 24px; border-bottom: 1px solid #232733; margin-top: -8px; flex-wrap: wrap">
+          <a href="#" class="tab tab-on">Synthèse</a>
+          <a href="#" class="tab">Runs <span class="m" style="margin-left: 6px; color: #5A6272">8</span></a>
+          <a href="#" class="tab">Donjons</a>
+          <a href="#" class="tab">Méthode</a>
+        </nav>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+          <section class="card" style="flex: 1 1 300px; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: #1A1812; border-color: #3D3420">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl" style="color: #C2B48F">Verdict pour une +19</span>
+              <div style="display: flex; align-items: baseline; gap: 12px">
+                <span style="font-size: 38px; font-weight: 800; line-height: 1; color: #F2B544">MAYBE</span>
+                <span class="m" style="font-size: 38px; font-weight: 700; line-height: 1">66</span>
+              </div>
+            </div>
+            <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #E8DFC6">Bon parse et bien équipé, mais il prend beaucoup de dégâts évitables.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: 12px; background: #14120D; border: 1px solid #3D3420">
+              <span class="lbl" style="color: #C2B48F">Fiabilité</span>
+              <div style="display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 6px 12px; align-items: baseline">
+                <span style="font-size: 13px; font-weight: 600; color: #ECEEF2">Niveau</span>
+                <span style="font-size: 13px; color: #C9C0A8; line-height: 1.45"><strong style="color: #ECEEF2">Non prouvé en +19</strong> · meilleur run +16, aucun en +17 ou plus</span>
+                <span style="font-size: 13px; font-weight: 600; color: #ECEEF2">Stabilité</span>
+                <span style="font-size: 13px; color: #C9C0A8; line-height: 1.45"><strong class="m" style="color: #ECEEF2">58–74</strong> · traverse INVITE : un run décide</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <div style="position: relative; height: 22px">
+                  <div style="position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: #2E2A1E"></div>
+                  <div style="position: absolute; left: 30%; top: 2px; bottom: 2px; width: 1px; background: #8D95A3"></div>
+                  <div style="position: absolute; left: 70%; top: 2px; bottom: 2px; width: 1px; background: #ECEEF2"></div>
+                  <sc-for list="{{loo}}" as="d" hint-placeholder-count="8">
+                    <span style="position: absolute; left: {{d.left}}%; top: 6px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: {{d.fill}}; border: 1px solid #14120D"></span>
+                  </sc-for>
+                </div>
+                <div style="position: relative; height: 14px; font-size: 11px; color: #A39A80"><span style="position: absolute; left: 30%; transform: translateX(-50%)">PASS 30</span><span style="position: absolute; left: 70%; transform: translateX(-50%); color: #ECEEF2">INVITE 70</span></div>
+                <span style="font-size: 12px; color: #A39A80">Un point = le score sans un des 8 runs. Sans le Temple +16 (9 morts) : 74.</span>
+              </div>
+            </div>
+          </section>
+
+          <div style="flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <section class="card" style="padding: 4px 20px">
+              <sc-for list="{{axes}}" as="a" hint-placeholder-count="4">
+                <div style="display: grid; grid-template-columns: minmax(96px, 120px) 40px minmax(80px, 1fr) minmax(0, 1.5fr); gap: 14px; align-items: center; padding: 12px 0; border-top: {{a.border}}">
+                  <span style="font-size: 14px; font-weight: 600">{{a.name}}</span>
+                  <span class="m" style="font-size: 18px; font-weight: 700; color: {{a.fill}}">{{a.score}}</span>
+                  <div style="position: relative; height: 7px; border-radius: 999px; background: #232733">
+                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{a.score}}%; border-radius: 999px; background: {{a.fill}}"></div>
+                    <div style="position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; background: #8D95A3"></div>
+                  </div>
+                  <span style="font-size: 13px; color: #A0A7B4; min-width: 0">{{a.why}}</span>
+                </div>
+              </sc-for>
+            </section>
+            <span style="font-size: 12px; color: #5A6272">Trait = joueur moyen de sa spé.</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const VC = { INVITE: '#3FCF8E', MAYBE: '#F2B544', PASS: '#F2665C' };
+    const side = [['Vachâman', 'INVITE', 77, 3, false], ['Obye', 'MAYBE', 66, 8, true], ['Danilaskuf', 'INVITE', 76, 2, false], ['Loutrasse', 'MAYBE', 59, 5, true], ['Circe', 'PASS', 24, 4, false]]
+      .map(([name, v, score, spread, gate]) => ({ name, score, spread, gate, vColor: VC[v], cls: name === 'Obye' ? 'nav-a nav-on' : 'nav-a' }));
+    const loo = [58, 63, 65, 66, 67, 67, 68, 74].map((s) => ({ left: s, fill: s >= 70 ? '#3FCF8E' : s >= 30 ? '#F2B544' : '#F2665C' }));
+    const fillOf = (s) => s >= 70 ? '#5AB8F0' : s >= 50 ? '#C9CED8' : '#F59E5B';
+    const axes = [
+      ['Throughput', 74, 'parse médian 71 % · aucun run à la clé'],
+      ['Utilité', 66, 'kicks +4 pts vs pairs · 2 dispels/run'],
+      ['Préparation', 70, 'ilvl +3 vs attendu en +19'],
+      ['Survie', 52, 'évitable +31 % vs pairs · 0,9 mort/run'],
+    ].map(([name, score, why], i) => ({ name, score, why, fill: fillOf(score), border: i === 0 ? '0' : '1px solid #232733' }));
+    return { side, loo, axes };
+  }
+}
+</script>
+</body>
+</html>

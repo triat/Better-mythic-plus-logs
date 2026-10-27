@@ -1,0 +1,19 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-27T20:10:00Z" },
+  "title": "bmpl · Verdict à ton niveau",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 980, "expand": "fill", "title": "A · Deux pastilles : non prouvé + plage sur la barre" },
+    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 980, "expand": "fill", "title": "B · Le niveau d'abord : NON PROUVÉ en titre, le verdict à son niveau dessous" },
+    "C.dc.html": { "x": 2720, "y": 0, "w": 1280, "h": 980, "expand": "fill", "title": "C · Bloc Fiabilité : niveau et stabilité, avec les scores sans chaque run" },
+    "D.dc.html": { "x": 0, "y": 1100, "w": 1280, "h": 900, "title": "Petites surfaces : Récents, Live, Comparer, selon A / B / C" },
+    "E.dc.html": { "x": 1360, "y": 1100, "w": 1280, "h": 900, "title": "Méthode : les signaux comptés comme le joueur moyen (deux options)" }
+  },
+  "order": ["Main.dc.html", "B.dc.html", "C.dc.html", "D.dc.html", "E.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Phase 2 : le verdict pour TA clé (niveau prouvé + plage du score)", "kind": "title1", "maxW": 4000 }
+  },
+  "designSystems": []
+}

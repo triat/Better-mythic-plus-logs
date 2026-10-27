@@ -1,6 +1,7 @@
 import type { T } from "../i18n/t.ts";
 import type { HistoryItem, LookupPayload } from "../types.ts";
 import type { MenuItem } from "./header.ts";
+import { spreadOf, unprovenOf } from "./reliability.ts";
 
 export const MAX_COMPARE = 5;
 
@@ -59,7 +60,10 @@ export function withPayloadSummary(items: HistoryItem[], key: string, payload: P
   const ev = payload.evaluation;
   const verdict = ev.verdict === "insufficient" ? null : ev.verdict;
   const score = ev.global;
+  const spread = spreadOf(ev);
+  const unproven = unprovenOf(ev);
   const i = items.findIndex((it) => it.key === key);
-  if (i < 0 || (items[i]!.verdict === verdict && items[i]!.score === score)) return items;
-  return items.map((it, j) => (j === i ? { ...it, verdict, score } : it));
+  const it = items[i];
+  if (!it || (it.verdict === verdict && it.score === score && (it.spread ?? null) === spread && (it.unproven ?? null) === unproven)) return items;
+  return items.map((x, j) => (j === i ? { ...x, verdict, score, spread, unproven } : x));
 }

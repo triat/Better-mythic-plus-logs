@@ -6,6 +6,7 @@ import { classMenu, rolesFor, sortMenu } from "../../lib/live/panel.ts";
 import type { LiveRowView, LiveView } from "../../lib/live/panel.ts";
 import type { LiveRole, LiveSort, Roster } from "../../lib/live/roster.ts";
 import { ChipMenu } from "../ChipMenu.tsx";
+import { Icon } from "../Icon.tsx";
 
 /** `DeathKnight` → "Death Knight": the class menu's labels, from the one runtime table `web/` may import. */
 const CLASS_ID_BY_NAME: Record<string, number> = Object.fromEntries(
@@ -123,6 +124,8 @@ function Row({ row: r, onSelect }: { row: LiveRowView; onSelect: (character: str
               <span className={"cand-pill " + r.verdict.cls}>
                 {r.verdict.label}{r.verdict.score !== null && <span className="mono">{r.verdict.score}</span>}
               </span>
+              {r.verdict.spread && <span className="rel-spread mono">{r.verdict.spread}</span>}
+              {r.verdict.unproven && <span className="rel-mark" role="img" aria-label={r.verdict.unproven} title={r.verdict.unproven}><Icon name="warn" size={13} /></span>}
               {r.age && <span className="lv-age">{r.age}</span>}
             </>
           ) : (

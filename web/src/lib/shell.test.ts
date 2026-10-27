@@ -65,6 +65,11 @@ describe("recentRows", () => {
     expect(b!.score).toBe("—");
     expect(b!.verdict).toBeNull();
   });
+  test("the spread and the unproven level, when the history row knows them", () => {
+    const [a, b] = recentRows([item(1, { spread: 7.6, unproven: true }), item(2)], null);
+    expect([a!.spread, a!.unproven]).toEqual(["±8", true]);
+    expect([b!.spread, b!.unproven]).toEqual([null, false]);
+  });
   test("splits Name-Realm, links to the candidate page, marks the active key", () => {
     const rows = recentRows([item(1, { label: "Vachâman-Ysondre" }), item(2)], "eu|Name2-Realm|12");
     expect(rows[0]!.name).toBe("Vachâman");

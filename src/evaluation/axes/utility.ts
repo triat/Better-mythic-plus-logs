@@ -12,9 +12,9 @@ export function scoreUtility(i: EvalInputs, cfg: EvaluationConfig, override?: Ov
   // Set whenever crowdControl is: both come from the same runs.
   const rate = Math.round((u.controlRate ?? 0) * 10) / 10;
   return scoreAxis("utility", [
-    { id: "kicksVsPeers", value: u.hasKick ? u.kicksVsPeers : null, label: (r) => `kicks ${signed(r)} pts vs peers` },
-    { id: "kicksAbsolute", value: u.hasKick ? u.kicksAbsolute : null, label: (r) => `${(r * 100).toFixed(0)}% of kick capacity used` },
-    { id: "dispels", value: u.hasDispel ? u.dispels : null, label: (r) => `${r.toFixed(1)} dispels/run` },
+    { id: "kicksVsPeers", n: i.counts["utility.kicksVsPeers"], value: u.kicksVsPeers, applies: u.hasKick, label: (r) => `kicks ${signed(r)} pts vs peers` },
+    { id: "kicksAbsolute", n: i.counts["utility.kicksAbsolute"], value: u.kicksAbsolute, applies: u.hasKick, label: (r) => `${(r * 100).toFixed(0)}% of kick capacity used` },
+    { id: "dispels", n: i.counts["utility.dispels"], value: u.dispels, applies: u.hasDispel, label: (r) => `${r.toFixed(1)} dispels/run` },
     { id: "crowdControl", value: u.crowdControl, label: (r) => `crowd control ${signed(r)}% vs spec median (${rate} per 10 min)`, extra: { rate } },
   ], i.role, cfg, i.runsUsed, override);
 }

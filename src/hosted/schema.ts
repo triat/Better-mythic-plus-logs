@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS user_history (
   seq          INTEGER NOT NULL,
   verdict      TEXT,
   score        INTEGER,
+  spread       INTEGER,
+  unproven     INTEGER,
   PRIMARY KEY (user_id, key)
 );
 CREATE INDEX IF NOT EXISTS user_history_key ON user_history(key, fetched_at);

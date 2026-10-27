@@ -170,6 +170,17 @@ const payload = (over: Partial<LookupPayload> = {}): LookupPayload => ({
 } as unknown as LookupPayload);
 
 describe("profileHeader", () => {
+  test("the low-reliability chip: an unproven level or a range that decides; it waits for the thresholds", () => {
+    const th = { invite: 70, maybe: 30, minRuns: 3 };
+    const ev = (proven: boolean, low: number, high: number) => payload({ evaluation: {
+      role: "dps", targetLevel: 19, axes: [], global: 66, verdict: "maybe", runsUsed: 8, analyzedRuns: 0, configVersion: "x",
+      level: { floor: 17, best: proven ? 20 : 16, atTarget: proven ? 3 : 0, proven }, range: { low, high, without: [] },
+    } } as Partial<LookupPayload>);
+    expect(profileHeader(tEn, "en", ev(false, 63, 68), th).lowReliability).toBe("low reliability");
+    expect(profileHeader(tFr, "fr", ev(true, 58, 74), th).lowReliability).toBe("fiabilité faible");
+    expect(profileHeader(tEn, "en", ev(true, 63, 68), th).lowReliability).toBeNull();
+    expect(profileHeader(tEn, "en", ev(false, 63, 68)).lowReliability).toBeNull();
+  });
   test("French: line, verdict, facts, links", () => {
     const h = profileHeader(tFr, "fr", payload());
     expect(h.name).toBe("Obye");

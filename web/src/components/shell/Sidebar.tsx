@@ -15,6 +15,7 @@ import { SearchInput } from "../SearchInput.tsx";
 import { UserMenu } from "../UserMenu.tsx";
 import { LocalAccount } from "./LocalAccount.tsx";
 import { WhatsNew } from "./WhatsNew.tsx";
+import { Logo } from "../Logo.tsx";
 
 export interface LookupForm { character: string; spec: string; metric: "" | "dps" | "hps" }
 export const EMPTY_FORM: LookupForm = { character: "", spec: "", metric: "" };
@@ -82,7 +83,7 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
   const typed = p.form.character.trim() !== "";
   return (
     <aside className="sidebar">
-      <a className="side-logo" href="/">bmpl</a>
+      <Logo className="side-logo" />
       <div className="side-search-wrap">
         <form className="side-search" role="search" aria-label={t("shell.search.label")} onSubmit={submit}>
           <div className="search-box">
@@ -214,6 +215,8 @@ function Recent({ row, onRecent, onRemove }: { row: RecentRow; onRecent: ((key: 
         <span className={"recent-dot " + tone} aria-hidden="true" />
         <span className="recent-name">{row.name}</span>
         <span className={"recent-score mono " + tone}>{row.score}</span>
+        {row.spread && <span className="rel-spread mono">{row.spread}</span>}
+        {row.unproven && <span className="rel-mark" role="img" aria-label={t("cand.rel.unprovenMark")} title={t("cand.rel.unprovenMark")}><Icon name="warn" size={12} /></span>}
       </a>
       <button type="button" className="recent-more" aria-label={t("shell.recent.more", { name: row.name })} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <Icon name="more" size={16} />

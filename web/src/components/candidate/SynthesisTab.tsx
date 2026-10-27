@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import type { LookupPayload } from "../../types.ts";
 import { anchorOf } from "../../lib/help.ts";
+import { reliabilityView } from "../../lib/reliability.ts";
+import type { ReliabilityView } from "../../lib/reliability.ts";
 import { synthesisDocs, synthesisView } from "../../lib/synthesis.ts";
 import type { AxisLine, ForceRow, VerdictBlock } from "../../lib/synthesis.ts";
 import { useDocs } from "../../docs.tsx";
@@ -17,11 +19,12 @@ export function SynthesisTab({ payload }: { payload: LookupPayload }) {
     () => (docs ? synthesisView(t, locale, payload.evaluation, synthesisDocs(t, docs), payload.runsIndexed) : null),
     [docs, t, locale, payload],
   );
+  const rel = useMemo(() => (docs ? reliabilityView(t, payload.evaluation, payload, docs.config.verdict) : null), [docs, t, payload]);
   if (!view) return <div className="muted"><span className="spinner" /> {t("common.loading")}</div>;
   return (
     <div className="synth">
       <div className="synth-top">
-        <VerdictCard verdict={view.verdict} flip={view.flip} />
+        <VerdictCard verdict={view.verdict} flip={view.flip} rel={rel} />
         <div className="synth-side">
           <section className="card synth-card">
             <div className="synth-card-head">
@@ -50,7 +53,7 @@ export function SynthesisTab({ payload }: { payload: LookupPayload }) {
   );
 }
 
-function VerdictCard({ verdict: v, flip }: { verdict: VerdictBlock; flip: ReturnType<typeof synthesisView>["flip"] }) {
+function VerdictCard({ verdict: v, flip, rel }: { verdict: VerdictBlock; flip: ReturnType<typeof synthesisView>["flip"]; rel: ReliabilityView | null }) {
   const { t } = useT();
   return (
     <section className={"card synth-verdict " + v.cls.replace("badge-", "vt-")}>
@@ -73,6 +76,7 @@ function VerdictCard({ verdict: v, flip }: { verdict: VerdictBlock; flip: Return
         </div>
       )}
       <p className="synth-summary">{v.summary}</p>
+      {rel && <Reliability rel={rel} />}
       {flip && (
         <div className="synth-flip">
           <span className="synth-lbl">{flip.title}<HelpLink anchor="drivers" /></span>
@@ -94,6 +98,34 @@ function VerdictCard({ verdict: v, flip }: { verdict: VerdictBlock; flip: Return
         </div>
       )}
     </section>
+  );
+}
+
+/** Canvas "bmpl · Verdict à ton niveau", variant C: the level and the stability, with the score without each run. */
+function Reliability({ rel }: { rel: ReliabilityView }) {
+  return (
+    <div className="rel">
+      <span className="synth-lbl">{rel.title}<HelpLink anchor="reliability" /></span>
+      <dl className="rel-rows">
+        <dt>{rel.level.label}</dt>
+        <dd><b className={rel.level.ok ? undefined : "rel-warn"}>{rel.level.strong}</b> · {rel.level.detail}</dd>
+        <dt>{rel.stability.label}</dt>
+        <dd>{rel.stability.strong && <><b className="mono">{rel.stability.strong}</b> · </>}{rel.stability.detail}</dd>
+      </dl>
+      {rel.dots.length > 0 && (
+        <div className="rel-strip-wrap" aria-hidden="true">
+          <div className="rel-strip">
+            <div className="rel-track" />
+            {rel.ticks.map((tk) => <span key={tk.at} className={"rel-tick " + tk.band} style={{ left: `${tk.at}%` }} />)}
+            {rel.dots.map((d) => <span key={d.key} className={"rel-dot " + d.band} style={{ left: `${d.at}%` }} />)}
+          </div>
+          <div className="rel-labels">
+            {rel.ticks.map((tk) => <span key={tk.at} style={{ left: `${tk.at}%` }}>{tk.label}</span>)}
+          </div>
+        </div>
+      )}
+      {rel.note && <span className="rel-note">{rel.note}</span>}
+    </div>
   );
 }
 

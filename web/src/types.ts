@@ -62,6 +62,10 @@ export interface HistoryItem {
   verdict: "invite" | "maybe" | "pass" | null;
   /** The evaluation's global score; null when there is none. */
   score: number | null;
+  /** How far the score moves when one run is left out; null when unknown (absent on old servers). */
+  spread?: number | null;
+  /** The vetted key's level is not proven; null when unknown (absent on old servers). */
+  unproven?: boolean | null;
   fetchedAt: number;
   /** The effective request (region included) — what Refresh re-runs. */
   request: HistoryRequest;

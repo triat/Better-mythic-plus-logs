@@ -19,10 +19,12 @@ export interface UserHistoryRepo {
 }
 
 interface ItemRaw { key: string; request: string; label: string; char_class: number; spec: string | null; target_level: number; target_auto: number; fetched_at: number;
-  verdict: string | null; score: number | null }
+  verdict: string | null; score: number | null; spread: number | null; unproven: number | null }
 interface EntryRaw extends ItemRaw { payload: string }
 
-const ITEM_COLUMNS = "key, request, label, char_class, spec, target_level, target_auto, fetched_at, verdict, score";
+const ITEM_COLUMNS = "key, request, label, char_class, spec, target_level, target_auto, fetched_at, verdict, score, spread, unproven";
+/** `unproven` as stored: 1, 0 or NULL. */
+const bit = (b: boolean | null): number | null => (b === null ? null : b ? 1 : 0);
 
 const item = (r: ItemRaw, defaultRegion: Region): HistoryListItem => ({
   key: r.key,
@@ -36,6 +38,8 @@ const item = (r: ItemRaw, defaultRegion: Region): HistoryListItem => ({
   // Written only through `summaryOf`, so the stored text is one of the three verdicts or NULL.
   verdict: r.verdict as HistoryVerdict | null,
   score: r.score,
+  spread: r.spread,
+  unproven: r.unproven === null ? null : r.unproven === 1,
 });
 const entry = (r: EntryRaw, defaultRegion: Region): HistoryEntry => ({ ...item(r, defaultRegion), result: JSON.parse(r.payload) as unknown });
 const asRecord = (e: HistoryEntry): HistoryRecord =>
@@ -99,12 +103,28 @@ function migrateVerdictColumns(db: Database, tables: HistoryTables): void {
   })();
 }
 
+/**
+ * Tables created before the rows carried the score's spread and the unproven level (validity spec 2026-10-27) lack
+ * both columns: add them, NULL. Not backfilled: a row gets them the next time its payload is read and re-evaluated
+ * (`syncSummary`) or replaced.
+ */
+function migrateReliabilityColumns(db: Database, tables: HistoryTables): void {
+  const T = tables.history;
+  const has = db.query<{ name: string }, []>(`PRAGMA table_info(${T})`).all().some((c) => c.name === "spread");
+  if (has) return;
+  db.transaction(() => {
+    db.run(`ALTER TABLE ${T} ADD COLUMN spread INTEGER`);
+    db.run(`ALTER TABLE ${T} ADD COLUMN unproven INTEGER`);
+  })();
+}
+
 /** `defaultRegion` (the instance default) completes rows that predate the region — at open, then on read. */
 export function openUserHistory(db: Database, max: number, tables: HistoryTables, defaultRegion: Region): UserHistoryRepo {
   const T = tables.history;
   const A = tables.auto;
   migrateRegionlessKeys(db, tables, defaultRegion);
   migrateVerdictColumns(db, tables);
+  migrateReliabilityColumns(db, tables);
   const toItem = (r: ItemRaw) => item(r, defaultRegion);
   const toEntry = (r: EntryRaw) => entry(r, defaultRegion);
   const getOne = db.query<EntryRaw, [number, string]>(`SELECT ${ITEM_COLUMNS}, payload FROM ${T} WHERE user_id = ? AND key = ?`);
@@ -114,17 +134,20 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
   const oldest = db.query<ItemRaw, [number]>(`SELECT ${ITEM_COLUMNS} FROM ${T} WHERE user_id = ? ORDER BY seq ASC LIMIT 1`);
   const touch = db.query(`UPDATE ${T} SET seq = ? WHERE user_id = ? AND key = ?`);
   const upsert = db.query(
-    `INSERT INTO ${T} (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq, verdict, score)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO ${T} (user_id, key, request, payload, label, char_class, spec, target_level, target_auto, fetched_at, seq, verdict, score, spread, unproven)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id, key) DO UPDATE SET request = excluded.request, payload = excluded.payload, label = excluded.label,
        char_class = excluded.char_class, spec = excluded.spec, target_level = excluded.target_level,
        target_auto = excluded.target_auto, fetched_at = excluded.fetched_at, seq = excluded.seq,
-       verdict = excluded.verdict, score = excluded.score`,
+       verdict = excluded.verdict, score = excluded.score, spread = excluded.spread, unproven = excluded.unproven`,
   );
-  const setPayload = db.query(`UPDATE ${T} SET payload = ?, verdict = ?, score = ? WHERE user_id = ? AND key = ?`);
+  const setPayload = db.query(`UPDATE ${T} SET payload = ?, verdict = ?, score = ?, spread = ?, unproven = ? WHERE user_id = ? AND key = ?`);
   // Guarded so an unchanged row is not rewritten (every history read and cache hit calls it), and so a row replaced
   // since the payload was read (`fetched_at` moved: a Refresh in between) keeps the newer payload's summary.
-  const setSummary = db.query(`UPDATE ${T} SET verdict = ?, score = ? WHERE user_id = ? AND key = ? AND fetched_at = ? AND (verdict IS NOT ? OR score IS NOT ?)`);
+  const setSummary = db.query(
+    `UPDATE ${T} SET verdict = ?, score = ?, spread = ?, unproven = ? WHERE user_id = ? AND key = ? AND fetched_at = ?
+       AND (verdict IS NOT ? OR score IS NOT ? OR spread IS NOT ? OR unproven IS NOT ?)`,
+  );
   const deleteOne = db.query(`DELETE FROM ${T} WHERE user_id = ? AND key = ?`);
   const deleteAll = db.query(`DELETE FROM ${T} WHERE user_id = ?`);
   const sharedNewest = db.query<EntryRaw, [string, number, number]>(
@@ -158,7 +181,7 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
           autoSet.run(userId, aliasKey, rec.targetLevel, fetchedAt);
         }
         const summary = summaryOf(rec.result);
-        upsert.run(userId, key, JSON.stringify(r), JSON.stringify(rec.result), rec.label, rec.charClass, rec.spec, rec.targetLevel, rec.targetAutoDetected ? 1 : 0, fetchedAt, nextSeq.get(userId)!.n, summary.verdict, summary.score);
+        upsert.run(userId, key, JSON.stringify(r), JSON.stringify(rec.result), rec.label, rec.charClass, rec.spec, rec.targetLevel, rec.targetAutoDetected ? 1 : 0, fetchedAt, nextSeq.get(userId)!.n, summary.verdict, summary.score, summary.spread, bit(summary.unproven));
         while (count.get(userId)!.n > max) {
           const o = oldest.get(userId);
           if (!o) break;
@@ -225,11 +248,12 @@ export function openUserHistory(db: Database, max: number, tables: HistoryTables
         },
         updateResult(key, result) {
           const s = summaryOf(result);
-          setPayload.run(JSON.stringify(result), s.verdict, s.score, userId, key);
+          setPayload.run(JSON.stringify(result), s.verdict, s.score, s.spread, bit(s.unproven), userId, key);
         },
         syncSummary(key, result, fetchedAt) {
           const s = summaryOf(result);
-          setSummary.run(s.verdict, s.score, userId, key, fetchedAt, s.verdict, s.score);
+          const u = bit(s.unproven);
+          setSummary.run(s.verdict, s.score, s.spread, u, userId, key, fetchedAt, s.verdict, s.score, s.spread, u);
         },
       };
     },

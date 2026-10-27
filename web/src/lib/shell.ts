@@ -8,7 +8,13 @@ import type { MenuModel } from "./session.ts";
 export type NavKey = "home" | "candidate" | "me" | "compare" | "live" | "help";
 export type IconName = "home" | "users" | "user" | "compare" | "live" | "help";
 export interface NavItem { key: NavKey; href: string; label: string; icon: IconName; active: boolean; count?: number; dot?: "on" | "off" }
-export interface RecentRow { key: string; href: string; name: string; verdict: "invite" | "maybe" | "pass" | null; score: string; active: boolean; classId: number }
+export interface RecentRow {
+  key: string; href: string; name: string; verdict: "invite" | "maybe" | "pass" | null; score: string; active: boolean; classId: number;
+  /** "±8": how far the score moves when one run is left out (canvas "bmpl · Verdict à ton niveau", C); null when unknown. */
+  spread: string | null;
+  /** The vetted key's level is not proven. */
+  unproven: boolean;
+}
 /** An outward link of the account block (canvas "bmpl · Contact et soutien", variant A); opens in a new tab. */
 export interface AccountLink { key: "contact" | "support"; href: string; label: string }
 export interface AccountView {
@@ -50,6 +56,8 @@ function recentRow(i: HistoryItem, activeKey: string | null): RecentRow {
     score: i.score === null ? "—" : String(Math.round(i.score)),
     active: i.key === activeKey,
     classId: i.charClass,
+    spread: typeof i.spread === "number" ? `±${Math.round(i.spread)}` : null,
+    unproven: i.unproven === true,
   };
 }
 

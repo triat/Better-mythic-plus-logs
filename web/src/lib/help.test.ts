@@ -122,13 +122,13 @@ test("roleWeights, informational axis, thresholds text, faq filter", () => {
 
 test("axisNote: the minimum-runs line of Survival and Consistency, from the config", () => {
   const c = { high: 6, medium: 3, consistencyMinRuns: 5, deepdiveMinRuns: 2 };
-  expect(axisNote(tEn, "survival", c)).toBe("The two deep-dive sub-signals appear once at least 2 shown runs have been analyzed.");
+  expect(axisNote(tEn, "survival", c)).toBe("The two deep-dive sub-signals appear once at least 2 shown runs have been analyzed, in your own characters' Survival pillar only: they never count in the verdict.");
   expect(axisNote(tEn, "consistency", c)).toBe("Every sub-signal needs at least 5 runs; below that the axis is n/a.");
-  expect(axisNote(tEn, "survival", { ...c, deepdiveMinRuns: 1 })).toBe("The two deep-dive sub-signals appear once at least 1 shown run has been analyzed.");
+  expect(axisNote(tEn, "survival", { ...c, deepdiveMinRuns: 1 })).toBe("The two deep-dive sub-signals appear once at least 1 shown run has been analyzed, in your own characters' Survival pillar only: they never count in the verdict.");
   expect(axisNote(tEn, "consistency", { ...c, consistencyMinRuns: 1 })).toBe("Every sub-signal needs at least 1 run; below that the axis is n/a.");
   expect(axisNote(tEn, "utility", c)).toBeNull();
-  expect(axisNote(tFr, "survival", c)).toBe("Les deux sous-signaux deep-dive apparaissent une fois qu'au moins 2 runs affichés ont été analysés.");
-  expect(axisNote(tFr, "survival", { ...c, deepdiveMinRuns: 1 })).toBe("Les deux sous-signaux deep-dive apparaissent une fois qu'au moins 1 run affiché a été analysé.");
+  expect(axisNote(tFr, "survival", c)).toBe("Les deux sous-signaux deep-dive apparaissent une fois qu'au moins 2 runs affichés ont été analysés, dans le pilier Survie de tes propres personnages seulement : ils ne comptent jamais dans le verdict.");
+  expect(axisNote(tFr, "survival", { ...c, deepdiveMinRuns: 1 })).toBe("Les deux sous-signaux deep-dive apparaissent une fois qu'au moins 1 run affiché a été analysé, dans le pilier Survie de tes propres personnages seulement : ils ne comptent jamais dans le verdict.");
   expect(axisNote(tFr, "consistency", c)).toBe("Chaque sous-signal demande au moins 5 runs ; en dessous l'axe est n/a.");
   expect(axisNote(tFr, "utility", c)).toBeNull();
 });

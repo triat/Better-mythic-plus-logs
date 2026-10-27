@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Petites surfaces et états</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+.m{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8D95A3}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:999px;background:#1C2029;border:1px solid #2A2F3B;font-size:12px;color:#C9CED8;white-space:nowrap}
+.cell{background:#161920;border:1px solid #232733;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0;box-sizing:border-box}
+.row{display:flex;align-items:center;gap:8px;min-width:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 900px; box-sizing: border-box; padding: 32px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; display: grid; grid-template-columns: 170px repeat(3, minmax(0, 1fr)); gap: 12px; align-content: start">
+
+  <span></span>
+  <span class="lbl" style="color: #ECEEF2">A · Deux pastilles</span>
+  <span class="lbl" style="color: #ECEEF2">B · Le niveau d'abord</span>
+  <span class="lbl" style="color: #ECEEF2">C · Fiabilité</span>
+
+  <span style="font-size: 14px; font-weight: 600; padding-top: 12px">Récents</span>
+  <div class="cell"><div class="row"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F2B544"></span><span style="font-size: 14px; color: #C9CED8">Obye</span><span class="m" style="margin-left: auto; font-size: 11px; color: #A0A7B4; border: 1px solid #2A2F3B; border-radius: 6px; padding: 0 5px">+16</span><span class="m" style="font-size: 13px; color: #F2B544">66</span></div></div>
+  <div class="cell"><div class="row"><span style="width: 8px; height: 8px; border-radius: 50%; box-sizing: border-box; border: 2px solid #F2B544"></span><span style="font-size: 14px; color: #C9CED8">Obye</span><span class="m" style="margin-left: auto; font-size: 13px; color: #A0A7B4">66</span></div></div>
+  <div class="cell"><div class="row"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F2B544"></span><span style="font-size: 14px; color: #C9CED8">Obye</span><span class="m" style="margin-left: auto; font-size: 13px; color: #F2B544">66</span><span class="m" style="font-size: 11px; color: #8D95A3">±8</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A0A7B4" stroke-width="2.4" aria-label="non prouvé à ta clé"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></div></div>
+
+  <span style="font-size: 14px; font-weight: 600; padding-top: 12px">Live · candidat</span>
+  <div class="cell"><div class="row" style="flex-wrap: wrap"><span style="font-size: 14px; font-weight: 700; color: #B65CE0">Obye</span><span style="font-size: 12px; color: #8D95A3">DH · 319</span><span class="chip" style="background: #1A1812; border-color: #3D3420; color: #F2B544; font-weight: 700">MAYBE <span class="m">66</span><span class="m" style="font-weight: 500; color: #C2B48F">58–74</span></span><span class="chip">non prouvé +19</span></div></div>
+  <div class="cell"><div class="row" style="flex-wrap: wrap"><span style="font-size: 14px; font-weight: 700; color: #B65CE0">Obye</span><span style="font-size: 12px; color: #8D95A3">DH · 319</span><span class="chip" style="background: transparent; border-color: #8D95A3; color: #ECEEF2; font-weight: 700">NON PROUVÉ +19</span><span class="m" style="font-size: 12px; color: #C2B48F">MAYBE 66 à +16</span></div></div>
+  <div class="cell"><div class="row" style="flex-wrap: wrap"><span style="font-size: 14px; font-weight: 700; color: #B65CE0">Obye</span><span style="font-size: 12px; color: #8D95A3">DH · 319</span><span class="chip" style="background: #1A1812; border-color: #3D3420; color: #F2B544; font-weight: 700">MAYBE <span class="m">66</span></span><span class="m" style="font-size: 11px; color: #8D95A3">±8</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A0A7B4" stroke-width="2.4" aria-label="non prouvé à ta clé"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></div></div>
+
+  <span style="font-size: 14px; font-weight: 600; padding-top: 12px">Comparer · tête</span>
+  <div class="cell"><span style="font-size: 16px; font-weight: 800; color: #B65CE0">Obye</span><div class="row"><span style="font-size: 22px; font-weight: 800; color: #F2B544">MAYBE</span><span class="m" style="font-size: 22px; font-weight: 700">66</span><span class="m" style="font-size: 12px; color: #C2B48F">58–74</span></div><span class="chip" style="align-self: flex-start">non prouvé en +19 · max +16</span></div>
+  <div class="cell"><span style="font-size: 16px; font-weight: 800; color: #B65CE0">Obye</span><span style="font-size: 20px; font-weight: 800">NON PROUVÉ</span><span style="font-size: 12px; color: #C2B48F">MAYBE 66 à son niveau (+16) · entre 58 et 74</span></div>
+  <div class="cell"><span style="font-size: 16px; font-weight: 800; color: #B65CE0">Obye</span><div class="row"><span style="font-size: 22px; font-weight: 800; color: #F2B544">MAYBE</span><span class="m" style="font-size: 22px; font-weight: 700">66</span></div><span style="font-size: 12px; color: #A0A7B4">Niveau ✗ max +16 · Stabilité 58–74</span></div>
+
+  <span style="font-size: 14px; font-weight: 600; padding-top: 12px; line-height: 1.35">Prouvé et stable<br><span style="font-size: 12px; font-weight: 400; color: #8D95A3">5 runs en +19 ou plus</span></span>
+  <div class="cell"><div class="row"><span class="chip" style="background: #12201B; border-color: #24523F; color: #3FCF8E; font-weight: 700">INVITE <span class="m">82</span><span class="m" style="font-weight: 500; color: #8FD3B4">79–85</span></span></div><span style="font-size: 12px; color: #8D95A3">Pas de pastille de niveau quand il est prouvé.</span></div>
+  <div class="cell"><div class="row"><span style="font-size: 22px; font-weight: 800; color: #3FCF8E">INVITE</span><span class="m" style="font-size: 22px; font-weight: 700">82</span></div><span style="font-size: 12px; color: #8D95A3">entre 79 et 85 · comme aujourd’hui sinon</span></div>
+  <div class="cell"><div class="row"><span style="font-size: 22px; font-weight: 800; color: #3FCF8E">INVITE</span><span class="m" style="font-size: 22px; font-weight: 700">82</span></div><span style="font-size: 12px; color: #A0A7B4">Niveau ✓ 5 runs en +19 ou plus · Stabilité 79–85, stable</span></div>
+
+  <span style="font-size: 14px; font-weight: 600; padding-top: 12px; line-height: 1.35">Trop peu de runs<br><span style="font-size: 12px; font-weight: 400; color: #8D95A3">3 runs : pas de plage</span></span>
+  <div class="cell"><div class="row"><span class="chip" style="background: #1A1812; border-color: #3D3420; color: #F2B544; font-weight: 700">MAYBE <span class="m">55</span></span></div><span style="font-size: 12px; color: #8D95A3">Plage dès 4 runs.</span></div>
+  <div class="cell"><div class="row"><span style="font-size: 22px; font-weight: 800; color: #F2B544">MAYBE</span><span class="m" style="font-size: 22px; font-weight: 700">55</span></div><span style="font-size: 12px; color: #8D95A3">3 runs seulement : impossible de dire si ce score tient.</span></div>
+  <div class="cell"><div class="row"><span style="font-size: 22px; font-weight: 800; color: #F2B544">MAYBE</span><span class="m" style="font-size: 22px; font-weight: 700">55</span></div><span style="font-size: 12px; color: #A0A7B4">Stabilité : non mesurée, il faut 4 runs ou plus</span></div>
+
+  <span style="font-size: 14px; font-weight: 600; padding-top: 12px; line-height: 1.35">Plus haut que ta clé<br><span style="font-size: 12px; font-weight: 400; color: #8D95A3">meilleur +22, ta clé +19</span></span>
+  <div class="cell" style="grid-column: span 3"><span style="font-size: 13px; color: #C9CED8">Rien de plus : le niveau est prouvé dès qu’un run atteint ta clé − 2 (ici +17). Un joueur bien au-dessus n’a ni pastille ni texte.</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

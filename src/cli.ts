@@ -86,12 +86,15 @@ Usage:
   bmpl invite <discord-id> [--note "…"] | --list | --remove <discord-id>
                                      Hosted mode: allow a Discord user to sign in
                                      (writes the invites table in bmpl.db).
-  bmpl calibrate --hourly [--minutes 55] | --fit
+  bmpl calibrate --hourly [--minutes 55] | --fit | --study
                                      Weekly recalibration, run by its systemd timers:
                                      --hourly samples for an hour with the WCL points
                                      the members leave (spends points; calibration.db);
                                      --fit refits the global curves (~1 pt) and writes
-                                     candidate.json + comparison.md next to it.
+                                     candidate.json + comparison.md next to it;
+                                     --study (0 pts, also part of --fit) measures each
+                                     signal's reliability and the candidates: study.json
+                                     + study.md next to it.
   bmpl char <name> <realm>           Basic character info.
   bmpl ping                          Verify API auth + show rate-limit budget.
   bmpl zones [--mplus]               List WCL zones (M+ filter available).

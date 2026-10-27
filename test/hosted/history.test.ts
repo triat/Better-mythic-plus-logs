@@ -91,7 +91,7 @@ describe("SQLite history — same semantics as the in-memory History", () => {
     const { a: h } = setup(20, () => 4242);
     const e = h.record(req("A-B", 10), entry({ label: "A-B", targetLevel: 10, targetAutoDetected: false, result: { v: 1 } }));
     const [item] = h.list();
-    expect(item).toEqual({ key: e.key, request: req("A-B", 10), fetchedAt: 4242, label: "A-B", charClass: 7, spec: "Holy", targetLevel: 10, targetAutoDetected: false, verdict: null, score: null });
+    expect(item).toEqual({ key: e.key, request: req("A-B", 10), fetchedAt: 4242, label: "A-B", charClass: 7, spec: "Holy", targetLevel: 10, targetAutoDetected: false, verdict: null, score: null, spread: null, unproven: null });
     expect("result" in item!).toBe(false);
     expect(h.get(e.key)).toEqual({ ...item!, result: { v: 1 } });
   });
@@ -329,6 +329,18 @@ describe("SQLite history — verdict and score", () => {
     expect(a.list().map((i) => [i.verdict, i.score])).toEqual([["invite", 78]]);
   });
 
+  test("record and syncSummary carry the spread and the unproven level, even when verdict and score stay", () => {
+    const { a } = setup();
+    const withRel = (proven: boolean, low: number, high: number) =>
+      ({ evaluation: { verdict: "maybe", global: 66, range: { low, high, without: [] }, level: { proven } } });
+    const e = a.record(req("A-X", 19), entry({ label: "A-X", targetLevel: 19, result: evaluated("maybe", 66) }));
+    expect(a.list().map((i) => [i.spread, i.unproven])).toEqual([[null, null]]);
+    a.syncSummary(e.key, withRel(false, 58, 74), e.fetchedAt);
+    expect(a.list().map((i) => [i.verdict, i.score, i.spread, i.unproven])).toEqual([["maybe", 66, 8, true]]);
+    a.updateResult(e.key, withRel(true, 64, 69));
+    expect(a.get(e.key)).toMatchObject({ spread: 3, unproven: false });
+  });
+
   test("another member's copied entry keeps the verdict and score", () => {
     const { a, b } = setup();
     a.record(req("A-X", 18), entry({ label: "A-X", targetLevel: 18, result: evaluated("maybe", 50) }));
@@ -347,7 +359,7 @@ describe("SQLite history — verdict and score", () => {
     expect(columns(db, "old_history")).not.toContain("verdict");
 
     openUserHistory(db, HISTORY_MAX_PER_USER, tables, "eu");
-    expect(columns(db, "old_history")).toEqual(expect.arrayContaining(["verdict", "score"]));
+    expect(columns(db, "old_history")).toEqual(expect.arrayContaining(["verdict", "score", "spread", "unproven"]));
     const rows = () => db.query<{ key: string; verdict: string | null; score: number | null }, []>("SELECT label AS key, verdict, score FROM old_history ORDER BY seq").all();
     expect(rows()).toEqual([
       { key: "A-X", verdict: "invite", score: 91 },
@@ -365,6 +377,6 @@ describe("SQLite history — verdict and score", () => {
 
   test("the hosted and local schemas carry the columns from the start", () => {
     const { db } = setup();
-    expect(columns(db, "user_history")).toEqual(expect.arrayContaining(["verdict", "score"]));
+    expect(columns(db, "user_history")).toEqual(expect.arrayContaining(["verdict", "score", "spread", "unproven"]));
   });
 });

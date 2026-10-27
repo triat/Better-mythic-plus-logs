@@ -12,6 +12,8 @@ import { AXIS_KEYS } from "../../src/evaluation/types.ts";
 import { deaths, fixturePayload, payloadWith, runWith } from "./helpers.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
+/** The engine without the average player: a missing sub-signal is left out (the rule before config version 10). */
+const noRef = { ...cfg, reference: { dps: {}, healer: {}, tank: {} } };
 
 const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   role: "dps", targetLevel: 16, runsUsed: 6, analyzedRuns: 0, seasonSlug: "season-mn-2",
@@ -20,6 +22,7 @@ const baseInputs = (over: Partial<EvalInputs> = {}): EvalInputs => ({
   throughput: { medianParse: null, parseAtTarget: null },
   consistency: { sample: 6, parseSpread: null, deathsSpread: null, damageSpread: null },
   preparation: { ilvl: null },
+  counts: {},
   ...over,
 });
 
@@ -30,7 +33,7 @@ describe("scoreAxis engine", () => {
       { id: "wipeDeaths", value: null, label: () => "x" },
       { id: "avoidableVsPeers", value: 50, label: (r) => `${r}%` },        // 10, w2 → delta +2×-40/5 = -16
       { id: "groupDeaths", value: 0, label: () => "g" },                    // weight 0 for dps → skipped
-    ], "dps", cfg, 6);
+    ], "dps", noRef, 6);
     // Σw = 3+2 = 5 ; score = (3×65 + 2×10)/5 = 43
     expect(a.score).toBe(43);
     expect(a.evidence.map((e) => e.source)).toEqual(["survival.avoidableVsPeers", "survival.individualDeaths"]);
@@ -60,7 +63,32 @@ describe("scoreAxis engine", () => {
       { id: "avoidableDeaths", value: 0.5, extra: { count: 1, total: 2 }, label: () => "1/2" },
     ], "tank", cfg, 4);
     expect(a.evidence.find((e) => e.source === "survival.individualDeaths")).toMatchObject({ label: "1.25", value: 1.25 });
-    expect(a.evidence.find((e) => e.source === "survival.avoidableDeaths")).toMatchObject({ value: 0.5, extra: { count: 1, total: 2 } });
+    expect(a.pillarOnly!.find((e) => e.source === "survival.avoidableDeaths")).toMatchObject({ value: 0.5, extra: { count: 1, total: 2 } });
+  });
+  test("a missing sub-signal scores as the role's average player, listed as imputed, never as evidence", () => {
+    const ref = cfg.reference.dps["survival.avoidableVsPeers"]!;
+    const subs = (avoidable: number | null) => [
+      { id: "individualDeaths", value: 1, label: (r: number) => `${r}` },
+      { id: "avoidableVsPeers", value: avoidable, label: (r: number) => `${r}` },
+    ];
+    const missing = scoreAxis("survival", subs(null), "dps", cfg, 6);
+    expect(missing.imputed).toEqual(["survival.avoidableVsPeers"]);
+    expect(missing.evidence.map((e) => e.source)).toEqual(["survival.individualDeaths"]);
+    expect(missing.score).toBe(scoreAxis("survival", subs(ref.x), "dps", cfg, 6).score);
+  });
+  test("a sub-signal the kit cannot have is left out, not imputed; an axis with nothing measured stays n/a", () => {
+    const a = scoreAxis("utility", [
+      { id: "kicksVsPeers", value: null, applies: false, label: () => "" },
+      { id: "dispels", value: 3, label: (r) => `${r}` },
+    ], "dps", cfg, 6);
+    expect(a.imputed).toBeUndefined();
+    expect(a.score).toBe(60);
+    const none = scoreAxis("throughput", [
+      { id: "medianParse", value: null, label: () => "" },
+      { id: "parseAtTarget", value: null, label: () => "" },
+    ], "dps", cfg, 6);
+    expect(none.score).toBeNull();
+    expect(none.imputed).toBeUndefined();
   });
 });
 
@@ -72,7 +100,7 @@ describe("survival", () => {
       baseInputs({
         survival: { individualDeaths: 1.25, individualDeathsScaled: 2, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: 20, groupDeaths: null, groupDeathsScaled: null, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 },
       }),
-      cfg,
+      noRef,
     );
     // dps weights individualDeaths=3, dtpsVsPeers=1 → (3×35 + 1×40)/4 = 145/4 = 36.25 → round 36
     expect(at8.score).toBe(36);
@@ -92,7 +120,7 @@ describe("survival", () => {
   test("healer counts teammate deaths", () => {
     const h = scoreSurvival(
       baseInputs({ role: "healer", survival: { individualDeaths: 0, individualDeathsScaled: 0, wipeDeaths: null, avoidableVsPeers: null, dtpsVsPeers: null, groupDeaths: 4, groupDeathsScaled: 4, defensiveUsage: null, avoidableDeathShare: null, avoidableDeathsCount: 0, countedDeathsCount: 0 } }),
-      cfg,
+      noRef,
     );
     expect(h.evidence.map((e) => e.source)).toContain("survival.groupDeaths");
     // healer weights individualDeaths=3, groupDeaths=2 → (3×100 + 2×45)/5 = 390/5 = 78
@@ -105,18 +133,20 @@ describe("survival", () => {
     expect(at12.score).toBe(at20.score);
     expect(at12.evidence).toEqual(at20.evidence);
   });
-  test("deep-dive sub-signals score and label from the counts", () => {
+  test("deep-dive sub-signals score and label from the counts, for the pillar only", () => {
     const a = scoreSurvival(baseInputs({ analyzedRuns: 3, survival: { ...baseInputs().survival, defensiveUsage: 0.6, avoidableDeathShare: 2 / 3, avoidableDeathsCount: 2, countedDeathsCount: 3 } }), cfg);
-    const usage = a.evidence.find((e) => e.source === "survival.defensiveUsage")!;
+    expect(a.evidence).toEqual([]);
+    expect(a.score).toBeNull();
+    const usage = a.pillarOnly!.find((e) => e.source === "survival.defensiveUsage")!;
     expect(usage.label).toBe("majors used 60% of possible (3 runs)");
     expect(usage.value).toBe(0.6);
     expect(usage.extra).toEqual({ runs: 3 });
-    const deaths = a.evidence.find((e) => e.source === "survival.avoidableDeaths")!;
+    const deaths = a.pillarOnly!.find((e) => e.source === "survival.avoidableDeaths")!;
     expect(deaths.label).toBe("2/3 deaths with something at hand");
     expect(deaths.value).toBeCloseTo(2 / 3, 6);
     expect(deaths.extra).toEqual({ count: 2, total: 3 });
-    expect(deaths.delta).toBeLessThan(0);   // 0.67 → 30 on the curve
-    expect(usage.delta).toBeGreaterThan(0); // 0.6 → 85
+    expect(deaths.score).toBeCloseTo(30, 0); // 0.67 → 30 on the curve
+    expect(usage.score).toBe(85);            // 0.6 → 85
   });
 });
 
@@ -138,7 +168,7 @@ describe("EVIDENCE_SOURCES", () => {
   });
   test("survival.defensiveUsage carries extra.runs when a deep-dive exists", () => {
     const a = scoreSurvival(baseInputs({ analyzedRuns: 1, survival: { ...baseInputs().survival, defensiveUsage: 0.5 } }), cfg);
-    expect(a.evidence.find((e) => e.source === "survival.defensiveUsage")).toMatchObject({ label: "majors used 50% of possible (1 run)", value: 0.5, extra: { runs: 1 } });
+    expect(a.pillarOnly!.find((e) => e.source === "survival.defensiveUsage")).toMatchObject({ label: "majors used 50% of possible (1 run)", value: 0.5, extra: { runs: 1 } });
   });
 });
 
@@ -173,7 +203,7 @@ describe("consistency", () => {
     expect(c.confidence).toBe("low");
   });
   test("scores spreads", () => {
-    const c = scoreConsistency(baseInputs({ consistency: { sample: 6, parseSpread: 10, deathsSpread: 1.5, damageSpread: null } }), cfg);
+    const c = scoreConsistency(baseInputs({ consistency: { sample: 6, parseSpread: 10, deathsSpread: 1.5, damageSpread: null } }), noRef);
     // weights parseSpread=2, deathsSpread=2 → (2×85 + 2×45)/4 = 260/4 = 65
     expect(c.score).toBe(65);
   });

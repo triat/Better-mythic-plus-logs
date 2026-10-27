@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "La barre latérale reste maintenant visible quand tu fais défiler une longue page, avec ton compte en bas ; tes recherches récentes défilent à l'intérieur quand la liste est longue.",
+    ],
+  },
+  {
     version: "0.10.10",
     date: "2026-10-27",
     items: [

@@ -194,8 +194,11 @@ function Recent({ row, onRecent, onRemove }: { row: RecentRow; onRecent: ((key: 
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLLIElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
+    // Récents may scroll inside the sidebar: bring a menu opened on its last visible row into view.
+    menuRef.current?.scrollIntoView({ block: "nearest" });
     const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDoc);
@@ -222,7 +225,7 @@ function Recent({ row, onRecent, onRemove }: { row: RecentRow; onRecent: ((key: 
         <Icon name="more" size={16} />
       </button>
       {open && (
-        <div className="menu card recent-menu" role="menu">
+        <div className="menu card recent-menu" role="menu" ref={menuRef}>
           <button type="button" className="menu-item" role="menuitem" onClick={() => { setOpen(false); onRemove(row.key); }}>{t("shell.recent.remove")}</button>
         </div>
       )}

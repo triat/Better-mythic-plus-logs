@@ -31,7 +31,7 @@ Copy both this `deploy/` directory and `.env.hosted.example` to the VPS before r
 6. First deploy only: `sudo systemctl start litestream bmpl-backup-check.timer`.
 7. Verify: `systemctl status bmpl caddy litestream bmpl-backup-check.timer`, hit `https://bmpl.example.com/api/health` (`curl -s … | jq .warnings` should print `[]` once the first backup snapshot and check have run), and after the first hour check `/opt/bmpl/last-backup` exists.
 
-`/opt/bmpl/.env` also takes four optional variables beyond the required ones: `BMPL_OPEN_SIGNUP`, `BMPL_DISCORD_GUILD_ID`, `BMPL_ENCRYPTION_KEY` (enables members' own Warcraft Logs clients — generate with `openssl rand -base64 32`), `BMPL_OPERATOR`. See `.env.hosted.example` and [docs/hosted.md](../docs/hosted.md#environment) for what each does.
+`/opt/bmpl/.env` also takes four optional variables beyond the required ones: `BMPL_OPEN_SIGNUP`, `BMPL_DISCORD_GUILD_ID`, `BMPL_ENCRYPTION_KEY` (enables members' own Warcraft Logs clients — generate with `openssl rand -base64 32`), `BMPL_OPERATOR`, plus `BMPL_CONTACT_URL` / `BMPL_SUPPORT_URL` for the account block's links. See `.env.hosted.example` and [docs/hosted.md](../docs/hosted.md#environment) for what each does.
 
 ## Deploying on a VPS
 

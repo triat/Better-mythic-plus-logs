@@ -321,6 +321,8 @@ Optional:
 | `BMPL_DISCORD_GUILD_ID` | Only accounts in this Discord server may sign in (adds the `guilds` OAuth scope) |
 | `BMPL_ENCRYPTION_KEY` | 32 random bytes, base64 (`openssl rand -base64 32`); enables members' own WCL clients — losing it makes stored clients unusable |
 | `BMPL_OPERATOR` | Who runs this instance, shown on `/privacy` (default "the admin of this instance") |
+| `BMPL_CONTACT_URL` | Where members reach the operator: the "Discord" link under the version line, the account menu's "Message … on Discord" and the `/privacy` questions line. Default: the first `BMPL_ADMIN_DISCORD_IDS` profile, `https://discord.com/users/<id>`; an https URL overrides it, `off` removes it |
+| `BMPL_SUPPORT_URL` | The "Support bmpl" link next to it (e.g. a Buy Me a Coffee page); an https URL, unset = no link |
 | `BMPL_REGION` | Instance default WoW region (`eu`/`us`/`kr`/`tw`, default `eu`); a member picks their own with the region chip inside the search field (remembered per account through `PUT /api/settings`), and `/api/status` reports it |
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and

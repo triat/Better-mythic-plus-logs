@@ -208,7 +208,7 @@ describe("GET /api/admin/instance", () => {
     expect(r.lastBackupAt).toBeNull();
     const base = new URL(TEST_HOSTED_CONFIG.baseUrl);
     expect(r.logsUrl).toBe(`${base.protocol}//logs.${base.host}`);
-    expect(r.env.map((e: { key: string }) => e.key)).toEqual(["BMPL_BASE_URL", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET", "BMPL_SESSION_SECRET", "BMPL_ADMIN_DISCORD_IDS", "BMPL_BNET_CLIENT_ID", "BMPL_BNET_CLIENT_SECRET", "BMPL_POINTS_PER_USER_HOUR", "BMPL_OPEN_SIGNUP", "BMPL_DISCORD_GUILD_ID", "BMPL_ENCRYPTION_KEY", "BMPL_OPERATOR", "BMPL_OPS_TOKEN", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET"]);
+    expect(r.env.map((e: { key: string }) => e.key)).toEqual(["BMPL_BASE_URL", "BMPL_DISCORD_CLIENT_ID", "BMPL_DISCORD_CLIENT_SECRET", "BMPL_SESSION_SECRET", "BMPL_ADMIN_DISCORD_IDS", "BMPL_BNET_CLIENT_ID", "BMPL_BNET_CLIENT_SECRET", "BMPL_POINTS_PER_USER_HOUR", "BMPL_OPEN_SIGNUP", "BMPL_DISCORD_GUILD_ID", "BMPL_ENCRYPTION_KEY", "BMPL_OPERATOR", "BMPL_CONTACT_URL", "BMPL_SUPPORT_URL", "BMPL_OPS_TOKEN", "WCL_CLIENT_ID", "WCL_CLIENT_SECRET"]);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.sessionSecret);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.discordClientSecret);
     expect(JSON.stringify(r)).not.toContain(TEST_HOSTED_CONFIG.bnetClientSecret);

@@ -9,7 +9,15 @@ export type NavKey = "home" | "candidate" | "me" | "compare" | "live" | "help";
 export type IconName = "home" | "users" | "user" | "compare" | "live" | "help";
 export interface NavItem { key: NavKey; href: string; label: string; icon: IconName; active: boolean; count?: number; dot?: "on" | "off" }
 export interface RecentRow { key: string; href: string; name: string; verdict: "invite" | "maybe" | "pass" | null; score: string; active: boolean; classId: number }
-export interface AccountView { title: string; lines: string[]; local: boolean }
+/** An outward link of the account block (canvas "bmpl · Contact et soutien", variant A); opens in a new tab. */
+export interface AccountLink { key: "contact" | "support"; href: string; label: string }
+export interface AccountView {
+  title: string;
+  lines: string[];
+  local: boolean;
+  /** The short row under the version line (`side`) and the account menu's items (`menu`); empty when unset or local. */
+  links: { side: AccountLink[]; menu: AccountLink[] };
+}
 
 const NAV: readonly { key: NavKey; href: string; icon: IconName }[] = [
   { key: "home", href: "/", icon: "home" },
@@ -65,6 +73,21 @@ export function recentList(items: HistoryItem[], activeKey: string | null, expan
 
 /** The account block: hosted = the user menu's name + quota line; local = "Local mode", no lines. */
 export function accountView(t: T, status: StatusInfo, menu: MenuModel | null): AccountView {
-  if (!status.hosted) return { title: t("shell.account.local"), lines: [], local: true };
-  return { title: menu?.name ?? "", lines: menu ? [menu.quota.text] : [], local: false };
+  if (!status.hosted) return { title: t("shell.account.local"), lines: [], local: true, links: { side: [], menu: [] } };
+  return { title: menu?.name ?? "", lines: menu ? [menu.quota.text] : [], local: false, links: accountLinks(t, status) };
+}
+
+/** Contact the operator on Discord and support bmpl: each link only when the instance sets its URL. */
+export function accountLinks(t: T, status: StatusInfo): AccountView["links"] {
+  const side: AccountLink[] = [];
+  const menu: AccountLink[] = [];
+  if (status.contactUrl) {
+    side.push({ key: "contact", href: status.contactUrl, label: t("shell.links.contact") });
+    menu.push({ key: "contact", href: status.contactUrl, label: t("shell.links.contactMenu", { operator: status.operator }) });
+  }
+  if (status.supportUrl) {
+    side.push({ key: "support", href: status.supportUrl, label: t("shell.links.support") });
+    menu.push({ key: "support", href: status.supportUrl, label: t("shell.links.supportMenu") });
+  }
+  return { side, menu };
 }

@@ -4,8 +4,8 @@ import { makeT, tEn } from "../i18n/t.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, initialScreen, candidateHref, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./hostedMode.ts";
 
 const tFr = makeT(fr, "fr");
-const local = { hosted: false, hasCredentials: true, envPath: "/x/.env", openSignup: false, guildRequired: false, wclClients: false, operator: "", region: "eu" as const };
-const hosted = { hosted: true, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: true, operator: "Muleyoxo", region: "eu" as const };
+const local = { hosted: false, hasCredentials: true, envPath: "/x/.env", openSignup: false, guildRequired: false, wclClients: false, operator: "", contactUrl: null, supportUrl: null, region: "eu" as const };
+const hosted = { hosted: true, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: true, operator: "Muleyoxo", contactUrl: null, supportUrl: null, region: "eu" as const };
 
 describe("uiControls", () => {
   test("local mode shows every control", () => {
@@ -27,7 +27,7 @@ describe("initialScreen", () => {
     expect(initialScreen({ ...hosted, hasCredentials: false }, "/")).toBe("main");
   });
   test("fallback status is local with everything on", () => {
-    expect(LOCAL_STATUS).toEqual({ hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", region: "eu" });
+    expect(LOCAL_STATUS).toEqual({ hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", contactUrl: null, supportUrl: null, region: "eu" });
   });
 });
 

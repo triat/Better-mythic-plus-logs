@@ -1805,4 +1805,7 @@ button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset:
   .wcl-guide-value { grid-template-columns: minmax(0, 1fr) auto; }
   .wcl-guide-value > .muted { grid-column: 1 / -1; }
 }
+.side-links { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 2px 12px 4px; font-size: 12px; }
+.side-links > span { display: inline-flex; gap: 10px; }
+.side-links-sep { color: var(--dim); }
 .account-key-link { display: block; font-size: 12px; font-weight: 600; padding: 2px 12px 6px; }

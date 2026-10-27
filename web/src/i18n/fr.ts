@@ -668,7 +668,8 @@ export const fr: Mirror<typeof en> = {
     deleteMine: "Supprimer mon compte",
     deleteLine: "Paramètres → {deleteMine} supprime toutes les lignes ci-dessus, ton lien Battle.net compris, et te déconnecte. Les corrections que tu as proposées et qu'un admin a approuvées restent dans la table partagée, sans ton nom. "
       + "Le journal d'audit garde ton id Discord, le nom d'utilisateur que tu avais à la suppression et ton IP jusqu'à 90 jours, sans lien avec aucun compte. Les backups de la base sont gardés 30 jours.",
-    questions: "Questions : l'admin de cette instance, sur Discord.",
+    questions: "Questions : {contact}.",
+    questionsContact: "l'admin de cette instance, sur Discord",
   },
   help: {
     title: "Aide", sub: "ce qui est analysé, comment chaque nombre est calculé, et pourquoi certains ne le sont pas",
@@ -820,6 +821,7 @@ export const fr: Mirror<typeof en> = {
   shell: {
     nav: { home: "Accueil", candidate: "Candidats", me: "Mes persos", compare: "Comparer", live: "Live", help: "Aide" },
     account: { local: "Mode local" },
+    links: { contact: "Discord", contactMenu: "Écrire à {operator} sur Discord ↗", support: "Soutenir bmpl", supportMenu: "Soutenir bmpl ↗" },
     navLabel: "Navigation",
     paletteKey: "Ctrl K",
     paletteOpen: "Ouvrir la palette de commandes",

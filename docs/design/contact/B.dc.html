@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>B · Carte Contact dans l'Aide</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+  <aside style="width: 248px; flex-shrink: 0; box-sizing: border-box; padding: 20px 16px; border-right: 1px solid #232733; display: flex; flex-direction: column; gap: 14px">
+    <span style="font-weight: 700; font-size: 15px">bmpl</span>
+    <div style="height: 48px; border: 1px solid #2A2F3B; border-radius: 10px; display: flex; align-items: center; padding: 0 14px; color: #8D95A3; font-size: 14px">Rechercher un joueur</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: #A0A7B4">
+      <span style="padding: 8px 12px">Accueil</span><span style="padding: 8px 12px">Candidats</span><span style="padding: 8px 12px">Mes personnages</span>
+      <span style="padding: 8px 12px; background: #1C2029; border-radius: 10px; color: #ECEEF2; font-weight: 600">Aide et contact</span>
+    </nav>
+  </aside>
+  <main style="flex-grow: 1; padding: 32px 40px; display: flex; flex-direction: column; gap: 16px; max-width: 900px">
+    <h1 style="margin: 0; font-size: 22px; font-weight: 700">Aide</h1>
+    <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 22px 24px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 360px; min-width: 0">
+        <span style="font-weight: 600; font-size: 16px">Une question, un bug, une idée ?</span>
+        <span style="font-size: 14px; color: #C9CED8">bmpl est fait par [opérateur]. Écris-lui directement sur Discord.</span>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <a href="#discord" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 10px; background: #ECEEF2; color: #0E1014; font-weight: 600; font-size: 14px">Écrire sur Discord ↗</a>
+        <a href="#coffee" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A2F3B; color: #ECEEF2; font-weight: 600; font-size: 14px">Soutenir bmpl ↗</a>
+      </div>
+    </section>
+    <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-weight: 600">Comment le verdict est calculé</span>
+      <span style="height: 10px; width: 70%; background: #1C2029; border-radius: 4px"></span>
+      <span style="height: 10px; width: 55%; background: #1C2029; border-radius: 4px"></span>
+      <span style="height: 10px; width: 62%; background: #1C2029; border-radius: 4px"></span>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

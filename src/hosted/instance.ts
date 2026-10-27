@@ -25,6 +25,8 @@ export function describeConfig(config: HostedConfig, wcl: { clientId: string | n
     { key: "BMPL_DISCORD_GUILD_ID", value: config.discordGuildId ?? NOT_SET, secret: false },
     { key: "BMPL_ENCRYPTION_KEY", value: config.encryptionKey ? SET : NOT_SET, secret: true },
     { key: "BMPL_OPERATOR", value: config.operator, secret: false },
+    { key: "BMPL_CONTACT_URL", value: config.contactUrl ?? NOT_SET, secret: false },
+    { key: "BMPL_SUPPORT_URL", value: config.supportUrl ?? NOT_SET, secret: false },
     { key: "BMPL_OPS_TOKEN", value: config.opsTokenSha256 === null ? NOT_SET : config.opsTokenSha256 === BOOTSTRAP_OPS.sha256 ? "•••• (bootstrap)" : SET, secret: true },
     { key: "WCL_CLIENT_ID", value: wcl.clientId ? abbreviate(wcl.clientId) : NOT_SET, secret: false },
     { key: "WCL_CLIENT_SECRET", value: wcl.hasSecret ? SET : NOT_SET, secret: true },

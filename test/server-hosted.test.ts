@@ -178,7 +178,7 @@ describe("/api/health", () => {
     expect(body.warnings).toContain("no backup marker");
   });
   test("GET /api/status (hosted) carries the phase 2 flags", async () => {
-    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, version: pkgVersion, hasCredentials: expect.any(Boolean), region: "eu", openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance" });
+    expect(await (await fetch(h("/api/status"))).json()).toEqual({ ok: true, hosted: true, version: pkgVersion, hasCredentials: expect.any(Boolean), region: "eu", openSignup: false, guildRequired: false, wclClients: false, operator: "the admin of this instance", contactUrl: null, supportUrl: null });
   });
 });
 

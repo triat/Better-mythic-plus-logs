@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "You can now message the person who runs bmpl on Discord straight from the sidebar or the account menu.",
+    ],
+  },
+  {
     version: "0.10.8",
     date: "2026-10-26",
     items: [

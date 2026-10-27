@@ -168,11 +168,21 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
 
       <div className="side-account">
         {p.controls.signOut && p.menu ? (
-          <UserMenu m={p.menu} lines={p.account.lines} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
+          <UserMenu m={p.menu} lines={p.account.lines} links={p.account.links.menu} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} />
         ) : (
           <LocalAccount title={p.account.title} controls={p.controls} watch={p.watch} onWatchToggle={p.onWatchToggle} onSetup={p.onSetup} onQuit={p.onQuit} />
         )}
         {p.version && <WhatsNew version={p.version} />}
+        {p.account.links.side.length > 0 && (
+          <div className="side-links">
+            {p.account.links.side.map((l, i) => (
+              <span key={l.key}>
+                {i > 0 && <span className="side-links-sep" aria-hidden="true">·</span>}
+                <a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </aside>
   );

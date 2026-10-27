@@ -36,6 +36,10 @@ export interface HostedConfig {
   encryptionKey: Uint8Array | null;
   /** Shown to members who cannot get in (e.g. "ask Muleyoxo on Discord"). */
   operator: string;
+  /** Where members reach the operator (`BMPL_CONTACT_URL`, else the first admin's Discord profile); null: no link. */
+  contactUrl: string | null;
+  /** "Support bmpl" (`BMPL_SUPPORT_URL`, e.g. Buy Me a Coffee); null: no link. */
+  supportUrl: string | null;
   /** SHA-256 (hex) of the bearer token that opens the read-only `/api/ops/*` routes; null = they answer 404. */
   opsTokenSha256: string | null;
 }
@@ -84,6 +88,12 @@ const parseOrigin = (raw: string): string | null => {
   return u.origin;
 };
 
+/** An https URL of at most 300 characters (the contact and support links shown to members). */
+const httpsUrl = (raw: string): boolean => {
+  if (raw.length > 300) return false;
+  try { return new URL(raw).protocol === "https:"; } catch { return false; }
+};
+
 /** Why a session secret is unfit even when long enough, or null when it passes. */
 export const weakSecret = (s: string): string | null => {
   if (new Set(s).size < 8) return "fewer than 8 distinct characters";
@@ -127,6 +137,13 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
   if (keyBytes !== null && keyBytes.length !== ENCRYPTION_KEY_BYTES) invalid.push("BMPL_ENCRYPTION_KEY: base64 of 32 random bytes — generate one with `openssl rand -base64 32`");
   const operator = read(env, "BMPL_OPERATOR");
   if (operator.length > 80) invalid.push("BMPL_OPERATOR: at most 80 characters");
+  const rawContact = read(env, "BMPL_CONTACT_URL");
+  const rawSupport = read(env, "BMPL_SUPPORT_URL");
+  if (rawContact !== "" && rawContact !== "off" && !httpsUrl(rawContact)) invalid.push("BMPL_CONTACT_URL: an https URL, or \"off\"");
+  if (rawSupport !== "" && !httpsUrl(rawSupport)) invalid.push("BMPL_SUPPORT_URL: an https URL");
+  // The contact link defaults to the first admin's Discord profile (a DM needs a server in common).
+  const contactUrl = rawContact === "off" ? null : rawContact !== "" ? rawContact
+    : adminDiscordIds[0] !== undefined ? `https://discord.com/users/${adminDiscordIds[0]}` : null;
   // `off` disables the ops routes outright, bootstrap token included.
   const opsToken = read(env, "BMPL_OPS_TOKEN");
   if (opsToken !== "" && opsToken !== "off") {
@@ -153,6 +170,8 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
       discordGuildId: rawGuild || null,
       encryptionKey: keyBytes ? new Uint8Array(keyBytes) : null,
       operator: operator || DEFAULT_OPERATOR,
+      contactUrl,
+      supportUrl: rawSupport || null,
       opsTokenSha256,
     },
   };

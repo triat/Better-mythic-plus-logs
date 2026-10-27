@@ -678,7 +678,8 @@ export const en = {
     deleteMine: "Delete my account",
     deleteLine: "Settings → {deleteMine} removes every row above, your Battle.net link included, and signs you out. Corrections you proposed that an admin approved stay in the shared table, without your name. "
       + "The audit log keeps your Discord id, the username you had at deletion and your IP for up to 90 days, unlinked from any account. Backups of the database are kept 30 days.",
-    questions: "Questions: the admin of this instance on Discord.",
+    questions: "Questions: {contact}.",
+    questionsContact: "the admin of this instance on Discord",
   },
   help: {
     title: "Help", sub: "what is analysed, how every number is computed, and why some are not",
@@ -830,6 +831,7 @@ export const en = {
   shell: {
     nav: { home: "Home", candidate: "Candidates", me: "My characters", compare: "Compare", live: "Live", help: "Help" },
     account: { local: "Local mode" },
+    links: { contact: "Discord", contactMenu: "Message {operator} on Discord ↗", support: "Support bmpl", supportMenu: "Support bmpl ↗" },
     navLabel: "Navigation",
     paletteKey: "Ctrl K",
     paletteOpen: "Open the command palette",

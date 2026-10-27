@@ -13,6 +13,10 @@ export interface StatusInfo {
   guildRequired: boolean;
   wclClients: boolean;
   operator: string;
+  /** Where members reach the operator (the first admin's Discord profile unless overridden) and the "Support bmpl"
+   * link; null hides each one. */
+  contactUrl: string | null;
+  supportUrl: string | null;
   /** The instance default region — the region a fresh lookup uses until the member picks (and saves) their own. */
   region: Region;
   /** The running version (`package.json`), shown under the account block with the changelog; absent on old servers. */
@@ -24,7 +28,7 @@ export type BootScreen = "setup" | "main" | "signin";
 export type Page = "home" | "candidate" | "compare" | "live" | "admin" | "settings" | "privacy" | "help" | "me";
 
 /** Used when /api/status itself fails: behave like today's local UI. */
-export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", region: "eu" };
+export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", contactUrl: null, supportUrl: null, region: "eu" };
 
 const PAGES: Record<string, Page> = {
   "/": "home", "/candidate": "candidate", "/compare": "compare", "/live": "live",

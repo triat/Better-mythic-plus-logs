@@ -15,6 +15,8 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   discordGuildId: null,
   encryptionKey: null,
   operator: "the admin of this instance",
+  contactUrl: null,
+  supportUrl: null,
   opsTokenSha256: null,
 };
 

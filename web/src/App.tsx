@@ -81,6 +81,7 @@ export function App() {
         ? {
             hosted: s.hosted, hasCredentials: s.hasCredentials, envPath: s.envPath ?? null,
             openSignup: s.openSignup ?? false, guildRequired: s.guildRequired ?? false, wclClients: s.wclClients ?? false, operator: s.operator ?? "",
+            contactUrl: s.contactUrl ?? null, supportUrl: s.supportUrl ?? null,
             region: isRegion(s.region) ? s.region : "eu",
             ...(typeof s.version === "string" ? { version: s.version } : {}),
           }
@@ -103,7 +104,7 @@ export function App() {
   // The privacy page is one bare page (brand header, no search) for everyone: readable before
   // signing in (it is linked from the sign-in note) and rendered outside `Main` when signed in, so
   // it never gets the app header on top of its own.
-  if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} /></BrowserLocale>;
+  if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} contactUrl={screen.status.contactUrl} /></BrowserLocale>;
   // /help is public too: an anonymous hosted visitor gets the bare page (brand line, no search); signed in or local, it renders inside `Main` under the app header.
   if (screen.kind === "signin" && page === "help") return <BrowserLocale><HelpPage status={screen.status} bare /></BrowserLocale>;
   // Every other path, signed out: the landing page (redesign spec decision 2).

@@ -4,7 +4,7 @@ import { makeT, tEn } from "../i18n/t.ts";
 import type { HistoryItem } from "../types.ts";
 import { LOCAL_STATUS, type StatusInfo } from "./hostedMode.ts";
 import { menuModel } from "./session.ts";
-import { accountView, navItems, recentList, recentRows } from "./shell.ts";
+import { accountLinks, accountView, navItems, recentList, recentRows } from "./shell.ts";
 
 const tFr = makeT(fr, "fr");
 const hosted: StatusInfo = { ...LOCAL_STATUS, hosted: true };
@@ -109,14 +109,39 @@ describe("recentList", () => {
 describe("accountView", () => {
   const member = { id: 2, discordId: "22", username: "biwaa", globalName: "Biwaa", avatarUrl: "", role: "member" as const };
   test("local: the local-mode title, no lines", () => {
-    expect(accountView(tEn, LOCAL_STATUS, null)).toEqual({ title: "Local mode", lines: [], local: true });
+    expect(accountView(tEn, LOCAL_STATUS, null)).toEqual({ title: "Local mode", lines: [], local: true, links: { side: [], menu: [] } });
   });
   test("hosted: the menu's name and quota line", () => {
     const menu = menuModel(tEn, member, { used: 88, limit: 300, resetInS: 2280 });
-    expect(accountView(tEn, hosted, menu)).toEqual({ title: "Biwaa", lines: ["212 of 300 pts left this hour"], local: false });
-    expect(accountView(tEn, hosted, null)).toEqual({ title: "", lines: [], local: false });
+    expect(accountView(tEn, hosted, menu)).toEqual({ title: "Biwaa", lines: ["212 of 300 pts left this hour"], local: false, links: { side: [], menu: [] } });
+    expect(accountView(tEn, hosted, null)).toEqual({ title: "", lines: [], local: false, links: { side: [], menu: [] } });
   });
   test("in French", () => {
     expect(accountView(tFr, LOCAL_STATUS, null).title).toBe("Mode local");
+  });
+});
+
+describe("accountLinks", () => {
+  const discord = "https://discord.com/users/111111111111111111";
+  const coffee = "https://buymeacoffee.com/bmpl";
+  test("none when the instance sets no URL", () => {
+    expect(accountLinks(tEn, hosted)).toEqual({ side: [], menu: [] });
+  });
+  test("contact and support, short in the sidebar, named in the menu", () => {
+    const links = accountLinks(tEn, { ...hosted, operator: "Muleyoxo", contactUrl: discord, supportUrl: coffee });
+    expect(links.side).toEqual([
+      { key: "contact", href: discord, label: "Discord" },
+      { key: "support", href: coffee, label: "Support bmpl" },
+    ]);
+    expect(links.menu.map((l) => l.label)).toEqual(["Message Muleyoxo on Discord ↗", "Support bmpl ↗"]);
+  });
+  test("each link on its own", () => {
+    expect(accountLinks(tEn, { ...hosted, supportUrl: coffee }).side.map((l) => l.key)).toEqual(["support"]);
+    expect(accountLinks(tEn, { ...hosted, contactUrl: discord }).menu.map((l) => l.key)).toEqual(["contact"]);
+  });
+  test("in French", () => {
+    const links = accountLinks(tFr, { ...hosted, operator: "Muleyoxo", contactUrl: discord, supportUrl: coffee });
+    expect(links.side.map((l) => l.label)).toEqual(["Discord", "Soutenir bmpl"]);
+    expect(links.menu.map((l) => l.label)).toEqual(["Écrire à Muleyoxo sur Discord ↗", "Soutenir bmpl ↗"]);
   });
 });

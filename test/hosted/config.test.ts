@@ -200,3 +200,23 @@ describe("BMPL_OPS_TOKEN", () => {
     expect(weak.ok).toBe(false);
   });
 });
+
+describe("contact and support links", () => {
+  const cfg = (extra: Record<string, string>) => {
+    const r = validateHostedEnv({ ...FULL, ...extra });
+    if (!r.ok) throw new Error(JSON.stringify(r));
+    return r.config;
+  };
+  test("the contact link defaults to the first admin's Discord profile; BMPL_CONTACT_URL replaces it, \"off\" removes it", () => {
+    expect(cfg({}).contactUrl).toBe(`https://discord.com/users/${FULL.BMPL_ADMIN_DISCORD_IDS!.split(",")[0]!.trim()}`);
+    expect(cfg({ BMPL_CONTACT_URL: "https://discord.gg/abc" }).contactUrl).toBe("https://discord.gg/abc");
+    expect(cfg({ BMPL_CONTACT_URL: "off" }).contactUrl).toBeNull();
+  });
+  test("the support link is off until set; both must be https URLs", () => {
+    expect(cfg({}).supportUrl).toBeNull();
+    expect(cfg({ BMPL_SUPPORT_URL: "https://buymeacoffee.com/biwaa" }).supportUrl).toBe("https://buymeacoffee.com/biwaa");
+    const bad = validateHostedEnv({ ...FULL, BMPL_SUPPORT_URL: "http://x", BMPL_CONTACT_URL: "javascript:alert(1)" });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.invalid.filter((m) => /CONTACT|SUPPORT/.test(m))).toHaveLength(2);
+  });
+});

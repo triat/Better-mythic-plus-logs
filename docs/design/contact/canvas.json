@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-26T23:20:00Z" },
+  "title": "bmpl · Contact et soutien",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 800, "title": "A · Barre latérale + menu du compte" },
+    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 800, "title": "B · Carte « Contact » en haut de l'Aide" },
+    "C.dc.html": { "x": 2720, "y": 0, "w": 1280, "h": 800, "title": "C · Bandeau discret en pied de page, partout" }
+  },
+  "order": ["Main.dc.html", "B.dc.html", "C.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Te contacter sur Discord, et plus tard « Buy me a coffee »", "kind": "title1", "maxW": 4000 }
+  },
+  "designSystems": []
+}

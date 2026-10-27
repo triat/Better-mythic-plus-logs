@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>A · Barre latérale et menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+  <aside style="width: 248px; flex-shrink: 0; box-sizing: border-box; padding: 20px 16px; border-right: 1px solid #232733; display: flex; flex-direction: column; gap: 14px; position: relative">
+    <span style="font-weight: 700; font-size: 15px">bmpl</span>
+    <div style="height: 48px; border: 1px solid #2A2F3B; border-radius: 10px; display: flex; align-items: center; padding: 0 14px; color: #8D95A3; font-size: 14px">Rechercher un joueur</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: #A0A7B4">
+      <span style="padding: 8px 12px">Accueil</span><span style="padding: 8px 12px">Candidats</span><span style="padding: 8px 12px">Mes personnages</span><span style="padding: 8px 12px">Aide</span>
+    </nav>
+    <div style="flex-grow: 1"></div>
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 132px; background: #161920; border: 1px solid #2A2F3B; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+      <span style="padding: 8px 10px; color: #A0A7B4">Aide</span>
+      <span style="padding: 8px 10px; color: #A0A7B4">Mes personnages</span>
+      <span style="padding: 8px 10px; color: #A0A7B4">Paramètres</span>
+      <span style="height: 1px; background: #232733; margin: 4px 0"></span>
+      <a href="#discord" style="padding: 8px 10px; color: #ECEEF2">Écrire à [opérateur] sur Discord ↗</a>
+      <a href="#coffee" style="padding: 8px 10px; color: #ECEEF2">Soutenir bmpl ↗</a>
+      <span style="height: 1px; background: #232733; margin: 4px 0"></span>
+      <span style="padding: 8px 10px; color: #A0A7B4">Se déconnecter</span>
+    </div>
+    <button type="button" style="font: inherit; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: #161920; border: 1px solid #2A2F3B; color: #ECEEF2; text-align: left">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #232836; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">T</span>
+      <span style="display: flex; flex-direction: column; font-size: 13px"><span style="font-weight: 600">tom</span><span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #A0A7B4">212 pts sur 300</span></span>
+    </button>
+    <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: #8D95A3; padding: 0 4px">
+      <span style="font-family: 'Geist Mono', monospace">v0.10.8</span><span>·</span><a href="#wn" style="color: #ECEEF2; font-weight: 600">Nouveautés</a>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; padding: 0 4px">
+      <a href="#discord">Discord</a><span style="color: #8D95A3">·</span><a href="#coffee">Soutenir bmpl</a>
+    </div>
+  </aside>
+  <main style="flex-grow: 1; padding: 32px 40px; display: flex; flex-direction: column; gap: 16px">
+    <div style="height: 120px; background: #161920; border: 1px solid #232733; border-radius: 16px"></div>
+    <div style="height: 320px; background: #161920; border: 1px solid #232733; border-radius: 16px"></div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

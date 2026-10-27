@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>C · Pied de page discret</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+  <aside style="width: 248px; flex-shrink: 0; box-sizing: border-box; padding: 20px 16px; border-right: 1px solid #232733; display: flex; flex-direction: column; gap: 14px">
+    <span style="font-weight: 700; font-size: 15px">bmpl</span>
+    <div style="height: 48px; border: 1px solid #2A2F3B; border-radius: 10px; display: flex; align-items: center; padding: 0 14px; color: #8D95A3; font-size: 14px">Rechercher un joueur</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: #A0A7B4">
+      <span style="padding: 8px 12px">Accueil</span><span style="padding: 8px 12px">Candidats</span><span style="padding: 8px 12px">Mes personnages</span><span style="padding: 8px 12px">Aide</span>
+    </nav>
+  </aside>
+  <main style="flex-grow: 1; padding: 32px 40px; display: flex; flex-direction: column; gap: 16px">
+    <div style="height: 140px; background: #161920; border: 1px solid #232733; border-radius: 16px"></div>
+    <div style="height: 380px; background: #161920; border: 1px solid #232733; border-radius: 16px"></div>
+    <div style="flex-grow: 1"></div>
+    <footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 14px 4px 0; border-top: 1px solid #1E222C; font-size: 13px; color: #A0A7B4">
+      <span>bmpl, fait par [opérateur]</span>
+      <span style="color: #8D95A3">·</span>
+      <a href="#discord">Une question ? Discord ↗</a>
+      <span style="color: #8D95A3">·</span>
+      <a href="#coffee">Soutenir bmpl ↗</a>
+      <div style="flex-grow: 1"></div>
+      <a href="#privacy" style="color: #A0A7B4">Confidentialité</a>
+    </footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

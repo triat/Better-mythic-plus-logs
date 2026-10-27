@@ -76,7 +76,7 @@ function TopBar(p: HomePageProps) {
           <a href="/live" className="home-top-a"><span className={"nav-dot " + (p.liveOn ? "on" : "off")} aria-hidden="true" />{t("shell.nav.live")}</a>
           <a href="/help" className="home-top-a">{t("shell.nav.help")}</a>
           {p.controls.signOut && p.menu ? (
-            <UserMenu m={p.menu} lines={p.account.lines} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} compact />
+            <UserMenu m={p.menu} lines={p.account.lines} links={p.account.links.menu} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} compact />
           ) : (
             <LocalAccount title={p.account.title} controls={p.controls} watch={p.watch} onWatchToggle={p.onWatchToggle} onSetup={p.onSetup} onQuit={p.onQuit} compact />
           )}

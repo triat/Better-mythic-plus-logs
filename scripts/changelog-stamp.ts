@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 // Release step (release.yml): the user-facing changelog's "next" entry becomes the released version, in both
-// languages. Refuses (exit 1) when either file has no "next" entry or an empty one: a release always tells the users
-// something. Spec: docs/superpowers/specs/2026-10-14-whats-new-design.md, decision 3.
+// languages. With no "next" entry in either file the release is a technical one (nothing the users notice): nothing is
+// stamped and the release goes on (decided 2026-10-27). Refuses (exit 1) when only one file has the entry, when it is
+// empty, or when the version is already listed. Spec: docs/superpowers/specs/2026-10-14-whats-new-design.md, decision 3.
 //
 //   bun scripts/changelog-stamp.ts <X.Y.Z> <YYYY-MM-DD> [dir]     (dir defaults to web/src/changelog)
 import { readFileSync, writeFileSync } from "node:fs";
@@ -33,16 +34,24 @@ if (import.meta.main) {
     console.error("usage: changelog-stamp <X.Y.Z> <YYYY-MM-DD> [dir]");
     process.exit(2);
   }
-  const problems: string[] = [];
+  const loaded: { f: string; entries: ChangelogEntry[] }[] = [];
   for (const f of FILES) {
     const mod = (await import(resolve(dir, f))) as Record<string, ChangelogEntry[]>;
-    const entries = Object.values(mod).find(Array.isArray) ?? [];
+    loaded.push({ f, entries: Object.values(mod).find(Array.isArray) ?? [] });
+  }
+  const withNext = loaded.filter((l) => l.entries.some((e) => e.version === "next"));
+  if (withNext.length === 0) {
+    console.log(`changelog: no "next" entry, ${version} is a technical release (nothing stamped, nothing new for the users)`);
+    process.exit(0);
+  }
+  const problems: string[] = [];
+  for (const { f, entries } of loaded) {
     const why = nextProblem(entries);
     if (why) problems.push(`${f}: ${why}`);
     if (entries.some((e) => e.version === version)) problems.push(`${f}: version ${version} is already in the changelog`);
   }
   if (problems.length > 0) {
-    console.error(`Nothing to tell the users for ${version}: ${problems.join("; ")}. Add the release's lines under "next" in web/src/changelog/en.ts and fr.ts.`);
+    console.error(`The changelog cannot be stamped for ${version}: ${problems.join("; ")}. Write the release's lines under "next" in both web/src/changelog/en.ts and fr.ts, or in neither for a technical release.`);
     process.exit(1);
   }
   for (const f of FILES) {

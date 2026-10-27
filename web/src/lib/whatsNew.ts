@@ -32,5 +32,7 @@ export function whatsNew(entries: ChangelogEntry[], lastSeen: string | null, run
     .filter((e) => isVersion(e.version) && compareVersions(e.version, running) <= 0)
     .sort((a, b) => compareVersions(b.version, a.version));
   if (!isVersion(lastSeen) || compareVersions(lastSeen, running) >= 0) return { mark: false, since: [], all };
-  return { mark: true, since: all.filter((e) => compareVersions(e.version, lastSeen) > 0), all };
+  // A technical release has no entry of its own: the mark lights only when something new is listed.
+  const since = all.filter((e) => compareVersions(e.version, lastSeen) > 0);
+  return { mark: since.length > 0, since, all };
 }

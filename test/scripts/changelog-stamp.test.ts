@@ -34,7 +34,7 @@ describe("changelog-stamp", () => {
     expect(nextProblem([{ version: "next", items: ["x"] }])).toBeNull();
   });
   // Synthetic files, not copies of the shipped ones: right after a release the shipped files have no "next" entry.
-  test("the script stamps both files, and refuses a second run (no next left)", async () => {
+  test("the script stamps both files; a second run is a technical release; one file alone is refused", async () => {
     const dir = mkdtempSync(join(tmpdir(), "bmpl-stamp-"));
     try {
       mkdirSync(join(dir, "changelog"));
@@ -49,9 +49,17 @@ describe("changelog-stamp", () => {
         expect(s).toContain(`date: "2099-01-01",`);
         expect(s).not.toContain(`version: "next"`);
       }
+      // No "next" left in either file: a technical release, nothing stamped, the files unchanged.
+      const before = readFileSync(join(dir, "changelog", "en.ts"), "utf8");
       const again = run("9.9.10");
-      expect(again.exitCode).toBe(1);
-      expect(again.stderr.toString()).toContain("no \"next\" entry");
+      expect(again.exitCode).toBe(0);
+      expect(again.stdout.toString()).toContain("technical release");
+      expect(readFileSync(join(dir, "changelog", "en.ts"), "utf8")).toBe(before);
+      // "next" in one language only is a mistake, not a technical release.
+      writeFileSync(join(dir, "changelog", "en.ts"), SRC);
+      const half = run("9.9.11");
+      expect(half.exitCode).toBe(1);
+      expect(half.stderr.toString()).toContain("fr.ts: no \"next\" entry");
       writeFileSync(join(dir, "changelog", "en.ts"), "export const X = [];\n");
       expect(run("bad").exitCode).toBe(2);
     } finally {

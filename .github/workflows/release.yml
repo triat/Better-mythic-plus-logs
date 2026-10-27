@@ -71,8 +71,9 @@ jobs:
           echo "version=$next" >> "$GITHUB_OUTPUT"
           echo "tag=v$next" >> "$GITHUB_OUTPUT"
 
-      # The user-facing changelog's "next" entry becomes this version (refused when it is missing or empty: a release
-      # always tells the users something). Then only package.json's "version" line changes, so it keeps its formatting.
+      # The user-facing changelog's "next" entry becomes this version; with no "next" in either file this is a technical
+      # release and nothing is stamped (one file alone or an empty entry is refused). Then only package.json's "version"
+      # line changes, so it keeps its formatting.
       - name: Stamp the changelog and bump package.json
         env:
           NEXT: ${{ steps.version.outputs.version }}

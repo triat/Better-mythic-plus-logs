@@ -296,6 +296,38 @@ deploy job skips the step with a notice until `bmpl-provision` exists. Secrets
 (`/opt/bmpl/.env`, `/etc/grafana/grafana.env`, `/etc/litestream.yml`) and DNS
 records stay yours.
 
+**9e. Visit statistics (Umami on pgrust, optional).** With an analytics
+domain, `bootstrap.sh` also installs [pgrust](https://github.com/malisper/pgrust)
+(pinned release, checksum checked, `/usr/local/lib/pgrust`, data in
+`/var/lib/pgrust`, loopback `:5432`, `MemoryMax=512M`), Docker and the
+pinned Umami image (loopback `:3002`, `--memory 384m`, served by Caddy as the
+analytics domain), `pg_dump` 18 from the PostgreSQL apt repository and a
+daily dump (`umami-backup.timer`, 04:30 Europe/Paris, 7 kept in
+`/var/backups/umami`, VPS only). pgrust is a beta ("We don't recommend running
+pgrust in production (yet)", its README): it holds Umami's statistics only,
+never bmpl's data. Steps, once:
+
+1. A DNS `A` record for the analytics domain pointing at the VPS.
+2. `sudo bmpl-provision vX.Y.Z --analytics-domain analytics.riat.dev` (the
+   running tag). It stores `ANALYTICS_DOMAIN=` in
+   `/etc/bmpl/provision.conf`, so every later release keeps it, and forces
+   one run. That run creates `/etc/umami/umami.env` (root, 600: the database
+   password and the app secret, never printed), the `umami` role and
+   database, starts Umami and replaces its default `admin` / `umami`
+   password with a random one in `/etc/umami/admin-password`.
+3. Sign in at `https://analytics.riat.dev` as `admin` with that password,
+   change it, add a website for `bmpl.riat.dev` and copy its id.
+4. In `/opt/bmpl/.env`: `BMPL_ANALYTICS_URL=https://analytics.riat.dev` and
+   `BMPL_ANALYTICS_WEBSITE_ID=<the id>`, then `sudo systemctl restart bmpl`.
+
+`journalctl -u pgrust -u umami -t umami-backup` shows the three. Restore a
+dump: `sudo -u pgrust /usr/lib/postgresql/18/bin/pg_restore -h /run/pgrust
+--clean -d umami /var/backups/umami/umami-<date>.dump` with Umami stopped.
+If pgrust misbehaves, the same dump restores into stock PostgreSQL 18
+(tested 2026-10-28): install `postgresql-18`, restore, point `DATABASE_URL`
+in `umami.env` at it. Spec:
+`docs/superpowers/specs/2026-10-28-umami-analytics-design.md`.
+
 **10. Uninstall.** On the VPS as root:
 
 ```bash
@@ -307,6 +339,12 @@ systemctl daemon-reload
 userdel bmpl && rm -rf /opt/bmpl
 rm -f /var/log/caddy/bmpl.log*
 ```
+
+Umami and pgrust, if installed: `systemctl disable --now umami pgrust
+umami-backup.timer`, remove their three units, `/usr/local/sbin/umami-backup`,
+`/etc/umami`, `/usr/local/lib/pgrust`, `/var/lib/pgrust`, `/var/backups/umami`,
+the `pgrust` user, `docker rmi` the image, and the `ANALYTICS_DOMAIN=` line of
+`/etc/bmpl/provision.conf`.
 
 Then remove the site block from `/etc/caddy/Caddyfile` (`systemctl reload
 caddy`, or `apt-get remove caddy`), and delete the bucket.

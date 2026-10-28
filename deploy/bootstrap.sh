@@ -2,9 +2,11 @@
 # VPS setup for bmpl hosted mode, first time and every later change. Safe to re-run: every file is installed only when
 # its content differs, and only the services whose files changed are reloaded or restarted. Run through
 # deploy/provision.sh: once by hand, as the one-liner in deploy/README.md § 2, then by each release when deploy/ changed
-# (.github/workflows/deploy.yml). Direct use still works: sudo ./bootstrap.sh bmpl.example.com.
+# (.github/workflows/deploy.yml). Direct use still works: sudo ./bootstrap.sh bmpl.example.com [analytics.example.com].
 set -euo pipefail
-DOMAIN="${1:?usage: bootstrap.sh <domain>}"
+DOMAIN="${1:?usage: bootstrap.sh <domain> [<analytics-domain>]}"
+# Optional: Umami on pgrust at this domain (spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md, § 4d).
+ANALYTICS_DOMAIN="${2:-}"
 export DEBIAN_FRONTEND=noninteractive
 # The 0.3.x line; only the amd64 asset is fetched below (no arm64 VPS support here).
 LITESTREAM_VERSION="${LITESTREAM_VERSION:-0.3.13}"
@@ -13,6 +15,11 @@ LITESTREAM_VERSION="${LITESTREAM_VERSION:-0.3.13}"
 VICTORIALOGS_VERSION="${VICTORIALOGS_VERSION:-v1.53.0}"
 VICTORIALOGS_SHA256="${VICTORIALOGS_SHA256:-55feba89713cafa952673f91b8b38e7701bb0290989263da671b47a0de16edd3}"
 VL_PLUGIN_VERSION="${VL_PLUGIN_VERSION:-0.32.0}"
+# Analytics (only with an analytics domain): pgrust's release tarball with the checksum of its MANIFEST.txt, and
+# Umami's image pinned by its index digest.
+PGRUST_VERSION="${PGRUST_VERSION:-0.4-beta}"
+PGRUST_SHA256="${PGRUST_SHA256:-9a53fdc039ca338808702641369b0ac7d6c163124f76f2bfd21860b0be9fb7bb}"
+UMAMI_IMAGE="${UMAMI_IMAGE:-ghcr.io/umami-software/umami:3.4.1@sha256:e69d1a7932e9dab0fc523edc7be1f3a53f3c261f57856fc2167ae74a8fc022e8}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 # Unattended upgrades may hold the dpkg lock for a while: wait for it rather than fail.
 APT=(apt-get -o DPkg::Lock::Timeout=600 -y)
@@ -85,6 +92,7 @@ fi
 # 4. Files from this directory → their places (never overwrite an existing .env or litestream.yml).
 tmp_caddy=$(mktemp)
 sed "s/bmpl\.example\.com/${DOMAIN}/" "$HERE/Caddyfile" > "$tmp_caddy"
+[ -n "$ANALYTICS_DOMAIN" ] && sed "s/analytics\.example\.com/${ANALYTICS_DOMAIN}/" "$HERE/Caddyfile.analytics" >> "$tmp_caddy"
 caddy validate --config "$tmp_caddy" --adapter caddyfile >/dev/null 2>&1 || { caddy validate --config "$tmp_caddy" --adapter caddyfile; exit 1; }
 put "$tmp_caddy" /etc/caddy/Caddyfile 644 root:root caddy
 rm -f "$tmp_caddy"
@@ -171,6 +179,60 @@ put "$HERE/grafana-alerts.sh" /usr/local/sbin/bmpl-grafana-alerts 755 root:root
 put "$HERE/bmpl-grafana-alerts.service" /etc/systemd/system/bmpl-grafana-alerts.service 644 root:root systemd
 put "$HERE/bmpl-grafana-alerts.path" /etc/systemd/system/bmpl-grafana-alerts.path 644 root:root systemd
 
+# 4d. Analytics (only with an analytics domain): pgrust (pinned binary, checksum checked, loopback :5432, its socket in
+# /run/pgrust), Docker and Umami's image (loopback :3002, served by Caddy as the analytics domain), pg_dump 18 from the
+# PostgreSQL apt repository for the daily dump. Each runs under a memory cap so it can never starve bmpl.
+if [ -n "$ANALYTICS_DOMAIN" ]; then
+  if [ ! -f /etc/apt/sources.list.d/pgdg.list ]; then
+    install -d -m 755 /usr/share/postgresql-common/pgdg
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    "${APT[@]}" update
+  fi
+  missing=()
+  for p in docker.io postgresql-client-18; do dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p"); done
+  if [ "${#missing[@]}" -gt 0 ]; then "${APT[@]}" install "${missing[@]}"; fi
+  if ! /usr/local/lib/pgrust/bin/postgres --version 2>/dev/null | grep -q "^pgrust ${PGRUST_VERSION} "; then
+    tmp=$(mktemp -d)
+    curl -fsSL "https://pgrust.com/downloads/v${PGRUST_VERSION}/pgrust-${PGRUST_VERSION}-linux-x86_64.tar.gz" -o "$tmp/pgrust.tar.gz"
+    echo "${PGRUST_SHA256}  $tmp/pgrust.tar.gz" | sha256sum -c -
+    tar -xzf "$tmp/pgrust.tar.gz" -C "$tmp"
+    rm -rf /usr/local/lib/pgrust.new && mv "$tmp/pgrust-${PGRUST_VERSION}-linux-x86_64" /usr/local/lib/pgrust.new
+    chown -R root:root /usr/local/lib/pgrust.new && chmod -R go-w /usr/local/lib/pgrust.new
+    rm -rf /usr/local/lib/pgrust && mv /usr/local/lib/pgrust.new /usr/local/lib/pgrust
+    rm -rf "$tmp"
+    CHANGED[pgrust]=1
+  fi
+  id -u pgrust >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin pgrust
+  install -d -o pgrust -g pgrust -m 700 /var/lib/pgrust /var/backups/umami
+  # The cluster, once: its superuser is the pgrust OS user (peer authentication on the socket, no password), TCP
+  # connections need a password (scram).
+  if [ ! -f /var/lib/pgrust/PG_VERSION ]; then
+    (cd / && runuser -u pgrust -- /usr/local/lib/pgrust/bin/initdb -D /var/lib/pgrust -U pgrust -E UTF8 --locale=C.UTF-8 \
+      --auth-local=peer --auth-host=scram-sha-256)
+  fi
+  put "$HERE/pgrust.service" /etc/systemd/system/pgrust.service 644 root:root systemd pgrust
+  put "$HERE/umami.service" /etc/systemd/system/umami.service 644 root:root systemd umami
+  put "$HERE/umami-backup.service" /etc/systemd/system/umami-backup.service 644 root:root systemd
+  put "$HERE/umami-backup.timer" /etc/systemd/system/umami-backup.timer 644 root:root systemd
+  put "$HERE/umami-backup.sh" /usr/local/sbin/umami-backup 755 root:root
+  # Umami's secrets, once (root only): the umami role's password, the app secret. Never printed.
+  install -d -m 700 /etc/umami
+  if [ ! -f /etc/umami/umami.env ]; then
+    umask 077
+    printf 'DATABASE_URL=postgresql://umami:%s@127.0.0.1:5432/umami\nAPP_SECRET=%s\nDISABLE_TELEMETRY=1\nHOSTNAME=127.0.0.1\nPORT=3002\n' \
+      "$(openssl rand -hex 24)" "$(openssl rand -hex 32)" > /etc/umami/umami.env
+    umask 022
+    CHANGED[umami]=1
+  fi
+  tmp_img=$(mktemp)
+  printf 'UMAMI_IMAGE=%s\n' "$UMAMI_IMAGE" > "$tmp_img"
+  put "$tmp_img" /etc/umami/umami.image 600 root:root umami
+  rm -f "$tmp_img"
+fi
+
 # 5. Hardening: fail2ban on sshd (bans through ufw) and unattended security upgrades with a
 # scheduled reboot — Ubuntu ships 20auto-upgrades already enabled, this only adds the reboot policy.
 put "$HERE/fail2ban-jail.local" /etc/fail2ban/jail.local 644 root:root fail2ban
@@ -198,6 +260,42 @@ for s in victorialogs alloy grafana-server; do
   key="$s"; [ "$s" = grafana-server ] && key=grafana
   if [ -n "${CHANGED[$key]:-}" ] || ! systemctl is-active --quiet "$s"; then systemctl restart "$s"; echo "restarted $s"; fi
 done
+# Analytics: pgrust first, then the umami role and database (once), then Umami, then its default account closed.
+if [ -n "$ANALYTICS_DOMAIN" ]; then
+  systemctl enable pgrust umami umami-backup.timer >/dev/null 2>&1
+  if [ -n "${CHANGED[pgrust]:-}" ] || ! systemctl is-active --quiet pgrust; then systemctl restart pgrust; echo "restarted pgrust"; fi
+  psql_pg() { (cd / && runuser -u pgrust -- /usr/local/lib/pgrust/bin/psql -h /run/pgrust -p 5432 -d postgres -v ON_ERROR_STOP=1 -tA "$@"); }
+  for _ in $(seq 1 30); do psql_pg -c "select 1" >/dev/null 2>&1 && break; sleep 1; done
+  if [ "$(psql_pg -c "select 1 from pg_roles where rolname = 'umami'")" != "1" ]; then
+    pw=$(sed -n 's|^DATABASE_URL=postgresql://umami:\([^@]*\)@.*|\1|p' /etc/umami/umami.env)
+    psql_pg -c "create role umami login password '${pw}'" >/dev/null
+    psql_pg -c "create database umami owner umami" >/dev/null
+    unset pw
+    echo "pgrust: role and database umami created"
+  fi
+  systemctl start umami-backup.timer
+  if [ -n "${CHANGED[umami]:-}" ] || ! systemctl is-active --quiet umami; then
+    docker pull -q "$UMAMI_IMAGE" >/dev/null
+    systemctl restart umami
+    echo "restarted umami"
+  fi
+  # Umami creates admin / umami at its first start: replace that password at once, keep the new one for the operator.
+  for _ in $(seq 1 90); do curl -sf http://127.0.0.1:3002/api/heartbeat >/dev/null && break; sleep 2; done
+  token=$(curl -s -X POST http://127.0.0.1:3002/api/auth/login -H 'content-type: application/json' \
+    -d '{"username":"admin","password":"umami"}' | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+  if [ -n "$token" ]; then
+    newpw=$(openssl rand -base64 24 | tr -d '/+=')
+    if curl -sf -X POST http://127.0.0.1:3002/api/me/password -H "authorization: Bearer ${token}" -H 'content-type: application/json' \
+      -d "{\"currentPassword\":\"umami\",\"newPassword\":\"${newpw}\"}" >/dev/null; then
+      (umask 077; printf '%s\n' "$newpw" > /etc/umami/admin-password)
+      echo "Umami: user admin, password in /etc/umami/admin-password (change it at first sign-in)"
+    else
+      echo "Umami: could not replace the default admin password; change it at first sign-in" >&2
+    fi
+    unset newpw
+  fi
+  unset token
+fi
 # After Grafana is up: the alert rules as grafana.env allows (restarts Grafana only if that changes them), then the watch.
 /usr/local/sbin/bmpl-grafana-alerts
 systemctl enable --now bmpl-grafana-alerts.path >/dev/null 2>&1

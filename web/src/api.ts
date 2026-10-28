@@ -1,3 +1,4 @@
+import type { AnalyticsConfig } from "./lib/analytics.ts";
 import type {
   AdminAudit,
   BnetCandidate,
@@ -102,7 +103,7 @@ const historyPath = (key: string) => `/api/history/${encodeURIComponent(key)}`;
 
 export const api = {
   status: () =>
-    call<{ hosted: boolean; hasCredentials: boolean; envPath?: string; openSignup?: boolean; guildRequired?: boolean; wclClients?: boolean; operator?: string; contactUrl?: string | null; supportUrl?: string | null; region?: Region; version?: string }>("/api/status"),
+    call<{ hosted: boolean; hasCredentials: boolean; envPath?: string; openSignup?: boolean; guildRequired?: boolean; wclClients?: boolean; operator?: string; contactUrl?: string | null; supportUrl?: string | null; region?: Region; version?: string; analytics?: AnalyticsConfig | null }>("/api/status"),
   setup: (clientId: string, clientSecret: string) =>
     call<{ envPath: string }>("/api/setup", post({ clientId, clientSecret })),
   lookup: (req: LookupRequest) =>

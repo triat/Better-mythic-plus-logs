@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bmpl-provision <vX.Y.Z> [--force] [--domain <domain>] — applies deploy/ of a release to this VPS, only when it changed.
+# bmpl-provision <vX.Y.Z> [--force] [--domain <domain>] [--analytics-domain <domain>] — applies deploy/ of a release to this VPS, only when it changed.
 # Installed root-owned as /usr/local/sbin/bmpl-provision by bootstrap.sh; the deploy user may run it through sudo
 # (sudoers-bmpl-deploy), never edit it. It downloads the tag from GitHub itself (the repository is public), so nothing
 # the deploy job sends is ever run as root: a leaked deploy key can at most re-apply an official release. Run by
@@ -7,16 +7,18 @@
 #   curl -fsSL https://raw.githubusercontent.com/triat/Better-mythic-plus-logs/<tag>/deploy/provision.sh \
 #     | sudo bash -s -- <tag> --domain bmpl.example.com
 set -euo pipefail
-usage() { echo "usage: bmpl-provision <vX.Y.Z> [--force] [--domain <domain>]" >&2; exit 2; }
+usage() { echo "usage: bmpl-provision <vX.Y.Z> [--force] [--domain <domain>] [--analytics-domain <domain>]" >&2; exit 2; }
 TAG="${1:-}"
 [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || usage
 shift
 FORCE=""
 NEW_DOMAIN=""
+NEW_ANALYTICS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --force) FORCE=--force ;;
     --domain) [ $# -ge 2 ] || usage; NEW_DOMAIN="$2"; shift ;;
+    --analytics-domain) [ $# -ge 2 ] || usage; NEW_ANALYTICS="$2"; shift ;;
     *) usage ;;
   esac
   shift
@@ -27,8 +29,16 @@ if [ -n "$NEW_DOMAIN" ]; then
   [ -f /etc/bmpl/provision.conf ] || printf 'DOMAIN=%s\nREPO=triat/Better-mythic-plus-logs\n' "$NEW_DOMAIN" > /etc/bmpl/provision.conf
 fi
 [ -f /etc/bmpl/provision.conf ] || { echo "bmpl-provision: first run: pass --domain <domain>" >&2; exit 2; }
+# Umami on pgrust (spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md): set once, kept for every release.
+if [ -n "$NEW_ANALYTICS" ]; then
+  [[ "$NEW_ANALYTICS" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo "bmpl-provision: bad domain: $NEW_ANALYTICS" >&2; exit 2; }
+  sed -i '/^ANALYTICS_DOMAIN=/d' /etc/bmpl/provision.conf
+  printf 'ANALYTICS_DOMAIN=%s\n' "$NEW_ANALYTICS" >> /etc/bmpl/provision.conf
+  FORCE=--force
+fi
+ANALYTICS_DOMAIN=""
 # shellcheck disable=SC1091
-. /etc/bmpl/provision.conf # DOMAIN=…, REPO=owner/name
+. /etc/bmpl/provision.conf # DOMAIN=…, REPO=owner/name, ANALYTICS_DOMAIN=… (optional)
 STATE=/var/lib/bmpl-provision
 install -d -m 700 "$STATE"
 exec 9>/run/bmpl-provision.lock
@@ -62,7 +72,7 @@ if [ "$FORCE" != "--force" ] && [ "$(cat "$STATE/applied" 2>/dev/null || true)" 
   exit 0
 fi
 
-if bash "$src/deploy/bootstrap.sh" "$DOMAIN"; then
+if bash "$src/deploy/bootstrap.sh" "$DOMAIN" "$ANALYTICS_DOMAIN"; then
   echo "$fingerprint" > "$STATE/applied"
   echo "$TAG" > "$STATE/applied-tag"
   report applied "$([ "$FORCE" = "--force" ] && echo forced || echo "deploy/ changed")"

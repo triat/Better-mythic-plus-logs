@@ -1,0 +1,19 @@
+[Unit]
+Description=Umami: bmpl's visit statistics (spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md)
+After=docker.service pgrust.service
+Requires=docker.service
+Wants=pgrust.service
+
+[Service]
+Type=simple
+# The image pinned by digest (bootstrap.sh writes UMAMI_IMAGE into umami.image); host network so Umami listens on
+# 127.0.0.1:3002 (umami.env) and reaches pgrust on loopback, with no Docker-published port around ufw.
+EnvironmentFile=/etc/umami/umami.image
+ExecStartPre=-/usr/bin/docker rm -f umami
+ExecStart=/usr/bin/docker run --rm --name umami --network host --memory 384m --env-file /etc/umami/umami.env --log-driver journald ${UMAMI_IMAGE}
+ExecStop=/usr/bin/docker stop -t 20 umami
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily dump of Umami's database (7 kept in /var/backups/umami)
+After=pgrust.service
+Requires=pgrust.service
+
+[Service]
+Type=oneshot
+User=pgrust
+Group=pgrust
+ExecStart=/usr/local/sbin/umami-backup

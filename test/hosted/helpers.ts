@@ -18,6 +18,7 @@ export const TEST_HOSTED_CONFIG: HostedConfig = {
   contactUrl: null,
   supportUrl: null,
   opsTokenSha256: null,
+  analytics: null,
 };
 
 export const TEST_ENCRYPTION_KEY = new Uint8Array(32).map((_, i) => i);

@@ -220,3 +220,25 @@ describe("contact and support links", () => {
     if (!bad.ok) expect(bad.invalid.filter((m) => /CONTACT|SUPPORT/.test(m))).toHaveLength(2);
   });
 });
+
+describe("analytics (Umami)", () => {
+  const ID = "77bb2d19-7cfd-4c46-9100-232862ecd092";
+  const run = (extra: Record<string, string>) => validateHostedEnv({ ...FULL, ...extra });
+  test("off until both variables are set; the URL is kept as its origin, the id lower-cased", () => {
+    const none = run({});
+    expect(none.ok && none.config.analytics).toBeNull();
+    const on = run({ BMPL_ANALYTICS_URL: "https://analytics.riat.dev/", BMPL_ANALYTICS_WEBSITE_ID: ID.toUpperCase() });
+    expect(on.ok && on.config.analytics).toEqual({ url: "https://analytics.riat.dev", websiteId: ID });
+  });
+  test("one without the other, http, a path or a non-UUID id are refused", () => {
+    const bad = (extra: Record<string, string>) => {
+      const r = run(extra);
+      return r.ok ? [] : r.invalid.filter((m) => m.startsWith("BMPL_ANALYTICS"));
+    };
+    expect(bad({ BMPL_ANALYTICS_URL: "https://analytics.riat.dev" })).toHaveLength(1);
+    expect(bad({ BMPL_ANALYTICS_WEBSITE_ID: ID })).toHaveLength(1);
+    expect(bad({ BMPL_ANALYTICS_URL: "http://analytics.riat.dev", BMPL_ANALYTICS_WEBSITE_ID: ID })).toHaveLength(1);
+    expect(bad({ BMPL_ANALYTICS_URL: "https://analytics.riat.dev/x", BMPL_ANALYTICS_WEBSITE_ID: ID })).toHaveLength(1);
+    expect(bad({ BMPL_ANALYTICS_URL: "https://analytics.riat.dev", BMPL_ANALYTICS_WEBSITE_ID: "bmpl" })).toHaveLength(1);
+  });
+});

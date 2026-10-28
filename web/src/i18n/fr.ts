@@ -662,6 +662,8 @@ export const fr: Mirror<typeof en> = {
     requests: "Journal des requêtes",
     requestsLine: "{requests} : chaque requête que tu fais (ce qui est appelé, le statut et la durée de la réponse, ton numéro de membre, les points WCL dépensés), les erreurs que ton navigateur rencontre sur une page (le message, la page, la version) et, dans le journal du serveur web, ton IP, gardés 90 jours, uniquement pour faire tourner et protéger le service.",
     auditLine: "{audit} : connexions, refus et erreurs avec ton id et ton IP, gardés 90 jours.",
+    analytics: "Statistiques de visite",
+    analyticsLine: "{analytics} : chaque page que tu ouvres (son type, comme « candidat » ou « aide », jamais un personnage ni une recherche), d'où tu viens, ton navigateur, ton système, ton type d'appareil, la taille d'écran, la langue et le pays, et quelques actions (un lookup, une comparaison, une analyse, une synchronisation, Live, l'ajout de ton client WCL, la liaison Battle.net, sans leur objet). Comptés par Umami sur ce même serveur : aucun cookie, aucune adresse IP gardée. Activer « Do Not Track » dans ton navigateur l'arrête.",
     notYours: "Ce qui n'est pas à toi",
     publicData: "Les runs, classements et données de combat récupérés sur Warcraft Logs sont publics et mis en cache pour tout le monde ; ils portent les noms des joueurs de ces runs, c'est ainsi que Warcraft Logs les publie.",
     deleting: "Supprimer ton compte",

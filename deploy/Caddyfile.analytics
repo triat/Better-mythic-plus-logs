@@ -1,0 +1,11 @@
+
+# Umami (spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md): installed only when bmpl-provision knows an
+# analytics domain; bootstrap.sh appends this block with analytics.example.com replaced. Loopback only behind it.
+analytics.example.com {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	reverse_proxy 127.0.0.1:3002
+}

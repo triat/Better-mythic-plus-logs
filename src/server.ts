@@ -23,7 +23,7 @@ import { sharedRoutes } from "./server/routes-shared.ts";
 import { localRoutes } from "./server/routes-local.ts";
 import { getLocalHistory, openLocalHistory } from "./server/local-history.ts";
 import { jsonResponse } from "./server/http.ts";
-import { withSecurityHeaders } from "./server/security.ts";
+import { securityHeaders, withSecurityHeaders } from "./server/security.ts";
 import { errorFields, log, userRef } from "./log.ts";
 import pkg from "../package.json";
 import { closeStore, getStore } from "./signals/store.ts";
@@ -131,6 +131,8 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
     runtime = createHostedRuntime(opts.hostedConfig!, store._db, opts.fetchFn ?? fetch, { ...DEFAULT_RATE_LIMITS, ...opts.rateLimits }, { verifyWclClient: opts.verifyWclClient });
     current = runtime;
   }
+  // The CSP names the Umami origin when the instance sends it page views (spec 2026-10-28-umami-analytics-design.md).
+  const headers = securityHeaders(runtime?.config.analytics?.url ?? null);
   const routes: Route[] = [
     ...sharedRoutes({ hosted, envPath: envPathHint, runtime }),
     ...(runtime ? [...authRoutes(runtime), ...bnetRoutes(runtime), ...adminRoutes(runtime), ...userRoutes(runtime), ...opsRoutes(runtime)] : localRoutes()),
@@ -231,7 +233,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
           user: userRef(seen.userId), wcl_points: seen.points, req: reqId,
         });
       }
-      return withSecurityHeaders(res, { "X-Request-Id": reqId });
+      return withSecurityHeaders(res, { "X-Request-Id": reqId }, headers);
     },
     // Belt-and-suspenders: `respond` already catches everything reachable through `findRoute` and
     // `serveStatic`, but nothing outside it (e.g. a throw from Bun's own request parsing) should
@@ -241,7 +243,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
       else console.error(e);
       runtime?.errors.push(e, null);
       const res = jsonResponse({ ok: false, error: "Internal error" }, 500);
-      return hosted ? withSecurityHeaders(res) : res;
+      return hosted ? withSecurityHeaders(res, {}, headers) : res;
     },
   });
 

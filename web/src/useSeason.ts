@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
+import { analyticsEvent } from "./analytics.ts";
 import type { LookupPayload, Region, SeasonView } from "./types.ts";
 import type { SelfActions } from "./components/owner/types.ts";
 
@@ -93,6 +94,7 @@ export function useSeason(who: SeasonWho, self: SelfActions, reloadKey?: unknown
     }
     setRunning(false);
     setProgress(null);
+    if (done > 0) analyticsEvent("season_sync");
   }, [id, view, load, self]);
 
   return {

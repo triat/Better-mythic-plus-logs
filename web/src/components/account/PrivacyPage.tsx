@@ -2,10 +2,10 @@ import { useT } from "../../locale.tsx";
 import { Around } from "../Around.tsx";
 import { Logo } from "../Logo.tsx";
 
-interface Props { operator: string; guildRequired: boolean; contactUrl: string | null }
+interface Props { operator: string; guildRequired: boolean; contactUrl: string | null; analytics?: boolean }
 
 /** /privacy: one static page, readable signed out (brand header only, no search). Text from the canvas "Phase2Details". */
-export function PrivacyPage({ operator, guildRequired, contactUrl }: Props) {
+export function PrivacyPage({ operator, guildRequired, contactUrl, analytics = false }: Props) {
   const { t } = useT();
   return (
     <>
@@ -32,6 +32,7 @@ export function PrivacyPage({ operator, guildRequired, contactUrl }: Props) {
           <li><Around message={t("privacy.sessionsLine")} params={{ sessions: <b>{t("privacy.sessions")}</b> }} /></li>
           <li><Around message={t("privacy.auditLine")} params={{ audit: <b>{t("privacy.audit")}</b> }} /></li>
           <li><Around message={t("privacy.requestsLine")} params={{ requests: <b>{t("privacy.requests")}</b> }} /></li>
+          {analytics && <li><Around message={t("privacy.analyticsLine")} params={{ analytics: <b>{t("privacy.analytics")}</b> }} /></li>}
         </ul>
         <h2>{t("privacy.notYours")}</h2>
         <p>{t("privacy.publicData")}</p>

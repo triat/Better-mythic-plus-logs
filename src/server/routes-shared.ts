@@ -156,7 +156,7 @@ export function sharedRoutes(ctx: SharedContext): Route[] {
             ok: true, hosted: true, version: pkg.version as string, hasCredentials: hasCredentials(), region: config.region,
             openSignup: rt.config.openSignup, guildRequired: rt.config.discordGuildId !== null,
             wclClients: rt.wclClients.enabled, operator: rt.config.operator,
-            contactUrl: rt.config.contactUrl, supportUrl: rt.config.supportUrl,
+            contactUrl: rt.config.contactUrl, supportUrl: rt.config.supportUrl, analytics: rt.config.analytics,
           })
         : jsonResponse({
             ok: true, hosted: false, version: pkg.version as string, hasCredentials: hasCredentials(), envPath: ctx.envPath, region: config.region,

@@ -1,6 +1,6 @@
 # Umami on pgrust: page and event analytics for bmpl
 
-Status: draft, 2026-10-28, for the user's review.
+Status: approved 2026-10-28, implemented 2026-10-28 (plan `docs/superpowers/plans/2026-10-28-umami-analytics.md`).
 
 ## Goal
 
@@ -67,7 +67,7 @@ devices and the funnel from the landing to the first lookup.
     the CSP stays without inline scripts) with `data-auto-track="false"`, `data-exclude-search="true"`,
     `data-exclude-hash="true"`, `data-do-not-track="true"` and `data-domains` set to bmpl's host. Page views are sent
     by hand once per page load with the page's kind as URL (`/`, `/candidate`, `/compare`, `/live`, `/me`, `/help`,
-    `/settings`, `/privacy`, `/admin`, the landing as `/`): never a query (`?open=`, `?q=`, `?pick=` hold character
+    `/settings`, `/privacy`, `/admin`, the signed-out home, the landing, as `/landing`): never a query (`?open=`, `?q=`, `?pick=` hold character
     names), never a character, never a Discord id. Event properties are from a closed list (below), checked by a
     test. Umami itself sets no cookie and keeps no IP address (it derives a session from a salted hash that rotates).
 11. **Events: eight, fired by the front after the action succeeds.** One `analytics.event(name, props?)` call per
@@ -84,7 +84,7 @@ devices and the funnel from the landing to the first lookup.
     | `wcl_client_set` | a member saved their own WCL client | none |
     | `bnet_link` | the Battle.net round trip came back linked | none |
 
-12. **Privacy page and changelog.** `/privacy` gains one paragraph (from the dictionaries): what Umami receives (page
+12. **Privacy page and changelog.** `/privacy` gains one paragraph, shown only when analytics is configured (from the dictionaries): what Umami receives (page
     kind, referrer, browser, OS, device, country, screen size, language, the events above), that it sets no cookie,
     is hosted on the same VPS, and that the browser's Do Not Track turns it off. One changelog line under `"next"`
     (en/fr), since a player can notice the privacy change. The landing gets no banner: no cookie, no identifier
@@ -117,7 +117,7 @@ timer (daily) ──pg_dump -Fc──▶ /var/backups/umami (7 kept)
 | `src/hosted/config.ts` | `analytics: { url, websiteId } \| null` from the two variables; a URL that is not `https://` or a website id that is not a UUID is a startup error |
 | `src/server/security.ts` | the CSP takes the analytics origin when configured |
 | `src/server/routes-shared.ts` | `GET /api/status` → `analytics` |
-| `web/src/lib/analytics.ts` | pure: `pageKind(pathname)`, `ANALYTICS_EVENTS` and their allowed properties, `analyticsAttributes(cfg, host)` |
+| `web/src/lib/analytics.ts` | pure: `pagePath(page, signedOut)`, `ANALYTICS_EVENTS` and `eventProps` (the allowed properties and values), `scriptAttributes(cfg, host)` |
 | `web/src/analytics.ts` | loads the script once, `pageview()`, `event(name, props)`; no-op until loaded and in local mode |
 | components | the eight `event` calls of decision 11 |
 | `web/src/i18n/{en,fr}.ts`, `PrivacyPage` | the privacy paragraph |
@@ -138,11 +138,13 @@ timer (daily) ──pg_dump -Fc──▶ /var/backups/umami (7 kept)
 ## Tests
 
 - `test/hosted/config.test.ts`: the two variables, both or neither, the URL and UUID checks.
-- `test/server/security.test.ts`: the CSP with and without analytics.
-- `web/src/lib/analytics.test.ts`: `pageKind` for every page and for paths with queries; every event of the table and
-  no other; a property outside the allowed list is refused; the attributes.
-- `bootstrap.sh`: `shellcheck`, and a run in a scratch container with `ANALYTICS_DOMAIN` set and unset (unset: no
-  pgrust, no Docker, no change to the Caddyfile).
+- `test/server-analytics.test.ts`: `/api/status`'s `analytics` and the CSP with it; `test/server-hosted.test.ts` without.
+- `web/src/lib/analytics.test.ts`: `pagePath` for every page and the landing; every event of the table and no other; a
+  property or value outside the allowed list is dropped; the attributes.
+- `bootstrap.sh`, `provision.sh`, `umami-backup.sh`: `shellcheck`. Without a systemd host, the analytics steps were run
+  by hand in a scratch container on 2026-10-28, as written: the version check, `initdb` through `runuser`, the role and
+  database from `umami.env`'s password, a TCP login as `umami`, `pg_dump` 18 through the socket as `pgrust`, and the
+  default-account step twice on a fresh Umami (replaced, then "already refused"). The first real run is the VPS's.
 - Already checked by hand on 2026-10-28 in a scratch container: pgrust 0.4-beta starts, Umami 3.4.1 applies its 26
   migrations on it ("All migrations have been successfully applied."), login, website creation, `/api/send` for page
   views and a named event, the stats, path, event and time-series endpoints all answer; `pg_dump` 18 → `pg_restore`

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api.ts";
+import { analyticsEvent } from "../analytics.ts";
 import type { QuotaInfo } from "../api.ts";
 import type { OwnClientView } from "../types.ts";
 import { WCL_CLIENTS_URL, wclGuideView } from "../lib/wclGuide.ts";
@@ -34,6 +35,7 @@ export function WclGuide({ quota, onSaved, onError }: Props) {
     const r = await api.account.saveWclClient(clientId.trim(), clientSecret);
     setBusy(false);
     if (!r.ok) { onError(r.error); return; } // fields kept for a retry
+    analyticsEvent("wcl_client_set");
     onSaved(r.client);
   };
 

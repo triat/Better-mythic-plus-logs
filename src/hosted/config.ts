@@ -42,6 +42,11 @@ export interface HostedConfig {
   supportUrl: string | null;
   /** SHA-256 (hex) of the bearer token that opens the read-only `/api/ops/*` routes; null = they answer 404. */
   opsTokenSha256: string | null;
+  /**
+   * The Umami instance that receives page views and events (`BMPL_ANALYTICS_URL` + `BMPL_ANALYTICS_WEBSITE_ID`, both or
+   * neither); null = no tracker, no CSP entry. Spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md.
+   */
+  analytics: { url: string; websiteId: string } | null;
 }
 
 export const MIN_SESSION_SECRET_BYTES = 32;
@@ -66,6 +71,7 @@ export const sha256Hex = (s: string): string => createHash("sha256").update(s, "
 type Env = Record<string, string | undefined>;
 
 const read = (env: Env, key: string): string => (env[key] ?? "").trim();
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /** `--hosted` beats `BMPL_MODE`; an unknown BMPL_MODE is refused rather than silently local. */
 export function resolveMode(flagHosted: boolean, env: Env): { ok: true; mode: Mode } | { ok: false; error: string } {
@@ -150,6 +156,13 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
     if (Buffer.byteLength(opsToken, "utf8") < MIN_OPS_TOKEN_BYTES) invalid.push(`BMPL_OPS_TOKEN: at least ${MIN_OPS_TOKEN_BYTES} bytes, or "off" — generate one with \`openssl rand -base64 48\``);
     else if (weakSecret(opsToken)) invalid.push(`BMPL_OPS_TOKEN: ${weakSecret(opsToken)} — generate one with \`openssl rand -base64 48\``);
   }
+  const rawAnalyticsUrl = read(env, "BMPL_ANALYTICS_URL");
+  const rawWebsiteId = read(env, "BMPL_ANALYTICS_WEBSITE_ID").toLowerCase();
+  const analyticsOrigin = rawAnalyticsUrl === "" ? null : parseOrigin(rawAnalyticsUrl);
+  if ((rawAnalyticsUrl === "") !== (rawWebsiteId === "")) invalid.push("BMPL_ANALYTICS_URL and BMPL_ANALYTICS_WEBSITE_ID: both or neither");
+  if (rawAnalyticsUrl !== "" && !analyticsOrigin?.startsWith("https://")) invalid.push("BMPL_ANALYTICS_URL: an https origin, e.g. https://analytics.example.com");
+  if (rawWebsiteId !== "" && !UUID.test(rawWebsiteId)) invalid.push("BMPL_ANALYTICS_WEBSITE_ID: the website's UUID from Umami");
+  const analytics = analyticsOrigin && rawWebsiteId !== "" ? { url: analyticsOrigin, websiteId: rawWebsiteId } : null;
   const opsTokenSha256 = opsToken === "off" ? null
     : opsToken !== "" ? sha256Hex(opsToken)
     : baseUrl === BOOTSTRAP_OPS.origin ? BOOTSTRAP_OPS.sha256 : null;
@@ -173,6 +186,7 @@ export function validateHostedEnv(env: Env): { ok: true; config: HostedConfig } 
       contactUrl,
       supportUrl: rawSupport || null,
       opsTokenSha256,
+      analytics,
     },
   };
 }

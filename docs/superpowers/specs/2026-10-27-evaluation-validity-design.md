@@ -161,6 +161,27 @@ rule's 0.02 could not tell a gain from noise.
 - **Not run-based sources** (`NOT_RUN_BASED`: `preparation.ilvlVsLevel`) get no split-half, no one-run reliability and
   no k; they keep their nominal and effective shares.
 
+**Decisions after the v2 run** (2026-10-28, 2,175 characters; user: « applique »). The rule picked `both` for dps
+(split-half +0.13 [+0.08, +0.18]) and tank (+0.11 [+0.08, +0.15]) and `all` for healers (+0.19 [+0.12, +0.26]); no
+prediction surely worse, though every prediction is weak (deaths 0.1 to 0.2, timed near 0) and the healer intervals
+are wide (deaths −0.08 [−0.20, +0.05]). Applied as the rule says, re-checked by the next weekly studies. Seen on the
+way: shrinkage alone predicts deaths surely worse in all three roles; percentile curves alone are surely less steady
+for healers (−0.22) and tanks (−0.04); a lighter tank deaths weight is surely less steady (−0.08), so it stays at 3.
+
+- **The proposal** (`proposalFrom`, `StudyResult.proposal`): per role, what its best candidate changes, on top of the
+  expected item level fitted from the fit half, refitted and judged against today like the candidates; written whole
+  as `proposal.config`, from which the next default config is built (`applyProposal` in `src/calibration/apply.ts`),
+  so `globalCurve` and `reference` always match the shipped changes.
+- **The expected item level is fitted** (`fitExpectedIlvl`): the hand-set table (+15 → 315, +20 → 325) sat 7 to 8
+  levels under what the sampled players wear (median gap +8.0 dps, +7.3 healer, +7.2 tank), and the curve gives 75 at
+  0 and 100 from +10, so nearly every character scored 90 to 100: a 331 and a 338 barely differed. The table is now
+  the median item level of the characters sampled at each key level, refitted every week with the rest; with the
+  per-role percentile curves, the median player of the role scores 50 on it.
+- **Strengths and weaknesses** (the Synthèse tab) read the drivers: each signal's effect on the score shown against
+  the role's average player, in whole points, as "what would flip it" already did. They read axis points against 50
+  before, which turned the item level above (92.5 on a one-signal axis) into "+42.5" while it cost the player about a
+  third of a point against the average one (user report, 2026-10-28).
+
 **The engine** reads both changes from the config, off by default: `shrinkage[role][source] = k` pulls a value
 measured on n runs toward `reference.x` by k / (n + k) (`EvalInputs.counts` holds n; a driver's override is never
 pulled), and a sub-signal's `curves[role]` replaces its shared `curve` for that role. Nothing changes until a reviewed

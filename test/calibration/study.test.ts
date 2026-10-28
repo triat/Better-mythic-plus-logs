@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { Sample } from "../../src/calibration/fit.ts";
 import {
-  beats, bootstrapDiffs, halves, MIN_SPLIT_RUNS, outcomes, parseCheck, runStudy, type ScoreRows, type ScoreStudy, signalStudy, studyMarkdown, targetedAxes,
+  beats, bootstrapDiffs, halves, MIN_SPLIT_RUNS, outcomes, parseCheck, proposalFrom, runStudy, type ScoreRows, type ScoreStudy, signalStudy, studyMarkdown,
+  targetedAxes,
 } from "../../src/calibration/study.ts";
 import type { EvalPayload } from "../../src/evaluation/inputs.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
@@ -132,6 +133,21 @@ describe("evaluation study", () => {
     expect(bootstrapDiffs(today, { same: today }, after, 300)).toEqual(bootstrapDiffs(today, { same: today }, after, 300));
   });
 
+  test("the proposal takes, per role, what its best candidate changes and nothing else", () => {
+    const fit = population(160);
+    const p = proposalFrom(fit, cfg, { dps: "both", healer: null, tank: null });
+    expect(Object.keys(p.shrinkage!)).toEqual(["dps"]);
+    expect(p.axes.survival.subSignals.individualDeaths!.curves!.dps).toBeDefined();
+    expect(p.axes.survival.subSignals.individualDeaths!.curves!.healer).toBeUndefined();
+    expect(p.axes.utility.subSignals.dispels!.weights).toEqual(cfg.axes.utility.subSignals.dispels!.weights);
+    // "all" for the healer brings its targeted weight only, never the tank's.
+    const all = proposalFrom(fit, cfg, { dps: null, healer: "all", tank: null });
+    expect(all.axes.utility.subSignals.dispels!.weights.healer).toBe(1);
+    expect(all.axes.survival.subSignals.individualDeaths!.weights.tank).toBe(3);
+    // No winner anywhere: today's config.
+    expect(proposalFrom(fit, cfg, { dps: null, healer: null, tank: null })).toEqual(cfg);
+  });
+
   test("targeted weights: tank individual deaths and healer dispels weigh 1, nothing else moves", () => {
     const axes = targetedAxes(cfg.axes);
     expect(axes.survival.subSignals.individualDeaths!.weights).toEqual({ ...cfg.axes.survival.subSignals.individualDeaths!.weights, tank: 1 });
@@ -144,7 +160,14 @@ describe("evaluation study", () => {
     const r = runStudy(population(240), cfg, 1_800_000_000_000, 200);
     expect(r.roles.dps.fit + r.roles.dps.test).toBe(240);
     expect(r.bootstrap).toBe(200);
-    expect(Object.keys(r.roles.dps.candidates)).toEqual(["today", "shrinkage", "percentile", "both", "targeted", "all"]);
+    expect(Object.keys(r.roles.dps.candidates)).toEqual(["today", "shrinkage", "percentile", "both", "targeted", "all", "proposal"]);
+    // The proposal: a config the engine accepts, judged against today like the candidates.
+    expect(() => validateConfig(r.proposal!.config)).not.toThrow();
+    expect(r.proposal!.config.version).toBe(cfg.version);
+    expect(r.roles.dps.candidates.proposal!.vsToday!.splitHalf).not.toBeNull();
+    // Every character plays +16 here: one key level is not enough to fit the expected item level.
+    expect(r.proposal!.expectedIlvl).toBeNull();
+    expect(r.proposal!.config.expectedIlvl).toEqual(cfg.expectedIlvl);
     expect(r.roles.dps.candidates.today.changes).toBe(0);
     expect(r.roles.dps.candidates.today.vsToday).toBeNull();
     const shrink = r.roles.dps.candidates.shrinkage.vsToday!.splitHalf!;
@@ -169,6 +192,8 @@ describe("evaluation study", () => {
     expect(r.candidate.shrinkage.dps?.["preparation.ilvlVsLevel"]).toBeUndefined();
     const md = studyMarkdown(r);
     expect(md).toContain("## dps");
+    expect(md).toContain("## Proposal");
+    expect(md).toContain("| proposal |");
     expect(md).toContain("n/a, per character");
     expect(md).toMatch(/\| shrinkage \| \d\.\d\d · \**[+−±]\d\.\d\d \[/);
     expect(md).not.toMatch(/Name\d/);

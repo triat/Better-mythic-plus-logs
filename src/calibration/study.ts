@@ -3,17 +3,20 @@
 // really carries, whether WCL's parse is ranked per key level, and candidate changes — shrinkage toward the average
 // player (decision 7), per-role percentile curves (decision 8), and the targeted weights of study v2 — fitted on one
 // half of the characters and judged on the other. Study v2 (2026-10-27) judges each candidate against today's config
-// with a paired bootstrap over the held-out characters, so a difference inside the sampling noise decides nothing.
+// with a paired bootstrap over the held-out characters, so a difference inside the sampling noise decides nothing, and
+// builds the proposal (user 2026-10-28): per role its best candidate, on top of the item level the players of each
+// key level wear, refitted and judged like the candidates, ready to become the next default config.
 // It reads calibration.db only and writes aggregates: no character name, no WCL call.
 import { curveFor } from "../evaluation/axis.ts";
 import { curve } from "../evaluation/curve.ts";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { validateConfig } from "../evaluation/config.ts";
 import { scoreOnly } from "../evaluation/evaluate.ts";
 import type { EvalPayload, EvalRun } from "../evaluation/inputs.ts";
 import { payloadWithRuns } from "../evaluation/reliability.ts";
 import { AXIS_KEYS, type AxisKey, type CurvePoints, type EvaluationConfig, type Role } from "../evaluation/types.ts";
-import { curveInputs, fitGlobal, isFit, percentileCurve, quantile, ROLES, type Sample, spearman } from "./fit.ts";
+import { curveInputs, fitExpectedIlvl, fitGlobal, isFit, percentileCurve, quantile, ROLES, type Sample, spearman, withExpectedIlvl } from "./fit.ts";
 
 /** Pairs below this give no correlation (null). */
 export const MIN_PAIRS = 30;
@@ -368,6 +371,43 @@ export function targetedAxes(axes: EvaluationConfig["axes"]): EvaluationConfig["
 
 export type CandidateName = "today" | "shrinkage" | "percentile" | "both" | "targeted" | "all";
 const CANDIDATES = ["shrinkage", "percentile", "both", "targeted", "all"] as const;
+/** A row of a role's table: a candidate, or the proposal (never a candidate itself, so never `best`). */
+export type RowName = CandidateName | "proposal";
+
+const SHRINKS: readonly CandidateName[] = ["shrinkage", "both", "all"];
+const CURVES: readonly CandidateName[] = ["percentile", "both", "all"];
+const TARGETS: readonly CandidateName[] = ["targeted", "all"];
+
+/**
+ * The proposal: `start` with, per role, what its `best` candidate changes (shrinkage, percentile curves, targeted
+ * weights), each fitted on `fit` against `start`. A role whose best is null keeps `start`'s. Not yet refitted.
+ */
+export function proposalFrom(fit: Sample[], start: EvaluationConfig, best: Record<Role, CandidateName | null>): EvaluationConfig {
+  const fittedShrinkage = shrinkageFrom(fit, start);
+  const fittedCurves = percentileCurvesFrom(fit, start);
+  const axes = structuredClone(start.axes);
+  const shrinkage: NonNullable<EvaluationConfig["shrinkage"]> = structuredClone(start.shrinkage ?? {});
+  for (const role of ROLES) {
+    const b = best[role];
+    if (!b) continue;
+    if (SHRINKS.includes(b) && fittedShrinkage[role]) shrinkage[role] = fittedShrinkage[role];
+    if (CURVES.includes(b)) {
+      for (const axis of AXIS_KEYS) {
+        for (const [id, sc] of Object.entries(fittedCurves[axis].subSignals)) {
+          const c = sc.curves?.[role];
+          if (c) axes[axis].subSignals[id]!.curves = { ...axes[axis].subSignals[id]!.curves, [role]: c };
+        }
+      }
+    }
+    if (TARGETS.includes(b)) {
+      for (const t of TARGETED.filter((x) => x.role === role)) {
+        const [axis, id] = t.source.split(".") as [AxisKey, string];
+        axes[axis].subSignals[id]!.weights[role] = t.weight;
+      }
+    }
+  }
+  return { ...start, axes, ...(Object.keys(shrinkage).length > 0 ? { shrinkage } : {}) };
+}
 
 /** A candidate config with its `globalCurve` and `reference` refitted on the fit half, so its percentiles mean the same. */
 function refitted(fit: Sample[], cfg: EvaluationConfig): EvaluationConfig {
@@ -380,7 +420,8 @@ export interface RoleStudy {
   fit: number;
   test: number;
   signals: SignalStudy[];
-  candidates: Record<CandidateName, ScoreStudy>;
+  /** The candidates, then the proposal (absent from a study written before 2026-10-28). */
+  candidates: Record<CandidateName, ScoreStudy> & { proposal?: ScoreStudy };
 }
 
 export interface StudyResult {
@@ -399,6 +440,12 @@ export interface StudyResult {
   };
   /** Per role, the candidate that keeps the split-half best without losing prediction, or null to keep today's. */
   best: Record<Role, CandidateName | null>;
+  /**
+   * The next default config: per role its best candidate, on top of the expected item level fitted from the fit half
+   * (null when too few samples carry one), with `globalCurve` and `reference` refitted. Its version is today's: the
+   * one who applies it bumps it. Absent from a study written before 2026-10-28.
+   */
+  proposal?: { expectedIlvl: { slug: string; curve: CurvePoints } | null; config: EvaluationConfig };
 }
 
 /**
@@ -426,6 +473,7 @@ export function runStudy(samples: Sample[], base: EvaluationConfig, now: number,
   };
   const roles = {} as Record<Role, RoleStudy>;
   const best = {} as Record<Role, CandidateName | null>;
+  const held = {} as Record<Role, { own: Sample[]; after: (Outcomes | null)[]; today: ScoreRows }>;
   for (const role of ROLES) {
     const ownFit = fit.filter((s) => s.study.role === role);
     const ownTest = test.filter((s) => s.study.role === role);
@@ -435,8 +483,19 @@ export function runStudy(samples: Sample[], base: EvaluationConfig, now: number,
     const candidates = Object.fromEntries((Object.keys(configs) as CandidateName[]).map((name) =>
       [name, { ...scoreStudy(ownTest, configs[name], base, rows[name], after), vsToday: diffs[name] ?? null }])) as Record<CandidateName, ScoreStudy>;
     roles[role] = { role, fit: ownFit.length, test: ownTest.length, signals: signalStudy(ownTest, base, role), candidates };
+    held[role] = { own: ownTest, after, today: rows.today };
     const winners = CANDIDATES.filter((n) => beats(candidates[n]));
     best[role] = winners.sort((a, b) => (candidates[b].splitHalf ?? 0) - (candidates[a].splitHalf ?? 0))[0] ?? null;
+  }
+  // The proposal: the item level first (the curves and the reference are fitted on the gaps it gives), then each
+  // role's best, refitted, and judged on the held-out half against today like the candidates.
+  const expectedIlvl = fitExpectedIlvl(fit, base);
+  const proposal = validateConfig(refitted(fit, proposalFrom(fit, withExpectedIlvl(base, expectedIlvl), best)));
+  for (const role of ROLES) {
+    const h = held[role];
+    const rows = scoreRows(h.own, proposal);
+    const vsToday = bootstrapDiffs(h.today, { proposal: rows }, h.after, resamples).proposal ?? null;
+    roles[role].candidates.proposal = { ...scoreStudy(h.own, proposal, base, rows, h.after), vsToday };
   }
   const curves: StudyResult["candidate"]["curves"] = {};
   for (const axis of AXIS_KEYS) {
@@ -445,7 +504,7 @@ export function runStudy(samples: Sample[], base: EvaluationConfig, now: number,
   const weights = TARGETED.map((t) => ({ source: t.source, role: t.role, from: subConfig(base, t.source).weights[t.role], to: t.weight }));
   return {
     studiedAt: now, baseVersion: base.version, samples: samples.length, bootstrap: resamples, parse: parseCheck(samples), roles,
-    candidate: { shrinkage, curves, weights }, best,
+    candidate: { shrinkage, curves, weights }, best, proposal: { expectedIlvl, config: proposal },
   };
 }
 
@@ -476,6 +535,17 @@ export function studyMarkdown(r: StudyResult): string {
     "",
     `${r.parse.runs} ranked runs. Spearman(amount, parse) inside spec × dungeon: ${num(r.parse.pooled)}; inside spec × dungeon × key level: ${num(r.parse.perLevel)}; Spearman(key level, parse) inside spec × dungeon: ${num(r.parse.levelVsParse)}. Reading: **${r.parse.reading}**.`,
   ];
+  if (r.proposal) {
+    const e = r.proposal.expectedIlvl;
+    lines.push(
+      "",
+      "## Proposal",
+      "",
+      `Per role, its best candidate (${ROLES.map((role) => `${role}: ${r.best[role] ?? "today's"}`).join(", ")}), on top of the item level the fit half wears at each key level, with \`globalCurve\` and \`reference\` refitted. Its row in each role's table below is judged like the candidates. The config itself is \`proposal.config\` in GET /api/ops/calibration/study.`,
+      "",
+      e ? `Expected item level (${e.slug}): ${e.curve.map(([x, y]) => `+${x} → ${y}`).join(", ")}.` : "Expected item level: too few samples carry one, today's table is kept.",
+    );
+  }
   for (const role of ROLES) {
     const x = r.roles[role];
     lines.push(
@@ -488,8 +558,8 @@ export function studyMarkdown(r: StudyResult): string {
       "",
       "| Candidate | split-half | predicts deaths | predicts avoidable | predicts timed | WCL ladder | INVITE / MAYBE / PASS | changes |",
       "|---|---|---|---|---|---|---|---|",
-      ...(Object.keys(x.candidates) as CandidateName[]).map((n) => {
-        const c = x.candidates[n];
+      ...(Object.keys(x.candidates) as RowName[]).map((n) => {
+        const c = x.candidates[n]!;
         const d = c.vsToday;
         return `| ${n} | ${vs(c.splitHalf, d?.splitHalf)} | ${vs(c.predicts.deaths, d?.deaths)} | ${vs(c.predicts.avoidable, d?.avoidable)} | ${vs(c.predicts.timed, d?.timed)} | ${num(c.wclLadder)} | ${pct(c.verdicts.invite)} / ${pct(c.verdicts.maybe)} / ${pct(c.verdicts.pass)} | ${c.changes} |`;
       }),

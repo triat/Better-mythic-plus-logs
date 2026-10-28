@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { validateConfig } from "../evaluation/config.ts";
 import { scoreOnly } from "../evaluation/evaluate.ts";
 import type { EvaluationConfig, Role } from "../evaluation/types.ts";
-import { fitGlobal, isFit, MIN_N, quantile, ROLES, type Sample } from "./fit.ts";
+import { fitExpectedIlvl, fitGlobal, isFit, MIN_N, quantile, ROLES, type Sample, withExpectedIlvl } from "./fit.ts";
 
 /** A pull request only when, on the test half, this share of the characters changes verdict… */
 export const VERDICT_SHARE = 0.02;
@@ -20,7 +20,8 @@ export interface FitResult {
   fittedAt: number;
   /** The config version the fit started from: the workflow only applies it on top of the same one. */
   baseVersion: string;
-  candidate: Pick<EvaluationConfig, "globalCurve" | "reference">;
+  /** `expectedIlvl` is absent from a fit written before 2026-10-28, and when too few samples carry an item level. */
+  candidate: Pick<EvaluationConfig, "globalCurve" | "reference"> & { expectedIlvl?: EvaluationConfig["expectedIlvl"] };
   roles: Record<Role, RoleComparison>;
   test: number;
   verdictChanges: number;
@@ -34,9 +35,12 @@ const median = (xs: number[]): number | null => (xs.length ? Math.round(quantile
 export function fitAndCompare(samples: Sample[], base: EvaluationConfig, now: number): FitResult {
   const fit = samples.filter(isFit);
   const test = samples.filter((s) => !isFit(s));
-  const g = fitGlobal(fit, base);
+  // The expected item level first: the reference and the curve are then fitted on the gaps it gives.
+  const ilvl = fitExpectedIlvl(fit, base);
+  const start = withExpectedIlvl(base, ilvl);
+  const g = fitGlobal(fit, start);
   // Validated here, so a candidate the shipped config would refuse never reaches the pull request.
-  const cand: EvaluationConfig = validateConfig({ ...base, globalCurve: g.globalCurve, reference: g.reference });
+  const cand: EvaluationConfig = validateConfig({ ...start, globalCurve: g.globalCurve, reference: g.reference });
   const roles = {} as Record<Role, RoleComparison>;
   let changes = 0;
   for (const role of ROLES) {
@@ -65,9 +69,18 @@ export function fitAndCompare(samples: Sample[], base: EvaluationConfig, now: nu
     reason = `${(100 * share).toFixed(1)} % of ${test.length} held-out characters change verdict` + (moved.length ? `; median moved for ${moved.join(", ")}` : "");
   } else reason = `below the threshold: ${(100 * share).toFixed(1)} % change verdict (< ${100 * VERDICT_SHARE} %), no role median moves ${MEDIAN_POINTS} points`;
   return {
-    fittedAt: now, baseVersion: base.version, candidate: { globalCurve: g.globalCurve, reference: g.reference },
+    fittedAt: now, baseVersion: base.version,
+    candidate: { globalCurve: g.globalCurve, reference: g.reference, ...(ilvl ? { expectedIlvl: start.expectedIlvl } : {}) },
     roles, test: test.length, verdictChanges: changes, thresholdMet, reason,
   };
+}
+
+/** The fitted item level per key level, one line, when the fit has one. */
+function expectedIlvlLines(r: FitResult): string[] {
+  const e = r.candidate.expectedIlvl;
+  if (!e) return [];
+  const [slug, points] = Object.entries(e).at(-1)!;
+  return [`Expected item level (${slug}), median of the characters sampled at each key level: ${points.map(([x, y]) => `+${x} → ${y}`).join(", ")}.`, ""];
 }
 
 /** The pull request's body: aggregates only. */
@@ -87,6 +100,7 @@ export function comparisonMarkdown(r: FitResult): string {
       return `| ${role} | ${x.fit} | ${x.test} | ${x.refitted ? "yes" : `no (< ${MIN_N})`} | ${x.verdictChanges} | ${fmt(x.medianCurrent)} | ${fmt(x.medianCandidate)} |`;
     }),
     "",
+    ...expectedIlvlLines(r),
     "Spec: `docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md`.",
   ];
   return `${lines.join("\n")}\n`;

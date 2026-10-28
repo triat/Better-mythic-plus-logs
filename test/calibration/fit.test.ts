@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { fitGlobal, isFit, MIN_N, percentileCurve, quantile, type Sample } from "../../src/calibration/fit.ts";
+import { fitExpectedIlvl, fitGlobal, isFit, MIN_ILVL_N, MIN_N, percentileCurve, quantile, type Sample, withExpectedIlvl } from "../../src/calibration/fit.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
+import type { EvalPayload } from "../../src/evaluation/inputs.ts";
 import { payloadWith, runWith } from "../evaluation/helpers.ts";
 
 const cfg = validateConfig(DEFAULT_CONFIG);
@@ -11,7 +12,37 @@ const dps = (n: number, parse: (i: number) => number): Sample[] => Array.from({ 
   payload: payloadWith(Array.from({ length: 6 }, () => runWith({}, { parsePercent: parse(i), keyLevel: 16 })), { targetLevel: 16 }),
 }));
 
+/** One character at key level `level` wearing `ilvl`, its Raider.IO profile naming `slug`. */
+const geared = (level: number, ilvl: number, slug = "season-mn-2"): Sample => ({
+  study: { key: `g${level}-${ilvl}`, name: "G", server: "Realm", className: "Mage", spec: "Mage:Fire", role: "dps", level, percentile: 0.5, quintile: 2 },
+  payload: { ...payloadWith([runWith({}, { keyLevel: level })], { targetLevel: level }), rio: { itemLevel: ilvl, seasons: [{ slug }] } as unknown as EvalPayload["rio"] },
+});
+/** `n` characters at `level`, item levels spread evenly around `median` (± 3). */
+const band = (level: number, median: number, n = MIN_ILVL_N, slug?: string): Sample[] =>
+  Array.from({ length: n }, (_, i) => geared(level, median - 3 + (6 * i) / (n - 1), slug));
+
 describe("calibration fit", () => {
+  test("fitExpectedIlvl: the median item level per key level, the hand-set slope past both ends", () => {
+    // Today's table: +10 → 300, +15 → 315, +20 → 325, +25 → 332.
+    const f = fitExpectedIlvl([...band(15, 322), ...band(16, 324), ...band(18, 327), ...band(20, 333)], cfg)!;
+    expect(f.slug).toBe("season-mn-2");
+    expect(f.curve).toEqual([[10, 307], [15, 322], [16, 324], [18, 327], [20, 333], [25, 340]]);
+    // A level lower than the one below it keeps that one's value; a level under the minimum is left out.
+    const dip = fitExpectedIlvl([...band(15, 322), ...band(16, 320), ...band(17, 330, MIN_ILVL_N - 1), ...band(20, 333)], cfg)!;
+    expect(dip.curve).toEqual([[10, 307], [15, 322], [16, 322], [20, 333], [25, 340]]);
+    // Under two levels, or no item level at all: nothing to fit.
+    expect(fitExpectedIlvl(band(16, 324), cfg)).toBeNull();
+    expect(fitExpectedIlvl(dps(80, (i) => i), cfg)).toBeNull();
+  });
+
+  test("withExpectedIlvl: the season's table replaced in place, a new season added last", () => {
+    const same = withExpectedIlvl(cfg, { slug: "season-mn-2", curve: [[15, 320], [20, 330]] });
+    expect(same.expectedIlvl).toEqual({ "season-mn-2": [[15, 320], [20, 330]] });
+    const next = fitExpectedIlvl([...band(15, 340, MIN_ILVL_N, "season-mn-3"), ...band(20, 350, MIN_ILVL_N, "season-mn-3")], cfg)!;
+    expect(Object.keys(withExpectedIlvl(cfg, next).expectedIlvl)).toEqual(["season-mn-2", "season-mn-3"]);
+    expect(withExpectedIlvl(cfg, null)).toBe(cfg);
+  });
+
   test("percentileCurve: anchors rise with x, a constant population is neutral", () => {
     const c = percentileCurve(Array.from({ length: 100 }, (_, i) => i), true);
     expect(c[0]![1]).toBeLessThan(5);

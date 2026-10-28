@@ -15,6 +15,27 @@ export function deepMerge(base: unknown, override: unknown): unknown {
   return out;
 }
 
+/**
+ * `deepMerge(base, override)` for a user's evaluation.json: a sub-signal whose `curve` the file sets, without
+ * `curves`, keeps that curve for every role, so `base`'s per-role `curves`, which would win over it (`curveFor`), are
+ * dropped for that sub-signal (validity spec 2026-10-27, decision 8).
+ */
+export function mergeUserConfig(base: unknown, override: unknown): unknown {
+  const merged = deepMerge(base, override);
+  if (!isObj(merged) || !isObj(override) || !isObj(override.axes) || !isObj(merged.axes)) return merged;
+  for (const [axis, a] of Object.entries(override.axes)) {
+    if (!isObj(a) || !isObj(a.subSignals)) continue;
+    const subs = (merged.axes as Record<string, unknown>)[axis];
+    if (!isObj(subs) || !isObj(subs.subSignals)) continue;
+    for (const [id, s] of Object.entries(a.subSignals)) {
+      // deepMerge rebuilt every object the file touches, so the default config itself is never changed here.
+      const target = subs.subSignals[id];
+      if (isObj(s) && "curve" in s && !("curves" in s) && isObj(target)) delete target.curves;
+    }
+  }
+  return merged;
+}
+
 class ConfigError extends Error {}
 const fail = (path: string, msg: string): never => { throw new ConfigError(`${path}: ${msg}`); };
 
@@ -222,7 +243,7 @@ export async function loadConfig(userPath: string | null): Promise<{ config: Eva
   }
   const legacy = dropLegacyExperience(override);
   try {
-    const config = validateConfig(deepMerge(DEFAULT_CONFIG, legacy.override));
+    const config = validateConfig(mergeUserConfig(DEFAULT_CONFIG, legacy.override));
     return legacy.dropped ? { config, warning: legacyExperienceWarning(userPath) } : { config };
   } catch (e) {
     // The file is ignored for another reason: the experience notice still goes with it, so it is not lost on the fix.

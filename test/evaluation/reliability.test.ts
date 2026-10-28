@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import { evaluate } from "../../src/evaluation/evaluate.ts";
 import { LEVEL_MARGIN, levelProof, payloadWithout, scoreRange } from "../../src/evaluation/reliability.ts";
-import { deaths, payloadWith, runWith } from "./helpers.ts";
+import { deaths, MECHANICS_CONFIG, payloadWith, runWith } from "./helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 
 const run = (level: number, parse: number, died = 0) => runWith({
   keystone: { level, chests: 1, timed: true, timeMs: 1_500_000, affixes: [] },

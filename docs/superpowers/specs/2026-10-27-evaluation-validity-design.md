@@ -1,8 +1,8 @@
 # Evaluation validity — design
 
 Status: phases 1 and 2 implemented 2026-10-27; phase 3's study and engine support implemented 2026-10-27, study v2
-(bootstrap intervals, targeted weights) implemented the same day after the first run on the real samples, its
-decisions wait on the v2 run; phase 4 designed, not started.
+(bootstrap intervals, targeted weights, the proposal) implemented 2026-10-27/28; its curve candidates were measured
+wrong until the 2026-10-28 fix below, so config 11 waits on a rerun; phase 4 designed, not started.
 
 ## Goal
 
@@ -161,7 +161,20 @@ rule's 0.02 could not tell a gain from noise.
 - **Not run-based sources** (`NOT_RUN_BASED`: `preparation.ilvlVsLevel`) get no split-half, no one-run reliability and
   no k; they keep their nominal and effective shares.
 
-**Decisions after the v2 run** (2026-10-28, 2,175 characters; user: « applique »). The rule picked `both` for dps
+**A bug voids part of both runs** (found 2026-10-28 while writing config 11). `curveInputs` (`src/calibration/fit.ts`)
+reads a sub-signal's input back through a linear probe curve, but left the per-role `curves` in place, and `curveFor`
+prefers them: on any config with per-role curves every input came out as its percentile score / 1000. `fitGlobal`
+reads its `reference` through it, so every candidate with curves (`percentile`, `both`, `all`, `proposal`) was
+refitted with a reference near 0.05 for each curved sub-signal (median parse, deaths, kicks…), then scored with
+missing data imputed there and shrinkage pulled there. Their rows in both runs, and the decisions below that rest on
+them, are void; `shrinkage` and `targeted` (no curves) and the per-signal tables are not affected. The probe now
+drops the per-role curves too (regression test in `test/calibration/fit.test.ts`); nothing reached production, which
+runs config 10 (no per-role curve). The user still chose to apply the proposal for all three roles (2026-10-28,
+before the bug was found, tanks included despite their avoidable prediction −0.10 [−0.16, −0.05]); config 11 is built
+from the next, corrected run.
+
+**Decisions after the v2 run** (2026-10-28, 2,175 characters; user: « applique »; void for the curve candidates, see
+above). The rule picked `both` for dps
 (split-half +0.13 [+0.08, +0.18]) and tank (+0.11 [+0.08, +0.15]) and `all` for healers (+0.19 [+0.12, +0.26]); no
 prediction surely worse, though every prediction is weak (deaths 0.1 to 0.2, timed near 0) and the healer intervals
 are wide (deaths −0.08 [−0.20, +0.05]). Applied as the rule says, re-checked by the next weekly studies. Seen on the

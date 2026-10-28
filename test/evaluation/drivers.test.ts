@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_CONFIG, deepMerge, validateConfig } from "../../src/evaluation/config.ts";
+import { deepMerge, validateConfig } from "../../src/evaluation/config.ts";
 import { evaluate } from "../../src/evaluation/evaluate.ts";
-import { deaths, payloadWith, runWith } from "./helpers.ts";
+import { deaths, MECHANICS_CONFIG, payloadWith, runWith } from "./helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 const run = (d: number, parse: number) => runWith({
   deaths: deaths(d), consumables: { potions: 4, healthstones: 1 },
   avoidableDamage: { total: 0, perMinute: 100, peer: { median: 100, count: 4 }, spellCount: 10 },
@@ -23,7 +23,7 @@ describe("score drivers", () => {
 
   test("no impact when the reference is where the curve cannot tell the difference", () => {
     // A flat curve scores every input the same, so replacing the input by the reference changes nothing.
-    const flat = validateConfig(deepMerge(DEFAULT_CONFIG, { axes: { survival: { subSignals: { individualDeaths: { curve: [[0, 60], [10, 60]] } } } } }));
+    const flat = validateConfig(deepMerge(MECHANICS_CONFIG, { axes: { survival: { subSignals: { individualDeaths: { curve: [[0, 60], [10, 60]] } } } } }));
     expect(evaluate(payload(3, 60), flat).drivers!.some((d) => d.source === "survival.individualDeaths")).toBe(false);
   });
 
@@ -51,7 +51,7 @@ describe("score drivers", () => {
   });
 
   test("unreachable when three signals cannot get there", () => {
-    const hard = validateConfig(deepMerge(DEFAULT_CONFIG, { verdict: { invite: 100, maybe: 99 } }));
+    const hard = validateConfig(deepMerge(MECHANICS_CONFIG, { verdict: { invite: 100, maybe: 99 } }));
     const nv = evaluate(payload(3, 30), hard).nextVerdict!;
     expect(nv.reachable).toBe(false);
     expect(nv.sources.length).toBeLessThanOrEqual(3);
@@ -80,7 +80,7 @@ describe("score drivers", () => {
       dispels: { count: 3, available: true },
     }, { parsePercent: parse, keyLevel: 16 });
     const strong = payloadWith(Array.from({ length: 8 }, () => strongRun(90)), { targetLevel: 16 });
-    const hard = validateConfig(deepMerge(DEFAULT_CONFIG, { verdict: { invite: 100 } }));
+    const hard = validateConfig(deepMerge(MECHANICS_CONFIG, { verdict: { invite: 100 } }));
     const e = evaluate(strong, hard);
     expect(e.verdict).toBe("maybe");
     expect(e.drivers!.some((d) => d.impact < 0)).toBe(false);
@@ -90,7 +90,7 @@ describe("score drivers", () => {
   test("a player at the reference scores 0 on that signal", () => {
     // individualDeaths' curve input is deaths × the run's level-scale factor; 0 deaths scales to
     // 0 regardless of key level, so pinning the reference's x at 0 too makes the override a no-op.
-    const atRef = validateConfig(deepMerge(DEFAULT_CONFIG, { reference: { dps: { "survival.individualDeaths": { x: 0, value: 0 } } } }));
+    const atRef = validateConfig(deepMerge(MECHANICS_CONFIG, { reference: { dps: { "survival.individualDeaths": { x: 0, value: 0 } } } }));
     const ds = evaluate(payload(0, 30), atRef).drivers!;
     expect(ds.some((d) => d.source === "survival.individualDeaths")).toBe(false);
   });

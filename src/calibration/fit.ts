@@ -73,6 +73,9 @@ export function curveInputs(payload: EvalPayload, cfg: EvaluationConfig): Record
   for (const axis of Object.values(probe.axes)) {
     for (const sub of Object.values(axis.subSignals)) {
       sub.curve = [[-1e9, -1e9 * SLOPE], [1e9, 1e9 * SLOPE]];
+      // A per-role curve wins over the shared one (`curveFor`): left in place it would replace the probe, and every
+      // input read through it would come out as its score / SLOPE (the bug of the 2026-10-28 proposal).
+      delete sub.curves;
       sub.weights = { dps: 1, healer: 1, tank: 1 };
     }
   }

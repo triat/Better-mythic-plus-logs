@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import * as path from "node:path";
 import {
   DEFAULT_CONFIG,
+  mergeUserConfig,
   configVersion,
   deepMerge,
   dropLegacyExperience,
@@ -119,7 +120,19 @@ describe("loadConfig", () => {
     expect(r.config.verdict.invite).toBe(75);
     expect(r.config.verdict.maybe).toBe(30);
     expect(r.config.axes.utility.subSignals.dispels.curve).toEqual([[0, 30], [10, 100]]);
-    expect(r.config.axes.utility.subSignals.dispels.weights.healer).toBe(3);
+    expect(r.config.axes.utility.subSignals.dispels.weights.healer).toBe(DEFAULT_CONFIG.axes.utility.subSignals.dispels!.weights.healer);
+  });
+  test("a user curve wins over the default's per-role curves for that sub-signal only", () => {
+    const base = structuredClone(DEFAULT_CONFIG) as unknown as { axes: Record<string, { subSignals: Record<string, { curves?: unknown }> }> };
+    base.axes.utility!.subSignals.dispels!.curves = { healer: [[0, 0], [10, 100]] };
+    base.axes.utility!.subSignals.kicksAbsolute!.curves = { dps: [[0, 0], [1, 100]] };
+    const merged = validateConfig(mergeUserConfig(base, { axes: { utility: { subSignals: { dispels: { curve: [[0, 30], [10, 100]] } } } } }));
+    expect(merged.axes.utility.subSignals.dispels!.curves).toBeUndefined();
+    expect(merged.axes.utility.subSignals.kicksAbsolute!.curves).toEqual({ dps: [[0, 0], [1, 100]] });
+    // Setting both keeps both; the base itself is left as it was.
+    const both = validateConfig(mergeUserConfig(base, { axes: { utility: { subSignals: { dispels: { curve: [[0, 30], [10, 100]], curves: { tank: [[0, 10], [5, 90]] } } } } } }));
+    expect(both.axes.utility.subSignals.dispels!.curves).toEqual({ healer: [[0, 0], [10, 100]], tank: [[0, 10], [5, 90]] });
+    expect(base.axes.utility!.subSignals.dispels!.curves).toEqual({ healer: [[0, 0], [10, 100]] });
   });
   test("invalid user file → default + warning naming the file and path", async () => {
     const p = tmp("bad.json");

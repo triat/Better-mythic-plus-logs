@@ -119,6 +119,7 @@ implemented (canvas "bmpl · Verdict à ton niveau" C: `src/evaluation/reliabili
 header chip, the marks in Récents / Live / Compare, the Méthode tab's "average" rows); phase 3's study is implemented
 (`src/calibration/study.ts`, `bmpl calibrate --study`, `GET /api/ops/calibration/study`; the engine reads optional
 `shrinkage` and per-role `curves`, off until the study's results are reviewed), and its v2 (bootstrap intervals
-against today, the `targeted` and `all` candidates) waits on its first run on the VPS; phase 4 (labelled profiles) is not
+against today, the `targeted` and `all` candidates, the proposal) too; config 11 waits on a rerun after the
+2026-10-28 `curveInputs` fix (the curve candidates of the first runs were measured wrong); phase 4 (labelled profiles) is not
 started. Next: self-review phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

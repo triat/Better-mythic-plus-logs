@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fitExpectedIlvl, fitGlobal, isFit, MIN_ILVL_N, MIN_N, percentileCurve, quantile, type Sample, withExpectedIlvl } from "../../src/calibration/fit.ts";
+import { curveInputs, fitExpectedIlvl, fitGlobal, isFit, MIN_ILVL_N, MIN_N, percentileCurve, quantile, type Sample, withExpectedIlvl } from "../../src/calibration/fit.ts";
 import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import type { EvalPayload } from "../../src/evaluation/inputs.ts";
 import { payloadWith, runWith } from "../evaluation/helpers.ts";
@@ -50,6 +50,17 @@ describe("calibration fit", () => {
     for (let i = 1; i < c.length; i++) expect(c[i]![1]).toBeGreaterThan(c[i - 1]![1]);
     expect(percentileCurve([3, 3, 3], true)).toEqual([[3, 50], [4, 50]]);
     expect(quantile([1, 2, 3, 4], 0.5)).toBe(2.5);
+  });
+
+  test("curveInputs reads the measured value whatever the curves: per-role ones and shrinkage change nothing", () => {
+    const [s] = dps(1, () => 70);
+    const shaped = structuredClone(cfg);
+    for (const axis of Object.values(shaped.axes)) {
+      for (const sub of Object.values(axis.subSignals)) sub.curves = { dps: [[0, 0], [1, 100]], healer: [[0, 100], [1, 0]] };
+    }
+    const withShrinkage = { ...shaped, shrinkage: { dps: { "throughput.medianParse": 3 } } };
+    expect(curveInputs(s!.payload, withShrinkage)).toEqual(curveInputs(s!.payload, cfg));
+    expect(curveInputs(s!.payload, cfg)["throughput.medianParse"]).toBeCloseTo(70, 6);
   });
 
   test("fitGlobal: the reference is a median of measured values only, never of imputed ones", () => {

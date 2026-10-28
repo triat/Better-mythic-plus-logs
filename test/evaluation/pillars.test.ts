@@ -1,14 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { EVIDENCE_SOURCES } from "../../src/evaluation/axes/index.ts";
 import { scoreAxis } from "../../src/evaluation/axis.ts";
-import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
 import { evaluate } from "../../src/evaluation/evaluate.ts";
 import { collectInputs } from "../../src/evaluation/inputs.ts";
 import { CONTEXT_SOURCES, PILLAR_SOURCES, pillarOf, pillarScores } from "../../src/evaluation/pillars.ts";
 import { PILLAR_KEYS } from "../../src/evaluation/types.ts";
-import { deaths, payloadWith, runWith } from "./helpers.ts";
+import { deaths, MECHANICS_CONFIG, payloadWith, runWith } from "./helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 const kicks = { count: 6, kickCooldownS: 15, capacity: 10, usage: 0.6, peer: { median: 0.5, count: 3 } };
 const pillar = (ev: ReturnType<typeof evaluate>, key: string) => ev.pillars!.find((p) => p.key === key)!;
 
@@ -58,7 +57,7 @@ describe("pillarScores", () => {
 
 describe("pillar-only sub-signals", () => {
   test("utility.crowdControl is in the Control pillar and never in the axis score", () => {
-    const cfg = validateConfig(DEFAULT_CONFIG);
+    const cfg = MECHANICS_CONFIG;
     const subs = [
       { id: "dispels", value: 10, label: (r: number) => `${r} dispels/run` },
       { id: "crowdControl", value: 30, label: (r: number) => `crowd control ${r}`, extra: { rate: 4.2 } },
@@ -74,7 +73,7 @@ describe("pillar-only sub-signals", () => {
     expect(control.score).toBe(85);
   });
   test("runs with crowd control: the Control pillar moves, the axes, global and verdict do not", () => {
-    const cfg = validateConfig(DEFAULT_CONFIG);
+    const cfg = MECHANICS_CONFIG;
     const control = (vsReference: number) => ({ uses: 10, enemies: 12, perTenMin: 4, reference: 4, vsReference, stale: false, spells: [] });
     const plain = payloadWith([1, 2, 3].map(() => runWith({})));
     const withCc = payloadWith([-40, -30, -20].map((v) => runWith({ control: control(v) })));

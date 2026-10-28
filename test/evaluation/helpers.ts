@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { validateConfig } from "../../src/evaluation/config.ts";
+import type { EvaluationConfig } from "../../src/evaluation/types.ts";
 import { analyzeLookup, type MPlusRun } from "../../src/mplus.ts";
 import type { EvalPayload, EvalRun } from "../../src/evaluation/inputs.ts";
 import { parseRioProfile } from "../../src/signals/rio-profile.ts";
@@ -5,6 +9,13 @@ import { signalSummary } from "../../src/signals/summary.ts";
 import type { GroupRole, RunSignals } from "../../src/signals/types.ts";
 import { parseRunSignals } from "../../src/signals/wcl-run.ts";
 import { loadRioFixture, loadWclFixture } from "../fixtures.ts";
+
+/**
+ * Config 10 as shipped (2026-10-27): the hand-set curves, no per-role curve, no shrinkage, the hand-set expected item
+ * level. The engine's mechanics tests read it rather than the default config, so a recalibration (the weekly pull
+ * request, a study proposal) never moves them; what the default config itself must do is tested on DEFAULT_CONFIG.
+ */
+export const MECHANICS_CONFIG: EvaluationConfig = validateConfig(JSON.parse(readFileSync(join(import.meta.dir, "../fixtures/evaluation-config-v10.json"), "utf8")));
 
 let seq = 0;
 

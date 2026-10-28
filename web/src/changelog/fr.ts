@@ -5,7 +5,7 @@ export const CHANGELOG_FR: ChangelogEntry[] = [
   {
     version: "next",
     items: [
-      "La barre latérale reste maintenant visible quand tu fais défiler une longue page, avec ton compte en bas ; tes recherches récentes défilent à l'intérieur quand la liste est longue.",
+      "La barre latérale reste maintenant visible quand tu fais défiler une longue page, avec la recherche en haut et ton compte en bas ; sur une fenêtre basse, les liens et les recherches récentes entre les deux défilent seuls.",
     ],
   },
   {

@@ -141,31 +141,34 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
         {!p.sseConnected && <div className="side-note faint" title={t("header.reconnecting")}>{t("header.liveDisconnected")}</div>}
       </div>
 
-      <nav className="side-nav" aria-label={t("shell.navLabel")}>
-        {p.nav.map((n) => (
-          <a key={n.key} href={n.href} className={"nav-a" + (n.active ? " on" : "")} aria-current={n.active ? "page" : undefined}>
-            <Icon name={n.icon} size={18} />
-            <span>{n.label}</span>
-            {n.count !== undefined && <span className="nav-count mono">{n.count}</span>}
-            {n.dot && <span className={"nav-dot " + n.dot} aria-hidden="true" />}
-          </a>
-        ))}
-      </nav>
+      {/* The part that scrolls when the window is too short; the search above and the account below stay put. */}
+      <div className="side-scroll">
+        <nav className="side-nav" aria-label={t("shell.navLabel")}>
+          {p.nav.map((n) => (
+            <a key={n.key} href={n.href} className={"nav-a" + (n.active ? " on" : "")} aria-current={n.active ? "page" : undefined}>
+              <Icon name={n.icon} size={18} />
+              <span>{n.label}</span>
+              {n.count !== undefined && <span className="nav-count mono">{n.count}</span>}
+              {n.dot && <span className={"nav-dot " + n.dot} aria-hidden="true" />}
+            </a>
+          ))}
+        </nav>
 
-      {recent.rows.length > 0 && (
-        <section className="side-recent" aria-labelledby="side-recent-title">
-          <h2 className="side-label" id="side-recent-title">{t("shell.recent.title")}</h2>
-          <ul>
-            {recent.rows.map((r) => <Recent key={r.key} row={r} onRecent={p.onRecent} onRemove={p.onRemove} />)}
-          </ul>
-          {recent.toggle && (
-            <button type="button" className="side-clear" aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
-              {expanded ? t("shell.recent.showLess") : t("shell.recent.showMore", { count: recent.hidden })}
-            </button>
-          )}
-          <button type="button" className="side-clear" onClick={p.onClearAll}>{t("shell.recent.clearAll")}</button>
-        </section>
-      )}
+        {recent.rows.length > 0 && (
+          <section className="side-recent" aria-labelledby="side-recent-title">
+            <h2 className="side-label" id="side-recent-title">{t("shell.recent.title")}</h2>
+            <ul>
+              {recent.rows.map((r) => <Recent key={r.key} row={r} onRecent={p.onRecent} onRemove={p.onRemove} />)}
+            </ul>
+            {recent.toggle && (
+              <button type="button" className="side-clear" aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
+                {expanded ? t("shell.recent.showLess") : t("shell.recent.showMore", { count: recent.hidden })}
+              </button>
+            )}
+            <button type="button" className="side-clear" onClick={p.onClearAll}>{t("shell.recent.clearAll")}</button>
+          </section>
+        )}
+      </div>
 
       <div className="side-account">
         {p.controls.signOut && p.menu ? (
@@ -197,7 +200,7 @@ function Recent({ row, onRecent, onRemove }: { row: RecentRow; onRecent: ((key: 
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    // Récents may scroll inside the sidebar: bring a menu opened on its last visible row into view.
+    // The sidebar's middle part may scroll: bring a menu opened on its last visible row into view.
     menuRef.current?.scrollIntoView({ block: "nearest" });
     const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };

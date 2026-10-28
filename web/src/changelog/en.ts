@@ -4,7 +4,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.16",
+    date: "2026-10-28",
     items: [
       "The privacy page now lists the visit statistics this instance counts: pages opened and a few actions, without cookies or anything about the characters you look at.",
     ],

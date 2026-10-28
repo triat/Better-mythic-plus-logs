@@ -3,14 +3,14 @@
 import { describe, expect, test } from "bun:test";
 import { scoreAllAxes } from "../../src/evaluation/axes/index.ts";
 import { shrink } from "../../src/evaluation/axis.ts";
-import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
+import { validateConfig } from "../../src/evaluation/config.ts";
 import { curve } from "../../src/evaluation/curve.ts";
 import { evaluate, globalScore } from "../../src/evaluation/evaluate.ts";
 import { collectInputs, type EvalInputs } from "../../src/evaluation/inputs.ts";
 import type { CurvePoints, Role } from "../../src/evaluation/types.ts";
-import { deaths, payloadWith, runWith } from "./helpers.ts";
+import { deaths, MECHANICS_CONFIG, payloadWith, runWith } from "./helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 const ROLES: Role[] = ["dps", "healer", "tank"];
 
 /** A profile with every sub-signal measured, each near an ordinary value. */

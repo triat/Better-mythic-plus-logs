@@ -5,13 +5,13 @@ import { scoreConsistency } from "../../src/evaluation/axes/consistency.ts";
 import { scorePreparation } from "../../src/evaluation/axes/preparation.ts";
 import { scoreSurvival } from "../../src/evaluation/axes/survival.ts";
 import { scoreUtility } from "../../src/evaluation/axes/utility.ts";
-import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
+import { DEFAULT_CONFIG } from "../../src/evaluation/config.ts";
 import { evaluate } from "../../src/evaluation/evaluate.ts";
 import { collectInputs, type EvalInputs } from "../../src/evaluation/inputs.ts";
 import { AXIS_KEYS } from "../../src/evaluation/types.ts";
-import { deaths, fixturePayload, payloadWith, runWith } from "./helpers.ts";
+import { deaths, fixturePayload, MECHANICS_CONFIG, payloadWith, runWith } from "./helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 /** The engine without the average player: a missing sub-signal is left out (the rule before config version 10). */
 const noRef = { ...cfg, reference: { dps: {}, healer: {}, tank: {} } };
 

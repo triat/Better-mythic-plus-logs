@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { DEFAULT_CONFIG, configVersion, deepMerge, validateConfig } from "../../src/evaluation/config.ts";
 import { evaluate, globalScore, verdictFor } from "../../src/evaluation/evaluate.ts";
 import type { AxisScore } from "../../src/evaluation/types.ts";
-import { deaths, fixturePayload, payloadWith, runWith } from "./helpers.ts";
+import { deaths, fixturePayload, MECHANICS_CONFIG, payloadWith, runWith } from "./helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 const ax = (key: AxisScore["key"], score: number | null): AxisScore => ({ key, score, confidence: "high", evidence: [] });
 
 describe("globalScore / verdictFor", () => {
@@ -73,29 +73,32 @@ describe("evaluate", () => {
     const p = payloadWith(Array.from({ length: 6 }, bad), { targetLevel: 16 });
     expect(evaluate(p, cfg).verdict).toBe("pass");
     const identity = { dps: [[0, 0], [100, 100]], healer: [[0, 0], [100, 100]], tank: [[0, 0], [100, 100]] };
-    const lenient = validateConfig(deepMerge(DEFAULT_CONFIG, { verdict: { invite: 20, maybe: 10 }, globalCurve: identity }));
+    const lenient = validateConfig(deepMerge(MECHANICS_CONFIG, { verdict: { invite: 20, maybe: 10 }, globalCurve: identity }));
     expect(evaluate(p, lenient).verdict).toBe("invite");
   });
 
   test("the global is the weighted mean through the role's globalCurve, rounded", () => {
     const p = payloadWith(Array.from({ length: 8 }, good), { targetLevel: 16 });
     const identity = { dps: [[0, 0], [100, 100]], healer: [[0, 0], [100, 100]], tank: [[0, 0], [100, 100]] };
-    const plain = evaluate(p, validateConfig(deepMerge(DEFAULT_CONFIG, { globalCurve: identity })));
+    const plain = evaluate(p, validateConfig(deepMerge(MECHANICS_CONFIG, { globalCurve: identity })));
     const raw = globalScore(plain.axes, "dps", cfg)!;
     expect(plain.global).toBe(Math.round(raw));
     // A curve that halves every raw score: same axes, halved global, verdict read on the halved value.
-    const half = validateConfig(deepMerge(DEFAULT_CONFIG, { globalCurve: { ...identity, dps: [[0, 0], [100, 50]] } }));
+    const half = validateConfig(deepMerge(MECHANICS_CONFIG, { globalCurve: { ...identity, dps: [[0, 0], [100, 50]] } }));
     const e = evaluate(p, half);
     expect(e.axes).toEqual(plain.axes);
     expect(e.global).toBe(Math.round(raw / 2));
     expect(e.verdict).toBe(verdictFor(e.global, e.runsUsed, half));
   });
 
-  test("the default curve places a median player of the calibration population near 50", () => {
+  test("the default curve places a median player of the calibration population inside the scale", () => {
+    // Read on the shipped config: a recalibration moves the point, never off the scale.
+    const shipped = validateConfig(DEFAULT_CONFIG);
     for (const role of ["dps", "healer", "tank"] as const) {
-      const median = cfg.globalCurve[role].find(([, y]) => y >= 50)!; // a refitted curve may step over 50 exactly
+      const median = shipped.globalCurve[role].find(([, y]) => y >= 50)!; // a refitted curve may step over 50 exactly
       expect(median).toBeDefined();
-      expect(median[0]).toBeGreaterThan(70); // today's raw weighted mean of a median player sits in the mid-70s
+      expect(median[0]).toBeGreaterThan(0);
+      expect(median[0]).toBeLessThan(100);
     }
   });
 
@@ -133,7 +136,7 @@ describe("default config snapshot (v8)", () => {
   // s1-tank has no avoidable list for its dungeon, which no longer leaves Survival at 100 (s1-tank 81 → 58, + rio
   // 80 → 60); no fixture has analyses. Any later drift means a weight or curve moved. `globalCurve` is pinned to v8's: the weekly recalibration refits it (spec
   // docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md), and its pull request must not fail here.
-  const cfg = { ...validateConfig(DEFAULT_CONFIG), globalCurve: {
+  const cfg = { ...MECHANICS_CONFIG, globalCurve: {
     dps:    [[0, 0], [47.7, 2], [51.1, 5], [56, 10], [63.9, 25], [69.1, 40], [71.4, 50], [73.7, 60], [77.3, 75], [82.7, 90], [84, 95], [86.4, 98], [100, 100]],
     healer: [[0, 0], [60.2, 2], [62.7, 5], [65.9, 10], [71.6, 25], [75.3, 40], [77.5, 50], [79.1, 60], [83.3, 75], [86.7, 90], [89.5, 95], [91.5, 98], [100, 100]],
     tank:   [[0, 0], [56.7, 2], [59.6, 5], [62.3, 10], [67, 25], [71, 40], [72.6, 50], [75.5, 60], [78.6, 74], [83.4, 90], [86.7, 95], [88.9, 98], [100, 100]],

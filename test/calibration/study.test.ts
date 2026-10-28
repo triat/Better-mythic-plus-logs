@@ -5,10 +5,10 @@ import {
   targetedAxes,
 } from "../../src/calibration/study.ts";
 import type { EvalPayload } from "../../src/evaluation/inputs.ts";
-import { DEFAULT_CONFIG, validateConfig } from "../../src/evaluation/config.ts";
-import { deaths, payloadWith, runWith } from "../evaluation/helpers.ts";
+import { validateConfig } from "../../src/evaluation/config.ts";
+import { deaths, MECHANICS_CONFIG, payloadWith, runWith } from "../evaluation/helpers.ts";
 
-const cfg = validateConfig(DEFAULT_CONFIG);
+const cfg = MECHANICS_CONFIG;
 
 /** Deterministic noise in [0, 1). */
 const noise = (seed: number) => {

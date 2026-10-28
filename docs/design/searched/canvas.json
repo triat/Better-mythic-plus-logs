@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-28T15:50:00Z" },
+  "title": "bmpl · Personnages recherchés",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 1180, "title": "A · Une section de l'admin : tableau filtrable" },
+    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 1180, "title": "B · Une page à part : la vue d'ensemble puis le tableau" },
+    "C.dc.html": { "x": 2720, "y": 0, "w": 1280, "h": 1180, "title": "C · Le nuage des scores, par rôle et par verdict" }
+  },
+  "order": ["Main.dc.html", "B.dc.html", "C.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Admin : tous les personnages recherchés, leurs scores et ce qui est regardé", "kind": "title1", "maxW": 4000 }
+  },
+  "designSystems": []
+}

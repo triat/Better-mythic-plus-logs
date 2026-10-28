@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>A · Section de l'admin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1180px; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <span style="font-weight: 600">Personnages recherchés</span>
+      <span style="font-size: 12px; color: #A0A7B4">412 personnages · tous les membres · 0 pt WCL · le dernier verdict calculé pour chacun</span>
+      <div style="flex-grow: 1"></div>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid #A0A7B4; background: #1C2029; color: #ECEEF2">Tous · 412</button>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid #232733; background: transparent; color: #A0A7B4"><span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #3FCF8E; margin-right: 6px"></span>Inviter · 138</button>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid #232733; background: transparent; color: #A0A7B4"><span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #F2B544; margin-right: 6px"></span>Peut-être · 171</button>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid #232733; background: transparent; color: #A0A7B4"><span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #F2665C; margin-right: 6px"></span>Passer · 81</button>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid #232733; background: transparent; color: #A0A7B4">Sans verdict · 22</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 4px 0; font-size: 12px">
+      <label style="display: flex; align-items: center; gap: 8px; height: 32px; width: 280px; box-sizing: border-box; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 10px; background: #0E1014; color: #8D95A3; font-size: 13px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="search" aria-label="Rechercher un personnage" placeholder="Nom, royaume ou classe" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #ECEEF2; font: inherit; outline: none">
+      </label>
+      <span style="color: #8D95A3">Rôle</span>
+      <span style="display: inline-flex; border: 1px solid #232733; border-radius: 8px; overflow: hidden">
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: #1C2029; color: #ECEEF2; font-weight: 600">Tous</button>
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">Tank</button>
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">Soigneur</button>
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">DPS</button>
+      </span>
+      <span style="color: #8D95A3">Région</span>
+      <span style="display: inline-flex; border: 1px solid #232733; border-radius: 8px; overflow: hidden">
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: #1C2029; color: #ECEEF2; font-weight: 600">Toutes</button>
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">EU</button>
+        <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">US</button>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 150px 150px 90px 110px 84px 130px; gap: 12px; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">
+      <span>personnage</span><span>spé · rôle</span><span>verdict bmpl</span><span>score rio</span><span>meilleure clé</span><span>membres</span><span style="color: #ECEEF2">dernière recherche ↓</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="14">
+      <a href="#" style="display: grid; grid-template-columns: 1fr 150px 150px 90px 110px 84px 130px; gap: 12px; align-items: center; padding: 8px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; color: #ECEEF2">
+        <span style="display: flex; align-items: center; gap: 8px; min-width: 0"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.classColor}}; flex: none"></span><span style="font-weight: 500; white-space: nowrap">{{r.name}}</span><span style="color: #8D95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.realm}} · {{r.region}}</span></span>
+        <span style="color: #C9CED8">{{r.spec}} <span style="color: #8D95A3">· {{r.role}}</span></span>
+        <span style="display: flex; align-items: center; gap: 6px"><span style="font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid {{r.vBorder}}; background: {{r.vBg}}; color: {{r.vColor}}">{{r.verdict}}</span><span style="font-family: 'Geist Mono', monospace">{{r.score}}</span><span style="color: #8D95A3; font-size: 12px">+{{r.level}}</span></span>
+        <span style="font-family: 'Geist Mono', monospace">{{r.rio}}</span>
+        <span style="font-family: 'Geist Mono', monospace">+{{r.best}} <span style="color: #8D95A3; font-family: Geist, system-ui, sans-serif; font-size: 12px">{{r.bestDungeon}}</span></span>
+        <span style="font-family: 'Geist Mono', monospace; color: #C9CED8">{{r.members}}</span>
+        <span style="color: #A0A7B4; font-family: 'Geist Mono', monospace; font-size: 12px">{{r.seen}}</span>
+      </a>
+    </sc-for>
+    <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
+      <span style="font-size: 12px; color: #8D95A3">1–14 sur 412 · un clic ouvre le profil (0 pt)</span>
+      <div style="flex-grow: 1"></div>
+      <a href="#" aria-label="Page précédente" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #5A6272; font-size: 13px">‹</a>
+      <a href="#" aria-current="page" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #A0A7B4; border-radius: 8px; color: #ECEEF2; font-size: 13px; font-weight: 600; background: #1C2029">1</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">2</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">3</a>
+      <span style="color: #8D95A3; font-size: 13px; padding: 0 2px">…</span>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">30</a>
+      <a href="#" aria-label="Page suivante" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">›</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const V = {
+      Inviter: ["#3FCF8E", "#12201B", "#24523F"],
+      "Peut-être": ["#F2B544", "#1A1812", "#3D3420"],
+      Passer: ["#F2665C", "#1E1416", "#4A2228"],
+    };
+    const r = (name, realm, region, classColor, spec, role, verdict, score, level, rio, best, bestDungeon, members, seen) => ({
+      name, realm, region, classColor, spec, role, verdict, score, level, rio, best, bestDungeon, members, seen,
+      vColor: V[verdict][0], vBg: V[verdict][1], vBorder: V[verdict][2],
+    });
+    return {
+      rows: [
+        r("Vachâman", "Ysondre", "EU", "#0070DD", "Élémentaire", "DPS", "Inviter", 78, 15, "3 412", 17, "Brèche", 4, "il y a 3 min"),
+        r("Kessandra", "Hyjal", "EU", "#C41E3A", "Sang", "Tank", "Peut-être", 54, 16, "3 105", 16, "Prieuré", 2, "il y a 12 min"),
+        r("Lumiel", "Archimonde", "EU", "#FFFFFF", "Discipline", "Soigneur", "Inviter", 81, 15, "3 288", 16, "Cinderbrew", 3, "il y a 40 min"),
+        r("Thrakk", "Kazzak", "EU", "#C69B6D", "Fureur", "DPS", "Passer", 31, 16, "2 744", 14, "Opération", 1, "il y a 1 h"),
+        r("Nymeria", "Dalaran", "EU", "#FF7C0A", "Restauration", "Soigneur", "Peut-être", 58, 14, "2 951", 15, "Brèche", 2, "il y a 2 h"),
+        r("Shadowmend", "Illidan", "US", "#A330C9", "Dévastation", "DPS", "Inviter", 84, 17, "3 560", 18, "Ara-Kara", 5, "il y a 3 h"),
+        r("Orwen", "Elune", "EU", "#F48CBA", "Protection", "Tank", "Inviter", 72, 15, "3 190", 16, "Grim Batol", 1, "il y a 5 h"),
+        r("Zaela", "Ysondre", "EU", "#8788EE", "Affliction", "DPS", "Peut-être", 49, 15, "2 880", 15, "Prieuré", 1, "hier"),
+        r("Miko", "Draenor", "EU", "#00FF98", "Tisse-brume", "Soigneur", "Passer", 27, 16, "2 610", 13, "Cinderbrew", 2, "hier"),
+        r("Corvax", "Tarren Mill", "EU", "#AAD372", "Précision", "DPS", "Inviter", 76, 15, "3 240", 17, "Ara-Kara", 1, "il y a 2 j"),
+        r("Ilsabet", "Hyjal", "EU", "#3FC7EB", "Givre", "DPS", "Peut-être", 61, 15, "3 020", 16, "Grim Batol", 3, "il y a 2 j"),
+        r("Durgan", "Sargeras", "EU", "#C69B6D", "Protection", "Tank", "Passer", 22, 15, "2 450", 12, "Opération", 1, "il y a 4 j"),
+        r("Faelyn", "Kirin Tor", "EU", "#33937F", "Préservation", "Soigneur", "Inviter", 88, 16, "3 470", 17, "Brèche", 2, "il y a 5 j"),
+        r("Rokhar", "Ysondre", "EU", "#FFF468", "Hors-la-loi", "DPS", "Peut-être", 52, 15, "2 990", 15, "Prieuré", 1, "il y a 6 j"),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

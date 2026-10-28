@@ -28,14 +28,15 @@ export interface StatusInfo {
 export interface UiControls { setup: boolean; quit: boolean; watch: boolean; envPath: boolean; signOut: boolean }
 export type BootScreen = "setup" | "main" | "signin";
 /** No router: the pathname picks the page rendered inside `Main` (or, for /privacy and /help, before the sign-in wall). */
-export type Page = "home" | "candidate" | "compare" | "live" | "admin" | "settings" | "privacy" | "help" | "me";
+/** `characters`: /admin/characters, the admin's searched characters (canvas "bmpl · Personnages recherchés"). */
+export type Page = "home" | "candidate" | "compare" | "live" | "admin" | "characters" | "settings" | "privacy" | "help" | "me";
 
 /** Used when /api/status itself fails: behave like today's local UI. */
 export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", contactUrl: null, supportUrl: null, region: "eu" };
 
 const PAGES: Record<string, Page> = {
   "/": "home", "/candidate": "candidate", "/compare": "compare", "/live": "live",
-  "/admin": "admin", "/settings": "settings", "/privacy": "privacy", "/help": "help", "/me": "me",
+  "/admin": "admin", "/admin/characters": "characters", "/settings": "settings", "/privacy": "privacy", "/help": "help", "/me": "me",
 };
 export const pageOf = (pathname: string): Page => PAGES[pathname] ?? "home";
 /** The candidate page's URL for a history entry, on its default tab (`candHref` in lib/profile.ts names a tab or a run). */

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>B · Page personnages</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1180px; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; gap: 16px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+  <div style="display: flex; align-items: baseline; gap: 12px">
+    <h1 style="margin: 0; font-size: 22px; font-weight: 600">Personnages recherchés</h1>
+    <span style="font-size: 13px; color: #A0A7B4">admin · tous les membres · 0 pt WCL</span>
+    <div style="flex-grow: 1"></div>
+    <span style="display: inline-flex; border: 1px solid #232733; border-radius: 8px; overflow: hidden">
+      <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">7 j</button>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: #1C2029; color: #ECEEF2; font-weight: 600">30 j</button>
+      <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border: 0; background: transparent; color: #A0A7B4">Saison</button>
+    </span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+    <div style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">personnages</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 26px; font-weight: 600">412</span>
+      <span style="font-size: 12px; color: #8D95A3">dont 96 cette semaine</span>
+    </div>
+    <div style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">score médian</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 26px; font-weight: 600">57</span>
+      <span style="font-size: 12px; color: #8D95A3">tank 52 · soigneur 61 · dps 57</span>
+    </div>
+    <div style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">verdicts</span>
+      <div style="display: flex; height: 10px; border-radius: 999px; overflow: hidden; margin: 10px 0 6px">
+        <span style="width: 35%; background: #3FCF8E"></span><span style="width: 44%; background: #F2B544"></span><span style="width: 21%; background: #F2665C"></span>
+      </div>
+      <span style="font-size: 12px; color: #8D95A3">inviter 138 · peut-être 171 · passer 81</span>
+    </div>
+    <div style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">niveau visé</span>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 26px; font-weight: 600">+15</span>
+      <span style="font-size: 12px; color: #8D95A3">le plus fréquent · de +10 à +19</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px">
+    <section style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-weight: 600">Répartition des scores</span>
+      <div style="display: flex; align-items: flex-end; gap: 6px; height: 150px; border-bottom: 1px solid #232733; padding-bottom: 2px">
+        <sc-for list="{{bins}}" as="b" hint-placeholder-count="10">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px">
+            <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8D95A3">{{b.n}}</span>
+            <span style="width: 100%; height: {{b.h}}px; background: {{b.color}}; border-radius: 4px 4px 0 0"></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-family: 'Geist Mono', monospace; font-size: 11px; color: #8D95A3"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
+    </section>
+    <section style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-weight: 600">Les plus recherchés</span>
+      <sc-for list="{{top}}" as="s" hint-placeholder-count="6">
+        <div style="display: grid; grid-template-columns: 10px 1fr 120px 40px; gap: 10px; align-items: center; font-size: 13px">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: {{s.color}}"></span>
+          <span>{{s.label}}</span>
+          <span style="height: 6px; background: #1C2029; border-radius: 999px; overflow: hidden"><span style="display: block; height: 100%; width: {{s.w}}%; background: #7FB4FF"></span></span>
+          <span style="font-family: 'Geist Mono', monospace; text-align: right; color: #C9CED8">{{s.n}}</span>
+        </div>
+      </sc-for>
+      <span style="font-size: 12px; color: #8D95A3">par spécialisation, personnages distincts</span>
+    </section>
+  </div>
+
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span style="font-weight: 600">Tous les personnages</span>
+      <div style="flex-grow: 1"></div>
+      <label style="display: flex; align-items: center; gap: 8px; height: 32px; width: 260px; box-sizing: border-box; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 10px; background: #0E1014; color: #8D95A3; font-size: 13px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="search" aria-label="Rechercher un personnage" placeholder="Nom, royaume ou classe" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #ECEEF2; font: inherit; outline: none">
+      </label>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 140px 130px 90px 100px 130px; gap: 12px; padding: 2px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">
+      <span>personnage</span><span>spé</span><span style="color: #ECEEF2">score ↓</span><span>rio</span><span>membres</span><span>dernière recherche</span>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+      <a href="#" style="display: grid; grid-template-columns: 1fr 140px 130px 90px 100px 130px; gap: 12px; align-items: center; padding: 7px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; color: #ECEEF2">
+        <span style="display: flex; gap: 8px; align-items: center"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{r.c}}"></span>{{r.name}} <span style="color: #8D95A3">{{r.realm}}</span></span>
+        <span style="color: #C9CED8">{{r.spec}}</span>
+        <span style="display: flex; gap: 6px; align-items: center"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{r.v}}"></span><span style="font-family: 'Geist Mono', monospace">{{r.score}}</span><span style="color: #8D95A3; font-size: 12px">+{{r.level}}</span></span>
+        <span style="font-family: 'Geist Mono', monospace">{{r.rio}}</span>
+        <span style="font-family: 'Geist Mono', monospace; color: #C9CED8">{{r.members}}</span>
+        <span style="color: #A0A7B4; font-size: 12px; font-family: 'Geist Mono', monospace">{{r.seen}}</span>
+      </a>
+    </sc-for>
+    <span style="font-size: 12px; color: #8D95A3">1–6 sur 412 · pages numérotées comme Membres</span>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const counts = [4, 9, 18, 31, 52, 74, 88, 71, 45, 20];
+    const max = Math.max(...counts);
+    const bins = counts.map((n, i) => ({ n, h: Math.round((n / max) * 120), color: i < 4 ? "#F2665C" : i < 7 ? "#F2B544" : "#3FCF8E" }));
+    const t = (label, color, n) => ({ label, color, n, w: Math.round((n / 41) * 100) });
+    const G = "#3FCF8E", Y = "#F2B544", R = "#F2665C";
+    const r = (name, realm, c, spec, v, score, level, rio, members, seen) => ({ name, realm, c, spec, v, score, level, rio, members, seen });
+    return {
+      bins,
+      top: [
+        t("Dévastation", "#33937F", 41), t("Élémentaire", "#0070DD", 33), t("Discipline", "#FFFFFF", 29),
+        t("Sang", "#C41E3A", 24), t("Givre", "#3FC7EB", 22), t("Restauration", "#FF7C0A", 19),
+      ],
+      rows: [
+        r("Faelyn", "Kirin Tor", "#33937F", "Préservation", G, 88, 16, "3 470", 2, "il y a 5 j"),
+        r("Shadowmend", "Illidan", "#A330C9", "Dévastation", G, 84, 17, "3 560", 5, "il y a 3 h"),
+        r("Lumiel", "Archimonde", "#FFFFFF", "Discipline", G, 81, 15, "3 288", 3, "il y a 40 min"),
+        r("Vachâman", "Ysondre", "#0070DD", "Élémentaire", G, 78, 15, "3 412", 4, "il y a 3 min"),
+        r("Ilsabet", "Hyjal", "#3FC7EB", "Givre", Y, 61, 15, "3 020", 3, "il y a 2 j"),
+        r("Thrakk", "Kazzak", "#C69B6D", "Fureur", R, 31, 16, "2 744", 1, "il y a 1 h"),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

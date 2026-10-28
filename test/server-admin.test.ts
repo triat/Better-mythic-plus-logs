@@ -43,6 +43,18 @@ describe("admin gate", () => {
   });
 });
 
+describe("searched characters", () => {
+  test("admin only; the list and the verdict thresholds, members never named", async () => {
+    expect((await fetch(u("/api/admin/characters"), { headers: { cookie: member.cookie } })).status).toBe(403);
+    const r = await fetch(u("/api/admin/characters"), { headers: { cookie: admin.cookie } });
+    expect(r.status).toBe(200);
+    const body = await r.json();
+    expect(Array.isArray(body.characters)).toBe(true);
+    expect(body.thresholds.invite).toBeGreaterThan(body.thresholds.maybe);
+    expect(JSON.stringify(body)).not.toContain("boss");
+  });
+});
+
 describe("invites", () => {
   test("add, list, remove", async () => {
     const add = await fetch(u("/api/admin/invites"), json("POST", { discordId: "222222222222222222", note: "guild" }, admin.cookie));

@@ -4,6 +4,8 @@ import { dirname } from "node:path";
 import pkg from "../../package.json";
 import { SHIPPED, specDefensives } from "../deepdive/table.ts";
 import { AUDIT_KINDS, actionsOf, clip } from "../hosted/audit.ts";
+import { searchedCharacters } from "../hosted/characters.ts";
+import { getEvalConfig } from "../evaluation/config.ts";
 import type { AuditKind } from "../hosted/audit.ts";
 import { DISCORD_ID } from "../hosted/config.ts";
 import { HOUR_MS, hourStart } from "../hosted/db.ts";
@@ -130,6 +132,11 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
         }),
         hours: rt.db.usage.totals(at - 24 * HOUR_MS),
       });
+    }, "admin"),
+    // Searched characters (canvas "bmpl · Personnages recherchés"): every character looked up, from data already held.
+    route("GET", "/api/admin/characters", async () => {
+      const v = (await getEvalConfig()).verdict;
+      return jsonResponse({ ok: true, characters: searchedCharacters((await getStore())._db), thresholds: { invite: v.invite, maybe: v.maybe } });
     }, "admin"),
     // Feature usage (spec 2026-10-09): every catalogue entry with members, uses, a daily series and the top 5 members.
     route("GET", "/api/admin/features", (_req, url, ctx) => {

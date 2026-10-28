@@ -31,6 +31,7 @@ const ROUTES: Record<string, { pick: (a: WebAssets) => string; type: string; cac
   "/compare": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/live": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/admin": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
+  "/admin/characters": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/settings": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/privacy": { pick: (a) => a.index, type: "text/html; charset=utf-8" },
   "/help": { pick: (a) => a.index, type: "text/html; charset=utf-8" },

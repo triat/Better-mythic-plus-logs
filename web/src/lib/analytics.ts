@@ -20,7 +20,7 @@ export type AnalyticsEvent = keyof typeof ANALYTICS_EVENTS;
 export interface AnalyticsProps { source?: "fetched" | "cached"; count?: number }
 
 const PAGE_PATH: Record<Page, string> = {
-  home: "/", candidate: "/candidate", compare: "/compare", live: "/live", admin: "/admin",
+  home: "/", candidate: "/candidate", compare: "/compare", live: "/live", admin: "/admin", characters: "/admin/characters",
   settings: "/settings", privacy: "/privacy", help: "/help", me: "/me",
 };
 

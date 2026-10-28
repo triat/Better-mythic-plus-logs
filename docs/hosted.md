@@ -387,6 +387,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/invites` | admin | List invites |
 | POST | `/api/admin/invites` | admin | Add an invite (Discord id + optional note) |
 | DELETE | `/api/admin/invites/:discordId` | admin | Remove an invite (also revokes that user's sessions) |
+| GET | `/api/admin/characters` | admin | Every character looked up (`character_runs`, `rio_profile`, the newest `user_history` verdict, members as a count) and the verdict thresholds; 0 WCL pts, `/admin/characters` |
 | GET | `/api/admin/audit` | admin | Paged audit log (`kind`, `offset` or `before`, `limit`, `q` = member or target) |
 | GET | `/api/admin/features` | admin | Feature usage: active members, every catalogue event with members, uses, last use, a daily series and the top 5 members (`days` 7/30/90, `admins` 0/1) |
 | GET | `/api/admin/usage` | admin | WCL budget gauge: this hour per member, the shared client's last `rateLimitData`, last 24 hourly totals |

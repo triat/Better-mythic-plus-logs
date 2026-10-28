@@ -3,7 +3,8 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
-    version: "next",
+    version: "0.10.12",
+    date: "2026-10-28",
     items: [
       "Les forces et faiblesses montrent maintenant ce que chaque signal ajoute ou retire au score face au joueur moyen : un item level comme celui de la plupart des joueurs n'apparaît plus comme une grosse force.",
     ],

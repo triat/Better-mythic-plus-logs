@@ -1,0 +1,16 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-28T14:10:00Z" },
+  "title": "bmpl · Admin listes",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 1420, "title": "A · Pages numérotées, tableau d'usage replié sous les chiffres" },
+    "B.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 1300, "title": "B · Précédent / Suivant partout, usage replié en une ligne" }
+  },
+  "order": ["Main.dc.html", "B.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Admin : membres paginés et cherchables, usage replié, audit 10 / 20 / 50", "kind": "title1", "maxW": 2640 }
+  },
+  "designSystems": []
+}

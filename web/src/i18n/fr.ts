@@ -756,9 +756,14 @@ export const fr: Mirror<typeof en> = {
       listed: "listé ({kind}, cd {cd} s)", alreadyIgnored: "déjà ignoré", notInTable: "— (pas dans la table)", ignoredForSpec: "ignoré pour cette spec",
       noChange: "{to} (aucun changement)", seconds: "{n} s",
     },
+    pager: {
+      label: "Pages", range: "{from}–{to} sur {total}", rangeFor: "{from}–{to} sur {total} pour « {q} »",
+      prev: "Page précédente", next: "Page suivante", page: "Page {n}", gap: "…",
+    },
     users: {
-      title: "Membres", sub: "{n} · connectés au moins une fois",
-      head: { name: "nom", role: "rôle", lastSeen: "dernière visite", ptsHour: "pts · heure", pts24h: "pts · 24 h", discordId: "id discord" },
+      title: "Membres", sub: "{n} · connectés au moins une fois · dernière visite la plus récente d'abord",
+      search: "Rechercher un nom ou un id Discord", searchLabel: "Rechercher un membre", none: "Aucun membre ne correspond à « {q} ».",
+      head: { name: "nom", role: "rôle", lastSeen: "dernière visite ↓", ptsHour: "pts · heure", pts24h: "pts · 24 h", discordId: "id discord" },
       role: { member: "membre", admin: "admin" }, env: "env", banned: "banni",
       makeAdmin: "promouvoir", makeMember: "rétrograder",
       makeAdminConfirm: "Promouvoir {name} admin ? Il a la page Admin, pas de quota, et peut approuver les propositions.",
@@ -790,6 +795,7 @@ export const fr: Mirror<typeof en> = {
     usage: {
       title: "Usage des fonctionnalités", sub: "par membre et par jour · événements API + interface · gardé 90 jours · 0 pt WCL",
       period: "{n} j", includeAdmins: "Inclure les admins",
+      detailShow: "Afficher le détail · {n} fonctionnalités (tableau ou catégories)", detailHide: "Masquer le détail",
       view: { table: "Tableau", categories: "Catégories" },
       kpi: {
         today: "Actifs aujourd'hui", d7: "Actifs 7 j", d30: "Actifs 30 j", lookups: "Lookups / membre actif", unused: "Fonctionnalités inutilisées",
@@ -809,7 +815,8 @@ export const fr: Mirror<typeof en> = {
       title: "Journal d'audit", sub: "connexions, actions admin, refus de quota, rejets de sécurité · gardé 90 jours",
       chips: { all: "Tout", login: "Connexions", admin: "Admin", quota: "Quota", security: "Sécurité" },
       head: { time: "heure", who: "qui", action: "action", target: "cible", detail: "détail" },
-      empty: "Rien d'enregistré pour l'instant.", loadMore: "Charger {n} de plus", showing: "{shown} affichées sur {total} · plus récentes d'abord",
+      empty: "Rien d'enregistré pour l'instant.", newest: "plus récentes d'abord",
+      search: "Filtrer par membre", searchLabel: "Filtrer le journal par membre ou cible", searchHint: "qui ou cible", rows: "Lignes", rowsLabel: "Lignes par page",
       detail: {
         quota: "quota", budget: "budget de l'instance", quotaRefused: "{what} · {used}/{limit} pts utilisés, reset dans {min} min",
         rateLimited: "{limit} par {window} s · réessai dans {retry} s",

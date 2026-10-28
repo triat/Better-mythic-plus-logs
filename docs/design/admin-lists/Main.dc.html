@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>A · Pages numérotées</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1420px; box-sizing: border-box; padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014; overflow: hidden">
+
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <span style="font-weight: 600">Membres</span>
+      <span style="font-size: 12px; color: #A0A7B4">134 · connectés au moins une fois · dernière visite la plus récente d'abord</span>
+      <div style="flex-grow: 1"></div>
+      <label style="display: flex; align-items: center; gap: 8px; height: 32px; width: 260px; box-sizing: border-box; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 10px; background: #0E1014; color: #8D95A3; font-size: 13px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="search" aria-label="Rechercher un membre" placeholder="Rechercher un nom ou un id Discord" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #ECEEF2; font: inherit; outline: none">
+      </label>
+    </div>
+    <div style="display: grid; grid-template-columns: 24px 180px 176px 156px 96px 96px 1fr 210px; gap: 12px; align-items: center; padding: 2px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">
+      <span></span><span>nom</span><span>rôle</span><span style="color: #ECEEF2">dernière visite ↓</span><span>pts · heure</span><span>pts · 24 h</span><span>id discord</span><span></span>
+    </div>
+    <sc-for list="{{users}}" as="u" hint-placeholder-count="8">
+      <div style="display: grid; grid-template-columns: 24px 180px 176px 156px 96px 96px 1fr 210px; gap: 12px; align-items: center; padding: 8px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px">
+        <span style="width: 24px; height: 24px; border-radius: 50%; background: #1C2029; color: #A0A7B4; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{u.initials}}</span>
+        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.name}} <span style="color: #8D95A3">{{u.handle}}</span></span>
+        <span>
+          <sc-if value="{{u.admin}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #7FB4FF; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px">admin</span></sc-if>
+          <sc-if value="{{u.member}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px">membre</span> <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent; margin-left: 4px">promouvoir</button></sc-if>
+        </span>
+        <span style="color: #A0A7B4; font-family: 'Geist Mono', monospace">{{u.lastSeen}}</span>
+        <span style="font-family: 'Geist Mono', monospace">{{u.ptsHour}}</span>
+        <span style="font-family: 'Geist Mono', monospace">{{u.pts24h}}</span>
+        <span style="font-family: 'Geist Mono', monospace; color: #8D95A3">{{u.discordId}}</span>
+        <span style="display: flex; gap: 6px; justify-content: flex-end">
+          <button type="button" style="font: inherit; font-size: 12px; height: 26px; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 8px; background: transparent; color: #ECEEF2">Révoquer les sessions</button>
+          <button type="button" style="font: inherit; font-size: 12px; height: 26px; padding: 0 10px; border: 1px solid #5C2A28; border-radius: 8px; background: transparent; color: #F2665C">Bannir</button>
+        </span>
+      </div>
+    </sc-for>
+    <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
+      <span style="font-size: 12px; color: #8D95A3">1–20 sur 134</span>
+      <div style="flex-grow: 1"></div>
+      <a href="#" aria-label="Page précédente" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #5A6272; font-size: 13px">‹</a>
+      <a href="#" aria-current="page" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #A0A7B4; border-radius: 8px; color: #ECEEF2; font-size: 13px; font-weight: 600; background: #1C2029">1</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">2</a>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">3</a>
+      <span style="color: #8D95A3; font-size: 13px; padding: 0 2px">…</span>
+      <a href="#" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">7</a>
+      <a href="#" aria-label="Page suivante" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #A0A7B4; font-size: 13px">›</a>
+    </div>
+  </section>
+
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <span style="font-weight: 600">Usage des fonctionnalités</span>
+      <span style="font-size: 12px; color: #A0A7B4">par membre et par jour · événements API + interface · gardé 90 jours · 0 pt WCL</span>
+      <div style="flex-grow: 1"></div>
+      <span style="display: inline-flex; height: 26px; border: 1px solid #232733; border-radius: 10px; background: #0E1014; overflow: hidden; font-size: 12px; font-weight: 600">
+        <span style="padding: 0 10px; display: flex; align-items: center; color: #A0A7B4; border-right: 1px solid #1E222C">7 j</span>
+        <span style="padding: 0 10px; display: flex; align-items: center; color: #A0A7B4; border-right: 1px solid #1E222C">14 j</span>
+        <span style="padding: 0 10px; display: flex; align-items: center; color: #ECEEF2; background: #161920">30 j</span>
+      </span>
+      <span style="font-size: 12px; color: #A0A7B4">Inclure les admins</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+      <div style="background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">Actifs aujourd'hui</span><span style="font-size: 22px; font-weight: 600">12</span><span style="font-size: 12px; color: #8D95A3">sur 134 membres</span></div>
+      <div style="background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">Actifs 7 j</span><span style="font-size: 22px; font-weight: 600">41</span><span style="font-size: 12px; color: #8D95A3">31 % des membres</span></div>
+      <div style="background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">Actifs 30 j</span><span style="font-size: 22px; font-weight: 600">87</span><span style="font-size: 12px; color: #8D95A3">65 % des membres</span></div>
+      <div style="background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">Lookups / membre actif</span><span style="font-size: 22px; font-weight: 600">9,4</span><span style="font-size: 12px; color: #8D95A3">30 j · récupérés + en cache</span></div>
+      <div style="background: #0E1014; border: 1px solid #1E222C; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">Fonctionnalités inutilisées</span><span style="font-size: 22px; font-weight: 600; color: #F2B544">6</span><span style="font-size: 12px; color: #8D95A3">sur 48 au catalogue</span></div>
+    </div>
+    <button type="button" aria-expanded="false" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; color: #A0A7B4; background: transparent; border: 0; padding: 4px 0">
+      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+      Afficher le détail · 48 fonctionnalités (Tableau / Catégories)
+    </button>
+  </section>
+
+  <section style="background: #161920; border: 1px solid #232733; border-radius: 16px; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <span style="font-weight: 600">Journal d'audit</span>
+      <span style="font-size: 12px; color: #A0A7B4">connexions, actions admin, refus de quota, rejets de sécurité · gardé 90 jours</span>
+      <div style="flex-grow: 1"></div>
+      <button type="button" style="font: inherit; font-size: 12px; color: #ECEEF2; border: 1px solid #A0A7B4; border-radius: 999px; padding: 1px 8px; background: transparent">Tout · 214</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Connexions · 168</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Admin · 21</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Quota · 9</button>
+      <button type="button" style="font: inherit; font-size: 12px; color: #A0A7B4; border: 1px solid #232733; border-radius: 999px; padding: 1px 8px; background: transparent">Sécurité · 16</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0">
+      <label style="display: flex; align-items: center; gap: 8px; height: 32px; width: 280px; box-sizing: border-box; padding: 0 10px; border: 1px solid #2A2F3B; border-radius: 10px; background: #0E1014; color: #8D95A3; font-size: 13px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input type="search" aria-label="Filtrer par membre" value="morwyn" style="flex: 1; min-width: 0; border: 0; background: transparent; color: #ECEEF2; font: inherit; outline: none">
+      </label>
+      <span style="font-size: 12px; color: #8D95A3">qui ou cible</span>
+      <div style="flex-grow: 1"></div>
+      <span style="font-size: 12px; color: #A0A7B4">Lignes</span>
+      <span style="display: inline-flex; height: 26px; border: 1px solid #232733; border-radius: 10px; background: #0E1014; overflow: hidden; font-size: 12px; font-weight: 600">
+        <span style="padding: 0 10px; display: flex; align-items: center; color: #A0A7B4; border-right: 1px solid #1E222C">10</span>
+        <span style="padding: 0 10px; display: flex; align-items: center; color: #ECEEF2; background: #161920; border-right: 1px solid #1E222C">20</span>
+        <span style="padding: 0 10px; display: flex; align-items: center; color: #A0A7B4">50</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: 156px 130px 150px 220px 1fr; gap: 12px; padding: 2px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #A0A7B4">
+      <span>heure</span><span>qui</span><span>action</span><span>cible</span><span>détail</span>
+    </div>
+    <sc-for list="{{audit}}" as="r" hint-placeholder-count="6">
+      <div style="display: grid; grid-template-columns: 156px 130px 150px 220px 1fr; gap: 12px; align-items: center; padding: 8px 10px; font-size: 13px; background: #0E1014; border: 1px solid #1E222C; border-radius: 10px">
+        <span style="font-family: 'Geist Mono', monospace; color: #8D95A3">{{r.time}}</span>
+        <span>{{r.who}}</span>
+        <span style="font-family: 'Geist Mono', monospace; font-size: 12px">{{r.action}}</span>
+        <span style="color: #C9CED8">{{r.target}}</span>
+        <span style="color: #8D95A3">{{r.detail}}</span>
+      </div>
+    </sc-for>
+    <div style="display: flex; align-items: center; gap: 6px; padding-top: 6px">
+      <span style="font-size: 12px; color: #8D95A3">1–6 sur 6 pour « morwyn » · plus récentes d'abord</span>
+      <div style="flex-grow: 1"></div>
+      <a href="#" aria-label="Page précédente" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #5A6272; font-size: 13px">‹</a>
+      <a href="#" aria-current="page" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #A0A7B4; border-radius: 8px; color: #ECEEF2; font-size: 13px; font-weight: 600; background: #1C2029">1</a>
+      <a href="#" aria-label="Page suivante" style="display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border: 1px solid #232733; border-radius: 8px; color: #5A6272; font-size: 13px">›</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1420}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const u = (name, handle, admin, lastSeen, ptsHour, pts24h, discordId) => ({
+      name, handle, initials: name.slice(0, 2).toUpperCase(), admin, member: !admin, lastSeen, ptsHour, pts24h, discordId,
+    });
+    return {
+      users: [
+        u("Morwyn", "@morwyn", false, "il y a 2 min", "36 / 300", "212", "4318…0291"),
+        u("Aldren", "@aldren", true, "il y a 11 min", "0", "64", "2207…8813"),
+        u("Kessa", "@kessa.wow", false, "il y a 48 min", "0 / 300", "90", "9154…3307"),
+        u("Thorvald", "@thorv", false, "il y a 3 h", "0 / 300", "18", "6640…1172"),
+        u("Ilyane", "@ilyane", false, "hier", "0 / 300", "0", "1029…5548"),
+        u("Brannoc", "@brannoc", false, "il y a 2 j", "0 / 300", "0", "8873…4460"),
+        u("Selwen", "@selwen", false, "il y a 6 j", "0 / 300", "0", "3391…0715"),
+        u("Ortrud", "@ortrud", false, "il y a 3 sem.", "0 / 300", "0", "5520…9906"),
+      ],
+      audit: [
+        { time: "28.10 14:02", who: "Morwyn", action: "login", target: "Morwyn", detail: "nouvelle session" },
+        { time: "28.10 13:47", who: "Morwyn", action: "quota_refused", target: "lookup", detail: "quota · 300/300 pts utilisés, reset dans 13 min" },
+        { time: "28.10 13:45", who: "Morwyn", action: "wcl_client_set", target: "client perso", detail: "vérifié" },
+        { time: "27.10 21:10", who: "Aldren", action: "user_role", target: "Morwyn", detail: "membre → admin refusé" },
+        { time: "26.10 18:32", who: "Morwyn", action: "bnet_link", target: "Morwyn#2231", detail: "4 personnages importés" },
+        { time: "24.10 09:05", who: "Morwyn", action: "login", target: "Morwyn", detail: "première connexion" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

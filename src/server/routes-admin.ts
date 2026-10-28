@@ -36,6 +36,8 @@ const tail = (url: URL, prefix: string): string => url.pathname.slice(prefix.len
 
 export const AUDIT_DEFAULT_LIMIT = 50;
 export const AUDIT_MAX_LIMIT = 200;
+/** The audit search (`q`) is cut to this many characters. */
+export const AUDIT_QUERY_MAX = 64;
 
 /** A positive integer query parameter (`null` when absent, `undefined` when present but not one). */
 const positiveInt = (raw: string | null): number | null | undefined => {
@@ -82,7 +84,8 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       if (removed) rt.audit.record("invite_remove", { target: id, detail: { sessionsEnded } });
       return jsonResponse({ ok: removed, sessionsEnded });
     }, "admin"),
-    // The audit section of the admin page (issue #9): newest first, one kind at a time, keyset-paged by id.
+    // The audit section of the admin page (issue #9): newest first, one kind at a time, keyset-paged by id (`before`) or
+    // by numbered pages (`offset`), optionally only the rows whose member or target contains `q`.
     route("GET", "/api/admin/audit", (_req, url, ctx) => {
       const kind = url.searchParams.get("kind") ?? "all";
       if (kind !== "all" && !AUDIT_KINDS.includes(kind as AuditKind)) return jsonResponse({ ok: false, error: "`kind` must be all, login, admin, quota, security or error" }, 400);
@@ -91,13 +94,21 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
       const rawLimit = positiveInt(url.searchParams.get("limit"));
       if (rawLimit === undefined || (rawLimit !== null && rawLimit > AUDIT_MAX_LIMIT)) return jsonResponse({ ok: false, error: `\`limit\` must be an integer between 1 and ${AUDIT_MAX_LIMIT}` }, 400);
       const limit = rawLimit ?? AUDIT_DEFAULT_LIMIT;
+      const rawOffset = url.searchParams.get("offset");
+      const offset = rawOffset === null ? 0 : /^\d+$/.test(rawOffset) && Number.isSafeInteger(Number(rawOffset)) ? Number(rawOffset) : undefined;
+      if (offset === undefined) return jsonResponse({ ok: false, error: "`offset` must be a non-negative integer" }, 400);
+      if (offset > 0 && before !== null) return jsonResponse({ ok: false, error: "`offset` and `before` cannot be combined" }, 400);
+      const query = (url.searchParams.get("q") ?? "").trim().slice(0, AUDIT_QUERY_MAX) || null;
       // "all" leaves WCL and server errors out: the admin page reads them in Grafana; `kind=error` and /api/ops/errors still serve them.
-      const rows = rt.db.audit.list({ actions: kind === "all" ? ADMIN_ALL_ACTIONS : actionsOf(kind as AuditKind), before, limit });
-      const counts = rt.db.audit.counts(null);
+      const rows = rt.db.audit.list({ actions: kind === "all" ? ADMIN_ALL_ACTIONS : actionsOf(kind as AuditKind), before, limit, offset, query });
+      const counts = rt.db.audit.counts(null, query);
+      const shown = { ...counts, all: counts.all - counts.error };
       return jsonResponse({
         ok: true,
         rows,
-        counts: { ...counts, all: counts.all - counts.error },
+        counts: shown,
+        // The rows the kind and the search hold in all: the numbered pages' total.
+        total: shown[kind as AuditKind | "all"],
         errors24h: rt.db.audit.counts(ctx.now - 24 * HOUR_MS).error,
         nextBefore: rows.length === limit ? rows[rows.length - 1]!.id : null,
       });

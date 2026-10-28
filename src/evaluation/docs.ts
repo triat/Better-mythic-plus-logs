@@ -84,7 +84,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
     insufficient: "With fewer enriched runs than the minimum printed below the verdict is INSUFFICIENT DATA whatever the score would have been: there is not enough signal to say anything.",
   },
   levelScale: "A death at a high key is not a death at a low key. For the death-based sub-signals each run's count is multiplied by a factor read at that run's own key level (not the target you asked for, so asking for a harder key never makes the same deaths look better or worse), before it goes through the curve. Between two listed levels the factor is interpolated; outside them it is clamped.",
-  expectedIlvl: "Item level is judged against what a character is expected to wear at the target key level this season. The expected value is interpolated between the listed levels and clamped outside them; the season is the one Raider.IO reports for the character, falling back to the newest season this instance knows.",
+  expectedIlvl: "Item level is judged against what the players of the target key level wear this season: at each key level the calibration samples, the median item level of its characters, refitted every week; past the sampled levels the curve keeps the season's slope. The expected value is interpolated between the listed levels and clamped outside them; the season is the one Raider.IO reports for the character, falling back to the newest season this instance knows.",
   axes: {
     survival: {
       title: "Survival",
@@ -135,7 +135,7 @@ export const EVALUATION_DOCS: EvaluationDocs = {
       summary: "Item level against what the target level expects.",
       why: "Cheap, fully in the player's hands, and a good proxy for how seriously they take a key.",
       subSignals: {
-        ilvlVsLevel: { title: "Item level vs target", what: "Item level minus what the season expects at the target key level.", source: "Raider.IO (item level) and this instance's expected-item-level curve for the season.", how: "Item level − expected(target level), in item levels; the expected value is interpolated from the curve printed under Expected item level.", why: "Under-geared for the key is a survival and throughput problem waiting to happen; over-geared is fine.", naWhen: "When Raider.IO has no item level for the character.", unit: "item levels vs expected", scaledByLevel: false },
+        ilvlVsLevel: { title: "Item level vs target", what: "Item level minus what the players of the target key level wear this season.", source: "Raider.IO (item level) and this instance's expected-item-level curve for the season, the median item level of the characters sampled at each key level, refitted every week.", how: "Item level − expected(target level), in item levels; the expected value is interpolated from the curve printed under Expected item level.", why: "Under-geared for the key is a survival and throughput problem waiting to happen; over-geared is fine.", naWhen: "When Raider.IO has no item level for the character.", unit: "item levels vs expected", scaledByLevel: false },
       },
     },
   },

@@ -74,7 +74,7 @@ describe("evidenceText", () => {
     expect(line("throughput.medianParse", 66.6)[1]).toContain("\u202f%");
     expect(line("throughput.medianParse", 66.6)[0]).not.toContain(" %");
     expect(line("consistency.deathsSpread", 1.25)).toEqual(["deaths spread ±1.3", "les morts varient de ±1,3 / run"]);
-    expect(line("preparation.ilvlVsLevel", -4)).toEqual(["ilvl −4 vs expected for the key", "ilvl −4 vs l'attendu pour la clé"]);
+    expect(line("preparation.ilvlVsLevel", -4)).toEqual(["ilvl −4 vs players at that key", "ilvl −4 vs les joueurs de ce niveau"]);
   });
   test("an unknown source or a payload without value falls back to the server label", () => {
     expect(evidenceText(tEn, "en", { source: "survival.unknown", value: 1, delta: 0, label: "server text" })).toBe("server text");

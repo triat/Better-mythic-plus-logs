@@ -57,12 +57,15 @@ describe("calibration pull request", () => {
 
   test("the study's proposal: the whole file rewritten in its layout, the next version, read back as the proposal", () => {
     expect(validateConfig(JSON.parse(configText(cfg)))).toEqual(cfg);
-    const axes = structuredClone(cfg.axes);
+    // On config 10 as pinned (hand-set curves, no per-role curve), so the lines below do not move with the default.
+    const V10 = readFileSync("test/fixtures/evaluation-config-v10.json", "utf8");
+    const v10 = validateConfig(JSON.parse(V10));
+    const axes = structuredClone(v10.axes);
     axes.survival.subSignals.individualDeaths!.curves = { dps: [[0, 90], [1, 50], [3, 5]], tank: [[0, 60], [2, 10]] };
     axes.utility.subSignals.dispels!.weights.healer = 1;
-    const proposal = { ...cfg, axes, shrinkage: { dps: { "survival.individualDeaths": 10.82, "throughput.medianParse": 2.44 } } };
-    const out = applyProposal(TEXT, proposal);
-    expect(out.version).toBe(String(Number(cfg.version) + 1));
+    const proposal = { ...v10, axes, shrinkage: { dps: { "survival.individualDeaths": 10.82, "throughput.medianParse": 2.44 } } };
+    const out = applyProposal(V10, proposal);
+    expect(out.version).toBe(String(Number(v10.version) + 1));
     expect(validateConfig(JSON.parse(out.text))).toEqual(validateConfig({ ...proposal, version: out.version }));
     expect(out.text).toContain(`        "individualDeaths": { "curve": [[0, 100], [0.5, 85], [1, 65], [2, 35], [3, 10]], "weights": { "dps": 3, "healer": 3, "tank": 3 },
           "curves": { "dps": [[0, 90], [1, 50], [3, 5]], "tank": [[0, 60], [2, 10]] } },`);

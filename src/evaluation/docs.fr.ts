@@ -22,7 +22,7 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
     insufficient: "Avec moins de runs enrichis que le minimum imprimé ci-dessous, le verdict est PAS ASSEZ DE DONNÉES quel que soit le score : il n'y a pas assez de signal pour dire quoi que ce soit.",
   },
   levelScale: "Une mort à haute key n'est pas une mort à basse key. Pour les sous-signaux basés sur les morts, le compte de chaque run est multiplié par un facteur lu au niveau de key de ce run (pas la cible que tu as demandée, donc demander une key plus dure ne rend jamais les mêmes morts meilleures ou pires), avant de passer par la courbe. Entre deux niveaux listés le facteur est interpolé ; en dehors il est borné.",
-  expectedIlvl: "L'item level est jugé face à ce qu'un perso est censé porter au niveau de key cible cette saison. La valeur attendue est interpolée entre les niveaux listés et bornée en dehors ; la saison est celle que Raider.IO rapporte pour le perso, sinon la plus récente que cette instance connaît.",
+  expectedIlvl: "L'item level est jugé face à ce que portent les joueurs du niveau de key cible cette saison : à chaque niveau échantillonné par la calibration, l'item level médian de ses persos, recalculé chaque semaine ; au-delà des niveaux échantillonnés, la courbe garde la pente de la saison. La valeur attendue est interpolée entre les niveaux listés et bornée en dehors ; la saison est celle que Raider.IO rapporte pour le perso, sinon la plus récente que cette instance connaît.",
   axes: {
     survival: {
       title: "Survie",
@@ -73,7 +73,7 @@ export const EVALUATION_DOCS_FR: EvaluationDocs = {
       summary: "Item level face à ce que le niveau cible attend.",
       why: "Pas cher, entièrement entre les mains du joueur, et un bon indicateur du sérieux avec lequel il prend une key.",
       subSignals: {
-        ilvlVsLevel: { title: "Item level vs cible", what: "Item level moins ce que la saison attend au niveau de key cible.", source: "Raider.IO (item level) et la courbe d'item level attendu de cette instance pour la saison.", how: "Item level − attendu(niveau cible), en niveaux d'item ; la valeur attendue est interpolée depuis la courbe imprimée sous Item level attendu.", why: "Sous-stuffé pour la key, c'est un problème de survie et de throughput qui n'attend que d'arriver ; sur-stuffé, c'est très bien.", naWhen: "Quand Raider.IO n'a pas d'item level pour le perso.", unit: "ilvl vs attendu", scaledByLevel: false },
+        ilvlVsLevel: { title: "Item level vs cible", what: "Item level moins ce que portent les joueurs du niveau de key cible cette saison.", source: "Raider.IO (item level) et la courbe d'item level attendu de cette instance pour la saison : l'item level médian des persos échantillonnés à chaque niveau de key, recalculé chaque semaine.", how: "Item level − attendu(niveau cible), en niveaux d'item ; la valeur attendue est interpolée depuis la courbe imprimée sous Item level attendu.", why: "Sous-stuffé pour la key, c'est un problème de survie et de throughput qui n'attend que d'arriver ; sur-stuffé, c'est très bien.", naWhen: "Quand Raider.IO n'a pas d'item level pour le perso.", unit: "ilvl vs attendu", scaledByLevel: false },
       },
     },
   },

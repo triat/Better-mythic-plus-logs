@@ -4,6 +4,7 @@ import type { StatusInfo } from "../lib/hostedMode.ts";
 import { scoreTone } from "../lib/home.ts";
 import { PREVIEW_AXES, PREVIEW_SCORE, landingView } from "../lib/landing.ts";
 import { useT } from "../locale.tsx";
+import { analyticsEvent } from "../analytics.ts";
 import { Icon } from "./Icon.tsx";
 import { Logo } from "./Logo.tsx";
 
@@ -47,7 +48,7 @@ export function Landing({ status, search }: { status: StatusInfo; search: string
               <h1 className="land-title">{t("landing.title")}</h1>
               <p className="land-sub">{t("landing.sub")}</p>
               <div className="land-cta">
-                <a className="btn btn-discord" href="/auth/discord"><Icon name="discord" size={18} /> {t("signin.discord")}</a>
+                <a className="btn btn-discord" href="/auth/discord" onClick={() => analyticsEvent("sign_in_click")}><Icon name="discord" size={18} /> {t("signin.discord")}</a>
                 <span className="home-sub">{t("landing.free")}</span>
               </div>
               {v.loginFailed && <p className="land-failed">{t("signin.failed")}</p>}

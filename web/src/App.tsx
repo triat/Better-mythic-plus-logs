@@ -32,6 +32,8 @@ import { SettingsProvider, useSettings } from "./settings.tsx";
 import { useSse } from "./useSse.ts";
 import { startUsageTracking, track } from "./usage.ts";
 import { startErrorReporting } from "./clientErrors.ts";
+import { analyticsEvent, startAnalytics } from "./analytics.ts";
+import { pagePath } from "./lib/analytics.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
@@ -84,6 +86,7 @@ export function App() {
             contactUrl: s.contactUrl ?? null, supportUrl: s.supportUrl ?? null,
             region: isRegion(s.region) ? s.region : "eu",
             ...(typeof s.version === "string" ? { version: s.version } : {}),
+            analytics: s.analytics ?? null,
           }
         : LOCAL_STATUS;
       const me = status.hosted ? await api.me() : null;
@@ -93,6 +96,8 @@ export function App() {
       startErrorReporting(status.hosted && me?.kind === "ok", status.version ?? null);
       track(PAGE_EVENT[page]);
       const kind = bootScreen(status, me, location.pathname);
+      // Umami (hosted, configured): one page view per page load, the page's kind only.
+      if (status.hosted) startAnalytics(status.analytics, pagePath(page, me?.kind !== "ok"));
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
         setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings, quota: me?.kind === "ok" ? me.quota : null, ownClient: me?.kind === "ok" ? me.ownClient : null });
@@ -104,7 +109,7 @@ export function App() {
   // The privacy page is one bare page (brand header, no search) for everyone: readable before
   // signing in (it is linked from the sign-in note) and rendered outside `Main` when signed in, so
   // it never gets the app header on top of its own.
-  if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} contactUrl={screen.status.contactUrl} /></BrowserLocale>;
+  if (screen.status.hosted && page === "privacy") return <BrowserLocale><PrivacyPage operator={screen.status.operator} guildRequired={screen.status.guildRequired} contactUrl={screen.status.contactUrl} analytics={!!screen.status.analytics} /></BrowserLocale>;
   // /help is public too: an anonymous hosted visitor gets the bare page (brand line, no search); signed in or local, it renders inside `Main` under the app header.
   if (screen.kind === "signin" && page === "help") return <BrowserLocale><HelpPage status={screen.status} bare /></BrowserLocale>;
   // Every other path, signed out: the landing page (redesign spec decision 2).
@@ -354,6 +359,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
+    analyticsEvent("lookup", { source: r.fromCache ? "cached" : "fetched" });
     // The URL names the new profile before it mounts: its run / sheet are read from the URL at mount (candInitial).
     if (page === "candidate") history.replaceState({}, "", candSwitchHref(r.key, location.search, sameCharacter));
     setActiveKey(r.key);
@@ -604,6 +610,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (!r.ok) { if (r.quota) setQuota(r.quota); setAnalyzing(null); setToast(quotaOrBudgetMessage(t, r), r.quota ? ownClientAction : null); return false; }
     if (r.quota) setQuota(r.quota);
     if (r.ownClient !== undefined) setOwnClient(r.ownClient);
+    analyticsEvent("deepdive");
     // Keep the buttons disabled until the refreshed payload is in.
     await reloadActive();
     setAnalyzing(null);
@@ -717,7 +724,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
         )}
         {page === "live" && (
           <LivePage
-            state={live.state} connect={() => { track("live_connect"); return live.connect(); }} disconnect={live.disconnect}
+            state={live.state} connect={() => { track("live_connect"); return live.connect().then((r) => { analyticsEvent("live_connect"); return r; }); }} disconnect={live.disconnect}
             roster={live.roster} verdicts={liveVerdicts} yourKey={yourKey}
             sort={settings.liveSort} roles={settings.liveRoles} classes={settings.liveClasses}
             onSortChange={(v: LiveSort) => { track("live_filter"); updateSettings({ liveSort: v }); }}

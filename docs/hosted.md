@@ -326,6 +326,7 @@ Optional:
 | `BMPL_OPERATOR` | Who runs this instance, shown on `/privacy` (default "the admin of this instance") |
 | `BMPL_CONTACT_URL` | Where members reach the operator: the "Discord" link under the version line, the account menu's "Message … on Discord" and the `/privacy` questions line. Default: the first `BMPL_ADMIN_DISCORD_IDS` profile, `https://discord.com/users/<id>`; an https URL overrides it, `off` removes it |
 | `BMPL_SUPPORT_URL` | The "Support bmpl" link next to it (e.g. a Buy Me a Coffee page); an https URL, unset = no link |
+| `BMPL_ANALYTICS_URL` / `BMPL_ANALYTICS_WEBSITE_ID` | Both or neither: the Umami instance (an https origin, e.g. `https://analytics.riat.dev`) and the website's UUID. Set: `/api/status` carries `analytics`, the CSP adds the origin to `script-src` and `connect-src`, the front loads `<origin>/script.js` and sends one page view per page load (the page's kind, never a query) and eight named events, and `/privacy` lists them; the browser's Do Not Track turns it off. Install: `deploy/README.md` § 9e; spec `docs/superpowers/specs/2026-10-28-umami-analytics-design.md` |
 | `BMPL_REGION` | Instance default WoW region (`eu`/`us`/`kr`/`tw`, default `eu`); a member picks their own with the region chip inside the search field (remembered per account through `PUT /api/settings`), and `/api/status` reports it |
 
 Missing or invalid variables make `bmpl serve --hosted` exit with code 2 and

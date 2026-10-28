@@ -1,6 +1,7 @@
 import type { MeResult, MeUser } from "../api.ts";
 import type { T } from "../i18n/t.ts";
 import type { Region } from "../types.ts";
+import type { AnalyticsConfig } from "./analytics.ts";
 import { candHref } from "./profile.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
@@ -21,6 +22,8 @@ export interface StatusInfo {
   region: Region;
   /** The running version (`package.json`), shown under the account block with the changelog; absent on old servers. */
   version?: string;
+  /** The Umami instance (hosted, configured; spec 2026-10-28-umami-analytics-design.md); absent or null: no tracker. */
+  analytics?: AnalyticsConfig | null;
 }
 export interface UiControls { setup: boolean; quit: boolean; watch: boolean; envPath: boolean; signOut: boolean }
 export type BootScreen = "setup" | "main" | "signin";

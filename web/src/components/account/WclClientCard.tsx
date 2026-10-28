@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import type { OwnClientView } from "../../types.ts";
 import { clientCard } from "../../lib/account.ts";
 import { useT } from "../../locale.tsx";
@@ -39,6 +40,7 @@ export function WclClientCard({ enabled, client, limitPerUser, onChange, onError
     const r = await api.account.saveWclClient(clientId.trim(), clientSecret);
     setBusy(false);
     if (!r.ok) { onError(r.error); return; } // fields kept for a retry
+    analyticsEvent("wcl_client_set");
     clearForm();
     onChange(r.client);
   };

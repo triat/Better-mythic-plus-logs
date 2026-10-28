@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "La page Confidentialité détaille maintenant les statistiques de visite que compte cette instance : pages ouvertes et quelques actions, sans cookie ni rien sur les personnages consultés.",
+    ],
+  },
+  {
     version: "0.10.14",
     date: "2026-10-28",
     items: [

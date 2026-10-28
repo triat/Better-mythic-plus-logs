@@ -9,6 +9,7 @@ import { synthesisDocs } from "../../lib/synthesis.ts";
 import { useDocs } from "../../docs.tsx";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import { CompareDuel } from "./CompareDuel.tsx";
 import { ComparePicker } from "./ComparePicker.tsx";
 import { CompareRanking } from "./CompareRanking.tsx";
@@ -113,6 +114,7 @@ export function ComparePage({ tabs, selected, onSelect, loadEntry, onLoadFailed,
       <>
         {failedKeys.length > 0 && <Failure text={t("compare.failed.some", { names })} onRetry={retryFailed} />}
         {view}
+        <CompareShown shownKey={entries.map((e) => e.key).join("|")} count={entries.length} />
       </>
     );
   }
@@ -133,4 +135,15 @@ function Failure({ text, onRetry }: { text: string; onRetry: () => void }) {
       <button type="button" className="btn" onClick={onRetry}>{t("compare.failed.retry")}</button>
     </p>
   );
+}
+
+/** Sends one "compare" analytics event per set of profiles shown: the count only, never who. Renders nothing. */
+function CompareShown({ shownKey, count }: { shownKey: string; count: number }) {
+  const last = useRef<string | null>(null);
+  useEffect(() => {
+    if (shownKey === last.current) return;
+    last.current = shownKey;
+    analyticsEvent("compare", { count });
+  }, [shownKey, count]);
+  return null;
 }

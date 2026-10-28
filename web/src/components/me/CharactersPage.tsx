@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../api.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import type { BnetState } from "../../api.ts";
 import type { HistoryItem, Region } from "../../types.ts";
 import { bnetNotice, pickFailureNotice, picksBody, picksFromList, removedNotice, type BnetCode, type BnetNotice } from "../../lib/bnet.ts";
@@ -56,6 +57,8 @@ export function CharactersPage({ self, history, region, instanceRegion, onRegion
   }), []);
   useEffect(() => {
     if (!self.hosted) return;
+    // Back from Battle.net with the account linked: the pick is pending.
+    if (bnetCode === "pick") analyticsEvent("bnet_link");
     let alive = true;
     void api.bnet.get().then((r) => {
       if (!alive) return;

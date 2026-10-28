@@ -1,0 +1,32 @@
+[Unit]
+Description=pgrust: the database of Umami (spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pgrust
+Group=pgrust
+# Loopback and its own socket directory only; /usr/local/lib/pgrust is the pinned release bootstrap.sh installs.
+RuntimeDirectory=pgrust
+RuntimeDirectoryPreserve=yes
+ExecStart=/usr/local/lib/pgrust/bin/postgres -D /var/lib/pgrust -h 127.0.0.1 -p 5432 -k /run/pgrust
+# Postgres' fast shutdown, which pgrust's README calls safe.
+KillSignal=SIGINT
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=5
+# A cap so analytics can never starve bmpl (4 GB on the VPS); pgrust reads it (its memory watchdog); ~215 MB idle.
+MemoryMax=512M
+ProtectSystem=strict
+ReadWritePaths=/var/lib/pgrust
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

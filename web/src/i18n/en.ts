@@ -672,6 +672,8 @@ export const en = {
     auditLine: "{audit}: sign-ins, refusals and errors with your id and IP, kept 90 days.",
     requests: "Request log",
     requestsLine: "{requests}: each request you make (what was called, the answer's status and time, your member number, the WCL points spent), the errors your browser hits on a page (the message, the page, the version) and, in the web server's log, your IP, kept 90 days for running and protecting the service only.",
+    analytics: "Visit statistics",
+    analyticsLine: "{analytics}: each page you open (its kind, such as \"candidate\" or \"help\", never a character or a search), where you came from, your browser, system, device type, screen size, language and country, and a few actions (a lookup, a comparison, an analysis, a sync, Live, adding your WCL client, linking Battle.net, without what they were about). Counted by Umami on this same server: no cookie, no IP address kept. Turning on \"Do Not Track\" in your browser stops it.",
     notYours: "What is not yours",
     publicData: "Runs, rankings and fight data fetched from Warcraft Logs are public and are cached for everyone; they carry the names of the players in those runs, which is how Warcraft Logs publishes them.",
     deleting: "Deleting your account",

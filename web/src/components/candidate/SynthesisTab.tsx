@@ -139,7 +139,7 @@ function ForceList({ title, tone, rows, empty }: { title: string; tone: "better"
           <div className="synth-force-name"><span>{r.name}</span><span className="mono">{r.pts}</span></div>
           {r.hint && <span className="signal-hint">{r.hint}</span>}
           <div className="synth-force-bar"><div style={{ width: `${r.widthPct}%` }} /></div>
-          <span className="synth-note">{r.axis} · {r.detail}</span>
+          <span className="synth-note">{r.axis} · {r.detail} · {r.avg}</span>
         </div>
       ))}
     </div>

@@ -16,6 +16,10 @@ it as a pull request the user merges or not.
 - No new signal, no change to the rubric's structure: only what shipped from the study, the per-role global percentile
   curve (`globalCurve`) and the average-player `reference`, both fitted by `scripts/calibration/fit-global.ts`
   (amended 2026-10-14 while planning: the study's sub-signal curves were never shipped, so they are not refitted).
+  Amended 2026-10-28 (user): the expected item level per key level (`expectedIlvl`) is refitted too, first, as the
+  median item level of the characters sampled at each key level of the band, the hand-set table's slope carried past
+  both ends (`fitExpectedIlvl` in `src/calibration/fit.ts`); the hand-set table had fallen 7 to 8 levels behind what
+  the players wear, so almost every character scored 90 to 100 on it.
 - No third-party data in the repository (the study's rule: "0 names kept in the repo"; the repository is public).
 
 ## Decisions (user answers of 2026-10-14)

@@ -75,8 +75,10 @@ longer mean what they say.
 
 Since October 2026 the population is kept fresh: the hosted instance samples
 EU characters every hour with the Warcraft Logs points its members leave
-unused, and every Wednesday refits `globalCurve` and `reference` on the last
-four weeks of the season. When the refit would change at least 2 % of the
+unused, and every Wednesday refits `globalCurve`, `reference` and the expected
+item level of each key level (`expectedIlvl`: the median item level of the
+characters sampled at that level, since 2026-10-28) on the last four weeks of
+the season. When the refit would change at least 2 % of the
 verdicts or move a role's median by 2 points, it is proposed as a pull
 request; nothing changes until it is merged and released
 ([spec](superpowers/specs/2026-10-14-weekly-recalibration-design.md)).
@@ -87,7 +89,9 @@ or earn the most points of the global score against the role's average player
 `globalCurve`), and the largest costs — three at most — that together would
 reach the next verdict if brought to the average player's level. Each effect
 is "this signal alone at the average player's level"; they do not add up
-exactly to the score.
+exactly to the score. The Synthèse tab's strengths and weaknesses are the same
+effects, in points of the score shown: a signal within a point of the average
+player's is neither.
 
 Every axis lists its **evidence**: the specific sub-signals that moved the
 score, in plain language. **Timed vs. depleted is deliberately not scored**

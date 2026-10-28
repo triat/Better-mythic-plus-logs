@@ -1,7 +1,9 @@
 // The calibration fit, 0 WCL points: per role, the global percentile curve (`globalCurve`, raw weighted mean of the
 // axes → its percentile in the population) and the average player (`reference`, the median curve input `x` and display
-// value `value` of every scored sub-signal). The only parts of the 2026-09 study that shipped, so the only parts the
-// weekly run refits (spec docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md, non-goals).
+// value `value` of every scored sub-signal); and, for every role at once, the item level the players of each key level
+// wear (`expectedIlvl`, user 2026-10-28). The parts the weekly run refits (spec
+// docs/superpowers/specs/2026-10-14-weekly-recalibration-design.md, non-goals).
+import { curve } from "../evaluation/curve.ts";
 import { globalScore } from "../evaluation/evaluate.ts";
 import { scoreAllAxes } from "../evaluation/axes/index.ts";
 import { collectInputs, type EvalPayload } from "../evaluation/inputs.ts";
@@ -108,6 +110,54 @@ export function spearman(a: number[], b: number[]): number {
   for (let i = 0; i < ra.length; i++) { num += (ra[i]! - ma) * (rb[i]! - mb); da += (ra[i]! - ma) ** 2; db += (rb[i]! - mb) ** 2; }
   return num / Math.sqrt(da * db);
 }
+
+/** A key level needs this many samples with an item level for its median to count. */
+export const MIN_ILVL_N = 30;
+
+/**
+ * The item level expected at each key level, fitted on `samples` (validity spec 2026-10-27, user 2026-10-28): at each
+ * key level of the calibration band, the median item level of the characters sampled there, never lower than the level
+ * below. The hand-set table's slope carries on past both ends, so a +10 or a +25 still reads a sensible value. Keyed by
+ * the season the samples' Raider.IO profiles name most, else `base`'s newest; null under two fitted levels.
+ */
+export function fitExpectedIlvl(samples: Sample[], base: EvaluationConfig): { slug: string; curve: CurvePoints } | null {
+  const slugs = new Map<string, number>();
+  const byLevel = new Map<number, number[]>();
+  for (const s of samples) {
+    const rio = s.payload.rio;
+    const slug = rio?.seasons?.[0]?.slug;
+    if (slug) slugs.set(slug, (slugs.get(slug) ?? 0) + 1);
+    const ilvl = rio?.itemLevel;
+    if (typeof ilvl !== "number" || !Number.isFinite(ilvl) || ilvl <= 0) continue;
+    const level = s.payload.targetLevel;
+    (byLevel.get(level) ?? byLevel.set(level, []).get(level)!).push(ilvl);
+  }
+  const newest = Object.keys(base.expectedIlvl).at(-1)!;
+  const slug = [...slugs].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? newest;
+  const hand = base.expectedIlvl[slug] ?? base.expectedIlvl[newest]!;
+  let floor = -Infinity;
+  const fitted = [...byLevel].filter(([, xs]) => xs.length >= MIN_ILVL_N).sort((a, b) => a[0] - b[0]).map(([level, xs]): [number, number] => {
+    floor = Math.max(floor, round(quantile(xs, 0.5), 1));
+    return [level, floor];
+  });
+  if (fitted.length < 2) return null;
+  const [lo, atLo] = fitted[0]!;
+  const [hi, atHi] = fitted.at(-1)!;
+  const first = hand[0]![0];
+  const last = hand.at(-1)![0];
+  return {
+    slug,
+    curve: [
+      ...(first < lo ? [[first, round(atLo - (curve(lo, hand) - curve(first, hand)), 1)] as [number, number]] : []),
+      ...fitted,
+      ...(last > hi ? [[last, round(atHi + (curve(last, hand) - curve(hi, hand)), 1)] as [number, number]] : []),
+    ],
+  };
+}
+
+/** `cfg` with `fitted` as its season's expected item level (a new season goes last: the newest). */
+export const withExpectedIlvl = (cfg: EvaluationConfig, fitted: { slug: string; curve: CurvePoints } | null): EvaluationConfig =>
+  fitted ? { ...cfg, expectedIlvl: { ...cfg.expectedIlvl, [fitted.slug]: fitted.curve } } : cfg;
 
 export interface GlobalFit {
   globalCurve: EvaluationConfig["globalCurve"];

@@ -392,7 +392,10 @@ and whether shrinkage, per-role percentile curves, lighter weights on the two
 noisiest signals, or all of them would make the score steadier without predicting
 worse. Each candidate's difference with today comes with a 95 % interval (a
 bootstrap over the held-out characters); only a difference whose interval leaves
-out 0 decides. It takes a few seconds to a minute:
+out 0 decides. It also writes the proposal: per role its best candidate, on top
+of the item level the players of each key level wear, refitted, judged the same
+way, and stored whole as `proposal.config` (what the next default config is
+built from). It takes a few seconds to a minute:
 
 ```bash
 ssh <vps> 'cd /opt/bmpl && sudo -u bmpl ./bmpl calibrate --study && cat study.md'

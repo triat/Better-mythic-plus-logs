@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { applyCandidate, planApply, STALE_MS } from "../../src/calibration/apply.ts";
+import { applyCandidate, applyProposal, configText, planApply, STALE_MS } from "../../src/calibration/apply.ts";
 import type { FitResult } from "../../src/calibration/report.ts";
 import { validateConfig } from "../../src/evaluation/config.ts";
 
@@ -43,6 +43,30 @@ describe("calibration pull request", () => {
     expect(parsed.verdict).toEqual(cfg.verdict);
     const changed = out.text.split("\n").filter((l, i) => l !== TEXT.split("\n")[i]);
     expect(changed.length).toBe(3); // the version, dps's curve, tank's reference
+  });
+
+  test("apply: a fitted expected item level replaces its block, in the file's layout", () => {
+    const expectedIlvl = { "season-mn-2": [[10, 307], [15, 322], [20, 333], [25, 340]] as [number, number][] };
+    const out = applyCandidate(TEXT, { ...fit().candidate, expectedIlvl });
+    expect(validateConfig(JSON.parse(out.text)).expectedIlvl).toEqual(expectedIlvl);
+    const changed = out.text.split("\n").filter((l, i) => l !== TEXT.split("\n")[i]);
+    expect(changed).toEqual([`  "version": "${out.version}",`, `    "season-mn-2": [[10, 307], [15, 322], [20, 333], [25, 340]]`]);
+    // Today's table written back is the same line.
+    expect(applyCandidate(TEXT, { ...fit().candidate, expectedIlvl: cfg.expectedIlvl }).text).toBe(applyCandidate(TEXT, fit().candidate).text);
+  });
+
+  test("the study's proposal: the whole file rewritten in its layout, the next version, read back as the proposal", () => {
+    expect(validateConfig(JSON.parse(configText(cfg)))).toEqual(cfg);
+    const axes = structuredClone(cfg.axes);
+    axes.survival.subSignals.individualDeaths!.curves = { dps: [[0, 90], [1, 50], [3, 5]], tank: [[0, 60], [2, 10]] };
+    axes.utility.subSignals.dispels!.weights.healer = 1;
+    const proposal = { ...cfg, axes, shrinkage: { dps: { "survival.individualDeaths": 10.82, "throughput.medianParse": 2.44 } } };
+    const out = applyProposal(TEXT, proposal);
+    expect(out.version).toBe(String(Number(cfg.version) + 1));
+    expect(validateConfig(JSON.parse(out.text))).toEqual(validateConfig({ ...proposal, version: out.version }));
+    expect(out.text).toContain(`        "individualDeaths": { "curve": [[0, 100], [0.5, 85], [1, 65], [2, 35], [3, 10]], "weights": { "dps": 3, "healer": 3, "tank": 3 },
+          "curves": { "dps": [[0, 90], [1, 50], [3, 5]], "tank": [[0, 60], [2, 10]] } },`);
+    expect(out.text).toContain(`  "shrinkage": {\n    "dps": { "survival.individualDeaths": 10.82, "throughput.medianParse": 2.44 }\n  },\n`);
   });
 
   test("apply refuses a file whose layout moved", () => {

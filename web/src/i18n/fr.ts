@@ -930,7 +930,7 @@ export const fr: Mirror<typeof en> = {
       weightInfo: "informatif · poids 0",
       flipFoot: "gains estimés sur l'axe concerné",
       forces: "Forces et faiblesses",
-      forcesSub: "effet sur l'axe, en points",
+      forcesSub: "effet sur le score face au joueur moyen, en points",
       pros: "Ce qui l'aide",
       cons: "Ce qui le freine",
       nonePros: "Rien ne se détache.",

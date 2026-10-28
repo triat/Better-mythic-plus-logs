@@ -173,6 +173,9 @@ const player = (name: string, scores: [number, number, number, number, number], 
     evaluation: {
       ...p.evaluation, role: "dps", targetLevel: 18, global: 76, verdict: "invite", runsUsed: 9,
       axes: keys.map((k, i) => axis(k, scores[i]!, evidence[k] ?? [])),
+      // The strengths and weaknesses read the drivers: one per evidence line, its delta as the badge points.
+      drivers: Object.values(evidence).flatMap((ev) => (ev ?? []).map(([source, delta, value]) => ({ source, impact: Math.round(delta), value, reference: 0, label: "" })))
+        .filter((d) => d.impact !== 0),
       ...(over.evaluation as object | undefined),
     },
   } as LookupPayload;

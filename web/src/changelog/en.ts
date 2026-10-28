@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Strengths and weaknesses now show what each signal adds to or takes from the score compared with the average player, so an item level like most players' no longer shows as a big strength.",
+    ],
+  },
+  {
     version: "0.10.11",
     date: "2026-10-28",
     items: [

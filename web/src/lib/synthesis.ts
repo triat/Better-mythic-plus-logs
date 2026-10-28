@@ -13,8 +13,8 @@ import { AXIS_ORDER, axisTitle, verdictView } from "./verdict.ts";
 const MAX_PROS = 4;
 const MAX_CONS = 5;
 const MAX_SUMMARY = 2;
-/** |delta| that fills a strength / weakness bar. */
-const FULL_BAR_DELTA = 20;
+/** |impact| in badge points that fills a strength / weakness bar. */
+const FULL_BAR_POINTS = 10;
 
 /** The narrow pieces of GET /api/docs the tab reads (`synthesisDocs` picks them). */
 export interface SynthesisDocs {
@@ -58,7 +58,8 @@ export interface VerdictBlock {
 }
 export interface FlipRow { name: string; hint: string | null; gain: string; gap: string }
 export interface FlipView { title: string; rows: FlipRow[]; reachable: boolean; note: string | null }
-export interface ForceRow { name: string; hint: string | null; pts: string; axis: string; detail: string; widthPct: number }
+/** A strength or a weakness: `detail` is the evidence line, `avg` the average player's value it is measured against. */
+export interface ForceRow { name: string; hint: string | null; pts: string; axis: string; detail: string; avg: string; widthPct: number }
 export type Band = "better" | "neutral" | "worse";
 export interface AxisLine { key: AxisKey; name: string; score: number | null; band: Band; why: string; informational: boolean }
 export interface SynthesisView {
@@ -74,11 +75,8 @@ export interface SynthesisView {
 export const scoreBand = (score: number | null): Band =>
   score === null ? "neutral" : score >= 70 ? "better" : score >= 50 ? "neutral" : "worse";
 
-/** "+9.2" / "−10.3", one decimal, the decimal comma in French. */
-const signedPts = (locale: Locale, n: number): string => {
-  const s = (n < 0 ? "−" : "+") + Math.abs(n).toFixed(1);
-  return locale === "fr" ? s.replace(".", ",") : s;
-};
+/** "+4" / "−10": a driver's whole badge points. */
+const signedPts = (n: number): string => (n < 0 ? "−" : "+") + Math.abs(Math.round(n));
 
 const axisOf = (source: string): string => source.split(".")[0]!;
 
@@ -93,18 +91,27 @@ export function synthesisView(t: T, locale: Locale, ev: Evaluation, docs: Synthe
   const topTexts = (a: AxisScore | undefined): string[] =>
     [...(a?.evidence ?? [])].sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta)).slice(0, 2).map(text);
 
-  // Strengths and weaknesses: the counted axes' evidence, largest effect first.
-  const evidence = [...byKey.values()].filter((a) => counted(a.key) && a.score !== null).flatMap((a) => a.evidence.map((e) => ({ e, axis: a.key })));
-  const force = ({ e, axis }: { e: Evidence; axis: AxisKey }): ForceRow => ({
-    name: docs.titleOf(e.source),
-    hint: signalHint(t, e.source),
-    pts: signedPts(locale, e.delta),
-    axis: axisTitle(t, axis),
-    detail: text(e),
-    widthPct: Math.min(100, Math.round((Math.abs(e.delta) / FULL_BAR_DELTA) * 100)),
-  });
-  const pros = evidence.filter((x) => x.e.delta > 0).sort((a, b) => b.e.delta - a.e.delta).slice(0, MAX_PROS).map(force);
-  const cons = evidence.filter((x) => x.e.delta < 0).sort((a, b) => a.e.delta - b.e.delta).slice(0, MAX_CONS).map(force);
+  // Strengths and weaknesses: the drivers, each signal's effect on the badge against the role's average player (the same
+  // reference as "what would flip it", user 2026-10-28), on the counted axes, largest first. A signal less than a point
+  // away from the average player is neither: an item level 7 above the expected one is no strength when the average
+  // player is 8 above it.
+  const evidenceOf = new Map([...byKey.values()].flatMap((a) => a.evidence.map((e) => [e.source, e] as const)));
+  const drivers = (ev.drivers ?? []).filter((d) => counted(axisOf(d.source)));
+  const force = (d: Driver): ForceRow => {
+    const e = evidenceOf.get(d.source);
+    const { value, reference } = driverValues(t, locale, d);
+    return {
+      name: docs.titleOf(d.source),
+      hint: signalHint(t, d.source),
+      pts: signedPts(d.impact),
+      axis: axisTitle(t, axisOf(d.source) as AxisKey),
+      detail: e ? text(e) : value,
+      avg: reference,
+      widthPct: Math.min(100, Math.round((Math.abs(d.impact) / FULL_BAR_POINTS) * 100)),
+    };
+  };
+  const pros = drivers.filter((d) => d.impact > 0).sort((a, b) => b.impact - a.impact).slice(0, MAX_PROS).map(force);
+  const cons = drivers.filter((d) => d.impact < 0).sort((a, b) => a.impact - b.impact).slice(0, MAX_CONS).map(force);
 
   const insufficient = ev.verdict === "insufficient" || ev.global === null;
   const v = verdictView(t, ev);

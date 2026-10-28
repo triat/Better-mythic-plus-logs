@@ -940,7 +940,7 @@ export const en = {
       weightInfo: "informational · weight 0",
       flipFoot: "estimated gains on the axis concerned",
       forces: "Strengths and weaknesses",
-      forcesSub: "effect on the axis, in points",
+      forcesSub: "effect on the score vs the average player, in points",
       pros: "What helps",
       cons: "What holds back",
       nonePros: "Nothing stands out.",

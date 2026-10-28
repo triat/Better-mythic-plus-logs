@@ -43,9 +43,17 @@ const obye = (over: Partial<Evaluation> = {}): Evaluation => ({
   drivers: [
     { source: "survival.avoidableVsPeers", impact: -10, value: 46, reference: 0, label: "" },
     { source: "survival.individualDeaths", impact: -9, value: 1.6, reference: 0.7, label: "" },
+    { source: "utility.dispels", impact: -5, value: 1.3, reference: 2, label: "" },
     { source: "consistency.deathsSpread", impact: -4, value: 2.8, reference: 1.2, label: "" },
     { source: "experience.prevSeason", impact: -3, value: 0, reference: 1, label: "" },
-    { source: "utility.dispels", impact: -5, value: 1.3, reference: 2, label: "" },
+    { source: "utility.kicksAbsolute", impact: -2, value: 0.1, reference: 0.2, label: "" },
+    { source: "throughput.medianParse", impact: -1, value: 43, reference: 50, label: "" },
+    { source: "survival.dtpsVsPeers", impact: -1, value: 4, reference: 1, label: "" },
+    { source: "utility.kicksVsPeers", impact: 6, value: 9, reference: -2, label: "" },
+    { source: "survival.wipeDeaths", impact: 3, value: 0.3, reference: 0.5, label: "" },
+    { source: "preparation.ilvlVsLevel", impact: 2, value: 16, reference: 8, label: "" },
+    { source: "throughput.parseAtTarget", impact: 2, value: 53, reference: 50, label: "" },
+    { source: "consistency.damageSpread", impact: 1, value: 111, reference: 90, label: "" },
   ],
   nextVerdict: { verdict: "invite", threshold: 70, sources: ["survival.avoidableVsPeers", "survival.individualDeaths", "consistency.deathsSpread", "experience.prevSeason", "utility.dispels"], score: 72, reachable: true },
   ...over,
@@ -56,26 +64,31 @@ describe("synthesisView", () => {
     const v = synthesisView(tFr, "fr", obye(), docs, 15).verdict;
     expect(v).toMatchObject({ cls: "badge-maybe", label: "MAYBE", score: "59", target: "pour une +11", title: "Verdict pour une +11", barPct: 59 });
     expect(v.thresholds).toEqual([{ label: "MAYBE 30", at: 30 }, { label: "INVITE 70", at: 70 }]);
-    expect(v.summary).toBe("Porté par item level vs cible et kicks vs pairs, mais freiné par dégâts évitables vs pairs et morts individuelles.");
+    expect(v.summary).toBe("Porté par kicks vs pairs et morts en wipe, mais freiné par dégâts évitables vs pairs et morts individuelles.");
     expect(v.confidence).toBe("8 runs notés sur 15 indexés. Peu de runs : le verdict peut bouger vite.");
   });
-  test("strengths and weaknesses: counted axes only, largest first, capped at 4 and 5", () => {
+  test("strengths and weaknesses: the drivers in badge points vs the average player, counted axes only, capped at 4 and 5", () => {
     const s = synthesisView(tFr, "fr", obye(), docs, 15);
     expect(s.pros.map((p) => [p.name, p.pts, p.axis, p.widthPct])).toEqual([
-      ["Item level vs cible", "+20,0", "Préparation", 100],
-      ["Kicks vs pairs", "+9,2", "Utilité", 46],
-      ["Morts en wipe", "+6,1", "Survie", 31],
-      ["Parse à la cible", "+4,8", "Throughput", 24],
+      ["Kicks vs pairs", "+6", "Utilité", 60],
+      ["Morts en wipe", "+3", "Survie", 30],
+      ["Item level vs cible", "+2", "Préparation", 20],
+      ["Parse à la cible", "+2", "Throughput", 20],
     ]);
-    expect(s.cons.map((c) => c.pts)).toEqual(["−10,3", "−9,3", "−3,2", "−2,0", "−2,0"]);
-    expect(s.cons[0]!.detail).toBe("dégâts évitables +46\u202f% vs le groupe");
-    expect(s.cons[1]).toMatchObject({ name: "Morts individuelles", axis: "Survie", detail: "1,6 mort(s) hors wipe / run" });
+    expect(s.cons.map((c) => c.pts)).toEqual(["−10", "−9", "−5", "−2", "−1"]);
+    // The evidence line, then the average player's value: what the points are measured against.
+    expect([s.cons[0]!.detail, s.cons[0]!.avg]).toEqual(["dégâts évitables +46\u202f% vs le groupe", "moy. +0 %"]);
+    expect(s.cons[1]).toMatchObject({ name: "Morts individuelles", axis: "Survie", detail: "1,6 mort(s) hors wipe / run", avg: "moy. 0,7", widthPct: 90 });
     expect(s.cons[1]!.hint).toBe("Ses morts quand le groupe n'a pas wipe, par run, pondérées par le niveau de la clé.");
     // Régularité (weight 0) and the legacy Experience axis never show up as a strength or a weakness.
     const names = [...s.pros, ...s.cons].map((r) => r.name);
     expect(names).not.toContain("Écart de morts");
+    expect(names).not.toContain("Écart de dégâts vs pairs");
     expect(names).not.toContain("experience.prevSeason");
-    expect(s.cons.some((c) => c.name === "Parse médian")).toBe(false); // sixth cost, past the cap
+    expect(s.cons.some((c) => c.name === "survival.dtpsVsPeers")).toBe(false); // sixth cost, past the cap
+    // A signal as good as the average player's has no driver, so it is neither, whatever its score against 50.
+    const flat = synthesisView(tFr, "fr", obye({ drivers: [] }), docs, 15);
+    expect([flat.pros, flat.cons]).toEqual([[], []]);
   });
   test("what would flip it: the path without weight-0 or unknown axes", () => {
     const f = synthesisView(tFr, "fr", obye(), docs, 15).flip!;
@@ -106,6 +119,7 @@ describe("synthesisView", () => {
     expect(s.verdict).toMatchObject({ score: null, barPct: null, label: "NOT ENOUGH DATA", summary: "Not enough scored runs for a verdict: 3 needed." });
     expect(s.verdict.confidence).toBe("2 runs scored out of 4 indexed");
     expect(s.flip).toBeNull();
+    expect([s.pros, s.cons]).toEqual([[], []]);
     // A stray nextVerdict on an insufficient evaluation still draws no flip.
     expect(synthesisView(tEn, "en", { ...ev, nextVerdict: obye().nextVerdict }, docs, 4).flip).toBeNull();
   });
@@ -128,9 +142,9 @@ describe("synthesisView", () => {
     expect(sparse.find((a) => a.key === "survival")).toMatchObject({ score: null, band: "neutral", why: "not enough data for this axis" });
   });
   test("summary variants", () => {
-    const onlyPros = obye({ axes: [axis("utility", 80, [["utility.kicksVsPeers", 9.2, 0]])] });
+    const onlyPros = obye({ axes: [axis("utility", 80, [["utility.kicksVsPeers", 9.2, 0]])], drivers: [{ source: "utility.kicksVsPeers", impact: 4, value: 9, reference: -2, label: "" }] });
     expect(synthesisView(tEn, "en", onlyPros, docs, 15).verdict.summary).toBe("Helped by kicks vs pairs; nothing costs much.");
-    const flat = obye({ axes: [] });
+    const flat = obye({ axes: [], drivers: [] });
     expect(synthesisView(tEn, "en", flat, docs, 15).verdict.summary).toBe("No signal stands out.");
   });
   test("scoreBand thresholds", () => {

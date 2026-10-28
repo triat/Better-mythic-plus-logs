@@ -33,8 +33,10 @@ developers.
    Entries accumulate under `"next"`. Plain player language, one sentence each, no internal names (no "deep-dive",
    no "config version"), at most about five items per version.
 3. **The release stamps them.** `release.yml`, in the bump commit, renames the `"next"` entry of both files to the new
-   version with today's date. It refuses to run when `"next"` is missing or empty in either file ("nothing to tell
-   the users"); a release with no user-visible change carries one line saying what improved under the hood.
+   version with today's date. It refuses to run when `"next"` is in one file only or empty. *Amended 2026-10-27:*
+   with no `"next"` in either file the release is a technical one: nothing is stamped, the release goes on, and the
+   front lights no mark, since no entry is newer than the member's last visit. The first rule ("nothing to tell the
+   users" refused) held back technical changes that concern no player.
 4. **The running version** comes from the server (`GET /api/status` gains `version`, the `package.json` version the
    binary was built with, like `/api/health`). The front and the server ship in one binary, so they agree.
 5. **"Last seen" per member.** Hosted: `user_settings.lastSeenVersion`, read and written through the existing
@@ -68,8 +70,8 @@ click        → show entries → PUT /api/settings { lastSeenVersion: running }
 
 - `/api/status` without `version` (an old binary behind a new front cannot happen, one binary): mark hidden.
 - `lastSeenVersion` newer than the running version (a rollback): no mark, nothing shown, value left as is.
-- A running version absent from the changelog (a hand-made release): the mark still lights; the list shows the
-  entries between the two versions that exist.
+- A running version absent from the changelog (a technical or hand-made release): the mark lights only when an
+  entry exists between the two versions, and the list shows those entries (amended 2026-10-27, decision 3).
 
 ## Tests
 

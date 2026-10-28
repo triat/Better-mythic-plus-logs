@@ -44,7 +44,8 @@ just check-deps                             # bun audit on both lockfiles — ru
   `web/src/changelog/en.ts` and the same line in `fr.ts` (plain player language, one sentence, no internal names). That
   covers a new feature, a changed screen, a score, verdict or signal that moves, a fixed bug a player could see. Tests,
   CI, refactors and docs add none. Check it before ending every task: nobody else writes these lines. The release stamps
-  `"next"` with the version and refuses to run without it (spec `docs/superpowers/specs/2026-10-14-whats-new-design.md`).
+  `"next"` with the version; with no `"next"` in either file it is a technical release, stamped nothing and shown to
+  nobody (spec `docs/superpowers/specs/2026-10-14-whats-new-design.md`, decision 3).
 - **`web/` imports from `src/` are types only** (`import type … from "@shared/…"`), single runtime exception `src/wow/classes.ts`. `verbatimModuleSyntax` enforces it.
 - **Front colours/radii/fonts come from `web/src/styles/tokens.css`**; never invent a value. Any visible UI change goes through the Claude Design canvas first (see `docs/agents/workflow.md`).
 - **Git:** work on `main` in place, no history rewriting, no force push, push only when asked. Never stage the user's local files at the repo root: `biwaasham.json` (saved payload), `defensives.json`, `evaluation.json`, `.env`, `bmpl.db*`.
@@ -117,6 +118,7 @@ player, the deep-dive out of the verdict, the property suite `test/evaluation/pr
 implemented (canvas "bmpl · Verdict à ton niveau" C: `src/evaluation/reliability.ts`, the Synthèse Fiabilité block, the
 header chip, the marks in Récents / Live / Compare, the Méthode tab's "average" rows); phase 3's study is implemented
 (`src/calibration/study.ts`, `bmpl calibrate --study`, `GET /api/ops/calibration/study`; the engine reads optional
-`shrinkage` and per-role `curves`, off until the study's results are reviewed); phase 4 (labelled profiles) is not
+`shrinkage` and per-role `curves`, off until the study's results are reviewed), and its v2 (bootstrap intervals
+against today, the `targeted` and `all` candidates) waits on its first run on the VPS; phase 4 (labelled profiles) is not
 started. Next: self-review phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.

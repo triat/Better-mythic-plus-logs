@@ -48,6 +48,10 @@ describe("whatsNew", () => {
     expect(w.mark).toBe(true);
     expect(versions(w.since)).toEqual(["0.10.2", "0.10.1"]);
   });
+  test("a technical release (no entry since the last visit) lights no mark", () => {
+    const w = whatsNew(log, "0.10.2", "0.10.3");
+    expect([w.mark, w.since.length, versions(w.all)[0]]).toEqual([false, 0, "0.10.2"]);
+  });
   test("\"next\" is never shown; an unknown running version shows nothing", () => {
     expect(versions(whatsNew(log, "0.9.9", "0.11.0").all)).not.toContain("next");
     expect(whatsNew(log, "0.9.9", null)).toEqual({ mark: false, since: [], all: [] });

@@ -482,7 +482,13 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 }
 
 /* shell (redesign phase 1): the sidebar frame, mockup F-Palette and the frame drawn on every F-*.dc.html.
-   The sidebar stacks above the content once the two no longer fit side by side (no sticky, no 100vh there). */
+   The sidebar stacks above the content once the two no longer fit side by side (no sticky, no 100vh there).
+   Side by side, the sidebar stays in view while the page scrolls (user 2026-10-27/28): as tall as the window, the
+   logo and search at its top and the account block at its foot stay put, and the middle part (navigation, Récents)
+   scrolls when it does not fit. The search stays out of the scrolling part because its suggestions and the chip
+   menus are wider than the sidebar and a scroll area would clip them; z-index 30 keeps them and What's new above
+   the content, under the run sheet (40) and the palette (50). Under 520 px of height (search and account alone fill
+   the window) the sidebar scrolls with the page and the account block follows Récents. */
 .shell { display: flex; flex-wrap: wrap; align-items: stretch; }
 .shell-main { flex: 999 1 720px; min-width: 0; padding: 28px 32px 96px; --gutter: 0px; }
 .shell-content { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
@@ -491,6 +497,12 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .shell-main .admin-title { padding-top: 0; }
 .sidebar { flex: 1 1 248px; max-width: 100%; min-width: 0; padding: 20px 12px; border-right: 1px solid var(--border-soft); display: flex; flex-direction: column; gap: 20px; }
 @media (min-width: 1001px) { .shell { min-height: 100vh; } .sidebar { max-width: 300px; } }
+.side-scroll { display: flex; flex-direction: column; gap: 20px; }
+@media (min-width: 1001px) and (min-height: 520px) {
+  .sidebar { position: sticky; top: 0; height: 100vh; z-index: 30; }
+  .side-scroll { flex: 1 1 auto; min-height: 0; margin: 0 -12px; padding: 0 12px; overflow-y: auto; overscroll-behavior: contain; }
+  .side-account { margin-top: auto; }
+}
 @media (max-width: 1000px) {
   .sidebar { border-right: 0; border-bottom: 1px solid var(--border-soft); }
   .shell-main { padding: 20px 16px 64px; }
@@ -541,7 +553,6 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 .recent-menu { top: calc(100% + 4px); right: 0; width: 180px; }
 .side-clear { align-self: flex-start; margin: 4px 0 0 12px; padding: 0; border: 0; background: transparent; color: var(--label); font-size: 12px; cursor: pointer; }
 .side-clear:hover { color: var(--text); }
-.side-account { margin-top: auto; }
 .account-block { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--border); color: var(--text); text-align: left; cursor: pointer; }
 .account-block:hover, .account-block.active { border-color: var(--border-2); background: var(--card-2); }
 .account-block .avatar { width: 32px; height: 32px; }

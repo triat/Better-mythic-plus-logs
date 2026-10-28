@@ -71,7 +71,11 @@ The user's standing rule: any visible UI change is mocked on the Claude Design c
 Every in-app page sits in the frame (`Shell`, redesign spec decision 1): `.sidebar` (248 px, at most 300 px) on the
 left, `.shell-main` beside it, whose `.shell-content` column is at most 1120 px wide, or `--col` while a result or a
 comparison is shown (`:has(.content-result)`: 1200 px, 1640 px in `:root:has(.content-result)`). At 1000 px and below
-the sidebar stacks above the content (flex wrap: no sticky, no `100vh`). The connected home page (`HomePage`) and the
+the sidebar stacks above the content (flex wrap: no sticky, no `100vh`). Above, on a window at least 520 px tall, the
+sidebar is sticky and as tall as the window (z-index 30, under the run sheet and the palette): logo and search stay at
+its top, the account block at its foot, and `.side-scroll` (navigation and Récents) scrolls between them when it does
+not fit. The search stays outside the scrolling part, so its suggestions and the chip menus, wider than the sidebar,
+are never clipped. A shorter window scrolls the sidebar with the page, the account block right under Récents. The connected home page (`HomePage`) and the
 landing are outside the frame and have their own centred column. No page may scroll horizontally (spec decision 8);
 phase 2 redrew the candidate profile (grids that fit their column, rows stacked into cards at 390 px), phase 3 the
 owner pages and phase 4 Compare and Live; no pre-redesign view is left. The owner pages (phase 3) wrap the bento to one column under 900 px and stack the run rows into cards. `--gutter` is 0 inside

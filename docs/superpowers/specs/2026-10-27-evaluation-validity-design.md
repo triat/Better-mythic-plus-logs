@@ -1,7 +1,8 @@
 # Evaluation validity — design
 
-Status: phases 1 and 2 implemented 2026-10-27; phase 3's study and engine support implemented 2026-10-27, its
-decisions wait on the first study of the real samples; phase 4 designed, not started.
+Status: phases 1 and 2 implemented 2026-10-27; phase 3's study and engine support implemented 2026-10-27, study v2
+(bootstrap intervals, targeted weights) implemented the same day after the first run on the real samples, its
+decisions wait on the v2 run; phase 4 designed, not started.
 
 ## Goal
 
@@ -134,8 +135,31 @@ points: it reads the rolling window of `calibration.db` (the newest season prese
   `percentile` (decision 8, per-role curves `curves[role]` = the fit half's percentile, direction kept), `both`.
   Measured: the raw score's split-half Spearman (the stability the user asked for), its prediction of the newer half's
   deaths, avoidable damage and timed share from the older half, its agreement with WCL's ladder, the verdict shares and
-  the verdict changes against today. **A candidate beats today** when its split-half rises by 0.02 or more and no
-  prediction drops by more than 0.02; `best[role]` names the steadiest such candidate, or null.
+  the verdict changes against today. ~~A candidate beats today when its split-half rises by 0.02 or more and no
+  prediction drops by more than 0.02~~ (v1, replaced by v2 below); `best[role]` names the steadiest winner, or null.
+
+**First run on the real samples** (2026-10-27, 2,150 characters): the parse is ranked per key level (Spearman(amount,
+parse) 0.93 per level against 0.47 across levels). Split-half of the raw score, today / shrinkage / percentile / both:
+dps 0.59 / 0.65 / 0.60 / 0.71, healer 0.61 / 0.79 / 0.40 / 0.73, tank 0.74 / 0.81 / 0.69 / 0.85. The predictions of
+the newer half are small (deaths about 0.1 to 0.2, timed near 0). Counted signals close to noise: tank individual
+deaths (split-half 0.07), healer dispels (0.16), healer avoidable damage (0.18), healer kicks against peers (0.17).
+`preparation.ilvlVsLevel` showed 1.00, an artefact: the item level is the character's, the same in both halves. With
+about 350 held-out characters per role, one correlation moves by about ±0.1 at 95 % from sampling alone, so the v1
+rule's 0.02 could not tell a gain from noise.
+
+**Study v2** (same day):
+
+- **Paired bootstrap** (`bootstrapDiffs`, 1,000 resamples, a fixed seed so the same samples give the same intervals):
+  each resample draws the held-out characters with replacement and measures today and every candidate on that same
+  draw; `vsToday[measure]` = candidate − today on all of them with the 2.5th and 97.5th percentiles of the resampled
+  differences, for the split-half and the three predictions.
+- **A candidate beats today** when it is surely steadier (the split-half interval wholly above 0) and surely not worse
+  at predicting (no prediction interval wholly below 0).
+- **Two more candidates**: `targeted` (tank `survival.individualDeaths` and healer `utility.dispels` weigh 1 instead
+  of 3, `TARGETED`, the two counted signals closest to noise for their role) and `all` (shrinkage + percentile curves
+  + targeted weights); `candidate.weights` lists the targeted change.
+- **Not run-based sources** (`NOT_RUN_BASED`: `preparation.ilvlVsLevel`) get no split-half, no one-run reliability and
+  no k; they keep their nominal and effective shares.
 
 **The engine** reads both changes from the config, off by default: `shrinkage[role][source] = k` pulls a value
 measured on n runs toward `reference.x` by k / (n + k) (`EvalInputs.counts` holds n; a driver's override is never

@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "The sidebar now stays in view while you scroll a long page, with the search at its top and your account at its foot; on a short window, the links and recent lookups between them scroll on their own.",
+    ],
+  },
+  {
     version: "0.10.10",
     date: "2026-10-27",
     items: [

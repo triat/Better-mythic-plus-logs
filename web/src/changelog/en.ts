@@ -4,6 +4,13 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Item level is now compared with what players at your key level actually wear, refreshed every week, instead of a fixed table that had fallen behind.",
+      "Healers' dispels count less, and a tank's score depends less on a single run: both read steadier from one set of runs to the next, so some verdicts move.",
+    ],
+  },
+  {
     version: "0.10.12",
     date: "2026-10-28",
     items: [

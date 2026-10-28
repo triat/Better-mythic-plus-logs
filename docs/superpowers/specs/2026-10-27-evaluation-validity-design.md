@@ -1,8 +1,8 @@
 # Evaluation validity — design
 
 Status: phases 1 and 2 implemented 2026-10-27; phase 3's study and engine support implemented 2026-10-27, study v2
-(bootstrap intervals, targeted weights, the proposal) implemented 2026-10-27/28; its curve candidates were measured
-wrong until the 2026-10-28 fix below, so config 11 waits on a rerun; phase 4 designed, not started.
+(bootstrap intervals, targeted weights, the proposal) implemented 2026-10-27/28; config 11 applied 2026-10-28 from
+the corrected run (below); phase 4 designed, not started.
 
 ## Goal
 
@@ -172,6 +172,17 @@ drops the per-role curves too (regression test in `test/calibration/fit.test.ts`
 runs config 10 (no per-role curve). The user still chose to apply the proposal for all three roles (2026-10-28,
 before the bug was found, tanks included despite their avoidable prediction −0.10 [−0.16, −0.05]); config 11 is built
 from the next, corrected run.
+
+**Config 11, from the corrected run** (2026-10-28, 2,279 characters, after the fix). The rule now picks: dps none
+(`both` and `all` are steadier, +0.10 [+0.06, +0.14], but predict avoidable damage surely worse, −0.07 [−0.11,
+−0.02]); healers `targeted` (dispels 3 → 1: +0.09 [+0.07, +0.11], no prediction surely worse); tanks `all`
+(shrinkage, percentile curves and deaths 3 → 1: +0.11 [+0.08, +0.15]). The proposal adds the fitted expected item level
+to every role. Judged on the held-out half against config 10: dps +0.01 [0.00, +0.02], deaths prediction +0.01 [0.00,
++0.02], 13 of 372 verdicts change; healers +0.09 [+0.07, +0.12], nothing surely worse, 39 of 376 change, agreement with
+WCL's ladder 0.50 → 0.42; tanks +0.10 [+0.06, +0.14], avoidable prediction −0.09 [−0.14, −0.03], surely worse, 87 of
+366 change. The tank row breaks the rule through the fitted item level (`all` alone on the hand-set table: −0.01); the
+user applied the proposal for all three roles anyway (« Appliquer la proposition », 2026-10-28), as in the morning's
+choice. Config 11 is `proposal.config` written by `applyProposal`; the weekly studies re-check it.
 
 **Decisions after the v2 run** (2026-10-28, 2,175 characters; user: « applique »; void for the curve candidates, see
 above). The rule picked `both` for dps

@@ -32,6 +32,6 @@ describe("sub-signal names and hints", () => {
   test("French reads in plain words", () => {
     expect(signalName(tFr, "throughput.parseAtTarget")).toBe("Parse sur les clés visées");
     expect(signalName(tFr, "preparation.ilvlVsLevel")).toBe("Équipement pour la clé visée");
-    expect(signalHint(tEn, "preparation.ilvlVsLevel")).toBe("Item level compared with what the season expects at the target key: +3 = 3 above.");
+    expect(signalHint(tEn, "preparation.ilvlVsLevel")).toBe("Item level compared with what players at the target key level wear this season: +3 = 3 above.");
   });
 });

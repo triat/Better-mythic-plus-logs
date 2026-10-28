@@ -356,7 +356,7 @@ export const en = {
       damageSpread: "damage-vs-peers spread ±{value}%",
     },
     preparation: {
-      ilvlVsLevel: "ilvl {value} vs expected for the key",
+      ilvlVsLevel: "ilvl {value} vs players at that key",
     },
   } satisfies EvidenceMessages,
   drivers: {
@@ -390,7 +390,7 @@ export const en = {
       damageSpread: { name: "Damage-taken variation", hint: "Whether damage taken vs the group is a habit or a one-off." },
     },
     preparation: {
-      ilvlVsLevel: { name: "Gear for the target key", hint: "Item level compared with what the season expects at the target key: +3 = 3 above." },
+      ilvlVsLevel: { name: "Gear for the target key", hint: "Item level compared with what players at the target key level wear this season: +3 = 3 above." },
     },
   } satisfies SignalMessages,
   runs: {
@@ -700,7 +700,8 @@ export const en = {
     informational: "{list} {count, plural, one {has} other {have}} weight 0 for every role: shown, never counted. Timed vs depleted is shown in the run list and never scored.",
     axesIntro: "Each axis scores 0–100. A sub-signal's value goes through its curve — printed beside it, linear between the points and clamped outside them — into a "
       + "0–100 score; the axis is the mean of those scores weighted by the player's role (the chips under each curve), rounded. A sub-signal the kit cannot have, or whose "
-      + "weight for the role is 0, is left out; one whose data is missing counts as the role's average player, with no evidence line. Each evidence line on an axis row is that sub-signal's share of the distance from 50, in axis points.",
+      + "weight for the role is 0, is left out; one whose data is missing counts as the role's average player, with no evidence line. A role with its own curve for a sub-signal, fitted on the "
+      + "calibration population, uses it instead of the one printed here (tanks, since config 11). Each evidence line on an axis row is that sub-signal's share of the distance from 50, in axis points.",
     survivalNote: "The two deep-dive sub-signals appear once at least {count, plural, one {# shown run has} other {# shown runs have}} been analyzed, in your own characters' Survival pillar only: they never count in the verdict.",
     consistencyNote: "Every sub-signal needs at least {count, plural, one {# run} other {# runs}}; below that the axis is n/a.",
     subSignals: "{count, plural, one {# sub-signal} other {# sub-signals}}", bonus: " · {n} bonus",

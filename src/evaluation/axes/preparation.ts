@@ -13,6 +13,6 @@ export function scorePreparation(i: EvalInputs, cfg: EvaluationConfig, override?
   const expected = curve(i.targetLevel, cfg.expectedIlvl[slug]!);
   const ilvlVsLevel = p.ilvl === null ? null : p.ilvl - expected;
   return scoreAxis("preparation", [
-    { id: "ilvlVsLevel", value: ilvlVsLevel, label: (r) => `ilvl ${signed(r)} vs expected for the key` },
+    { id: "ilvlVsLevel", value: ilvlVsLevel, label: (r) => `ilvl ${signed(r)} vs players at that key` },
   ], i.role, cfg, i.runsUsed, override);
 }

@@ -3,6 +3,13 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "L'item level est maintenant comparé à ce que portent vraiment les joueurs de ton niveau de clé, recalculé chaque semaine, au lieu d'une table fixe qui avait pris du retard.",
+      "Les dispels comptent moins pour les healers, et le score d'un tank dépend moins d'un seul run : les deux sont plus stables d'un lot de runs à l'autre, donc certains verdicts bougent.",
+    ],
+  },
+  {
     version: "0.10.12",
     date: "2026-10-28",
     items: [

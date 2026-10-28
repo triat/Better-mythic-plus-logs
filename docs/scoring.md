@@ -50,6 +50,14 @@ target level then scored better than having played there badly. A sub-signal the
 dispel) is still left out, and an axis where nothing was measured stays `n/a`. The Method tab's evidence lists only
 what was measured ([validity spec](superpowers/specs/2026-10-27-evaluation-validity-design.md)).
 
+**Config version 11** (2026-10-28) applies what the evaluation study found, role by role, on the half of the sampled
+characters it was not fitted on. Item level is compared with what the players of the target key level wear (the
+median of the characters sampled at each level, refitted every week) rather than a fixed table that had fallen 7 to 8
+levels behind. A healer's dispels weigh 1 instead of 3: they barely repeat from one set of runs to the next. Tanks get
+their own curves (each signal's percentile among the sampled tanks), their deaths outside wipes weigh 1 instead of 3,
+and each measured signal is pulled toward the average tank by k / (n + k) for n runs (`shrinkage`), so one run decides
+less. DPS keep their curves and weights.
+
 **Reliability** (validity spec phase 2): how far the verdict holds for the key you vet for. Neither part changes the
 score or the verdict.
 

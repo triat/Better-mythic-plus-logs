@@ -766,9 +766,14 @@ export const en = {
       listed: "listed ({kind}, cd {cd} s)", alreadyIgnored: "already ignored", notInTable: "— (not in table)", ignoredForSpec: "ignored for this spec",
       noChange: "{to} (no change)", seconds: "{n} s",
     },
+    pager: {
+      label: "Pages", range: "{from}–{to} of {total}", rangeFor: "{from}–{to} of {total} for “{q}”",
+      prev: "Previous page", next: "Next page", page: "Page {n}", gap: "…",
+    },
     users: {
-      title: "Users", sub: "{n} · signed in at least once",
-      head: { name: "name", role: "role", lastSeen: "last seen", ptsHour: "pts · hour", pts24h: "pts · 24 h", discordId: "discord id" },
+      title: "Users", sub: "{n} · signed in at least once · most recent visit first",
+      search: "Search a name or a Discord id", searchLabel: "Search users", none: "No user matches “{q}”.",
+      head: { name: "name", role: "role", lastSeen: "last seen ↓", ptsHour: "pts · hour", pts24h: "pts · 24 h", discordId: "discord id" },
       role: { member: "member", admin: "admin" }, env: "env", banned: "banned",
       makeAdmin: "make admin", makeMember: "make member",
       makeAdminConfirm: "Make {name} an admin? They get the Admin page, no quota, and can approve proposals.",
@@ -800,6 +805,7 @@ export const en = {
     usage: {
       title: "Feature usage", sub: "per member and day · API + interface events · kept 90 days · 0 WCL pts",
       period: "{n} d", includeAdmins: "Include admins",
+      detailShow: "Show the details · {n} features (table or categories)", detailHide: "Hide the details",
       view: { table: "Table", categories: "Categories" },
       kpi: {
         today: "Active today", d7: "Active 7 d", d30: "Active 30 d", lookups: "Lookups / active member", unused: "Unused features",
@@ -819,7 +825,8 @@ export const en = {
       title: "Audit log", sub: "logins, admin actions, quota refusals, security rejections · kept 90 days",
       chips: { all: "All", login: "Logins", admin: "Admin", quota: "Quota", security: "Security" },
       head: { time: "time", who: "who", action: "action", target: "target", detail: "detail" },
-      empty: "Nothing logged yet.", loadMore: "Load {n} more", showing: "showing {shown} of {total} · newest first",
+      empty: "Nothing logged yet.", newest: "newest first",
+      search: "Filter by member", searchLabel: "Filter the log by member or target", searchHint: "who or target", rows: "Rows", rowsLabel: "Rows per page",
       detail: {
         quota: "quota", budget: "instance budget", quotaRefused: "{what} · {used}/{limit} pts used, resets in {min} min",
         rateLimited: "{limit} per {window} s · retry in {retry} s",

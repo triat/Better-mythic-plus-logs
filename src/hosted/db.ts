@@ -127,10 +127,14 @@ export interface HostedDb {
   audit: {
     /** Inserts one row (`detail` already serialised) and returns its id. */
     add(row: { at: number; userId: number | null; action: AuditAction; target: string | null; detail: string | null; ip: string | null }): number;
-    /** Newest first (`id DESC`), joined with users for `username`; `actions: null` = every action, `before` = rows with a smaller id only. */
-    list(o: { actions: AuditAction[] | null; before: number | null; limit: number }): AuditRow[];
-    /** Row counts per kind (plus `all`) since `sinceAt` (null = ever). */
-    counts(sinceAt: number | null): Record<AuditKind | "all", number>;
+    /**
+     * Newest first (`id DESC`), joined with users for `username`; `actions: null` = every action, `before` = rows with a
+     * smaller id only, `offset` = rows skipped (the admin page's numbered pages), `query` = rows whose member (username or
+     * display name) or target contains it, case-insensitively for ASCII.
+     */
+    list(o: { actions: AuditAction[] | null; before: number | null; limit: number; offset?: number; query?: string | null }): AuditRow[];
+    /** Row counts per kind (plus `all`) since `sinceAt` (null = ever), only the rows `query` matches when given. */
+    counts(sinceAt: number | null, query?: string | null): Record<AuditKind | "all", number>;
     /** Deletes rows older than `at`; returns how many. */
     purgeBefore(at: number): number;
   };
@@ -239,6 +243,12 @@ export function openHosted(db: Database): HostedDb {
   const auditInsert = db.query<{ id: number }, [number, number | null, string, string | null, string | null, string | null]>("INSERT INTO audit_log (at, user_id, action, target, detail, ip) VALUES (?, ?, ?, ?, ?, ?) RETURNING id");
   const AUDIT_SELECT = "SELECT a.id, a.at, a.user_id, u.username, a.action, a.target, a.detail, a.ip FROM audit_log a LEFT JOIN users u ON u.id = a.user_id";
   const auditCounts = db.query<{ action: AuditAction; n: number }, [number]>("SELECT action, COUNT(*) AS n FROM audit_log WHERE at >= ? GROUP BY action");
+  /** The member or the target contains the pattern (`likePattern`); `\\` escapes `%`, `_` and itself. */
+  const AUDIT_MATCH = "(u.username LIKE ? ESCAPE '\\' OR u.global_name LIKE ? ESCAPE '\\' OR a.target LIKE ? ESCAPE '\\')";
+  const auditCountsMatching = db.query<{ action: AuditAction; n: number }, [number, string, string, string]>(
+    `SELECT a.action AS action, COUNT(*) AS n FROM audit_log a LEFT JOIN users u ON u.id = a.user_id WHERE a.at >= ? AND ${AUDIT_MATCH} GROUP BY a.action`,
+  );
+  const likePattern = (q: string): string => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
   const auditPurge = db.query("DELETE FROM audit_log WHERE at < ?");
 
   const wclClientGet = db.query<WclClientRaw, [number]>("SELECT * FROM user_wcl_clients WHERE user_id = ?");
@@ -337,12 +347,14 @@ export function openHosted(db: Database): HostedDb {
         const params: Array<string | number> = [];
         if (o.actions !== null) { where.push(`a.action IN (${o.actions.map(() => "?").join(", ")})`); params.push(...o.actions); }
         if (o.before !== null) { where.push("a.id < ?"); params.push(o.before); }
-        params.push(o.limit);
-        const sql = `${AUDIT_SELECT}${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY a.id DESC LIMIT ?`;
+        if (o.query) { where.push(AUDIT_MATCH); const p = likePattern(o.query); params.push(p, p, p); }
+        params.push(o.limit, o.offset ?? 0);
+        const sql = `${AUDIT_SELECT}${where.length ? ` WHERE ${where.join(" AND ")}` : ""} ORDER BY a.id DESC LIMIT ? OFFSET ?`;
         return db.query<AuditRaw, Array<string | number>>(sql).all(...params).map(auditRow);
       },
-      counts(sinceAt) {
-        const byAction = new Map(auditCounts.all(sinceAt ?? 0).map((r) => [r.action, Number(r.n)]));
+      counts(sinceAt, query) {
+        const rows = query ? auditCountsMatching.all(sinceAt ?? 0, likePattern(query), likePattern(query), likePattern(query)) : auditCounts.all(sinceAt ?? 0);
+        const byAction = new Map(rows.map((r) => [r.action, Number(r.n)]));
         const out = { all: 0 } as Record<AuditKind | "all", number>;
         for (const kind of AUDIT_KINDS) {
           const n = actionsOf(kind).reduce((sum, a) => sum + (byAction.get(a) ?? 0), 0);

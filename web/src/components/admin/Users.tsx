@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { AdminUser } from "../../types.ts";
-import { userRow } from "../../lib/admin.ts";
+import { membersView, userRow } from "../../lib/admin.ts";
 import { useT } from "../../locale.tsx";
 import { Around } from "../Around.tsx";
 import { Avatar } from "../Avatar.tsx";
+import { Icon } from "../Icon.tsx";
+import { Pager } from "./Pager.tsx";
 
 interface Props {
   users: AdminUser[];
@@ -16,11 +18,18 @@ interface Props {
 }
 type Confirm = { id: number; kind: "role" | "revoke" | "ban" } | null;
 
-/** Everyone who signed in at least once: role toggle, session revocation and ban (each confirmed inline), unban (canvas "Users", "Phase2Details" for ban). */
+/**
+ * Everyone who signed in at least once: role toggle, session revocation and ban (each confirmed inline), unban (canvas
+ * "Users", "Phase2Details" for ban); the most recent visit first, searched by name or Discord id and paged in the
+ * browser (canvas "bmpl · Admin listes", A).
+ */
 export function Users({ users, selfId, limitPerUser, onRole, onRevoke, onBan, onUnban }: Props) {
   const { t } = useT();
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const view = membersView(t, users, query, page);
   const run = async (p: Promise<void>) => {
     setBusy(true);
     await p;
@@ -32,12 +41,21 @@ export function Users({ users, selfId, limitPerUser, onRole, onRevoke, onBan, on
       <div className="admin-section-head">
         <span style={{ fontWeight: 600 }}>{t("admin.users.title")}</span>
         <span className="muted">{t("admin.users.sub", { n: users.length })}</span>
+        <div className="grow" />
+        <label className="admin-search">
+          <Icon name="search" size={14} />
+          <input
+            type="search" value={query} placeholder={t("admin.users.search")} aria-label={t("admin.users.searchLabel")}
+            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+          />
+        </label>
       </div>
       <div className="admin-row admin-row-head admin-row-user label-caps">
-        <span /><span>{t("admin.users.head.name")}</span><span>{t("admin.users.head.role")}</span><span>{t("admin.users.head.lastSeen")}</span>
+        <span /><span>{t("admin.users.head.name")}</span><span>{t("admin.users.head.role")}</span><span className="sorted">{t("admin.users.head.lastSeen")}</span>
         <span>{t("admin.users.head.ptsHour")}</span><span>{t("admin.users.head.pts24h")}</span><span>{t("admin.users.head.discordId")}</span><span />
       </div>
-      {users.map((u) => {
+      {view.total === 0 && query.trim() && <div className="faint" style={{ fontSize: 13 }}>{t("admin.users.none", { q: query.trim() })}</div>}
+      {view.rows.map((u) => {
         const r = userRow(t, u, Date.now(), selfId, limitPerUser);
         const name = <b>{r.name}</b>;
         const asking = confirm?.id === r.id ? confirm.kind : null;
@@ -99,6 +117,13 @@ export function Users({ users, selfId, limitPerUser, onRole, onRevoke, onBan, on
           </div>
         );
       })}
+      {view.total > 0 && (
+        <div className="pager-row">
+          <span className="faint">{view.range}</span>
+          <div className="grow" />
+          <Pager page={view.page} pages={view.pages} onPage={setPage} />
+        </div>
+      )}
     </section>
   );
 }

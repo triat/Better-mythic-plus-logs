@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { AdminInstance, AdminInvite, AdminProposal, AdminUsage, AdminUser, AuditRow, FeatureUsage, UsageReport } from "../types.ts";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
-import { AUDIT_KIND_OF, USAGE_CATEGORY_ORDER, auditChips, usageCards, usageChips, usageIsEmpty, usageKpis, usageRow, usageTable, auditDetail, auditRow, auditShowing, decidedLine, diffRows, fmtBytes, fmtUptime, gaugeModel, grafanaLinks, hourBars, instanceModel, instanceWcl, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
+import { AUDIT_KIND_OF, USAGE_CATEGORY_ORDER, auditChips, usageCards, usageChips, usageIsEmpty, usageKpis, usageRow, usageTable, auditDetail, auditFooter, auditRow, decidedLine, membersView, pageList, rangeText, diffRows, fmtBytes, fmtUptime, gaugeModel, grafanaLinks, hourBars, instanceModel, instanceWcl, inviteRow, proposalCard, topConsumers, userRow } from "./admin.ts";
 import { fmtPts, fmtStamp } from "./format.ts";
 
 const tFr = makeT(fr, "fr");
@@ -218,8 +218,40 @@ describe("audit rows", () => {
     for (const c of auditChips(tEn)) if (c.kind !== "all") expect(kinds.has(c.kind)).toBe(true);
     expect(auditChips(tEn).map((c) => c.label)).toEqual(["All", "Logins", "Admin", "Quota", "Security"]);
     expect(auditChips(tFr).map((c) => c.label)).toEqual(["Tout", "Connexions", "Admin", "Quota", "Sécurité"]);
-    expect(auditShowing(tEn, 10, 1280)).toBe("showing 10 of 1 280 · newest first");
-    expect(auditShowing(tFr, 10, 1280)).toBe("10 affichées sur 1 280 · plus récentes d'abord");
+    expect(auditFooter(tEn, 1, 20, 1280, "")).toBe("1–20 of 1 280 · newest first");
+    expect(auditFooter(tFr, 3, 20, 45, " morwyn ")).toBe("41–45 sur 45 pour « morwyn » · plus récentes d'abord");
+  });
+});
+
+describe("paged lists", () => {
+  test("pageList: first, last, the current page and its neighbours, three at an end, a gap for two pages or more", () => {
+    expect(pageList(1, 1)).toEqual([1]);
+    expect(pageList(1, 3)).toEqual([1, 2, 3]);
+    expect(pageList(1, 7)).toEqual([1, 2, 3, "gap", 7]);
+    expect(pageList(4, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(pageList(5, 12)).toEqual([1, "gap", 4, 5, 6, "gap", 12]);
+    expect(pageList(12, 12)).toEqual([1, "gap", 10, 11, 12]);
+    expect(pageList(3, 7)).toEqual([1, 2, 3, 4, "gap", 7]);
+  });
+  test("rangeText: from–to of total, the search named while one is typed, nothing left", () => {
+    expect(rangeText(tEn, 2, 20, 134, "")).toBe("21–40 of 134");
+    expect(rangeText(tEn, 7, 20, 134, "")).toBe("121–134 of 134");
+    expect(rangeText(tEn, 1, 20, 0, "zz")).toBe("0–0 of 0 for “zz”");
+    expect(rangeText(tFr, 1, 20, 3, "mor")).toBe("1–3 sur 3 pour « mor »");
+  });
+  test("membersView: the most recent visit first, searched by name, username or Discord id without case or accents, paged", () => {
+    const at = (id: number, username: string, globalName: string | null, ago: number, discordId = String(id * 111)): AdminUser =>
+      ({ ...users[1]!, id, username, globalName, lastSeenAt: NOW - ago, discordId });
+    const list = [at(1, "tom", null, 5 * H), at(2, "elwyn", "Élwyn", H), at(3, "kessa", null, 3 * H), at(4, "brannoc", null, 10 * H), at(5, "mor", "Morwyn", 0)];
+    expect(membersView(tEn, list, "", 1).rows.map((u) => u.id)).toEqual([5, 2, 3, 1, 4]);
+    expect(membersView(tEn, list, "ELW", 1).rows.map((u) => u.id)).toEqual([2]);
+    expect(membersView(tEn, list, "morw", 1).rows.map((u) => u.id)).toEqual([5]);
+    expect(membersView(tEn, list, "333", 1).rows.map((u) => u.id)).toEqual([3]);
+    const paged = membersView(tEn, list, "", 2, 2);
+    expect([paged.rows.map((u) => u.id), paged.page, paged.pages, paged.total, paged.range]).toEqual([[3, 1], 2, 3, 5, "3–4 of 5"]);
+    // A search that leaves fewer pages brings the page back into range.
+    expect(membersView(tEn, list, "o", 3, 2)).toMatchObject({ page: 2, pages: 2, total: 3, range: "3–3 of 3 for “o”" });
+    expect(membersView(tFr, list, "zz", 1)).toMatchObject({ rows: [], total: 0, page: 1, pages: 1, range: "0–0 sur 0 pour « zz »" });
   });
 });
 

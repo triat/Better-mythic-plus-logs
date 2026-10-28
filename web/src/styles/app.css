@@ -316,6 +316,25 @@ a.spell:hover { color: var(--link); border-bottom-color: var(--link); }
 
 /* --- hosted: admin audit log (Audit.tsx, issue #9; canvas A) --- */
 .admin-row-audit { grid-template-columns: 156px 130px 150px 220px 1fr; }
+/* Paged lists (canvas "bmpl · Admin listes", A): the search fields, the tools row, the numbered pages, the fold. */
+.admin-search { display: flex; align-items: center; gap: 8px; height: 32px; width: 280px; max-width: 100%; min-width: 0; padding: 0 10px; border: 1px solid var(--border-2); border-radius: var(--radius); background: var(--inset); color: var(--faint); font-size: 13px; }
+.admin-search:focus-within { border-color: var(--link); }
+.admin-search input { flex: 1; min-width: 0; height: 30px; padding: 0; border: 0; background: transparent; color: var(--text); }
+.admin-search input:focus { border: 0; }
+.admin-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 4px 0; font-size: 12px; }
+.admin-row-head .sorted { color: var(--text); }
+.pager-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 6px; font-size: 12px; }
+.pager { display: flex; align-items: center; gap: 6px; }
+.pager-btn { min-width: 28px; height: 28px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; }
+.pager-btn:hover:not(:disabled) { color: var(--text); border-color: var(--border-2); }
+.pager-btn.on { color: var(--text); font-weight: 600; border-color: var(--muted); background: var(--card-2); }
+.pager-btn:disabled { color: var(--dim); cursor: default; }
+.pager-prev svg { transform: rotate(90deg); }
+.pager-next svg { transform: rotate(-90deg); }
+.pager-gap { color: var(--faint); padding: 0 2px; }
+.admin-fold { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; border: 0; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; }
+.admin-fold:hover { color: var(--text); }
+.admin-fold[aria-expanded="false"] svg { transform: rotate(-90deg); }
 .admin-row-audit > span:last-child { white-space: normal; }
 .dot-login { background: var(--green); }
 .dot-admin { background: var(--link); }

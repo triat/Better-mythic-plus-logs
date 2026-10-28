@@ -281,7 +281,61 @@ export function auditRow(t: T, r: AuditRow, now = Date.now()): AuditRowModel {
   };
 }
 
-export const auditShowing = (t: T, shown: number, total: number): string => t("admin.audit.showing", { shown, total: fmtPts(total) });
+// --- Paged lists (canvas "bmpl · Admin listes", variant A, chosen 2026-10-28) ---
+
+/** The audit's rows per page, as offered (10 / 20 / 50), and the one a visit starts with. */
+export const AUDIT_PAGE_SIZES = [10, 20, 50] as const;
+export type AuditPageSize = (typeof AUDIT_PAGE_SIZES)[number];
+export const AUDIT_DEFAULT_SIZE: AuditPageSize = 20;
+/** Members per page. */
+export const MEMBERS_PER_PAGE = 20;
+
+/**
+ * The numbered pages to show around `page` (1-based): the first and the last, the current one and its neighbours, the
+ * first or last three near an end; a gap stands for two pages or more, a single hidden page shows instead.
+ */
+export function pageList(page: number, pages: number): (number | "gap")[] {
+  const keep = new Set([1, pages, page - 1, page, page + 1, ...(page <= 2 ? [3] : []), ...(page >= pages - 1 ? [pages - 2] : [])]);
+  const out: (number | "gap")[] = [];
+  let last = 0;
+  for (const n of [...keep].filter((x) => x >= 1 && x <= pages).sort((a, b) => a - b)) {
+    if (n - last === 2) out.push(n - 1);
+    else if (last > 0 && n - last > 2) out.push("gap");
+    out.push(n);
+    last = n;
+  }
+  return out;
+}
+
+/** "1–20 of 134", or "1–3 of 3 for “mor”" while a search is typed; "0 of 0" when nothing is left. */
+export function rangeText(t: T, page: number, perPage: number, total: number, query: string): string {
+  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const to = Math.min(page * perPage, total);
+  const params = { from: fmtPts(from), to: fmtPts(to), total: fmtPts(total) };
+  return query ? t("admin.pager.rangeFor", { ...params, q: query }) : t("admin.pager.range", params);
+}
+
+/** Lower case without accents: "Élwyn" finds "elwyn". */
+const fold = (s: string): string => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+export interface MembersView { rows: AdminUser[]; total: number; page: number; pages: number; range: string }
+/**
+ * The members on `page`: the most recent visit first, only those whose display name, username or Discord id contains
+ * `query` (case and accents aside); `page` is brought back into range, so a search that shrinks the list never shows
+ * an empty page.
+ */
+export function membersView(t: T, users: readonly AdminUser[], query: string, page: number, perPage = MEMBERS_PER_PAGE): MembersView {
+  const q = fold(query.trim());
+  const sorted = [...users].sort((a, b) => b.lastSeenAt - a.lastSeenAt || a.id - b.id);
+  const hits = q ? sorted.filter((u) => [u.globalName ?? "", u.username, u.discordId].some((s) => fold(s).includes(q))) : sorted;
+  const pages = Math.max(1, Math.ceil(hits.length / perPage));
+  const p = Math.min(Math.max(1, page), pages);
+  return { rows: hits.slice((p - 1) * perPage, p * perPage), total: hits.length, page: p, pages, range: rangeText(t, p, perPage, hits.length, query.trim()) };
+}
+
+/** The audit's footer: the range on screen, newest first. */
+export const auditFooter = (t: T, page: number, perPage: number, total: number, query: string): string =>
+  `${rangeText(t, page, perPage, total, query.trim())} · ${t("admin.audit.newest")}`;
 
 // --- Feature usage (spec 2026-10-09-feature-usage-dashboard-design.md; canvas "usage", A table + B cards) ---
 

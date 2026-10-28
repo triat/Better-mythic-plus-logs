@@ -25,7 +25,7 @@ proxy must set that header (Caddy does; the shipped `deploy/Caddyfile` sets no
 [Deploying on a VPS](../deploy/README.md#deploying-on-a-vps)),
 every JSON body is validated against an explicit shape (unknown fields are
 refused), server errors never carry messages or paths, and the audit log
-(`GET /api/admin/audit?kind=&before=&limit=`, the admin page's Audit section) keeps
+(`GET /api/admin/audit?kind=&offset=&limit=&q=`, the admin page's Audit section) keeps
 90 days of logins, admin actions, quota refusals, security rejections and
 WCL/server errors (`kind=error`; `kind=all` and the admin page leave the errors
 out, they are read in Grafana's Errors dashboard or `GET /api/ops/errors`).
@@ -58,7 +58,8 @@ only*, *Account banned* and *Too many new accounts* explain the other three
 (`?denied=<discordId>|guild|banned|rate`). Sessions last 30 days (sliding) in
 an `HttpOnly` cookie; **Sign out** ends one. Removing an id from
 `BMPL_ADMIN_DISCORD_IDS` does not demote an existing admin — change the role
-on the admin page (Users → make admin / make member) or via
+on the admin page (Users, most recent visit first, 20 per page, searchable by
+name, username or Discord id → make admin / make member) or via
 `POST /api/admin/users/:id/role`; **Revoke sessions** signs a user out
 everywhere (`POST /api/admin/users/:id/sessions/revoke`); **Ban** (`POST
 /api/admin/users/:id/ban`) does the same and blocks every future sign-in
@@ -236,7 +237,9 @@ and 30 days, lookups per active member, the count of unused features, then
 either a table (share of active members, members, uses, last use, a daily
 sparkline; click a row for its top 5 members) or one card per category. The
 period is 7, 30 or 90 days; admins are left out unless "Include admins" is on;
-the Table / Categories choice is remembered per browser.
+the Table / Categories choice is remembered per browser. The figures are always
+shown; the table or the cards stay folded under "Show the details" until
+opened, on every visit.
 
 Counts live in `usage_events` (one row per event, UTC day and member, kept 90
 days, deleted with the account). The catalogue is closed
@@ -383,7 +386,7 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/invites` | admin | List invites |
 | POST | `/api/admin/invites` | admin | Add an invite (Discord id + optional note) |
 | DELETE | `/api/admin/invites/:discordId` | admin | Remove an invite (also revokes that user's sessions) |
-| GET | `/api/admin/audit` | admin | Paged audit log (`kind`, `before`, `limit`) |
+| GET | `/api/admin/audit` | admin | Paged audit log (`kind`, `offset` or `before`, `limit`, `q` = member or target) |
 | GET | `/api/admin/features` | admin | Feature usage: active members, every catalogue event with members, uses, last use, a daily series and the top 5 members (`days` 7/30/90, `admins` 0/1) |
 | GET | `/api/admin/usage` | admin | WCL budget gauge: this hour per member, the shared client's last `rateLimitData`, last 24 hourly totals |
 | GET | `/api/admin/proposals` | admin | Pending/approved/rejected defensives proposals (`status`) |

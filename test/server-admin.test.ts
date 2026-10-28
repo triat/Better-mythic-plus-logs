@@ -257,6 +257,27 @@ describe("audit log", () => {
     for (const row of r.rows) expect(row.userId).toBe(admin.user.id);
     member = loginAs(db, TEST_HOSTED_CONFIG.sessionSecret, { discordId: "123456789012345678", role: "member", username: "tom" });
   });
+  test("search and numbered pages: q matches the member or the target, offset skips rows, counts and total follow q", async () => {
+    await fetch(u("/api/admin/invites"), json("POST", { discordId: "735353535353535353", note: "100%_sure" }, admin.cookie));
+    const all = await (await fetch(u("/api/admin/audit?limit=200"), { headers: { cookie: admin.cookie } })).json();
+    expect(all.total).toBe(all.counts.all);
+    // By the member's name ("boss" did every admin action here), any case.
+    const byWho = await (await fetch(u("/api/admin/audit?kind=admin&q=BOS&limit=200"), { headers: { cookie: admin.cookie } })).json();
+    expect(byWho.rows.length).toBeGreaterThan(0);
+    for (const row of byWho.rows) expect(row.username).toBe("boss");
+    expect(byWho.total).toBe(byWho.rows.length);
+    // By the target; a % or _ in the search is a plain character, not a wildcard.
+    const byTarget = await (await fetch(u("/api/admin/audit?q=5353535"), { headers: { cookie: admin.cookie } })).json();
+    expect(byTarget.rows.map((x: { action: string; target: string }) => [x.action, x.target])).toEqual([["invite_add", "735353535353535353"]]);
+    expect(byTarget.counts.admin).toBe(1);
+    expect((await (await fetch(u("/api/admin/audit?q=%25"), { headers: { cookie: admin.cookie } })).json()).total).toBe(0);
+    expect((await (await fetch(u("/api/admin/audit?q=nobody-here"), { headers: { cookie: admin.cookie } })).json()).rows).toEqual([]);
+    // Page 2 of 1-row pages is the second newest row.
+    const page2 = await (await fetch(u("/api/admin/audit?limit=1&offset=1"), { headers: { cookie: admin.cookie } })).json();
+    expect(page2.rows[0].id).toBe(all.rows[1].id);
+    expect((await fetch(u("/api/admin/audit?offset=-1"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+    expect((await fetch(u("/api/admin/audit?offset=1&before=5"), { headers: { cookie: admin.cookie } })).status).toBe(400);
+  });
   test("pagination: before + limit walk the log", async () => {
     const first = await (await fetch(u("/api/admin/audit?limit=1"), { headers: { cookie: admin.cookie } })).json();
     expect(first.rows).toHaveLength(1);

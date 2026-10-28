@@ -4,6 +4,7 @@ import type { UsageCategory, UsagePeriod, UsageReport } from "../../types.ts";
 import { usageCards, usageChips, usageIsEmpty, usageKpis, usageTable } from "../../lib/admin.ts";
 import type { UsageRowModel, UsageView } from "../../lib/admin.ts";
 import { useT } from "../../locale.tsx";
+import { Icon } from "../Icon.tsx";
 
 const PERIODS: readonly UsagePeriod[] = [7, 30, 90];
 const VIEWS: readonly UsageView[] = ["table", "categories"];
@@ -12,8 +13,9 @@ const VIEW_KEY = "bmpl.adminUsageView";
 const readView = (): UsageView => { try { return localStorage.getItem(VIEW_KEY) === "categories" ? "categories" : "table"; } catch { return "table"; } };
 const writeView = (v: UsageView): void => { try { localStorage.setItem(VIEW_KEY, v); } catch { /* private window */ } };
 
-/** Feature usage (canvas "usage", A + B): one header with the period, the admin filter and a Table / Categories switch.
- * Owns its data like `Audit` (GET /api/admin/features, 0 WCL pts). */
+/** Feature usage (canvas "usage", A + B): one header with the period and the admin filter, the key figures, then the
+ * details behind a fold, closed on every visit (canvas "bmpl · Admin listes", A): the Table / Categories switch and
+ * the table or the cards. Owns its data like `Audit` (GET /api/admin/features, 0 WCL pts). */
 export function Usage() {
   const { t } = useT();
   const [days, setDays] = useState<UsagePeriod>(30);
@@ -21,6 +23,7 @@ export function Usage() {
   const [view, setView] = useState<UsageView>(readView);
   const [category, setCategory] = useState<UsageCategory | "all">("all");
   const [open, setOpen] = useState<string | null>(null);
+  const [detail, setDetail] = useState(false);
   const [report, setReport] = useState<UsageReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -47,11 +50,6 @@ export function Usage() {
             <button key={p} type="button" className={"seg-item" + (p === days ? " on" : "")} aria-pressed={p === days} onClick={() => setDays(p)}>{t("admin.usage.period", { n: p })}</button>
           ))}
         </span>
-        <span className="seg">
-          {VIEWS.map((v) => (
-            <button key={v} type="button" className={"seg-item" + (v === view ? " on" : "")} aria-pressed={v === view} onClick={() => pickView(v)}>{t(`admin.usage.view.${v}`)}</button>
-          ))}
-        </span>
         <label className={"sw" + (admins ? " on" : "")}>
           <input type="checkbox" checked={admins} onChange={(e) => setAdmins(e.target.checked)} />
           <span className="sw-track"><span className="sw-knob" /></span>
@@ -70,14 +68,29 @@ export function Usage() {
         </div>
       )}
       {error && <div className="faint" style={{ fontSize: 12 }}>{error}</div>}
+      {report && !usageIsEmpty(report) && (
+        <button type="button" className="admin-fold" aria-expanded={detail} onClick={() => setDetail((d) => !d)}>
+          <Icon name="chevron" size={12} />
+          {detail ? t("admin.usage.detailHide") : t("admin.usage.detailShow", { n: report.features.length })}
+        </button>
+      )}
+      {detail && (
+        <div className="admin-tools">
+          <span className="seg">
+            {VIEWS.map((v) => (
+              <button key={v} type="button" className={"seg-item" + (v === view ? " on" : "")} aria-pressed={v === view} onClick={() => pickView(v)}>{t(`admin.usage.view.${v}`)}</button>
+            ))}
+          </span>
+        </div>
+      )}
     </>
   );
 
-  if (!report || usageIsEmpty(report)) {
+  if (!report || usageIsEmpty(report) || !detail) {
     return (
       <section id="usage" className="card admin-section usage">
         {head}
-        {report && <div className="inset usage-empty muted">{t("admin.usage.empty", { days })}</div>}
+        {report && usageIsEmpty(report) && <div className="inset usage-empty muted">{t("admin.usage.empty", { days })}</div>}
       </section>
     );
   }

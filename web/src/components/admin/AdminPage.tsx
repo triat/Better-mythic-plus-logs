@@ -57,6 +57,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <a href="#invites">{t("admin.page.nav.invites")}</a>
         <a href="#instance">{t("admin.page.nav.instance")}</a>
         <a href="#audit">{t("admin.page.nav.audit")}</a>
+        <a href="/admin/characters" style={{ marginLeft: "auto" }}>{t("admin.page.nav.characters")}</a>
       </nav>
       <div className="content">
         <Gauge usage={data.usage} users={data.users} />

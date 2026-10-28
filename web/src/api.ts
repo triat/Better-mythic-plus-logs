@@ -1,6 +1,7 @@
 import type { AnalyticsConfig } from "./lib/analytics.ts";
 import type {
   AdminAudit,
+  AdminCharacter,
   BnetCandidate,
   AdminInstance,
   AdminInvite,
@@ -152,6 +153,7 @@ export const api = {
     audit: (o: { kind: AuditKind | "all"; before?: number | null; offset?: number; limit?: number; q?: string }) =>
       call<AdminAudit>(`/api/admin/audit?kind=${o.kind}${o.before ? `&before=${o.before}` : ""}${o.offset ? `&offset=${o.offset}` : ""}`
         + `&limit=${o.limit ?? 50}${o.q ? `&q=${encodeURIComponent(o.q)}` : ""}`),
+    characters: () => call<{ characters: AdminCharacter[]; thresholds: { invite: number; maybe: number } }>("/api/admin/characters"),
   },
   /** The member's own Warcraft Logs client and account (issue #11): the secret is write-only, the id comes back abbreviated. */
   account: {

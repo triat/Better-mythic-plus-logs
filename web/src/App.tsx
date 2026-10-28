@@ -37,6 +37,7 @@ import { pagePath } from "./lib/analytics.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
+import { SearchedPage } from "./components/admin/SearchedPage.tsx";
 import { Forbidden } from "./components/admin/Forbidden.tsx";
 import { HelpPage } from "./components/help/HelpPage.tsx";
 import { ComparePage } from "./components/compare/ComparePage.tsx";
@@ -68,7 +69,7 @@ const BOOT_SEARCH = location.search;
 const bnetCode = bnetCodeOf(location.search);
 const PAGE_EVENT = {
   home: "page_home", candidate: "page_candidate", compare: "page_compare", live: "page_live",
-  admin: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me",
+  admin: "page_admin", characters: "page_admin", settings: "page_settings", privacy: "page_privacy", help: "page_help", me: "page_me",
 } as const;
 // The pages that switch profiles in place (Récents, the palette, a lookup): the candidate page, and Live, whose screen
 // capture a navigation would end. Every other page navigates to the candidate page instead.
@@ -739,6 +740,9 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
         )}
         {page === "admin" && (
           access === "ok" && me ? <AdminPage me={me} /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
+        )}
+        {page === "characters" && (
+          access === "ok" && me ? <SearchedPage /> : <Forbidden reason={access === "local" ? "local" : "member"} handle={me ? `@${me.username}` : null} />
         )}
         {page === "settings" && (
           account === "ok" && me

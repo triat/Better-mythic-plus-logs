@@ -3,6 +3,7 @@
 import { DISCORD_ID } from "../hosted/config.ts";
 import { KEY_MAX, KEY_MIN, SEMVER } from "../hosted/settings-limits.ts"; // moved out of routes-user.ts (which now imports them from here too) — no validate ↔ routes cycle
 import { REGIONS } from "../wow/regions.ts";
+import { FEEDBACK_KINDS, FEEDBACK_MESSAGE_MAX, VERDICT_RATINGS, VERDICT_REASONS } from "../hosted/feedback.ts";
 import { LOCALES } from "../hosted/locale.ts";
 import { LIVE_ROLES, LIVE_SORTS } from "../hosted/live.ts";
 import { MAX_CHARACTERS } from "../self/characters.ts";
@@ -153,3 +154,15 @@ export const CLIENT_ERROR_BODY = obj({
   version: opt(nullable(str({ max: 32, pattern: SEMVER }))),
 });
 export const LIVE_CACHED_BODY = obj({ level: nullable(int({ min: KEY_MIN, max: KEY_MAX })), players: arr(LIVE_PLAYER, { min: 1, max: 40 }) });
+
+// Members' feedback (canvas "bmpl · Retours", src/hosted/feedback.ts).
+export const FEEDBACK_BODY = obj({
+  kind: oneOf(FEEDBACK_KINDS), message: str({ min: 1, max: FEEDBACK_MESSAGE_MAX, trim: true }), replyOk: bool(),
+  page: opt(nullable(str({ max: 32, pattern: /^[a-z]+$/ }))),
+});
+const REALM_SLUG = /^[\p{Ll}\d'-]{1,64}$/u;
+export const VERDICT_FEEDBACK_BODY = obj({
+  region: oneOf(REGIONS), realm: str({ min: 1, max: 64, pattern: REALM_SLUG }), name: str({ min: 1, max: 32, trim: true }), level: int({ min: 2, max: 50 }),
+  rating: oneOf(VERDICT_RATINGS), reason: opt(nullable(oneOf(VERDICT_REASONS))), message: opt(nullable(str({ max: FEEDBACK_MESSAGE_MAX, trim: true }))),
+  label: str({ min: 1, max: 80, trim: true }), verdict: opt(nullable(oneOf(["invite", "maybe", "pass"] as const))), score: opt(nullable(int({ min: 0, max: 100 }))),
+});

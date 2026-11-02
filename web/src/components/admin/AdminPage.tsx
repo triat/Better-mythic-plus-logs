@@ -1,3 +1,4 @@
+import { Feedback } from "./Feedback.tsx";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../api.ts";
 import type { MeUser } from "../../api.ts";
@@ -21,6 +22,7 @@ export function AdminPage({ me }: { me: MeUser }) {
   const [data, setData] = useState<AdminData>(EMPTY);
   const [toast, setToast] = useState<string | null>(null);
   const [auditKind, setAuditKind] = useState<AuditKind | "all">("all");
+  const [feedbackUnread, setFeedbackUnread] = useState(0);
   const closeToast = useCallback(() => setToast(null), []);
   const reload = useCallback(async () => {
     const [usage, users, invites, pending, approved, rejected, instance] = await Promise.all([
@@ -57,6 +59,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <a href="#invites">{t("admin.page.nav.invites")}</a>
         <a href="#instance">{t("admin.page.nav.instance")}</a>
         <a href="#audit">{t("admin.page.nav.audit")}</a>
+        <a href="#feedback">{t("admin.page.nav.feedback")}{feedbackUnread > 0 && <span className="chip chip-warn" style={{ marginLeft: 4 }}>{feedbackUnread}</span>}</a>
         <a href="/admin/characters" style={{ marginLeft: "auto" }}>{t("admin.page.nav.characters")}</a>
       </nav>
       <div className="content">
@@ -71,6 +74,7 @@ export function AdminPage({ me }: { me: MeUser }) {
         <Invites invites={data.invites} users={data.users} onAdd={(id, note) => act(api.admin.addInvite(id, note))} onRemove={(id) => act(api.admin.removeInvite(id))} />
         <Instance instance={data.instance} usage={data.usage} />
         <Audit kind={auditKind} onKind={setAuditKind} />
+        <Feedback onUnread={setFeedbackUnread} />
       </div>
       <Toast message={toast} onClose={closeToast} />
     </>

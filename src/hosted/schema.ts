@@ -141,6 +141,23 @@ CREATE TABLE IF NOT EXISTS user_bnet (
   linked_at  INTEGER NOT NULL,
   removed    TEXT
 );
+-- Members' feedback (canvas "bmpl · Retours"): kind verdict (target = "region|realm|name|level", one per member and
+-- target), or a general message (idea, problem, other). Deleted with the member.
+CREATE TABLE IF NOT EXISTS feedback (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  at       INTEGER NOT NULL,
+  kind     TEXT    NOT NULL,
+  target   TEXT,
+  rating   TEXT,
+  reason   TEXT,
+  message  TEXT,
+  reply_ok INTEGER NOT NULL DEFAULT 0,
+  context  TEXT,
+  read_at  INTEGER
+);
+CREATE UNIQUE INDEX IF NOT EXISTS feedback_target ON feedback(user_id, target) WHERE target IS NOT NULL;
+CREATE INDEX IF NOT EXISTS feedback_at ON feedback(at);
 CREATE TABLE IF NOT EXISTS bnet_imports (
   user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   candidates TEXT    NOT NULL,

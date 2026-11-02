@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-02T10:20:00Z" },
+  "title": "bmpl · Retours",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 760, "title": "2 · Le pied de la barre latérale : A, B, C" },
+    "Verdict.dc.html": { "x": 1360, "y": 0, "w": 1280, "h": 760, "title": "1 · Un avis sur le verdict, discret" },
+    "Form.dc.html": { "x": 0, "y": 880, "w": 1280, "h": 760, "title": "2 + 3 · Le formulaire et l'invitation unique" }
+  },
+  "order": ["Main.dc.html", "Verdict.dc.html", "Form.dc.html"],
+  "notes": {
+    "t": { "x": 0, "y": -260, "text": "Retours : sur le verdict, depuis la barre latérale, et une invitation qui ne revient pas", "kind": "title1", "maxW": 2640 }
+  },
+  "designSystems": []
+}

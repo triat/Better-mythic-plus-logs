@@ -133,6 +133,14 @@ export function adminRoutes(rt: HostedRuntime): Route[] {
         hours: rt.db.usage.totals(at - 24 * HOUR_MS),
       });
     }, "admin"),
+    // Members' feedback (canvas "bmpl · Retours"): newest first; the Discord name only when the member agreed.
+    route("GET", "/api/admin/feedback", () => jsonResponse({ ok: true, rows: rt.db.feedback.list(200), unread: rt.db.feedback.unread() }), "admin"),
+    prefixRoute("POST", "/api/admin/feedback/", (_req, url, ctx) => {
+      const m = /^(\d+)\/read$/.exec(tail(url, "/api/admin/feedback/"));
+      if (!m) return jsonResponse({ ok: false, error: "Expected /api/admin/feedback/:id/read" }, 400);
+      rt.db.feedback.markRead(Number.parseInt(m[1]!, 10), ctx.now);
+      return jsonResponse({ ok: true, unread: rt.db.feedback.unread() });
+    }, "admin"),
     // Searched characters (canvas "bmpl · Personnages recherchés"): every character looked up, from data already held.
     route("GET", "/api/admin/characters", async () => {
       const v = (await getEvalConfig()).verdict;

@@ -1,3 +1,5 @@
+import { track } from "../../usage.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import { useMemo, useState } from "react";
 import type { SeasonView } from "../../types.ts";
 import { ownerDungeons } from "../../lib/ownerDungeons.ts";
@@ -39,7 +41,7 @@ export function OwnerDungeons({ season, onRuns }: { season: SeasonView; onRuns: 
           {v.rows.map((r) => (
             <button
               key={r.encounterID} type="button" className={"odg-row odg-btn" + (r.selected ? " on" : "")} aria-pressed={r.selected}
-              onClick={() => setSelected(r.encounterID)}
+              onClick={() => { if (selected !== r.encounterID) { track("dungeon_open"); analyticsEvent("dungeon_open"); } setSelected(r.encounterID); }}
             >
               <span className="odg-name">
                 <span className="rl-abbr odg-abbr" aria-hidden="true">{r.abbr}</span>

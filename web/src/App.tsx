@@ -33,7 +33,8 @@ import { useSse } from "./useSse.ts";
 import { startUsageTracking, track } from "./usage.ts";
 import { startErrorReporting } from "./clientErrors.ts";
 import { analyticsEvent, startAnalytics } from "./analytics.ts";
-import { pagePath } from "./lib/analytics.ts";
+import { FeedbackProvider, useFeedback } from "./feedback.tsx";
+import { pagePath, utmQuery } from "./lib/analytics.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
@@ -98,7 +99,7 @@ export function App() {
       track(PAGE_EVENT[page]);
       const kind = bootScreen(status, me, location.pathname);
       // Umami (hosted, configured): one page view per page load, the page's kind only.
-      if (status.hosted) startAnalytics(status.analytics, pagePath(page, me?.kind !== "ok"));
+      if (status.hosted) startAnalytics(status.analytics, pagePath(page, me?.kind !== "ok") + utmQuery(BOOT_SEARCH));
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
         setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings, quota: me?.kind === "ok" ? me.quota : null, ownClient: me?.kind === "ok" ? me.ownClient : null });
@@ -126,7 +127,9 @@ export function App() {
     <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
       <SettingsLocale>
         <DocsProvider>
-          <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+          <FeedbackProvider enabled={screen.status.hosted && screen.me !== null} operator={screen.status.operator} page={page}>
+            <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+          </FeedbackProvider>
         </DocsProvider>
       </SettingsLocale>
     </SettingsProvider>
@@ -160,6 +163,7 @@ const formToRequest = (f: LookupForm, level: number | null, region: Region): Loo
 
 function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; initialOwnClient: OwnClientView | null; onSetup: () => void }) {
   const { t } = useT();
+  const feedback = useFeedback();
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
@@ -180,7 +184,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
   const { settings, update: updateSettings, adopt: adoptSettings } = useSettings();
   const yourKey = settings.yourKey;
-  const onKeyChange = (v: number | null) => { track("key_level_change"); updateSettings({ yourKey: v }); };
+  const onKeyChange = (v: number | null) => { track("key_level_change"); analyticsEvent("key_level"); updateSettings({ yourKey: v }); };
   // The region: the saved choice, else the instance default. Not part of the form — it is a setting like "your key".
   const region = effectiveRegion(settings.region, status.region);
   const regionRef = useRef(region);
@@ -226,6 +230,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (cached) return { payload: cached };
     const r = await api.historyEntry(key);
     if (!r.ok) return { error: r.error };
+    analyticsEvent("history_open");
     payloads.current.set(key, r.result);
     // The server re-evaluated the entry with today's rules: Récents shows the same verdict and score as the page.
     setTabs((items) => withPayloadSummary(items, key, r.result));
@@ -347,6 +352,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     // A refusal that carries the member's own quota numbers gets the way out: the guided sheet when the instance stores
     // own clients (canvas "bmpl · Clé WCL guidée" A), else the toast with the guide link.
     if (!r.ok) {
+      analyticsEvent("lookup_failed", { reason: r.quota ? "quota" : r.notFound ? "not_found" : "error" });
       if (r.quota) setQuota(r.quota);
       if (r.quota && showsWclGuide({ hosted: status.hosted, wclClients: status.wclClients, ownClient, quota: r.quota })) {
         setGuide({ quota: r.quota, req, refresh });
@@ -361,6 +367,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
     analyticsEvent("lookup", { source: r.fromCache ? "cached" : "fetched" });
+    feedback.lookedUp();
     // The URL names the new profile before it mounts: its run / sheet are read from the URL at mount (candInitial).
     if (page === "candidate") history.replaceState({}, "", candSwitchHref(r.key, location.search, sameCharacter));
     setActiveKey(r.key);
@@ -370,7 +377,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     touch();
     await loadHistory();
     return r.key;
-  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters, status.hosted, status.wclClients, ownClient]);
+  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters, status.hosted, status.wclClients, ownClient, feedback]);
 
   /** Shows a history profile: in place on the candidate page (the URL follows) and on Live, else on the candidate page. */
   const openProfile = useCallback((key: string) => {

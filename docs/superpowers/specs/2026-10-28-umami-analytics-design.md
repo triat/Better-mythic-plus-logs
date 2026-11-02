@@ -68,7 +68,10 @@ devices and the funnel from the landing to the first lookup.
     `data-exclude-hash="true"`, `data-do-not-track="true"` and `data-domains` set to bmpl's host. Page views are sent
     by hand once per page load with the page's kind as URL (`/`, `/candidate`, `/compare`, `/live`, `/me`, `/help`,
     `/settings`, `/privacy`, `/admin`, the signed-out home, the landing, as `/landing`): never a query (`?open=`, `?q=`, `?pick=` hold character
-    names), never a character, never a Discord id. Event properties are from a closed list (below), checked by a
+    names), never a character, never a Discord id. One exception since 2026-11-02: the page view carries the link's
+    campaign tags, `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` only, each value at most 64
+    characters of `A-Z a-z 0-9 . _ ~ -` (`utmQuery` in `web/src/lib/analytics.ts`), so a link the operator shares as
+    `/?utm_source=discord&utm_campaign=<server>` shows in Umami's UTM view. Event properties are from a closed list (below), checked by a
     test. Umami itself sets no cookie and keeps no IP address (it derives a session from a salted hash that rotates).
 11. **Events: eight, fired by the front after the action succeeds.** One `analytics.event(name, props?)` call per
     place, a no-op when Umami is not loaded:
@@ -83,6 +86,22 @@ devices and the funnel from the landing to the first lookup.
     | `live_connect` | the Live capture connected | none |
     | `wcl_client_set` | a member saved their own WCL client | none |
     | `bnet_link` | the Battle.net round trip came back linked | none |
+
+    Added 2026-11-02, so Umami's Journeys, Funnels and Sessions show a member's steps after a lookup (the list and
+    each property's allowed values live in `ANALYTICS_EVENTS`, `web/src/lib/analytics.ts`, pinned by its test):
+
+    | Event | When | Properties |
+    |---|---|---|
+    | `lookup_failed` | a lookup refused or failed | `reason`: `quota` \| `not_found` \| `error` |
+    | `tab` | a profile tab picked | `view`: `candidate` \| `owner`; `tab`: `synthesis` \| `runs` \| `dungeons` \| `method` \| `form` |
+    | `run_pick` | a run picked (Runs tab, sheet, owner runs) | none |
+    | `run_sheet` | "Open full view" | none |
+    | `timeline_layer` | a timeline layer ticked or unticked | `layer`: `deaths` \| `dispo` \| `cd` \| `casts` \| `control` |
+    | `dungeon_open` | a dungeon's detail opened | none |
+    | `history_open` | a history entry loaded (Récents, palette) | none |
+    | `key_level` | the key level changed | none |
+    | `support_click` | the Support link | `place`: `sidebar` \| `menu` |
+    | `contact_click` | the Contact link | `place`: `sidebar` \| `menu` \| `privacy` |
 
 12. **Privacy page and changelog.** `/privacy` gains one paragraph, shown only when analytics is configured (from the dictionaries): what Umami receives (page
     kind, referrer, browser, OS, device, country, screen size, language, the events above), that it sets no cookie,

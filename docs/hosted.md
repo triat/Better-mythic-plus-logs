@@ -245,10 +245,13 @@ Counts live in `usage_events` (one row per event, UTC day and member, kept 90
 days, deleted with the account). The catalogue is closed
 (`src/hosted/usage-catalog.ts`): **API events** (`lookup`, `lookup_cached`,
 `lookup_refresh`, `deepdive`, `deepdive_reanalyze`, `defensives_correction`,
-`history_open`/`close`/`clear`, `live_roster`, `wcl_client_set`/`verify`/`remove`,
-`settings_save`) are counted by the server after a successful request;
-**interface events** (page views, `axis_expand`, `compare_open`, `help_link`,
-the Live panel's actions…) are counted in the page and sent in batches to
+`history_open`/`close`/`clear`, `live_roster`, `wcl_client_set`/`verify`/`remove`)
+are counted by the server after a successful request, and `lookup_refused`,
+`lookup_not_found`, `lookup_failed` after a lookup that gave no result (settings
+saves are not counted: most are automatic); **interface events** (page views,
+the profile tabs, `run_pick`, `run_sheet_open`, `timeline_layer`, `dungeon_open`,
+`compare_open`, `help_link`, `link_support`, `link_contact`, the Live panel's
+actions…) are counted in the page and sent in batches to
 `POST /api/usage/events` (at most 40 names, each count 1..50, 30 requests per
 minute per member; unknown names are dropped). Interface counts can be lost
 when a tab closes; API counts cannot. `history_open` includes the tab the page
@@ -387,6 +390,9 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/invites` | admin | List invites |
 | POST | `/api/admin/invites` | admin | Add an invite (Discord id + optional note) |
 | DELETE | `/api/admin/invites/:discordId` | admin | Remove an invite (also revokes that user's sessions) |
+| POST/GET | `/api/feedback` | user | A member's message; `sentGeneral` and their answer on a verdict (spec `docs/superpowers/specs/2026-11-02-feedback-design.md`) |
+| PUT | `/api/feedback/verdict` | user | "Does this verdict seem right?", one answer per character and key level |
+| GET | `/api/admin/feedback` | admin | The newest 200 feedback rows and the unread count; `POST /api/admin/feedback/:id/read` marks one |
 | GET | `/api/admin/characters` | admin | Every character looked up (`character_runs`, `rio_profile`, the newest `user_history` verdict, members as a count) and the verdict thresholds; 0 WCL pts, `/admin/characters` |
 | GET | `/api/admin/audit` | admin | Paged audit log (`kind`, `offset` or `before`, `limit`, `q` = member or target) |
 | GET | `/api/admin/features` | admin | Feature usage: active members, every catalogue event with members, uses, last use, a daily series and the top 5 members (`days` 7/30/90, `admins` 0/1) |

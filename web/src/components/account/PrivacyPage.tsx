@@ -1,3 +1,4 @@
+import { linkClicked } from "../../analytics.ts";
 import { useT } from "../../locale.tsx";
 import { Around } from "../Around.tsx";
 import { Logo } from "../Logo.tsx";
@@ -28,6 +29,7 @@ export function PrivacyPage({ operator, guildRequired, contactUrl, analytics = f
           <li><Around message={t("privacy.historyLine")} params={{ history: <b>{t("privacy.history")}</b> }} /></li>
           <li><Around message={t("privacy.bnetLine")} params={{ bnet: <b>{t("privacy.bnet")}</b> }} /></li>
           <li><Around message={t("privacy.clientLine")} params={{ client: <b>{t("privacy.client")}</b> }} /></li>
+          <li><Around message={t("privacy.feedbackLine")} params={{ feedback: <b>{t("privacy.feedbackStored")}</b> }} /></li>
           <li><Around message={t("privacy.featuresLine")} params={{ features: <b>{t("privacy.features")}</b> }} /></li>
           <li><Around message={t("privacy.sessionsLine")} params={{ sessions: <b>{t("privacy.sessions")}</b> }} /></li>
           <li><Around message={t("privacy.auditLine")} params={{ audit: <b>{t("privacy.audit")}</b> }} /></li>
@@ -41,7 +43,7 @@ export function PrivacyPage({ operator, guildRequired, contactUrl, analytics = f
         <p className="faint" style={{ fontSize: 12 }}>
           <Around message={t("privacy.questions")} params={{
             contact: contactUrl
-              ? <a href={contactUrl} target="_blank" rel="noopener noreferrer">{t("privacy.questionsContact")}</a>
+              ? <a href={contactUrl} target="_blank" rel="noopener noreferrer" onClick={() => linkClicked("contact", "privacy")}>{t("privacy.questionsContact")}</a>
               : t("privacy.questionsContact"),
           }} />
         </p>

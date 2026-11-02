@@ -20,6 +20,8 @@ import { openBnet, resetManualCharacters } from "./bnet-db.ts";
 import type { BnetRepo } from "./bnet-db.ts";
 import { AUDIT_KINDS, actionsOf } from "./audit.ts";
 import { openUsageEvents } from "./usage-events.ts";
+import { openFeedback } from "./feedback.ts";
+import type { FeedbackRepo } from "./feedback.ts";
 import type { UsageEventsRepo } from "./usage-events.ts";
 import type { AuditAction, AuditKind, AuditRow } from "./audit.ts";
 
@@ -116,6 +118,8 @@ export interface HostedDb {
   bnet: BnetRepo;
   /** Feature-usage counters per member and UTC day (`usage_events`), for the admin page's Usage section. */
   features: UsageEventsRepo;
+  /** Members' feedback on a verdict or on bmpl (canvas "bmpl · Retours"). */
+  feedback: FeedbackRepo;
   wclClients: {
     get(userId: number): WclClientRow | null;
     /** Upserts the row; a re-put resets `verifiedAt` to what is passed. */
@@ -328,6 +332,7 @@ export function openHosted(db: Database): HostedDb {
     defensives: openDefensives(db),
     bnet: openBnet(db),
     features: openUsageEvents(db),
+    feedback: openFeedback(db),
     wclClients: {
       get: (userId) => { const r = wclClientGet.get(userId); return r ? wclClient(r) : null; },
       put(row) {

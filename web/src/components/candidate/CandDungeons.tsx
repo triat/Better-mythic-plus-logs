@@ -1,3 +1,5 @@
+import { track } from "../../usage.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import { useMemo, useState } from "react";
 import type { LookupPayload, MPlusRun } from "../../types.ts";
 import { costText } from "../../lib/deepdive.ts";
@@ -48,7 +50,7 @@ export function CandDungeons({ payload, deepdive, onView }: CandDungeonsProps) {
         {view.rows.map((r) => (
           <Row
             key={r.key} r={r} run={payload.perDungeon.runs.find((x) => runKeyOf(x) === r.key) ?? null} cols={cols} open={open === r.key} deepdive={deepdive}
-            onToggle={() => setOpen((o) => (o === r.key ? null : r.key))} onView={() => onView(r.key)}
+            onToggle={() => setOpen((o) => { if (o !== r.key) { track("dungeon_open"); analyticsEvent("dungeon_open"); } return o === r.key ? null : r.key; })} onView={() => onView(r.key)}
           />
         ))}
       </section>

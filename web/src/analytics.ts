@@ -1,6 +1,7 @@
 // Loads Umami's tracker once per page load when the instance has one (hosted, `GET /api/status`'s `analytics`), sends
 // the page view and the events of `lib/analytics.ts`. Spec docs/superpowers/specs/2026-10-28-umami-analytics-design.md.
 // Never throws, never waits: a blocked or failed script only means nothing is counted.
+import { track } from "./usage.ts";
 import { type AnalyticsConfig, type AnalyticsEvent, type AnalyticsProps, eventProps, scriptAttributes } from "./lib/analytics.ts";
 
 interface Umami { track: (arg?: string | ((p: Record<string, unknown>) => Record<string, unknown>), data?: Record<string, string | number>) => void }
@@ -33,4 +34,11 @@ export function analyticsEvent(name: AnalyticsEvent, props?: AnalyticsProps): vo
   if (!started) return;
   const send = () => { try { umami()?.track(name, eventProps(name, props)); } catch { /* ignored */ } };
   if (umami()) send(); else if (pending.length < 20) pending.push(send);
+}
+
+/** A click on the operator's "Support" or "Contact" link: counted in the usage table and sent to Umami. */
+export function linkClicked(key: "support" | "contact", place: "sidebar" | "menu" | "privacy"): void {
+  track(key === "support" ? "link_support" : "link_contact");
+  if (key === "support") analyticsEvent("support_click", { place: place === "privacy" ? "menu" : place });
+  else analyticsEvent("contact_click", { place });
 }

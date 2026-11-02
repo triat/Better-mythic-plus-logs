@@ -1932,3 +1932,41 @@ button.lv-member:focus-visible { outline: 2px solid var(--link); outline-offset:
   .sc-two, .sc-cloud { grid-template-columns: minmax(0, 1fr); }
   .sc-plot { height: 320px; }
 }
+
+/* Feedback (canvas "bmpl · Retours"): the form in the What's new panel's frame, the verdict question, the invitation,
+   the admin rows. */
+.fb-panel { gap: 18px; }
+.fb-sent { margin: 0; color: var(--text-soft); }
+.fb-form { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.fb-kinds { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; border: 0; }
+.fb-kinds legend { width: 100%; margin-bottom: 8px; padding: 0; }
+.fb-chip { font-size: 13px; padding: 5px 12px; }
+.fb-field { display: flex; flex-direction: column; gap: 8px; }
+.fb-field textarea, .vf-field textarea { font: inherit; font-size: 14px; line-height: 1.45; resize: vertical; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border-2); background: var(--inset); color: var(--text); }
+.fb-field textarea:focus, .vf-field textarea:focus { outline: none; border-color: var(--link); }
+.fb-count { align-self: flex-end; font-size: 12px; }
+.fb-check { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-soft); }
+.fb-error { font-size: 13px; color: var(--red); }
+.fb-actions, .vf-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.fb-form .fb-actions { margin-top: auto; }
+.vf { display: flex; align-items: center; gap: 8px; padding-top: 4px; font-size: 13px; color: var(--label); }
+.vf > span { flex: 1; }
+.vf-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-2); border-radius: var(--radius); background: transparent; color: var(--muted); cursor: pointer; }
+.vf-btn:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+.vf-done svg { color: var(--invite); flex: none; }
+.vf-link { border: 0; background: transparent; padding: 0; font: inherit; color: var(--link); cursor: pointer; }
+.vf-ask { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; font-size: 13px; }
+.vf-reasons { display: flex; flex-wrap: wrap; gap: 6px; }
+.vf-field { display: flex; }
+.vf-field textarea { flex: 1; font-size: 13px; }
+.fb-prompt { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: 340px; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; box-shadow: var(--shadow-lg); }
+.fb-prompt-head { display: flex; align-items: flex-start; gap: 10px; }
+.fb-prompt-title { font-size: 14px; font-weight: 600; line-height: 1.35; color: var(--text); }
+.fb-prompt-x { margin-left: auto; flex: none; width: 28px; height: 28px; border: 0; border-radius: var(--radius); background: transparent; color: var(--label); font: inherit; font-size: 16px; cursor: pointer; }
+.fb-prompt-x:hover { color: var(--text); background: var(--card-2); }
+.fb-prompt-actions { display: flex; align-items: center; gap: 8px; }
+.menu-item-icon { display: flex; align-items: center; gap: 10px; }
+.fb-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; font-size: 13px; }
+.fb-row-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fb-row.unread { border-color: var(--border-2); }
+.fb-row-msg { margin: 0; white-space: pre-wrap; color: var(--text); }

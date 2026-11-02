@@ -8,7 +8,9 @@ import whConfigJs from "../web/dist/wh-config.js" with { type: "file" };
 // Copied as-is from web/public/fonts/ (Geist, OFL-1.1 — licence in web/public/fonts/OFL.txt).
 import geistWoff2 from "../web/dist/fonts/Geist-Variable.woff2" with { type: "file" };
 import geistMonoWoff2 from "../web/dist/fonts/GeistMono-Variable.woff2" with { type: "file" };
+// The link-preview image, copied from web/public/og.png (source docs/design/og/og.html).
+import ogPng from "../web/dist/og.png" with { type: "file" };
 
 // bun-types types every `*.html` import as an HTMLBundle (Bun's HTML bundler); with
 // `type: "file"` Bun actually returns the path string, so cast that one.
-export const WEB_ASSETS = { index: indexHtml as unknown as string, appJs, appCss, whConfigJs, geistWoff2, geistMonoWoff2 };
+export const WEB_ASSETS = { index: indexHtml as unknown as string, appJs, appCss, whConfigJs, geistWoff2, geistMonoWoff2, ogPng };

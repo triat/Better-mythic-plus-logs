@@ -83,6 +83,8 @@ function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: nu
   if (req.method === "PUT" && url.pathname === "/api/me/wcl-client") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/me/wcl-client/verify") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/usage/events") return { limiter: runtime.limits.usage, key };
+  // Feedback writes share the usage limiter (30 a minute per member): enough for a person, a wall for a script.
+  if ((req.method === "POST" && url.pathname === "/api/feedback") || (req.method === "PUT" && url.pathname === "/api/feedback/verdict")) return { limiter: runtime.limits.usage, key };
   if (req.method === "POST" && url.pathname === "/api/client-error") return { limiter: runtime.limits.clientError, key };
   return null;
 }
@@ -99,7 +101,6 @@ export function apiEventFor(method: string, path: string): ApiEvent | null {
     case "GET /api/season": return "season_view";
     case "POST /api/live/cached": return "live_roster";
     case "POST /api/defensives": return "defensives_correction";
-    case "PUT /api/settings": return "settings_save";
     case "PUT /api/me/wcl-client": return "wcl_client_set";
     case "POST /api/me/wcl-client/verify": return "wcl_client_verify";
     case "DELETE /api/me/wcl-client": return "wcl_client_remove";
@@ -121,7 +122,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const hosted = opts.hosted ?? false;
   if (hosted && !opts.hostedConfig) throw new Error("hosted mode needs hostedConfig");
   const envPathHint = await resolveEnvPath();
-  const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader);
+  const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader, hosted ? (opts.hostedConfig?.baseUrl ?? "") : "");
 
   let runtime: HostedRuntime | null = null;
   if (!hosted) await openLocalHistory();

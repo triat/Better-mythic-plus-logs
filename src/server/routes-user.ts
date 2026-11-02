@@ -12,7 +12,9 @@ import { parseCharacters, restrictToStored, type MyCharacter } from "../self/cha
 import { jsonResponse } from "./http.ts";
 import { route } from "./routes.ts";
 import type { Route } from "./routes.ts";
-import { CLIENT_ERROR_BODY, SETTINGS_BODY, USAGE_EVENTS_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
+import { CLIENT_ERROR_BODY, FEEDBACK_BODY, SETTINGS_BODY, USAGE_EVENTS_BODY, VERDICT_FEEDBACK_BODY, WCL_CLIENT_BODY, parseBody } from "./validate.ts";
+import pkg from "../../package.json";
+import { isRegion } from "../wow/regions.ts";
 import { log, userRef } from "../log.ts";
 import { USAGE_BATCH_MAX_COUNT, USAGE_BATCH_MAX_NAMES, isUiEvent } from "../hosted/usage-catalog.ts";
 import type { UiEvent } from "../hosted/usage-catalog.ts";
@@ -56,6 +58,38 @@ export function parseUsageEvents(v: unknown): { ok: true; events: Array<[UiEvent
 
 export function userRoutes(rt: HostedRuntime): Route[] {
   return [
+    // Feedback (canvas "bmpl · Retours"): a general message, a verdict judged fair or not, and what the page needs.
+    route("POST", "/api/feedback", async (req, _url, ctx) => {
+      const b = await parseBody(req, FEEDBACK_BODY);
+      if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+      rt.db.feedback.addGeneral(ctx.user!.id, ctx.now, { kind: b.value.kind, message: b.value.message, replyOk: b.value.replyOk, page: b.value.page ?? null, version: pkg.version as string });
+      rt.track(ctx.user!.id, "feedback_sent");
+      log.info("feedback", { kind: b.value.kind, user: userRef(ctx.user!.id) });
+      return jsonResponse({ ok: true });
+    }),
+    route("GET", "/api/feedback", (_req, url, ctx) => {
+      const p = url.searchParams;
+      const level = Number(p.get("level"));
+      const region = p.get("region") ?? "";
+      const target = isRegion(region) && Number.isInteger(level) && level >= 2 && level <= 50 && p.get("realm") && p.get("name")
+        ? { region, realm: p.get("realm")!, name: p.get("name")!, level } : null;
+      return jsonResponse({
+        ok: true, sentGeneral: rt.db.feedback.hasGeneral(ctx.user!.id),
+        verdict: target ? rt.db.feedback.verdictOf(ctx.user!.id, target) : null,
+      });
+    }),
+    route("PUT", "/api/feedback/verdict", async (req, _url, ctx) => {
+      const b = await parseBody(req, VERDICT_FEEDBACK_BODY);
+      if (!b.ok) return jsonResponse({ ok: false, error: b.error }, 400);
+      const v = b.value;
+      const target = { region: v.region, realm: v.realm, name: v.name, level: v.level };
+      rt.db.feedback.setVerdict(ctx.user!.id, ctx.now, target, {
+        rating: v.rating, reason: v.rating === "unfair" ? (v.reason ?? null) : null, message: v.message || null,
+        context: { label: v.label, verdict: v.verdict ?? null, score: v.score ?? null },
+      });
+      rt.track(ctx.user!.id, "feedback_verdict");
+      return jsonResponse({ ok: true, verdict: rt.db.feedback.verdictOf(ctx.user!.id, target) });
+    }),
     route("GET", "/api/settings", (_req, _url, ctx) => jsonResponse({ ok: true, settings: rt.db.settings.get(ctx.user!.id) })),
     route("PUT", "/api/settings", async (req, _url, ctx) => {
       const b = await parseBody(req, SETTINGS_BODY);

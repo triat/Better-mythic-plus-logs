@@ -1,6 +1,6 @@
 {
   "name": "bmpl",
-  "version": "0.10.17",
+  "version": "0.10.18",
   "description": "Better Mythic+ Logs — Warcraft Logs M+ character analyzer",
   "license": "AGPL-3.0-or-later",
   "type": "module",

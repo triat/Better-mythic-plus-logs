@@ -33,7 +33,7 @@ import { useSse } from "./useSse.ts";
 import { startUsageTracking, track } from "./usage.ts";
 import { startErrorReporting } from "./clientErrors.ts";
 import { analyticsEvent, startAnalytics } from "./analytics.ts";
-import { pagePath } from "./lib/analytics.ts";
+import { pagePath, utmQuery } from "./lib/analytics.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
 import { AdminPage } from "./components/admin/AdminPage.tsx";
@@ -98,7 +98,7 @@ export function App() {
       track(PAGE_EVENT[page]);
       const kind = bootScreen(status, me, location.pathname);
       // Umami (hosted, configured): one page view per page load, the page's kind only.
-      if (status.hosted) startAnalytics(status.analytics, pagePath(page, me?.kind !== "ok"));
+      if (status.hosted) startAnalytics(status.analytics, pagePath(page, me?.kind !== "ok") + utmQuery(BOOT_SEARCH));
       if (kind === "main") {
         const settings = me?.kind === "ok" ? parseServerSettings((await api.settings().then((r) => (r.ok ? r.settings : null)))) : null;
         setScreen({ kind, status, me: me?.kind === "ok" ? me.user : null, settings, quota: me?.kind === "ok" ? me.quota : null, ownClient: me?.kind === "ok" ? me.ownClient : null });

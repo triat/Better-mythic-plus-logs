@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ANALYTICS_EVENTS, eventProps, pagePath, scriptAttributes } from "./analytics.ts";
+import { ANALYTICS_EVENTS, eventProps, pagePath, scriptAttributes, utmQuery } from "./analytics.ts";
 import type { Page } from "./hostedMode.ts";
 
 describe("analytics", () => {
@@ -8,6 +8,14 @@ describe("analytics", () => {
     expect(pages.map((p) => pagePath(p, false))).toEqual(["/", "/candidate", "/compare", "/live", "/admin", "/settings", "/privacy", "/help", "/me"]);
     expect(pagePath("home", true)).toBe("/landing");
     expect(pagePath("help", true)).toBe("/help");
+  });
+  test("utmQuery: the five campaign tags with plain values, nothing else of the query", () => {
+    expect(utmQuery("?utm_source=discord&utm_campaign=guild-x&open=Vacha-Ysondre&q=Secret")).toBe("?utm_source=discord&utm_campaign=guild-x");
+    expect(utmQuery("?open=Vacha-Ysondre")).toBe("");
+    expect(utmQuery("")).toBe("");
+    // A value with spaces, accents or slashes (a name, a free text, a URL) is dropped.
+    expect(utmQuery("?utm_source=discord&utm_term=Vach%C3%A2man%20Ysondre&utm_content=a%2Fb")).toBe("?utm_source=discord");
+    expect(utmQuery(`?utm_campaign=${"x".repeat(65)}`)).toBe("");
   });
   test("the eight events of the spec and no other", () => {
     expect(Object.keys(ANALYTICS_EVENTS).sort()).toEqual(["bnet_link", "compare", "deepdive", "live_connect", "lookup", "season_sync", "sign_in_click", "wcl_client_set"]);

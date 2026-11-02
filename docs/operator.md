@@ -121,6 +121,13 @@ them (`bmpl-provision`, [deploy/README.md § 9d](../deploy/README.md)).
 - **A member reports an error**: ask for the time; in Grafana's Explore, query
   `service:bmpl event:server_error` around it, or `req:<id>` with the
   `X-Request-Id` of the failed response.
+- **Where the link is shared**: Umami's Sources only show `discord.com` (Discord
+  sends no server or channel). Two more views: the Activity dashboard's *Links
+  pasted* panels count each fetch by a platform's preview robot (one per paste
+  in Discord, Slack, X, Reddit…, with the page), still without where; and the
+  links you share yourself can carry campaign tags,
+  `https://bmpl.<host>/?utm_source=discord&utm_campaign=<server>`, which
+  Umami's UTM view groups (letters, digits and `. _ ~ -` only, 64 at most).
 - **The services**: `systemctl status victorialogs alloy grafana-server`; each
   has a `MemoryMax` (512 MB, 384 MB, 768 MB). Disable the whole stack with
   `systemctl disable --now victorialogs alloy grafana-server`: bmpl keeps

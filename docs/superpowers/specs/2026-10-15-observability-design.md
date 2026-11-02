@@ -46,7 +46,10 @@ every restart.
    (only a lookup, season or deep-dive target: `lookup Name-Realm`, never an admin target), and a 5xx answered without
    an exception (a failed lookup, season sync or deep-dive) logs its own `server_error` with the same fields.
 5. **Alloy collects two sources**: the journal of `bmpl.service` and of the two `bmpl-calibrate-*` units (JSON parsed
-   into fields), and Caddy's access log (`/var/log/caddy/bmpl.log`, already JSON: client IP, status, duration, size).
+   into fields), and Caddy's access log (`/var/log/caddy/bmpl.log`, already JSON: client IP, status, duration, size;
+   since 2026-11-02 also `preview_bot`, the lower-cased name of a link-preview robot — Discordbot, Slackbot,
+   Twitterbot… — taken from the User-Agent by an Alloy stage, the only part of the headers kept; the Activity
+   dashboard counts the links pasted per platform from it).
    It pushes to VictoriaLogs through the Loki push API (`/insert/loki/api/v1/push`), which VictoriaLogs accepts.
 6. **Replaceable by Loki.** Alloy speaks the Loki protocol, so moving to Loki means: install Loki, change one URL in
    Alloy, switch the Grafana data source, rewrite the dashboards' queries (LogsQL → LogQL). bmpl does not change. To keep

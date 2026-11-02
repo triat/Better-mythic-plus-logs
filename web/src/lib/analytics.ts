@@ -27,6 +27,25 @@ const PAGE_PATH: Record<Page, string> = {
 /** The URL a page view is sent with: the page's kind, never its query; a signed-out visitor's home is the landing. */
 export const pagePath = (page: Page, signedOut: boolean): string => (signedOut && page === "home" ? "/landing" : PAGE_PATH[page]);
 
+/** The campaign tags a shared link may carry; nothing else of a query ever reaches Umami. */
+export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+const UTM_VALUE = /^[A-Za-z0-9._~-]{1,64}$/;
+
+/**
+ * The query to send with the page view: the `utm_*` tags of `search` only, each value at most 64 characters of
+ * `A-Z a-z 0-9 . _ ~ -` (a link's campaign name, never a character or a free text); "" when none is left.
+ */
+export function utmQuery(search: string): string {
+  const all = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const k of UTM_KEYS) {
+    const v = all.get(k);
+    if (v !== null && UTM_VALUE.test(v)) kept.set(k, v);
+  }
+  const q = kept.toString();
+  return q ? `?${q}` : "";
+}
+
 /** The event's properties reduced to the allowed ones with allowed values; undefined when none is left. */
 export function eventProps(name: AnalyticsEvent, props: AnalyticsProps = {}): Record<string, string | number> | undefined {
   const allowed: readonly string[] = ANALYTICS_EVENTS[name];

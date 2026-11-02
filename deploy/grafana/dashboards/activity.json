@@ -298,6 +298,117 @@
         "sortOrder": "Descending",
         "enableLogDetails": true
       }
+    },
+    {
+      "id": 7,
+      "title": "Links pasted per day, by platform",
+      "type": "timeseries",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "description": "One fetch by a platform's link-preview robot (Discordbot, Slackbot, Twitterbot\u2026) each time someone pastes a bmpl link there. Where it was pasted (which server, which channel) is not known.",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:caddy preview_bot:* -request.uri:=\"/og.png\" | stats by (preview_bot) count() pastes",
+          "queryType": "statsRange",
+          "editorMode": "code",
+          "legendFormat": "{{preview_bot}}"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "interval": "1d"
+    },
+    {
+      "id": 8,
+      "title": "Pasted links, by platform and page",
+      "type": "table",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "expr": "service:caddy preview_bot:* -request.uri:=\"/og.png\" | stats by (preview_bot, request.uri) count() pastes | sort by (pastes desc) | limit 30",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": true
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "preview_bot": 0,
+              "request.uri": 1,
+              "pastes": 2
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "pastes",
+                "destinationType": "number"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "annotations": {

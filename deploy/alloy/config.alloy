@@ -27,14 +27,39 @@ loki.source.journal "bmpl" {
 }
 
 // Caddy's access log (JSON). The request and response headers are dropped at ingestion: only the client IP, method,
-// URI, status, duration and size are kept.
+// URI, status, duration and size are kept, plus `preview_bot` below.
 local.file_match "caddy" {
   path_targets = [{ __path__ = "/var/log/caddy/bmpl.log", service = "caddy" }]
 }
 
 loki.source.file "caddy" {
   targets    = local.file_match.caddy.targets
+  forward_to = [loki.process.caddy.receiver]
+}
+
+// Link-preview robots (Discord, Slack, X, Reddit…): the only part of a request's headers kept, as the
+// `preview_bot` field, so a link pasted somewhere shows as one fetch by that platform's robot. People's
+// browsers match none of these names and keep nothing of their headers.
+loki.process "caddy" {
   forward_to = [loki.write.caddy.receiver]
+
+  stage.json {
+    expressions = { ua = "request.headers.\"User-Agent\"[0]" }
+  }
+
+  stage.regex {
+    source     = "ua"
+    expression = "(?i)(?P<preview_bot>discordbot|slackbot|slack-imgproxy|twitterbot|facebookexternalhit|facebookcatalog|linkedinbot|telegrambot|whatsapp|redditbot|skypeuripreview|bluesky|mastodon|embedly|iframely)"
+  }
+
+  stage.template {
+    source   = "preview_bot"
+    template = "{{ if .Value }}{{ ToLower .Value }}{{ end }}"
+  }
+
+  stage.labels {
+    values = { preview_bot = "" }
+  }
 }
 
 // bmpl's lines are JSON objects: VictoriaLogs parses them into fields (event, route, status, ms, user, …); `msg` is the

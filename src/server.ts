@@ -121,7 +121,7 @@ export async function runServer(opts: ServeOptions): Promise<Server<undefined>> 
   const hosted = opts.hosted ?? false;
   if (hosted && !opts.hostedConfig) throw new Error("hosted mode needs hostedConfig");
   const envPathHint = await resolveEnvPath();
-  const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader);
+  const serveStatic = createStaticHandler(opts.assets ?? defaultAssetLoader, hosted ? (opts.hostedConfig?.baseUrl ?? "") : "");
 
   let runtime: HostedRuntime | null = null;
   if (!hosted) await openLocalHistory();

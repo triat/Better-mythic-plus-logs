@@ -125,6 +125,26 @@ describe("createStaticHandler", () => {
   });
   test("the pages the front resolves from the pathname are static routes (/me included)", async () => {
     const handler = createStaticHandler(async () => null);
-    for (const p of ["/", "/candidate", "/compare", "/live", "/admin", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
+    for (const p of ["/", "/candidate", "/compare", "/live", "/admin", "/admin/characters", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
+  });
+  test("link previews: the origin fills the index's tags (\"\" locally), /og.png is served when built", async () => {
+    const fdir = mkdtempSync(join(tmpdir(), "bmpl-og-"));
+    try {
+      const files = {
+        index: join(fdir, "index.html"), appJs: join(fdir, "app.js"), appCss: join(fdir, "app.css"), whConfigJs: join(fdir, "wh.js"),
+        geistWoff2: join(fdir, "g.woff2"), geistMonoWoff2: join(fdir, "gm.woff2"), ogPng: join(fdir, "og.png"),
+      };
+      for (const [k, p] of Object.entries(files)) writeFileSync(p, k);
+      writeFileSync(files.index, '<meta property="og:image" content="__BMPL_ORIGIN__/og.png" /><meta property="og:url" content="__BMPL_ORIGIN__/" />');
+      const hosted = createStaticHandler(async () => files, "https://bmpl.example.com");
+      expect(await (await hosted("/candidate"))!.text()).toBe('<meta property="og:image" content="https://bmpl.example.com/og.png" /><meta property="og:url" content="https://bmpl.example.com/" />');
+      expect(await (await createStaticHandler(async () => files)("/"))!.text()).toBe('<meta property="og:image" content="/og.png" /><meta property="og:url" content="/" />');
+      const og = await hosted("/og.png");
+      expect([og?.status, og?.headers.get("content-type"), og?.headers.get("cache-control"), await og?.text()]).toEqual([200, "image/png", "public, max-age=86400", "ogPng"]);
+      const { ogPng: _, ...older } = files;
+      expect(await createStaticHandler(async () => older)("/og.png")).toBeNull();
+    } finally {
+      rmSync(fdir, { recursive: true, force: true });
+    }
   });
 });

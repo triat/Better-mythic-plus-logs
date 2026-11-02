@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Un lien bmpl partagé sur Discord, X ou ailleurs affiche maintenant une carte d'aperçu avec le nom et ce que fait le site.",
+    ],
+  },
+  {
     version: "0.10.16",
     date: "2026-10-28",
     items: [

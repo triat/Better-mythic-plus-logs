@@ -68,7 +68,10 @@ devices and the funnel from the landing to the first lookup.
     `data-exclude-hash="true"`, `data-do-not-track="true"` and `data-domains` set to bmpl's host. Page views are sent
     by hand once per page load with the page's kind as URL (`/`, `/candidate`, `/compare`, `/live`, `/me`, `/help`,
     `/settings`, `/privacy`, `/admin`, the signed-out home, the landing, as `/landing`): never a query (`?open=`, `?q=`, `?pick=` hold character
-    names), never a character, never a Discord id. Event properties are from a closed list (below), checked by a
+    names), never a character, never a Discord id. One exception since 2026-11-02: the page view carries the link's
+    campaign tags, `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` only, each value at most 64
+    characters of `A-Z a-z 0-9 . _ ~ -` (`utmQuery` in `web/src/lib/analytics.ts`), so a link the operator shares as
+    `/?utm_source=discord&utm_campaign=<server>` shows in Umami's UTM view. Event properties are from a closed list (below), checked by a
     test. Umami itself sets no cookie and keeps no IP address (it derives a session from a salted hash that rotates).
 11. **Events: eight, fired by the front after the action succeeds.** One `analytics.event(name, props?)` call per
     place, a no-op when Umami is not loaded:

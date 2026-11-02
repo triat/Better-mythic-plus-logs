@@ -7,6 +7,7 @@ import { useT } from "../locale.tsx";
 import { Avatar } from "./Avatar.tsx";
 import { Icon } from "./Icon.tsx";
 import { track } from "../usage.ts";
+import { linkClicked } from "../analytics.ts";
 
 interface Props {
   m: MenuModel;
@@ -89,7 +90,7 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut, lines, links 
           {links.length > 0 && (
             <>
               <div className="menu-sep" />
-              {links.map((l) => <a key={l.key} className="menu-item" href={l.href} target="_blank" rel="noopener noreferrer" role="menuitem">{l.label}</a>)}
+              {links.map((l) => <a key={l.key} className="menu-item" href={l.href} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => linkClicked(l.key, "menu")}>{l.label}</a>)}
               <div className="menu-sep" />
             </>
           )}

@@ -180,7 +180,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
   // "Your key": the level every lookup is evaluated for (null = auto). Per browser locally, per account when hosted.
   const { settings, update: updateSettings, adopt: adoptSettings } = useSettings();
   const yourKey = settings.yourKey;
-  const onKeyChange = (v: number | null) => { track("key_level_change"); updateSettings({ yourKey: v }); };
+  const onKeyChange = (v: number | null) => { track("key_level_change"); analyticsEvent("key_level"); updateSettings({ yourKey: v }); };
   // The region: the saved choice, else the instance default. Not part of the form — it is a setting like "your key".
   const region = effectiveRegion(settings.region, status.region);
   const regionRef = useRef(region);
@@ -226,6 +226,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     if (cached) return { payload: cached };
     const r = await api.historyEntry(key);
     if (!r.ok) return { error: r.error };
+    analyticsEvent("history_open");
     payloads.current.set(key, r.result);
     // The server re-evaluated the entry with today's rules: Récents shows the same verdict and score as the page.
     setTabs((items) => withPayloadSummary(items, key, r.result));
@@ -347,6 +348,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     // A refusal that carries the member's own quota numbers gets the way out: the guided sheet when the instance stores
     // own clients (canvas "bmpl · Clé WCL guidée" A), else the toast with the guide link.
     if (!r.ok) {
+      analyticsEvent("lookup_failed", { reason: r.quota ? "quota" : r.notFound ? "not_found" : "error" });
       if (r.quota) setQuota(r.quota);
       if (r.quota && showsWclGuide({ hosted: status.hosted, wclClients: status.wclClients, ownClient, quota: r.quota })) {
         setGuide({ quota: r.quota, req, refresh });

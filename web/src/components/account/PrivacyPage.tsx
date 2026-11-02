@@ -1,3 +1,4 @@
+import { linkClicked } from "../../analytics.ts";
 import { useT } from "../../locale.tsx";
 import { Around } from "../Around.tsx";
 import { Logo } from "../Logo.tsx";
@@ -41,7 +42,7 @@ export function PrivacyPage({ operator, guildRequired, contactUrl, analytics = f
         <p className="faint" style={{ fontSize: 12 }}>
           <Around message={t("privacy.questions")} params={{
             contact: contactUrl
-              ? <a href={contactUrl} target="_blank" rel="noopener noreferrer">{t("privacy.questionsContact")}</a>
+              ? <a href={contactUrl} target="_blank" rel="noopener noreferrer" onClick={() => linkClicked("contact", "privacy")}>{t("privacy.questionsContact")}</a>
               : t("privacy.questionsContact"),
           }} />
         </p>

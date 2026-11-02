@@ -128,6 +128,14 @@ them (`bmpl-provision`, [deploy/README.md § 9d](../deploy/README.md)).
   links you share yourself can carry campaign tags,
   `https://bmpl.<host>/?utm_source=discord&utm_campaign=<server>`, which
   Umami's UTM view groups (letters, digits and `. _ ~ -` only, 64 at most).
+- **What people do, step by step** (Umami, `https://analytics.<host>`): *Sessions*
+  lists each visit with its pages and events in order; *Journeys* draws the
+  common paths (start from `/landing` or from the `lookup` event); *Funnels*
+  measures a chain, for instance `/landing` → `sign_in_click` → `lookup` →
+  `tab` → `run_pick`. The events and their values are in the spec
+  `docs/superpowers/specs/2026-10-28-umami-analytics-design.md` (decision 11);
+  `support_click` and `contact_click` count the Support and Contact links, also
+  in the admin page's Usage section (`link_support`, `link_contact`).
 - **The services**: `systemctl status victorialogs alloy grafana-server`; each
   has a `MemoryMax` (512 MB, 384 MB, 768 MB). Disable the whole stack with
   `systemctl disable --now victorialogs alloy grafana-server`: bmpl keeps

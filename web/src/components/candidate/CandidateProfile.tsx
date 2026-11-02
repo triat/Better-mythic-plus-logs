@@ -9,6 +9,7 @@ import { DEFAULT_LAYERS, shownEvent } from "../../lib/timeline.ts";
 import type { EventPick, LayerKey } from "../../lib/timeline.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import type { DeepdiveActions } from "../Detail.tsx";
 import { MeChip } from "../self/MeChip.tsx";
 import type { SelfActions } from "../owner/types.ts";
@@ -53,7 +54,11 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
   // The timeline's ticked layers and picked death: per page view, shared by the Runs tab and the run sheet.
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>(DEFAULT_LAYERS);
   const [eventPick, setEventPick] = useState<EventPick | null>(null);
-  const toggleLayer = useCallback((k: LayerKey) => setLayers((l) => ({ ...l, [k]: !l[k] })), []);
+  const toggleLayer = useCallback((k: LayerKey) => {
+    track("timeline_layer");
+    analyticsEvent("timeline_layer", { layer: k });
+    setLayers((l) => ({ ...l, [k]: !l[k] }));
+  }, []);
   // The sheet opened from "Analyse détaillée" starts on its deep-dive section.
   const [sheetDd, setSheetDd] = useState(false);
   const openRef = useRef<HTMLButtonElement>(null);
@@ -68,9 +73,11 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
     requestAnimationFrame(() => (openRef.current ?? tabRefs.current.get(tabRef.current))?.focus());
   };
 
+  const pickedRun = () => { track("run_pick"); analyticsEvent("run_pick"); };
   const pick = (tab: CandTab) => {
     if (tab === state.tab) return;
     track(CAND_TAB_EVENT[tab]);
+    analyticsEvent("tab", { view: "candidate", tab });
     setState((s) => ({ ...s, tab }));
   };
   const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -105,13 +112,13 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
         {state.tab === "runs" && (
           <RunsTab
             payload={payload} deepdive={deepdive} run={state.run}
-            onRun={(run) => setState((s) => ({ ...s, run }))}
-            onSheet={(run, dd) => { setSheetDd(!!dd); setState((s) => ({ ...s, run, sheet: true })); }}
+            onRun={(run) => { pickedRun(); setState((s) => ({ ...s, run })); }}
+            onSheet={(run, dd) => { track("run_sheet_open"); analyticsEvent("run_sheet"); setSheetDd(!!dd); setState((s) => ({ ...s, run, sheet: true })); }}
             layers={layers} onToggle={toggleLayer} pick={eventPick} onPick={setEventPick} openRef={openRef}
           />
         )}
         {state.tab === "dungeons" && (
-          <CandDungeons payload={payload} deepdive={deepdive} onView={(run) => { track(CAND_TAB_EVENT.runs); setState((s) => ({ ...s, tab: "runs", run })); }} />
+          <CandDungeons payload={payload} deepdive={deepdive} onView={(run) => { track(CAND_TAB_EVENT.runs); analyticsEvent("tab", { view: "candidate", tab: "runs" }); setState((s) => ({ ...s, tab: "runs", run })); }} />
         )}
         {state.tab === "method" && <MethodTab evaluation={payload.evaluation} />}
       </div>
@@ -120,7 +127,7 @@ export function CandidateProfile({ payload, hint, onReevaluate, deepdive, self, 
           payload={payload} run={sheetRun} analysis={sheetAnalysis} deepdive={deepdive}
           layers={layers} onToggle={toggleLayer}
           event={shownEvent(eventPick, state.run!, sheetRun, sheetAnalysis)} onSelect={(id) => setEventPick({ run: state.run!, id })}
-          onRun={(run) => { setSheetDd(false); setState((s) => ({ ...s, run })); }}
+          onRun={(run) => { pickedRun(); setSheetDd(false); setState((s) => ({ ...s, run })); }}
           onClose={closeSheet} focusDeepdive={sheetDd}
         />
       )}

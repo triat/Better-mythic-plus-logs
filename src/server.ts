@@ -99,7 +99,6 @@ export function apiEventFor(method: string, path: string): ApiEvent | null {
     case "GET /api/season": return "season_view";
     case "POST /api/live/cached": return "live_roster";
     case "POST /api/defensives": return "defensives_correction";
-    case "PUT /api/settings": return "settings_save";
     case "PUT /api/me/wcl-client": return "wcl_client_set";
     case "POST /api/me/wcl-client/verify": return "wcl_client_verify";
     case "DELETE /api/me/wcl-client": return "wcl_client_remove";

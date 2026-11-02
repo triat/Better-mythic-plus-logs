@@ -28,7 +28,7 @@ beforeEach(() => {
 describe("catalogue", () => {
   test("every entry has a known category and source; ui names are exactly the ui entries", () => {
     for (const e of USAGE_EVENTS) expect(["api", "ui"]).toContain(USAGE_CATALOG[e].source);
-    expect(isUiEvent("axis_expand")).toBe(true);
+    expect(isUiEvent("rio_toggle")).toBe(true);
     expect(isUiEvent("lookup")).toBe(false); // an api event is never accepted from the front
     expect(isUiEvent("toString")).toBe(false);
     expect(isUiEvent("nope")).toBe(false);
@@ -69,7 +69,7 @@ describe("usage_events repo", () => {
     expect(f.share).toBe(1);
   });
   test("every catalogue entry is listed, unused ones with zeros, most members first", () => {
-    db.features.add(tom.id, "axis_expand", NOW);
+    db.features.add(tom.id, "rio_toggle", NOW);
     db.features.add(bob.id, "lookup", NOW);
     db.features.add(tom.id, "lookup", NOW);
     const r = report();

@@ -8,6 +8,7 @@ import { OWNER_TABS, OWNER_TAB_EVENT, ownerHeader, ownerHref, ownerState, ownerT
 import type { OwnerState, OwnerTab } from "../../lib/profile.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
+import { analyticsEvent } from "../../analytics.ts";
 import { seasonWho, useSeason } from "../../useSeason.ts";
 import { CandidateProfile } from "../candidate/CandidateProfile.tsx";
 import type { DetailProps } from "../Detail.tsx";
@@ -48,7 +49,11 @@ export function OwnerProfile(props: DetailProps) {
   const [filters, setFilters] = useState<RunFilters | null>(null);
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>(DEFAULT_LAYERS);
   const [eventPick, setEventPick] = useState<EventPick | null>(null);
-  const toggleLayer = useCallback((k: LayerKey) => setLayers((l) => ({ ...l, [k]: !l[k] })), []);
+  const toggleLayer = useCallback((k: LayerKey) => {
+    track("timeline_layer");
+    analyticsEvent("timeline_layer", { layer: k });
+    setLayers((l) => ({ ...l, [k]: !l[k] }));
+  }, []);
 
   const switchView = (vetting: boolean) => {
     if (urlKey === null) { setState((s) => ({ ...s, run: null, vetting })); return; }
@@ -59,6 +64,7 @@ export function OwnerProfile(props: DetailProps) {
   const pick = (tab: OwnerTab) => {
     if (tab === state.tab) return;
     track(OWNER_TAB_EVENT[tab]);
+    analyticsEvent("tab", { view: "owner", tab });
     setState((s) => ({ ...s, tab }));
   };
   const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -120,7 +126,7 @@ export function OwnerProfile(props: DetailProps) {
         )}
         {v !== null && !empty && state.tab === "runs" && (
           <OwnerRuns
-            payload={payload} season={v} deepdive={props.deepdive} run={state.run} onRun={(run) => setState((s) => ({ ...s, run }))}
+            payload={payload} season={v} deepdive={props.deepdive} run={state.run} onRun={(run) => { if (run !== null) { track("run_pick"); analyticsEvent("run_pick"); } setState((s) => ({ ...s, run })); }}
             filters={filters} onFilters={setFilters} layers={layers} onToggle={toggleLayer} pick={eventPick} onPick={setEventPick}
           />
         )}

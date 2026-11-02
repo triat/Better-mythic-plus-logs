@@ -194,6 +194,7 @@ export async function handleLookup(req: Request, ctx: RequestContext, runtime: H
     if (runtime) {
       const outcome = result.status === 429 ? "refused" : result.status === 404 ? "not_found" : result.wcl ? "wcl_error" : "failed";
       log.info("lookup_done", { outcome, status: result.status, region: body.region ?? config.region, refresh: !!body.refresh, own_client: scope.own });
+      runtime?.track(ctx.user?.id ?? null, outcome === "refused" ? "lookup_refused" : outcome === "not_found" ? "lookup_not_found" : "lookup_failed");
     }
     return jsonResponse(failureBody(result, runtime), result.status);
   }

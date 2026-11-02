@@ -245,10 +245,13 @@ Counts live in `usage_events` (one row per event, UTC day and member, kept 90
 days, deleted with the account). The catalogue is closed
 (`src/hosted/usage-catalog.ts`): **API events** (`lookup`, `lookup_cached`,
 `lookup_refresh`, `deepdive`, `deepdive_reanalyze`, `defensives_correction`,
-`history_open`/`close`/`clear`, `live_roster`, `wcl_client_set`/`verify`/`remove`,
-`settings_save`) are counted by the server after a successful request;
-**interface events** (page views, `axis_expand`, `compare_open`, `help_link`,
-the Live panel's actions…) are counted in the page and sent in batches to
+`history_open`/`close`/`clear`, `live_roster`, `wcl_client_set`/`verify`/`remove`)
+are counted by the server after a successful request, and `lookup_refused`,
+`lookup_not_found`, `lookup_failed` after a lookup that gave no result (settings
+saves are not counted: most are automatic); **interface events** (page views,
+the profile tabs, `run_pick`, `run_sheet_open`, `timeline_layer`, `dungeon_open`,
+`compare_open`, `help_link`, `link_support`, `link_contact`, the Live panel's
+actions…) are counted in the page and sent in batches to
 `POST /api/usage/events` (at most 40 names, each count 1..50, 30 requests per
 minute per member; unknown names are dropped). Interface counts can be lost
 when a tab closes; API counts cannot. `history_open` includes the tab the page

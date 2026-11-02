@@ -87,6 +87,22 @@ devices and the funnel from the landing to the first lookup.
     | `wcl_client_set` | a member saved their own WCL client | none |
     | `bnet_link` | the Battle.net round trip came back linked | none |
 
+    Added 2026-11-02, so Umami's Journeys, Funnels and Sessions show a member's steps after a lookup (the list and
+    each property's allowed values live in `ANALYTICS_EVENTS`, `web/src/lib/analytics.ts`, pinned by its test):
+
+    | Event | When | Properties |
+    |---|---|---|
+    | `lookup_failed` | a lookup refused or failed | `reason`: `quota` \| `not_found` \| `error` |
+    | `tab` | a profile tab picked | `view`: `candidate` \| `owner`; `tab`: `synthesis` \| `runs` \| `dungeons` \| `method` \| `form` |
+    | `run_pick` | a run picked (Runs tab, sheet, owner runs) | none |
+    | `run_sheet` | "Open full view" | none |
+    | `timeline_layer` | a timeline layer ticked or unticked | `layer`: `deaths` \| `dispo` \| `cd` \| `casts` \| `control` |
+    | `dungeon_open` | a dungeon's detail opened | none |
+    | `history_open` | a history entry loaded (Récents, palette) | none |
+    | `key_level` | the key level changed | none |
+    | `support_click` | the Support link | `place`: `sidebar` \| `menu` |
+    | `contact_click` | the Contact link | `place`: `sidebar` \| `menu` \| `privacy` |
+
 12. **Privacy page and changelog.** `/privacy` gains one paragraph, shown only when analytics is configured (from the dictionaries): what Umami receives (page
     kind, referrer, browser, OS, device, country, screen size, language, the events above), that it sets no cookie,
     is hosted on the same VPS, and that the browser's Do Not Track turns it off. One changelog line under `"next"`

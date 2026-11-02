@@ -267,7 +267,7 @@ describe("feature usage", () => {
     features: [
       feat("lookup", "lookup", 4, 30, { source: "api", daily: [10, 0, 0, 0, 0, 5, 15], top: [{ userId: 2, username: "tom", uses: 20, lastAt: NOW - 30 * 60_000 }] }),
       feat("lookup_cached", "lookup", 3, 10, { source: "api" }),
-      feat("axis_expand", "result", 1, 1),
+      feat("rio_toggle", "result", 1, 1),
       feat("compare_open", "history", 0, 0),
       feat("metric_pick", "lookup", 0, 0),
     ],
@@ -301,7 +301,7 @@ describe("feature usage", () => {
   });
   test("table: used rows then unused, filtered by category", () => {
     const all = usageTable(tEn, report, "all", NOW);
-    expect(all.used.map((r) => r.event)).toEqual(["lookup", "lookup_cached", "axis_expand"]);
+    expect(all.used.map((r) => r.event)).toEqual(["lookup", "lookup_cached", "rio_toggle"]);
     expect(all.unused.map((r) => r.event)).toEqual(["compare_open", "metric_pick"]);
     expect(usageTable(tEn, report, "lookup", NOW).unused.map((r) => r.event)).toEqual(["metric_pick"]);
   });

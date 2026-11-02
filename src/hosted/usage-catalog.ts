@@ -13,6 +13,10 @@ export const USAGE_CATALOG = {
   lookup: { category: "lookup", source: "api" },
   lookup_cached: { category: "lookup", source: "api" },
   lookup_refresh: { category: "lookup", source: "api" },
+  // A lookup that did not give a result: the quota, a character not found, a WCL or server failure.
+  lookup_refused: { category: "lookup", source: "api" },
+  lookup_not_found: { category: "lookup", source: "api" },
+  lookup_failed: { category: "lookup", source: "api" },
   reevaluate: { category: "lookup", source: "ui" },
   key_level_change: { category: "lookup", source: "ui" },
   region_change: { category: "lookup", source: "ui" },
@@ -23,9 +27,11 @@ export const USAGE_CATALOG = {
   page_home: { category: "result", source: "ui" },
   page_candidate: { category: "result", source: "ui" },
   page_main_result: { category: "result", source: "ui" },
-  axis_expand: { category: "result", source: "ui" },
-  legend_toggle: { category: "result", source: "ui" },
-  runs_toggle: { category: "result", source: "ui" },
+  // The Runs tab and the run sheet: a run picked, the full view opened, a timeline layer ticked; a dungeon's detail.
+  run_pick: { category: "result", source: "ui" },
+  run_sheet_open: { category: "result", source: "ui" },
+  timeline_layer: { category: "result", source: "ui" },
+  dungeon_open: { category: "result", source: "ui" },
   rio_toggle: { category: "result", source: "ui" },
   external_log: { category: "result", source: "ui" },
   external_rio: { category: "result", source: "ui" },
@@ -63,12 +69,14 @@ export const USAGE_CATALOG = {
   wcl_client_set: { category: "account", source: "api" },
   wcl_client_verify: { category: "account", source: "api" },
   wcl_client_remove: { category: "account", source: "api" },
-  settings_save: { category: "account", source: "api" },
   page_settings: { category: "account", source: "ui" },
   page_privacy: { category: "account", source: "ui" },
   page_me: { category: "account", source: "ui" },
   locale_switch: { category: "account", source: "ui" },
   toast_own_client: { category: "account", source: "ui" },
+  // The operator's links: "Support bmpl" and the Discord contact (sidebar or account menu).
+  link_support: { category: "account", source: "ui" },
+  link_contact: { category: "account", source: "ui" },
   // Admin
   page_admin: { category: "admin", source: "ui" },
 } as const satisfies Record<string, { category: UsageCategory; source: UsageSource }>;

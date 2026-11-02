@@ -83,6 +83,8 @@ function rateLimitFor(runtime: HostedRuntime, req: Request, url: URL, userId: nu
   if (req.method === "PUT" && url.pathname === "/api/me/wcl-client") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/me/wcl-client/verify") return { limiter: runtime.limits.lookup, key };
   if (req.method === "POST" && url.pathname === "/api/usage/events") return { limiter: runtime.limits.usage, key };
+  // Feedback writes share the usage limiter (30 a minute per member): enough for a person, a wall for a script.
+  if ((req.method === "POST" && url.pathname === "/api/feedback") || (req.method === "PUT" && url.pathname === "/api/feedback/verdict")) return { limiter: runtime.limits.usage, key };
   if (req.method === "POST" && url.pathname === "/api/client-error") return { limiter: runtime.limits.clientError, key };
   return null;
 }

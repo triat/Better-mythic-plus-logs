@@ -8,6 +8,7 @@ import { Avatar } from "./Avatar.tsx";
 import { Icon } from "./Icon.tsx";
 import { track } from "../usage.ts";
 import { linkClicked } from "../analytics.ts";
+import { useFeedback } from "../feedback.tsx";
 
 interface Props {
   m: MenuModel;
@@ -25,6 +26,7 @@ interface Props {
 /** The sidebar's account block (redesign phase 1: the trigger is the block itself, the menu opens upward) and its menu: identity, quota line + bar, the EN | FR language row, Help, Settings, Admin (admins), Sign out, Privacy. Design: canvas "Hosted", header A; "Phase2SettingsA" for the menu additions; "Locale" (A) for the language row. */
 export function UserMenu({ m, pendingProposals, onOpen, onSignOut, lines, links = [], compact = false }: Props) {
   const { t, locale, setLocale } = useT();
+  const fb = useFeedback();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -87,10 +89,15 @@ export function UserMenu({ m, pendingProposals, onOpen, onSignOut, lines, links 
           <a className="menu-item" href="/me" role="menuitem">{t("header.me")}</a>
           <a className="menu-item" href="/settings" role="menuitem">{t("common.settings")}</a>
           {m.isAdmin && <a className="menu-item" href="/admin" role="menuitem">{t("common.admin")}{pending && <span className="faint">· {pending}</span>}</a>}
-          {links.length > 0 && (
+          {(fb.enabled || links.length > 0) && (
             <>
               <div className="menu-sep" />
-              {links.map((l) => <a key={l.key} className="menu-item" href={l.href} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => linkClicked(l.key, "menu")}>{l.label}</a>)}
+              {fb.enabled && (
+                <button type="button" className="menu-item menu-item-icon" role="menuitem" onClick={() => { setOpen(false); fb.open("menu"); }}>
+                  <Icon name="message" size={16} />{t("feedback.menu")}
+                </button>
+              )}
+              {links.map((l) => <a key={l.key} className="menu-item" href={l.href} target="_blank" rel="noopener noreferrer" role="menuitem" onClick={() => linkClicked(l.key, "menu")}>{l.label} ↗</a>)}
               <div className="menu-sep" />
             </>
           )}

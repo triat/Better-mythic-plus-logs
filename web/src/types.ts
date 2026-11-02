@@ -13,6 +13,7 @@ export type { HistoryRequest } from "@shared/server-history.ts";
 export type { ProposalSummary } from "@shared/hosted/defensives.ts";
 export type { RateLimitSnapshot } from "@shared/wcl/meter.ts";
 export type { AdminCharacter, CharacterRole } from "@shared/hosted/characters.ts";
+export type { FeedbackKind, FeedbackRow, VerdictFeedback, VerdictRating, VerdictReason, VerdictTarget } from "@shared/hosted/feedback.ts";
 export type { DefensiveSpell } from "@shared/deepdive/types.ts";
 export type { EnvRow } from "@shared/hosted/instance.ts";
 export type { AuditAction, AuditKind, AuditRow } from "@shared/hosted/audit.ts";

@@ -390,6 +390,9 @@ are registered in both modes; the local-only routes
 | GET | `/api/admin/invites` | admin | List invites |
 | POST | `/api/admin/invites` | admin | Add an invite (Discord id + optional note) |
 | DELETE | `/api/admin/invites/:discordId` | admin | Remove an invite (also revokes that user's sessions) |
+| POST/GET | `/api/feedback` | user | A member's message; `sentGeneral` and their answer on a verdict (spec `docs/superpowers/specs/2026-11-02-feedback-design.md`) |
+| PUT | `/api/feedback/verdict` | user | "Does this verdict seem right?", one answer per character and key level |
+| GET | `/api/admin/feedback` | admin | The newest 200 feedback rows and the unread count; `POST /api/admin/feedback/:id/read` marks one |
 | GET | `/api/admin/characters` | admin | Every character looked up (`character_runs`, `rio_profile`, the newest `user_history` verdict, members as a count) and the verdict thresholds; 0 WCL pts, `/admin/characters` |
 | GET | `/api/admin/audit` | admin | Paged audit log (`kind`, `offset` or `before`, `limit`, `q` = member or target) |
 | GET | `/api/admin/features` | admin | Feature usage: active members, every catalogue event with members, uses, last use, a daily series and the top 5 members (`days` 7/30/90, `admins` 0/1) |

@@ -1,3 +1,5 @@
+import { VerdictFeedback } from "../feedback/VerdictFeedback.tsx";
+import { verdictSubject, type VerdictSubject } from "../../lib/feedback.ts";
 import { useMemo } from "react";
 import type { LookupPayload } from "../../types.ts";
 import { anchorOf } from "../../lib/help.ts";
@@ -24,7 +26,7 @@ export function SynthesisTab({ payload }: { payload: LookupPayload }) {
   return (
     <div className="synth">
       <div className="synth-top">
-        <VerdictCard verdict={view.verdict} flip={view.flip} rel={rel} />
+        <VerdictCard verdict={view.verdict} flip={view.flip} rel={rel} subject={verdictSubject(payload)} />
         <div className="synth-side">
           <section className="card synth-card">
             <div className="synth-card-head">
@@ -53,7 +55,7 @@ export function SynthesisTab({ payload }: { payload: LookupPayload }) {
   );
 }
 
-function VerdictCard({ verdict: v, flip, rel }: { verdict: VerdictBlock; flip: ReturnType<typeof synthesisView>["flip"]; rel: ReliabilityView | null }) {
+function VerdictCard({ verdict: v, flip, rel, subject }: { verdict: VerdictBlock; flip: ReturnType<typeof synthesisView>["flip"]; rel: ReliabilityView | null; subject: VerdictSubject | null }) {
   const { t } = useT();
   return (
     <section className={"card synth-verdict " + v.cls.replace("badge-", "vt-")}>
@@ -97,6 +99,7 @@ function VerdictCard({ verdict: v, flip, rel }: { verdict: VerdictBlock; flip: R
           <span>{v.confidence}</span>
         </div>
       )}
+      {subject && <VerdictFeedback subject={subject} />}
     </section>
   );
 }

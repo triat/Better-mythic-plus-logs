@@ -27,6 +27,11 @@ export const ANALYTICS_EVENTS = {
   dungeon_open: {},
   history_open: {},
   key_level: {},
+  // Feedback (canvas "bmpl · Retours").
+  feedback_open: { place: ["menu", "prompt"] },
+  feedback_sent: { kind: ["idea", "problem", "other"] },
+  feedback_verdict: { rating: ["fair", "unfair"] },
+  feedback_prompt: { action: ["shown", "later", "dismiss"] },
   // The operator's links.
   support_click: { place: ["sidebar", "menu"] },
   contact_click: { place: ["sidebar", "menu", "privacy"] },

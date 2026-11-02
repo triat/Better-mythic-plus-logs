@@ -8,7 +8,6 @@ import type { Suggestion } from "../../lib/suggest.ts";
 import { OTHER_SPEC, regionChipLabel, regionMenu, specChipLabel, specMenu } from "../../lib/header.ts";
 import { useT } from "../../locale.tsx";
 import { track } from "../../usage.ts";
-import { linkClicked } from "../../analytics.ts";
 import { ChipMenu } from "../ChipMenu.tsx";
 import { Icon } from "../Icon.tsx";
 import { KeyStepper } from "../KeyStepper.tsx";
@@ -178,16 +177,6 @@ export function Sidebar(p: SidebarProps & { onOpenPalette: () => void }) {
           <LocalAccount title={p.account.title} controls={p.controls} watch={p.watch} onWatchToggle={p.onWatchToggle} onSetup={p.onSetup} onQuit={p.onQuit} />
         )}
         {p.version && <WhatsNew version={p.version} />}
-        {p.account.links.side.length > 0 && (
-          <div className="side-links">
-            {p.account.links.side.map((l, i) => (
-              <span key={l.key}>
-                {i > 0 && <span className="side-links-sep" aria-hidden="true">·</span>}
-                <a href={l.href} target="_blank" rel="noopener noreferrer" onClick={() => linkClicked(l.key, "sidebar")}>{l.label}</a>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </aside>
   );

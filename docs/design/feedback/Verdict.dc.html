@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Avis sur le verdict</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E1014}
+a{color:#7FB4FF;text-decoration:none}a:hover{color:#A9CCFF}
+</style>
+</helmet>
+<div style="width: 1280px; height: 760px; box-sizing: border-box; padding: 32px 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; font-family: Geist, system-ui, sans-serif; color: #ECEEF2; background: #0E1014">
+  <sc-for list="{{states}}" as="s" hint-placeholder-count="3">
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 16px; font-weight: 700">{{s.title}}</span><span style="font-size: 13px; color: #A0A7B4">{{s.sub}}</span></div>
+      <div style="background: #12201B; border: 1px solid #24523F; border-radius: 16px; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #A0A7B4">verdict pour une +23</span>
+        <span style="font-size: 38px; font-weight: 800; letter-spacing: -.02em"><span style="color: #3FCF8E">INVITE</span> 73</span>
+        <div style="position: relative; height: 8px; border-radius: 999px; background: #1F3A2E"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 73%; border-radius: 999px; background: #3FCF8E"></span></div>
+        <span style="font-size: 15px; line-height: 1.4; color: #ECEEF2">Porté par dégâts évitables vs le groupe et dissipations, mais freiné par parse médian.</span>
+        <div style="border: 1px solid #24523F; border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #A0A7B4">Fiabilité · Niveau non prouvé en +23 · Stabilité 70–78</div>
+        <div style="border: 1px solid #24523F; border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #C9CED8">8 runs notés sur 12 indexés</div>
+
+        <sc-if value="{{s.idle}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; align-items: center; gap: 8px; padding-top: 2px; font-size: 13px; color: #8D95A3">
+            <span>Ce verdict te paraît juste ?</span>
+            <div style="flex-grow: 1"></div>
+            <button type="button" aria-label="Oui, juste" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #24523F; border-radius: 8px; background: transparent; color: #A0A7B4"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 20H7"></path></svg></button>
+            <button type="button" aria-label="Non, pas juste" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #24523F; border-radius: 8px; background: transparent; color: #A0A7B4"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 13V4h3v9zM17 13l-4 8a2 2 0 0 1-3-2l1-4H5a2 2 0 0 1-2-2.3l1.4-7A2 2 0 0 1 6.4 4H17"></path></svg></button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{s.asking}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 2px; font-size: 13px">
+            <span style="color: #C9CED8">Qu'est-ce qui ne va pas ? <span style="color: #8D95A3">(facultatif)</span></span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <button type="button" aria-pressed="true" style="font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid #A0A7B4; background: #1C2029; color: #ECEEF2">Trop généreux</button>
+              <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid #2A2F3B; background: transparent; color: #A0A7B4">Trop sévère</button>
+              <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid #2A2F3B; background: transparent; color: #A0A7B4">Il manque des runs</button>
+              <button type="button" style="font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid #2A2F3B; background: transparent; color: #A0A7B4">Autre</button>
+            </div>
+            <label style="display: flex; flex-direction: column; gap: 4px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Un mot de plus</span>
+              <textarea rows="2" placeholder="Un mot de plus, si tu veux" style="font: inherit; font-size: 13px; resize: none; padding: 8px 10px; border-radius: 8px; border: 1px solid #2A2F3B; background: #0E1014; color: #ECEEF2">Joué avec lui hier, il meurt souvent sur les packs.</textarea>
+            </label>
+            <div style="display: flex; gap: 8px; justify-content: flex-end">
+              <button type="button" style="font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 0; background: transparent; color: #A0A7B4">Annuler</button>
+              <button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 0; background: #ECEEF2; color: #0E1014">Envoyer</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{s.done}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 8px; padding-top: 2px; font-size: 13px; color: #8D95A3">
+            <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3FCF8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg>
+            <span>Merci, c'est noté : verdict jugé trop généreux.</span>
+            <div style="flex-grow: 1"></div>
+            <button type="button" style="font: inherit; font-size: 13px; border: 0; background: transparent; color: #7FB4FF; padding: 0">Modifier</button>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      states: [
+        { title: "Au repos", sub: "Une ligne grise sous le verdict, deux petits boutons. Rien d'autre ne bouge.", idle: true, asking: false, done: false },
+        { title: "Après « pas juste »", sub: "La ligne s'ouvre sur place : une raison et un mot, tous deux facultatifs. « Juste » s'enregistre d'un clic.", idle: false, asking: true, done: false },
+        { title: "Envoyé", sub: "L'avis reste affiché pour ce personnage et ce niveau, modifiable. On ne redemande pas.", idle: false, asking: false, done: true },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

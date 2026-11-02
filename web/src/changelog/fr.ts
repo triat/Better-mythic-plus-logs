@@ -5,6 +5,7 @@ export const CHANGELOG_FR: ChangelogEntry[] = [
   {
     version: "next",
     items: [
+      "Tu peux maintenant dire si un verdict te paraît juste, sous le verdict dans la Synthèse, et envoyer une idée ou un problème depuis le menu du compte, où se trouvent aussi désormais les liens Discord et Soutenir.",
       "Un lien bmpl partagé sur Discord, X ou ailleurs affiche maintenant une carte d'aperçu avec le nom et ce que fait le site.",
     ],
   },

@@ -19,7 +19,8 @@ describe("analytics", () => {
   });
   test("the events of the spec and no other", () => {
     expect(Object.keys(ANALYTICS_EVENTS).sort()).toEqual([
-      "bnet_link", "compare", "contact_click", "deepdive", "dungeon_open", "history_open", "key_level", "live_connect", "lookup", "lookup_failed",
+      "bnet_link", "compare", "contact_click", "deepdive", "dungeon_open", "feedback_open", "feedback_prompt", "feedback_sent", "feedback_verdict",
+      "history_open", "key_level", "live_connect", "lookup", "lookup_failed",
       "run_pick", "run_sheet", "season_sync", "sign_in_click", "support_click", "tab", "timeline_layer", "wcl_client_set",
     ]);
   });

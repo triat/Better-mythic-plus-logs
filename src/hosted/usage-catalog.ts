@@ -65,6 +65,12 @@ export const USAGE_CATALOG = {
   // Help
   page_help: { category: "help", source: "ui" },
   help_link: { category: "help", source: "ui" },
+  // Feedback (canvas "bmpl · Retours"): a verdict judged, a message sent; the invitation's buttons.
+  feedback_verdict: { category: "help", source: "api" },
+  feedback_sent: { category: "help", source: "api" },
+  feedback_open: { category: "help", source: "ui" },
+  feedback_prompt_later: { category: "help", source: "ui" },
+  feedback_prompt_dismiss: { category: "help", source: "ui" },
   // Account
   wcl_client_set: { category: "account", source: "api" },
   wcl_client_verify: { category: "account", source: "api" },

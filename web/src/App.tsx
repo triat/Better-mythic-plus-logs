@@ -33,6 +33,7 @@ import { useSse } from "./useSse.ts";
 import { startUsageTracking, track } from "./usage.ts";
 import { startErrorReporting } from "./clientErrors.ts";
 import { analyticsEvent, startAnalytics } from "./analytics.ts";
+import { FeedbackProvider, useFeedback } from "./feedback.tsx";
 import { pagePath, utmQuery } from "./lib/analytics.ts";
 import { PrivacyPage } from "./components/account/PrivacyPage.tsx";
 import { SettingsPage } from "./components/account/SettingsPage.tsx";
@@ -126,7 +127,9 @@ export function App() {
     <SettingsProvider hosted={screen.status.hosted} initial={screen.settings}>
       <SettingsLocale>
         <DocsProvider>
-          <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+          <FeedbackProvider enabled={screen.status.hosted && screen.me !== null} operator={screen.status.operator} page={page}>
+            <Main status={screen.status} me={screen.me} initialQuota={screen.quota} initialOwnClient={screen.ownClient} onSetup={() => { history.pushState({}, "", "/setup"); setScreen({ kind: "setup", status: { ...screen.status, hasCredentials: true } }); }} />
+          </FeedbackProvider>
         </DocsProvider>
       </SettingsLocale>
     </SettingsProvider>
@@ -160,6 +163,7 @@ const formToRequest = (f: LookupForm, level: number | null, region: Region): Loo
 
 function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status: StatusInfo; me: MeUser | null; initialQuota: QuotaInfo | null; initialOwnClient: OwnClientView | null; onSetup: () => void }) {
   const { t } = useT();
+  const feedback = useFeedback();
   const controls = uiControls(status);
   const [form, setForm] = useState<LookupForm>(EMPTY_FORM);
   const [quota, setQuota] = useState<QuotaInfo | null>(initialQuota);
@@ -363,6 +367,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     payloads.current.set(r.key, r.result);
     setFromCache(r.fromCache);
     analyticsEvent("lookup", { source: r.fromCache ? "cached" : "fetched" });
+    feedback.lookedUp();
     // The URL names the new profile before it mounts: its run / sheet are read from the URL at mount (candInitial).
     if (page === "candidate") history.replaceState({}, "", candSwitchHref(r.key, location.search, sameCharacter));
     setActiveKey(r.key);
@@ -372,7 +377,7 @@ function Main({ status, me, initialQuota, initialOwnClient, onSetup }: { status:
     touch();
     await loadHistory();
     return r.key;
-  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters, status.hosted, status.wclClients, ownClient]);
+  }, [loadHistory, updateSettings, t, ownClientAction, settings.characters, status.hosted, status.wclClients, ownClient, feedback]);
 
   /** Shows a history profile: in place on the candidate page (the URL follows) and on Live, else on the candidate page. */
   const openProfile = useCallback((key: string) => {

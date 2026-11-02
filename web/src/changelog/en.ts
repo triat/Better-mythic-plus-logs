@@ -6,6 +6,7 @@ export const CHANGELOG_EN: ChangelogEntry[] = [
   {
     version: "next",
     items: [
+      "You can now tell whether a verdict seems right, under it on the Synthesis tab, and send an idea or a problem from the account menu, where the Discord and Support links moved too.",
       "A bmpl link shared on Discord, X or elsewhere now shows a preview card with the name and what the site does.",
     ],
   },

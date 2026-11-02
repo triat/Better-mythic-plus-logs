@@ -2,6 +2,12 @@ import type { AnalyticsConfig } from "./lib/analytics.ts";
 import type {
   AdminAudit,
   AdminCharacter,
+  FeedbackKind,
+  FeedbackRow,
+  VerdictFeedback,
+  VerdictRating,
+  VerdictReason,
+  VerdictTarget,
   BnetCandidate,
   AdminInstance,
   AdminInvite,
@@ -154,8 +160,20 @@ export const api = {
       call<AdminAudit>(`/api/admin/audit?kind=${o.kind}${o.before ? `&before=${o.before}` : ""}${o.offset ? `&offset=${o.offset}` : ""}`
         + `&limit=${o.limit ?? 50}${o.q ? `&q=${encodeURIComponent(o.q)}` : ""}`),
     characters: () => call<{ characters: AdminCharacter[]; thresholds: { invite: number; maybe: number } }>("/api/admin/characters"),
+    feedback: () => call<{ rows: FeedbackRow[]; unread: number }>("/api/admin/feedback"),
+    feedbackRead: (id: number) => call<{ unread: number }>(`/api/admin/feedback/${id}/read`, post()),
   },
   /** The member's own Warcraft Logs client and account (issue #11): the secret is write-only, the id comes back abbreviated. */
+  /** Members' feedback (canvas "bmpl · Retours"), hosted and signed in only. */
+  feedback: {
+    state: (t: VerdictTarget | null) =>
+      call<{ sentGeneral: boolean; verdict: VerdictFeedback | null }>(
+        "/api/feedback" + (t ? `?region=${t.region}&realm=${encodeURIComponent(t.realm)}&name=${encodeURIComponent(t.name)}&level=${t.level}` : ""),
+      ),
+    send: (body: { kind: FeedbackKind; message: string; replyOk: boolean; page: string | null }) => call<Record<never, never>>("/api/feedback", post(body)),
+    verdict: (body: VerdictTarget & { rating: VerdictRating; reason: VerdictReason | null; message: string | null; label: string; verdict: "invite" | "maybe" | "pass" | null; score: number | null }) =>
+      call<{ verdict: VerdictFeedback }>("/api/feedback/verdict", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+  },
   account: {
     wclClient: () => call<{ enabled: boolean; client: OwnClientView | null }>("/api/me/wcl-client"),
     saveWclClient: (clientId: string, clientSecret: string) =>

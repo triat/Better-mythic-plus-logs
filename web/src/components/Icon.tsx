@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import type { IconName as NavIconName } from "../lib/shell.ts";
 
-export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "clock" | "lock" | "info" | "warn" | "discord";
+export type IconName = NavIconName | "search" | "close" | "chevron" | "more" | "settings" | "logout" | "admin" | "bolt" | "arrow" | "clock" | "lock" | "info" | "warn" | "discord" | "check" | "thumbUp" | "thumbDown" | "message";
 
 const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
   warn: <><path d="M12 3l9 16H3z" /><path d="M12 10v4M12 17h.01" /></>,
@@ -26,6 +26,11 @@ const STROKE: Record<Exclude<IconName, "discord">, ReactNode> = {
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></>,
   lock: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
+  // Feedback (canvas "bmpl · Retours").
+  check: <path d="M5 12l5 5L20 7" />,
+  thumbUp: <path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 20H7" />,
+  thumbDown: <path d="M17 13V4h3v9zM17 13l-4 8a2 2 0 0 1-3-2l1-4H5a2 2 0 0 1-2-2.3l1.4-7A2 2 0 0 1 6.4 4H17" />,
+  message: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z" />,
 };
 
 const DISCORD = "M107.7 8.1A105.2 105.2 0 0 0 81.5 0c-1.1 2-2.4 4.7-3.3 6.8a97.7 97.7 0 0 0-29.1 0C48.2 4.7 46.9 2 45.7 0a105 105 0 0 0-26.2 8.1C2.9 33.2-1.6 57.6.6 81.7a106 106 0 0 0 32.2 16.2c2.6-3.5 4.9-7.3 6.9-11.2a68.6 68.6 0 0 1-10.9-5.2c.9-.7 1.8-1.4 2.7-2.1a75.6 75.6 0 0 0 64.6 0c.9.7 1.8 1.4 2.7 2.1-3.5 2.1-7.1 3.8-10.9 5.2 2 3.9 4.3 7.7 6.9 11.2a105.8 105.8 0 0 0 32.2-16.2c2.6-27.9-4.5-52.1-18.9-73.6zM42.5 66.9c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5.1 12.9-11.5 12.9zm42.5 0c-6.3 0-11.5-5.8-11.5-12.9s5.1-12.9 11.5-12.9 11.6 5.8 11.5 12.9c0 7.1-5 12.9-11.5 12.9z";

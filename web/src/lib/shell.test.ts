@@ -4,9 +4,12 @@ import { makeT, tEn } from "../i18n/t.ts";
 import type { HistoryItem } from "../types.ts";
 import { LOCAL_STATUS, type StatusInfo } from "./hostedMode.ts";
 import { menuModel } from "./session.ts";
+import { LIVE_ENABLED } from "./features.ts";
 import { accountLinks, accountView, navItems, recentList, recentRows } from "./shell.ts";
 
 const tFr = makeT(fr, "fr");
+// Live is off for now (lib/features.ts): its entries are only expected while it is on.
+const live = <const T,>(...x: T[]): T[] => (LIVE_ENABLED ? x : []);
 const hosted: StatusInfo = { ...LOCAL_STATUS, hosted: true };
 
 const item = (n: number, o: Partial<HistoryItem> = {}): HistoryItem => ({
@@ -24,12 +27,12 @@ const item = (n: number, o: Partial<HistoryItem> = {}): HistoryItem => ({
 });
 
 describe("navItems", () => {
-  test("six items in order, labels, hrefs, icons", () => {
+  test("the items in order, labels, hrefs, icons (Live only while on)", () => {
     const items = navItems(tEn, "home", { candidates: 0, liveOn: false });
-    expect(items.map((i) => i.key)).toEqual(["home", "candidate", "me", "compare", "live", "help"]);
-    expect(items.map((i) => i.href)).toEqual(["/", "/candidate", "/me", "/compare", "/live", "/help"]);
-    expect(items.map((i) => i.label)).toEqual(["Home", "Candidates", "My characters", "Compare", "Live", "Help"]);
-    expect(items.map((i) => i.icon)).toEqual(["home", "users", "user", "compare", "live", "help"]);
+    expect(items.map((i) => i.key)).toEqual(["home", "candidate", "me", "compare", ...live("live"), "help"]);
+    expect(items.map((i) => i.href)).toEqual(["/", "/candidate", "/me", "/compare", ...live("/live"), "/help"]);
+    expect(items.map((i) => i.label)).toEqual(["Home", "Candidates", "My characters", "Compare", ...live("Live"), "Help"]);
+    expect(items.map((i) => i.icon)).toEqual(["home", "users", "user", "compare", ...live("live"), "help"]);
   });
   test("active follows the page; none for a page outside the nav", () => {
     expect(navItems(tEn, "compare", { candidates: 0, liveOn: false }).filter((i) => i.active).map((i) => i.key)).toEqual(["compare"]);
@@ -40,13 +43,14 @@ describe("navItems", () => {
     expect(navItems(tEn, "home", { candidates: 6, liveOn: false })[1]!.count).toBe(6);
     expect(navItems(tEn, "home", { candidates: 6, liveOn: false })[0]!.count).toBeUndefined();
   });
-  test("the Live dot on / off, on Live only", () => {
-    expect(navItems(tEn, "home", { candidates: 0, liveOn: true })[4]!.dot).toBe("on");
-    expect(navItems(tEn, "home", { candidates: 0, liveOn: false })[4]!.dot).toBe("off");
-    expect(navItems(tEn, "home", { candidates: 0, liveOn: true }).filter((i) => i.dot).length).toBe(1);
+  test("the Live dot on / off, on Live only; no dot while Live is off", () => {
+    const dot = (liveOn: boolean) => navItems(tEn, "home", { candidates: 0, liveOn }).find((i) => i.key === "live")?.dot;
+    expect(dot(true)).toBe(LIVE_ENABLED ? "on" : undefined);
+    expect(dot(false)).toBe(LIVE_ENABLED ? "off" : undefined);
+    expect(navItems(tEn, "home", { candidates: 0, liveOn: true }).filter((i) => i.dot).length).toBe(LIVE_ENABLED ? 1 : 0);
   });
   test("in French", () => {
-    expect(navItems(tFr, "home", { candidates: 0, liveOn: false }).map((i) => i.label)).toEqual(["Accueil", "Candidats", "Mes persos", "Comparer", "Live", "Aide"]);
+    expect(navItems(tFr, "home", { candidates: 0, liveOn: false }).map((i) => i.label)).toEqual(["Accueil", "Candidats", "Mes persos", "Comparer", ...live("Live"), "Aide"]);
   });
 });
 

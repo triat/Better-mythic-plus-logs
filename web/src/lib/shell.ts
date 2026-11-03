@@ -4,6 +4,7 @@ import type { T } from "../i18n/t.ts";
 import type { HistoryItem } from "../types.ts";
 import { candidateHref, type Page, type StatusInfo } from "./hostedMode.ts";
 import type { MenuModel } from "./session.ts";
+import { LIVE_ENABLED } from "./features.ts";
 
 export type NavKey = "home" | "candidate" | "me" | "compare" | "live" | "help";
 export type IconName = "home" | "users" | "user" | "compare" | "live" | "help";
@@ -25,16 +26,16 @@ export interface AccountView {
   links: { side: AccountLink[]; menu: AccountLink[] };
 }
 
-const NAV: readonly { key: NavKey; href: string; icon: IconName }[] = [
+const NAV: readonly { key: NavKey; href: string; icon: IconName }[] = ([
   { key: "home", href: "/", icon: "home" },
   { key: "candidate", href: "/candidate", icon: "users" },
   { key: "me", href: "/me", icon: "user" },
   { key: "compare", href: "/compare", icon: "compare" },
   { key: "live", href: "/live", icon: "live" },
   { key: "help", href: "/help", icon: "help" },
-];
+] satisfies { key: NavKey; href: string; icon: IconName }[]).filter((n) => LIVE_ENABLED || n.key !== "live");
 
-/** The six navigation links, in order; the candidate count only when there is one, the Live dot always. */
+/** The navigation links, in order (Live only while `LIVE_ENABLED`); the candidate count only when there is one, the Live dot always. */
 export function navItems(t: T, page: Page, o: { candidates: number; liveOn: boolean }): NavItem[] {
   return NAV.map((n) => ({
     ...n,

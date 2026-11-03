@@ -7,6 +7,7 @@ import { realmName } from "./format.ts";
 import { historyKeyFor, parseEntry, slugOf } from "./me.ts";
 import { regionLabel } from "./regions.ts";
 import { classLine, matchSuggestions, type Suggestion } from "./suggest.ts";
+import { LIVE_ENABLED } from "./features.ts";
 
 export type PaletteAction = { kind: "open"; historyKey: string } | { kind: "lookup"; fill: string; region: Region } | { kind: "go"; href: string };
 export interface PaletteRow {
@@ -37,12 +38,12 @@ export interface PaletteSources {
 export const PALETTE_RECENT_MAX = 5;
 export const PALETTE_MINE_MAX = 5;
 
-const ACTIONS = [
+const ACTIONS = ([
   { key: "compare", href: "/compare" },
   { key: "live", href: "/live" },
   { key: "help", href: "/help" },
   { key: "me", href: "/me" },
-] as const;
+] as const).filter((a) => LIVE_ENABLED || a.key !== "live");
 
 const fold = (s: string): string => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const where = (realm: string, region: Region): string => `${realm} (${regionLabel(region)})`;

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { LOCAL_STATUS, accountAccess, adminAccess, bootScreen, deniedNotice, initialScreen, candidateHref, loginFailed, pageOf, proposalMode, signInNote, uiControls } from "./hostedMode.ts";
+import { LIVE_ENABLED } from "./features.ts";
 
 const tFr = makeT(fr, "fr");
 const local = { hosted: false, hasCredentials: true, envPath: "/x/.env", openSignup: false, guildRequired: false, wclClients: false, operator: "", contactUrl: null, supportUrl: null, region: "eu" as const };
@@ -72,7 +73,8 @@ describe("deniedNotice / signInNote / pageOf / accountAccess", () => {
     expect(pageOf("/")).toBe("home");
     expect(pageOf("/candidate")).toBe("candidate");
     expect(pageOf("/compare")).toBe("compare");
-    expect(pageOf("/live")).toBe("live");
+    // Live is off for now (lib/features.ts): /live is the home page until it is back.
+    expect(pageOf("/live")).toBe(LIVE_ENABLED ? "live" : "home");
     expect(pageOf("/admin")).toBe("admin");
     expect(pageOf("/settings")).toBe("settings");
     expect(pageOf("/privacy")).toBe("privacy");

@@ -26,6 +26,7 @@ import { usePaletteKey } from "../shell/Shell.tsx";
 import type { PaletteProps } from "../shell/Shell.tsx";
 import type { SidebarProps } from "../shell/Sidebar.tsx";
 import { Logo } from "../Logo.tsx";
+import { LIVE_ENABLED } from "../../lib/features.ts";
 
 type SearchProps = Pick<SidebarProps,
   "form" | "onFormChange" | "onLookup" | "busy" | "suggestions" | "onSuggest" | "region" | "instanceRegion" | "onRegionChange"
@@ -74,7 +75,7 @@ function TopBar(p: HomePageProps) {
         <Logo className="home-logo" />
         <nav className="home-top-nav" aria-label={t("home.nav")}>
           <a href="/me" className="home-top-a">{t("shell.nav.me")}</a>
-          <a href="/live" className="home-top-a"><span className={"nav-dot " + (p.liveOn ? "on" : "off")} aria-hidden="true" />{t("shell.nav.live")}</a>
+          {LIVE_ENABLED && <a href="/live" className="home-top-a"><span className={"nav-dot " + (p.liveOn ? "on" : "off")} aria-hidden="true" />{t("shell.nav.live")}</a>}
           <a href="/help" className="home-top-a">{t("shell.nav.help")}</a>
           {p.controls.signOut && p.menu ? (
             <UserMenu m={p.menu} lines={p.account.lines} links={p.account.links.menu} pendingProposals={p.pendingProposals} onOpen={p.onMenuOpen} onSignOut={p.onSignOut} compact />
@@ -306,12 +307,12 @@ function Candidates({ history, liveOn }: { history: HistoryItem[]; liveOn: boole
         <h2 className="home-h2" id="home-cands-title">{t("home.candidates.title")}</h2>
         {history.length >= 2 && <a href="/compare" className="home-more">{t("home.candidates.compare")}</a>}
       </div>
-      <a href="/live" className={"home-live" + (liveOn ? " on" : "")}>
+      {LIVE_ENABLED && <a href="/live" className={"home-live" + (liveOn ? " on" : "")}>
         <span className={"nav-dot " + (liveOn ? "on" : "off")} aria-hidden="true" />
         <span className="home-live-title">{liveOn ? t("home.candidates.liveOn") : t("home.candidates.liveOff")}</span>
         <span className="home-sub">{t("home.candidates.liveSub")}</span>
         <span className="home-more home-live-open">{t("home.candidates.liveOpen")}</span>
-      </a>
+      </a>}
       {rows.length === 0 ? <p className="muted home-p home-pad">{t("home.candidates.empty")}</p> : (
         <div className="home-crows">
           {rows.map((r) => (

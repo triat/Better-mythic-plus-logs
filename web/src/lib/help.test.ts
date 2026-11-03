@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import { READING_KEYS, anchorOf, axisIsInformational, hashAnchor, axisNote, budgetPill, curvePath, curveTable, faqEntries, fmtThresholds, linkSegments, roleWeights, toc } from "./help.ts";
+import { LIVE_ENABLED } from "./features.ts";
 
 const tFr = makeT(fr, "fr");
 
@@ -35,27 +36,30 @@ describe("hashAnchor", () => {
   });
 });
 
+// Live is off for now (lib/features.ts): its section is only expected while it is on.
+const live = <const T,>(...x: T[]): T[] => (LIVE_ENABLED ? x : []);
+
 describe("toc", () => {
   test("order and the five axis sub-entries", () => {
     const t = toc(tEn, docs, false);
     expect(t.map((e) => e.anchor)).toEqual([
       "what", "verdict", "axes", "axis-survival", "axis-utility", "axis-throughput", "axis-consistency", "axis-preparation", "pillars",
-      "level-scale", "expected-ilvl", "runs", "peers", "deep-dive", "live-addon", "reading", "faq",
+      "level-scale", "expected-ilvl", "runs", "peers", "deep-dive", ...live("live-addon"), "reading", "faq",
     ]);
     expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation"]);
     expect(t.filter((e) => !e.sub).map((e) => e.label)).toEqual([
       "What bmpl looks at", "The verdict", "The five axes", "The five pillars", "Key-level scaling", "Expected item level", "Per-run signals", "Peers", "Deep-dive",
-      "The in-game addon", "Reading the page", "FAQ",
+      ...live("The in-game addon"), "Reading the page", "FAQ",
     ]);
   });
-  test("live-addon is not hosted-gated: present, in the same spot, whether hosted or not", () => {
-    expect(toc(tEn, docs, false).map((e) => e.anchor)).toContain("live-addon");
-    expect(toc(tEn, docs, true).map((e) => e.anchor)).toContain("live-addon");
-    expect(toc(tEn, docs, false).find((e) => e.anchor === "live-addon")!.label).toBe("The in-game addon");
+  test("live-addon is not hosted-gated: present while Live is on, whether hosted or not; absent while off", () => {
+    expect(toc(tEn, docs, false).some((e) => e.anchor === "live-addon")).toBe(LIVE_ENABLED);
+    expect(toc(tEn, docs, true).some((e) => e.anchor === "live-addon")).toBe(LIVE_ENABLED);
+    if (LIVE_ENABLED) expect(toc(tEn, docs, false).find((e) => e.anchor === "live-addon")!.label).toBe("The in-game addon");
   });
   test("hosted: the own-client guide sits between deep-dive and live-addon, before reading", () => {
     const anchors = toc(tEn, docs, true).map((e) => e.anchor);
-    expect(anchors.slice(anchors.indexOf("deep-dive"), anchors.indexOf("reading") + 1)).toEqual(["deep-dive", "wcl-client", "live-addon", "reading"]);
+    expect(anchors.slice(anchors.indexOf("deep-dive"), anchors.indexOf("reading") + 1)).toEqual(["deep-dive", "wcl-client", ...live("live-addon"), "reading"]);
     expect(toc(tEn, docs, true).find((e) => e.anchor === "wcl-client")!.label).toBe("Your own WCL client");
   });
   test("French: the section labels follow the dictionary, the axis labels follow the registry served", () => {
@@ -63,7 +67,7 @@ describe("toc", () => {
     expect(t.map((e) => e.anchor)).toEqual(toc(tEn, docs, true).map((e) => e.anchor));
     expect(t.filter((e) => !e.sub).map((e) => e.label)).toEqual([
       "Ce que bmpl regarde", "Le verdict", "Les cinq axes", "Les cinq piliers", "Pondération par niveau de key", "Item level attendu", "Signaux par run", "Pairs", "Deep-dive",
-      "Ton propre client WCL", "L'addon en jeu", "Lire la page", "FAQ",
+      "Ton propre client WCL", ...live("L'addon en jeu"), "Lire la page", "FAQ",
     ]);
     // The registry is fetched in the UI language (api.docs(locale)); the toc prints whatever titles it carries.
     expect(t.filter((e) => e.sub).map((e) => e.label)).toEqual(["Survival", "Utility", "Throughput", "Consistency", "Preparation"]);

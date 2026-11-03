@@ -18,6 +18,7 @@ import { HelpToc } from "./HelpToc.tsx";
 import { LiveAddonGuide } from "./LiveAddonGuide.tsx";
 import { WclClientGuide } from "./WclClientGuide.tsx";
 import { Logo } from "../Logo.tsx";
+import { LIVE_ENABLED } from "../../lib/features.ts";
 
 type Docs = Omit<DocsResponse, "ok">;
 const ROLES = ["dps", "healer", "tank"] as const;
@@ -77,7 +78,7 @@ export function HelpPage({ status, bare = false }: Props) {
             <section className="card help-card" id="peers"><h2>{t("help.toc.peers")}</h2><p className="help-p">{data.docs.peers}</p></section>
             <DeepDive t={t} data={data} />
             {status.hosted && <WclClientGuide doc={data.docs.wclClient} quota={data.quota} />}
-            <LiveAddonGuide doc={data.docs.liveAddon} />
+            {LIVE_ENABLED && <LiveAddonGuide doc={data.docs.liveAddon} />}
             <Reading t={t} />
             <Faq entries={faqEntries(data.docs, status.hosted)} />
           </div>

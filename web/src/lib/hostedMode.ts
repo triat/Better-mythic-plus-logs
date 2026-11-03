@@ -3,6 +3,7 @@ import type { T } from "../i18n/t.ts";
 import type { Region } from "../types.ts";
 import type { AnalyticsConfig } from "./analytics.ts";
 import { candHref } from "./profile.ts";
+import { LIVE_ENABLED } from "./features.ts";
 
 // What the UI may show depending on the server mode (GET /api/status).
 export interface StatusInfo {
@@ -35,7 +36,7 @@ export type Page = "home" | "candidate" | "compare" | "live" | "admin" | "charac
 export const LOCAL_STATUS: StatusInfo = { hosted: false, hasCredentials: true, envPath: null, openSignup: false, guildRequired: false, wclClients: false, operator: "", contactUrl: null, supportUrl: null, region: "eu" };
 
 const PAGES: Record<string, Page> = {
-  "/": "home", "/candidate": "candidate", "/compare": "compare", "/live": "live",
+  "/": "home", "/candidate": "candidate", "/compare": "compare", ...(LIVE_ENABLED ? { "/live": "live" as const } : {}),
   "/admin": "admin", "/admin/characters": "characters", "/settings": "settings", "/privacy": "privacy", "/help": "help", "/me": "me",
 };
 export const pageOf = (pathname: string): Page => PAGES[pathname] ?? "home";

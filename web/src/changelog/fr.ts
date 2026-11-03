@@ -3,6 +3,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_FR: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "Le panneau Live est désactivé pour l'instant, le temps qu'il fonctionne vraiment bien ; la recherche d'un personnage ne change pas.",
+    ],
+  },
+  {
     version: "0.10.18",
     date: "2026-11-02",
     items: [

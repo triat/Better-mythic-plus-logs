@@ -10,6 +10,8 @@ export interface WebAssets {
 }
 export type AssetLoader = () => Promise<WebAssets | null>;
 
+import { LIVE_ENABLED } from "./features.ts";
+
 export const NOT_BUILT = "web UI not built — run: just web-build";
 
 /** Resolves the embedded/built front, or null when web/dist is absent. */
@@ -61,6 +63,8 @@ const notBuilt = () =>
 export function createStaticHandler(loader: AssetLoader, origin = ""): (pathname: string) => Promise<Response | null> {
   let assets: WebAssets | null = null;
   return async (pathname) => {
+    // Live is off (src/features.ts): an old link or bookmark lands on the home page.
+    if (pathname === "/live" && !LIVE_ENABLED) return new Response(null, { status: 302, headers: { Location: "/" } });
     const route = ROUTES[pathname];
     if (!route) return null;
     // A null result is not cached: building web/dist while the server runs then works.

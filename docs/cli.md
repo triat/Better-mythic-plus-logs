@@ -176,7 +176,7 @@ is already printed. Copy the next applicant; the next lookup runs.
 `pbpaste`, Linux via `wl-paste`/`xclip`) and fires on any string matching the
 `Name-Realm` shape.
 
-The web UI's **Live** panel is the hands-free flow's browser equivalent: instead of copying names one
+The web UI's **Live** panel (switched off for now: `LIVE_ENABLED` in `src/features.ts` and `web/src/lib/features.ts`) is the hands-free flow's browser equivalent: instead of copying names one
 at a time, the in-game addon (`addon/`) draws every current Group Finder applicant and party member as
 a small pixel strip, and the **Live** chip reads it through a screen share — no clipboard, no
 alt-tabbing. The clipboard watcher above stays; it needs no addon and works for any single character

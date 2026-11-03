@@ -4,6 +4,12 @@ import type { ChangelogEntry } from "./types.ts";
 
 export const CHANGELOG_EN: ChangelogEntry[] = [
   {
+    version: "next",
+    items: [
+      "The Live panel is switched off for now, until it works well enough; looking a character up is unchanged.",
+    ],
+  },
+  {
     version: "0.10.18",
     date: "2026-11-02",
     items: [

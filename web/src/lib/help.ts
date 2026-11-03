@@ -2,6 +2,7 @@ import type { AxisKey, CurvePoints, DocsResponse, EvaluationDocs, FaqEntry } fro
 import type { T } from "../i18n/t.ts";
 import { fmtPts } from "./format.ts";
 import { AXIS_ORDER } from "./verdict.ts";
+import { LIVE_ENABLED } from "./features.ts";
 
 // View models of the /help page: anchors, the table of contents, curve tables and paths, weights and
 // threshold wording. Every number shown on the page comes from GET /api/docs' `config`, never from here.
@@ -40,8 +41,8 @@ export function toc(t: T, docs: EvaluationDocs, hosted: boolean): TocEntry[] {
     { anchor: "peers", label: t("help.toc.peers") },
     { anchor: "deep-dive", label: t("help.toc.deepdive") },
     ...(hosted ? [{ anchor: "wcl-client", label: t("help.toc.wclClient") }] : []),
-    // Not hosted-gated: the Live panel and its addon work the same way locally and hosted.
-    { anchor: "live-addon", label: t("help.toc.liveAddon") },
+    // Not hosted-gated: the Live panel and its addon work the same way locally and hosted; gone while Live is off.
+    ...(LIVE_ENABLED ? [{ anchor: "live-addon" as const, label: t("help.toc.liveAddon") }] : []),
     { anchor: "reading", label: t("help.toc.reading") },
     { anchor: "faq", label: t("help.toc.faq") },
   ];

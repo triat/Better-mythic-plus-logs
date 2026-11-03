@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { fr } from "../i18n/fr.ts";
 import { makeT, tEn } from "../i18n/t.ts";
 import type { HistoryItem, MyCharacter } from "../types.ts";
+import { LIVE_ENABLED } from "./features.ts";
 import { moveIndex, paletteSections, rowAt, type PaletteSources } from "./palette.ts";
 import { suggestionsOf } from "./suggest.ts";
 
@@ -42,9 +43,9 @@ describe("paletteSections, empty query", () => {
     expect(rows[0]).toMatchObject({ label: "Biwaasham", detail: "main · Hyjal (EU)", hint: "Open · 0 pts", classId: 9, action: { kind: "open", historyKey: "h3" } });
     expect(rows[1]).toMatchObject({ label: "Biwaarlock", detail: "Nerzhul (EU)", hint: "Look up", action: { kind: "lookup", fill: "Biwaarlock-Nerzhul", region: "eu" } });
   });
-  test("actions go to Compare, Live, Help, My characters", () => {
+  test("actions go to Compare, Live (while on), Help, My characters", () => {
     expect(sections[2]!.rows.map((r) => r.action)).toEqual([
-      { kind: "go", href: "/compare" }, { kind: "go", href: "/live" }, { kind: "go", href: "/help" }, { kind: "go", href: "/me" },
+      { kind: "go", href: "/compare" }, ...(LIVE_ENABLED ? [{ kind: "go", href: "/live" } as const] : []), { kind: "go", href: "/help" }, { kind: "go", href: "/me" },
     ]);
   });
   test("nothing known: only the actions", () => {
@@ -54,7 +55,7 @@ describe("paletteSections, empty query", () => {
     const fr = paletteSections(tFr, "", sources(characters, history));
     expect(fr.map((s) => s.title)).toEqual(["Personnages récents", "Mes persos", "Actions"]);
     expect(fr[1]!.rows[0]!.detail).toBe("principal · Hyjal (EU)");
-    expect(fr[2]!.rows[2]!.label).toBe("Aide : comment le verdict est calculé");
+    expect(fr[2]!.rows[LIVE_ENABLED ? 2 : 1]!.label).toBe("Aide : comment le verdict est calculé");
   });
 });
 
@@ -94,19 +95,20 @@ describe("paletteSections, typed", () => {
 
 describe("moveIndex / rowAt", () => {
   const sections = paletteSections(tEn, "", sources([mine("Biwaarlock", "nerzhul")], history.slice(0, 2)));
-  // 2 recent + 1 mine + 4 actions = 7 rows
+  // 2 recent + 1 mine + 4 actions (3 while Live is off) = 7 rows (6)
+  const last = LIVE_ENABLED ? 6 : 5;
   test("wraps both ways across sections", () => {
     expect(moveIndex(sections, 0, 1)).toBe(1);
     expect(moveIndex(sections, 1, 1)).toBe(2);
-    expect(moveIndex(sections, 6, 1)).toBe(0);
-    expect(moveIndex(sections, 0, -1)).toBe(6);
+    expect(moveIndex(sections, last, 1)).toBe(0);
+    expect(moveIndex(sections, 0, -1)).toBe(last);
     expect(moveIndex([], 0, 1)).toBe(0);
   });
   test("rowAt walks the sections; out of range is null", () => {
     expect(rowAt(sections, 0)!.label).toBe("Vachaman");
     expect(rowAt(sections, 2)!.label).toBe("Biwaarlock");
     expect(rowAt(sections, 3)!.action).toEqual({ kind: "go", href: "/compare" });
-    expect(rowAt(sections, 7)).toBeNull();
+    expect(rowAt(sections, last + 1)).toBeNull();
     expect(rowAt(sections, -1)).toBeNull();
   });
 });

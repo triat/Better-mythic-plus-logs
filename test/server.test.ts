@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runServer } from "../src/server.ts";
 import { createStaticHandler } from "../src/web-static.ts";
+import { LIVE_ENABLED } from "../src/features.ts";
 
 let dir: string;
 let server: Awaited<ReturnType<typeof runServer>>;
@@ -125,7 +126,13 @@ describe("createStaticHandler", () => {
   });
   test("the pages the front resolves from the pathname are static routes (/me included)", async () => {
     const handler = createStaticHandler(async () => null);
-    for (const p of ["/", "/candidate", "/compare", "/live", "/admin", "/admin/characters", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
+    for (const p of ["/", "/candidate", "/compare", "/admin", "/admin/characters", "/settings", "/privacy", "/help", "/me"]) expect((await handler(p))?.status).toBe(503);
+    expect((await handler("/live"))?.status).toBe(LIVE_ENABLED ? 503 : 302);
+  });
+  test("Live off (src/features.ts): /live redirects to the home page", async () => {
+    if (LIVE_ENABLED) return;
+    const r = (await createStaticHandler(async () => null)("/live"))!;
+    expect([r.status, r.headers.get("Location")]).toEqual([302, "/"]);
   });
   test("link previews: the origin fills the index's tags (\"\" locally), /og.png is served when built", async () => {
     const fdir = mkdtempSync(join(tmpdir(), "bmpl-og-"));

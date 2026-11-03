@@ -61,16 +61,9 @@ explains that number with the thresholds your instance actually uses.
 
 ## Your applicants, without typing anything
 
-There is an optional WoW addon. Install it, share your game window with the site once, and **the
-people applying to your key appear in bmpl on their own** — name, class, role, score — as they come
-in, with the ones bmpl has already vetted marked as such. Click one to open it.
-
-Nothing is sent from the game. The addon has no network code at all: it draws a small grey square of
-pixels in the corner of your screen, only while the Group Finder is open, and your browser reads it
-off your own screen. It sends nothing, receives nothing, stores nothing.
-
-**[Download the addon](https://github.com/triat/Better-mythic-plus-logs/releases/latest/download/bmpl-addon.zip)** ·
-[setup guide and `/bmpl` commands](https://bmpl.riat.dev/help#live-addon)
+Paused for now. The Live panel, where an optional WoW addon brought the people applying to your key into bmpl
+on their own, is switched off on the site until it works well enough. Looking a character up by name is
+unchanged.
 
 ## Getting in
 

@@ -122,5 +122,7 @@ header chip, the marks in Récents / Live / Compare, the Méthode tab's "average
 against today, the `targeted` and `all` candidates, the proposal) too; config 11 (2026-10-28, from the run after the
 `curveInputs` fix) fits the expected item level per key level, weighs healer dispels 1, and gives tanks their own curves,
 shrinkage and deaths weight 1; phase 4 (labelled profiles) is not
-started. Next: self-review phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
+started. The Live panel is switched off for now (2026-11-03): `LIVE_ENABLED` in `src/features.ts` and its front copy
+`web/src/lib/features.ts` (no route, `/live` redirects to `/`, no link, no help section); the code and the addon stay.
+Next: self-review phase 3 (own spec), WCL items in issue #24. Unscheduled ideas live
 as GitHub issues #12–#19.
